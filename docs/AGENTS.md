@@ -91,10 +91,10 @@ Auth settings (roles, permissions, policies) are stored in the Mongo `settings` 
 
 ## Notes & Folder Tree
 
-The Master Folder Tree is a shared, production-grade tree engine used by **10 independent instances**:
+The Master Folder Tree is a shared, production-grade tree engine used by **11 independent instances**:
 `notes`, `image_studio`, `product_categories`, `cms_page_builder`, `case_resolver`,
 `case_resolver_cases`, `validator_list_tree`, `validator_pattern_tree`,
-`prompt_exploder_hierarchy`, `brain_catalog_tree`.
+`prompt_exploder_hierarchy`, `brain_catalog_tree`, `brain_routing_tree`.
 
 **Key directories:**
 - `src/features/foldertree/v2/` — engine root (barrel: `index.ts`)

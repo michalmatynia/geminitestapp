@@ -9,7 +9,7 @@ import {
 } from '../../useAiPathsPersistence.types';
 
 import {
-  fetchAiPathsSettingsCached,
+  type AiPathsSettingRecord,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -66,9 +66,9 @@ export function usePreferencePersistence(
     [persistUserPreferences]
   );
 
-  const resolveUserPreferences = useCallback(async (): Promise<AiPathsUserPreferences | null> => {
+  const resolveUserPreferences = useCallback(
+    (settings: AiPathsSettingRecord[]): AiPathsUserPreferences | null => {
     try {
-      const settings = await fetchAiPathsSettingsCached();
       const prefsItem = settings.find((s) => s.key === 'user_preferences');
       if (!prefsItem?.value) return null;
       const parsed = JSON.parse(prefsItem.value) as AiPathsUserPreferences;
@@ -80,7 +80,9 @@ export function usePreferencePersistence(
     } catch {
       return null;
     }
-  }, []);
+    },
+    []
+  );
 
   return {
     persistUiState,

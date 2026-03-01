@@ -105,7 +105,9 @@ const ACTIVE_RUN_REFRESH_MIN_MS = 5000;
 const IDLE_RUN_REFRESH_MIN_MS = 30000;
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
 const POLLING_JITTER_MS = 500;
+const QUEUE_STATUS_POLL_INTERVAL_MS = 5_000;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
+const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
 
 const JobQueueContext = createContext<JobQueueContextValue | null>(null);
 
@@ -299,6 +301,7 @@ export function JobQueueProvider({
       return response.data as { status: QueueStatus };
     },
     enabled: isPanelActive,
+    refetchInterval: isPanelActive ? QUEUE_STATUS_POLL_INTERVAL_MS : false,
     meta: {
       source: 'ai-paths.job-queue',
       operation: 'polling',
@@ -488,6 +491,40 @@ export function JobQueueProvider({
       return next.slice(-120);
     });
   }, [queueStatusQuery.data?.status]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const refreshQueueViews = (): void => {
+      if (!isPanelActive) return;
+      void runsQuery.refetch();
+      void queueStatusQuery.refetch();
+    };
+
+    const handleWindowEvent = (): void => {
+      refreshQueueViews();
+    };
+
+    window.addEventListener('ai-path-run-enqueued', handleWindowEvent as EventListener);
+
+    let channel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel(AI_PATH_RUN_QUEUE_CHANNEL);
+        channel.onmessage = () => {
+          refreshQueueViews();
+        };
+      } catch {
+        channel = null;
+      }
+    }
+
+    return (): void => {
+      window.removeEventListener('ai-path-run-enqueued', handleWindowEvent as EventListener);
+      if (channel) {
+        channel.close();
+      }
+    };
+  }, [isPanelActive, runsQuery.refetch, queueStatusQuery.refetch]);
 
   useEffect(() => {
     streamSourcesRef.current.forEach((source, runId) => {

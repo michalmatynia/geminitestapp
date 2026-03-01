@@ -25,8 +25,12 @@ export const getQueueHealth = async (): Promise<Record<string, QueueHealthStatus
   return Object.fromEntries(results);
 };
 
-export const startAllWorkers = (): void => {
+export const startAllWorkers = (options?: { excludeQueueNames?: readonly string[] }): void => {
+  const excluded = new Set(options?.excludeQueueNames ?? []);
   for (const [name, queue] of registry.entries()) {
+    if (excluded.has(name)) {
+      continue;
+    }
     void logSystemEvent({
       level: 'info',
       message: `[queue-registry] Starting queue worker: ${name}`,

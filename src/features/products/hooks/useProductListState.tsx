@@ -214,6 +214,10 @@ export function useProductListState(): ProductListContextType & {
     () => new Set(data.map((product: ProductWithImages) => product.id)),
     [data]
   );
+  const visibleProductIds = useMemo(
+    () => Array.from(visibleProductIdSet),
+    [visibleProductIdSet]
+  );
   const categoryLookupCatalogIds = useMemo((): string[] => {
     const ids = new Set<string>();
     data.forEach((product: ProductWithImages) => {
@@ -332,6 +336,7 @@ export function useProductListState(): ProductListContextType & {
     prefetchIntegrationSelectionData,
     prefetchProductListingsData,
     refreshProductListingsData,
+    visibleProductIds,
     rowSelection,
     toast,
   });

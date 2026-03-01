@@ -16,13 +16,14 @@ import {
   Button,
   useToast,
   Input,
-  SearchInput,
   FormSection,
   FormField,
   StandardDataTablePanel,
   Tag,
   EmptyState,
   PageLayout,
+  FilterPanel,
+  FormActions,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -202,21 +203,14 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           return (
             <div className='flex items-center justify-end gap-2'>
               {isEditing ? (
-                <>
-                  <Button
-                    variant='outline'
-                    size='xs'
-                    onClick={(): void => {
-                      void handleUpdate(tag.id);
-                    }}
-                    disabled={updateTag.isPending}
-                  >
-                    Save
-                  </Button>
-                  <Button variant='ghost' size='xs' onClick={handleEditCancel}>
-                    Cancel
-                  </Button>
-                </>
+                <FormActions
+                  onSave={() => void handleUpdate(tag.id)}
+                  onCancel={handleEditCancel}
+                  saveText='Save'
+                  isSaving={updateTag.isPending}
+                  saveVariant='default'
+                  cancelVariant='ghost'
+                />
               ) : (
                 <>
                   <Button variant='outline' size='xs' onClick={(): void => handleEditStart(tag)}>
@@ -302,17 +296,17 @@ export function AdminNotesTagsPage(): React.JSX.Element {
 
         <StandardDataTablePanel
           filters={
-            <div className='max-w-md'>
-              <SearchInput
-                value={searchQuery}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setSearchQuery(event.target.value)
-                }
-                onClear={() => setSearchQuery('')}
-                placeholder='Search tags...'
-                size='sm'
-              />
-            </div>
+            <FilterPanel
+              filters={[]}
+              values={{}}
+              search={searchQuery}
+              searchPlaceholder='Search tags by name...'
+              onFilterChange={() => {}}
+              onSearchChange={setSearchQuery}
+              onReset={() => setSearchQuery('')}
+              showHeader={false}
+              compact
+            />
           }
           columns={columns}
           data={filteredTags}

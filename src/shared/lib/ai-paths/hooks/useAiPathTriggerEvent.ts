@@ -498,6 +498,17 @@ export function useAiPathTriggerEvent(): {
     }
 
     try {
+      toast(`Preparing AI Path run: ${args.triggerLabel?.trim() || triggerEventId}`, {
+        variant: 'info',
+      });
+      args.onProgress?.({
+        status: 'running',
+        progress: 0,
+        completedNodes: 0,
+        totalNodes: 1,
+        node: null,
+      });
+
       let settingsData: Array<{ key: string; value: string }> = [];
       const [preferredActivePathId, fetchedSettingsData] = await Promise.all([
         resolvePreferredActivePathId(),
@@ -647,8 +658,6 @@ export function useAiPathTriggerEvent(): {
         );
         return;
       }
-
-      toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
       const totalNodes = Math.max(
         1,

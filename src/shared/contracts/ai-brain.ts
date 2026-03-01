@@ -199,6 +199,90 @@ export const brainModelsResponseSchema = z.object({
 export type BrainModelsResponse = z.infer<typeof brainModelsResponseSchema>;
 export type BrainModelsResponseDto = BrainModelsResponse;
 
+export const brainOperationsRangeSchema = z.enum(['15m', '1h', '6h', '24h']);
+export type BrainOperationsRange = z.infer<typeof brainOperationsRangeSchema>;
+
+export const brainOperationsDomainStateSchema = z.enum([
+  'healthy',
+  'warning',
+  'critical',
+  'unknown',
+]);
+export type BrainOperationsDomainState = z.infer<typeof brainOperationsDomainStateSchema>;
+
+export const brainOperationsDomainKeySchema = z.enum([
+  'ai_paths',
+  'chatbot',
+  'agent_runtime',
+  'image_studio',
+]);
+export type BrainOperationsDomainKey = z.infer<typeof brainOperationsDomainKeySchema>;
+
+export const brainOperationsMetricSchema = z.object({
+  key: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  value: z.union([z.string(), z.number(), z.boolean()]),
+});
+export type BrainOperationsMetric = z.infer<typeof brainOperationsMetricSchema>;
+
+export const brainOperationsTrendDirectionSchema = z.enum(['up', 'down', 'flat', 'unknown']);
+export type BrainOperationsTrendDirection = z.infer<typeof brainOperationsTrendDirectionSchema>;
+
+export const brainOperationsTrendSchema = z.object({
+  direction: brainOperationsTrendDirectionSchema,
+  delta: z.number(),
+  label: z.string().trim().min(1),
+  current: z.number().int().nonnegative().optional(),
+  previous: z.number().int().nonnegative().optional(),
+});
+export type BrainOperationsTrend = z.infer<typeof brainOperationsTrendSchema>;
+
+export const brainOperationsLinkSchema = z.object({
+  label: z.string().trim().min(1),
+  href: z.string().trim().min(1),
+});
+export type BrainOperationsLink = z.infer<typeof brainOperationsLinkSchema>;
+
+export const brainOperationsRecentEventSchema = z.object({
+  id: z.string().trim().min(1).optional(),
+  status: z.string().trim().min(1),
+  timestamp: z.string(),
+});
+export type BrainOperationsRecentEvent = z.infer<typeof brainOperationsRecentEventSchema>;
+
+export const brainOperationsDomainOverviewSchema = z.object({
+  key: brainOperationsDomainKeySchema,
+  label: z.string().trim().min(1),
+  state: brainOperationsDomainStateSchema,
+  message: z.string().trim().min(1).optional(),
+  sampleSize: z.number().int().nonnegative(),
+  updatedAt: z.string(),
+  metrics: z.array(brainOperationsMetricSchema).default([]),
+  trend: brainOperationsTrendSchema.optional(),
+  recentEvents: z.array(brainOperationsRecentEventSchema).default([]),
+  links: z.array(brainOperationsLinkSchema).default([]),
+});
+export type BrainOperationsDomainOverview = z.infer<typeof brainOperationsDomainOverviewSchema>;
+
+export const brainOperationsOverviewResponseSchema = z.object({
+  range: brainOperationsRangeSchema.default('1h'),
+  generatedAt: z.string(),
+  window: z.object({
+    currentStart: z.string(),
+    currentEnd: z.string(),
+    previousStart: z.string(),
+    previousEnd: z.string(),
+  }),
+  domains: z.object({
+    ai_paths: brainOperationsDomainOverviewSchema,
+    chatbot: brainOperationsDomainOverviewSchema,
+    agent_runtime: brainOperationsDomainOverviewSchema,
+    image_studio: brainOperationsDomainOverviewSchema,
+  }),
+});
+export type BrainOperationsOverviewResponse = z.infer<typeof brainOperationsOverviewResponseSchema>;
+export type BrainOperationsOverviewResponseDto = BrainOperationsOverviewResponse;
+
 // Backward-compatibility alias for one migration cycle.
 export const chatbotModelsResponseSchema = brainModelsResponseSchema;
 export type ChatbotModelsResponse = BrainModelsResponse;

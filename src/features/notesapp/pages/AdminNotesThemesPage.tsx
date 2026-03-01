@@ -20,6 +20,7 @@ import {
   FormSection,
   FormField,
   ListPanel,
+  FormActions,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -288,11 +289,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               />
             </FormField>
           </div>
-          <div className='mt-6'>
-            <Button onClick={() => void handleCreate()} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Create Theme'}
-            </Button>
-          </div>
+          <FormActions
+            onSave={() => void handleCreate()}
+            saveText='Create Theme'
+            isSaving={isSaving}
+            className='mt-6'
+          />
         </FormSection>
 
         <ListPanel
@@ -325,18 +327,15 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                       </div>
                       <div className='flex items-center gap-2'>
                         {isEditing ? (
-                          <>
-                            <Button
-                              onClick={() => void handleUpdate(theme.id)}
-                              disabled={isUpdating}
-                              size='sm'
-                            >
-                              {isUpdating ? 'Saving...' : 'Save'}
-                            </Button>
-                            <Button onClick={handleEditCancel} variant='ghost' size='sm'>
-                              Cancel
-                            </Button>
-                          </>
+                          <FormActions
+                            onSave={() => void handleUpdate(theme.id)}
+                            onCancel={handleEditCancel}
+                            saveText='Save'
+                            isSaving={isUpdating}
+                            saveVariant='default'
+                            cancelVariant='ghost'
+                            size='sm'
+                          />
                         ) : (
                           <Button
                             onClick={() => handleEditStart(theme)}
@@ -346,14 +345,16 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             Edit
                           </Button>
                         )}
-                        <Button
-                          onClick={() => setThemeToDelete(theme.id)}
-                          variant='outline'
-                          size='sm'
-                          className='border-red-500/40 text-red-300 hover:text-red-200'
-                        >
-                          <Trash2 className='size-4' />
-                        </Button>
+                        {!isEditing && (
+                          <Button
+                            onClick={() => setThemeToDelete(theme.id)}
+                            variant='outline'
+                            size='sm'
+                            className='border-red-500/40 text-red-300 hover:text-red-200'
+                          >
+                            <Trash2 className='size-4' />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>

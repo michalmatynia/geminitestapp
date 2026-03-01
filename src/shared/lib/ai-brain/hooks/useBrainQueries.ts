@@ -4,6 +4,8 @@ import type { AiPathRuntimeAnalyticsSummaryDto as AiPathRuntimeAnalyticsSummary 
 import type { AnalyticsSummaryDto as AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
+  BrainOperationsOverviewResponseDto as BrainOperationsOverviewResponse,
+  BrainOperationsRange,
   BrainModelsResponseDto as BrainModelsResponse,
   InsightsSnapshotDto as InsightsSnapshot,
 } from '@/shared/contracts/ai-brain';
@@ -14,7 +16,7 @@ import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
-export type { BrainModelsResponse, InsightsSnapshot };
+export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResponse };
 
 export function useBrainModels(options?: {
   enabled?: boolean;
@@ -42,6 +44,31 @@ export function useBrainModels(options?: {
 // Backward-compatibility alias for existing call sites.
 export function useOllamaModels(): SingleQuery<BrainModelsResponse> {
   return useBrainModels();
+}
+
+export function useBrainOperationsOverview(options?: {
+  range?: BrainOperationsRange;
+}): SingleQuery<BrainOperationsOverviewResponse> {
+  const range = options?.range ?? '1h';
+  const queryKey = brainKeys.operationsOverview(range);
+  return createSingleQueryV2<BrainOperationsOverviewResponse>({
+    queryKey,
+    queryFn: () =>
+      api.get<BrainOperationsOverviewResponse>('/api/brain/operations/overview', {
+        params: { range },
+      }),
+    id: 'brain-operations-overview',
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+    meta: {
+      source: 'brain.hooks.useBrainOperationsOverview',
+      operation: 'polling',
+      resource: 'brain.operations-overview',
+      domain: 'global',
+      queryKey,
+      tags: ['brain', 'operations-overview'],
+    },
+  });
 }
 
 export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {

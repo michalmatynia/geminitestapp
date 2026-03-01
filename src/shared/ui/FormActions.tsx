@@ -24,7 +24,9 @@ interface FormActionsProps {
     | 'ghost'
     | 'link'
     | undefined;
+  saveIcon?: React.ReactNode | undefined;
   children?: React.ReactNode | undefined;
+  size?: 'default' | 'sm' | 'lg' | 'xs';
 }
 
 export function FormActions({
@@ -37,7 +39,9 @@ export function FormActions({
   className,
   saveVariant = 'default',
   cancelVariant = 'outline',
+  saveIcon,
   children,
+  size = 'sm',
 }: FormActionsProps): React.JSX.Element {
   return (
     <div className={cn('flex items-center justify-end gap-3', className)}>
@@ -46,7 +50,7 @@ export function FormActions({
         <Button
           type='button'
           variant={cancelVariant}
-          size='sm'
+          size={size}
           onClick={onCancel}
           disabled={isSaving}
         >
@@ -55,12 +59,13 @@ export function FormActions({
       )}
       {onSave && (
         <Button
-          type='submit'
+          type='button'
           variant={saveVariant}
-          size='sm'
+          size={size}
           onClick={onSave}
           disabled={isDisabled || isSaving}
         >
+          {saveIcon && !isSaving && <span className='mr-2'>{saveIcon}</span>}
           {isSaving ? (
             <>
               <Loader2 className='mr-2 size-4 animate-spin' />

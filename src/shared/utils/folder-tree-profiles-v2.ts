@@ -49,6 +49,7 @@ export const folderTreeInstanceValues = [
   'validator_pattern_tree',
   'prompt_exploder_hierarchy',
   'brain_catalog_tree',
+  'brain_routing_tree',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
@@ -216,6 +217,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: brain-catalog-entry',
     folderHint: 'Not used (flat list at root).',
   },
+  brain_routing_tree: {
+    title: 'AI Brain Routing',
+    description: 'Controls grouped routing list behavior for AI Brain capability routes.',
+    fileHint: 'Example: brain-routing-capability',
+    folderHint: 'Example: brain-routing-feature',
+  },
 };
 
 export const folderTreePersistFeedbackByInstance: Record<
@@ -271,6 +278,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Catalog updated.',
+  },
+  brain_routing_tree: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Routing tree updated.',
   },
 };
 
@@ -983,6 +995,49 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
           childKinds: ['brain-catalog-entry'],
           targetType: 'root',
           targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  brain_routing_tree: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move here',
+      inlineDropLabel: 'Drop route',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: null,
+        dragHandle: null,
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['brain-routing-capability'],
+          targetType: 'folder',
+          targetKinds: ['brain-routing-feature'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['brain-routing-feature'],
+          targetType: 'root',
+          targetKinds: ['root'],
           allow: true,
         },
       ],

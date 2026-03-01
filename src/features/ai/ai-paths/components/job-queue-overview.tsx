@@ -79,7 +79,9 @@ export function JobQueueOverview({
                 : 'Failed to load queue status.'}
             </div>
           ) : (
-            <div className='mt-1 text-[11px] text-gray-400'>Updated every 5s</div>
+            <div className='mt-1 text-[11px] text-gray-400'>
+              Polled every 5s while this panel is active
+            </div>
           )}
           {queueStatus?.slo ? (
             <StatusBadge

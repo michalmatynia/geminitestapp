@@ -63,7 +63,7 @@ const settings: SettingsOption[] = [
   },
   {
     id: 'brain',
-    href: '/admin/settings/brain',
+    href: '/admin/brain?tab=routing',
     icon: Brain,
     title: 'Brain',
     description:

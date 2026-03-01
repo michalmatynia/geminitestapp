@@ -1,11 +1,11 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
-import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
+import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -18,35 +18,32 @@ export function useBaselinkerSettingsState() {
     : '—';
 
   const settingsQuery = useSettings();
-  const updateSettingMutation = useUpdateSetting();
+  const updateSettingsBulkMutation = useUpdateSettingsBulk();
   const defaultExportConnectionQuery = useDefaultExportConnection();
   const queryClient = useQueryClient();
 
-  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState('10');
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
-  const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] = useState('');
-  const [savingDefaultConnection, setSavingDefaultConnection] = useState(false);
-  const [defaultConnectionMessage, setDefaultConnectionMessage] = useState<string | null>(null);
+  const storedSyncInterval = useMemo(() => {
+    const found = settingsQuery.data?.find(
+      (setting: { key: string; value: string }) => setting.key === 'base_sync_poll_interval_minutes'
+    );
+    return found?.value ?? '10';
+  }, [settingsQuery.data]);
+
+  const storedDefaultConnectionId = useMemo(() => {
+    return defaultExportConnectionQuery.data?.connectionId?.trim() ?? '';
+  }, [defaultExportConnectionQuery.data]);
+
+  const [syncIntervalMinutes, setSyncIntervalMinutes] = useState(storedSyncInterval);
+  const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] = useState(storedDefaultConnectionId);
+  const [isSaving, setIsSaving] = useState(false);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (settingsQuery.data && !hasInitialized.current) {
-      const found = settingsQuery.data.find(
-        (setting: { key: string; value: string }) =>
-          setting.key === 'base_sync_poll_interval_minutes'
-      );
-      if (found?.value) {
-        timer = setTimeout(() => {
-          setSyncIntervalMinutes(found.value);
-          hasInitialized.current = true;
-        }, 0);
-      }
+    if (!hasInitialized.current && storedSyncInterval !== '10') {
+      setSyncIntervalMinutes(storedSyncInterval);
+      hasInitialized.current = true;
     }
-    return (): void => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [settingsQuery.data]);
+  }, [storedSyncInterval]);
 
   useEffect(() => {
     if (connections.length === 0) {
@@ -54,70 +51,57 @@ export function useBaselinkerSettingsState() {
       return;
     }
 
-    const persistedConnectionId = defaultExportConnectionQuery.data?.connectionId?.trim() ?? '';
-    const persistedExists = connections.some(
-      (connection) => connection.id === persistedConnectionId
-    );
-
-    setDefaultOneClickConnectionId((current) => {
-      const currentExists = connections.some((connection) => connection.id === current);
-      if (currentExists) return current;
-      if (persistedExists) return persistedConnectionId;
-      return connections[0]?.id ?? '';
-    });
-  }, [connections, defaultExportConnectionQuery.data?.connectionId]);
-
-  const handleSaveSyncInterval = useCallback(async (): Promise<void> => {
-    const parsed = Number(syncIntervalMinutes);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setSyncMessage('Enter a valid number of minutes.');
-      return;
+    if (!defaultOneClickConnectionId && storedDefaultConnectionId) {
+      setDefaultOneClickConnectionId(storedDefaultConnectionId);
+    } else if (!defaultOneClickConnectionId && connections.length > 0) {
+      setDefaultOneClickConnectionId(connections[0]!.id);
     }
-    setSyncMessage(null);
+  }, [connections, storedDefaultConnectionId, defaultOneClickConnectionId]);
+
+  const isDirty = useMemo(() => {
+    return syncIntervalMinutes !== storedSyncInterval || 
+           defaultOneClickConnectionId !== storedDefaultConnectionId;
+  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId]);
+
+  const handleSaveAll = useCallback(async (): Promise<void> => {
+    const intervalParsed = Number(syncIntervalMinutes);
+    if (!Number.isFinite(intervalParsed) || intervalParsed <= 0) {
+      throw new Error('Enter a valid number of minutes for sync interval.');
+    }
+
+    setIsSaving(true);
     try {
-      await updateSettingMutation.mutateAsync({
-        key: 'base_sync_poll_interval_minutes',
-        value: String(parsed),
-      });
-      setSyncMessage('Sync interval saved.');
-    } catch {
-      setSyncMessage('Failed to save sync interval.');
-    }
-  }, [syncIntervalMinutes, updateSettingMutation]);
+      const updates = [];
+      
+      if (syncIntervalMinutes !== storedSyncInterval) {
+        updates.push({
+          key: 'base_sync_poll_interval_minutes',
+          value: String(intervalParsed),
+        });
+      }
 
-  const handleSaveDefaultConnection = useCallback(async (): Promise<void> => {
-    const normalizedConnectionId = defaultOneClickConnectionId.trim();
-    if (!normalizedConnectionId) {
-      setDefaultConnectionMessage('Select a connection first.');
-      return;
-    }
+      if (updates.length > 0) {
+        await updateSettingsBulkMutation.mutateAsync(updates);
+      }
 
-    setDefaultConnectionMessage(null);
-    setSavingDefaultConnection(true);
+      if (defaultOneClickConnectionId !== storedDefaultConnectionId) {
+        await api.post('/api/integrations/exports/base/default-connection', {
+          connectionId: defaultOneClickConnectionId,
+        });
 
-    try {
-      await api.post('/api/integrations/exports/base/default-connection', {
-        connectionId: normalizedConnectionId,
-      });
-
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.integrations.selection.defaultConnection(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.integrations.importExport.pref('default-connection'),
-        }),
-      ]);
-
-      setDefaultConnectionMessage('Default OneClick connection saved.');
-    } catch (error) {
-      setDefaultConnectionMessage(
-        error instanceof Error ? error.message : 'Failed to save default OneClick connection.'
-      );
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.integrations.selection.defaultConnection(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.integrations.importExport.pref('default-connection'),
+          }),
+        ]);
+      }
     } finally {
-      setSavingDefaultConnection(false);
+      setIsSaving(false);
     }
-  }, [defaultOneClickConnectionId, queryClient]);
+  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId, updateSettingsBulkMutation, queryClient]);
 
   return {
     connections,
@@ -126,16 +110,12 @@ export function useBaselinkerSettingsState() {
     baseTokenUpdatedAt,
     syncIntervalMinutes,
     setSyncIntervalMinutes,
-    syncMessage,
-    handleSaveSyncInterval,
-    isSavingSyncInterval: updateSettingMutation.isPending,
+    handleSaveAll,
+    isSaving: isSaving || updateSettingsBulkMutation.isPending,
+    isDirty,
     defaultOneClickConnectionId,
     setDefaultOneClickConnectionId,
-    savingDefaultConnection,
-    defaultConnectionMessage,
-    setDefaultConnectionMessage,
-    handleSaveDefaultConnection,
-    defaultExportConnectionId: defaultExportConnectionQuery.data?.connectionId?.trim() ?? '',
+    defaultExportConnectionId: storedDefaultConnectionId,
     handleBaselinkerTest,
     isTesting,
   };

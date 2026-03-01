@@ -65,6 +65,13 @@ const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
   return run.startedAt;
 };
 
+const resolveDispatchErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  return String(error);
+};
+
 const dispatchRun = async (runId: string, options?: { delayMs?: number }): Promise<void> => {
   try {
     await enqueuePathRunJob(runId, options);
@@ -355,7 +362,49 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       });
     }
 
-    await dispatchRun(run.id);
+    try {
+      await dispatchRun(run.id);
+    } catch (dispatchError) {
+      const finishedAt = new Date();
+      const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
+      const message = `Run dispatch failed: ${dispatchMessage}`;
+
+      await repo.updateRunIfStatus(run.id, ['queued'], {
+        status: 'failed',
+        errorMessage: message,
+        finishedAt: finishedAt.toISOString(),
+      });
+      try {
+        await Promise.all([
+          repo.createRunEvent({
+            runId: run.id,
+            level: 'error',
+            message,
+            metadata: {
+              pathId: run.pathId,
+              runStartedAt: resolveRunStartedAt(run),
+              runtimeFingerprint,
+              traceId: run.id,
+            },
+          }),
+          recordRuntimeRunFinished({
+            runId: run.id,
+            status: 'failed',
+            durationMs: 0,
+            timestamp: finishedAt,
+          }),
+        ]);
+      } catch (auxError) {
+        void ErrorSystem.logWarning(`Non-critical dispatch failure logging for run ${run.id}`, {
+          service: 'ai-paths-service',
+          action: 'dispatchFailureLogging',
+          runId: run.id,
+          error: auxError,
+        });
+      }
+
+      throw new Error(message, { cause: dispatchError });
+    }
 
     return run;
   };
@@ -434,7 +483,54 @@ export const resumePathRun = async (
       });
     }
 
-    await dispatchRun(updated.id);
+    try {
+      await dispatchRun(updated.id);
+    } catch (dispatchError) {
+      const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
+      const failedAt = new Date().toISOString();
+      const revertMeta = withRuntimeFingerprintMeta({
+        ...(updated.meta ?? {}),
+        resumeDispatchFailure: {
+          failedAt,
+          reason: dispatchMessage,
+          revertedToStatus: run.status,
+          mode,
+        },
+      });
+      const reverted = await repo.updateRunIfStatus(updated.id, ['queued'], {
+        status: run.status,
+        errorMessage: run.errorMessage ?? dispatchMessage,
+        retryCount: run.retryCount ?? null,
+        nextRetryAt: run.nextRetryAt ?? null,
+        deadLetteredAt: run.deadLetteredAt ?? null,
+        meta: revertMeta,
+      });
+
+      try {
+        await repo.createRunEvent({
+          runId,
+          level: 'error',
+          message: `Run dispatch failed during resume: ${dispatchMessage}`,
+          metadata: {
+            runStartedAt: resolveRunStartedAt(reverted ?? updated),
+            runtimeFingerprint,
+            resumeMode: mode,
+            revertedToStatus: run.status,
+            traceId: runId,
+          },
+        });
+      } catch (eventError) {
+        void ErrorSystem.logWarning(`Non-critical resume dispatch failure logging error for ${runId}`, {
+          service: 'ai-paths-service',
+          action: 'resumeDispatchFailureEvent',
+          runId,
+          error: eventError,
+        });
+      }
+
+      throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });
+    }
+
     publishRunUpdate(runId, 'run', { status: 'queued', mode, traceId: runId });
 
     return updated;
@@ -521,7 +617,55 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
       );
     }
 
-    await dispatchRun(updated.id);
+    try {
+      await dispatchRun(updated.id);
+    } catch (dispatchError) {
+      const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
+      const failedAt = new Date().toISOString();
+      const revertMeta = withRuntimeFingerprintMeta({
+        ...(updated.meta ?? {}),
+        retryDispatchFailure: {
+          failedAt,
+          reason: dispatchMessage,
+          revertedToStatus: run.status,
+          nodeId,
+        },
+      });
+      const reverted = await repo.updateRunIfStatus(updated.id, ['queued'], {
+        status: run.status,
+        errorMessage: run.errorMessage ?? dispatchMessage,
+        retryCount: run.retryCount ?? null,
+        nextRetryAt: run.nextRetryAt ?? null,
+        deadLetteredAt: run.deadLetteredAt ?? null,
+        meta: revertMeta,
+      });
+
+      try {
+        await repo.createRunEvent({
+          runId,
+          level: 'warn',
+          message: `Run dispatch failed during node retry: ${dispatchMessage}`,
+          metadata: {
+            runStartedAt: resolveRunStartedAt(reverted ?? updated),
+            runtimeFingerprint,
+            retryNodeId: nodeId,
+            revertedToStatus: run.status,
+            traceId: runId,
+          },
+        });
+      } catch (eventError) {
+        void ErrorSystem.logWarning(`Non-critical retry dispatch failure logging error for ${runId}`, {
+          service: 'ai-paths-service',
+          action: 'retryDispatchFailureEvent',
+          runId,
+          nodeId,
+          error: eventError,
+        });
+      }
+
+      throw new Error(`Run dispatch failed: ${dispatchMessage}`, { cause: dispatchError });
+    }
+
     publishRunUpdate(runId, 'run', { status: 'queued', retryNodeId: nodeId, traceId: runId });
 
     return updated;

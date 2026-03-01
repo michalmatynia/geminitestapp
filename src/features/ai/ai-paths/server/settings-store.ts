@@ -116,11 +116,7 @@ export async function getAiPathsSettings(
   assertMongoConfigured();
 
   const records = await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
-
-  // Apply defaults for missing core keys if needed
-  const result = await maybeAutoApplyDefaultSeedsOnRead(normalizedKeys, records);
-
-  return result;
+  return records;
 }
 
 export async function getAiPathsSetting(key: string): Promise<string | null> {
@@ -158,7 +154,7 @@ async function maybeAutoApplyDefaultSeedsOnRead(
   const envAutoApply =
     testOptions?.autoApply !== undefined
       ? testOptions.autoApply
-      : parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], true);
+      : parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], false);
 
   if (!envAutoApply) return existingRecords;
 

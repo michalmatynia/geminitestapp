@@ -7,11 +7,11 @@ import { POST as runsPost } from '@/app/api/integrations/imports/base/runs/route
 const startBaseImportRunResponseMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/integrations/services/imports/base-import-run-starter', () => ({
+vi.mock('@/features/integrations/services/imports/base-import-run-starter', () => ({
   startBaseImportRunResponse: startBaseImportRunResponseMock,
 }));
 
-vi.mock('@/shared/lib/integrations/services/integration-repository', () => ({
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: vi.fn(async () => ({
     listIntegrations: listIntegrationsMock,
   })),

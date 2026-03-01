@@ -178,13 +178,13 @@ export const resolveBrainExecutionConfigForCapability = async (
 
   if (!assignment.enabled) {
     throw configurationError(
-      `${capabilityLabel} is disabled in AI Brain. Enable it in /admin/settings/brain before running this action.`
+      `${capabilityLabel} is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.`
     );
   }
 
   if (definition.policy === 'model-only' && assignment.provider !== 'model') {
     throw configurationError(
-      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/settings/brain to continue.`
+      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/brain?tab=routing to continue.`
     );
   }
 
@@ -223,14 +223,14 @@ export const resolveBrainExecutionConfigForCapability = async (
 
   if (assignment.provider !== 'model') {
     throw configurationError(
-      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/settings/brain to continue.`
+      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/brain?tab=routing to continue.`
     );
   }
 
   const modelId = assignment.modelId.trim() || options?.defaultModelId?.trim() || '';
   if (!modelId) {
     throw configurationError(
-      `${capabilityLabel} has no model assigned in AI Brain. Set a non-empty model ID in /admin/settings/brain.`
+      `${capabilityLabel} has no model assigned in AI Brain. Set a non-empty model ID in /admin/brain?tab=routing.`
     );
   }
 
@@ -287,13 +287,13 @@ export const resolveAiPathsNodeExecutionConfig = async (
 
   if (!assignment.enabled) {
     throw configurationError(
-      `${capabilityLabel} is disabled in AI Brain. Enable it in /admin/settings/brain before running this action.`
+      `${capabilityLabel} is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.`
     );
   }
 
   if (assignment.provider !== 'model') {
     throw configurationError(
-      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/settings/brain to continue.`
+      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/brain?tab=routing to continue.`
     );
   }
 

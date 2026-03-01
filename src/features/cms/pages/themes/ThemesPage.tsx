@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   StandardDataTablePanel,
+  FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -26,6 +27,13 @@ export default function ThemesPage(): React.ReactNode {
 
   const themes = useMemo(() => themesQuery.data ?? [], [themesQuery.data]);
   const [themeToDelete, setThemeToDelete] = React.useState<string | null>(null);
+  const [search, setSearch] = React.useState('');
+
+  const filteredThemes = useMemo(() => {
+    if (!search.trim()) return themes;
+    const q = search.toLowerCase().trim();
+    return themes.filter((t) => t.name.toLowerCase().includes(q));
+  }, [themes, search]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -130,9 +138,22 @@ export default function ThemesPage(): React.ReactNode {
             Create Theme
           </Button>
         }
+        filters={
+          <FilterPanel
+            filters={[]}
+            values={{}}
+            search={search}
+            searchPlaceholder='Search themes by name...'
+            onFilterChange={() => {}}
+            onSearchChange={setSearch}
+            onReset={() => setSearch('')}
+            showHeader={false}
+            compact
+          />
+        }
         isLoading={themesQuery.isLoading}
         columns={columns}
-        data={themes}
+        data={filteredThemes}
         emptyState={
           <EmptyState
             title='No themes defined'

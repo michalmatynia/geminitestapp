@@ -9,6 +9,15 @@ import { startAllWorkers } from '@/shared/lib/queue/registry';
 let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
 const LOG_SOURCE = 'queue-init';
+const STARTUP_GATED_AI_QUEUE_NAMES = [
+  'ai-path-run',
+  'chatbot',
+  'agent',
+  'image-studio-run',
+  'image-studio-sequence',
+  'case-resolver-ocr',
+  'ai-insights',
+] as const;
 
 const runStartupBackupSchedulerCatchup = (): void => {
   void (async (): Promise<void> => {
@@ -94,7 +103,6 @@ export const initializeQueues = (): void => {
       import('@/features/ai/ai-paths/workers/aiPathRunQueue'),
       import('@/features/ai/chatbot/workers/chatbotJobQueue'),
       import('@/features/ai/agent-runtime/workers/agentQueue'),
-      import('@/features/ai/insights/workers/aiInsightsQueue'),
       import('@/shared/lib/db/workers/databaseBackupSchedulerQueue'),
       import('@/features/ai/image-studio/workers/imageStudioRunQueue'),
       import('@/features/ai/image-studio/workers/imageStudioSequenceQueue'),
@@ -109,25 +117,17 @@ export const initializeQueues = (): void => {
 
     // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)
     (
-      (queueModules[1] as Record<string, unknown>)['startAiPathRunQueue'] as
+      (queueModules[4] as Record<string, unknown>)['startDatabaseBackupSchedulerQueue'] as
         | (() => void)
         | undefined
     )?.();
     (
-      (queueModules[3] as Record<string, unknown>)['startAgentQueue'] as (() => void) | undefined
-    )?.();
-    (
-      (queueModules[5] as Record<string, unknown>)['startDatabaseBackupSchedulerQueue'] as
+      (queueModules[8] as Record<string, unknown>)['startTraderaRelistSchedulerQueue'] as
         | (() => void)
         | undefined
     )?.();
     (
-      (queueModules[9] as Record<string, unknown>)['startTraderaRelistSchedulerQueue'] as
-        | (() => void)
-        | undefined
-    )?.();
-    (
-      (queueModules[13] as Record<string, unknown>)['startProductSyncSchedulerQueue'] as
+      (queueModules[12] as Record<string, unknown>)['startProductSyncSchedulerQueue'] as
         | (() => void)
         | undefined
     )?.();
@@ -137,6 +137,43 @@ export const initializeQueues = (): void => {
       source: LOG_SOURCE,
       message: 'Starting BullMQ workers...',
     });
-    startAllWorkers();
+    startAllWorkers({ excludeQueueNames: STARTUP_GATED_AI_QUEUE_NAMES });
+
+    // AI workers are started with feature-aware gates to avoid running disabled capabilities.
+    (
+      (queueModules[1] as Record<string, unknown>)['startAiPathRunQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[2] as Record<string, unknown>)['startChatbotJobQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[3] as Record<string, unknown>)['startAgentQueue'] as (() => void) | undefined
+    )?.();
+    (
+      (queueModules[5] as Record<string, unknown>)['startImageStudioRunQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[6] as Record<string, unknown>)['startImageStudioSequenceQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[13] as Record<string, unknown>)['startCaseResolverOcrQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+
+    // AI Insights queue is started separately after the generic startup pass so Brain gating
+    // can decide whether the worker should run at all.
+    const startAiInsightsQueue = (
+      await import('@/features/ai/insights/workers/aiInsightsQueue')
+    ).startAiInsightsQueue as (() => void) | undefined;
+    startAiInsightsQueue?.();
   })();
 };

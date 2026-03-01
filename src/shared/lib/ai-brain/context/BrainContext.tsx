@@ -4,15 +4,17 @@ import { createContext, useContext, useCallback, useEffect, useMemo, useState } 
 
 import {
   useBrainModels,
+  useBrainOperationsOverview,
   useBrainAnalyticsSummary,
   useBrainLogMetrics,
   useBrainInsights,
   useBrainRuntimeAnalytics,
+  type BrainOperationsOverviewResponse,
   type BrainModelsResponse,
   type InsightsSnapshot,
 } from '@/shared/lib/ai-brain/hooks/useBrainQueries';
 
-export type { BrainModelsResponse, InsightsSnapshot };
+export type { BrainModelsResponse, InsightsSnapshot, BrainOperationsOverviewResponse };
 
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
@@ -23,6 +25,7 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummaryDto } from '@/shared/contracts';
+import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import {
@@ -61,7 +64,7 @@ import {
   type AiBrainSettings,
 } from '../settings';
 
-type BrainTab = 'routing' | 'providers' | 'reports' | 'metrics';
+type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
 
 const REPORT_FEATURE_KEYS = new Set<AiBrainFeature>([
   'analytics',
@@ -180,6 +183,9 @@ interface BrainContextType {
 
   // Queries
   ollamaModelsQuery: SingleQuery<BrainModelsResponse>;
+  operationsRange: BrainOperationsRange;
+  setOperationsRange: (range: BrainOperationsRange) => void;
+  operationsOverviewQuery: SingleQuery<BrainOperationsOverviewResponse>;
   analyticsSummaryQuery: SingleQuery<AnalyticsSummaryDto>;
   logMetricsQuery: SingleQuery<SystemLogMetrics>;
   insightsQuery: SingleQuery<InsightsSnapshot>;
@@ -199,6 +205,8 @@ interface BrainContextType {
   handleDefaultChange: (next: AiBrainAssignment) => void;
   handleOverrideChange: (feature: AiBrainFeature, next: AiBrainAssignment) => void;
   handleCapabilityChange: (capability: AiBrainCapabilityKey, next: AiBrainAssignment) => void;
+  setCapabilityEnabled: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
+  clearCapabilityOverride: (capability: AiBrainCapabilityKey) => void;
   toggleOverride: (feature: AiBrainFeature, enabled: boolean) => void;
   toggleCapabilityOverride: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
   syncPlaywrightPersonas: () => void;
@@ -221,6 +229,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   const updateSettingsBulk = useUpdateSettingsBulk();
 
   const [activeTab, setActiveTab] = useState<BrainTab>('routing');
+  const [operationsRange, setOperationsRange] = useState<BrainOperationsRange>('1h');
   const [settings, setSettings] = useState<AiBrainSettings>(defaultBrainSettings);
   const [overridesEnabled, setOverridesEnabled] =
     useState<Record<AiBrainFeature, boolean>>(defaultOverridesEnabled);
@@ -371,6 +380,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   );
 
   const ollamaModelsQuery = useBrainModels();
+  const operationsOverviewQuery = useBrainOperationsOverview({ range: operationsRange });
 
   const liveOllamaModels = useMemo((): string[] => {
     const models = Array.isArray(ollamaModelsQuery.data?.sources?.liveOllamaModels)
@@ -472,6 +482,46 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     },
     []
   );
+
+  const setCapabilityEnabled = useCallback(
+    (capability: AiBrainCapabilityKey, enabled: boolean): void => {
+      setSettings((prev: AiBrainSettings) => {
+        const definition = getBrainCapabilityDefinition(capability);
+        const allowedProviders =
+          definition.policy === 'agent-or-model' ? (['model', 'agent'] as const) : (['model'] as const);
+        const baseAssignment =
+          prev.capabilities[capability] ?? resolveBrainCapabilityAssignment(prev, capability);
+        const nextAssignment = sanitizeBrainAssignmentForProviders(
+          {
+            ...baseAssignment,
+            enabled,
+          },
+          [...allowedProviders]
+        );
+
+        return {
+          ...prev,
+          capabilities: {
+            ...prev.capabilities,
+            [capability]: nextAssignment,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const clearCapabilityOverride = useCallback((capability: AiBrainCapabilityKey): void => {
+    setSettings((prev: AiBrainSettings) => {
+      if (!prev.capabilities[capability]) return prev;
+      const nextCapabilities = { ...prev.capabilities };
+      delete nextCapabilities[capability];
+      return {
+        ...prev,
+        capabilities: nextCapabilities,
+      };
+    });
+  }, []);
 
   const toggleOverride = useCallback((feature: AiBrainFeature, enabled: boolean): void => {
     setOverridesEnabled((prev: Record<AiBrainFeature, boolean>) => ({
@@ -750,6 +800,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     logsPromptSystem,
     setLogsPromptSystem,
     ollamaModelsQuery,
+    operationsRange,
+    setOperationsRange,
+    operationsOverviewQuery,
     analyticsSummaryQuery,
     logMetricsQuery,
     insightsQuery,
@@ -765,6 +818,8 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     handleDefaultChange,
     handleOverrideChange,
     handleCapabilityChange,
+    setCapabilityEnabled,
+    clearCapabilityOverride,
     toggleOverride,
     toggleCapabilityOverride,
     syncPlaywrightPersonas,

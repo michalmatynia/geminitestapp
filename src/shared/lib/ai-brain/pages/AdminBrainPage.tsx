@@ -1,33 +1,67 @@
 'use client';
 
-import { Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
+import { Activity, Brain, KeyRound, Radar, Sparkles } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect } from 'react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BrainSettingsHeader } from '@/shared/lib/ai-brain/components/BrainSettingsHeader';
 import { BrainStateOverview } from '@/shared/lib/ai-brain/components/BrainStateOverview';
 import { MetricsTab } from '@/shared/lib/ai-brain/components/MetricsTab';
+import { OperationsTab } from '@/shared/lib/ai-brain/components/OperationsTab';
 import { ProvidersTab } from '@/shared/lib/ai-brain/components/ProvidersTab';
 import { ReportsTab } from '@/shared/lib/ai-brain/components/ReportsTab';
 import { RoutingTab } from '@/shared/lib/ai-brain/components/RoutingTab';
 import { BrainProvider, useBrain } from '@/shared/lib/ai-brain/context/BrainContext';
 
-type BrainTab = 'routing' | 'providers' | 'reports' | 'metrics';
+type BrainTab = 'operations' | 'routing' | 'providers' | 'reports' | 'metrics';
+
+const BRAIN_TABS: BrainTab[] = ['operations', 'routing', 'providers', 'reports', 'metrics'];
+
+const isBrainTab = (value: string | null | undefined): value is BrainTab =>
+  Boolean(value && BRAIN_TABS.includes(value as BrainTab));
 
 function AdminBrainPageContent(): React.JSX.Element {
   const { activeTab, setActiveTab } = useBrain();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const resolvedTab: BrainTab = (() => {
+    const tabParam = searchParams.get('tab');
+    if (isBrainTab(tabParam)) return tabParam;
+    return pathname === '/admin/brain' ? 'operations' : 'routing';
+  })();
+
+  useEffect(() => {
+    if (activeTab === resolvedTab) return;
+    setActiveTab(resolvedTab);
+  }, [activeTab, resolvedTab, setActiveTab]);
+
+  const handleTabChange = useCallback(
+    (value: string): void => {
+      if (!isBrainTab(value)) return;
+      setActiveTab(value);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set('tab', value);
+      const query = nextParams.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams, setActiveTab]
+  );
 
   return (
     <div className='space-y-4'>
       <BrainSettingsHeader />
       <BrainStateOverview />
 
-      <Tabs
-        value={activeTab}
-        onValueChange={(value: string) => setActiveTab(value as BrainTab)}
-        className='space-y-4'
-      >
-        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-4'>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className='space-y-4'>
+        <TabsList className='grid h-auto w-full grid-cols-2 gap-1 p-1 md:grid-cols-5'>
+          <TabsTrigger value='operations' className='gap-2 text-xs md:text-sm'>
+            <Activity className='size-4' />
+            Operations
+          </TabsTrigger>
           <TabsTrigger value='routing' className='gap-2 text-xs md:text-sm'>
             <Brain className='size-4' />
             Routing
@@ -45,6 +79,10 @@ function AdminBrainPageContent(): React.JSX.Element {
             Metrics
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value='operations' className='space-y-4'>
+          <OperationsTab />
+        </TabsContent>
 
         <TabsContent value='routing' className='space-y-4'>
           <RoutingTab />

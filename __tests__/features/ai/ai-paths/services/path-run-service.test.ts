@@ -246,6 +246,33 @@ describe('PathRunService', () => {
       expect(failedRuns.total).toBe(1);
       expect(String(failedRuns.runs[0]?.errorMessage ?? '')).toContain('Run setup failed');
     });
+
+    it('marks run as failed when queue dispatch fails after enqueue', async () => {
+      enqueuePathRunJobMock.mockRejectedValueOnce(new Error('worker unavailable'));
+
+      await expect(
+        enqueuePathRun({
+          pathId: 'test-path-dispatch-fail',
+          userId: 'user-dispatch-fail',
+          nodes: mockNodes,
+          edges: [],
+        })
+      ).rejects.toThrow('Run dispatch failed');
+
+      const failedRuns = await repo.listRuns({
+        userId: 'user-dispatch-fail',
+        pathId: 'test-path-dispatch-fail',
+        status: 'failed',
+      });
+      expect(failedRuns.total).toBe(1);
+      expect(String(failedRuns.runs[0]?.errorMessage ?? '')).toContain('Run dispatch failed');
+
+      const failedRunId = String(failedRuns.runs[0]?.id ?? '');
+      const events = await repo.listRunEvents(failedRunId);
+      expect(events.some((event: AiPathRunEventRecord) => event.message.includes('Run dispatch failed'))).toBe(
+        true
+      );
+    });
   });
 
   describe('resumePathRun', () => {
@@ -265,6 +292,29 @@ describe('PathRunService', () => {
 
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: AiPathRunEventRecord) => e.message === 'Run resumed (resume).')).toBe(true);
+    });
+
+    it('reverts run status when dispatch fails during resume', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-resume-dispatch-fail',
+        nodes: mockNodes,
+        edges: [],
+      });
+      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'original-failure' });
+      enqueuePathRunJobMock.mockRejectedValueOnce(new Error('dispatch unavailable'));
+
+      await expect(resumePathRun(run.id, 'resume')).rejects.toThrow('Run dispatch failed');
+
+      const latest = await repo.findRunById(run.id);
+      expect(latest?.status).toBe('failed');
+      expect(latest?.errorMessage).toBe('original-failure');
+
+      const events = await repo.listRunEvents(run.id);
+      expect(
+        events.some((event: AiPathRunEventRecord) =>
+          event.message.includes('Run dispatch failed during resume')
+        )
+      ).toBe(true);
     });
   });
 
@@ -363,6 +413,30 @@ describe('PathRunService', () => {
 
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: AiPathRunEventRecord) => e.message === 'Retry node node-1.')).toBe(true);
+    });
+
+    it('reverts run status when dispatch fails during node retry', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-retry-dispatch-fail',
+        nodes: mockNodes,
+        edges: [],
+      });
+      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'original-node-failure' });
+
+      enqueuePathRunJobMock.mockRejectedValueOnce(new Error('dispatch unavailable'));
+
+      await expect(retryPathRunNode(run.id, 'node-1')).rejects.toThrow('Run dispatch failed');
+
+      const latest = await repo.findRunById(run.id);
+      expect(latest?.status).toBe('failed');
+      expect(latest?.errorMessage).toBe('original-node-failure');
+
+      const events = await repo.listRunEvents(run.id);
+      expect(
+        events.some((event: AiPathRunEventRecord) =>
+          event.message.includes('Run dispatch failed during node retry')
+        )
+      ).toBe(true);
     });
   });
 

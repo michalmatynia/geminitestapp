@@ -504,7 +504,19 @@ export async function evaluateGraphInternal(
 
           // --- Cache Check Start ---
           const cacheScope = resolveNodeCacheScope(node);
-          const cacheScopeFingerprint = cacheScope === 'run' ? { runId: resolvedRunId } : undefined;
+          let cacheScopeFingerprint: Record<string, unknown> | undefined;
+          
+          if (cacheScope === 'run') {
+            cacheScopeFingerprint = { runId: resolvedRunId };
+          } else if (cacheScope === 'session' || cacheScope === 'activation') {
+             // Bind session/activation scope to the primary entity context
+             const entityId =
+              pickString(triggerContext?.['entityId']) ??
+              pickString(triggerContext?.['productId']);
+             if (entityId) {
+               cacheScopeFingerprint = { entityId };
+             }
+          }
 
           const nodeHash =
             node.type === 'database'
@@ -529,10 +541,32 @@ export async function evaluateGraphInternal(
           const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
           const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
           const isCacheDisabled = cacheMode === 'disabled';
-          const skipCache = isEntryNode || isImplicitTriggerNode || isCacheDisabled;
+          
+          let validCacheHit = false;
+          let cacheSource: RuntimePortValues | null = null;
 
-          if (!skipCache && (cachedOutputs || isSeedMatch)) {
-            const out = isSeedMatch ? options.seedOutputs![node.id]! : cachedOutputs!;
+          if (!isEntryNode && !isImplicitTriggerNode && !isCacheDisabled) {
+            if (isSeedMatch) {
+              cacheSource = options.seedOutputs![node.id]!;
+              validCacheHit = true;
+            } else if (cachedOutputs) {
+              cacheSource = cachedOutputs;
+              validCacheHit = true;
+            }
+
+            // Guardrail: Reject status-only cache if node expects outputs
+            if (validCacheHit && cacheSource) {
+               const hasData = Object.keys(cacheSource).some(k => k !== 'status' && k !== 'context');
+               const expectsData = (node.outputs ?? []).length > 0;
+               if (!hasData && expectsData) {
+                 validCacheHit = false;
+                 cacheSource = null;
+               }
+            }
+          }
+
+          if (validCacheHit && cacheSource) {
+            const out = cacheSource;
             outputs[node.id] = cloneValue(out);
 
             if (out['status'] === 'blocked') {

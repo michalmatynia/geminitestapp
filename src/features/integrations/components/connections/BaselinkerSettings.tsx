@@ -11,9 +11,12 @@ import {
   FormSection,
   FormField,
   EmptyState,
+  FormActions,
+  useToast,
 } from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
+  const { toast } = useToast();
   const {
     connections,
     activeConnection,
@@ -21,19 +24,26 @@ export function BaselinkerSettings(): React.JSX.Element {
     baseTokenUpdatedAt,
     syncIntervalMinutes,
     setSyncIntervalMinutes,
-    syncMessage,
-    handleSaveSyncInterval,
-    isSavingSyncInterval,
+    handleSaveAll,
+    isSaving,
+    isDirty,
     defaultOneClickConnectionId,
     setDefaultOneClickConnectionId,
-    savingDefaultConnection,
-    defaultConnectionMessage,
-    setDefaultConnectionMessage,
-    handleSaveDefaultConnection,
     defaultExportConnectionId,
     handleBaselinkerTest,
     isTesting,
   } = useBaselinkerSettingsState();
+
+  const onSave = async (): Promise<void> => {
+    try {
+      await handleSaveAll();
+      toast('Baselinker settings saved successfully.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
+        variant: 'error',
+      });
+    }
+  };
 
   return (
     <FormSection
@@ -77,7 +87,6 @@ export function BaselinkerSettings(): React.JSX.Element {
                 value={defaultOneClickConnectionId || undefined}
                 onValueChange={(value: string): void => {
                   setDefaultOneClickConnectionId(value);
-                  setDefaultConnectionMessage(null);
                 }}
                 options={connections.map((connection) => ({
                   value: connection.id,
@@ -92,26 +101,10 @@ export function BaselinkerSettings(): React.JSX.Element {
                 size='sm'
                 triggerClassName='w-full'
               />
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  onClick={(): void => {
-                    void handleSaveDefaultConnection();
-                  }}
-                  loading={savingDefaultConnection}
-                  disabled={connections.length === 0}
-                  size='sm'
-                >
-                  Save Default
-                </Button>
-                {defaultExportConnectionId ? (
-                  <span className='text-[10px] text-gray-400'>
-                    Current default ID: {defaultExportConnectionId}
-                  </span>
-                ) : null}
-              </div>
-              {defaultConnectionMessage ? (
-                <p className='text-[10px] text-gray-400'>{defaultConnectionMessage}</p>
+              {defaultExportConnectionId ? (
+                <div className='text-[10px] text-gray-400'>
+                  Current default ID: {defaultExportConnectionId}
+                </div>
               ) : null}
             </div>
           </FormSection>
@@ -122,37 +115,24 @@ export function BaselinkerSettings(): React.JSX.Element {
             variant='subtle'
             className='p-3 text-xs text-gray-300'
           >
-            <div className='mt-2 flex flex-wrap items-center gap-2'>
+            <div className='mt-2'>
               <FormField label='Interval (Minutes)'>
-                <div className='flex items-center gap-2'>
-                  <Input
-                    type='number'
-                    min='1'
-                    value={syncIntervalMinutes}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      setSyncIntervalMinutes(event.target.value)
-                    }
-                    variant='subtle'
-                    size='sm'
-                    className='w-32'
-                  />
-                  <Button
-                    type='button'
-                    onClick={(): void => {
-                      void handleSaveSyncInterval();
-                    }}
-                    loading={isSavingSyncInterval}
-                    size='sm'
-                  >
-                    Save
-                  </Button>
-                </div>
+                <Input
+                  type='number'
+                  min='1'
+                  value={syncIntervalMinutes}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setSyncIntervalMinutes(event.target.value)
+                  }
+                  variant='subtle'
+                  size='sm'
+                  className='w-32'
+                />
               </FormField>
             </div>
-            {syncMessage && <p className='mt-2 text-[10px] text-gray-400'>{syncMessage}</p>}
           </FormSection>
 
-          <div className='flex flex-wrap items-center gap-3'>
+          <div className='flex flex-wrap items-center gap-3 pt-2'>
             <Button
               type='button'
               onClick={() => {
@@ -160,6 +140,7 @@ export function BaselinkerSettings(): React.JSX.Element {
               }}
               loading={isTesting}
               variant='solid'
+              size='sm'
             >
               {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
             </Button>
@@ -179,6 +160,16 @@ export function BaselinkerSettings(): React.JSX.Element {
               → My Account → API.
             </p>
           </div>
+
+          <FormActions
+            onSave={() => {
+              void onSave();
+            }}
+            saveText='Save Baselinker Settings'
+            isSaving={isSaving}
+            isDisabled={!isDirty}
+            className='pt-4'
+          />
         </div>
       )}
     </FormSection>

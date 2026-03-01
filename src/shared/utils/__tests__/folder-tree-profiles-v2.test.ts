@@ -20,6 +20,7 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.validator_pattern_tree.version).toBe(2);
     expect(parsed.prompt_exploder_hierarchy.version).toBe(2);
     expect(parsed.brain_catalog_tree.version).toBe(2);
+    expect(parsed.brain_routing_tree.version).toBe(2);
   });
 
   it('normalizes nesting kinds to lowercase and applies them in canNest rules', () => {

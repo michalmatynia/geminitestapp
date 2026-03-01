@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
   SparklesIcon,
   MapIcon,
+  Brain,
 } from 'lucide-react';
 import React from 'react';
 
@@ -248,6 +249,13 @@ export const buildAdminNav = (handlers: {
         ],
       },
     ],
+  },
+  {
+    id: 'brain',
+    label: 'Brain',
+    href: '/admin/brain?tab=operations',
+    icon: <Brain className='size-4' />,
+    keywords: ['ai', 'brain', 'operations', 'models', 'routing', 'insights'],
   },
   {
     id: 'jobs',
@@ -492,7 +500,7 @@ export const buildAdminNav = (handlers: {
         href: '/admin/settings',
         children: [
           { id: 'system/settings/overview', label: 'Overview', href: '/admin/settings' },
-          { id: 'system/settings/brain', label: 'Brain', href: '/admin/settings/brain' },
+          { id: 'system/settings/brain', label: 'Brain', href: '/admin/brain?tab=routing' },
           {
             id: 'system/settings/typography',
             label: 'Typography',

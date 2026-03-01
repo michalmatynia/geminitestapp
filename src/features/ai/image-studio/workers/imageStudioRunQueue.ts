@@ -5,6 +5,7 @@ import {
   executeImageStudioRun,
   type ImageStudioRunExecutionMeta,
 } from '@/features/ai/image-studio/server/run-executor';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
   getImageStudioRunById,
   updateImageStudioRun,
@@ -603,8 +604,54 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
   },
 });
 
+let workerStarted = false;
+let reconcileInFlight: Promise<void> | null = null;
+
+const isImageStudioEnabled = async (): Promise<boolean> => {
+  const brain = await getBrainAssignmentForFeature('image_studio');
+  return brain.enabled;
+};
+
+const assertImageStudioEnabled = async (): Promise<void> => {
+  const enabled = await isImageStudioEnabled();
+  if (enabled) return;
+  throw new Error(
+    'Image Studio is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.'
+  );
+};
+
 export const startImageStudioRunQueue = (): void => {
-  queue.startWorker();
+  if (reconcileInFlight) return;
+  reconcileInFlight = (async (): Promise<void> => {
+    let enabled: boolean;
+    try {
+      enabled = await isImageStudioEnabled();
+    } catch (error) {
+      await ErrorSystem.captureException(error, {
+        service: LOG_SOURCE,
+        action: 'validateBrainGate',
+      });
+      return;
+    }
+
+    if (!enabled) {
+      if (!workerStarted) return;
+      await queue.stopWorker().catch(async (error) => {
+        await ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          action: 'stopWorker',
+        });
+      });
+      workerStarted = false;
+      return;
+    }
+
+    if (workerStarted) return;
+    queue.startWorker();
+    workerStarted = true;
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
 };
 
 const processInlineRunInBackground = (
@@ -624,6 +671,8 @@ const processInlineRunInBackground = (
 export const enqueueImageStudioRunJob = async (
   runId: string
 ): Promise<ImageStudioRunDispatchMode> => {
+  await assertImageStudioEnabled();
+
   if (!isRedisAvailable()) {
     await logSystemEvent({
       level: 'info',

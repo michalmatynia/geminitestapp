@@ -147,6 +147,7 @@ export function useAiPathTrigger(): {
     }
 
     try {
+      toast('Preparing AI Path run: Path Generate Description', { variant: 'info' });
       const { orderedConfigs, preferredActivePathId, uiState } =
         await fetchPathSettings(queryClient);
 
@@ -194,8 +195,6 @@ export function useAiPathTrigger(): {
           { variant: 'info' }
         );
       }
-
-      toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
       const nodes: AiNode[] = normalizeNodes(selectedConfig.nodes ?? []);
       const edges: Edge[] = sanitizeEdges(

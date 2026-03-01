@@ -28,6 +28,7 @@ import {
   ActionMenu,
   DropdownMenuItem,
   Breadcrumbs,
+  FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -59,12 +60,19 @@ export default function SlugsPage(): React.JSX.Element {
   const zoningToggleValue = domainSettings.zoningEnabled;
   const [attachOpen, setAttachOpen] = useState(false);
   const [slugToDelete, setSlugToDelete] = useState<Slug | null>(null);
+  const [search, setSearch] = useState('');
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(attachOpen);
   const createSlug = useCreateSlug();
   const deleteSlug = useDeleteSlug();
   const slugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = useMemo((): Slug[] => allSlugsQuery.data ?? [], [allSlugsQuery.data]);
+
+  const filteredSlugs = useMemo((): Slug[] => {
+    if (!search.trim()) return slugs;
+    const q = search.toLowerCase().trim().replace(/^\//, '');
+    return slugs.filter((s) => s.slug.toLowerCase().includes(q));
+  }, [slugs, search]);
 
   const handleDomainChange = (value: string): void => {
     if (value === (activeDomainId ?? '')) return;
@@ -242,7 +250,20 @@ export default function SlugsPage(): React.JSX.Element {
       <StandardDataTablePanel
         variant='flat'
         columns={columns}
-        data={slugs}
+        data={filteredSlugs}
+        filters={
+          <FilterPanel
+            filters={[]}
+            values={{}}
+            search={search}
+            searchPlaceholder='Search routes by path...'
+            onFilterChange={() => {}}
+            onSearchChange={setSearch}
+            onReset={() => setSearch('')}
+            showHeader={false}
+            compact
+          />
+        }
         isLoading={slugsQuery.isLoading}
         emptyState={
           <EmptyState

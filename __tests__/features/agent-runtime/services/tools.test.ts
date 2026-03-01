@@ -1,7 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { runAgentTool } from '@/features/ai/agent-runtime/tools/index';
-import { runExtractionRequest } from '@/features/ai/agent-runtime/tools/run-agent-tool-extraction';
 import * as llmTools from '@/features/ai/agent-runtime/tools/llm';
 import * as playwrightBrowser from '@/features/ai/agent-runtime/tools/playwright/browser';
 import * as playwrightExtraction from '@/features/ai/agent-runtime/tools/playwright/extraction';
@@ -71,13 +70,6 @@ vi.mock('@/features/ai/agent-runtime/tools/playwright/extraction', () => ({
 
 vi.mock('@/features/ai/agent-runtime/tools/search', () => ({
   fetchSearchResults: vi.fn(),
-}));
-
-vi.mock('@/features/ai/agent-runtime/tools/run-agent-tool-extraction', () => ({
-  runExtractionRequest: vi.fn(async () => ({
-    ok: true,
-    output: { extractionType: 'none', extractedTotal: 0 },
-  })),
 }));
 
 vi.mock('@/features/ai/agent-runtime/tools/llm', () => ({
@@ -182,13 +174,22 @@ describe('Agent Runtime - Tools', () => {
   });
 
   it('should handle extraction request (products)', async () => {
-    vi.mocked(runExtractionRequest).mockResolvedValueOnce({
-      ok: true,
-      output: {
-        extractionType: 'product_names',
-        extractedTotal: 2,
-        items: ['Product A', 'Product B'],
-      },
+    (playwrightExtraction.extractProductNames as any).mockResolvedValue(['Product A', 'Product B']);
+    (playwrightExtraction.waitForProductContent as any).mockResolvedValue(undefined);
+    (llmTools.validateExtractionWithLLM as any).mockResolvedValue({
+      valid: true,
+      acceptedItems: ['Product A', 'Product B'],
+      rejectedItems: [],
+      missingCount: 0,
+      issues: [],
+    });
+    (llmTools.normalizeExtractionItemsWithLLM as any).mockResolvedValue(['Product A', 'Product B']);
+    (llmTools.buildExtractionPlan as any).mockResolvedValue({
+      target: 'products',
+      fields: ['name'],
+      primarySelectors: ['.product'],
+      fallbackSelectors: [],
+      notes: null,
     });
 
     const result = await runAgentTool({

@@ -4,11 +4,20 @@ import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executo
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { computeBackoffMs, processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
 import {
+  assertAiPathRunQueueReady,
   computeAiPathRunQueueSlo,
   enqueuePathRunJob,
+  getAiPathRunQueueStatus,
   removePathRunQueueEntries,
   type QueueSloThresholds,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+
+const getRuntimeAnalyticsSummaryMock = vi.hoisted(() => vi.fn());
+const recordRuntimeRunStartedMock = vi.hoisted(() => vi.fn());
+const recordRuntimeRunFinishedMock = vi.hoisted(() => vi.fn());
+const recordRuntimeRunQueuedMock = vi.hoisted(() => vi.fn());
+const getBrainAssignmentForFeatureMock = vi.hoisted(() => vi.fn());
+const getAiInsightsQueueStatusMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/ai/ai-paths/services/path-run-executor', () => ({
   executePathRun: vi.fn(),
@@ -16,6 +25,21 @@ vi.mock('@/features/ai/ai-paths/services/path-run-executor', () => ({
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
+}));
+
+vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
+  getRuntimeAnalyticsSummary: getRuntimeAnalyticsSummaryMock,
+  recordRuntimeRunStarted: recordRuntimeRunStartedMock,
+  recordRuntimeRunFinished: recordRuntimeRunFinishedMock,
+  recordRuntimeRunQueued: recordRuntimeRunQueuedMock,
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  getBrainAssignmentForFeature: getBrainAssignmentForFeatureMock,
+}));
+
+vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({
+  getAiInsightsQueueStatus: getAiInsightsQueueStatusMock,
 }));
 
 vi.mock('@/shared/utils/observability/error-system', () => ({
@@ -30,15 +54,51 @@ describe('AI Path Run Queue Worker', () => {
     updateRun: vi.fn(),
     updateRunIfStatus: vi.fn(),
     claimRunForProcessing: vi.fn(),
+    getQueueStats: vi.fn(),
     createRunEvent: vi.fn(),
     finalizeRun: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    getBrainAssignmentForFeatureMock.mockResolvedValue({ enabled: true });
+    recordRuntimeRunStartedMock.mockResolvedValue(undefined);
+    recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
+    recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
+    getAiInsightsQueueStatusMock.mockResolvedValue({
+      running: true,
+      healthy: true,
+      processing: false,
+      activeJobs: 0,
+      waitingJobs: 0,
+      failedJobs: 0,
+      completedJobs: 0,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    });
+    getRuntimeAnalyticsSummaryMock.mockResolvedValue({
+      runs: {
+        completed: 0,
+        failed: 0,
+        canceled: 0,
+        deadLettered: 0,
+        successRate: 100,
+        deadLetterRate: 0,
+        avgDurationMs: null,
+        p95DurationMs: null,
+      },
+      brain: {
+        totalReports: 0,
+        analyticsReports: 0,
+        logReports: 0,
+        warningReports: 0,
+        errorReports: 0,
+      },
+    });
     mockRepo.findRunById.mockResolvedValue(null);
     mockRepo.updateRunIfStatus.mockResolvedValue(null);
     mockRepo.claimRunForProcessing.mockResolvedValue(null);
+    mockRepo.getQueueStats.mockResolvedValue({ queuedCount: 0, oldestQueuedAt: null });
     vi.mocked(getPathRunRepository).mockReturnValue(mockRepo as any);
   });
 
@@ -210,6 +270,22 @@ describe('AI Path Run Queue Worker', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  describe('queue readiness', () => {
+    it('bypasses cache when bypassCache=true', async () => {
+      await getAiPathRunQueueStatus({ bypassCache: true });
+      await getAiPathRunQueueStatus({ bypassCache: true });
+
+      expect(mockRepo.getQueueStats).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws service unavailable when worker is not running', async () => {
+      getBrainAssignmentForFeatureMock.mockResolvedValueOnce({ enabled: false });
+      await expect(assertAiPathRunQueueReady()).rejects.toThrow(
+        'AI Paths queue worker is unavailable'
+      );
     });
   });
 });

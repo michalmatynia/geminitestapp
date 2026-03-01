@@ -12,7 +12,8 @@ import {
   processRun,
   processStaleRunRecovery,
 } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
-import { getAiInsightsQueueStatus } from '@/features/ai/insights/workers/aiInsightsQueue';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { configurationError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   AiPathRunQueueSloStatusDto,
@@ -20,6 +21,7 @@ import type {
   SloLevelDto,
 } from '@/shared/contracts/ai-paths-runtime';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type AiPathRunQueueSloStatus = AiPathRunQueueSloStatusDto;
 export type QueueSloThresholds = QueueSloThresholdsDto;
@@ -60,6 +62,39 @@ const debugQueueWarn = (message: string, context?: Record<string, unknown>): voi
 type AiPathRunJobData = {
   runId: string;
   type?: 'run' | 'recovery';
+};
+
+type AiInsightsQueueStatus = {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  activeJobs: number;
+  waitingJobs: number;
+  failedJobs: number;
+  completedJobs: number;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+};
+
+const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
+  running: false,
+  healthy: false,
+  processing: false,
+  activeJobs: 0,
+  waitingJobs: 0,
+  failedJobs: 0,
+  completedJobs: 0,
+  lastPollTime: 0,
+  timeSinceLastPoll: 0,
+};
+
+const getAiInsightsQueueStatusSnapshot = async (): Promise<AiInsightsQueueStatus> => {
+  const module = (await import('@/features/ai/insights/workers/aiInsightsQueue')) as {
+    getAiInsightsQueueStatus?: () => Promise<AiInsightsQueueStatus>;
+  };
+  const readStatus = module.getAiInsightsQueueStatus;
+  if (typeof readStatus !== 'function') return EMPTY_AI_INSIGHTS_QUEUE_STATUS;
+  return readStatus();
 };
 
 type EnqueuePathRunJobOptions = {
@@ -344,13 +379,127 @@ const queue = createManagedQueue<AiPathRunJobData>({
   },
 });
 
-export const startAiPathRunQueue = (): void => {
-  queue.startWorker();
-  // Schedule stale-run recovery using the same interval as HTTP cleanup guards.
-  void queue.enqueue(
-    { runId: '__recovery__', type: 'recovery' },
-    { repeat: { every: RECOVERY_REPEAT_MS }, jobId: 'ai-path-run-recovery' }
+type AiPathRunQueueState = {
+  workerStarted: boolean;
+  recoveryScheduled: boolean;
+};
+
+const globalWithAiPathRunQueueState = globalThis as typeof globalThis & {
+  __aiPathRunQueueState__?: AiPathRunQueueState;
+};
+
+const aiPathRunQueueState =
+  globalWithAiPathRunQueueState.__aiPathRunQueueState__ ??
+  (globalWithAiPathRunQueueState.__aiPathRunQueueState__ = {
+    workerStarted: false,
+    recoveryScheduled: false,
+  });
+
+let reconcileInFlight: Promise<void> | null = null;
+
+type RepeatableJobEntry = {
+  id?: string | null;
+  name?: string;
+  every?: number | null;
+  key: string;
+};
+
+const hasRepeatableQueueApi = (
+  value: unknown
+): value is {
+  getRepeatableJobs: () => Promise<RepeatableJobEntry[]>;
+  removeRepeatableByKey: (key: string) => Promise<void>;
+} =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { getRepeatableJobs?: unknown }).getRepeatableJobs === 'function' &&
+  typeof (value as { removeRepeatableByKey?: unknown }).removeRepeatableByKey === 'function';
+
+const removeRecoveryRepeatJobs = async (): Promise<void> => {
+  const queueApi = queue.getQueue();
+  if (!hasRepeatableQueueApi(queueApi)) return;
+  const repeatableJobs = await queueApi.getRepeatableJobs();
+  const targets = repeatableJobs.filter(
+    (job) =>
+      job.id === 'ai-path-run-recovery' ||
+      (job.name === AI_PATH_RUN_QUEUE_NAME && job.every === RECOVERY_REPEAT_MS)
   );
+  await Promise.all(targets.map(async (job) => queueApi.removeRepeatableByKey(job.key)));
+};
+
+const isAiPathsEnabled = async (): Promise<boolean> => {
+  const brain = await getBrainAssignmentForFeature('ai_paths');
+  return brain.enabled;
+};
+
+const assertAiPathsEnabled = async (): Promise<void> => {
+  const enabled = await isAiPathsEnabled();
+  if (enabled) return;
+  throw configurationError(
+    'AI Paths is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
+  );
+};
+
+const stopAiPathRunQueueInternal = async (): Promise<void> => {
+  await removeRecoveryRepeatJobs().catch((error) => {
+    void ErrorSystem.captureException(error, {
+      service: LOG_SOURCE,
+      action: 'removeRecoverySchedule',
+    });
+  });
+  aiPathRunQueueState.recoveryScheduled = false;
+  if (!aiPathRunQueueState.workerStarted) return;
+  await queue.stopWorker();
+  aiPathRunQueueState.workerStarted = false;
+};
+
+export const startAiPathRunQueue = (): void => {
+  if (reconcileInFlight) return;
+  reconcileInFlight = (async (): Promise<void> => {
+    let enabled: boolean;
+    try {
+      enabled = await isAiPathsEnabled();
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: LOG_SOURCE,
+        action: 'validateBrainGate',
+      });
+      return;
+    }
+
+    if (!enabled) {
+      await stopAiPathRunQueueInternal().catch((error) => {
+        void ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          action: 'stopWorker',
+        });
+      });
+      return;
+    }
+
+    if (!aiPathRunQueueState.workerStarted) {
+      queue.startWorker();
+      aiPathRunQueueState.workerStarted = true;
+    }
+    if (aiPathRunQueueState.recoveryScheduled) return;
+
+    // Schedule stale-run recovery using the same interval as HTTP cleanup guards.
+    aiPathRunQueueState.recoveryScheduled = true;
+    await queue
+      .enqueue(
+        { runId: '__recovery__', type: 'recovery' },
+        { repeat: { every: RECOVERY_REPEAT_MS }, jobId: 'ai-path-run-recovery' }
+      )
+      .catch((error) => {
+        aiPathRunQueueState.recoveryScheduled = false;
+        void ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          action: 'registerRecoverySchedule',
+        });
+      });
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
 };
 
 type AiPathRunQueueStatus = {
@@ -389,103 +538,159 @@ type AiPathRunQueueStatus = {
 };
 
 const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber('AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS', 2_000, 250);
+const QUEUE_UNAVAILABLE_RETRY_AFTER_MS = parseEnvNumber(
+  'AI_PATHS_QUEUE_UNAVAILABLE_RETRY_AFTER_MS',
+  5_000,
+  500
+);
 
 let queueStatusCache: { value: AiPathRunQueueStatus; expiresAt: number } | null = null;
 let queueStatusInFlight: Promise<AiPathRunQueueStatus> | null = null;
 
-export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> => {
+type GetAiPathRunQueueStatusOptions = {
+  bypassCache?: boolean;
+};
+
+const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
+  const health = aiPathRunQueueState.workerStarted
+    ? await queue.getHealthStatus()
+    : {
+      running: false,
+      healthy: false,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 0,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    };
+  const repo = await getPathRunRepository();
+  const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
+    repo.getQueueStats(),
+    getAiInsightsQueueStatusSnapshot(),
+    getRuntimeAnalyticsSummary({
+      from: new Date(now - 24 * 60 * 60 * 1000),
+      to: new Date(now),
+      range: '24h',
+    }),
+  ]);
+  const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
+  const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
+  const terminalRuns24h =
+    runtimeAnalyticsSummary.runs.completed +
+    runtimeAnalyticsSummary.runs.failed +
+    runtimeAnalyticsSummary.runs.canceled +
+    runtimeAnalyticsSummary.runs.deadLettered;
+  const brainTotalReports24h = runtimeAnalyticsSummary.brain.totalReports;
+  const brainErrorRate24h =
+    brainTotalReports24h > 0
+      ? Math.max(
+        0,
+        Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
+      )
+      : 0;
+  const slo = computeAiPathRunQueueSlo({
+    queueRunning: health.running ?? false,
+    queueHealthy: health.healthy ?? false,
+    queueLagMs,
+    successRate24h: runtimeAnalyticsSummary.runs.successRate,
+    terminalRuns24h,
+    deadLetterRate24h: runtimeAnalyticsSummary.runs.deadLetterRate,
+    brainErrorRate24h,
+    brainTotalReports24h,
+  });
+
+  return {
+    running: health.running ?? false,
+    healthy: health.healthy ?? false,
+    processing: health.processing ?? false,
+    activeRuns: health.activeCount,
+    concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+    lastPollTime: health.lastPollTime ?? 0,
+    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    queuedCount: stats.queuedCount,
+    oldestQueuedAt,
+    queueLagMs,
+    completedLastMinute: health.completedCount,
+    throughputPerMinute: health.completedCount,
+    avgRuntimeMs: runtimeAnalyticsSummary.runs.avgDurationMs,
+    p50RuntimeMs: null,
+    p95RuntimeMs: runtimeAnalyticsSummary.runs.p95DurationMs,
+    brainQueue: {
+      running: insightsQueueHealth.running,
+      healthy: insightsQueueHealth.healthy,
+      processing: insightsQueueHealth.processing,
+      activeJobs: insightsQueueHealth.activeJobs,
+      waitingJobs: insightsQueueHealth.waitingJobs,
+      failedJobs: insightsQueueHealth.failedJobs,
+      completedJobs: insightsQueueHealth.completedJobs,
+    },
+    brainAnalytics24h: {
+      analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
+      logReports: runtimeAnalyticsSummary.brain.logReports,
+      totalReports: runtimeAnalyticsSummary.brain.totalReports,
+      warningReports: runtimeAnalyticsSummary.brain.warningReports,
+      errorReports: runtimeAnalyticsSummary.brain.errorReports,
+    },
+    slo,
+  };
+};
+
+export const getAiPathRunQueueStatus = async (
+  options: GetAiPathRunQueueStatusOptions = {}
+): Promise<AiPathRunQueueStatus> => {
   const now = Date.now();
-  if (queueStatusCache && queueStatusCache.expiresAt > now) {
+  const bypassCache = options.bypassCache === true;
+  if (!bypassCache && queueStatusCache && queueStatusCache.expiresAt > now) {
     return queueStatusCache.value;
   }
-  if (queueStatusInFlight) {
+  if (!bypassCache && queueStatusInFlight) {
     return queueStatusInFlight;
   }
 
-  queueStatusInFlight = (async (): Promise<AiPathRunQueueStatus> => {
-    const health = await queue.getHealthStatus();
-    const repo = await getPathRunRepository();
-    const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
-      repo.getQueueStats(),
-      getAiInsightsQueueStatus(),
-      getRuntimeAnalyticsSummary({
-        from: new Date(now - 24 * 60 * 60 * 1000),
-        to: new Date(now),
-        range: '24h',
-      }),
-    ]);
-    const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
-    const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
-    const terminalRuns24h =
-      runtimeAnalyticsSummary.runs.completed +
-      runtimeAnalyticsSummary.runs.failed +
-      runtimeAnalyticsSummary.runs.canceled +
-      runtimeAnalyticsSummary.runs.deadLettered;
-    const brainTotalReports24h = runtimeAnalyticsSummary.brain.totalReports;
-    const brainErrorRate24h =
-      brainTotalReports24h > 0
-        ? Math.max(
-          0,
-          Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
-        )
-        : 0;
-    const slo = computeAiPathRunQueueSlo({
-      queueRunning: health.running ?? false,
-      queueHealthy: health.healthy ?? false,
-      queueLagMs,
-      successRate24h: runtimeAnalyticsSummary.runs.successRate,
-      terminalRuns24h,
-      deadLetterRate24h: runtimeAnalyticsSummary.runs.deadLetterRate,
-      brainErrorRate24h,
-      brainTotalReports24h,
-    });
-
-    return {
-      running: health.running ?? false,
-      healthy: health.healthy ?? false,
-      processing: health.processing ?? false,
-      activeRuns: health.activeCount,
-      concurrency: Math.max(1, DEFAULT_CONCURRENCY),
-      lastPollTime: health.lastPollTime ?? 0,
-      timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
-      queuedCount: stats.queuedCount,
-      oldestQueuedAt,
-      queueLagMs,
-      completedLastMinute: health.completedCount,
-      throughputPerMinute: health.completedCount,
-      avgRuntimeMs: runtimeAnalyticsSummary.runs.avgDurationMs,
-      p50RuntimeMs: null,
-      p95RuntimeMs: runtimeAnalyticsSummary.runs.p95DurationMs,
-      brainQueue: {
-        running: insightsQueueHealth.running,
-        healthy: insightsQueueHealth.healthy,
-        processing: insightsQueueHealth.processing,
-        activeJobs: insightsQueueHealth.activeJobs,
-        waitingJobs: insightsQueueHealth.waitingJobs,
-        failedJobs: insightsQueueHealth.failedJobs,
-        completedJobs: insightsQueueHealth.completedJobs,
-      },
-      brainAnalytics24h: {
-        analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
-        logReports: runtimeAnalyticsSummary.brain.logReports,
-        totalReports: runtimeAnalyticsSummary.brain.totalReports,
-        warningReports: runtimeAnalyticsSummary.brain.warningReports,
-        errorReports: runtimeAnalyticsSummary.brain.errorReports,
-      },
-      slo,
-    };
-  })();
-
-  try {
-    const status = await queueStatusInFlight;
+  const fetchStatus = async (): Promise<AiPathRunQueueStatus> => {
+    const status = await readAiPathRunQueueStatus(now);
     queueStatusCache = {
       value: status,
       expiresAt: Date.now() + QUEUE_STATUS_CACHE_TTL_MS,
     };
     return status;
+  };
+
+  if (bypassCache) {
+    return fetchStatus();
+  }
+
+  queueStatusInFlight = fetchStatus();
+  try {
+    return await queueStatusInFlight;
   } finally {
     queueStatusInFlight = null;
   }
+};
+
+const waitForQueueReconciliation = async (): Promise<void> => {
+  if (!reconcileInFlight) return;
+  await reconcileInFlight;
+};
+
+export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus> => {
+  startAiPathRunQueue();
+  await waitForQueueReconciliation();
+  const status = await getAiPathRunQueueStatus({ bypassCache: true });
+  if (status.running) return status;
+
+  throw serviceUnavailableError(
+    'AI Paths queue worker is unavailable. Please retry in a few seconds.',
+    QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+    {
+      queueRunning: status.running,
+      queueHealthy: status.healthy,
+      queuedCount: status.queuedCount,
+      activeRuns: status.activeRuns,
+    }
+  );
 };
 
 export const processSingleRun = async (runId: string): Promise<void> => {
@@ -568,6 +773,8 @@ export const enqueuePathRunJob = async (
   runId: string,
   options: EnqueuePathRunJobOptions = {}
 ): Promise<void> => {
+  await assertAiPathsEnabled();
+
   const delayMs = normalizeDelayMs(options.delayMs);
   const { queue: bullQueue, owned } = resolveAiPathRunQueue();
   if (!bullQueue) {

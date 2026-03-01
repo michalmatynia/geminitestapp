@@ -20,6 +20,7 @@ import {
   FormField,
   ToggleRow,
   Card,
+  FormActions,
 } from '@/shared/ui';
 
 const sortByOptions = [
@@ -275,17 +276,13 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </FormSection>
 
         {/* Reset Button */}
-        <div className='flex justify-end'>
-          <Button
-            variant='outline'
-            onClick={handleResetToDefaults}
-            disabled={allDefaults}
-            className='gap-2'
-          >
-            <RotateCcw className='size-4' />
-            Reset to Defaults
-          </Button>
-        </div>
+        <FormActions
+          onSave={handleResetToDefaults}
+          saveText='Reset to Defaults'
+          saveVariant='outline'
+          saveIcon={<RotateCcw className='size-4' />}
+          isDisabled={allDefaults}
+        />
 
         {/* Current Settings Summary */}
         <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>

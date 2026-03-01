@@ -1,5 +1,5 @@
 import { Eye, EyeOff } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { Button } from '@/shared/ui';
@@ -13,7 +13,11 @@ export function FocusModeTogglePortal({
   isFocusMode,
   onToggleFocusMode,
 }: FocusModeTogglePortalProps): React.JSX.Element | null {
-  if (typeof document === 'undefined') return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
 
   return createPortal(
     <Button

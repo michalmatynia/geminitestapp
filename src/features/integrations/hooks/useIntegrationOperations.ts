@@ -1,6 +1,6 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
@@ -19,7 +19,16 @@ type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
 
-export function useIntegrationOperations(): {
+const normalizeProductIds = (productIds: readonly string[]): string[] =>
+  Array.from(
+    new Set(
+      productIds
+        .map((productId) => productId.trim())
+        .filter((productId) => productId.length > 0)
+    )
+  ).sort();
+
+export function useIntegrationOperations(productIds: readonly string[] = []): {
   integrationsProduct: ProductWithImages | null;
   setIntegrationsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   showListProductModal: boolean;
@@ -51,19 +60,33 @@ export function useIntegrationOperations(): {
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
     null
   );
+  const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
+  const scopedProductIdsParam = useMemo(
+    () => scopedProductIds.map((productId) => encodeURIComponent(productId)).join(','),
+    [scopedProductIds]
+  );
+  const scopedListingBadgesQueryKey = useMemo(
+    () =>
+      [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
+    [scopedProductIds]
+  );
 
   // Load listing badges using query factory
   const listingsBadgeQuery = createListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
-    queryKey: listingBadgesQueryKey,
+    queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        return await api.get<ListingBadgesPayload>('/api/integrations/product-listings', {
-          cache: 'no-store',
-        });
+        return await api.get<ListingBadgesPayload>(
+          `/api/integrations/product-listings?productIds=${scopedProductIdsParam}`,
+          {
+            cache: 'no-store',
+          }
+        );
       } catch {
         return {};
       }
     },
+    enabled: scopedProductIds.length > 0,
     retry: 1,
     refetchInterval: (query) => {
       const data = query.state.data;
@@ -89,7 +112,7 @@ export function useIntegrationOperations(): {
       operation: 'polling',
       resource: 'integrations.product-listings.badges',
       domain: 'integrations',
-      queryKey: listingBadgesQueryKey,
+      queryKey: scopedListingBadgesQueryKey,
       tags: ['integrations', 'listings', 'badges'],
     },
   });

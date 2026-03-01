@@ -32,6 +32,30 @@ type AiInsightsQueueState = {
   schedulerRegistered: boolean;
 };
 
+type AiInsightsQueueStatus = {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  activeJobs: number;
+  waitingJobs: number;
+  failedJobs: number;
+  completedJobs: number;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+};
+
+const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
+  running: false,
+  healthy: false,
+  processing: false,
+  activeJobs: 0,
+  waitingJobs: 0,
+  failedJobs: 0,
+  completedJobs: 0,
+  lastPollTime: 0,
+  timeSinceLastPoll: 0,
+};
+
 const globalWithAiInsightsQueueState = globalThis as typeof globalThis & {
   __aiInsightsQueueState__?: AiInsightsQueueState;
 };
@@ -43,6 +67,8 @@ const aiInsightsQueueState =
     workerStarted: false,
     schedulerRegistered: false,
   });
+
+let reconcileInFlight: Promise<void> | null = null;
 
 const queue = createManagedQueue<AiInsightsJobData>({
   name: 'ai-insights',
@@ -114,71 +140,69 @@ const removeInsightsTickRepeatJobs = async (): Promise<void> => {
   );
 };
 
-export const startAiInsightsQueue = (): void => {
-  if (!aiInsightsQueueState.workerStarted) {
-    aiInsightsQueueState.workerStarted = true;
-    queue.startWorker();
-  }
-
-  if (aiInsightsQueueState.schedulerRegistered) {
-    void shouldRegisterInsightsScheduler()
-      .then(async (shouldRegister) => {
-        if (shouldRegister) return;
-        await removeInsightsTickRepeatJobs().catch(async (error) => {
-          void ErrorSystem.captureException(error, {
-            service: 'ai-insights-queue',
-            action: 'removeScheduler',
-          });
-        });
-        aiInsightsQueueState.schedulerRegistered = false;
-      })
-      .catch(async (error) => {
-        void ErrorSystem.captureException(error, {
-          service: 'ai-insights-queue',
-          action: 'validateScheduler',
-        });
-      });
-    return;
-  }
-  aiInsightsQueueState.schedulerRegistered = true;
-
-  void shouldRegisterInsightsScheduler()
-    .then(async (shouldRegister) => {
-      if (!shouldRegister) {
-        await removeInsightsTickRepeatJobs().catch(async (error) => {
-          void ErrorSystem.captureException(error, {
-            service: 'ai-insights-queue',
-            action: 'removeScheduler',
-          });
-        });
-        aiInsightsQueueState.schedulerRegistered = false;
-        return;
-      }
-      await queue.enqueue(
-        { type: 'scheduled-tick' },
-        { repeat: { every: AI_INSIGHTS_REPEAT_EVERY_MS }, jobId: 'ai-insights-tick' }
-      );
-    })
-    .catch(async (error) => {
-      aiInsightsQueueState.schedulerRegistered = false;
-      void ErrorSystem.captureException(error, {
-        service: 'ai-insights-queue',
-        action: 'registerScheduler',
-      });
-    });
+const reportQueueActionError = (error: unknown, action: string): void => {
+  void ErrorSystem.captureException(error, {
+    service: 'ai-insights-queue',
+    action,
+  });
 };
 
-export const getAiInsightsQueueStatus = async (): Promise<{
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeJobs: number;
-  waitingJobs: number;
-  failedJobs: number;
-  completedJobs: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-}> => {
+const stopInsightsWorker = async (): Promise<void> => {
+  if (!aiInsightsQueueState.workerStarted) return;
+  await queue.stopWorker();
+  aiInsightsQueueState.workerStarted = false;
+};
+
+export const startAiInsightsQueue = (): void => {
+  if (reconcileInFlight) return;
+
+  reconcileInFlight = (async (): Promise<void> => {
+    let shouldRegister: boolean;
+    try {
+      shouldRegister = await shouldRegisterInsightsScheduler();
+    } catch (error) {
+      reportQueueActionError(error, 'validateScheduler');
+      return;
+    }
+
+    if (!shouldRegister) {
+      await removeInsightsTickRepeatJobs().catch((error) => {
+        reportQueueActionError(error, 'removeScheduler');
+      });
+      aiInsightsQueueState.schedulerRegistered = false;
+      await stopInsightsWorker().catch((error) => {
+        reportQueueActionError(error, 'stopWorker');
+      });
+      return;
+    }
+
+    if (!aiInsightsQueueState.workerStarted) {
+      queue.startWorker();
+      aiInsightsQueueState.workerStarted = true;
+    }
+
+    if (aiInsightsQueueState.schedulerRegistered) return;
+
+    aiInsightsQueueState.schedulerRegistered = true;
+    await queue
+      .enqueue(
+        { type: 'scheduled-tick' },
+        { repeat: { every: AI_INSIGHTS_REPEAT_EVERY_MS }, jobId: 'ai-insights-tick' }
+      )
+      .catch((error) => {
+        aiInsightsQueueState.schedulerRegistered = false;
+        reportQueueActionError(error, 'registerScheduler');
+      });
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
+};
+
+export const getAiInsightsQueueStatus = async (): Promise<AiInsightsQueueStatus> => {
+  if (!aiInsightsQueueState.workerStarted) {
+    return EMPTY_AI_INSIGHTS_QUEUE_STATUS;
+  }
+
   const health = await queue.getHealthStatus();
   return {
     running: health.running ?? false,

@@ -8,7 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service';
-import { startAiPathRunQueue } from '@/features/jobs/server';
+import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -37,7 +37,7 @@ export async function POST_handler(
   }
   assertAiPathRunAccess(access, existing);
   const mode = parsed.data?.mode ?? 'resume';
+  await assertAiPathRunQueueReady();
   const run: unknown = await resumePathRun(runId, mode);
-  startAiPathRunQueue();
   return NextResponse.json({ run });
 }

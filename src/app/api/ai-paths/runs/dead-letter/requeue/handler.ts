@@ -8,7 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service';
-import { startAiPathRunQueue } from '@/features/jobs/server';
+import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -33,6 +33,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const mode = parsed.data?.mode ?? 'resume';
   const query = parsed.data?.query?.trim() || undefined;
   const limit = parsed.data?.limit ?? undefined;
+
+  await assertAiPathRunQueueReady();
 
   const repo = await getPathRunRepository();
   let targetRunIds = runIds;
@@ -83,10 +85,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         error: error instanceof Error ? error.message : 'Failed to requeue run',
       });
     }
-  }
-
-  if (requeuedRunIds.length > 0) {
-    startAiPathRunQueue();
   }
 
   if (errors.length > 0) {

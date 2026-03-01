@@ -20,7 +20,9 @@ import {
   DropdownMenuSeparator,
   Breadcrumbs,
   StandardDataTablePanel,
+  FilterPanel,
 } from '@/shared/ui';
+import type { FilterField } from '@/shared/ui/templates/panels';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -99,6 +101,7 @@ export default function PagesPage(): React.ReactNode {
   const slugsQuery = useCmsSlugs(activeDomainId);
   const deletePage = useDeletePage();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [search, setSearch] = useState('');
   const [previewSelections, setPreviewSelections] = useState<Record<string, string>>({});
   const [pageToDelete, setPageToDelete] = useState<PageSummary | null>(null);
 
@@ -113,9 +116,18 @@ export default function PagesPage(): React.ReactNode {
   }, [domainSlugs]);
 
   const filteredPages = useMemo((): PageSummary[] => {
-    if (statusFilter === 'all') return pages;
-    return pages.filter((page: PageSummary) => (page.status ?? 'draft') === statusFilter);
-  }, [pages, statusFilter]);
+    let result = pages;
+    if (statusFilter !== 'all') {
+      result = result.filter((page: PageSummary) => (page.status ?? 'draft') === statusFilter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      result = result.filter((page: PageSummary) => 
+        page.name.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [pages, statusFilter, search]);
 
   const handleConfirmDelete = async (): Promise<void> => {
     if (!pageToDelete) return;
@@ -300,20 +312,35 @@ export default function PagesPage(): React.ReactNode {
     />
   );
 
+  const filterConfig: FilterField[] = useMemo(
+    () => [
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: STATUS_FILTERS,
+      },
+    ],
+    []
+  );
+
   const filters = (
-    <div className='flex gap-2'>
-      {STATUS_FILTERS.map((filter) => (
-        <Button
-          key={filter.value}
-          size='xs'
-          variant={statusFilter === filter.value ? 'default' : 'outline'}
-          onClick={() => setStatusFilter(filter.value)}
-          className='h-7 rounded-full px-3'
-        >
-          {filter.label}
-        </Button>
-      ))}
-    </div>
+    <FilterPanel
+      filters={filterConfig}
+      values={{ status: statusFilter }}
+      search={search}
+      searchPlaceholder='Search pages by name...'
+      onFilterChange={(key, value) => {
+        if (key === 'status') setStatusFilter(value as StatusFilter);
+      }}
+      onSearchChange={setSearch}
+      onReset={() => {
+        setStatusFilter('all');
+        setSearch('');
+      }}
+      showHeader={false}
+      compact
+    />
   );
 
   return (

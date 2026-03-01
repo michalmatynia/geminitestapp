@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   getIntegrationRepository,
+  listProductListingsByProductIdsAcrossProviders,
   listAllProductListingsAcrossProviders,
 } from '@/features/integrations/server';
-import { getProductRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -43,26 +43,29 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   return null;
 };
 
-const listProductsWithBaseIds = async (): Promise<Array<{ id: string; baseProductId: string }>> => {
-  const productRepository = await getProductRepository();
-  const pageSize = 500;
-  const maxPages = 40;
-  const products: Array<{ id: string; baseProductId: string }> = [];
+const PRODUCT_IDS_PARAM_LIMIT = 250;
 
-  for (let page = 1; page <= maxPages; page += 1) {
-    const rows = await productRepository.getProducts({ page, pageSize });
-    if (rows.length === 0) break;
-
-    rows.forEach((product) => {
-      const baseProductId = (product.baseProductId ?? '').trim();
-      if (!baseProductId) return;
-      products.push({ id: product.id, baseProductId });
-    });
-
-    if (rows.length < pageSize) break;
+const safeDecode = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
   }
+};
 
-  return products;
+const parseRequestedProductIds = (req: NextRequest): string[] => {
+  const raw = req.nextUrl.searchParams.get('productIds');
+  if (!raw) return [];
+
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((value) => safeDecode(value).trim())
+        .filter((value) => value.length > 0)
+        .slice(0, PRODUCT_IDS_PARAM_LIMIT)
+    )
+  );
 };
 
 /**
@@ -71,8 +74,13 @@ const listProductsWithBaseIds = async (): Promise<Array<{ id: string; baseProduc
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const integrationRepository = await getIntegrationRepository();
+  const requestedProductIds = parseRequestedProductIds(_req);
+  const listingsPromise =
+    requestedProductIds.length > 0
+      ? listProductListingsByProductIdsAcrossProviders(requestedProductIds)
+      : listAllProductListingsAcrossProviders();
   const [listings, integrations] = await Promise.all([
-    listAllProductListingsAcrossProviders(),
+    listingsPromise,
     integrationRepository.listIntegrations(),
   ]);
 
@@ -127,19 +135,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       byProduct.set(listing.productId, {
         ...current,
         [marketplace]: normalizedStatus || 'unknown',
-      });
-    }
-  }
-
-  // Keep BL badge active for previously imported products even before listing
-  // records are fully backfilled.
-  const linkedProducts = await listProductsWithBaseIds();
-  for (const product of linkedProducts) {
-    const current = byProduct.get(product.id) ?? {};
-    if (!current.base) {
-      byProduct.set(product.id, {
-        ...current,
-        base: 'active',
       });
     }
   }

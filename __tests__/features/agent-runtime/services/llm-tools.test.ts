@@ -8,11 +8,25 @@ import {
   decideSearchFirstWithLLM,
 } from '@/features/ai/agent-runtime/tools/llm/index';
 import prisma from '@/shared/lib/db/prisma';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     agentAuditLog: { create: vi.fn() },
   },
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: vi.fn(async () => ({
+    modelId: 'mock-model',
+    temperature: 0.7,
+    maxTokens: 1000,
+  })),
+}));
+
+vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
+  runBrainChatCompletion: vi.fn(),
+  supportsBrainJsonMode: vi.fn(() => true),
 }));
 
 const mockContext = {
@@ -24,25 +38,20 @@ const mockContext = {
 describe('Agent Runtime - LLM Tools', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
   });
 
   describe('validateExtractionWithLLM', () => {
     it('should parse valid validation response', async () => {
-      const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            valid: true,
-            acceptedItems: ['Item 1'],
-            rejectedItems: ['Noise'],
-            issues: [],
-            missingCount: 0,
-          }),
-        },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce({
+        text: JSON.stringify({
+          valid: true,
+          acceptedItems: ['Item 1'],
+          rejectedItems: ['Noise'],
+          issues: [],
+          missingCount: 0,
+        }),
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       });
 
       const result = await validateExtractionWithLLM(mockContext, {
@@ -61,7 +70,7 @@ describe('Agent Runtime - LLM Tools', () => {
     });
 
     it('should handle LLM failure with fallback', async () => {
-      (global.fetch as any).mockRejectedValue(new Error('LLM Down'));
+      vi.mocked(runBrainChatCompletion).mockRejectedValueOnce(new Error('LLM Down'));
 
       const result = await validateExtractionWithLLM(mockContext, {
         prompt: 'Extract',
@@ -91,12 +100,10 @@ describe('Agent Runtime - LLM Tools', () => {
     });
 
     it('should clean items using LLM', async () => {
-      const mockResponse = {
-        message: { content: JSON.stringify({ items: ['a@b.com'] }) },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce({
+        text: JSON.stringify({ items: ['a@b.com'] }),
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       });
 
       const result = await normalizeExtractionItemsWithLLM(mockContext, {
@@ -111,12 +118,10 @@ describe('Agent Runtime - LLM Tools', () => {
 
   describe('inferSelectorsFromLLM', () => {
     it('should return selectors from LLM', async () => {
-      const mockResponse = {
-        message: { content: JSON.stringify({ selectors: ['.prod'] }) },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce({
+        text: JSON.stringify({ selectors: ['.prod'] }),
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       });
 
       const result = await inferSelectorsFromLLM(
@@ -134,20 +139,16 @@ describe('Agent Runtime - LLM Tools', () => {
 
   describe('buildExtractionPlan', () => {
     it('should return structured plan', async () => {
-      const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            target: 'products',
-            fields: ['name'],
-            primarySelectors: ['.p'],
-            fallbackSelectors: [],
-            notes: 'None',
-          }),
-        },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce({
+        text: JSON.stringify({
+          target: 'products',
+          fields: ['name'],
+          primarySelectors: ['.p'],
+          fallbackSelectors: [],
+          notes: 'None',
+        }),
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       });
 
       const result = await buildExtractionPlan(mockContext, {
@@ -163,18 +164,14 @@ describe('Agent Runtime - LLM Tools', () => {
 
   describe('decideSearchFirstWithLLM', () => {
     it('should decide whether to search', async () => {
-      const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            useSearchFirst: true,
-            query: 'example shop',
-            reason: 'Domain not found',
-          }),
-        },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce({
+        text: JSON.stringify({
+          useSearchFirst: true,
+          query: 'example shop',
+          reason: 'Domain not found',
+        }),
+        finishReason: 'stop',
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       });
 
       const result = await decideSearchFirstWithLLM(mockContext, 'Find shop', 'about:blank', false);

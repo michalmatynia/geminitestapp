@@ -8,7 +8,8 @@ import { startAgentQueue } from '@/features/jobs/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AgentRunStatusType } from '@/shared/contracts/agent-runtime';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { badRequestError, configurationError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -68,6 +69,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
     throw internalError('Agent runs not initialized. Run prisma generate/db push.');
+  }
+  const agentRuntimeBrain = await getBrainAssignmentForFeature('agent_runtime');
+  if (!agentRuntimeBrain.enabled) {
+    throw configurationError(
+      'Agent Runtime is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
+    );
   }
   let body: {
     prompt?: string;

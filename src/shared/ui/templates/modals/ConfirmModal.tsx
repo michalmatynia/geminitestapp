@@ -5,6 +5,9 @@ import React from 'react';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+
 export interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +21,10 @@ export interface ConfirmModalProps {
   loading?: boolean;
   isDangerous?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  confirmPassword?: string;
+  onConfirmPasswordChange?: (value: string) => void;
+  confirmPasswordLabel?: string;
+  children?: React.ReactNode;
 }
 
 /**
@@ -37,6 +44,10 @@ export function ConfirmModal({
   loading = false,
   isDangerous = false,
   size = 'sm',
+  confirmPassword,
+  onConfirmPasswordChange,
+  confirmPasswordLabel = 'Confirm with your user password',
+  children,
 }: ConfirmModalProps) {
   const handleConfirm = async () => {
     try {
@@ -46,6 +57,8 @@ export function ConfirmModal({
       console.error('Confirmation error:', error);
     }
   };
+
+  const isConfirmDisabled = loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
 
   return (
     <AppModal
@@ -57,7 +70,7 @@ export function ConfirmModal({
       size={size}
       showClose={false}
       footer={
-        <div className='flex gap-2'>
+        <div className='flex gap-2 w-full'>
           {extraAction}
           <div className='flex-1' />
           <Button onClick={onClose} variant='outline' disabled={loading}>
@@ -68,16 +81,36 @@ export function ConfirmModal({
               void handleConfirm();
             }}
             variant={isDangerous ? 'destructive' : 'primary'}
-            disabled={loading}
+            disabled={isConfirmDisabled}
           >
             {loading ? 'Processing...' : confirmText}
           </Button>
         </div>
       }
     >
-      {message && (
-        <div className='text-sm text-muted-foreground whitespace-pre-wrap'>{message}</div>
-      )}
+      <div className='space-y-4'>
+        {message && (
+          <div className='text-sm text-muted-foreground whitespace-pre-wrap'>{message}</div>
+        )}
+
+        {onConfirmPasswordChange && (
+          <div className='space-y-2'>
+            <Label className='text-xs font-medium text-gray-300'>
+              {confirmPasswordLabel}
+            </Label>
+            <Input
+              type='password'
+              value={confirmPassword}
+              onChange={(e) => onConfirmPasswordChange(e.target.value)}
+              placeholder='Enter your password'
+              disabled={loading}
+              autoFocus
+            />
+          </div>
+        )}
+
+        {children}
+      </div>
     </AppModal>
   );
 }

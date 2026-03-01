@@ -22,6 +22,8 @@ import {
   LoadingState,
   StatusBadge,
   StandardDataTablePanel,
+  FormActions,
+  FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -34,6 +36,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [search, setSearch] = useState('');
   const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
@@ -41,6 +44,11 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     (): NotebookRecord[] => notebooksQuery.data ?? [],
     [notebooksQuery.data]
   );
+  const filteredNotebooks = useMemo(() => {
+    if (!search.trim()) return notebooks;
+    const q = search.toLowerCase().trim();
+    return notebooks.filter((nb) => nb.name.toLowerCase().includes(q));
+  }, [notebooks, search]);
   const loading = notebooksQuery.isPending;
 
   const createNotebook = useCreateNotebook();
@@ -200,29 +208,14 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           return (
             <div className='flex items-center justify-end gap-2'>
               {isEditing ? (
-                <>
-                  <Button
-                    variant='outline'
-                    size='xs'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleUpdate(nb.id);
-                    }}
-                    disabled={updateNotebook.isPending}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='xs'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditCancel();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </>
+                <FormActions
+                  onSave={() => void handleUpdate(nb.id)}
+                  onCancel={handleEditCancel}
+                  saveText='Save'
+                  isSaving={updateNotebook.isPending}
+                  saveVariant='default'
+                  cancelVariant='ghost'
+                />
               ) : (
                 <>
                   <Button
@@ -334,7 +327,24 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           </div>
         </FormSection>
 
-        <StandardDataTablePanel columns={columns} data={notebooks} isLoading={loading} />
+        <StandardDataTablePanel
+          columns={columns}
+          data={filteredNotebooks}
+          filters={
+            <FilterPanel
+              filters={[]}
+              values={{}}
+              search={search}
+              searchPlaceholder='Search notebooks by name...'
+              onFilterChange={() => {}}
+              onSearchChange={setSearch}
+              onReset={() => setSearch('')}
+              showHeader={false}
+              compact
+            />
+          }
+          isLoading={loading}
+        />
       </div>
 
       <ConfirmModal

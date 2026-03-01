@@ -7,6 +7,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
   AI_PATHS_LAST_ERROR_KEY,
+  PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   createDefaultPathConfig,
   normalizeNodes,
@@ -17,7 +18,7 @@ import {
   stableStringify,
 } from '@/shared/lib/ai-paths';
 import {
-  fetchAiPathsSettingsCached,
+  fetchAiPathsSettingsByKeysCached,
   updateAiPathsSettingsBulk,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -130,11 +131,23 @@ export function useAiPathsPersistence(
     setLoading(true);
 
     const loadConfig = async (): Promise<void> => {
+      const loadStartedAt = Date.now();
       try {
-        const settings = await fetchAiPathsSettingsCached();
-        const userPrefs = await prefs.resolveUserPreferences();
+        const baseKeys = [
+          PATH_INDEX_KEY,
+          'user_preferences',
+          AI_PATHS_HISTORY_RETENTION_KEY,
+          AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
+          'ai_paths_validation_v1',
+          'ai_paths_ui_state',
+          'ai_paths_trigger_buttons',
+        ];
+        const stageAStartedAt = Date.now();
+        const baseSettings = await fetchAiPathsSettingsByKeysCached(baseKeys, { timeoutMs: 8_000 });
+        const stageADurationMs = Date.now() - stageAStartedAt;
+        const userPrefs = prefs.resolveUserPreferences(baseSettings);
 
-        const pathIndexItem = settings.find((s) => s.key === PATH_INDEX_KEY);
+        const pathIndexItem = baseSettings.find((s) => s.key === PATH_INDEX_KEY);
         let rawPaths: PathMeta[] = [];
         try {
           if (pathIndexItem?.value) rawPaths = JSON.parse(pathIndexItem.value) as PathMeta[];
@@ -144,15 +157,15 @@ export function useAiPathsPersistence(
         const loadedPaths = normalizeLoadedPathMetas(rawPaths);
         setPaths(loadedPaths);
 
-        const historyPassesItem = settings.find((s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY);
+        const historyPassesItem = baseSettings.find((s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY);
         setHistoryRetentionPasses(normalizeHistoryRetentionPasses(historyPassesItem?.value));
 
-        const historyMaxItem = settings.find(
+        const historyMaxItem = baseSettings.find(
           (s) => s.key === AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY
         );
         setHistoryRetentionOptionsMax(normalizeHistoryRetentionOptionsMax(historyMaxItem?.value));
 
-        const validationItem = settings.find((s) => s.key === 'ai_paths_validation_v1');
+        const validationItem = baseSettings.find((s) => s.key === 'ai_paths_validation_v1');
         if (validationItem?.value) {
           try {
             setAiPathsValidation(JSON.parse(validationItem.value) as AiPathsValidationConfig);
@@ -169,9 +182,19 @@ export function useAiPathsPersistence(
             ? preferredActivePathId
             : fallbackActivePathId;
 
-        if (resolvedActivePathId) {
-          const configItem = settings.find((s) => s.key === `path_config_${resolvedActivePathId}`);
-          let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
+        if (!resolvedActivePathId) {
+          setUiStateLoaded(true);
+          return;
+        }
+
+        const activeConfigKey = `${PATH_CONFIG_PREFIX}${resolvedActivePathId}`;
+        const stageBStartedAt = Date.now();
+        let config: PathConfig = createDefaultPathConfig(resolvedActivePathId);
+        try {
+          const activeConfigSettings = await fetchAiPathsSettingsByKeysCached([activeConfigKey], {
+            timeoutMs: 10_000,
+          });
+          const configItem = activeConfigSettings.find((item) => item.key === activeConfigKey);
           if (configItem?.value) {
             try {
               config = JSON.parse(configItem.value) as PathConfig;
@@ -185,70 +208,125 @@ export function useAiPathsPersistence(
               });
             }
           }
-          try {
-            config = migratePathConfigCollections(config).config;
-            config = repairPathNodeIdentities(config).config;
-            config.nodes = normalizeNodes(config.nodes);
-          } catch (error) {
-            logClientError(error, {
-              context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' },
+        } catch (error) {
+          logClientError(error, {
+            context: {
+              source: 'useAiPathsPersistence',
+              action: 'loadActivePathConfig',
+              pathId: resolvedActivePathId,
+              level: 'warn',
+            },
+          });
+        }
+        const stageBDurationMs = Date.now() - stageBStartedAt;
+        try {
+          config = migratePathConfigCollections(config).config;
+          config = repairPathNodeIdentities(config).config;
+          config.nodes = normalizeNodes(config.nodes);
+        } catch (error) {
+          logClientError(error, {
+            context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' },
+          });
+        }
+
+        setActivePathId(resolvedActivePathId);
+        setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
+
+        const normalizedNodes = normalizeNodes(config.nodes);
+        setNodes(normalizedNodes);
+        setEdges(sanitizeEdges(normalizedNodes, config.edges));
+        setPathName(config.name);
+        setPathDescription(config.description);
+        setActiveTrigger(normalizeTriggerLabel(config.trigger));
+        setExecutionMode(
+          config.executionMode === 'local' || config.executionMode === 'server'
+            ? config.executionMode
+            : 'server'
+        );
+        setFlowIntensity(
+          config.flowIntensity === 'off' ||
+            config.flowIntensity === 'low' ||
+            config.flowIntensity === 'medium' ||
+            config.flowIntensity === 'high'
+            ? config.flowIntensity
+            : 'medium'
+        );
+        setRunMode(
+          config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
+            ? config.runMode
+            : config.runMode === 'queue'
+              ? 'automatic'
+              : 'manual'
+        );
+        setStrictFlowMode(config.strictFlowMode !== false);
+        setBlockedRunPolicy(
+          config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
+        );
+        setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
+        setParserSamples(normalizeParserSamples(config.parserSamples));
+        setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
+        setRuntimeState(parseRuntimeState(config.runtimeState));
+        setLastRunAt(config.lastRunAt ?? null);
+        setIsPathLocked(Boolean(config.isLocked));
+        setIsPathActive(config.isActive !== false);
+        const preferredNodeId = config.uiState?.selectedNodeId ?? null;
+        const selectedNodeId =
+          preferredNodeId && normalizedNodes.some((node): boolean => node.id === preferredNodeId)
+            ? preferredNodeId
+            : (normalizedNodes[0]?.id ?? null);
+        setSelectedNodeId(selectedNodeId);
+        setConfigOpen(false);
+
+        if (resolvedActivePathId !== preferredActivePathId) {
+          void prefs.persistActivePathPreference(resolvedActivePathId);
+        }
+
+        const remainingConfigKeys = loadedPaths
+          .filter((path) => path.id !== resolvedActivePathId)
+          .map((path) => `${PATH_CONFIG_PREFIX}${path.id}`);
+        if (remainingConfigKeys.length > 0) {
+          const prefetchRemainingConfigs = async (): Promise<void> => {
+            const prefetchStartedAt = Date.now();
+            try {
+              await fetchAiPathsSettingsByKeysCached(remainingConfigKeys, { timeoutMs: 12_000 });
+              const prefetchDurationMs = Date.now() - prefetchStartedAt;
+              if (prefetchDurationMs >= 200) {
+                console.info('[ai-paths-load] prefetched non-active path configs', {
+                  durationMs: prefetchDurationMs,
+                  pathConfigs: remainingConfigKeys.length,
+                });
+              }
+            } catch (error) {
+              logClientError(error, {
+                context: {
+                  source: 'useAiPathsPersistence',
+                  action: 'prefetchPathConfigs',
+                  level: 'warn',
+                  pathConfigs: remainingConfigKeys.length,
+                },
+              });
+            }
+          };
+          if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            window.requestIdleCallback(() => {
+              void prefetchRemainingConfigs();
             });
+          } else {
+            setTimeout(() => {
+              void prefetchRemainingConfigs();
+            }, 150);
           }
+        }
 
-          setActivePathId(resolvedActivePathId);
-          setPathConfigs((prev) => ({ ...prev, [resolvedActivePathId]: config }));
-
-          const normalizedNodes = normalizeNodes(config.nodes);
-          setNodes(normalizedNodes);
-          setEdges(sanitizeEdges(normalizedNodes, config.edges));
-          setPathName(config.name);
-          setPathDescription(config.description);
-          setActiveTrigger(normalizeTriggerLabel(config.trigger));
-          setExecutionMode(
-            config.executionMode === 'local' || config.executionMode === 'server'
-              ? config.executionMode
-              : 'server'
-          );
-          setFlowIntensity(
-            config.flowIntensity === 'off' ||
-              config.flowIntensity === 'low' ||
-              config.flowIntensity === 'medium' ||
-              config.flowIntensity === 'high'
-              ? config.flowIntensity
-              : 'medium'
-          );
-          setRunMode(
-            config.runMode === 'automatic' ||
-              config.runMode === 'manual' ||
-              config.runMode === 'step'
-              ? config.runMode
-              : config.runMode === 'queue'
-                ? 'automatic'
-                : 'manual'
-          );
-          setStrictFlowMode(config.strictFlowMode !== false);
-          setBlockedRunPolicy(
-            config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
-          );
-          setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
-          setParserSamples(normalizeParserSamples(config.parserSamples));
-          setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
-          setRuntimeState(parseRuntimeState(config.runtimeState));
-          setLastRunAt(config.lastRunAt ?? null);
-          setIsPathLocked(Boolean(config.isLocked));
-          setIsPathActive(config.isActive !== false);
-          const preferredNodeId = config.uiState?.selectedNodeId ?? null;
-          const selectedNodeId =
-            preferredNodeId &&
-            normalizedNodes.some((node): boolean => node.id === preferredNodeId)
-              ? preferredNodeId
-              : (normalizedNodes[0]?.id ?? null);
-          setSelectedNodeId(selectedNodeId);
-          setConfigOpen(false);
-
-          if (resolvedActivePathId !== preferredActivePathId) {
-            void prefs.persistActivePathPreference(resolvedActivePathId);
-          }
+        const totalDurationMs = Date.now() - loadStartedAt;
+        if (totalDurationMs >= 300) {
+          console.info('[ai-paths-load] hydrated active canvas path', {
+            durationMs: totalDurationMs,
+            stageA: stageADurationMs,
+            stageB: stageBDurationMs,
+            pathCount: loadedPaths.length,
+            activePathId: resolvedActivePathId,
+          });
         }
         setUiStateLoaded(true);
       } catch (error) {

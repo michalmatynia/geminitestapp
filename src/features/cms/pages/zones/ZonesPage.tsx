@@ -21,6 +21,7 @@ import {
   SectionHeader,
   FormField,
   FormSection,
+  FilterPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -38,8 +39,15 @@ export default function ZonesPage(): React.JSX.Element {
 
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState('');
+  const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [zoneToDelete, setZoneToDelete] = useState<string | null>(null);
+
+  const filteredDomains = useMemo(() => {
+    if (!search.trim()) return domains;
+    const q = search.toLowerCase().trim();
+    return domains.filter((d) => d.domain.toLowerCase().includes(q));
+  }, [domains, search]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -222,7 +230,20 @@ export default function ZonesPage(): React.JSX.Element {
       <StandardDataTablePanel
         variant='flat'
         columns={columns}
-        data={domains}
+        data={filteredDomains}
+        filters={
+          <FilterPanel
+            filters={[]}
+            values={{}}
+            search={search}
+            searchPlaceholder='Search zones by domain...'
+            onFilterChange={() => {}}
+            onSearchChange={setSearch}
+            onReset={() => setSearch('')}
+            showHeader={false}
+            compact
+          />
+        }
         isLoading={domainsQuery.isLoading}
       />
 

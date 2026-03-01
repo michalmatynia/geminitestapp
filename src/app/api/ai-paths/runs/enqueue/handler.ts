@@ -13,7 +13,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
-import { startAiPathRunQueue } from '@/features/jobs/server';
+import { assertAiPathRunQueueReady } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { Edge } from '@/shared/contracts/ai-paths';
@@ -141,6 +141,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
   };
 
+  await assertAiPathRunQueueReady();
+
   const run = await enqueuePathRun({
     userId: access.userId,
     pathId: rest.pathId,
@@ -158,6 +160,5 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ...(rest.requestId ? { requestId: rest.requestId } : {}),
     meta: normalizedMeta,
   });
-  startAiPathRunQueue();
   return NextResponse.json({ run });
 }

@@ -10,6 +10,7 @@ export function useProductListModals({
   prefetchIntegrationSelectionData,
   prefetchProductListingsData,
   refreshProductListingsData,
+  visibleProductIds,
   rowSelection,
   toast,
 }: {
@@ -17,6 +18,7 @@ export function useProductListModals({
   prefetchIntegrationSelectionData: () => void;
   prefetchProductListingsData: (productId: string) => void;
   refreshProductListingsData: (productId: string) => void;
+  visibleProductIds: string[];
   rowSelection: Record<string, boolean>;
   toast: Toast;
 }) {
@@ -37,7 +39,7 @@ export function useProductListModals({
     setExportSettingsProduct,
     refreshListingBadges,
     handleListProductSuccess: baseHandleListProductSuccess,
-  } = useIntegrationOperations();
+  } = useIntegrationOperations(visibleProductIds);
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);

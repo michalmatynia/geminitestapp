@@ -1,5 +1,5 @@
-import { AdminBrainPage } from '@/shared/lib/ai-brain';
+import { redirect } from 'next/navigation';
 
-export default function AdminBrainSettingsPage(): React.JSX.Element {
-  return <AdminBrainPage />;
+export default function AdminBrainSettingsPage(): never {
+  redirect('/admin/brain?tab=routing');
 }

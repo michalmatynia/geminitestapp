@@ -20,6 +20,7 @@ import {
   loadRobotsTxt,
   parseRobotsRules,
   evaluateRobotsRules,
+  parseExtractionRequest,
 } from '../utils';
 
 import { type AgentToolRequest, type AgentToolResult, type ToolLlmContext } from './types';
@@ -342,21 +343,22 @@ export async function runAgentTool(
       log,
     });
 
-    if (!extractionResult) {
+    if (parseExtractionRequest(prompt) && !extractionResult) {
       throw new Error('Extraction failed to produce a result.');
     }
 
     const snapshot = await captureSnapshot(page, runId, _runDir, 'auto', log, activeStepId);
 
     return {
-      ok: true,
+      ok: extractionResult ? extractionResult.ok : true,
+      error: extractionResult?.error,
       output: {
         url: finalUrl,
         domText: safeText(snapshot.domText),
         snapshotId: snapshot.id,
         logCount: 0,
         cloudflareDetected: detectionState.cloudflareDetected,
-        ...extractionResult.output,
+        ...(extractionResult?.output ?? {}),
       },
     };
   } catch (error) {

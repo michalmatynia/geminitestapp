@@ -1,5 +1,6 @@
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/ai/chatbot/workers/chatbot-job-processor';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue } from '@/shared/lib/queue';
 
@@ -44,12 +45,50 @@ const queue = createManagedQueue<ChatbotJobData>({
   },
 });
 
+let workerStarted = false;
+let reconcileInFlight: Promise<void> | null = null;
+
+const isChatbotEnabled = async (): Promise<boolean> => {
+  const brain = await getBrainAssignmentForFeature('chatbot');
+  return brain.enabled;
+};
+
 export const startChatbotJobQueue = (): void => {
-  queue.startWorker();
+  if (reconcileInFlight) return;
+  reconcileInFlight = (async (): Promise<void> => {
+    let enabled: boolean;
+    try {
+      enabled = await isChatbotEnabled();
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'chatbot-job-queue',
+        action: 'validateBrainGate',
+      });
+      return;
+    }
+    if (!enabled) {
+      if (workerStarted) {
+        await queue.stopWorker().catch(async (error) => {
+          void ErrorSystem.captureException(error, {
+            service: 'chatbot-job-queue',
+            action: 'stopWorker',
+          });
+        });
+        workerStarted = false;
+      }
+      return;
+    }
+    if (workerStarted) return;
+    queue.startWorker();
+    workerStarted = true;
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
 };
 
 export const stopChatbotJobQueue = (): void => {
   void queue.stopWorker();
+  workerStarted = false;
 };
 
 export const enqueueChatbotJob = async (jobId: string): Promise<void> => {

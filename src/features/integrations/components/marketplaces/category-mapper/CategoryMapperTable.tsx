@@ -30,6 +30,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     handleSave,
     fetchMutation,
     saveMutation,
+    stats,
   } = useCategoryMapper();
 
   const data = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);

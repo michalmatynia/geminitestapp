@@ -9,6 +9,7 @@ export {
 export { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 export {
   startAiPathRunQueue,
+  assertAiPathRunQueueReady,
   enqueuePathRunJob,
   getAiPathRunQueueStatus,
   removePathRunQueueEntries,

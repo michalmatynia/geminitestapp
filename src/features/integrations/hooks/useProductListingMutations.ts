@@ -55,9 +55,10 @@ type GenericExportToBaseVariables = ExportToBaseVariables & {
   productId: string;
   requestId?: string;
 };
+type ListingBadgesSnapshot = Array<[readonly unknown[], ListingBadgesPayload | undefined]>;
 
 interface ListingBadgeContext {
-  previousListingBadges?: ListingBadgesPayload | undefined;
+  previousListingBadges?: ListingBadgesSnapshot | undefined;
 }
 
 interface ProductListingAndJobsContext {
@@ -68,19 +69,41 @@ interface ProductListingAndJobsContext {
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
 
+const getListingBadgesSnapshot = (
+  queryClient: ReturnType<typeof useQueryClient>
+): ListingBadgesSnapshot =>
+  queryClient.getQueriesData<ListingBadgesPayload>({
+    queryKey: listingBadgesQueryKey,
+  });
+
+const restoreListingBadgesSnapshot = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  snapshot: ListingBadgesSnapshot | undefined
+): void => {
+  if (!snapshot) return;
+  snapshot.forEach(([queryKey, data]) => {
+    queryClient.setQueryData(queryKey, data);
+  });
+};
+
 const setListingBadgeStatus = (
   queryClient: ReturnType<typeof useQueryClient>,
   productId: string,
   marketplace: keyof MarketplaceBadgeEntry,
   status: string
 ): void => {
-  queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => ({
-    ...(current ?? {}),
-    [productId]: {
-      ...toBadgeEntry(current?.[productId]),
-      [marketplace]: status,
+  queryClient.setQueriesData<ListingBadgesPayload>(
+    {
+      queryKey: listingBadgesQueryKey,
     },
-  }));
+    (current) => ({
+      ...(current ?? {}),
+      [productId]: {
+        ...toBadgeEntry(current?.[productId]),
+        [marketplace]: status,
+      },
+    })
+  );
 };
 
 const removeListingBadgeStatus = (
@@ -88,20 +111,25 @@ const removeListingBadgeStatus = (
   productId: string,
   marketplace: keyof MarketplaceBadgeEntry
 ): void => {
-  queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => {
-    if (!current) return current;
-    const currentProduct = toBadgeEntry(current[productId]);
-    if (Object.keys(currentProduct).length === 0) return current;
-    const nextProduct = { ...currentProduct };
-    delete nextProduct[marketplace];
-    const next = { ...current };
-    if (Object.keys(nextProduct).length === 0) {
-      delete next[productId];
-    } else {
-      next[productId] = nextProduct;
+  queryClient.setQueriesData<ListingBadgesPayload>(
+    {
+      queryKey: listingBadgesQueryKey,
+    },
+    (current) => {
+      if (!current) return current;
+      const currentProduct = toBadgeEntry(current[productId]);
+      if (Object.keys(currentProduct).length === 0) return current;
+      const nextProduct = { ...currentProduct };
+      delete nextProduct[marketplace];
+      const next = { ...current };
+      if (Object.keys(nextProduct).length === 0) {
+        delete next[productId];
+      } else {
+        next[productId] = nextProduct;
+      }
+      return next;
     }
-    return next;
-  });
+  );
 };
 
 export function useGenericExportToBaseMutation(): UpdateMutation<
@@ -143,14 +171,13 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
     },
     onMutate: async (vars: GenericExportToBaseVariables): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
-      const previousListingBadges =
-        queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      const previousListingBadges = getListingBadgesSnapshot(queryClient);
       setListingBadgeStatus(queryClient, vars.productId, 'base', 'pending');
       return { previousListingBadges };
     },
     onError: (_error, vars, context: ListingBadgeContext | undefined): void => {
       if (context?.previousListingBadges) {
-        queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
+        restoreListingBadgesSnapshot(queryClient, context.previousListingBadges);
         return;
       }
       removeListingBadgeStatus(queryClient, vars.productId, 'base');
@@ -414,14 +441,13 @@ export function useExportToBaseMutation(
     },
     onMutate: async (): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
-      const previousListingBadges =
-        queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      const previousListingBadges = getListingBadgesSnapshot(queryClient);
       setListingBadgeStatus(queryClient, productId, 'base', 'pending');
       return { previousListingBadges };
     },
     onError: (_error, _vars, context: ListingBadgeContext | undefined): void => {
       if (context?.previousListingBadges) {
-        queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
+        restoreListingBadgesSnapshot(queryClient, context.previousListingBadges);
         return;
       }
       removeListingBadgeStatus(queryClient, productId, 'base');

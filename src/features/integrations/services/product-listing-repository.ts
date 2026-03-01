@@ -713,6 +713,29 @@ export async function listProductListingsByProductIdAcrossProviders(
   });
 }
 
+export async function listProductListingsByProductIdsAcrossProviders(
+  productIds: string[]
+): Promise<
+  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+> {
+  const uniqueProductIds = Array.from(
+    new Set(productIds.map((id) => id.trim()).filter((id) => id.length > 0))
+  );
+  if (uniqueProductIds.length === 0) return [];
+
+  const [prismaListings, mongoListings] = await Promise.all([
+    prismaRepository.getListingsByProductIds(uniqueProductIds),
+    mongoRepository.getListingsByProductIds(uniqueProductIds),
+  ]);
+
+  return [...prismaListings, ...mongoListings].map((listing) => ({
+    productId: listing.productId,
+    status: listing.status,
+    integrationId: listing.integrationId,
+    marketplaceData: listing.marketplaceData,
+  }));
+}
+
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > {

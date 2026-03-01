@@ -8,7 +8,8 @@ import {
   IntegrationsProvider,
   useIntegrationsContext,
 } from '@/features/integrations/context/IntegrationsContext';
-import { Button, DetailModal, Input, LoadingState } from '@/shared/ui';
+import { LoadingState } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 function IntegrationsContent(): React.JSX.Element {
   const {
@@ -48,55 +49,19 @@ function IntegrationsContent(): React.JSX.Element {
 
   return (
     <div className='container mx-auto py-10'>
-      <DetailModal
+      <ConfirmModal
         isOpen={Boolean(connectionToDelete)}
         onClose={handleCloseDeleteModal}
         title='Delete connection'
         subtitle={connectionToDelete ? `Delete "${connectionToDelete.name}"` : undefined}
-        size='sm'
-        footer={
-          <div className='flex justify-end gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={handleCloseDeleteModal}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type='button'
-              variant='destructive'
-              onClick={() => {
-                void handleDeleteConfirm();
-              }}
-              disabled={isDeleting || !deletePassword.trim()}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete connection'}
-            </Button>
-          </div>
-        }
-      >
-        <div className='space-y-3'>
-          <p className='text-sm text-red-300'>
-            This action is permanent and will also remove all related product synchronizations and
-            listing links.
-          </p>
-          <div className='space-y-1'>
-            <label className='text-xs font-medium text-gray-300'>
-              Confirm with your user password
-            </label>
-            <Input
-              type='password'
-              value={deletePassword}
-              onChange={(event) => setDeletePassword(event.target.value)}
-              placeholder='Enter your password'
-              disabled={isDeleting}
-              autoFocus
-            />
-          </div>
-        </div>
-      </DetailModal>
+        message='This action is permanent and will also remove all related product synchronizations and listing links.'
+        confirmText='Delete connection'
+        isDangerous={true}
+        loading={isDeleting}
+        confirmPassword={deletePassword}
+        onConfirmPasswordChange={setDeletePassword}
+        onConfirm={handleDeleteConfirm}
+      />
       <IntegrationList />
 
       {isModalOpen && activeIntegration && <IntegrationModal />}

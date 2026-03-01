@@ -161,7 +161,7 @@ export const agentRunsKeys = QUERY_KEYS.agentRuns;
 
 /**
  * Brain query keys (from brain)
- * Used in: useBrainQueries.ts
+ * Used in: useBrainQueries.ts (models, operations overview, metrics)
  */
 export const brainKeys = QUERY_KEYS.brain;
 

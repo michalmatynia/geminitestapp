@@ -35,7 +35,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import {
   deleteAiPathsSettings,
-  fetchAiPathsSettingsCached,
+  fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
@@ -569,7 +569,10 @@ export function useAiPathsSettingsPathActions({
       setActivePathId(value);
       void (async (): Promise<void> => {
         try {
-          const settings = await fetchAiPathsSettingsCached();
+          const settings = await fetchAiPathsSettingsByKeysCached(
+            [`${PATH_CONFIG_PREFIX}${value}`],
+            { timeoutMs: 10_000 }
+          );
           if (switchRequestSeqRef.current !== nextRequestSeq) return;
 
           const configItem = settings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);

@@ -6,7 +6,10 @@ import path from 'path';
 import { UnrecoverableError } from 'bullmq';
 import OpenAI from 'openai';
 
-import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  getBrainAssignmentForFeature,
+  resolveBrainExecutionConfigForCapability,
+} from '@/shared/lib/ai-brain/server';
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/studio-settings';
 import {
   detectCaseResolverOcrProvider,
@@ -880,13 +883,61 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
   },
 });
 
+let workerStarted = false;
+let reconcileInFlight: Promise<void> | null = null;
+
+const isCaseResolverEnabled = async (): Promise<boolean> => {
+  const brain = await getBrainAssignmentForFeature('case_resolver');
+  return brain.enabled;
+};
+
+const assertCaseResolverEnabled = async (): Promise<void> => {
+  const enabled = await isCaseResolverEnabled();
+  if (enabled) return;
+  throw new Error(
+    'Case Resolver OCR is disabled in AI Brain. Enable it in /admin/brain?tab=routing before running this action.'
+  );
+};
+
 export const startCaseResolverOcrQueue = (): void => {
-  queue.startWorker();
+  if (reconcileInFlight) return;
+  reconcileInFlight = (async (): Promise<void> => {
+    let enabled: boolean;
+    try {
+      enabled = await isCaseResolverEnabled();
+    } catch (error) {
+      await ErrorSystem.captureException(error, {
+        service: LOG_SOURCE,
+        action: 'validateBrainGate',
+      });
+      return;
+    }
+
+    if (!enabled) {
+      if (!workerStarted) return;
+      await queue.stopWorker().catch(async (error) => {
+        await ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          action: 'stopWorker',
+        });
+      });
+      workerStarted = false;
+      return;
+    }
+
+    if (workerStarted) return;
+    queue.startWorker();
+    workerStarted = true;
+  })().finally(() => {
+    reconcileInFlight = null;
+  });
 };
 
 export const enqueueCaseResolverOcrJob = async (
   data: CaseResolverOcrQueueJobData
 ): Promise<CaseResolverOcrDispatchMode> => {
+  await assertCaseResolverEnabled();
+
   if (!isRedisAvailable()) {
     await logSystemEvent({
       level: 'info',

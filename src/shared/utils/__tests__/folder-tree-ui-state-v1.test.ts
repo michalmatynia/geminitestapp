@@ -62,6 +62,10 @@ describe('folder-tree-ui-state-v1', () => {
       expandedNodeIds: [],
       panelCollapsed: false,
     });
+    expect(parsed.brain_routing_tree).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
   });
 
   it('serializes valid maps without mutation', () => {

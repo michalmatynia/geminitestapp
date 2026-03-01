@@ -85,7 +85,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   });
 
   const updateRunSnapshot = async (
-    data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'error'>>
+    data: Partial<Pick<AiPathRunRecord, 'status' | 'runtimeState' | 'meta' | 'errorMessage'>>
   ): Promise<boolean> => {
     try {
       const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
@@ -560,7 +560,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await updateRunSnapshot({
       status: finalStatus,
       runtimeState: finalRuntimeState,
-      error: finalError,
+      errorMessage: finalError,
       meta: {
         ...(run.meta ?? {}),
         finishedAt,
@@ -589,7 +589,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await updateRunSnapshot({
       status,
       runtimeState: finalRuntimeState,
-      error: errorMessage,
+      errorMessage,
       meta: {
         ...(run.meta ?? {}),
         finishedAt,

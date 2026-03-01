@@ -8,7 +8,7 @@ const cancelBaseImportRunMock = vi.hoisted(() => vi.fn());
 const toStartResponseMock = vi.hoisted(() => vi.fn());
 const enqueueBaseImportRunJobMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/integrations/services/imports/base-import-service', () => ({
+vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
   getBaseImportRunDetailOrThrow: getBaseImportRunDetailOrThrowMock,
   resumeBaseImportRun: resumeBaseImportRunMock,
   updateBaseImportRunQueueJob: updateBaseImportRunQueueJobMock,
@@ -16,7 +16,7 @@ vi.mock('@/shared/lib/integrations/services/imports/base-import-service', () => 
   toStartResponse: toStartResponseMock,
 }));
 
-vi.mock('@/shared/lib/integrations/workers/baseImportQueue', () => ({
+vi.mock('@/features/integrations/workers/baseImportQueue', () => ({
   enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
 }));
 

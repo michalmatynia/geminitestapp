@@ -19,7 +19,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
           <Button
             variant='outline'
             size='sm'
-            onClick={() => window.location.assign('/admin/settings/brain')}
+            onClick={() => window.location.assign('/admin/brain?tab=routing')}
           >
             Settings
           </Button>

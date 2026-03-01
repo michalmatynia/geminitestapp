@@ -8,6 +8,7 @@ import {
   resolveBrainExecutionConfigForCapability,
 } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
 import { runDatabaseSync } from '@/shared/lib/db/services/database-sync';
 import { type DatabaseSyncDirection } from '@/shared/contracts';
@@ -29,14 +30,15 @@ import { badRequestError, operationFailedError } from '@/shared/errors/app-error
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
-// OpenAI's HTTP request body limit is ~20 MB.  Keep well inside that.
-const MAX_IMAGES = 10;
+// OpenAI-specific request body limits (~20 MB hard cap from the API).
+// These constants are only applied when the resolved model vendor is 'openai'.
+const OPENAI_MAX_IMAGES = 10;
 // 4 MB base64 string ≈ 3 MB raw image — enough for any reasonable product photo.
-const MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
+const OPENAI_MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
 // Total base64 budget for all images in one request (≈ 15 MB).
-const MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
+const OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
 // Prompt character cap — ~100 k chars ≈ 25 k tokens, generous for any product prompt.
-const MAX_PROMPT_CHARS = 100_000;
+const OPENAI_MAX_PROMPT_CHARS = 100_000;
 
 export type JobPayload = {
   isTest?: boolean;
@@ -57,11 +59,14 @@ export type Job = ProductAiJobRecord & {
   payload: JobPayload;
 };
 
-const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionContentPart[]> => {
+const buildImageParts = async (
+  imageUrls: string[],
+  openAiGuards: boolean
+): Promise<ChatCompletionContentPart[]> => {
   if (!imageUrls.length) return [] as ChatCompletionContentPart[];
 
-  // Honour the per-request image count limit up front.
-  const cappedUrls = imageUrls.slice(0, MAX_IMAGES);
+  // Apply OpenAI image-count cap only for OpenAI models.
+  const urlsToProcess = openAiGuards ? imageUrls.slice(0, OPENAI_MAX_IMAGES) : imageUrls;
 
   const imageFileRepository = await getImageFileRepository();
   const imageFiles = await imageFileRepository.listImageFiles();
@@ -69,7 +74,7 @@ const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionConte
     imageFiles.map((file: ImageFileRecord) => [file.filepath, file])
   );
 
-  const imagePromises = cappedUrls.map(
+  const imagePromises = urlsToProcess.map(
     async (item: string): Promise<ChatCompletionContentPart | null> => {
       try {
         let base64Image: string;
@@ -88,8 +93,8 @@ const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionConte
           const record = imageFileMap.get(item);
           if (record) mimetype = record.mimetype;
         }
-        // Drop images that individually exceed the per-image size budget.
-        if (base64Image.length > MAX_IMAGE_BASE64_BYTES) return null;
+        // OpenAI only: drop images that individually exceed the per-image size budget.
+        if (openAiGuards && base64Image.length > OPENAI_MAX_IMAGE_BASE64_BYTES) return null;
         return {
           type: 'image_url' as const,
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
@@ -106,13 +111,15 @@ const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionConte
     ): img is Extract<ChatCompletionContentPart, { type: 'image_url' }> => Boolean(img)
   );
 
-  // Apply the total-size budget: drop trailing images once we'd exceed the cap.
+  if (!openAiGuards) return parts;
+
+  // OpenAI only: apply the total-size budget; drop trailing images once we'd exceed the cap.
   let totalBytes = 0;
   const budgeted: typeof parts = [];
   for (const part of parts) {
     const url = (part as { image_url: { url: string } }).image_url.url;
     totalBytes += url.length;
-    if (totalBytes > MAX_TOTAL_IMAGE_BASE64_BYTES) break;
+    if (totalBytes > OPENAI_MAX_TOTAL_IMAGE_BASE64_BYTES) break;
     budgeted.push(part);
   }
   return budgeted;
@@ -124,8 +131,6 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   if (!rawPrompt) {
     throw badRequestError('Graph model job missing prompt', { jobId: job.id });
   }
-  const prompt =
-    rawPrompt.length > MAX_PROMPT_CHARS ? rawPrompt.slice(0, MAX_PROMPT_CHARS) : rawPrompt;
   const source =
     typeof payload.source === 'string' && payload.source.trim()
       ? payload.source.trim()
@@ -181,9 +186,17 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     systemMessage = brainConfig.systemPrompt;
     brainApplied = brainConfig.brainApplied;
   }
-  const content: ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
+
+  // Apply OpenAI-specific payload guards only when the resolved model is from OpenAI.
+  const isOpenAi = inferBrainModelVendor(modelId) === 'openai';
+  const effectivePrompt =
+    isOpenAi && rawPrompt.length > OPENAI_MAX_PROMPT_CHARS
+      ? rawPrompt.slice(0, OPENAI_MAX_PROMPT_CHARS)
+      : rawPrompt;
+
+  const content: ChatCompletionContentPart[] = [{ type: 'text', text: effectivePrompt }];
   if (attachImages) {
-    const imageParts = await buildImageParts(imageUrls);
+    const imageParts = await buildImageParts(imageUrls, isOpenAi);
     content.push(...imageParts);
   }
 
@@ -200,7 +213,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   return {
     result: resultText,
     modelId,
-    prompt,
+    prompt: rawPrompt,
     imageUrls,
     temperature,
     maxTokens,

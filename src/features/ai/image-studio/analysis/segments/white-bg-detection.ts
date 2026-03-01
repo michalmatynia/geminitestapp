@@ -403,13 +403,13 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
     coreCount = foregroundCount;
   }
 
-  const mask = shadowPolicy === 'exclude_shadow' ? coreMask : foregroundMask;
+  const mask = shadowPolicy === 'include_shadow' ? foregroundMask : coreMask;
   const components = resolveConnectedComponents(mask, width, height);
   const bestComponent = selectBestConnectedComponent(
     components,
     width,
     height,
-    shadowPolicy === 'exclude_shadow' ? coreCount : foregroundCount
+    shadowPolicy === 'include_shadow' ? foregroundCount : coreCount
   );
 
   if (!bestComponent) return null;
@@ -423,7 +423,7 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
     },
     confidence: computeComponentConfidence({
       component: bestComponent,
-      totalForegroundPixels: shadowPolicy === 'exclude_shadow' ? coreCount : foregroundCount,
+      totalForegroundPixels: shadowPolicy === 'include_shadow' ? foregroundCount : coreCount,
       width,
       height,
     }),
@@ -431,7 +431,7 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
       shadowPolicyRequested: shadowPolicy,
       shadowPolicyApplied: shadowPolicy,
       componentCount: components.length,
-      coreComponentCount: shadowPolicy === 'exclude_shadow' ? components.length : 0,
+      coreComponentCount: shadowPolicy === 'include_shadow' ? 0 : components.length,
       selectedComponentPixels: bestComponent.pixelCount,
       selectedComponentCoverage:
         bestComponent.pixelCount /
@@ -440,7 +440,7 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
       foregroundPixels: foregroundCount,
       corePixels: coreCount,
       touchesBorder: bestComponent.touchesBorder,
-      maskSource: shadowPolicy === 'exclude_shadow' ? 'core' : 'foreground',
+      maskSource: shadowPolicy === 'include_shadow' ? 'foreground' : 'core',
     },
   };
 };

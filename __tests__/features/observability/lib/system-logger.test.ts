@@ -10,9 +10,11 @@ import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
 import {
   logSystemEvent,
+  logSystemError,
   normalizeErrorInfo,
   buildErrorFingerprint,
 } from '@/shared/lib/observability/system-logger';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'test', createdAt: new Date().toISOString() }),
@@ -53,8 +55,6 @@ describe('system-logger', () => {
 
   describe('log-redaction integration', () => {
     it('should redact sensitive keys in context', async () => {
-       
-       
       await logSystemEvent({
         message: 'Test message',
         source: 'test',
@@ -98,8 +98,6 @@ describe('system-logger', () => {
 
   describe('logSystemEvent', () => {
     it('should call createSystemLog with default info level', async () => {
-       
-       
       await logSystemEvent({ message: 'Hello', source: 'test' });
       await vi.waitFor(() => {
         expect(createSystemLog).toHaveBeenCalledWith(
@@ -111,9 +109,70 @@ describe('system-logger', () => {
       });
     });
 
+    it('should log a system error', async () => {
+      const error = new Error('Boom');
+      await logSystemError({
+        message: 'An error occurred',
+        error,
+      });
+      
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'error',
+            message: 'An error occurred',
+            stack: error.stack,
+            context: expect.objectContaining({
+              error: expect.objectContaining({
+                message: 'Boom',
+              }),
+              fingerprint: expect.any(String),
+            }),
+          })
+        );
+      });
+    });
+
+    it('should preserve AppError metadata and cause chain', async () => {
+      const rootCause = new Error('Database timeout');
+      const appError = new AppError('Invalid payload', {
+        code: AppErrorCodes.validation,
+        httpStatus: 400,
+        expected: true,
+        retryable: false,
+        cause: rootCause,
+        meta: { field: 'sku' },
+      });
+
+      await logSystemError({
+        message: 'Validation failed',
+        source: 'products.v2',
+        error: appError,
+      });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'error',
+            context: expect.objectContaining({
+              errorCode: AppErrorCodes.validation,
+              errorName: 'AppError',
+              error: expect.objectContaining({
+                code: AppErrorCodes.validation,
+                httpStatus: 400,
+                expected: true,
+                meta: expect.objectContaining({ field: 'sku' }),
+                causeChain: expect.arrayContaining([
+                  expect.objectContaining({ message: 'Database timeout' }),
+                ]),
+              }),
+            }),
+          })
+        );
+      });
+    });
+
     it('should notify critical errors', async () => {
-       
-       
       await logSystemEvent({ message: 'Critical fail', source: 'test', level: 'error', critical: true });
       await vi.waitFor(() => {
         expect(notifyCriticalError).toHaveBeenCalled();
@@ -124,8 +183,6 @@ describe('system-logger', () => {
       const context: Record<string, unknown> = { a: 1 };
       context['self'] = context;
 
-       
-       
       await logSystemEvent({ message: 'Circular', source: 'test', context });
 
       await vi.waitFor(() => {
@@ -133,6 +190,28 @@ describe('system-logger', () => {
         expect(calls.length).toBeGreaterThan(0);
         const actualContext = calls[0]?.[0].context as any;
         expect(actualContext.self.self).toBe('[Circular]');
+      });
+    });
+
+    it('should extract info from Request', async () => {
+      const req = new Request('http://localhost/api/test', {
+        method: 'POST',
+        headers: { 'x-request-id': 'req-123' },
+      });
+
+      await logSystemEvent({
+        message: 'Request log',
+        request: req,
+      });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            path: '/api/test',
+            method: 'POST',
+            requestId: 'req-123',
+          })
+        );
       });
     });
   });

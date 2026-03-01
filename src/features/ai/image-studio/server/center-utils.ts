@@ -255,7 +255,7 @@ export async function centerAndScaleObjectByLayout(
       width: sourceObjectBounds.width,
       height: sourceObjectBounds.height,
     })
-    .resize(targetObjectBounds.width, targetObjectBounds.height, {
+    .resize(Math.round(targetObjectBounds.width), Math.round(targetObjectBounds.height), {
       fit: 'fill',
       kernel: 'lanczos3',
     })
@@ -264,13 +264,17 @@ export async function centerAndScaleObjectByLayout(
 
   const outputBuffer = await sharp({
     create: {
-      width: outputWidth,
-      height: outputHeight,
+      width: Math.round(outputWidth),
+      height: Math.round(outputHeight),
       channels: 4,
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
   })
-    .composite([{ input: extracted, left: targetObjectBounds.left, top: targetObjectBounds.top }])
+    .composite([{ 
+      input: extracted, 
+      left: Math.round(targetObjectBounds.left), 
+      top: Math.round(targetObjectBounds.top) 
+    }])
     .png()
     .toBuffer();
 

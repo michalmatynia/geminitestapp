@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -489,7 +490,7 @@ export function useAiPathTriggerEvent(): {
     }
   };
 
-  const fireAiPathTriggerEvent = async (args: FireAiPathTriggerEventArgs): Promise<void> => {
+  const fireAiPathTriggerEvent = useCallback(async (args: FireAiPathTriggerEventArgs): Promise<void> => {
     const triggerEventId = args.triggerEventId.trim();
     if (!triggerEventId) {
       toast('Missing trigger id.', { variant: 'error' });
@@ -498,18 +499,25 @@ export function useAiPathTriggerEvent(): {
 
     try {
       let settingsData: Array<{ key: string; value: string }> = [];
-      const preferredActivePathId = await resolvePreferredActivePathId();
-      try {
-        settingsData = await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-          queryFn: async () => {
-            return await fetchAiPathsSettingsCached();
-          },
-          staleTime: AI_PATHS_SETTINGS_STALE_MS,
-        });
-      } catch {
-        settingsData = await fetchAiPathsSettingsCached();
-      }
+      const [preferredActivePathId, fetchedSettingsData] = await Promise.all([
+        resolvePreferredActivePathId(),
+        queryClient
+          .fetchQuery({
+            queryKey: QUERY_KEYS.ai.aiPaths.settings(),
+            queryFn: async () => {
+              return await fetchAiPathsSettingsCached();
+            },
+            staleTime: AI_PATHS_SETTINGS_STALE_MS,
+          })
+          .catch(async () => {
+            try {
+              return await fetchAiPathsSettingsCached();
+            } catch {
+              return [] as Array<{ key: string; value: string }>;
+            }
+          }),
+      ]);
+      settingsData = fetchedSettingsData;
       let historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
 
       let selection = await resolveTriggerSelection(settingsData, triggerEventId, {
@@ -674,7 +682,17 @@ export function useAiPathTriggerEvent(): {
         });
       };
 
-      const entityJson = args.getEntityJson ? args.getEntityJson() : null;
+      let entityJson: Record<string, unknown> | null = null;
+      if (args.getEntityJson) {
+        try {
+          entityJson = args.getEntityJson();
+        } catch (entityJsonError) {
+          logClientError(entityJsonError, {
+            context: { source: 'useAiPathTriggerEvent', action: 'getEntityJson' },
+          });
+          // Proceed without entity JSON rather than failing the whole trigger
+        }
+      }
 
       const triggerContext = buildTriggerContext({
         triggerNode,
@@ -831,14 +849,18 @@ export function useAiPathTriggerEvent(): {
         void invalidateNotes(queryClient);
       }
 
-      await persistRunSnapshot(runAt);
+      void persistRunSnapshot(runAt);
     } catch (error) {
       logClientError(error, {
         context: { source: 'useAiPathTriggerEvent', action: 'fireAiPathTriggerEvent' },
       });
-      toast('Failed to run AI Path trigger.', { variant: 'error' });
+      const errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to run AI Path trigger.';
+      toast(errorMessage, { variant: 'error' });
     }
-  };
+  }, [queryClient, toast]);
 
   return { fireAiPathTriggerEvent };
 }

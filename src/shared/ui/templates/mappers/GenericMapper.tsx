@@ -2,19 +2,21 @@
 
 import { useEffect, useMemo } from 'react';
 
-import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { StandardDataTablePanel, EmptyState } from '@/shared/ui';
-import { useToast } from '@/shared/ui/toast';
+import { StandardDataTablePanel, EmptyState, useToast } from '@/shared/ui';
 
-import { usePendingExternalMappings } from './usePendingExternalMappings';
-import { GenericMapperHeaderActions } from './generic-mapper/GenericMapperHeaderActions';
-import { GenericMapperStats } from './generic-mapper/GenericMapperStats';
-import { GenericMapperExternalCell } from './generic-mapper/GenericMapperExternalCell';
+import { usePendingMappings } from './usePendingMappings';
+import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
+import { GenericMapperStats } from './GenericMapperStats';
+import { GenericMapperExternalCell } from './GenericMapperExternalCell';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
+  // Context
+  connectionId?: string | null;
+  connectionName?: string | null;
+
   // UI Labels
   title: string;
   internalColumnHeader: string;
@@ -55,13 +57,14 @@ export interface GenericItemMapperProps<TInternal, TExternal, TMapping> {
   config: GenericItemMapperConfig<TInternal, TExternal, TMapping>;
 }
 
-export function GenericItemMapper<TInternal, TExternal, TMapping>({
+export function GenericMapper<TInternal, TExternal, TMapping>({
   config,
 }: GenericItemMapperProps<TInternal, TExternal, TMapping>): React.JSX.Element {
-  const { connectionId, connectionName } = useCategoryMapper();
   const { toast } = useToast();
 
   const {
+    connectionId,
+    connectionName,
     title,
     internalColumnHeader,
     externalColumnHeader,
@@ -105,7 +108,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
   );
 
   const { pendingMappings, getCurrentMapping, handleMappingChange, resetPendingMappings, stats } =
-    usePendingExternalMappings({
+    usePendingMappings({
       mappings: currentMappings,
       internalIds: sortedInternalItems.map((item) => getInternalId(item)),
       getInternalId: getMappingInternalId,
@@ -123,7 +126,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error, {
-        context: { source: 'GenericItemMapper', action: 'fetch', connectionId, title },
+        context: { source: 'GenericMapper', action: 'fetch', connectionId, title },
       });
       const message =
         error instanceof Error ? error.message : `Failed to fetch ${title.toLowerCase()}`;
@@ -150,7 +153,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       resetPendingMappings();
     } catch (error: unknown) {
       logClientError(error, {
-        context: { source: 'GenericItemMapper', action: 'save', connectionId, title },
+        context: { source: 'GenericMapper', action: 'save', connectionId, title },
       });
       const message =
         error instanceof Error ? error.message : `Failed to save ${title.toLowerCase()}`;
@@ -217,7 +220,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
     <div className='space-y-4 border-t border-border/60 pt-6'>
       <StandardDataTablePanel
         title={title}
-        description={`Connection: ${connectionName}`}
+        description={connectionName ? `Connection: ${connectionName}` : undefined}
         headerActions={
           <GenericMapperHeaderActions
             onFetch={() => void handleFetch()}
@@ -228,7 +231,12 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
           />
         }
         alerts={
-          <GenericMapperStats total={stats.total} mapped={stats.mapped} pending={stats.pending} />
+          <GenericMapperStats 
+            total={stats.total} 
+            mapped={stats.mapped} 
+            pending={stats.pending} 
+            itemLabel={title}
+          />
         }
         columns={columns}
         data={sortedInternalItems}

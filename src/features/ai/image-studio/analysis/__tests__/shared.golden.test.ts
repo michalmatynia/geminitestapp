@@ -10,12 +10,15 @@ import {
   computeBoundsIou,
   minMetric,
 } from '@/features/ai/image-studio/analysis/__tests__/bounds-metrics';
-import { detectObjectBoundsForLayoutFromRgba } from '@/features/ai/image-studio/analysis/shared';
+import {
+  detectObjectBoundsForLayoutFromRgba,
+  normalizeImageStudioAnalysisLayoutConfig,
+} from '@/features/ai/image-studio/analysis/shared';
 import type { ImageStudioCenterLayoutConfig } from '@/features/ai/image-studio/contracts/center';
 
 const DETECTION_LAYOUT_BY_VARIANT: Record<
   ObjectLayoutFixtureVariant,
-  ImageStudioCenterLayoutConfig
+  Partial<ImageStudioCenterLayoutConfig>
 > = {
   auto: {
     detection: 'auto',
@@ -43,7 +46,7 @@ const runDetectionForVariant = (
     fixture.rgba,
     fixture.width,
     fixture.height,
-    DETECTION_LAYOUT_BY_VARIANT[variant]
+    normalizeImageStudioAnalysisLayoutConfig(DETECTION_LAYOUT_BY_VARIANT[variant])
   );
 
 describe('image-studio analysis golden fixtures', () => {

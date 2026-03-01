@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-type UsePendingExternalMappingsConfig<TMapping> = {
+type UsePendingMappingsConfig<TMapping> = {
   mappings: TMapping[];
   internalIds: string[];
   getInternalId: (mapping: TMapping) => string;
@@ -24,13 +24,13 @@ export type PendingExternalMappingsState = {
   stats: MappingStats;
 };
 
-export function usePendingExternalMappings<TMapping>({
+export function usePendingMappings<TMapping>({
   mappings,
   internalIds,
   getInternalId,
   getExternalId,
   isActive,
-}: UsePendingExternalMappingsConfig<TMapping>): PendingExternalMappingsState {
+}: UsePendingMappingsConfig<TMapping>): PendingExternalMappingsState {
   const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
 
   const mappingByInternalId = useMemo(() => {
@@ -90,3 +90,5 @@ export function usePendingExternalMappings<TMapping>({
     stats,
   };
 }
+
+export { usePendingMappings as usePendingExternalMappings };

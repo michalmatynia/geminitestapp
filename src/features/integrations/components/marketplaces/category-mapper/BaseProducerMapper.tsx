@@ -7,91 +7,71 @@ import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import {
-  useExternalProducers,
-  useProducerMappings,
-} from '@/features/integrations/hooks/useMarketplaceQueries';
+import { useProducerMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
-import type { ProducerDto as Producer } from '@/shared/contracts/products';
-
-import { GenericItemMapper, type GenericItemMapperConfig } from './GenericItemMapper';
-
-// Define the mapping type explicitly to match GenericItemMapper's expectations
-interface ProducerMapping {
-  internalProducerId: string;
-  externalProducerId: string | null;
-  isActive: boolean;
-}
+import { type Producer } from '@/shared/contracts/products';
+import { type ProducerMapping } from '@/shared/contracts/integrations';
+import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseProducerMapper(): React.JSX.Element {
-  const { connectionId } = useCategoryMapper();
+  const { connectionId, connectionName, catalogId } = useCategoryMapper();
+
   const producersQuery = useProducers();
-  const externalProducersQuery = useExternalProducers(connectionId);
-  const mappingsQuery = useProducerMappings(connectionId);
+  const externalProducersQuery = useFetchExternalProducersMutation();
+  const mappingsQuery = useProducerMappings(connectionId ?? '');
+
   const fetchMutation = useFetchExternalProducersMutation();
   const saveMutation = useSaveProducerMappingsMutation();
 
-  const internalProducers = useMemo(
-    (): Producer[] => producersQuery.data ?? [],
-    [producersQuery.data]
+  const config: GenericItemMapperConfig<Producer, any, ProducerMapping> = useMemo(
+    () => ({
+      connectionId,
+      connectionName,
+      title: 'Producer Mappings',
+      internalColumnHeader: 'Local Producer',
+      externalColumnHeader: 'Marketplace Producer',
+      internalItems: producersQuery.data ?? [],
+      externalItems: externalProducersQuery.data ?? [],
+      currentMappings: mappingsQuery.data ?? [],
+      getInternalId: (item) => item.id,
+      getInternalLabel: (item) => item.name,
+      getExternalId: (item) => String(item.id),
+      getExternalLabel: (item) => item.name,
+      getMappingInternalId: (m) => m.producerId,
+      getMappingExternalId: (m) => m.externalProducerId,
+      onFetch: async () => {
+        const result = await fetchMutation.mutateAsync(connectionId ?? '');
+        return { message: `Fetched ${result.length} producers` };
+      },
+      onSave: async (mappings) => {
+        await saveMutation.mutateAsync({
+          connectionId: connectionId ?? '',
+          mappings: mappings.map((m) => ({
+            producerId: m.internalId,
+            externalProducerId: m.externalId,
+          })),
+        });
+        return { message: 'Producer mappings saved' };
+      },
+      isLoadingInternal: producersQuery.isLoading,
+      isLoadingExternal: externalProducersQuery.isLoading,
+      isLoadingMappings: mappingsQuery.isLoading,
+      isFetching: fetchMutation.isPending,
+      isSaving: saveMutation.isPending,
+    }),
+    [
+      connectionId,
+      connectionName,
+      producersQuery.data,
+      producersQuery.isLoading,
+      externalProducersQuery.data,
+      externalProducersQuery.isLoading,
+      mappingsQuery.data,
+      mappingsQuery.isLoading,
+      fetchMutation,
+      saveMutation,
+    ]
   );
 
-  const mappings = useMemo(
-    (): ProducerMapping[] =>
-      (mappingsQuery.data ?? []).map(
-        (m: {
-          internalProducerId: string;
-          externalProducerId: string | null;
-          isActive: boolean;
-        }) => ({
-          internalProducerId: m.internalProducerId,
-          externalProducerId: m.externalProducerId,
-          isActive: Boolean(m.isActive),
-        })
-      ),
-    [mappingsQuery.data]
-  );
-
-  // Configure the generic mapper
-  const config: GenericItemMapperConfig<Producer, { id: string; name: string }, ProducerMapping> = {
-    title: 'Base.com Producers',
-    internalColumnHeader: 'Internal Producer',
-    externalColumnHeader: 'Base.com Producer',
-
-    internalItems: internalProducers,
-    externalItems: externalProducersQuery.data ?? [],
-    currentMappings: mappings,
-
-    getInternalId: (producer) => producer.id,
-    getInternalLabel: (producer) => producer.name,
-
-    getExternalId: (producer) => producer.id,
-    getExternalLabel: (producer) => producer.name,
-
-    getMappingInternalId: (m) => m.internalProducerId,
-    getMappingExternalId: (m) => m.externalProducerId,
-
-    onFetch: async () => {
-      const result = await fetchMutation.mutateAsync({ connectionId });
-      return { message: result.message };
-    },
-    onSave: async (newMappings) => {
-      const result = await saveMutation.mutateAsync({
-        connectionId,
-        mappings: newMappings.map((m) => ({
-          internalProducerId: m.internalId,
-          externalProducerId: m.externalId,
-        })),
-      });
-      return { message: result.message };
-    },
-
-    isLoadingInternal: producersQuery.isLoading,
-    isLoadingExternal: externalProducersQuery.isLoading,
-    isLoadingMappings: mappingsQuery.isLoading,
-    isFetching: fetchMutation.isPending,
-    isSaving: saveMutation.isPending,
-  };
-
-  return <GenericItemMapper config={config} />;
+  return <GenericMapper config={config} />;
 }

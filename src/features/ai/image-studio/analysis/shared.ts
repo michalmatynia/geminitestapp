@@ -38,7 +38,7 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
     )
   );
 
-  return {
+  const result = {
     paddingPercent,
     paddingXPercent: config?.paddingXPercent ?? paddingPercent,
     paddingYPercent: config?.paddingYPercent ?? paddingPercent,
@@ -77,6 +77,7 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
     shadowPolicy: config?.shadowPolicy ?? 'auto',
     detection: config?.detection ?? 'auto',
   };
+  return result;
 };
 
 export const analyzeImageObjectFromRgba = (params: {

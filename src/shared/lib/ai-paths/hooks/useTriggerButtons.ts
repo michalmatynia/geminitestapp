@@ -102,9 +102,11 @@ export function useTriggerButtons({
       }
 
       if (options.mode === 'toggle') {
-        const nextToggleMap = { ...toggleMap, [button.id]: options.checked ?? false };
-        setToggleMap(nextToggleMap);
-        writeMapToStorage(TOGGLE_STORAGE_KEY, nextToggleMap);
+        setToggleMap((prev) => {
+          const nextToggleMap = { ...prev, [button.id]: options.checked ?? false };
+          writeMapToStorage(TOGGLE_STORAGE_KEY, nextToggleMap);
+          return nextToggleMap;
+        });
       }
 
       let gotProgress = false;
@@ -176,7 +178,7 @@ export function useTriggerButtons({
         }
       }
     },
-    [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, toast, toggleMap]
+    [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, toast]
   );
 
   return {

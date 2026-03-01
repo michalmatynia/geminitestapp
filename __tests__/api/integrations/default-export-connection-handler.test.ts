@@ -9,7 +9,7 @@ const setExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/integrations/server', () => ({
+vi.mock('@/features/integrations/server', () => ({
   getExportDefaultConnectionId: getExportDefaultConnectionIdMock,
   setExportDefaultConnectionId: setExportDefaultConnectionIdMock,
   getIntegrationRepository: vi.fn(async () => ({

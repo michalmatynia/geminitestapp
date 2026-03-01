@@ -5,7 +5,7 @@ const { listExportTemplatesMock, getParameterByIdMock } = vi.hoisted(() => ({
   getParameterByIdMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/integrations/server', () => ({
+vi.mock('@/features/integrations/server', () => ({
   collectProductImageDiagnostics: vi.fn(),
   fetchBaseWarehouses: vi.fn(),
   getExportActiveTemplateId: vi.fn(async () => null),
@@ -26,6 +26,10 @@ vi.mock('@/shared/lib/integrations/server', () => ({
 vi.mock('@/features/products/server', () => ({
   getParameterRepository: vi.fn(async () => ({
     getParameterById: getParameterByIdMock,
+    listParameters: vi.fn(async () => [
+      { id: 'param-material', name_en: 'Material', name_pl: 'Materiał' },
+      { id: 'param-color', name_en: 'Color', name_pl: 'Kolor' },
+    ]),
   })),
   getProducerRepository: vi.fn(async () => ({
     getProducerById: vi.fn(async () => null),
@@ -36,6 +40,9 @@ vi.mock('@/features/products/server', () => ({
 }));
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: vi.fn(async () => undefined),
+  logSystemError: vi.fn(async () => undefined),
+  logSystemWarning: vi.fn(async () => undefined),
   ErrorSystem: {
     logInfo: vi.fn(async () => undefined),
     logWarning: vi.fn(async () => undefined),
@@ -77,6 +84,14 @@ describe('parseMappedParameterId', () => {
           {
             sourceKey: 'parameter:param-material',
             targetField: 'parameter:param-material',
+          },
+          {
+            sourceKey: 'parameter:param-material|en',
+            targetField: 'parameter:param-material|en',
+          },
+          {
+            sourceKey: 'parameter:param-material|pl',
+            targetField: 'parameter:param-material|pl',
           },
         ],
       },

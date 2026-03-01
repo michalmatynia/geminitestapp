@@ -404,14 +404,20 @@ export function useVectorCanvasInteractions({
       const point = toPoint(event.clientX, event.clientY);
       if (!point) return;
 
-      if (event.button === 1 || (event.button === 0 && spaceDownRef.current)) {
+      const isLeftClick = event.button === 0;
+      const isMiddleClick = event.button === 1;
+      const shouldPan =
+        isMiddleClick ||
+        (isLeftClick && (spaceDownRef.current || (_tool === 'select' && !_selectionEnabled)));
+
+      if (shouldPan) {
         beginPan(event.clientX, event.clientY);
         return;
       }
 
       // Handle hit testing and other interactions here...
     },
-    [beginPan, toPoint]
+    [beginPan, _selectionEnabled, toPoint, _tool]
   );
 
   const handleMouseMove = useCallback(

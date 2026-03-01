@@ -255,6 +255,7 @@ export async function postAutoScaleSlotHandler(
       {
         name: filename,
         imageFileId: imageFile.id,
+        imageBase64: null,
         metadata: {
           role: 'generation',
           sourceSlotId: sourceSlot.id,
@@ -331,7 +332,7 @@ export async function postAutoScaleSlotHandler(
         pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
       },
       {
-        responseStage: 'processed',
+        responseStage: 'created',
         sourceSlotId: sourceSlot.id,
         targetSlotId: targetSlot.id,
         requestId: idempotencyKey,
@@ -340,13 +341,15 @@ export async function postAutoScaleSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
-    const err = error as Record<string, unknown>;
+    const err = error as Record<string, unknown> & { meta?: Record<string, unknown> };
     if (err?.['autoScaleErrorCode']) {
       throw error;
     }
     const message = error instanceof Error ? error.message : String(error);
-    throw autoScaleBadRequest(IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID, message, {
-      originalError: error,
-    });
+    throw autoScaleBadRequest(
+      IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
+      message,
+      err.meta ? { ...err.meta, originalError: error } : { originalError: error }
+    );
   }
 }

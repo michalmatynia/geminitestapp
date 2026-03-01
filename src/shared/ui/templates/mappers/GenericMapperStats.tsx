@@ -5,16 +5,18 @@ export type GenericMapperStatsProps = {
   total: number;
   mapped: number;
   pending: number;
+  itemLabel?: string;
 };
 
 export function GenericMapperStats({
   total,
   mapped,
   pending,
+  itemLabel = 'Items',
 }: GenericMapperStatsProps): React.JSX.Element {
   return (
     <div className='flex gap-4 mb-4'>
-      <MetadataItem label='Total' value={total} variant='minimal' />
+      <MetadataItem label={`Total ${itemLabel}`} value={total} variant='minimal' />
       <MetadataItem
         label='Mapped'
         value={mapped}

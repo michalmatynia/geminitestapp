@@ -234,6 +234,18 @@ vi.mock('next/link', () => ({
   }) => React.createElement('a', { href, ...props }, children),
 }));
 
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  })),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
+
 // Mock next/server (for NextRequest/NextResponse in API routes)
 vi.mock('next/server', () => {
   class MockRequest extends Request {

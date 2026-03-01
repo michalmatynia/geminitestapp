@@ -626,15 +626,15 @@ export type ImageStudioNormalizedCenterLayout = z.infer<
 >;
 
 export const imageStudioCenterLayoutMetadataSchema = z.object({
-  paddingPercent: z.number().finite(),
-  paddingXPercent: z.number().finite(),
-  paddingYPercent: z.number().finite(),
-  fillMissingCanvasWhite: z.boolean(),
-  targetCanvasWidth: z.number().int().positive().nullable(),
-  targetCanvasHeight: z.number().int().positive().nullable(),
-  whiteThreshold: z.number().int().finite(),
-  chromaThreshold: z.number().int().finite(),
-  shadowPolicy: imageStudioCenterShadowPolicySchema,
+  paddingPercent: z.number().finite().optional(),
+  paddingXPercent: z.number().finite().optional(),
+  paddingYPercent: z.number().finite().optional(),
+  fillMissingCanvasWhite: z.boolean().optional(),
+  targetCanvasWidth: z.number().int().positive().nullable().optional(),
+  targetCanvasHeight: z.number().int().positive().nullable().optional(),
+  whiteThreshold: z.number().int().finite().optional(),
+  chromaThreshold: z.number().int().finite().optional(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
   layoutPolicyVersion: z.string().trim().min(1).nullable().optional(),
   detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
   detectionUsed: imageStudioCenterDetectionModeSchema.nullable().optional(),
@@ -644,14 +644,14 @@ export const imageStudioCenterLayoutMetadataSchema = z.object({
 export type ImageStudioCenterLayoutMetadata = z.infer<typeof imageStudioCenterLayoutMetadataSchema>;
 
 export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
-  paddingPercent: z.number().finite(),
-  paddingXPercent: z.number().finite(),
-  paddingYPercent: z.number().finite(),
-  fillMissingCanvasWhite: z.boolean(),
-  targetCanvasWidth: z.number().int().positive().nullable(),
-  targetCanvasHeight: z.number().int().positive().nullable(),
-  whiteThreshold: z.number().int().finite(),
-  chromaThreshold: z.number().int().finite(),
+  paddingPercent: z.number().finite().optional(),
+  paddingXPercent: z.number().finite().optional(),
+  paddingYPercent: z.number().finite().optional(),
+  fillMissingCanvasWhite: z.boolean().optional(),
+  targetCanvasWidth: z.number().int().positive().nullable().optional(),
+  targetCanvasHeight: z.number().int().positive().nullable().optional(),
+  whiteThreshold: z.number().int().finite().optional(),
+  chromaThreshold: z.number().int().finite().optional(),
   shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
   layoutPolicyVersion: z.string().trim().min(1).nullable().optional(),
   detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
@@ -750,8 +750,8 @@ const imageStudioOutputImageSchema = z
     filepath: z.string(),
     mimetype: z.string(),
     size: z.number().finite().nonnegative(),
-    width: z.number().finite().optional(),
-    height: z.number().finite().optional(),
+    width: z.number().finite().nullable().optional(),
+    height: z.number().finite().nullable().optional(),
   })
   .passthrough();
 

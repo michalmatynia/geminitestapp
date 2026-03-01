@@ -4,10 +4,9 @@ import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
-import { StandardDataTablePanel, EmptyState } from '@/shared/ui';
+import { StandardDataTablePanel, EmptyState, GenericMapperStats } from '@/shared/ui';
 
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
-import { CategoryMapperStats } from './CategoryMapperStats';
 import { CategoryMapperTableHeaderActions } from './category-table/CategoryMapperTableHeaderActions';
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
@@ -133,7 +132,15 @@ export function CategoryMapperTable(): React.JSX.Element {
           <CategoryMapperCatalogSelector />
         </div>
       }
-      alerts={<CategoryMapperStats />}
+      alerts={
+        <GenericMapperStats
+          total={stats.total}
+          mapped={stats.mapped}
+          pending={stats.pending}
+          itemLabel='Categories'
+        />
+      }
+
       isLoading={isLoading}
       variant='flat'
       columns={columns}

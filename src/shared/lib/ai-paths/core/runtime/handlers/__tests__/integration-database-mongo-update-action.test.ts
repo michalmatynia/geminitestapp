@@ -119,12 +119,12 @@ describe('handleDatabaseMongoUpdateAction', () => {
     expect(executeMongoCollectionUpdateMock).toHaveBeenCalledTimes(1);
   });
 
-  it('blocks mapping payload mode with explicit guardrail error', async () => {
+  it('blocks unsupported payload mode with explicit guardrail error', async () => {
     const args = {
       ...baseArgs,
       dbConfig: {
         ...baseArgs.dbConfig,
-        updatePayloadMode: 'mapping' as const,
+        updatePayloadMode: 'invalid_mode' as any,
       },
     };
 

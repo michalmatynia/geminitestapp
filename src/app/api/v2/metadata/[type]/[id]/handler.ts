@@ -10,6 +10,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { MongoCountryDoc, MongoLanguageDoc, MongoCatalogDoc } from '@/shared/lib/db/services/database-sync-types';
+import type { UpdateFilter } from 'mongodb';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -320,9 +321,10 @@ export async function PUT_metadata_id_handler(
             $pull: { languageIds: resolvedId },
             $addToSet: { languageIds: nextId },
             $set: { updatedAt: now },
-          } as any
+          } as unknown as UpdateFilter<MongoCatalogDoc>
         );
         await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
+
           { defaultLanguageId: resolvedId },
           { $set: { defaultLanguageId: nextId, updatedAt: now } }
         );
@@ -409,8 +411,13 @@ export async function DELETE_metadata_id_handler(
       await mongo.collection<MongoCountryDoc>('countries').deleteOne({ id: resolvedId });
       await mongo.collection<MongoLanguageDoc>('languages').updateMany(
         { 'countries.countryId': resolvedId },
-        { $pull: { countries: { countryId: resolvedId } }, $set: { updatedAt: new Date() } } as any
+        {
+          $pull: { countries: { countryId: resolvedId } },
+          $set: { updatedAt: new Date() },
+        } as unknown as UpdateFilter<MongoLanguageDoc>
       );
+
+
       return new Response(null, { status: 204 });
     }
 
@@ -430,8 +437,12 @@ export async function DELETE_metadata_id_handler(
       await mongo.collection<MongoLanguageDoc>('languages').deleteOne({ id: resolvedId });
       await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
         { languageIds: resolvedId },
-        { $pull: { languageIds: resolvedId }, $set: { updatedAt: now } } as any
+        {
+          $pull: { languageIds: resolvedId },
+          $set: { updatedAt: now },
+        } as unknown as UpdateFilter<MongoCatalogDoc>
       );
+
       await mongo.collection('catalogs').updateMany(
         { defaultLanguageId: resolvedId },
         { $set: { defaultLanguageId: null, updatedAt: now } }

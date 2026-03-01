@@ -42,7 +42,7 @@ const parsePolicyEnvNumber = (
 };
 
 export const IMAGE_STUDIO_LAYOUT_POLICY_CONFIG = {
-  autoConfidenceDelta: parsePolicyEnvNumber(POLICY_ENV_KEYS.autoConfidenceDelta, 0.08, 0, 0.5),
+  autoConfidenceDelta: parsePolicyEnvNumber(POLICY_ENV_KEYS.autoConfidenceDelta, 0.12, 0, 0.5),
   whiteAutoAreaRatioBias: parsePolicyEnvNumber(
     POLICY_ENV_KEYS.whiteAutoAreaRatioBias,
     0.995,
@@ -144,6 +144,9 @@ export const decideObjectDetectionCandidate = <TDetails>(params: {
   }
 
   if (whiteCandidate && alphaCandidate) {
+    const candWhiteArea = Math.max(1, whiteCandidate.bounds.width * whiteCandidate.bounds.height);
+    const candAlphaArea = Math.max(1, alphaCandidate.bounds.width * alphaCandidate.bounds.height);
+
     if (
       whiteCandidate.confidence < WHITE_CONFIDENCE_FLOOR &&
       alphaCandidate.confidence >= ALPHA_CONFIDENCE_FLOOR
@@ -190,9 +193,7 @@ export const decideObjectDetectionCandidate = <TDetails>(params: {
       });
     }
 
-    const whiteArea = Math.max(1, whiteCandidate.bounds.width * whiteCandidate.bounds.height);
-    const alphaArea = Math.max(1, alphaCandidate.bounds.width * alphaCandidate.bounds.height);
-    if (whiteArea <= alphaArea * WHITE_AUTO_AREA_RATIO_BIAS) {
+    if (candWhiteArea <= candAlphaArea * WHITE_AUTO_AREA_RATIO_BIAS) {
       return createDecision({
         selected: whiteCandidate,
         reason: 'auto_white_tighter_bounds',

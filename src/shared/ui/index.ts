@@ -84,6 +84,7 @@ export * from './templates/FilterPanel';
 export * from './templates/SimpleSettingsList';
 export * from './templates/GenericApiConsole';
 export * from './templates/DocumentSearchPage';
+export * from './templates/mappers';
 export {
   PanelHeader,
   PanelFilters,

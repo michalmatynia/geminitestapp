@@ -413,6 +413,48 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
         }
       },
+      onNodeBlocked: async ({ node, reason, message }) => {
+        try {
+          const finishedAt = new Date().toISOString();
+          const attempt = nodeAttemptMap.get(node.id) ?? 0;
+          const safeOutputs: RuntimePortValues = {
+            status: 'blocked',
+            skipReason: reason,
+            message,
+          };
+          accOutputs[node.id] = {
+            ...(accOutputs[node.id] ?? {}),
+            ...safeOutputs,
+            status: 'blocked',
+          } as RuntimePortValues;
+
+          await Promise.all([
+            repo.upsertRunNode(run.id, node.id, {
+              status: 'blocked',
+              outputs: safeOutputs,
+              finishedAt,
+              nodeType: node.type,
+              errorMessage: message,
+            }),
+            repo.createRunEvent({
+              runId: run.id,
+              level: 'warn',
+              message: `Node ${node.title ?? node.id} blocked: ${message}`,
+              metadata: {
+                runId: run.id,
+                nodeId: node.id,
+                nodeType: node.type,
+                attempt,
+                reason,
+              },
+
+            }),
+            throttledSaveIntermediateState(),
+          ]);
+        } catch (error) {
+          void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeBlocked' });
+        }
+      },
       onNodeError: async ({ node, nodeInputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
         try {
           resolvedRunId = run.id;
@@ -523,7 +565,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         ...(run.meta ?? {}),
         finishedAt,
         durationMs: computeDurationMs(runStartedAt, finishedAt),
-        profile: profileSnapshot,
+        runtimeTrace: {
+          profile: profileSnapshot,
+        },
       },
     });
 
@@ -533,18 +577,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       durationMs: computeDurationMs(runStartedAt, finishedAt) ?? undefined,
     }).catch(() => {});
   } catch (error) {
-    if (dbRunMissing) return;
+    if (dbRunMissing) throw error;
     const finishedAt = new Date().toISOString();
     const isCancelled =
       error instanceof GraphExecutionCancelled || runAbortController.signal.aborted;
     const status: AiPathRunStatus = isCancelled ? 'canceled' : 'failed';
 
     const finalRuntimeState = await buildCurrentRuntimeStateSnapshot();
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     await updateRunSnapshot({
       status,
       runtimeState: finalRuntimeState,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
       meta: {
         ...(run.meta ?? {}),
         finishedAt,
@@ -559,6 +604,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runId: run.id,
       });
     }
+
+    throw error;
   } finally {
     monitor.stop();
   }

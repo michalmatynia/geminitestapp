@@ -7,119 +7,71 @@ import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import {
-  useExternalTags,
-  useTagMappings,
-} from '@/features/integrations/hooks/useMarketplaceQueries';
-import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
-import type {
-  CatalogDto as CatalogRecord,
-  ProductTagDto as ProductTag,
-} from '@/shared/contracts/products';
-import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
-import { GenericItemMapper, type GenericItemMapperConfig } from './GenericItemMapper';
-
-// Define the mapping type explicitly to match GenericItemMapper's expectations
-interface TagMapping {
-  internalTagId: string;
-  externalTagId: string | null;
-  isActive: boolean;
-}
+import { useTagMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
+import { useTags } from '@/features/products/hooks/useProductMetadataQueries';
+import { type ProductTag } from '@/shared/contracts/products';
+import { type TagMapping } from '@/shared/contracts/integrations';
+import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseTagMapper(): React.JSX.Element {
-  const { connectionId } = useCategoryMapper();
-  const catalogsQuery = useCatalogs();
+  const { connectionId, connectionName, catalogId } = useCategoryMapper();
 
-  const internalTagsQueryKey = QUERY_KEYS.products.metadata.tags('all');
-  const internalTagsQuery = createListQueryV2({
-    queryKey: internalTagsQueryKey,
-    queryFn: () => api.get<ProductTag[]>('/api/products/tags/all'),
-    meta: {
-      source: 'integrations.components.BaseTagMapper.internalTagsQuery',
-      operation: 'list',
-      resource: 'products.metadata.tags.all',
-      domain: 'integrations',
-      queryKey: internalTagsQueryKey,
-      tags: ['integrations', 'marketplace', 'tags', 'internal'],
-    },
-  });
-
-  const externalTagsQuery = useExternalTags(connectionId);
-  const mappingsQuery = useTagMappings(connectionId);
+  const tagsQuery = useTags({ catalogId: catalogId ?? '' });
+  const externalTagsQuery = useFetchExternalTagsMutation();
+  const mappingsQuery = useTagMappings(connectionId ?? '');
 
   const fetchMutation = useFetchExternalTagsMutation();
   const saveMutation = useSaveTagMappingsMutation();
 
-  const catalogsById = useMemo(
-    () =>
-      new Map(
-        (catalogsQuery.data ?? []).map((catalog: CatalogRecord) => [catalog.id, catalog.name])
-      ),
-    [catalogsQuery.data]
+  const config: GenericItemMapperConfig<ProductTag, any, TagMapping> = useMemo(
+    () => ({
+      connectionId,
+      connectionName,
+      title: 'Tag Mappings',
+      internalColumnHeader: 'Local Tag',
+      externalColumnHeader: 'Marketplace Tag',
+      internalItems: tagsQuery.data ?? [],
+      externalItems: externalTagsQuery.data ?? [],
+      currentMappings: mappingsQuery.data ?? [],
+      getInternalId: (item) => item.id,
+      getInternalLabel: (item) => item.name,
+      getExternalId: (item) => String(item.id),
+      getExternalLabel: (item) => item.name,
+      getMappingInternalId: (m) => m.tagId,
+      getMappingExternalId: (m) => m.externalTagId,
+      onFetch: async () => {
+        const result = await fetchMutation.mutateAsync(connectionId ?? '');
+        return { message: `Fetched ${result.length} tags` };
+      },
+      onSave: async (mappings) => {
+        await saveMutation.mutateAsync({
+          connectionId: connectionId ?? '',
+          mappings: mappings.map((m) => ({
+            tagId: m.internalId,
+            externalTagId: m.externalId,
+          })),
+        });
+        return { message: 'Tag mappings saved' };
+      },
+      isLoadingInternal: tagsQuery.isLoading,
+      isLoadingExternal: externalTagsQuery.isLoading,
+      isLoadingMappings: mappingsQuery.isLoading,
+      isFetching: fetchMutation.isPending,
+      isSaving: saveMutation.isPending,
+    }),
+    [
+      connectionId,
+      connectionName,
+      tagsQuery.data,
+      tagsQuery.isLoading,
+      externalTagsQuery.data,
+      externalTagsQuery.isLoading,
+      mappingsQuery.data,
+      mappingsQuery.isLoading,
+      fetchMutation,
+      saveMutation,
+    ]
   );
 
-  const internalTags = useMemo(
-    (): ProductTag[] => internalTagsQuery.data ?? [],
-    [internalTagsQuery.data]
-  );
-
-  const mappings = useMemo(
-    (): TagMapping[] =>
-      (mappingsQuery.data ?? []).map(
-        (m: { internalTagId: string; externalTagId: string | null; isActive: boolean }) => ({
-          internalTagId: m.internalTagId,
-          externalTagId: m.externalTagId,
-          isActive: Boolean(m.isActive),
-        })
-      ),
-    [mappingsQuery.data]
-  );
-
-  // Configure the generic mapper
-  const config: GenericItemMapperConfig<ProductTag, { id: string; name: string }, TagMapping> = {
-    title: 'Base.com Tags',
-    internalColumnHeader: 'Internal Tag',
-    externalColumnHeader: 'Base.com Tag',
-    additionalColumnsHeader: 'Catalog',
-
-    internalItems: internalTags,
-    externalItems: externalTagsQuery.data ?? [],
-    currentMappings: mappings,
-
-    getInternalId: (tag) => tag.id,
-    getInternalLabel: (tag) => tag.name,
-    getInternalAdditionalLabel: (tag) => catalogsById.get(tag.catalogId) ?? tag.catalogId,
-
-    getExternalId: (tag) => tag.id,
-    getExternalLabel: (tag) => tag.name,
-
-    getMappingInternalId: (m) => m.internalTagId,
-    getMappingExternalId: (m) => m.externalTagId,
-
-    onFetch: async () => {
-      const result = await fetchMutation.mutateAsync({ connectionId });
-      return { message: result.message };
-    },
-    onSave: async (newMappings) => {
-      const result = await saveMutation.mutateAsync({
-        connectionId,
-        mappings: newMappings.map((m) => ({
-          internalTagId: m.internalId,
-          externalTagId: m.externalId,
-        })),
-      });
-      return { message: result.message };
-    },
-
-    isLoadingInternal: internalTagsQuery.isLoading || catalogsQuery.isLoading,
-    isLoadingExternal: externalTagsQuery.isLoading,
-    isLoadingMappings: mappingsQuery.isLoading,
-    isFetching: fetchMutation.isPending,
-    isSaving: saveMutation.isPending,
-  };
-
-  return <GenericItemMapper config={config} />;
+  return <GenericMapper config={config} />;
 }

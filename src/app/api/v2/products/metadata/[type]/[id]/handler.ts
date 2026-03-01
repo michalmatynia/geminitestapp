@@ -18,6 +18,7 @@ import type {
   MongoPriceGroupDoc,
   MongoCatalogDoc,
 } from '@/shared/lib/db/services/database-sync-types';
+import type { UpdateFilter } from 'mongodb';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -408,10 +409,14 @@ export async function DELETE_products_metadata_id_handler(
       await mongo.collection<MongoPriceGroupDoc>('price_groups').deleteOne({
         $or: [{ id: resolvedId }, { groupId: resolvedId }],
       });
-              await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
-                { priceGroupIds: resolvedId },
-                { $pull: { priceGroupIds: resolvedId }, $set: { updatedAt: now } } as any
-              );      await mongo.collection('catalogs').updateMany(
+      await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
+        { priceGroupIds: resolvedId },
+        {
+          $pull: { priceGroupIds: resolvedId },
+          $set: { updatedAt: now },
+        } as unknown as UpdateFilter<MongoCatalogDoc>
+      );
+      await mongo.collection('catalogs').updateMany(
         { defaultPriceGroupId: resolvedId },
         { $set: { defaultPriceGroupId: null, updatedAt: now } }
       );

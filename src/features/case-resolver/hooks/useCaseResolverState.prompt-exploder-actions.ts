@@ -105,6 +105,8 @@ export function useCaseResolverPromptExploder({
 
   const lastPromptExploderPayloadKeyRef = useRef<string | null>(null);
   const appliedPromptExploderTransferIdsRef = useRef<Set<string>>(new Set());
+  const autoApplyPromptTransferKeysRef = useRef<Set<string>>(new Set());
+  const autoApplyPromptTransferInFlightKeyRef = useRef<string | null>(null);
   const isApplyingPromptExploderPartyProposalRef = useRef(isApplyingPromptExploderPartyProposal);
 
   const setIsApplyingPromptExploderPartyProposal = useCallback(
@@ -655,6 +657,80 @@ export function useCaseResolverPromptExploder({
     workspaceRef,
     flushWorkspacePersist,
     setIsApplyingPromptExploderPartyProposal,
+  ]);
+
+  useEffect((): void => {
+    if (!shouldOpenEditorFromQuery) return;
+    const payload = pendingPromptExploderPayload;
+    if (!payload) return;
+    const requestedContextFileId = requestedFileId?.trim() ?? '';
+    const requestedSessionId = requestedPromptExploderSessionId.trim();
+    if (!requestedContextFileId || !requestedSessionId) return;
+    if (!workspace.files.some((file: CaseResolverFile): boolean => file.id === requestedContextFileId)) {
+      return;
+    }
+
+    const payloadTransferId = payload.transferId?.trim() || '';
+    const payloadContextFileId = payload.caseResolverContext?.fileId?.trim() || '';
+    const payloadSessionId = payload.caseResolverContext?.sessionId?.trim() || '';
+    const autoApplyKey = [
+      payloadTransferId || payload.createdAt || 'missing-transfer',
+      requestedContextFileId,
+      requestedSessionId,
+    ].join('|');
+    if (autoApplyPromptTransferKeysRef.current.has(autoApplyKey)) return;
+    if (autoApplyPromptTransferInFlightKeyRef.current === autoApplyKey) return;
+
+    if (payloadContextFileId !== requestedContextFileId || payloadSessionId !== requestedSessionId) {
+      autoApplyPromptTransferKeysRef.current.add(autoApplyKey);
+      logCaseResolverWorkspaceEvent({
+        source: 'prompt_exploder_apply_auto',
+        action: 'prompt_exploder_return_auto_apply_skipped',
+        message: [
+          'reason=binding_mismatch',
+          `payload_file_id=${payloadContextFileId || 'none'}`,
+          `requested_file_id=${requestedContextFileId}`,
+          `payload_session_id=${payloadSessionId || 'none'}`,
+          `requested_session_id=${requestedSessionId}`,
+        ].join(' '),
+      });
+      return;
+    }
+
+    autoApplyPromptTransferKeysRef.current.add(autoApplyKey);
+    autoApplyPromptTransferInFlightKeyRef.current = autoApplyKey;
+    logCaseResolverWorkspaceEvent({
+      source: 'prompt_exploder_apply_auto',
+      action: 'prompt_exploder_return_auto_apply_started',
+      message: [
+        `transfer_id=${payloadTransferId || 'none'}`,
+        `requested_file_id=${requestedContextFileId}`,
+      ].join(' '),
+    });
+
+    void (async (): Promise<void> => {
+      try {
+        const applied = await handleApplyPendingPromptExploderPayload();
+        logCaseResolverWorkspaceEvent({
+          source: 'prompt_exploder_apply_auto',
+          action: applied
+            ? 'prompt_exploder_return_auto_apply_succeeded'
+            : 'prompt_exploder_return_auto_apply_skipped',
+          message: `transfer_id=${payloadTransferId || 'none'} applied=${applied ? 'true' : 'false'}`,
+        });
+      } finally {
+        if (autoApplyPromptTransferInFlightKeyRef.current === autoApplyKey) {
+          autoApplyPromptTransferInFlightKeyRef.current = null;
+        }
+      }
+    })();
+  }, [
+    handleApplyPendingPromptExploderPayload,
+    pendingPromptExploderPayload,
+    requestedFileId,
+    requestedPromptExploderSessionId,
+    shouldOpenEditorFromQuery,
+    workspace.files,
   ]);
 
   return {

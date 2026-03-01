@@ -92,6 +92,11 @@ export function CaseResolverPageView(): React.JSX.Element {
     handleResetCaseContext,
   } = contextValue;
 
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Pending navigation stored as a callback so we can execute it after user confirms
   const [pendingNavigation, setPendingNavigation] = React.useState<(() => void) | null>(null);
 
@@ -114,7 +119,7 @@ export function CaseResolverPageView(): React.JSX.Element {
   );
 
   const menuToggleButton =
-    typeof document === 'undefined'
+    !mounted
       ? null
       : createPortal(
         <Button

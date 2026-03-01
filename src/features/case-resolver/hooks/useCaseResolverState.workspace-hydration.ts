@@ -24,6 +24,7 @@ export function useCaseResolverStateWorkspaceHydration({
   isApplyingPromptExploderPartyProposal,
   syncPersistedWorkspaceTracking,
   clearQueuedWorkspacePersistMutation,
+  isPromptExploderReturnFlow,
 }: {
   workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
@@ -37,6 +38,7 @@ export function useCaseResolverStateWorkspaceHydration({
   isApplyingPromptExploderPartyProposal: boolean;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   clearQueuedWorkspacePersistMutation: () => void;
+  isPromptExploderReturnFlow: boolean;
 }): void {
   const [bootstrapRefreshRetryTick, setBootstrapRefreshRetryTick] = useState(0);
   const bootstrapRefreshRetryAttemptRef = useRef(0);
@@ -91,16 +93,23 @@ export function useCaseResolverStateWorkspaceHydration({
         });
       };
       const currentRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
-      const metadata = await fetchCaseResolverWorkspaceMetadata('case_view_bootstrap');
+      const metadata = isPromptExploderReturnFlow
+        ? null
+        : await fetchCaseResolverWorkspaceMetadata('case_view_bootstrap');
       if (!isMountedRef.current || cancelled) return;
       const shouldFetchRecord =
-        metadata === null
+        isPromptExploderReturnFlow
+          ? true
+          : metadata === null
           ? true
           : metadata.exists !== false && metadata.revision >= currentRevision;
       const snapshot = shouldFetchRecord
         ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap', {
-          requiredFileId: requestedFileId,
-        })
+            requiredFileId: requestedFileId,
+            attemptProfile: isPromptExploderReturnFlow ? 'context_fast' : 'default',
+            maxTotalMs: isPromptExploderReturnFlow ? 6_500 : undefined,
+            attemptTimeoutMs: isPromptExploderReturnFlow ? 2_200 : undefined,
+          })
         : null;
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {
@@ -175,6 +184,7 @@ export function useCaseResolverStateWorkspaceHydration({
     setWorkspace,
     syncPersistedWorkspaceTracking,
     workspaceRef,
+    isPromptExploderReturnFlow,
   ]);
 
   useEffect(() => {

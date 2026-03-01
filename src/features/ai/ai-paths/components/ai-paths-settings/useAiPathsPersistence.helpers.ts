@@ -72,14 +72,12 @@ export const mergeNodeOverride = (baseNodes: AiNode[], nodeOverride?: AiNode): A
 
 export const resolvePathSaveBlockedMessage = (
   isPathLocked: boolean,
-  isPathActive: boolean
+  _isPathActive: boolean
 ): string | null => {
   if (isPathLocked) {
     return 'This path is locked. Unlock it to save.';
   }
-  if (!isPathActive) {
-    return 'This path is deactivated. Activate it to save.';
-  }
+  // Deactivated paths are excluded from runs, but should remain editable/savable.
   return null;
 };
 

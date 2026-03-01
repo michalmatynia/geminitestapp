@@ -4,7 +4,7 @@ import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '../types';
 import {
-  fetchCaseResolverWorkspaceRecord,
+  fetchCaseResolverWorkspaceRecordDetailed,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
@@ -23,6 +23,9 @@ import {
   type RequestedContextEvent,
 } from '../runtime';
 
+const CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_ATTEMPT_TIMEOUT_MS = 2_200;
+const CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_MAX_TOTAL_MS = 6_500;
+const CASE_RESOLVER_REQUESTED_CONTEXT_STORE_HYDRATION_GRACE_MS = 1_200;
 export const CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS = 10_000;
 
 type RequestedContextInFlightState = {
@@ -94,6 +97,10 @@ export function useCaseResolverStateRequestedContext({
   handledRequestedFileIdRef,
   syncPersistedWorkspaceTracking,
   clearQueuedWorkspacePersistMutation,
+  isStoreLoading,
+  isStoreFetching,
+  storeWorkspaceHasRequestedFile,
+  isPromptExploderReturnFlow,
 }: {
   requestedFileId: string | null;
   workspace: CaseResolverWorkspace;
@@ -103,6 +110,10 @@ export function useCaseResolverStateRequestedContext({
   handledRequestedFileIdRef: React.MutableRefObject<string | null>;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   clearQueuedWorkspacePersistMutation: () => void;
+  isStoreLoading: boolean;
+  isStoreFetching: boolean;
+  storeWorkspaceHasRequestedFile: boolean;
+  isPromptExploderReturnFlow: boolean;
 }): UseCaseResolverRequestedContextValue {
   const initialRequestedContextRuntimeState = useMemo(
     (): CaseResolverRuntimeRequestedContextSlice =>
@@ -142,6 +153,7 @@ export function useCaseResolverStateRequestedContext({
   const requestedContextStartedAtRef = useRef<number | null>(null);
   const requestedContextAutoClearRequestKeyRef = useRef<string | null>(null);
   const requestedContextLastQueuedAutoClearKeyRef = useRef<string | null>(null);
+  const requestedContextStoreHydrationWaitRequestKeyRef = useRef<string | null>(null);
   const lastLoggedRequestedContextSignatureRef = useRef<string>('');
 
   const setRequestedCaseStatus = useCallback(
@@ -302,6 +314,7 @@ export function useCaseResolverStateRequestedContext({
     requestedContextStartedAtRef.current = null;
     requestedContextAutoClearRequestKeyRef.current = null;
     requestedContextLastQueuedAutoClearKeyRef.current = null;
+    requestedContextStoreHydrationWaitRequestKeyRef.current = null;
     handledRequestedFileIdRef.current = null;
     setRequestedContextAutoClearRequestKey(null);
   }, [handledRequestedFileIdRef]);
@@ -373,6 +386,14 @@ export function useCaseResolverStateRequestedContext({
     );
     if (!hasRequestedFileInWorkspace) return;
 
+    if (requestedContextStoreHydrationWaitRequestKeyRef.current) {
+      logRequestedContextTransition('requested_context_resolved_after_store_hydration', {
+        message: 'Requested file resolved after waiting for store hydration.',
+        requestKey: requestedContextStoreHydrationWaitRequestKeyRef.current,
+        resolvedVia: 'workspace_presence',
+      });
+    }
+
     resetTransientRefs();
     applyRequestedContextEvent({
       type: 'workspace_contains_requested',
@@ -422,10 +443,13 @@ export function useCaseResolverStateRequestedContext({
     });
 
     void (async (): Promise<void> => {
-      const refreshedWorkspace = await fetchCaseResolverWorkspaceRecord(
+      const refreshedWorkspaceResult = await fetchCaseResolverWorkspaceRecordDetailed(
         'case_view_requested_context_resolve',
         {
           requiredFileId: normalizedRequestedFileId,
+          attemptProfile: 'context_fast',
+          maxTotalMs: CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_MAX_TOTAL_MS,
+          attemptTimeoutMs: CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_ATTEMPT_TIMEOUT_MS,
         }
       );
       if (!isMountedRef.current) return;
@@ -440,7 +464,14 @@ export function useCaseResolverStateRequestedContext({
         return;
       }
 
-      if (!refreshedWorkspace) {
+      if (refreshedWorkspaceResult.status === 'unavailable') {
+        if (refreshedWorkspaceResult.reason === 'budget_exhausted') {
+          logRequestedContextTransition('requested_context_fetch_budget_exhausted', {
+            message: `Fetch chain exhausted budget before resolving context. ${refreshedWorkspaceResult.message}`,
+            requestKey,
+            resolvedVia: 'snapshot_fetch',
+          });
+        }
         if (hasRequestedCaseFile(workspaceRef.current.files, normalizedRequestedFileId)) {
           requestedWorkspaceRefreshFileIdRef.current = null;
           requestedWorkspaceMissingFileIdRef.current = null;
@@ -454,6 +485,36 @@ export function useCaseResolverStateRequestedContext({
             requestKey,
             resolvedVia: 'workspace_presence',
           });
+          return;
+        }
+        const shouldWaitForStoreHydration =
+          requestedContextStoreHydrationWaitRequestKeyRef.current !== requestKey &&
+          (isStoreLoading ||
+            isStoreFetching ||
+            storeWorkspaceHasRequestedFile ||
+            isPromptExploderReturnFlow);
+        if (shouldWaitForStoreHydration) {
+          requestedContextStoreHydrationWaitRequestKeyRef.current = requestKey;
+          requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
+          requestedWorkspaceMissingFileIdRef.current = null;
+          handledRequestedFileIdRef.current = null;
+          logRequestedContextTransition('requested_context_waiting_for_store_hydration', {
+            message: [
+              `store_loading=${isStoreLoading ? 'true' : 'false'}`,
+              `store_fetching=${isStoreFetching ? 'true' : 'false'}`,
+              `store_has_requested=${storeWorkspaceHasRequestedFile ? 'true' : 'false'}`,
+              `prompt_return_flow=${isPromptExploderReturnFlow ? 'true' : 'false'}`,
+              `refresh_reason=${refreshedWorkspaceResult.reason}`,
+            ].join(' '),
+            requestKey,
+            resolvedVia: 'snapshot_fetch',
+          });
+          window.setTimeout((): void => {
+            if (!isMountedRef.current) return;
+            if (requestedCaseStatusRef.current !== 'loading') return;
+            if (requestedContextAttemptKeyRef.current !== requestKey) return;
+            applyRequestedContextEvent({ type: 'retry' });
+          }, CASE_RESOLVER_REQUESTED_CONTEXT_STORE_HYDRATION_GRACE_MS);
           return;
         }
         const requestedIssueAfterRefresh = resolveRequestedCaseIssueAfterRefresh({
@@ -474,10 +535,32 @@ export function useCaseResolverStateRequestedContext({
         queueRequestedContextAutoClear({
           requestKey,
           issue: requestedIssueAfterRefresh,
-          message: 'Auto-cleared stale URL context after refresh failure.',
+          message: `Auto-cleared stale URL context after refresh failure. ${refreshedWorkspaceResult.message}`,
         });
         return;
       }
+
+      if (refreshedWorkspaceResult.status === 'missing_required_file') {
+        requestedWorkspaceMissingFileIdRef.current = normalizedRequestedFileId;
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        applyRequestedContextEvent({
+          type: 'refresh_succeeded_missing',
+        });
+        logRequestedContextTransition('requested_context_missing_not_found', {
+          message: 'Requested file not found in refreshed workspace record.',
+          requestKey,
+          resolvedVia: 'snapshot_fetch',
+        });
+        queueRequestedContextAutoClear({
+          requestKey,
+          issue: 'requested_file_missing',
+          message: 'Auto-cleared stale URL context after requested file was not found.',
+        });
+        return;
+      }
+
+      const refreshedWorkspace = refreshedWorkspaceResult.workspace;
 
       const refreshedHasRequestedFile = hasRequestedCaseFile(
         refreshedWorkspace.files,
@@ -552,6 +635,10 @@ export function useCaseResolverStateRequestedContext({
     setWorkspace,
     syncPersistedWorkspaceTracking,
     workspaceRef,
+    isStoreFetching,
+    isStoreLoading,
+    storeWorkspaceHasRequestedFile,
+    isPromptExploderReturnFlow,
   ]);
 
   useEffect(() => {

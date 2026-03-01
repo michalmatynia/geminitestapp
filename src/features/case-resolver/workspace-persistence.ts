@@ -44,6 +44,29 @@ const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS = readPositiveIntegerEnv(
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT
 );
 
+export type CaseResolverWorkspaceFetchAttemptProfile = 'default' | 'context_fast';
+
+export type CaseResolverWorkspaceRecordFetchResult =
+  | {
+      status: 'resolved';
+      workspace: CaseResolverWorkspace;
+      attemptKey: string;
+      scope: 'light' | 'heavy';
+      durationMs: number;
+    }
+  | {
+      status: 'missing_required_file';
+      attemptKey: string | null;
+      durationMs: number;
+      message: string;
+    }
+  | {
+      status: 'unavailable';
+      reason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted';
+      durationMs: number;
+      message: string;
+    };
+
 export type CaseResolverWorkspaceDebugEvent = {
   id: string;
   timestamp: string;
@@ -405,27 +428,61 @@ export const fetchCaseResolverWorkspaceRecord = async (
     fresh?: boolean;
     strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
     requiredFileId?: string | null;
+    attemptProfile?: CaseResolverWorkspaceFetchAttemptProfile;
+    maxTotalMs?: number;
+    attemptTimeoutMs?: number;
   }
 ): Promise<CaseResolverWorkspace | null> => {
-  const startedAt = Date.now();
-  const fetchStrategy = options?.strategy ?? 'light_then_heavy';
-  const requiredFileId = options?.requiredFileId?.trim() ?? '';
+  const result = await fetchCaseResolverWorkspaceRecordDetailed(source, options);
+  return result.status === 'resolved' ? result.workspace : null;
+};
+
+const buildWorkspaceRecordFetchAttempts = ({
+  strategy,
+  fresh,
+  attemptProfile,
+}: {
+  strategy: 'light_then_heavy' | 'light_only' | 'heavy_only';
+  fresh: boolean;
+  attemptProfile: CaseResolverWorkspaceFetchAttemptProfile;
+}): Array<{ key: string; url: string; scope: 'light' | 'heavy' }> => {
   const attemptScopes: Array<'light' | 'heavy'> =
-    fetchStrategy === 'heavy_only'
-      ? ['heavy']
-      : fetchStrategy === 'light_only'
-        ? ['light']
-        : ['light', 'heavy'];
+    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+  if (!fresh) {
+    return attemptScopes.map((scope) => ({
+      key: `${scope}_cached_key`,
+      scope,
+      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+    }));
+  }
+
+  if (attemptProfile === 'context_fast' && strategy === 'light_then_heavy') {
+    return [
+      {
+        key: 'light_fresh_key',
+        scope: 'light',
+        url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      },
+      {
+        key: 'heavy_fresh_key',
+        scope: 'heavy',
+        url: `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      },
+      {
+        key: 'light_cached_key',
+        scope: 'light',
+        url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      },
+      {
+        key: 'heavy_cached_key',
+        scope: 'heavy',
+        url: `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      },
+    ];
+  }
+
   const attempts: Array<{ key: string; url: string; scope: 'light' | 'heavy' }> = [];
   attemptScopes.forEach((scope): void => {
-    if (options?.fresh === false) {
-      attempts.push({
-        key: `${scope}_cached_key`,
-        scope,
-        url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      });
-      return;
-    }
     attempts.push(
       {
         key: `${scope}_fresh_key`,
@@ -439,10 +496,56 @@ export const fetchCaseResolverWorkspaceRecord = async (
       }
     );
   });
+  return attempts;
+};
+
+export const fetchCaseResolverWorkspaceRecordDetailed = async (
+  source: string,
+  options?: {
+    fresh?: boolean;
+    strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
+    requiredFileId?: string | null;
+    attemptProfile?: CaseResolverWorkspaceFetchAttemptProfile;
+    maxTotalMs?: number;
+    attemptTimeoutMs?: number;
+  }
+): Promise<CaseResolverWorkspaceRecordFetchResult> => {
+  const startedAt = Date.now();
+  const fetchStrategy = options?.strategy ?? 'light_then_heavy';
+  const fetchFresh = options?.fresh !== false;
+  const requiredFileId = options?.requiredFileId?.trim() ?? '';
+  const attemptProfile = options?.attemptProfile ?? 'default';
+  const attempts = buildWorkspaceRecordFetchAttempts({
+    strategy: fetchStrategy,
+    fresh: fetchFresh,
+    attemptProfile,
+  });
+  const attemptTimeoutMs =
+    typeof options?.attemptTimeoutMs === 'number' && Number.isFinite(options.attemptTimeoutMs)
+      ? Math.max(1, Math.floor(options.attemptTimeoutMs))
+      : CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS;
+  const defaultMaxTotalMs =
+    attemptProfile === 'context_fast' ? Math.max(1_000, attemptTimeoutMs * 3) : attemptTimeoutMs * attempts.length;
+  const maxTotalMs =
+    typeof options?.maxTotalMs === 'number' && Number.isFinite(options.maxTotalMs)
+      ? Math.max(1, Math.floor(options.maxTotalMs))
+      : defaultMaxTotalMs;
 
   let lastFailureMessage = 'Workspace record request failed.';
   let loggedHeavyFallback = false;
+  let sawWorkspaceRecordMissingRequiredFile = false;
+  let lastMissingRequiredAttemptKey: string | null = null;
+  let sawTransportFailure = false;
+  let budgetExhausted = false;
+
   for (const attempt of attempts) {
+    const elapsedMs = Date.now() - startedAt;
+    const remainingBudgetMs = maxTotalMs - elapsedMs;
+    if (remainingBudgetMs <= 0) {
+      budgetExhausted = true;
+      lastFailureMessage = `Workspace fetch budget exhausted before attempt ${attempt.key}.`;
+      break;
+    }
     if (!loggedHeavyFallback && fetchStrategy === 'light_then_heavy' && attempt.scope === 'heavy') {
       loggedHeavyFallback = true;
       logCaseResolverWorkspaceEvent({
@@ -455,9 +558,10 @@ export const fetchCaseResolverWorkspaceRecord = async (
     try {
       const response = await fetchSettingsPayloadWithTimeout({
         url: attempt.url,
-        timeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+        timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
       });
       if (!response.ok) {
+        sawTransportFailure = true;
         lastFailureMessage = `Attempt ${attempt.key} failed (${response.status}).`;
         logCaseResolverWorkspaceEvent({
           source,
@@ -484,6 +588,8 @@ export const fetchCaseResolverWorkspaceRecord = async (
         requiredFileId.length > 0 &&
         !workspace.files.some((file): boolean => file.id === requiredFileId)
       ) {
+        sawWorkspaceRecordMissingRequiredFile = true;
+        lastMissingRequiredAttemptKey = attempt.key;
         lastFailureMessage = `Attempt ${attempt.key} returned workspace without required file ${requiredFileId}.`;
         logCaseResolverWorkspaceEvent({
           source,
@@ -500,8 +606,15 @@ export const fetchCaseResolverWorkspaceRecord = async (
         durationMs: Date.now() - startedAt,
         message: `attempt=${attempt.key}`,
       });
-      return workspace;
+      return {
+        status: 'resolved',
+        workspace,
+        attemptKey: attempt.key,
+        scope: attempt.scope,
+        durationMs: Date.now() - startedAt,
+      };
     } catch (error: unknown) {
+      sawTransportFailure = true;
       lastFailureMessage =
         error instanceof Error ? error.message : `Unknown refresh error (${attempt.key}).`;
       logCaseResolverWorkspaceEvent({
@@ -513,13 +626,45 @@ export const fetchCaseResolverWorkspaceRecord = async (
     }
   }
 
+  if (budgetExhausted) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'refresh_budget_exhausted',
+      durationMs: Date.now() - startedAt,
+      message: `attempt_profile=${attemptProfile} max_total_ms=${maxTotalMs}`,
+    });
+  }
+
+  if (
+    requiredFileId.length > 0 &&
+    sawWorkspaceRecordMissingRequiredFile &&
+    !sawTransportFailure &&
+    !budgetExhausted
+  ) {
+    return {
+      status: 'missing_required_file',
+      attemptKey: lastMissingRequiredAttemptKey,
+      durationMs: Date.now() - startedAt,
+      message: lastFailureMessage,
+    };
+  }
+
+  const unavailableReason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted' =
+    budgetExhausted ? 'budget_exhausted' : sawTransportFailure ? 'transport_error' : 'no_workspace_record';
+
   logCaseResolverWorkspaceEvent({
     source,
     action: 'refresh_failed',
     message: lastFailureMessage,
     durationMs: Date.now() - startedAt,
   });
-  return null;
+
+  return {
+    status: 'unavailable',
+    reason: unavailableReason,
+    durationMs: Date.now() - startedAt,
+    message: lastFailureMessage,
+  };
 };
 
 export const fetchCaseResolverWorkspaceSnapshot = async (

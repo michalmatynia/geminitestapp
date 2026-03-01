@@ -18,26 +18,60 @@ import {
   upsertPromptExploderLibraryItems,
   type PromptExploderLibraryItem,
 } from '../prompt-library';
+import {
+  appendPromptExploderSegmentationRecord,
+  buildPromptExploderSegmentationAnalysisContextJson,
+  buildPromptExploderSegmentationRecord,
+  hydratePromptExploderSegmentationRecordDocument,
+  parsePromptExploderSegmentationLibrary,
+  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
+  PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
+  removePromptExploderSegmentationRecordById,
+  sortPromptExploderSegmentationRecordsByCapturedAt,
+  type PromptExploderSegmentationRecord,
+} from '../segmentation-library';
 import { useBenchmarkActions } from './hooks/useBenchmark';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsActions, useSettingsState } from './hooks/useSettings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+export type CaptureSegmentationRecordReason =
+  | 'missing_prompt'
+  | 'missing_document'
+  | 'persist_failed'
+  | 'no_changes';
+
+export type CaptureSegmentationRecordResult = {
+  captured: boolean;
+  persisted: boolean;
+  reason?: CaptureSegmentationRecordReason;
+  recordId?: string;
+};
+
 export interface LibraryState {
   selectedLibraryItemId: string | null;
   libraryNameDraft: string;
   promptLibraryItems: PromptExploderLibraryItem[];
   selectedLibraryItem: PromptExploderLibraryItem | null;
+  selectedSegmentationRecordId: string | null;
+  segmentationRecords: PromptExploderSegmentationRecord[];
+  selectedSegmentationRecord: PromptExploderSegmentationRecord | null;
 }
 
 export interface LibraryActions {
   setSelectedLibraryItemId: React.Dispatch<React.SetStateAction<string | null>>;
   setLibraryNameDraft: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedSegmentationRecordId: React.Dispatch<React.SetStateAction<string | null>>;
   handleNewLibraryEntry: () => void;
   handleSaveLibraryItem: () => Promise<void>;
   handleLoadLibraryItem: (itemId: string) => void;
   handleDeleteLibraryItem: (itemId: string) => Promise<void>;
+  captureSegmentationRecordOnApply: () => Promise<CaptureSegmentationRecordResult>;
+  handleLoadSegmentationRecordIntoWorkspace: (recordId: string) => void;
+  handleDeleteSegmentationRecord: (recordId: string) => Promise<void>;
+  buildSegmentationAnalysisContextJsonForRecord: (recordId: string) => string | null;
+  buildSegmentationAnalysisContextJsonForAll: () => string;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
@@ -50,15 +84,18 @@ const LibraryActionsContext = createContext<LibraryActions | null>(null);
 export function LibraryProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const { settingsMap } = useSettingsState();
+  const { settingsMap, activeValidationScope, activeValidationRuleStack } = useSettingsState();
   const { updateSetting } = useSettingsActions();
 
-  const { promptText, documentState } = useDocumentState();
+  const { promptText, documentState, returnTarget } = useDocumentState();
   const { setPromptText, setDocumentState, setSelectedSegmentId, setManualBindings } =
     useDocumentActions();
   const { setBenchmarkReport, setDismissedBenchmarkSuggestionIds } = useBenchmarkActions();
 
   const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
+  const [selectedSegmentationRecordId, setSelectedSegmentationRecordId] = useState<string | null>(
+    null
+  );
   const [libraryNameDraft, setLibraryNameDraft] = useState('');
   const [loadedProjectIdFromQuery, setLoadedProjectIdFromQuery] = useState<string | null>(null);
 
@@ -78,6 +115,25 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     return promptLibraryItems.find((item) => item.id === selectedLibraryItemId) ?? null;
   }, [promptLibraryItems, selectedLibraryItemId]);
 
+  const rawSegmentationLibrary = settingsMap.get(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY) ?? null;
+  const segmentationLibraryState = useMemo(
+    () => parsePromptExploderSegmentationLibrary(rawSegmentationLibrary),
+    [rawSegmentationLibrary]
+  );
+  const segmentationRecords = useMemo(
+    () => sortPromptExploderSegmentationRecordsByCapturedAt(segmentationLibraryState.records),
+    [segmentationLibraryState.records]
+  );
+  const selectedSegmentationRecord = useMemo(() => {
+    if (!selectedSegmentationRecordId) return null;
+    return segmentationRecords.find((record) => record.id === selectedSegmentationRecordId) ?? null;
+  }, [segmentationRecords, selectedSegmentationRecordId]);
+  const activeValidationRuleStackId = useMemo(() => {
+    if (!activeValidationRuleStack) return 'none';
+    if (typeof activeValidationRuleStack === 'string') return activeValidationRuleStack;
+    return activeValidationRuleStack.id ?? activeValidationRuleStack.name ?? 'anonymous';
+  }, [activeValidationRuleStack]);
+
   // ── Sync selection ─────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -85,6 +141,12 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     if (promptLibraryItems.some((item) => item.id === selectedLibraryItemId)) return;
     setSelectedLibraryItemId(null);
   }, [promptLibraryItems, selectedLibraryItemId]);
+
+  useEffect(() => {
+    if (!selectedSegmentationRecordId) return;
+    if (segmentationRecords.some((record) => record.id === selectedSegmentationRecordId)) return;
+    setSelectedSegmentationRecordId(null);
+  }, [segmentationRecords, selectedSegmentationRecordId]);
 
   const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
 
@@ -98,6 +160,24 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       }
       await updateSetting.mutateAsync({
         key: PROMPT_EXPLODER_LIBRARY_KEY,
+        value: serialized,
+      });
+      return true;
+    },
+    [settingsMap, updateSetting]
+  );
+
+  const persistSegmentationRecords = useCallback(
+    async (records: PromptExploderSegmentationRecord[]): Promise<boolean> => {
+      const serialized = serializeSetting({
+        version: 1,
+        records,
+      });
+      if (settingsMap.get(PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY) === serialized) {
+        return false;
+      }
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY,
         value: serialized,
       });
       return true;
@@ -179,6 +259,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       }
       const hydratedDocument = hydratePromptExploderLibraryDocument(item);
       setSelectedLibraryItemId(item.id);
+      setSelectedSegmentationRecordId(null);
       setLibraryNameDraft(item.name);
       setPromptText(item.prompt);
       setDocumentState(hydratedDocument);
@@ -239,6 +320,172 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     [persistPromptLibraryItems, promptLibraryState.items, selectedLibraryItemId, toast]
   );
 
+  const captureSegmentationRecordOnApply = useCallback(
+    async (): Promise<CaptureSegmentationRecordResult> => {
+      if (!promptText.trim()) {
+        return {
+          captured: false,
+          persisted: false,
+          reason: 'missing_prompt',
+        };
+      }
+      if (!documentState) {
+        return {
+          captured: false,
+          persisted: false,
+          reason: 'missing_document',
+        };
+      }
+      const now = new Date().toISOString();
+      const nextRecord = buildPromptExploderSegmentationRecord({
+        promptText,
+        documentState,
+        now,
+        returnTarget,
+        validationScope: activeValidationScope,
+        validationRuleStack: activeValidationRuleStackId,
+      });
+      if (!nextRecord) {
+        return {
+          captured: false,
+          persisted: false,
+          reason: 'missing_document',
+        };
+      }
+      const nextRecords = appendPromptExploderSegmentationRecord({
+        records: segmentationLibraryState.records,
+        nextRecord,
+        maxRecords: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
+      });
+      try {
+        const persisted = await persistSegmentationRecords(nextRecords);
+        if (persisted) {
+          setSelectedSegmentationRecordId(nextRecord.id);
+        }
+        return {
+          captured: true,
+          persisted,
+          ...(persisted
+            ? { recordId: nextRecord.id }
+            : {
+              reason: 'no_changes' as const,
+            }),
+        };
+      } catch (error) {
+        toast(
+          error instanceof Error
+            ? `Failed to capture segmentation context: ${error.message}`
+            : 'Failed to capture segmentation context.',
+          { variant: 'warning' }
+        );
+        return {
+          captured: true,
+          persisted: false,
+          reason: 'persist_failed',
+          recordId: nextRecord.id,
+        };
+      }
+    },
+    [
+      activeValidationRuleStackId,
+      activeValidationScope,
+      documentState,
+      persistSegmentationRecords,
+      promptText,
+      returnTarget,
+      segmentationLibraryState.records,
+      toast,
+    ]
+  );
+
+  const handleLoadSegmentationRecordIntoWorkspace = useCallback(
+    (recordId: string): void => {
+      const record = segmentationRecords.find((candidate) => candidate.id === recordId);
+      if (!record) {
+        toast('Segmentation context record no longer exists.', { variant: 'error' });
+        return;
+      }
+      const hydratedDocument = hydratePromptExploderSegmentationRecordDocument(record);
+      setSelectedLibraryItemId(null);
+      setSelectedSegmentationRecordId(record.id);
+      setLibraryNameDraft('');
+      setPromptText(record.sourcePrompt);
+      setDocumentState(hydratedDocument);
+      setSelectedSegmentId(hydratedDocument?.segments[0]?.id ?? null);
+      setManualBindings(getManualBindingsFromDocument(hydratedDocument));
+      setBenchmarkReport(null);
+      setDismissedBenchmarkSuggestionIds([]);
+      toast('Loaded segmentation context into workspace.', { variant: 'success' });
+    },
+    [
+      segmentationRecords,
+      setBenchmarkReport,
+      setDismissedBenchmarkSuggestionIds,
+      setDocumentState,
+      setManualBindings,
+      setPromptText,
+      setSelectedSegmentId,
+      toast,
+    ]
+  );
+
+  const handleDeleteSegmentationRecord = useCallback(
+    async (recordId: string): Promise<void> => {
+      const target = segmentationLibraryState.records.find((record) => record.id === recordId);
+      if (!target) {
+        toast('Segmentation context record no longer exists.', { variant: 'info' });
+        return;
+      }
+      const nextRecords = removePromptExploderSegmentationRecordById(
+        segmentationLibraryState.records,
+        recordId
+      );
+      try {
+        const persisted = await persistSegmentationRecords(nextRecords);
+        if (!persisted) {
+          toast('Segmentation context list was already up to date.', { variant: 'info' });
+          return;
+        }
+        if (selectedSegmentationRecordId === recordId) {
+          setSelectedSegmentationRecordId(null);
+        }
+        toast('Deleted segmentation context record.', { variant: 'success' });
+      } catch (error) {
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete segmentation context record.',
+          { variant: 'error' }
+        );
+      }
+    },
+    [
+      persistSegmentationRecords,
+      segmentationLibraryState.records,
+      selectedSegmentationRecordId,
+      toast,
+    ]
+  );
+
+  const buildSegmentationAnalysisContextJsonForRecord = useCallback(
+    (recordId: string): string | null => {
+      const record = segmentationRecords.find((candidate) => candidate.id === recordId);
+      if (!record) return null;
+      return buildPromptExploderSegmentationAnalysisContextJson({
+        records: [record],
+      });
+    },
+    [segmentationRecords]
+  );
+
+  const buildSegmentationAnalysisContextJsonForAll = useCallback(
+    (): string =>
+      buildPromptExploderSegmentationAnalysisContextJson({
+        records: segmentationRecords,
+      }),
+    [segmentationRecords]
+  );
+
   // ── Memoized context values ────────────────────────────────────────────────
 
   const stateValue = useMemo<LibraryState>(
@@ -247,20 +494,47 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       libraryNameDraft,
       promptLibraryItems,
       selectedLibraryItem,
+      selectedSegmentationRecordId,
+      segmentationRecords,
+      selectedSegmentationRecord,
     }),
-    [selectedLibraryItemId, libraryNameDraft, promptLibraryItems, selectedLibraryItem]
+    [
+      selectedLibraryItemId,
+      libraryNameDraft,
+      promptLibraryItems,
+      selectedLibraryItem,
+      selectedSegmentationRecordId,
+      segmentationRecords,
+      selectedSegmentationRecord,
+    ]
   );
 
   const actionsValue = useMemo<LibraryActions>(
     () => ({
       setSelectedLibraryItemId,
       setLibraryNameDraft,
+      setSelectedSegmentationRecordId,
       handleNewLibraryEntry,
       handleSaveLibraryItem,
       handleLoadLibraryItem,
       handleDeleteLibraryItem,
+      captureSegmentationRecordOnApply,
+      handleLoadSegmentationRecordIntoWorkspace,
+      handleDeleteSegmentationRecord,
+      buildSegmentationAnalysisContextJsonForRecord,
+      buildSegmentationAnalysisContextJsonForAll,
     }),
-    [handleNewLibraryEntry, handleSaveLibraryItem, handleLoadLibraryItem, handleDeleteLibraryItem]
+    [
+      handleNewLibraryEntry,
+      handleSaveLibraryItem,
+      handleLoadLibraryItem,
+      handleDeleteLibraryItem,
+      captureSegmentationRecordOnApply,
+      handleLoadSegmentationRecordIntoWorkspace,
+      handleDeleteSegmentationRecord,
+      buildSegmentationAnalysisContextJsonForRecord,
+      buildSegmentationAnalysisContextJsonForAll,
+    ]
   );
 
   return (

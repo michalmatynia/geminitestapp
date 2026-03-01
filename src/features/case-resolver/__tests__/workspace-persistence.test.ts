@@ -10,6 +10,7 @@ import {
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
+  fetchCaseResolverWorkspaceRecordDetailed,
   fetchCaseResolverWorkspaceRecord,
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceMaxPayloadBytes,
@@ -236,6 +237,34 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
+  it('uses context_fast attempt profile order for context-critical fetches', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'light fresh failed' }))
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      attemptProfile: 'context_fast',
+      requiredFileId: null,
+    });
+
+    expect(result.status).toBe('resolved');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+  });
+
   it('continues to keyed heavy when keyed light workspace is missing the required file', async () => {
     const lightWorkspace = createDefaultCaseResolverWorkspace();
     const targetCase = createCaseResolverFile({
@@ -279,6 +308,68 @@ describe('case-resolver workspace persistence', () => {
     expect(fetchMock.mock.calls[2]?.[0]).toBe(
       `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
+  });
+
+  it('returns missing_required_file when all keyed records exist but none include required file', async () => {
+    const workspaceWithoutRequired = createDefaultCaseResolverWorkspace();
+    const requiredFileId = 'case-required-404';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspaceWithoutRequired),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      requiredFileId,
+    });
+
+    expect(result.status).toBe('missing_required_file');
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('returns unavailable with budget_exhausted when fetch chain exceeds context budget', async () => {
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          setTimeout(() => resolve(toJsonResponse(500, { error: 'slow failure' })), 5);
+        })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      attemptProfile: 'context_fast',
+      maxTotalMs: 3,
+      attemptTimeoutMs: 10,
+      requiredFileId: 'case-a',
+    });
+
+    expect(result.status).toBe('unavailable');
+    if (result.status === 'unavailable') {
+      expect(result.reason).toBe('budget_exhausted');
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('supports object payload shape for key snapshot fetch responses', async () => {

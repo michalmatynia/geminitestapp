@@ -298,12 +298,35 @@ export function usePathPersistence(
         if (options?.nodeOverride) {
           const expectedNode = options.nodeOverride;
           const normalizedExpectedConfig = sanitizePathConfig(config);
-          const normalizedExpectedNode: AiNode | undefined = normalizedExpectedConfig.nodes.find(
+          const samePosition = (left: AiNode, right: AiNode): boolean =>
+            Number(left.position?.x ?? Number.NaN) === Number(right.position?.x ?? Number.NaN) &&
+            Number(left.position?.y ?? Number.NaN) === Number(right.position?.y ?? Number.NaN);
+          const findBySignature = (candidates: AiNode[], needle: AiNode): AiNode | undefined =>
+            candidates.find(
+              (node: AiNode): boolean =>
+                node.type === needle.type &&
+                node.title === needle.title &&
+                samePosition(node, needle)
+            );
+          const expectedNodeIndex = config.nodes.findIndex(
             (node: AiNode): boolean => node.id === expectedNode.id
           );
-          const persistedNode: AiNode | undefined = finalConfig.nodes.find(
-            (node: AiNode): boolean => node.id === expectedNode.id
-          );
+          const normalizedExpectedNodeByIndex =
+            expectedNodeIndex >= 0 ? normalizedExpectedConfig.nodes[expectedNodeIndex] : undefined;
+          const normalizedExpectedNode: AiNode | undefined =
+            normalizedExpectedConfig.nodes.find(
+              (node: AiNode): boolean => node.id === expectedNode.id
+            ) ??
+            (normalizedExpectedNodeByIndex &&
+            normalizedExpectedNodeByIndex.type === expectedNode.type
+              ? normalizedExpectedNodeByIndex
+              : undefined) ??
+            findBySignature(normalizedExpectedConfig.nodes, expectedNode);
+          const persistedNode: AiNode | undefined = normalizedExpectedNode
+            ? finalConfig.nodes.find(
+                (node: AiNode): boolean => node.id === normalizedExpectedNode.id
+              ) ?? findBySignature(finalConfig.nodes, normalizedExpectedNode)
+            : undefined;
           const expectedConfigHash = stableStringify(normalizedExpectedNode?.config ?? null);
           const persistedConfigHash = stableStringify(persistedNode?.config ?? null);
           if (!persistedNode || expectedConfigHash !== persistedConfigHash) {

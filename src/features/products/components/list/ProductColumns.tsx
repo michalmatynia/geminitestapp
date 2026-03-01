@@ -424,7 +424,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       const product: ProductWithImages = row.original;
       const {
         onIntegrationsClick: handleClick,
-        onExportSettingsClick: handleOpenExportSettings,
         integrationBadgeIds,
         integrationBadgeStatuses,
         traderaBadgeIds,
@@ -469,9 +468,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
             prefetchListings={prefetchListings}
             showMarketplaceBadge={showMarketplaceBadge}
             onOpenIntegrations={(): void => handleClick(product)}
-            onOpenSettings={
-              handleOpenExportSettings ? (): void => handleOpenExportSettings(product) : undefined
-            }
           />
           <TriggerButtonBar
             location='product_row'

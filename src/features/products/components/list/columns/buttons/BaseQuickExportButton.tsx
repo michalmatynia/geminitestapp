@@ -44,14 +44,12 @@ export function BaseQuickExportButton({
   status,
   prefetchListings,
   showMarketplaceBadge,
-  onOpenSettings,
   onOpenIntegrations,
 }: {
   product: ProductWithImages;
   status: string;
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
-  onOpenSettings?: (() => void) | undefined;
   onOpenIntegrations?: (() => void) | undefined;
 }): React.JSX.Element {
   const { toast } = useToast();
@@ -282,7 +280,7 @@ export function BaseQuickExportButton({
   };
 
   const label = showMarketplaceBadge
-    ? `Manage Base listing (${status}).`
+    ? `One-click re-export to Base.com (${status}).`
     : 'One-click export to Base.com';
 
   const quickExportPending = quickExportMutation.isPending || quickExportLocked;
@@ -291,14 +289,10 @@ export function BaseQuickExportButton({
     <>
       <Button
         type='button'
-        disabled={!showMarketplaceBadge && quickExportPending}
-        onClick={
-          showMarketplaceBadge && onOpenSettings
-            ? onOpenSettings
-            : (): void => {
-              void runQuickExport();
-            }
-        }
+        disabled={quickExportPending}
+        onClick={(): void => {
+          void runQuickExport();
+        }}
         onMouseEnter={prefetchListings}
         onFocus={prefetchListings}
         variant='ghost'

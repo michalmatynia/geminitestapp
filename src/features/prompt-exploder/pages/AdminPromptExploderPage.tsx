@@ -13,6 +13,7 @@ import { ParserTuningSection } from '../components/ParserTuningSection';
 import { PatternRuntimePanel } from '../components/PatternRuntimePanel';
 import { PromptExploderDocsTab } from '../components/PromptExploderDocsTab';
 import { PromptExploderHeaderBar } from '../components/PromptExploderHeaderBar';
+import { PromptExploderLibraryTab } from '../components/PromptExploderLibraryTab';
 import { PromptProjectsPanel } from '../components/PromptProjectsPanel';
 import { ReassembledPromptPanel } from '../components/ReassembledPromptPanel';
 import { SegmentEditorPanel } from '../components/SegmentEditorPanel';
@@ -72,7 +73,7 @@ const PROMPT_EXPLODER_ACTIVE_TAB_KEY = 'prompt_exploder:active_tab';
 
 export function AdminPromptExploderPage(): React.JSX.Element {
   const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();
-  const [activeTab, setActiveTab] = useState<'workspace' | 'docs'>('workspace');
+  const [activeTab, setActiveTab] = useState<'workspace' | 'library' | 'docs'>('workspace');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -87,11 +88,16 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   useEffect(() => {
     if (!mounted) return;
     const storedTab = window.localStorage.getItem(PROMPT_EXPLODER_ACTIVE_TAB_KEY);
+    if (storedTab === 'library') {
+      setActiveTab('library');
+      return;
+    }
     if (storedTab === 'docs') setActiveTab('docs');
   }, [mounted]);
 
   const handleTabChange = (value: string): void => {
-    const nextTab = value === 'docs' ? 'docs' : 'workspace';
+    const nextTab =
+      value === 'docs' ? 'docs' : value === 'library' ? 'library' : 'workspace';
     setActiveTab(nextTab);
     window.localStorage.setItem(PROMPT_EXPLODER_ACTIVE_TAB_KEY, nextTab);
   };
@@ -141,9 +147,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               onValueChange={handleTabChange}
               className='flex flex-1 flex-col min-h-0 w-full space-y-4'
             >
-              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
+              <TabsList className='grid h-auto w-full grid-cols-3 gap-2 border border-border/60 bg-card/30 p-2'>
                 <TabsTrigger value='workspace' className='h-10'>
                   Workspace
+                </TabsTrigger>
+                <TabsTrigger value='library' className='h-10'>
+                  Library
                 </TabsTrigger>
                 <TabsTrigger value='docs' className='h-10'>
                   Docs
@@ -168,6 +177,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 <PatternRuntimePanel />
                 <ParserTuningSection />
                 <BenchmarkReportPanel />
+              </TabsContent>
+
+              <TabsContent value='library' className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'>
+                <PromptExploderLibraryTab />
               </TabsContent>
 
               <TabsContent value='docs' className='flex-1 min-h-0 overflow-y-auto'>

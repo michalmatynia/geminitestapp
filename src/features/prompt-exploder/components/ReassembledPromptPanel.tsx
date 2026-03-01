@@ -2,13 +2,26 @@
 
 import React from 'react';
 
-import { Button, FormSection, Textarea } from '@/shared/ui';
+import { Button, FormSection, Textarea, useToast } from '@/shared/ui';
 
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
+import { useLibraryActions } from '../context/hooks/useLibrary';
 
 export function ReassembledPromptPanel(): React.JSX.Element {
   const { documentState, returnTarget } = useDocumentState();
   const { handleApplyToImageStudio } = useDocumentActions();
+  const { captureSegmentationRecordOnApply } = useLibraryActions();
+  const { toast } = useToast();
+
+  const handleApply = async (): Promise<void> => {
+    const captureResult = await captureSegmentationRecordOnApply();
+    if (!captureResult.captured) {
+      toast('Segmentation context capture skipped (missing prompt or document).', {
+        variant: 'warning',
+      });
+    }
+    await handleApplyToImageStudio();
+  };
 
   return (
     <FormSection
@@ -21,7 +34,7 @@ export function ReassembledPromptPanel(): React.JSX.Element {
           type='button'
           variant='outline'
           onClick={(): void => {
-            void handleApplyToImageStudio();
+            void handleApply();
           }}
         >
           {returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio'}

@@ -2,19 +2,32 @@
 
 import React from 'react';
 
-import { Button, FormSection, Textarea, Card } from '@/shared/ui';
+import { Button, FormSection, Textarea, Card, useToast } from '@/shared/ui';
 
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
+import { useLibraryActions } from '../context/hooks/useLibrary';
 import { useSettingsState } from '../context/hooks/useSettings';
 
 export function SourcePromptPanel(): React.JSX.Element {
   const { promptText, returnTarget } = useDocumentState();
   const { setPromptText, handleExplode, handleApplyToImageStudio } = useDocumentActions();
+  const { captureSegmentationRecordOnApply } = useLibraryActions();
   const { runtimeGuardrailIssue, promptExploderSettings } = useSettingsState();
+  const { toast } = useToast();
   const caseResolverCaptureModeLabel =
     promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_with_heuristics'
       ? 'Rules + Heuristics'
       : 'Rules Only';
+
+  const handleApply = async (): Promise<void> => {
+    const captureResult = await captureSegmentationRecordOnApply();
+    if (!captureResult.captured) {
+      toast('Segmentation context capture skipped (missing prompt or document).', {
+        variant: 'warning',
+      });
+    }
+    await handleApplyToImageStudio();
+  };
 
   return (
     <FormSection
@@ -31,7 +44,7 @@ export function SourcePromptPanel(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={() => {
-              void handleApplyToImageStudio();
+              void handleApply();
             }}
           >
             {returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio'}

@@ -125,6 +125,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const shouldOpenEditorFromQuery = searchParams.get('openEditor') === '1';
   const requestedPromptExploderSessionId =
     searchParams.get('promptExploderSessionId')?.trim() ?? '';
+  const isPromptExploderReturnFlow =
+    shouldOpenEditorFromQuery &&
+    requestedPromptExploderSessionId.length > 0 &&
+    (requestedFileId?.trim() ?? '').length > 0;
 
   const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
@@ -145,6 +149,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
     [rawWorkspaceFromStore]
   );
+  const storeWorkspaceHasRequestedFile = useMemo((): boolean => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) return false;
+    return parsedWorkspaceFromStore.files.some(
+      (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId
+    );
+  }, [parsedWorkspaceFromStore.files, requestedFileId]);
   const navigationWorkspace = useMemo(
     (): CaseResolverWorkspace | null => readCaseResolverNavigationWorkspace(),
     [requestedFileId]
@@ -270,6 +281,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handledRequestedFileIdRef,
     syncPersistedWorkspaceTracking,
     clearQueuedWorkspacePersistMutation,
+    isStoreLoading: settingsStore.isLoading,
+    isStoreFetching: settingsStore.isFetching,
+    storeWorkspaceHasRequestedFile,
+    isPromptExploderReturnFlow,
   });
   const {
     requestedCaseStatus,
@@ -339,6 +354,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     isApplyingPromptExploderPartyProposal: promptExploder.isApplyingPromptExploderPartyProposal,
     syncPersistedWorkspaceTracking,
     clearQueuedWorkspacePersistMutation,
+    isPromptExploderReturnFlow,
   });
 
   const editorActions = useCaseResolverStateEditorActions({

@@ -106,7 +106,6 @@ const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickE
     status: 'not_started',
     prefetchListings: vi.fn(),
     showMarketplaceBadge: false,
-    onOpenSettings: undefined,
     onOpenIntegrations: undefined,
     ...overrides,
   };

@@ -484,19 +484,11 @@ export function useProductListState(): ProductListContextType & {
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
 
-      // If we have any cached detail for this product, open the modal immediately
-      // without the loading skeleton. The background fetch will silently update
-      // the form only if the server returns a newer version.
-      const cachedProduct = queryClient.getQueryData<ProductWithImages>(
-        normalizeQueryKey(getProductDetailQueryKey(product.id))
-      );
-      if (cachedProduct) {
-        setEditingProduct(markEditingProductHydrated(cachedProduct));
-        setIsEditHydrating(false);
-      } else {
-        setEditingProduct(null);
-        setIsEditHydrating(true);
-      }
+      // Always open with skeleton so the modal mounts once and stays open
+      // while fresh data loads. The form replaces the skeleton in-place with
+      // no second open animation.
+      setEditingProduct(product);
+      setIsEditHydrating(true);
 
       void queryClient
         .fetchQuery({
@@ -508,15 +500,10 @@ export function useProductListState(): ProductListContextType & {
               logError: false,
               timeout: PRODUCT_DETAIL_TIMEOUT_MS,
             }),
-          staleTime: 20_000,
+          staleTime: 0,
         })
         .then((freshProduct: ProductWithImages) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
-          // When we already opened with cached data, only re-render if the server
-          // returned something newer (avoids an unnecessary extra render).
-          if (cachedProduct && !isIncomingProductDetailNewer(freshProduct, cachedProduct)) {
-            return;
-          }
           setEditingProduct(markEditingProductHydrated(freshProduct));
           setIsEditHydrating(false);
         })

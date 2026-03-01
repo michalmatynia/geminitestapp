@@ -261,12 +261,15 @@ export const runtimeStateSchema = z.object({
   history: z.record(z.string(), z.array(runtimeHistoryEntrySchema)).optional(),
   hashes: z.record(z.string(), z.string()).optional(),
   hashTimestamps: z.record(z.string(), z.number()).optional(),
+  nodeDurations: z.record(z.string(), z.number()).optional(),
 });
 
 export type RuntimeState = z.infer<typeof runtimeStateSchema> & {
   history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   hashes?: Record<string, string> | undefined;
   hashTimestamps?: Record<string, number> | undefined;
+  /** Engine-measured execution duration (ms) per node ID for the last run */
+  nodeDurations?: Record<string, number> | undefined;
 };
 
 export const queuedRunSchema = z.object({

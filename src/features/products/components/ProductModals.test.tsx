@@ -17,6 +17,15 @@ vi.mock('@/features/products/context/ProductFormContext', () => ({
   ProductFormProvider: ({ children }: { children: ReactNode }) => (
     <div data-testid='product-form-provider'>{children}</div>
   ),
+  useProductFormContext: () => ({
+    handleSubmit: vi.fn(),
+    uploading: false,
+    hasUnsavedChanges: false,
+    showFileManager: false,
+    handleMultiFileSelect: vi.fn(),
+    product: null,
+    getValues: vi.fn().mockReturnValue({}),
+  }),
 }));
 
 vi.mock('@/features/products/components/modals/ProductFormModal', () => ({
@@ -43,6 +52,14 @@ vi.mock('@/shared/ui', () => ({
   Skeleton: ({ className }: { className?: string }) => (
     <div data-testid='skeleton' className={className} />
   ),
+}));
+
+vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+  TriggerButtonBar: () => <div data-testid='trigger-button-bar' />,
+}));
+
+vi.mock('@/features/products/components/ProductForm', () => ({
+  default: () => <div data-testid='product-form' />,
 }));
 
 vi.mock('@/features/integrations/components/listings/ListProductModal', () => ({
@@ -154,7 +171,9 @@ describe('ProductModals edit hydration guard', () => {
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
     expect(screen.getByText('Please wait while complete product data is loaded.')).toBeInTheDocument();
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
-    expect(screen.queryByTestId('product-form-modal')).not.toBeInTheDocument();
+    // Form provider and its content must not be rendered during loading
+    expect(screen.queryByTestId('product-form-provider')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('product-form')).not.toBeInTheDocument();
   });
 
   it('disables save while hydration is in progress', () => {
@@ -175,7 +194,8 @@ describe('ProductModals edit hydration guard', () => {
     render(<ProductModals />);
 
     expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
-    expect(screen.queryByTestId('product-form-modal')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('product-form-provider')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('product-form')).not.toBeInTheDocument();
   });
 
   it('renders edit form when the editing product is hydrated', () => {
@@ -188,7 +208,12 @@ describe('ProductModals edit hydration guard', () => {
 
     render(<ProductModals />);
 
+    // The shared FormModal wrapper stays open
+    expect(screen.getByTestId('loading-form-modal')).toBeInTheDocument();
+    // ProductFormProvider and form content render inside it
     expect(screen.getByTestId('product-form-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('product-form-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('product-form')).toBeInTheDocument();
+    // Save button is enabled when form is loaded
+    expect(screen.getByRole('button', { name: 'Update' })).not.toBeDisabled();
   });
 });

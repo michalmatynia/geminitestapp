@@ -22,6 +22,8 @@ export type AiPathLocalRunRecord = {
   finishedAt: string;
   durationMs?: number | null;
   nodeCount?: number | null;
+  /** Engine-measured per-node execution durations (ms) for post-run analysis */
+  nodeDurations?: Record<string, number> | null;
   error?: string | null;
   source?: string | null;
 };
@@ -58,6 +60,16 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
     typeof raw['nodeCount'] === 'number' && Number.isFinite(raw['nodeCount'])
       ? raw['nodeCount']
       : null;
+  const rawNodeDurations = raw['nodeDurations'];
+  const nodeDurations: Record<string, number> | null =
+    rawNodeDurations && typeof rawNodeDurations === 'object' && !Array.isArray(rawNodeDurations)
+      ? Object.fromEntries(
+          Object.entries(rawNodeDurations as Record<string, unknown>).filter(
+            ([, v]) => typeof v === 'number' && Number.isFinite(v)
+          ) as [string, number][]
+        )
+      : null;
+
   return {
     id,
     status,
@@ -65,6 +77,7 @@ const normalizeRecord = (value: unknown): AiPathLocalRunRecord | null => {
     finishedAt,
     durationMs,
     nodeCount,
+    nodeDurations: nodeDurations && Object.keys(nodeDurations).length > 0 ? nodeDurations : null,
     pathId: typeof raw['pathId'] === 'string' ? raw['pathId'] : null,
     pathName: typeof raw['pathName'] === 'string' ? raw['pathName'] : null,
     triggerEvent: typeof raw['triggerEvent'] === 'string' ? raw['triggerEvent'] : null,

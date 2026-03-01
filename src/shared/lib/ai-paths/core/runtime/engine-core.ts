@@ -197,6 +197,17 @@ export async function evaluateGraphInternal(
   const blockedNodes = new Set<string>();
   const skippedNodes = new Set<string>(options.skipNodeIds ?? []);
   const nodeHashes = new Map<string, string>();
+  // Engine-measured last execution duration per node (ms). Populated on finish/error.
+  const nodeDurationsMap = new Map<string, number>();
+  // Auto-create an in-run cache Map when any node has cache mode enabled and no external cache
+  // was provided. This makes `cache: { mode: 'auto', scope: 'run' }` work without configuration.
+  const effectiveCache: Map<string, RuntimePortValues> | null =
+    options.cache ??
+    (nodes.some(
+      (n) => n.config?.runtime?.cache?.mode && n.config.runtime.cache.mode !== 'disabled'
+    )
+      ? new Map<string, RuntimePortValues>()
+      : null);
 
   Object.keys(outputs).forEach((nodeId) => {
     if (!scopedNodeIds.has(nodeId)) {
@@ -270,6 +281,7 @@ export async function evaluateGraphInternal(
       inputs: cloneValue(inputsSnapshot),
       outputs: outputsSnapshot,
       hashes: Object.fromEntries(nodeHashes),
+      nodeDurations: nodeDurationsMap.size ? Object.fromEntries(nodeDurationsMap) : undefined,
       history: history.size
         ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
         : undefined,
@@ -544,7 +556,7 @@ export async function evaluateGraphInternal(
           }
 
           const prevOutputs = outputs[node.id] ?? null;
-          const cachedOutputs = nodeHash ? options.cache?.get(nodeHash) : null;
+          const cachedOutputs = nodeHash ? effectiveCache?.get(nodeHash) : null;
           const isSeedMatch = Boolean(
             nodeHash && seedHashes[node.id] === nodeHash && options.seedOutputs?.[node.id]
           );
@@ -796,10 +808,11 @@ export async function evaluateGraphInternal(
             const durationMs = nodeFinishedAt - nodeStartedAt;
             stats.totalMs += durationMs;
             stats.maxMs = Math.max(stats.maxMs, durationMs);
+            nodeDurationsMap.set(node.id, durationMs);
 
             outputs[node.id] = result;
             finishedNodes.add(node.id);
-            if (nodeHash) options.cache?.set(nodeHash, cloneValue(result));
+            if (nodeHash) effectiveCache?.set(nodeHash, cloneValue(result));
 
             if (options['recordHistory']) {
               const entries = history.get(node.id) ?? [];
@@ -861,6 +874,7 @@ export async function evaluateGraphInternal(
             }
             errorNodes.add(node.id);
             stats.errorCount += 1;
+            nodeDurationsMap.set(node.id, nowMs() - nodeStartedAt);
 
             if (options['recordHistory']) {
               const entries = history.get(node.id) ?? [];

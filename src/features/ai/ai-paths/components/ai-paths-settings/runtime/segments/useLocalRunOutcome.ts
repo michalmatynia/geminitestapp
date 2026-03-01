@@ -110,6 +110,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           finishedAt,
           durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
           nodeCount: args.normalizedNodes.length,
+          nodeDurations: outcome.state.nodeDurations ?? null,
           source: 'ai_paths_ui',
         });
         return;
@@ -171,6 +172,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           finishedAt,
           durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
           nodeCount: args.normalizedNodes.length,
+          nodeDurations: outcome.state.nodeDurations ?? null,
           error: outcome.error instanceof Error ? outcome.error.message : 'Local run failed',
           source: 'ai_paths_ui',
         });
@@ -231,6 +233,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           finishedAt,
           durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
           nodeCount: args.normalizedNodes.length,
+          nodeDurations: outcome.state.nodeDurations ?? null,
           error: 'Run cancelled',
           source: 'ai_paths_ui',
         });

@@ -147,6 +147,17 @@ export function createManagedQueue<TJobData>(
         // honours the signal and stops iteration cleanly (run → canceled).
         const timeoutController = new AbortController();
         const timer = setTimeout(() => {
+          void logSystemEvent({
+            level: 'warn',
+            source: `queue:${config.name}`,
+            message: `[queue-factory:${config.name}] job ${job.id ?? 'unknown'} timed out after ${jobTimeoutMs}ms`,
+            context: {
+              event: 'job.timeout',
+              jobId: job.id,
+              queueName: config.name,
+              timeoutMs: jobTimeoutMs,
+            },
+          });
           timeoutController.abort(
             new Error(`Job ${job.id ?? 'unknown'} timed out after ${jobTimeoutMs} ms`)
           );

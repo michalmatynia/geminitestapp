@@ -118,15 +118,57 @@ export const processRun = async (
   run: AiPathRunRecord,
   signal?: AbortSignal
 ): Promise<ProcessRunResult> => {
+  const runStartMs = Date.now();
   const repo = await getPathRunRepository();
   debugQueueLog(`Processing run ${run.id}`, { runId: run.id });
+
+  void logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: `AI-Paths run started: ${run.pathName ?? run.pathId}`,
+    context: {
+      event: 'run.started',
+      runId: run.id,
+      pathId: run.pathId,
+      pathName: run.pathName,
+      entityId: run.entityId,
+      entityType: run.entityType,
+      triggerEvent: run.triggerEvent,
+      retryCount: run.retryCount ?? 0,
+    },
+  });
+
   try {
     await executePathRun(run, signal);
     const latest = await repo.findRunById(run.id);
     if (latest?.status === 'canceled') {
       debugQueueLog(`Run ${run.id} was canceled during execution`, { runId: run.id });
+      void logSystemEvent({
+        level: 'info',
+        source: LOG_SOURCE,
+        message: `AI-Paths run canceled: ${run.pathName ?? run.pathId}`,
+        context: {
+          event: 'run.canceled',
+          runId: run.id,
+          pathId: run.pathId,
+          durationMs: Date.now() - runStartMs,
+        },
+      });
       return;
     }
+    void logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: `AI-Paths run completed: ${run.pathName ?? run.pathId}`,
+      context: {
+        event: 'run.completed',
+        runId: run.id,
+        pathId: run.pathId,
+        pathName: run.pathName,
+        entityId: run.entityId,
+        durationMs: Date.now() - runStartMs,
+      },
+    });
     debugQueueLog(`Run ${run.id} completed`, { runId: run.id });
     return;
   } catch (error: unknown) {
@@ -162,6 +204,21 @@ export const processRun = async (
         durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
         timestamp: finishedAt,
       });
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: `AI-Paths run failed (non-retryable): ${run.pathName ?? run.pathId} — ${message}`,
+        context: {
+          event: 'run.failed',
+          runId: run.id,
+          pathId: run.pathId,
+          pathName: run.pathName,
+          entityId: run.entityId,
+          durationMs: Date.now() - runStartMs,
+          nonRetryable: true,
+          error: message,
+        },
+      });
       publishRunUpdate(run.id, 'error', { error: message, nonRetryable: true });
       return;
     }
@@ -191,6 +248,23 @@ export const processRun = async (
         message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
         metadata: { retryCount, nextRetryAt: nextRetryAt.toISOString() },
       });
+      void logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: `AI-Paths run retrying: ${run.pathName ?? run.pathId} (attempt ${retryCount}/${maxAttempts})`,
+        context: {
+          event: 'run.retrying',
+          runId: run.id,
+          pathId: run.pathId,
+          pathName: run.pathName,
+          entityId: run.entityId,
+          retryCount,
+          maxAttempts,
+          delayMs,
+          nextRetryAt: nextRetryAt.toISOString(),
+          error: message,
+        },
+      });
       return { requeueDelayMs: delayMs };
     } else {
       const finishedAt = new Date();
@@ -215,6 +289,22 @@ export const processRun = async (
         status: 'dead_lettered',
         retryCount,
         maxAttempts,
+      });
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: `AI-Paths run dead-lettered: ${run.pathName ?? run.pathId} (${retryCount}/${maxAttempts} attempts)`,
+        context: {
+          event: 'run.dead_lettered',
+          runId: run.id,
+          pathId: run.pathId,
+          pathName: run.pathName,
+          entityId: run.entityId,
+          durationMs: Date.now() - runStartMs,
+          retryCount,
+          maxAttempts,
+          error: message,
+        },
       });
       return;
     }

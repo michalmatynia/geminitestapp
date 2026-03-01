@@ -467,27 +467,30 @@ export const executePathRun = async (
           } as RuntimePortValues;
 
           await Promise.all([
-            repo.upsertRunNode(run.id, node.id, {
-              status: 'blocked',
-              outputs: safeOutputs,
-              finishedAt,
-              nodeType: node.type,
-              error: message,
-            }),
-            repo.createRunEvent({
-              runId: run.id,
-              level: 'warn',
-              message: `Node ${node.title ?? node.id} blocked: ${message}`,
-              metadata: {
-                runId: run.id,
-                nodeId: node.id,
+            repo
+              .upsertRunNode(run.id, node.id, {
+                status: 'blocked',
+                outputs: safeOutputs,
+                finishedAt,
                 nodeType: node.type,
-                attempt,
-                reason,
-              },
-
-            }),
-            throttledSaveIntermediateState(),
+                error: message,
+              })
+              .catch(() => {}),
+            repo
+              .createRunEvent({
+                runId: run.id,
+                level: 'warn',
+                message: `Node ${node.title ?? node.id} blocked: ${message}`,
+                metadata: {
+                  runId: run.id,
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  attempt,
+                  reason,
+                },
+              })
+              .catch(() => {}),
+            throttledSaveIntermediateState().catch(() => {}),
           ]);
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeBlocked' });
@@ -517,31 +520,34 @@ export const executePathRun = async (
             status: 'failed',
           } as RuntimePortValues;
 
-          const tasks: Promise<unknown>[] = [
-            repo.upsertRunNode(run.id, node.id, {
-              status: 'failed',
-              outputs: errorOutputs ?? undefined,
-              finishedAt,
-              nodeType: node.type,
-              error: message,
-            }),
-            repo.createRunEvent({
-              runId: run.id,
-              level: 'error',
-              message: `Node ${node.title ?? node.id} failed: ${message}`,
-              metadata: {
-                traceId,
-                spanId: nodeSpanId,
-                nodeId: node.id,
+          await Promise.all([
+            repo
+              .upsertRunNode(run.id, node.id, {
+                status: 'failed',
+                outputs: errorOutputs ?? undefined,
+                finishedAt,
                 nodeType: node.type,
-                iteration,
-                attempt,
                 error: message,
-              },
-            }),
-            throttledSaveIntermediateState(),
-          ];
-          await Promise.all(tasks);
+              })
+              .catch(() => {}),
+            repo
+              .createRunEvent({
+                runId: run.id,
+                level: 'error',
+                message: `Node ${node.title ?? node.id} failed: ${message}`,
+                metadata: {
+                  traceId,
+                  spanId: nodeSpanId,
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  iteration,
+                  attempt,
+                  error: message,
+                },
+              })
+              .catch(() => {}),
+            throttledSaveIntermediateState().catch(() => {}),
+          ]);
           void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status: 'failed' }).catch(
             () => {}
           );

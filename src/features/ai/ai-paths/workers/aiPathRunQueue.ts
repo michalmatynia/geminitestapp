@@ -27,7 +27,19 @@ export type AiPathRunQueueSloStatus = AiPathRunQueueSloStatusDto;
 export type QueueSloThresholds = QueueSloThresholdsDto;
 export type SloLevel = SloLevelDto;
 
-const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
+// Default concurrency raised from 1 → 3: one slow job no longer blocks the whole queue.
+// claimRunForProcessing uses an atomic findOneAndUpdate so concurrent workers never
+// double-process the same run.  Override with AI_PATHS_RUN_CONCURRENCY env var.
+const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '3');
+// Per-job wall-clock timeout.  After this many ms the run's AbortController is fired,
+// the engine stops iteration, and the run is marked canceled.  Set to 0 to disable.
+// Default: 10 minutes.  Override with AI_PATHS_JOB_TIMEOUT_MS env var.
+const JOB_EXECUTION_TIMEOUT_MS = (() => {
+  const raw = process.env['AI_PATHS_JOB_TIMEOUT_MS'];
+  if (!raw) return 10 * 60 * 1000;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 10 * 60 * 1000;
+})();
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
 const LOG_SOURCE = 'ai-path-run-queue';
 const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
@@ -352,12 +364,20 @@ export const computeAiPathRunQueueSlo = (
 const queue = createManagedQueue<AiPathRunJobData>({
   name: AI_PATH_RUN_QUEUE_NAME,
   concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+  jobTimeoutMs: JOB_EXECUTION_TIMEOUT_MS > 0 ? JOB_EXECUTION_TIMEOUT_MS : undefined,
   defaultJobOptions: {
     attempts: 1, // Retries are handled by the processor (custom dead-letter logic)
     removeOnComplete: true,
     removeOnFail: false,
   },
-  processor: async (data) => {
+  workerOptions: {
+    // How often BullMQ checks for stalled jobs (ms). Default: 30 s.
+    stalledInterval: 30_000,
+    // Allow 2 stall cycles before declaring a job dead.  Default is 1; the
+    // extra window tolerates transient GC pauses or a slow MongoDB lock-renewal.
+    maxStalledCount: 2,
+  },
+  processor: async (data, _jobId, signal) => {
     // Handle stale run recovery job
     if (data.runId === '__recovery__' || data.type === 'recovery') {
       await processStaleRunRecovery();
@@ -382,7 +402,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
       return;
     }
     await recordRuntimeRunStarted({ runId: run.id });
-    const outcome = await processRun(run);
+    const outcome = await processRun(run, signal);
     if (outcome?.requeueDelayMs !== undefined) {
       await enqueuePathRunJob(run.id, { delayMs: outcome.requeueDelayMs });
     }
@@ -506,6 +526,18 @@ export const startAiPathRunQueue = (): void => {
     if (!aiPathRunQueueState.workerStarted) {
       queue.startWorker();
       aiPathRunQueueState.workerStarted = true;
+
+      // Eagerly establish the MongoDB connection so the first job does not pay
+      // the full cold-start latency (~20 s on Atlas) inline.  Fire-and-forget;
+      // a failure here is harmless — jobs will reconnect on their own.
+      void (async (): Promise<void> => {
+        try {
+          const { getMongoClient } = await import('@/shared/lib/db/mongo-client');
+          await getMongoClient();
+        } catch {
+          // Advisory only — swallow to avoid crashing startAiPathRunQueue.
+        }
+      })();
     }
     if (aiPathRunQueueState.recoveryScheduled) return;
 

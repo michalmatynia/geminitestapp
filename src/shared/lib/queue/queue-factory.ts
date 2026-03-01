@@ -123,17 +123,45 @@ export function createManagedQueue<TJobData>(
       return;
     }
     workerStarted = true;
+
+    // lockDuration must exceed the per-job timeout so BullMQ never declares a
+    // still-running job stalled.  Add 60 s buffer for final DB writes after the
+    // job resolves.  Fall back to 30 s (BullMQ default) when no timeout is set.
+    const jobTimeoutMs = config.jobTimeoutMs ?? 0;
+    const lockDuration =
+      jobTimeoutMs > 0
+        ? jobTimeoutMs + 60_000
+        : ((config.workerOptions?.['lockDuration'] as number | undefined) ?? 30_000);
+
     worker = new Worker(
       config.name,
       async (job: Job) => {
         lastProcessTime = Date.now();
         const data = job.data as TJobData;
-        return config.processor(data, job.id ?? 'unknown');
+
+        if (!jobTimeoutMs) {
+          return config.processor(data, job.id ?? 'unknown');
+        }
+
+        // Per-job wall-clock timeout.  Abort the processor signal; the engine
+        // honours the signal and stops iteration cleanly (run → canceled).
+        const timeoutController = new AbortController();
+        const timer = setTimeout(() => {
+          timeoutController.abort(
+            new Error(`Job ${job.id ?? 'unknown'} timed out after ${jobTimeoutMs} ms`)
+          );
+        }, jobTimeoutMs);
+        try {
+          return await config.processor(data, job.id ?? 'unknown', timeoutController.signal);
+        } finally {
+          clearTimeout(timer);
+        }
       },
       {
         ...config.workerOptions,
         connection,
         concurrency: config.concurrency,
+        lockDuration,
         removeOnComplete: { count: 0 },
         removeOnFail: { count: 100 },
       }

@@ -188,9 +188,12 @@ export type ProductAiJobRepository = {
 export type QueueConfig<TJobData = unknown> = {
   name: string; // QueueName
   concurrency: number;
+  /** Wall-clock limit per job (ms). 0 / undefined = disabled. */
+  jobTimeoutMs?: number | undefined;
   defaultJobOptions?: Record<string, unknown>; // Omit<JobsOptions, 'connection'>
   workerOptions?: Record<string, unknown>; // Omit<WorkerOptions, 'connection' | 'concurrency'>
-  processor: (data: TJobData, jobId: string) => Promise<unknown>;
+  /** Third arg is an AbortSignal that fires when jobTimeoutMs is exceeded. */
+  processor: (data: TJobData, jobId: string, signal?: AbortSignal) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
   onFailed?: (
     jobId: string,

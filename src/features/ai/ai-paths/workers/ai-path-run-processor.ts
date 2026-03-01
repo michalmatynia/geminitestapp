@@ -114,11 +114,14 @@ export type ProcessRunResult =
     }
   | undefined;
 
-export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult> => {
+export const processRun = async (
+  run: AiPathRunRecord,
+  signal?: AbortSignal
+): Promise<ProcessRunResult> => {
   const repo = await getPathRunRepository();
   debugQueueLog(`Processing run ${run.id}`, { runId: run.id });
   try {
-    await executePathRun(run);
+    await executePathRun(run, signal);
     const latest = await repo.findRunById(run.id);
     if (latest?.status === 'canceled') {
       debugQueueLog(`Run ${run.id} was canceled during execution`, { runId: run.id });

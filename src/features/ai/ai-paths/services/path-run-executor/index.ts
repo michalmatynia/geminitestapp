@@ -58,7 +58,10 @@ import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settin
 import { createPathRunProfiling } from './profiling';
 import { runExecutorPreflight } from './preflight';
 
-export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
+export const executePathRun = async (
+  run: AiPathRunRecord,
+  externalSignal?: AbortSignal
+): Promise<void> => {
   let repo: AiPathRunRepository;
   try {
     repo = await getPathRunRepository();
@@ -71,6 +74,22 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     throw new Error('Database repository not available', { cause: error });
   }
   const runAbortController = new AbortController();
+
+  // Forward an external timeout/abort signal (e.g. from the BullMQ job timeout)
+  // into the run's own abort controller so the engine stops cleanly.
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      runAbortController.abort(externalSignal.reason);
+    } else {
+      externalSignal.addEventListener(
+        'abort',
+        () => {
+          runAbortController.abort(externalSignal.reason);
+        },
+        { once: true }
+      );
+    }
+  }
   const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
 
   let dbRunMissing = false;
@@ -315,37 +334,43 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             status: 'running',
           } as RuntimePortValues;
 
-          const tasks: Promise<unknown>[] = [
-            repo.upsertRunNode(run.id, node.id, {
-              nodeType: node.type,
-              nodeTitle: node.title ?? null,
-              status: 'running',
-              attempt: nextAttempt,
-              inputs: safeInputs,
-              outputs: safePrevOutputs,
-              startedAt: nodeStartedAt,
-              error: null,
-            }),
-            throttledSaveIntermediateState(),
-          ];
-          if (LOG_NODE_START_EVENTS) {
-            tasks.push(
-              repo.createRunEvent({
-                runId: run.id,
-                level: 'info',
-                message: `Node ${node.title ?? node.id} started.`,
-                metadata: {
-                  traceId,
-                  spanId: nodeSpanId,
-                  nodeId: node.id,
-                  nodeType: node.type,
-                  iteration,
-                  attempt: nextAttempt,
-                },
+          // These observability writes are non-critical: if MongoDB is degraded
+          // the run must still continue.  Individual .catch keeps Promise.all
+          // from short-circuiting on the first failure.
+          await Promise.all([
+            repo
+              .upsertRunNode(run.id, node.id, {
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'running',
+                attempt: nextAttempt,
+                inputs: safeInputs,
+                outputs: safePrevOutputs,
+                startedAt: nodeStartedAt,
+                error: null,
               })
-            );
-          }
-          await Promise.all(tasks);
+              .catch(() => {}),
+            throttledSaveIntermediateState().catch(() => {}),
+            ...(LOG_NODE_START_EVENTS
+              ? [
+                  repo
+                    .createRunEvent({
+                      runId: run.id,
+                      level: 'info',
+                      message: `Node ${node.title ?? node.id} started.`,
+                      metadata: {
+                        traceId,
+                        spanId: nodeSpanId,
+                        nodeId: node.id,
+                        nodeType: node.type,
+                        iteration,
+                        attempt: nextAttempt,
+                      },
+                    })
+                    .catch(() => {}),
+                ]
+              : []),
+          ]);
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeStart' });
         }
@@ -387,35 +412,40 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const metadata =
             node.type === 'database' ? extractDatabaseRuntimeMetadata(safeOutputs) : null;
 
-          const tasks: Promise<unknown>[] = [
-            repo.upsertRunNode(run.id, node.id, {
-              status: status as AiPathNodeStatus,
-              outputs: safeOutputs,
-              finishedAt,
-              nodeType: node.type,
-              error: status === 'failed' ? (nextOutputs['message'] as string) : null,
-            }),
-            repo.createRunEvent({
-              runId: run.id,
-              level: status === 'failed' ? 'error' : 'info',
-              message:
-                status === 'cached'
-                  ? `Node ${node.title ?? node.id} reused cached outputs.`
-                  : `Node ${node.title ?? node.id} finished with status: ${status}.`,
-              metadata: {
-                traceId,
-                spanId: nodeSpanId,
-                nodeId: node.id,
+          // Non-critical observability writes — individual .catch prevents
+          // a MongoDB outage from aborting the run via Promise.all short-circuit.
+          await Promise.all([
+            repo
+              .upsertRunNode(run.id, node.id, {
+                status: status as AiPathNodeStatus,
+                outputs: safeOutputs,
+                finishedAt,
                 nodeType: node.type,
-                iteration,
-                attempt,
-                cached,
-                ...(metadata ? { nodeMetadata: metadata } : {}),
-              },
-            }),
-            throttledSaveIntermediateState(),
-          ];
-          await Promise.all(tasks);
+                error: status === 'failed' ? (nextOutputs['message'] as string) : null,
+              })
+              .catch(() => {}),
+            repo
+              .createRunEvent({
+                runId: run.id,
+                level: status === 'failed' ? 'error' : 'info',
+                message:
+                  status === 'cached'
+                    ? `Node ${node.title ?? node.id} reused cached outputs.`
+                    : `Node ${node.title ?? node.id} finished with status: ${status}.`,
+                metadata: {
+                  traceId,
+                  spanId: nodeSpanId,
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  iteration,
+                  attempt,
+                  cached,
+                  ...(metadata ? { nodeMetadata: metadata } : {}),
+                },
+              })
+              .catch(() => {}),
+            throttledSaveIntermediateState().catch(() => {}),
+          ]);
           void recordRuntimeNodeStatus({ runId: run.id, nodeId: node.id, status }).catch(() => {});
         } catch (error) {
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });

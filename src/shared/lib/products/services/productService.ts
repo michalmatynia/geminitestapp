@@ -133,16 +133,19 @@ const uploadFilesForProduct = async (
   sku: string | null,
   provider: ProductDbProvider
 ): Promise<Map<File, string>> => {
+  const results = await Promise.all(
+    files.map(async (file) => {
+      const imageFile = await uploadFile(file, {
+        category: 'products',
+        provider,
+        ...(sku ? { sku } : {}),
+        filenameOverride: file.name,
+      });
+      return { file, id: imageFile.id };
+    })
+  );
   const uploadedByFile = new Map<File, string>();
-  for (const file of files) {
-    const imageFile = await uploadFile(file, {
-      category: 'products',
-      provider,
-      ...(sku ? { sku } : {}),
-      filenameOverride: file.name,
-    });
-    uploadedByFile.set(file, imageFile.id);
-  }
+  results.forEach(({ file, id }) => uploadedByFile.set(file, id));
   return uploadedByFile;
 };
 
@@ -374,14 +377,19 @@ async function updateProduct(
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  const existing = await productRepository.getProductById(id);
+  // Parse form synchronously so validation can start immediately.
+  const parsedForm = data instanceof FormData ? parseProductForm(data) : null;
+  const inputData = parsedForm ? parsedForm.rawData : data;
+
+  // Run DB existence check and validation in parallel — neither depends on the other.
+  const [existing, validation] = await Promise.all([
+    productRepository.getProductById(id),
+    validateProductUpdate(inputData),
+  ]);
+
   if (!existing) {
     throw notFoundError(`Product not found: ${id}`);
   }
-
-  const parsedForm = data instanceof FormData ? parseProductForm(data) : null;
-  const inputData = parsedForm ? parsedForm.rawData : data;
-  const validation = await validateProductUpdate(inputData);
   if (!validation.success) {
     throw badRequestError('Product validation failed', {
       errors: validation.errors,
@@ -390,12 +398,23 @@ async function updateProduct(
 
   const normalized = normalizeUpdateProductPayloadForStorage(validation.data);
 
-  const product = await withRetry(() => productRepository.updateProduct(id, normalized), {
-    maxAttempts: 2,
-    initialDelayMs: 300,
-    maxDelayMs: 3000,
-    source: 'productService.updateProduct',
-  });
+  // Run DB write and image uploads in parallel — they are independent of each other.
+  const uploadSku = parsedForm ? resolveUploadSku(normalized.sku, existing.sku) : null;
+  const imageUploadTask: Promise<Map<File, string>> =
+    parsedForm && parsedForm.images.length > 0
+      ? uploadFilesForProduct(parsedForm.images, uploadSku, provider)
+      : Promise.resolve(new Map<File, string>());
+
+  const [product, uploadedByFile] = await Promise.all([
+    withRetry(() => productRepository.updateProduct(id, normalized), {
+      maxAttempts: 2,
+      initialDelayMs: 300,
+      maxDelayMs: 3000,
+      source: 'productService.updateProduct',
+    }),
+    imageUploadTask,
+  ]);
+
   if (!product) {
     throw badRequestError(`Failed to update product: ${id}`);
   }
@@ -410,8 +429,6 @@ async function updateProduct(
   };
 
   if (parsedForm) {
-    const uploadSku = resolveUploadSku(normalized.sku, existing.sku);
-    const uploadedByFile = await uploadFilesForProduct(parsedForm.images, uploadSku, provider);
     relationPayload.imageFileIds = resolveOrderedImageFileIds(
       parsedForm.imageSequence,
       uploadedByFile,

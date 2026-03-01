@@ -4,7 +4,6 @@ const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
-const importPlugin = require('eslint-plugin-import');
 
 module.exports = tseslint.config(
   {

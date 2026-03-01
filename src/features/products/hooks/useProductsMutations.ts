@@ -61,7 +61,7 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     mutationKey: QUERY_KEYS.products.all,
-    retry: (failureCount, error) => failureCount < 2 && isTransientError(error as Error),
+    retry: (failureCount, error) => failureCount < 2 && isTransientError(error),
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     meta: {
       source: 'products.hooks.useUpdateProduct',

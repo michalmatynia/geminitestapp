@@ -277,12 +277,12 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             triggerCandidates.length === 1
               ? triggerCandidates[0]
               : triggerCandidates.find((n: AiNode) =>
-                  args.sanitizedEdges.some(
-                    (e: Edge) =>
-                      (e.from === n.id || e.source === n.id) &&
+                args.sanitizedEdges.some(
+                  (e: Edge) =>
+                    (e.from === n.id || e.source === n.id) &&
                       (e.to === simulationNode.id || e.target === simulationNode.id)
-                  )
-                ) ?? triggerCandidates[0];
+                )
+              ) ?? triggerCandidates[0];
           if (!triggerNode) {
             args.toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
             return;

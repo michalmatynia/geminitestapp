@@ -219,15 +219,21 @@ const patchProductInQueryCache = (
 };
 
 const patchProductCaches = (queryClient: QueryClient, savedProduct: ProductWithImages): void => {
+  // Update detail caches synchronously — these are small and needed immediately.
   queryClient.setQueryData(
     getProductDetailQueryKey(savedProduct.id),
     (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
   );
   queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
-  queryClient.setQueriesData(
-    { queryKey: QUERY_KEYS.products.lists() },
-    (old: unknown) => patchProductInQueryCache(old, savedProduct)
-  );
+  // Defer the list patch to the next event-loop tick so the main thread isn't
+  // blocked by iterating every cached product-list page synchronously.
+  // invalidateProductCachesInBackground will refetch the lists anyway.
+  setTimeout(() => {
+    queryClient.setQueriesData(
+      { queryKey: QUERY_KEYS.products.lists() },
+      (old: unknown) => patchProductInQueryCache(old, savedProduct)
+    );
+  }, 0);
 };
 
 const invalidateProductCachesInBackground = (

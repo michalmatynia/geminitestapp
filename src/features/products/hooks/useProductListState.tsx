@@ -525,9 +525,14 @@ export function useProductListState(): ProductListContextType & {
 
   useEffect(() => {
     if (!openProductIdFromQuery) {
-      openingProductFromQueryRef.current = null;
-      editOpenRequestTokenRef.current += 1;
-      setIsEditHydrating(false);
+      // Only reset when this effect was the one that opened the product (via URL
+      // navigation). Skip when the product was opened via a click — in that case
+      // openingProductFromQueryRef is null and the token is owned by handleOpenEditModal.
+      if (openingProductFromQueryRef.current !== null) {
+        openingProductFromQueryRef.current = null;
+        editOpenRequestTokenRef.current += 1;
+        setIsEditHydrating(false);
+      }
       return;
     }
     if (editingProduct?.id === openProductIdFromQuery) return;

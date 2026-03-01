@@ -14,7 +14,7 @@ import {
   isValueCompatibleWithTypes,
   sanitizeEdges,
 } from '../utils';
-import { nowMs, resolveNodeTimeoutMs, withTimeout } from './execution-helpers';
+import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries, DEFAULT_RETRY_BACKOFF_MS } from './execution-helpers';
 
 // Modular imports
 import {
@@ -193,6 +193,7 @@ export async function evaluateGraphInternal(
   const activeNodes = new Set<string>();
   const finishedNodes = new Set<string>();
   const errorNodes = new Set<string>();
+  const timeoutNodes = new Set<string>();
   const blockedNodes = new Set<string>();
   const skippedNodes = new Set<string>(options.skipNodeIds ?? []);
   const nodeHashes = new Map<string, string>();
@@ -235,7 +236,7 @@ export async function evaluateGraphInternal(
     const nodeStatuses = nodes.reduce<Record<string, RuntimeState['nodeStatuses'][string]>>(
       (acc, node) => {
         if (errorNodes.has(node.id)) {
-          acc[node.id] = 'failed';
+          acc[node.id] = timeoutNodes.has(node.id) ? 'timeout' : 'failed';
         } else if (skippedNodes.has(node.id)) {
           acc[node.id] = 'skipped';
         } else if (finishedNodes.has(node.id)) {
@@ -382,6 +383,17 @@ export async function evaluateGraphInternal(
   while (changedInLastIteration && iteration < maxIterationsLimit) {
     iteration += 1;
     changedInLastIteration = false;
+
+    // Warn at 80% of max iterations so callers can surface a heads-up before the hard cap.
+    const warningThreshold = Math.floor(maxIterationsLimit * 0.8);
+    if (iteration === warningThreshold && options.onIterationLimitWarning) {
+      await options.onIterationLimitWarning({
+        runId: resolvedRunId,
+        iteration,
+        maxIterations: maxIterationsLimit,
+        remaining: maxIterationsLimit - iteration,
+      });
+    }
 
     if (options.onIteration) {
       await options.onIteration({
@@ -752,10 +764,26 @@ export async function evaluateGraphInternal(
               executed,
             };
 
-            const result = await withTimeout(
-              Promise.resolve(handler(handlerContext)),
-              timeoutMs,
-              `${node.type}:${node.id}`
+            const retryConfig = node.config?.runtime?.retry;
+            const retryAttempts =
+              typeof retryConfig?.attempts === 'number' && retryConfig.attempts > 1
+                ? retryConfig.attempts
+                : 1;
+            const retryBackoffMs =
+              typeof retryConfig?.backoffMs === 'number' && retryConfig.backoffMs > 0
+                ? retryConfig.backoffMs
+                : DEFAULT_RETRY_BACKOFF_MS;
+            const result = await withRetries(
+              () =>
+                withTimeout(
+                  Promise.resolve(handler(handlerContext)),
+                  timeoutMs,
+                  `${node.type}:${node.id}`
+                ),
+              retryAttempts,
+              retryBackoffMs,
+              `${node.type}:${node.id}`,
+              options.abortSignal
             );
 
             if (sideEffectPolicy === 'per_run') {
@@ -828,6 +856,9 @@ export async function evaluateGraphInternal(
               });
             }
           } catch (error) {
+            if (error instanceof Error && /timed out after/.test(error.message)) {
+              timeoutNodes.add(node.id);
+            }
             errorNodes.add(node.id);
             stats.errorCount += 1;
 

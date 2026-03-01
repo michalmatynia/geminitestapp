@@ -5,7 +5,7 @@ import { useRuntimeState } from '../../../context';
 import { StatusBadge, EmptyState } from '@/shared/ui';
 
 export function AiPathsRuntimeLog(): React.JSX.Element {
-  const { runtimeEvents } = useRuntimeState();
+  const { runtimeEvents, eventsOverflowed } = useRuntimeState();
 
   const runtimeLogEvents = useMemo(
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
@@ -20,6 +20,12 @@ export function AiPathsRuntimeLog(): React.JSX.Element {
           Last {runtimeLogEvents.length} runtime events from local + server execution.
         </div>
       </div>
+      {eventsOverflowed && (
+        <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+          Older events were dropped (log capped at {runtimeEvents.length} entries). Open Run Detail
+          for the full server-side event history.
+        </div>
+      )}
       <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
         {runtimeLogEvents.length > 0 ? (
           runtimeLogEvents.map((event) => (

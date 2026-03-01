@@ -83,6 +83,9 @@ export interface RuntimeStateData {
   lastError: LastErrorInfo | null;
   runtimeRunStatus: RuntimeRunStatus;
 
+  /** The run ID of the currently active server run, or null when idle */
+  currentRunId: string | null;
+
   // Node execution timing
   /** Map of node IDs to their last execution duration in ms */
   nodeDurations: Record<string, number>;
@@ -91,6 +94,9 @@ export interface RuntimeStateData {
   parserSampleLoading: boolean;
   updaterSampleLoading: boolean;
   sendingToAi: boolean;
+
+  /** True when runtimeEvents have been trimmed due to the MAX_RUNTIME_EVENTS cap */
+  eventsOverflowed: boolean;
 }
 
 export interface RuntimeActions {
@@ -113,6 +119,8 @@ export interface RuntimeActions {
   setRuntimeEvents: (events: AiPathRuntimeEvent[]) => void;
   /** Clear all runtime events */
   clearRuntimeEvents: () => void;
+  /** Dismiss the events overflow indicator */
+  clearEventsOverflow: () => void;
   /** Set node execution durations map */
   setNodeDurations: (
     durations: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
@@ -148,6 +156,8 @@ export interface RuntimeActions {
   // Execution tracking actions
   setLastRunAt: (timestamp: string | null) => void;
   setLastError: (error: LastErrorInfo | null) => void;
+  /** Track the active server run ID in state (null when idle) */
+  setCurrentRunId: (id: string | null) => void;
   setRuntimeRunStatus: (
     status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
   ) => void;
@@ -232,6 +242,7 @@ export function RuntimeProvider({
   const [lastRunAt, setLastRunAtInternal] = useState<string | null>(null);
   const [lastError, setLastErrorInternal] = useState<LastErrorInfo | null>(null);
   const [runtimeRunStatus, setRuntimeRunStatusInternal] = useState<RuntimeRunStatus>('idle');
+  const [currentRunId, setCurrentRunIdInternal] = useState<string | null>(null);
 
   // Node execution timing
   const [nodeDurations, setNodeDurationsInternal] = useState<Record<string, number>>({});
@@ -240,6 +251,7 @@ export function RuntimeProvider({
   const [parserSampleLoading, setParserSampleLoadingInternal] = useState(false);
   const [updaterSampleLoading, setUpdaterSampleLoadingInternal] = useState(false);
   const [sendingToAi, setSendingToAiInternal] = useState(false);
+  const [eventsOverflowed, setEventsOverflowedInternal] = useState(false);
   const runControlHandlersRef = useRef<RuntimeControlHandlers>({});
   const runtimeNodeConfigHandlersRef = useRef<RuntimeNodeConfigHandlers>({});
 
@@ -280,12 +292,15 @@ export function RuntimeProvider({
     setRuntimeNodeStatusesInternal({});
     setRuntimeEventsInternal([]);
     setNodeDurationsInternal({});
+    setEventsOverflowedInternal(false);
+    setCurrentRunIdInternal(null);
   }, []);
 
   const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
     setRuntimeEventsInternal((prev) => {
       const next = [...prev, event];
       if (next.length > MAX_RUNTIME_EVENTS) {
+        setEventsOverflowedInternal(true);
         return next.slice(next.length - MAX_RUNTIME_EVENTS);
       }
       return next;
@@ -298,6 +313,11 @@ export function RuntimeProvider({
 
   const clearRuntimeEvents = useCallback(() => {
     setRuntimeEventsInternal([]);
+    setEventsOverflowedInternal(false);
+  }, []);
+
+  const clearEventsOverflow = useCallback(() => {
+    setEventsOverflowedInternal(false);
   }, []);
 
   const appendHistory = useCallback((nodeId: string, entry: RuntimeHistoryEntry) => {
@@ -463,6 +483,7 @@ export function RuntimeProvider({
       // Execution tracking actions
       setLastRunAt: setLastRunAtInternal,
       setLastError: setLastErrorInternal,
+      setCurrentRunId: setCurrentRunIdInternal,
       setRuntimeRunStatus: setRuntimeRunStatusInternal,
       setRunControlHandlers,
       fireTrigger,
@@ -482,6 +503,7 @@ export function RuntimeProvider({
       setParserSampleLoading: setParserSampleLoadingInternal,
       setUpdaterSampleLoading: setUpdaterSampleLoadingInternal,
       setSendingToAi: setSendingToAiInternal,
+      clearEventsOverflow,
     }),
     [
       updateNodeInputs,
@@ -492,6 +514,7 @@ export function RuntimeProvider({
       addRuntimeEvent,
       setRuntimeEvents,
       clearRuntimeEvents,
+      clearEventsOverflow,
       appendHistory,
       clearHistory,
       clearNodeHistory,
@@ -526,9 +549,11 @@ export function RuntimeProvider({
       lastRunAt,
       lastError,
       runtimeRunStatus,
+      currentRunId,
       parserSampleLoading,
       updaterSampleLoading,
       sendingToAi,
+      eventsOverflowed,
     }),
     [
       runtimeState,
@@ -541,9 +566,11 @@ export function RuntimeProvider({
       lastRunAt,
       lastError,
       runtimeRunStatus,
+      currentRunId,
       parserSampleLoading,
       updaterSampleLoading,
       sendingToAi,
+      eventsOverflowed,
     ]
   );
 

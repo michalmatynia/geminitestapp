@@ -252,6 +252,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             },
             fetchEntityByType: args.fetchEntityByType,
             reportAiPathsError: args.reportAiPathsError,
+            abortSignal: args.abortControllerRef.current?.signal,
             toast: (message: unknown, options?: unknown): void => {
               args.toast(
                 typeof message === 'string' ? message : String(message ?? ''),

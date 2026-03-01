@@ -34,6 +34,7 @@ import type {
   ProductCreateInputDto,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { withRetry } from '@/shared/utils/retry';
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
@@ -389,7 +390,12 @@ async function updateProduct(
 
   const normalized = normalizeUpdateProductPayloadForStorage(validation.data);
 
-  const product = await productRepository.updateProduct(id, normalized);
+  const product = await withRetry(() => productRepository.updateProduct(id, normalized), {
+    maxAttempts: 2,
+    initialDelayMs: 300,
+    maxDelayMs: 3000,
+    source: 'productService.updateProduct',
+  });
   if (!product) {
     throw badRequestError(`Failed to update product: ${id}`);
   }
@@ -420,7 +426,12 @@ async function updateProduct(
 
   await applyProductRelations(productRepository, id, relationPayload);
 
-  const refreshed = await productRepository.getProductById(id);
+  const refreshed = await withRetry(() => productRepository.getProductById(id), {
+    maxAttempts: 2,
+    initialDelayMs: 300,
+    maxDelayMs: 3000,
+    source: 'productService.updateProduct.refresh',
+  });
   if (!refreshed) {
     throw badRequestError(`Failed to load updated product: ${id}`);
   }

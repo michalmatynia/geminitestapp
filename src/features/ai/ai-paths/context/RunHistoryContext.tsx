@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useRef, useCallback, type ReactNode } from 'react';
 
 import type {
   AiPathRunRecord,
@@ -85,6 +85,17 @@ export interface RunHistoryActions {
 
   // Utility for merging events
   mergeRunEvents: (incoming: AiPathRunEventRecord[]) => void;
+
+  /**
+   * Open the run detail panel for a specific run ID.
+   * The implementation must be registered via `setOpenRunDetailHandler`.
+   */
+  openRunDetail: (runId: string) => void;
+  /**
+   * Register the function that fetches and opens the run detail panel.
+   * Call this once from the component that owns the actual logic.
+   */
+  setOpenRunDetailHandler: (fn: ((runId: string) => void) | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,6 +134,17 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
   const [runStreamPaused, setRunStreamPausedInternal] = useState(false);
   const [runEventsOverflow, setRunEventsOverflowInternal] = useState(false);
   const [runEventsBatchLimit, setRunEventsBatchLimitInternal] = useState<number | null>(null);
+
+  // Injectable run detail opener
+  const openRunDetailHandlerRef = useRef<((runId: string) => void) | null>(null);
+
+  const setOpenRunDetailHandler = useCallback((fn: ((runId: string) => void) | null) => {
+    openRunDetailHandlerRef.current = fn;
+  }, []);
+
+  const openRunDetail = useCallback((runId: string) => {
+    openRunDetailHandlerRef.current?.(runId);
+  }, []);
 
   // Actions are stable
   const actions = useMemo<RunHistoryActions>(
@@ -184,8 +206,12 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
           return { ...prev, events: merged };
         });
       },
+
+      // Run detail opener
+      openRunDetail,
+      setOpenRunDetailHandler,
     }),
-    []
+    [openRunDetail, setOpenRunDetailHandler]
   );
 
   const state = useMemo<RunHistoryState>(

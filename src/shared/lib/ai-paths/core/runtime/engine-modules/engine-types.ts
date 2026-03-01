@@ -78,6 +78,12 @@ export type EvaluateGraphOptions = {
     iteration: number;
     activeNodes: string[];
   }) => Promise<void> | void;
+  onIterationLimitWarning?: (event: {
+    runId: string;
+    iteration: number;
+    maxIterations: number;
+    remaining: number;
+  }) => Promise<void> | void;
   onHalt?: (event: {
     runId: string;
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';

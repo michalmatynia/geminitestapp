@@ -22,7 +22,9 @@ const NODE_BATCH_LIMIT = normalizeLimit(
 );
 const PUBSUB_IDLE_TIMEOUT_MS = 30_000;
 const PUBSUB_CATCHUP_INTERVAL_MS = 10_000;
-const POLL_INTERVAL_MS = 500;
+const POLL_INTERVAL_MIN_MS = 200;
+const POLL_INTERVAL_MAX_MS = 2_000;
+const POLL_BACKOFF_MULTIPLIER = 1.5;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -254,7 +256,8 @@ async function streamWithPubSub(
 }
 
 /**
- * Polling fallback: original 500ms DB polling mechanism.
+ * Polling fallback: adaptive DB polling — backs off when idle, resets on activity.
+ * Interval range: POLL_INTERVAL_MIN_MS → POLL_INTERVAL_MAX_MS.
  */
 async function streamWithPolling(
   runId: string,
@@ -267,8 +270,13 @@ async function streamWithPolling(
   isCancelled: () => boolean
 ): Promise<void> {
   let cursors = { ...initialCursors };
+  let pollIntervalMs = POLL_INTERVAL_MIN_MS;
 
   while (!isCancelled()) {
+    const prevNodeTs = cursors.lastNodeCursor?.ts;
+    const prevEventId = cursors.lastEventCursor?.id;
+    const prevRunUpdatedAt = cursors.lastRunUpdatedAt;
+
     const result = await sendCatchUp(runId, send, cursors);
     cursors = {
       lastRunUpdatedAt: result.lastRunUpdatedAt,
@@ -276,7 +284,17 @@ async function streamWithPolling(
       lastEventCursor: result.lastEventCursor,
     };
     if (result.terminal) break;
-    await sleep(POLL_INTERVAL_MS);
+
+    // Back off when no changes detected; reset to minimum on any activity.
+    const hadActivity =
+      cursors.lastRunUpdatedAt !== prevRunUpdatedAt ||
+      cursors.lastNodeCursor?.ts !== prevNodeTs ||
+      cursors.lastEventCursor?.id !== prevEventId;
+    pollIntervalMs = hadActivity
+      ? POLL_INTERVAL_MIN_MS
+      : Math.min(pollIntervalMs * POLL_BACKOFF_MULTIPLIER, POLL_INTERVAL_MAX_MS);
+
+    await sleep(pollIntervalMs);
   }
 }
 

@@ -263,6 +263,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         if (args.currentRunStartedAtRef) {
           args.currentRunStartedAtRef.current = runStartedAt;
         }
+        args.setCurrentRunId?.(runId);
 
         args.appendRuntimeEvent({
           source: 'server',
@@ -388,6 +389,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           }
           if (args.currentRunStartedAtRef) {
             args.currentRunStartedAtRef.current = null;
+          }
+          args.setCurrentRunId?.(null);
+          if (terminalStatus === 'completed') {
+            args.openRunDetail?.(runId);
           }
         };
 
@@ -659,7 +664,29 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
 
         eventSource.onerror = (err: Event): void => {
           if (terminalHandled || !serverRunActiveRef.current) return;
-          logClientError(new Error('Server run stream error'), {
+          // readyState CONNECTING (0) = browser is auto-retrying after a transient disconnect.
+          // Do not finalize — node statuses remain as-is; the stream will catch up on reconnect.
+          if (eventSource.readyState === EventSource.CONNECTING) {
+            logClientError(new Error('Server run stream disconnected — reconnecting'), {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'eventSourceOnError',
+                runId,
+                readyState: eventSource.readyState,
+                error: String(err),
+              },
+            });
+            args.appendRuntimeEvent({
+              source: 'server',
+              kind: 'run_warning',
+              level: 'warn',
+              runId,
+              message: 'Stream disconnected — attempting to reconnect...',
+            });
+            return;
+          }
+          // readyState CLOSED (2) — permanent failure; finalize the run.
+          logClientError(new Error('Server run stream closed'), {
             context: {
               source: 'useAiPathsServerExecution',
               action: 'eventSourceOnError',

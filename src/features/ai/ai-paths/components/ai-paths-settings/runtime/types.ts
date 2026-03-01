@@ -66,6 +66,10 @@ export interface ServerExecutionArgs {
   toast: UiToastFn;
   currentRunIdRef?: MutableRefObject<string | null>;
   currentRunStartedAtRef?: MutableRefObject<string | null>;
+  /** Persists the active server run ID into RuntimeContext state (null when idle) */
+  setCurrentRunId?: (id: string | null) => void;
+  /** Opens the run detail panel for the given run ID (injected from RunHistoryContext) */
+  openRunDetail?: (runId: string) => void;
 }
 
 /**

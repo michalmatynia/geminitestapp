@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
-import { operationFailedError } from '@/shared/errors/app-error';
+import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -25,6 +25,13 @@ interface UpdateProductPayload {
   id: string;
   data: Partial<ProductWithImages>;
 }
+
+// Retry only transient/network errors — not validation (400) or not-found (404)
+const isTransientError = (error: Error): boolean => {
+  if (error instanceof AppError) return error.retryable;
+  const msg = error?.message?.toLowerCase() ?? '';
+  return /timeout|network|connection|refused|reset|fetch/i.test(msg);
+};
 
 export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> {
   const queryClient = useQueryClient();
@@ -54,6 +61,8 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     mutationKey: QUERY_KEYS.products.all,
+    retry: (failureCount, error) => failureCount < 2 && isTransientError(error as Error),
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     meta: {
       source: 'products.hooks.useUpdateProduct',
       operation: 'update',

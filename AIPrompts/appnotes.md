@@ -1,13 +1,43 @@
-Cases
-Full document name
-interrelations between douccmenta
+Improve query factories
+Improve foldre tree
+
+context matrix
+
+Cases Zrobi
+Postprodukcje
+
+mistral-nemo
+continue developing Brain feature as the centre of AI operations
+
+*When I try to run Parameter Inference v2 No Param Add , I get “ Node Validation disabled: proceeding with compile/dependency/data-contract findings (compile errors 2, dependency errors 0, data-contract errors 2).” and the run does not success. The database node is blocked. 
+
+In Cases List, I want advanced filters, Case createsd case modified, signature ID, Sticky Sorting
+
+Move Relation search engine to nodefile as well
+Move PReset options to tiny icon
+nested Master folder tree with files search
+Filter indication
+Working wygeneruj opis i nazwe
+Infer Params v2 - ale to później -Parameter inference when no parameters, currently it removes all the parameters
+
+In Case Resolver Case list, instead of Rename button I need Edit button, which will allow me to edit all of the Case fields.
+
+
+The Height of the Case List panel should be the same as Product list. Also 
+I cannot update new Image markdown file in Case Resolver
+Creating nodeflows in Case Resolver
+
+Validation pattern list has some weird layouting issues
+Validations need to be semantic, 
+I want Case resolver validator too
+I want to paste validation and add them like this
+
+Custom field importer and exporter
+
 
 Product Validator has to work on Auto
 Opis i tytuł doesn't seem to work, Trigger button list has two resorting mechanisms
 Paths need grouping
-
-- Collapsible Validation pattterns and sequences. I still want to be able todrag them to create sequence groups and resort validation patterns.
-  Some validation pattern sequences seem to be off,
 
 - Backups don't have created date
 

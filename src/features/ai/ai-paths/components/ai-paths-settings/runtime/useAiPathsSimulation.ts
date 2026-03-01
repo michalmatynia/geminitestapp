@@ -247,8 +247,48 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         simulationNode.config?.simulation?.productId?.trim();
       const entityType =
         normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? 'product';
+
       if (!entityId) {
-        args.toast('Enter an Entity ID in the simulation node.', { variant: 'error' });
+        // No entity ID configured — run with a minimal simulation context.
+        // Nodes that require entity data will produce 'blocked' status naturally.
+        args.toast('Simulating without entity data.', { variant: 'info' });
+        const emptyContext: Record<string, unknown> = {
+          contextSource: 'simulation_manual',
+          source: 'simulation',
+        };
+        seedSimulationRuntimeState(simulationNode, emptyContext);
+        if (triggerEvent) {
+          const triggerNode = args.normalizedNodes.find(
+            (node: AiNode): boolean =>
+              node.type === 'trigger' && node.config?.trigger?.event === triggerEvent
+          );
+          if (triggerNode) {
+            await args.runGraphForTrigger(triggerNode, undefined, emptyContext);
+          }
+        } else {
+          const triggerCandidates = args.normalizedNodes.filter(
+            (node: AiNode): boolean => node.type === 'trigger'
+          );
+          if (triggerCandidates.length === 0) {
+            args.toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
+            return;
+          }
+          const triggerNode =
+            triggerCandidates.length === 1
+              ? triggerCandidates[0]
+              : triggerCandidates.find((n: AiNode) =>
+                  args.sanitizedEdges.some(
+                    (e: Edge) =>
+                      (e.from === n.id || e.source === n.id) &&
+                      (e.to === simulationNode.id || e.target === simulationNode.id)
+                  )
+                ) ?? triggerCandidates[0];
+          if (!triggerNode) {
+            args.toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
+            return;
+          }
+          await args.runGraphForTrigger(triggerNode, undefined, emptyContext);
+        }
         return;
       }
 

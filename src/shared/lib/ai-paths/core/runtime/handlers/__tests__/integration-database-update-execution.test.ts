@@ -6,7 +6,7 @@ const { dbActionMock, dbUpdateMock, entityUpdateMock } = vi.hoisted(() => ({
   entityUpdateMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {
     action: dbActionMock,
     update: dbUpdateMock,

@@ -3,7 +3,7 @@
 import React from 'react';
 
 export interface CanvasSelectionMarqueeProps {
-  rect: { x: number; y: number; width: number; height: number };
+  rect: { left: number; top: number; width: number; height: number };
 }
 
 export function CanvasSelectionMarquee({ rect }: CanvasSelectionMarqueeProps): React.JSX.Element {
@@ -11,8 +11,8 @@ export function CanvasSelectionMarquee({ rect }: CanvasSelectionMarqueeProps): R
     <div
       className='absolute border border-blue-500 bg-blue-500/10 pointer-events-none z-[60]'
       style={{
-        left: rect.x,
-        top: rect.y,
+        left: rect.left,
+        top: rect.top,
         width: rect.width,
         height: rect.height,
       }}

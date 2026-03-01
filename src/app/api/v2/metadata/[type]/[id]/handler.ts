@@ -9,7 +9,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { MongoCountryDoc, MongoLanguageDoc } from '@/shared/lib/db/services/database-sync-types';
+import type { MongoCountryDoc, MongoLanguageDoc, MongoCatalogDoc } from '@/shared/lib/db/services/database-sync-types';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -82,7 +82,7 @@ const mapMongoLanguage = (
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  countries: Array<{ id: string; code: string; name: string; isActive: boolean }>;
+  countries: Array<{ id: string; code: string; name: string; isActive: boolean; countryId: string }>;
 } => {
   const id = String(doc.id ?? doc.code ?? '');
   const code = String(doc.code ?? doc.id ?? '').toUpperCase();
@@ -104,6 +104,7 @@ const mapMongoLanguage = (
           code: country.code,
           name: country.name,
           isActive: true,
+          countryId: country.id,
         };
       }
       return {
@@ -111,6 +112,7 @@ const mapMongoLanguage = (
         code: relation.countryId,
         name: relation.countryId,
         isActive: true,
+        countryId: relation.countryId,
       };
     }),
   };
@@ -188,7 +190,10 @@ export async function GET_metadata_id_handler(
       ...language,
       isDefault: false,
       isActive: true,
-      countries: language.countries.map((relation) => relation.country),
+      countries: language.countries.map((relation) => ({
+        ...relation.country,
+        countryId: relation.countryId,
+      })),
     });
   }
 
@@ -309,15 +314,15 @@ export async function PUT_metadata_id_handler(
       );
 
       if (nextId !== resolvedId) {
-        await mongo.collection('catalogs').updateMany(
+        await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
           { languageIds: resolvedId },
           {
             $pull: { languageIds: resolvedId },
             $addToSet: { languageIds: nextId },
             $set: { updatedAt: now },
-          }
+          } as any
         );
-        await mongo.collection('catalogs').updateMany(
+        await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
           { defaultLanguageId: resolvedId },
           { $set: { defaultLanguageId: nextId, updatedAt: now } }
         );
@@ -371,7 +376,10 @@ export async function PUT_metadata_id_handler(
       ...language,
       isDefault: false,
       isActive: true,
-      countries: language.countries.map((relation) => relation.country),
+      countries: language.countries.map((relation) => ({
+        ...relation.country,
+        countryId: relation.countryId,
+      })),
     });
   }
 
@@ -401,7 +409,7 @@ export async function DELETE_metadata_id_handler(
       await mongo.collection<MongoCountryDoc>('countries').deleteOne({ id: resolvedId });
       await mongo.collection<MongoLanguageDoc>('languages').updateMany(
         { 'countries.countryId': resolvedId },
-        { $pull: { countries: { countryId: resolvedId } }, $set: { updatedAt: new Date() } }
+        { $pull: { countries: { countryId: resolvedId } }, $set: { updatedAt: new Date() } } as any
       );
       return new Response(null, { status: 204 });
     }
@@ -420,9 +428,9 @@ export async function DELETE_metadata_id_handler(
       const resolvedId = String(existing.id ?? existing.code ?? id);
       const now = new Date();
       await mongo.collection<MongoLanguageDoc>('languages').deleteOne({ id: resolvedId });
-      await mongo.collection('catalogs').updateMany(
+      await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
         { languageIds: resolvedId },
-        { $pull: { languageIds: resolvedId }, $set: { updatedAt: now } }
+        { $pull: { languageIds: resolvedId }, $set: { updatedAt: now } } as any
       );
       await mongo.collection('catalogs').updateMany(
         { defaultLanguageId: resolvedId },

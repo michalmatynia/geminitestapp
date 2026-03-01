@@ -49,6 +49,7 @@ interface FileUploadEventsContextState {
   setFromDate: (val: string) => void;
   setToDate: (val: string) => void;
   setPage: (val: number) => void;
+  setPageSize: (val: number) => void;
 
   // Actions
   handleResetFilters: () => void;
@@ -66,7 +67,7 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 50;
+  const [pageSize, setPageSize] = useState(50);
 
   const filters = useMemo(
     () => ({
@@ -125,6 +126,7 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
       setFromDate,
       setToDate,
       setPage,
+      setPageSize,
       handleResetFilters,
       refetch: eventsQuery.refetch,
     }),
@@ -143,6 +145,7 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
       eventsQuery.isFetching,
       eventsQuery.refetch,
       handleResetFilters,
+      setPageSize,
     ]
   );
 

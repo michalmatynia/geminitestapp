@@ -12,7 +12,7 @@ import {
 
 import { createMockContext } from '../../test-utils';
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {
     action: vi.fn(),
     query: vi.fn(),

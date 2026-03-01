@@ -92,3 +92,14 @@ export const executePlaywrightTestSchema = z.object({
 });
 
 export type ExecutePlaywrightTest = z.infer<typeof executePlaywrightTestSchema>;
+
+export type PlaywrightArtifactLink = {
+  nodeId: string;
+  nodeTitle: string | null;
+  nodeType: string | null;
+  name: string;
+  path: string;
+  url: string | null;
+  mimeType: string | null;
+  kind: string | null;
+};

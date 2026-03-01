@@ -38,7 +38,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'revalidate or stop_after_accept.',
     errors: ['No throws.'],
     edgeCases: ['Unknown values fallback to revalidate.'],
-    example: "normalizePostAcceptBehavior('stop_after_accept')",
+    example: 'normalizePostAcceptBehavior(\'stop_after_accept\')',
   },
   {
     id: 'core.normalizePatternSequence',
@@ -115,7 +115,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'target and locale tuple.',
     errors: ['No throws.'],
     edgeCases: ['Unknown fields return target=null.'],
-    example: "resolveFieldTargetAndLocale('name_pl')",
+    example: 'resolveFieldTargetAndLocale(\'name_pl\')',
   },
   {
     id: 'core.isPatternLocaleMatch',
@@ -129,7 +129,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean locale match decision.',
     errors: ['No throws.'],
     edgeCases: ['Pattern without locale matches any locale.'],
-    example: "isPatternLocaleMatch('pl', 'pl')",
+    example: 'isPatternLocaleMatch(\'pl\', \'pl\')',
   },
   {
     id: 'core.normalizeReplacementFields',
@@ -140,7 +140,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Filtered unique list of allowed fields.',
     errors: ['No throws.'],
     edgeCases: ['Invalid entries are dropped silently.'],
-    example: "normalizeReplacementFields(['sku', 'sku'])",
+    example: 'normalizeReplacementFields([\'sku\', \'sku\'])',
   },
   {
     id: 'core.isReplacementAllowedForField',
@@ -151,7 +151,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean allow/deny.',
     errors: ['No throws.'],
     edgeCases: ['Empty allowlist means global replacement.'],
-    example: "isReplacementAllowedForField(pattern, 'name_en')",
+    example: 'isReplacementAllowedForField(pattern, \'name_en\')',
   },
   {
     id: 'core.isLatestPriceStockMirrorPattern',
@@ -256,7 +256,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Diff index, length, and matchText snippet.',
     errors: ['No throws.'],
     edgeCases: ['Equal strings produce a single-character fallback segment.'],
-    example: "deriveDiffSegment('abc', 'axc')",
+    example: 'deriveDiffSegment(\'abc\', \'axc\')',
   },
   {
     id: 'core.buildFieldIssues',
@@ -322,7 +322,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Validated and deduplicated replacement fields.',
     errors: ['No throws.'],
     edgeCases: ['Invalid fields are removed.'],
-    example: "normalizeReplacementFields(['name_en', 'name_en'])",
+    example: 'normalizeReplacementFields([\'name_en\', \'name_en\'])',
   },
   {
     id: 'helpers.formatReplacementFields',
@@ -344,7 +344,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'List of allowed replacement field keys.',
     errors: ['No throws.'],
     edgeCases: ['Unknown target falls back to sku.'],
-    example: "getReplacementFieldsForTarget('name')",
+    example: 'getReplacementFieldsForTarget(\'name\')',
   },
   {
     id: 'helpers.isLocaleTarget',
@@ -355,7 +355,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'True for name and description targets.',
     errors: ['No throws.'],
     edgeCases: ['Non-localized targets return false.'],
-    example: "isLocaleTarget('sku')",
+    example: 'isLocaleTarget(\'sku\')',
   },
   {
     id: 'helpers.isLatestFieldMirrorPattern',
@@ -366,7 +366,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean match result.',
     errors: ['No throws.'],
     edgeCases: ['Static replacers are not treated as mirror patterns.'],
-    example: "isLatestFieldMirrorPattern(pattern, 'price')",
+    example: 'isLatestFieldMirrorPattern(pattern, \'price\')',
   },
   {
     id: 'helpers.isNameSecondSegmentDimensionPattern',
@@ -377,7 +377,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean match result.',
     errors: ['No throws.'],
     edgeCases: ['Requires form_field name_en dynamic recipe.'],
-    example: "isNameSecondSegmentDimensionPattern(pattern, 'length')",
+    example: 'isNameSecondSegmentDimensionPattern(pattern, \'length\')',
   },
   {
     id: 'helpers.getSourceFieldOptionsForTarget',
@@ -410,7 +410,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Encoded recipe string.',
     errors: ['No throws.'],
     edgeCases: ['Always sets replace_whole_field target apply mode.'],
-    example: "buildLatestFieldRecipe('stock')",
+    example: 'buildLatestFieldRecipe(\'stock\')',
   },
   {
     id: 'helpers.buildDuplicateLabel',
@@ -432,7 +432,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Unique label not present in existing set.',
     errors: ['No throws.'],
     edgeCases: ['Empty label falls back to Pattern.'],
-    example: "buildUniqueLabel('Price from latest product', labels)",
+    example: 'buildUniqueLabel(\'Price from latest product\', labels)',
   },
   {
     id: 'helpers.getPatternSequence',
@@ -480,7 +480,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Reordered list or null when no-op/invalid.',
     errors: ['No throws.'],
     edgeCases: ['Dropping onto same id returns null.'],
-    example: "reorderPatterns(patterns, 'a', 'b')",
+    example: 'reorderPatterns(patterns, \'a\', \'b\')',
   },
   {
     id: 'helpers.createSequenceGroupId',
@@ -513,7 +513,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'True when RegExp constructor succeeds.',
     errors: ['No throws (exceptions are caught).'],
     edgeCases: ['Empty flags are treated as undefined.'],
-    example: "canCompileRegex('^KEY', 'i')",
+    example: 'canCompileRegex(\'^KEY\', \'i\')',
   },
   {
     id: 'helpers.buildSequenceGroups',
@@ -582,7 +582,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Validated scope enum value.',
     errors: ['No throws.'],
     edgeCases: ['Unknown values fallback to products scope.'],
-    example: "parseValidatorScope('image-studio')",
+    example: 'parseValidatorScope(\'image-studio\')',
   },
   {
     id: 'scope.normalizeValidatorPatternLists',

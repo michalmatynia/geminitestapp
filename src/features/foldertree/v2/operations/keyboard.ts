@@ -83,7 +83,7 @@ export const resolveKeyboardAction = ({
       // Already expanded — move into first child
       if (currentRow.isExpanded) {
         const firstChild = visibleRows[currentIndex + 1];
-        if (firstChild && firstChild.parentId === selectedNodeId) {
+        if (firstChild?.parentId === selectedNodeId) {
           return { type: 'select', nodeId: firstChild.nodeId };
         }
       }

@@ -17,12 +17,12 @@ import {
   StandardDataTablePanel,
   Card,
   EmptyState,
+  PanelPagination,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
-import { DatabasePagination } from './crud/DatabasePagination';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -167,7 +167,6 @@ export function CrudPanel(props: {
     rows,
     totalRows,
     isLoadingRows,
-    maxPage,
     fetchRows,
     handleAdd,
     handleEdit,
@@ -260,14 +259,19 @@ export function CrudPanel(props: {
 
   const footer =
     selectedTable && !isLoadingRows && rows.length > 0 ? (
-      <DatabasePagination
-        totalRows={totalRows}
-        page={page}
-        maxPage={maxPage}
-        setPage={setPage}
-        pageSize={pageSize}
-        setPageSize={setPageSize}
-      />
+      <div className='px-4 pb-2'>
+        <PanelPagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={totalRows}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
+          isLoading={isLoadingRows}
+        />
+      </div>
     ) : null;
 
   return (

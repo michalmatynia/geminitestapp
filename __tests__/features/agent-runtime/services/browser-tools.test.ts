@@ -10,8 +10,8 @@ import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
-    agentAuditLog: { create: vi.fn() },
-    agentBrowserSnapshot: { create: vi.fn() },
+    agentAuditLog: { create: vi.fn().mockResolvedValue({ id: 'mock-log-id' }) },
+    agentBrowserSnapshot: { create: vi.fn().mockResolvedValue({ id: 'mock-snapshot-id' }) },
   },
 }));
 

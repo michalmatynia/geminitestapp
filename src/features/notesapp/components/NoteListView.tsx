@@ -2,14 +2,13 @@ import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from
 import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { DocumentSearchPage } from '@/features/document-search';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   NoteThemeDto as ThemeRecord,
 } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
-import { Button, EmptyState, Pagination } from '@/shared/ui';
+import { Button, EmptyState, Pagination, DocumentSearchPage } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 import { NoteCard } from './NoteCard';

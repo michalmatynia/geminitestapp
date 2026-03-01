@@ -149,6 +149,11 @@ export function useCanvasInteractions(args?: {
   });
 
   const nodeActions: UseCanvasInteractionsNodesValue = useCanvasInteractionsNodes({
+    nodes,
+    edges,
+    isPathLocked,
+    notifyLocked: stateHandlers.notifyLocked,
+    confirmNodeSwitch,
     selectedNodeIdSet: new Set(selectedNodeIds),
     selectedNodeId,
     selectedNodeIds,

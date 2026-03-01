@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
@@ -7,8 +8,6 @@ import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
-
-import type { z } from 'zod';
 
 type Params = { id: string };
 

@@ -5,16 +5,15 @@ import {
   type ImageStudioAutoScalerResponse,
   imageStudioAutoScalerResponseSchema,
   type ImageStudioSlotRecord,
-  type ImageStudioCenterObjectBounds,
-  type ImageStudioNormalizedCenterLayout,
-  type ImageStudioDetectionDetails,
-  type ImageStudioWhitespaceMetrics,
   type ImageStudioAutoScalerMode,
   type ImageStudioCenterShadowPolicy,
   type ImageStudioCenterDetectionMode,
   type UploadedClientAutoScaleImage,
   type ImageStudioAutoScaleMetadata,
 } from '@/shared/contracts/image-studio';
+
+export type { ImageStudioAutoScaleMetadata };
+
 import {
   coerceBoolean,
   coerceFiniteNumber,

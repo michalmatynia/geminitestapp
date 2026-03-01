@@ -4,7 +4,7 @@ const { dbQueryMock } = vi.hoisted(() => ({
   dbQueryMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   dbApi: {
     query: dbQueryMock,
   },

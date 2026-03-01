@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import {
   getCurrencyRepository,
   getInternationalizationProvider,
+  ensureInternationalizationDefaults,
 } from '@/features/internationalization/server';
 import { type CreateCurrencyDto } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -83,7 +84,7 @@ const mapMongoLanguage = (
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
-  countries: Array<{ id: string; code: string; name: string; isActive: boolean }>;
+  countries: Array<{ id: string; code: string; name: string; isActive: boolean; countryId: string }>;
 } => {
   const id = String(doc.id ?? doc.code ?? '');
   const code = String(doc.code ?? doc.id ?? '').toUpperCase();
@@ -105,6 +106,7 @@ const mapMongoLanguage = (
           code: country.code,
           name: country.name,
           isActive: true,
+          countryId: country.id,
         };
       }
       return {
@@ -112,6 +114,7 @@ const mapMongoLanguage = (
         code: relation.countryId,
         name: relation.countryId,
         isActive: true,
+        countryId: relation.countryId,
       };
     }),
   };
@@ -127,7 +130,16 @@ export async function GET_intl_handler(
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
-    return NextResponse.json(await repo.listCurrencies());
+    let currencies = await repo.listCurrencies();
+    
+    if (currencies.length === 0 && provider === 'prisma') {
+      await prisma.$transaction(async (tx) => {
+        await ensureInternationalizationDefaults(tx);
+      });
+      currencies = await repo.listCurrencies();
+    }
+    
+    return NextResponse.json(currencies);
   }
 
   if (type === 'countries') {
@@ -141,9 +153,19 @@ export async function GET_intl_handler(
       return NextResponse.json(countries.map(mapMongoCountry));
     }
 
-    const countries = await prisma.country.findMany({
+    let countries = await prisma.country.findMany({
       include: { currencies: { include: { currency: true } } },
     });
+
+    if (countries.length === 0) {
+      await prisma.$transaction(async (tx) => {
+        await ensureInternationalizationDefaults(tx);
+      });
+      countries = await prisma.country.findMany({
+        include: { currencies: { include: { currency: true } } },
+      });
+    }
+
     return NextResponse.json(countries);
   }
 
@@ -169,15 +191,28 @@ export async function GET_intl_handler(
       );
     }
 
-    const languages = await prisma.language.findMany({
+    let languages = await prisma.language.findMany({
       include: { countries: { include: { country: true } } },
     });
+
+    if (languages.length === 0) {
+      await prisma.$transaction(async (tx) => {
+        await ensureInternationalizationDefaults(tx);
+      });
+      languages = await prisma.language.findMany({
+        include: { countries: { include: { country: true } } },
+      });
+    }
+
     return NextResponse.json(
       languages.map((language) => ({
         ...language,
         isDefault: false,
         isActive: true,
-        countries: language.countries.map((relation) => relation.country),
+        countries: language.countries.map((relation) => ({
+          ...relation.country,
+          countryId: relation.countryId,
+        })),
       }))
     );
   }
@@ -196,9 +231,13 @@ export async function POST_intl_handler(
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository(provider);
+    const code = readString(data, 'code');
+    const name = readString(data, 'name');
+    if (!code || !name) throw badRequestError('Code and name are required');
+
     const payload: CreateCurrencyDto = {
-      code: readString(data, 'code') ?? '',
-      name: readString(data, 'name') ?? '',
+      code: code.toUpperCase(),
+      name,
       symbol: readString(data, 'symbol') ?? null,
       isDefault: false,
       isActive: true,
@@ -207,15 +246,17 @@ export async function POST_intl_handler(
   }
 
   if (type === 'countries') {
+    const code = (readString(data, 'code') ?? '').toUpperCase();
+    const name = readString(data, 'name');
+    if (!code || !name) throw badRequestError('Code and name are required');
+
     if (provider === 'mongodb') {
       const mongo = await getMongoDb();
-      const code = (readString(data, 'code') ?? '').toUpperCase();
-      if (!code) throw badRequestError('Country code is required');
       const now = new Date();
       const countryDoc: MongoCountryDoc = {
         id: code,
         code,
-        name: readString(data, 'name') ?? code,
+        name,
         currencyIds: readStringArray(data, 'currencyIds'),
         createdAt: now,
         updatedAt: now,
@@ -230,8 +271,8 @@ export async function POST_intl_handler(
     const currencyIds = readStringArray(data, 'currencyIds');
     const country = await prisma.country.create({
       data: {
-        code: (readString(data, 'code') ?? '') as CountryCode,
-        name: readString(data, 'name') ?? '',
+        code: code as CountryCode,
+        name,
         currencies:
           currencyIds.length > 0
             ? {
@@ -245,16 +286,18 @@ export async function POST_intl_handler(
   }
 
   if (type === 'languages') {
+    const code = (readString(data, 'code') ?? '').toUpperCase();
+    const name = readString(data, 'name');
+    if (!code || !name) throw badRequestError('Code and name are required');
+
     if (provider === 'mongodb') {
       const mongo = await getMongoDb();
-      const code = (readString(data, 'code') ?? '').toUpperCase();
-      if (!code) throw badRequestError('Language code is required');
       const countryIds = readStringArray(data, 'countryIds');
       const now = new Date();
       const languageDoc: MongoLanguageDoc = {
         id: code,
         code,
-        name: readString(data, 'name') ?? code,
+        name,
         nativeName: readString(data, 'nativeName') ?? null,
         countries: countryIds.map((countryId: string) => ({ countryId })),
         createdAt: now,
@@ -281,8 +324,8 @@ export async function POST_intl_handler(
     const countryIds = readStringArray(data, 'countryIds');
     const language = await prisma.language.create({
       data: {
-        code: readString(data, 'code') ?? '',
-        name: readString(data, 'name') ?? '',
+        code,
+        name,
         nativeName: readString(data, 'nativeName'),
         countries:
           countryIds.length > 0
@@ -297,7 +340,10 @@ export async function POST_intl_handler(
       ...language,
       isDefault: false,
       isActive: true,
-      countries: language.countries.map((relation) => relation.country),
+      countries: language.countries.map((relation) => ({
+        ...relation.country,
+        countryId: relation.countryId,
+      })),
     });
   }
 

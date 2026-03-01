@@ -14,23 +14,15 @@ export interface UseCanvasStateHandlersValue {
     clientX: number,
     clientY: number
   ) => { x: number; y: number } | null;
-  updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => void;
+  updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
     removedEdges: Edge[],
     remainingEdges: Edge[]
   ) => RuntimeState;
   resolveActiveNodeSelectionIds: () => string[];
-  resolveNodesWithinMarquee: (
-    rect: { left: number; top: number; width: number; height: number },
-    nodes: AiNode[]
-  ) => string[];
-  resolveNodeSelectionByScope: (
-    nodeId: string,
-    nodes: AiNode[],
-    edges: Edge[],
-    scope: 'portion' | 'wiring'
-  ) => string[];
+  resolveNodesWithinMarquee: (marquee: MarqueeSelectionState) => string[];
+  resolveNodeSelectionByScope: (currentSelection: string[], marqueeNodes: string[]) => string[];
   handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanMove: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanEnd: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
@@ -90,11 +82,12 @@ export function useCanvasStateHandlers(args: {
   );
 
   const updateLastPointerCanvasPosFromClient = useCallback(
-    (clientX: number, clientY: number): void => {
+    (clientX: number, clientY: number): { x: number; y: number } | null => {
       const point = resolveViewportPointFromClient(clientX, clientY);
       if (point) {
         lastPointerCanvasPosRef.current = point;
       }
+      return point;
     },
     [resolveViewportPointFromClient]
   );

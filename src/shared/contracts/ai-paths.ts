@@ -606,6 +606,75 @@ export type ExecuteAiPathDto = z.infer<typeof executeAiPathSchema>;
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
 
 /**
+ * AI Path Canvas UI Types
+ */
+export type MarqueeMode = 'replace' | 'add' | 'subtract';
+
+export type MarqueeSelectionState = {
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  mode: MarqueeMode;
+  baseNodeIds: string[];
+};
+
+export type SubgraphClipboardPayload = {
+  version: 1;
+  sourcePathId: string | null;
+  capturedAt: string;
+  nodes: AiNode[];
+  edges: Edge[];
+  bounds: { minX: number; minY: number; maxX: number; maxY: number };
+};
+
+export type TouchPointSample = {
+  x: number;
+  y: number;
+  time: number;
+  ts?: number;
+  vx?: number;
+  vy?: number;
+};
+
+export type TouchGestureState =
+  | {
+      mode: 'pinch';
+      pointerIds: [number, number];
+      startDistance: number;
+      startScale: number;
+      anchorCanvas: { x: number; y: number };
+    }
+  | {
+      mode: 'pan';
+      pointerId: number;
+      recentSamples: TouchPointSample[];
+    };
+
+export type TouchLongPressSelectionState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startedAt: number;
+  indicatorViewportX: number;
+  indicatorViewportY: number;
+  mode: MarqueeMode;
+  baseNodeIds: string[];
+  timerId: number | null;
+};
+
+export type TouchLongPressIndicatorState = {
+  x: number;
+  y: number;
+  progress: number;
+  phase: 'pending' | 'activated';
+};
+
+export interface HandleSelectNodeOptions {
+  toggle?: boolean;
+}
+
+/**
  * AI Path Repository Interfaces
  */
 

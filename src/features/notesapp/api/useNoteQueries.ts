@@ -2,10 +2,7 @@
 
 import { z } from 'zod';
 
-export * from './useNotebookResource';
-
 import {
-  notebookSchema,
   noteWithRelationsSchema,
   noteTagSchema,
   noteThemeSchema,
@@ -26,35 +23,26 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
 
+import { useNotebookResource } from './useNotebookResource';
+
+export * from './useNotebookResource';
+
+/**
+ * @deprecated Use useNotebookResource().listQuery instead.
+ */
+export function useNotebooks(
+  _notebookId?: string,
+  _options?: QueryOptions
+): ListQuery<NotebookRecord> {
+  const { listQuery } = useNotebookResource();
+  return listQuery;
+}
+
 const NOTES_STALE_MS = 10_000;
 
 type QueryOptions = {
   enabled?: boolean;
 };
-
-export function useNotebooks(
-  _notebookId?: string,
-  options?: QueryOptions
-): ListQuery<NotebookRecord> {
-  const queryKey = noteKeys.notebooks();
-  return createListQueryV2({
-    queryKey,
-    queryFn: async (): Promise<NotebookRecord[]> => {
-      const data = await api.get<NotebookRecord[]>('/api/notes/notebooks');
-      return z.array(notebookSchema).parse(data);
-    },
-    enabled: options?.enabled ?? true,
-    staleTime: NOTES_STALE_MS,
-    meta: {
-      source: 'notes.hooks.useNotebooks',
-      operation: 'list',
-      resource: 'notes.notebooks',
-      domain: 'global',
-      queryKey,
-      tags: ['notes', 'notebooks'],
-    },
-  });
-}
 
 export function useNoteFolderTree(
   notebookId?: string,

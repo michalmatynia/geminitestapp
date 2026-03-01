@@ -9,16 +9,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  EmptyState,
   FormSection,
   SectionHeader,
   Skeleton,
   Tag as UiTag,
   useToast,
   Breadcrumbs,
-  ActionMenu,
-  DropdownMenuItem,
-  PropertyRow,
+  SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -276,44 +273,24 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
               <Skeleton className='h-8 w-full' />
               <Skeleton className='h-8 w-full' />
             </div>
-          ) : tags.length === 0 ? (
-            <EmptyState
-              title='No tags yet'
-              description='Create tags to classify Case Resolver documents.'
-              action={
-                <Button onClick={openCreateModal} variant='outline'>
-                  <Plus className='mr-2 size-4' />
-                  Create First Tag
-                </Button>
-              }
-            />
           ) : (
-            <div className='space-y-2'>
-              {tags.map((tag: CaseResolverTag) => (
-                <div
-                  key={tag.id}
-                  className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
-                >
-                  <div className='min-w-0'>
+            <SimpleSettingsList
+              items={tags.map((tag: CaseResolverTag) => ({
+                id: tag.id,
+                title: (
+                  <div className='flex items-center gap-2'>
                     <UiTag label={tag.label} color={tag.color || '#38bdf8'} dot />
-                    <PropertyRow
-                      label='Path'
-                      value={tagPathById.get(tag.id) ?? tag.label}
-                      className='mt-1'
-                    />
                   </div>
-                  <ActionMenu ariaLabel={`Actions for tag ${tag.label}`}>
-                    <DropdownMenuItem onSelect={() => openEditModal(tag)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem
-                      className='text-destructive focus:text-destructive'
-                      onSelect={() => setTagToDelete(tag)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </ActionMenu>
-                </div>
-              ))}
-            </div>
+                ),
+                description: tagPathById.get(tag.id) ?? tag.label,
+                original: tag,
+              }))}
+              isLoading={settingsStore.isLoading}
+              onEdit={(item) => openEditModal(item.original)}
+              onDelete={(item) => setTagToDelete(item.original)}
+              emptyMessage='No tags yet. Create tags to classify Case Resolver documents.'
+              columns={2}
+            />
           )}
         </div>
       </FormSection>

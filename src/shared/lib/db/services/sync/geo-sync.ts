@@ -67,8 +67,8 @@ export const syncCountries: SyncHandler = async ({ mongo, prisma, countryCodes }
   const deleted = await prisma.country.deleteMany();
   const created = data.length
     ? await prisma.country.createMany({
-        data: data.map(({ currencyIds: _, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
-      })
+      data: data.map(({ currencyIds: _, ...rest }) => rest) as Prisma.CountryCreateManyInput[],
+    })
     : { count: 0 };
 
   const joinRows = data.flatMap((country) =>
@@ -116,8 +116,8 @@ export const syncLanguages: SyncHandler = async ({ mongo, prisma }) => {
   const deleted = await prisma.language.deleteMany();
   const created = data.length
     ? await prisma.language.createMany({
-        data: data.map(({ countries: _, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
-      })
+      data: data.map(({ countries: _, ...rest }) => rest) as Prisma.LanguageCreateManyInput[],
+    })
     : { count: 0 };
 
   const joinRows = data.flatMap((lang) =>

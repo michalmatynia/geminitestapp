@@ -23,7 +23,11 @@ export function useLocalExecutionTriggers(
   loop: {
     runLocalLoop: (
       mode: 'run' | 'step'
-    ) => Promise<{ status: string; error?: unknown; state: RuntimeState }>;
+    ) => Promise<{
+      status: 'completed' | 'paused' | 'canceled' | 'error';
+      error?: unknown;
+      state: RuntimeState;
+    }>;
   },
   outcome: {
     finalizeLocalRunOutcome: (

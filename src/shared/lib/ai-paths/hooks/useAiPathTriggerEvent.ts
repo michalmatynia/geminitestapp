@@ -297,18 +297,18 @@ const resolveTriggerSelection = async (
 
   const orderedConfigs: PathConfig[] = pathOrder.length
     ? pathOrder
-        .map((id: string) => configs[id])
-        .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+      .map((id: string) => configs[id])
+      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
   const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some((node: AiNode) => {
-          if (node.type !== 'trigger') return false;
-          const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
-          return configuredEvent === triggerEventId;
-        })
+        if (node.type !== 'trigger') return false;
+        const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
+        return configuredEvent === triggerEventId;
+      })
       : false
   );
 
@@ -358,61 +358,61 @@ const buildTriggerContext = (args: {
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-        clientX: nativeEvent.clientX,
-        clientY: nativeEvent.clientY,
-        pageX: nativeEvent.pageX,
-        pageY: nativeEvent.pageY,
-        screenX: nativeEvent.screenX,
-        screenY: nativeEvent.screenY,
-        offsetX: nativeEvent.offsetX,
-        offsetY: nativeEvent.offsetY,
-        button: nativeEvent.button,
-        buttons: nativeEvent.buttons,
-        altKey: nativeEvent.altKey,
-        ctrlKey: nativeEvent.ctrlKey,
-        shiftKey: nativeEvent.shiftKey,
-        metaKey: nativeEvent.metaKey,
-      }
+      clientX: nativeEvent.clientX,
+      clientY: nativeEvent.clientY,
+      pageX: nativeEvent.pageX,
+      pageY: nativeEvent.pageY,
+      screenX: nativeEvent.screenX,
+      screenY: nativeEvent.screenY,
+      offsetX: nativeEvent.offsetX,
+      offsetY: nativeEvent.offsetY,
+      button: nativeEvent.button,
+      buttons: nativeEvent.buttons,
+      altKey: nativeEvent.altKey,
+      ctrlKey: nativeEvent.ctrlKey,
+      shiftKey: nativeEvent.shiftKey,
+      metaKey: nativeEvent.metaKey,
+    }
     : undefined;
 
   const location =
     typeof window !== 'undefined'
       ? {
-          href: window.location.href,
-          origin: window.location.origin,
-          pathname: window.location.pathname,
-          search: window.location.search,
-          hash: window.location.hash,
-          referrer: document.referrer || undefined,
-        }
+        href: window.location.href,
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+        referrer: document.referrer || undefined,
+      }
       : {};
 
   const ui =
     typeof window !== 'undefined'
       ? {
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight,
-            devicePixelRatio: window.devicePixelRatio,
-          },
-          screen: {
-            width: window.screen?.width,
-            height: window.screen?.height,
-            availWidth: window.screen?.availWidth,
-            availHeight: window.screen?.availHeight,
-          },
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          language: navigator.language,
-          languages: navigator.languages,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          documentTitle: document.title,
-          visibilityState: document.visibilityState,
-          scroll: {
-            x: window.scrollX,
-            y: window.scrollY,
-          },
-        }
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          devicePixelRatio: window.devicePixelRatio,
+        },
+        screen: {
+          width: window.screen?.width,
+          height: window.screen?.height,
+          availWidth: window.screen?.availWidth,
+          availHeight: window.screen?.availHeight,
+        },
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        documentTitle: document.title,
+        visibilityState: document.visibilityState,
+        scroll: {
+          x: window.scrollX,
+          y: window.scrollY,
+        },
+      }
       : {};
 
   const base: Record<string, unknown> = {
@@ -454,7 +454,7 @@ const buildTriggerContext = (args: {
 
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
-} {
+  } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -660,10 +660,10 @@ export function useAiPathTriggerEvent(): {
         const clamped = Math.max(0, Math.min(1, rawProgress));
         const node = payload.node
           ? {
-              id: payload.node.id,
-              title: payload.node.title ?? null,
-              type: payload.node.type ?? null,
-            }
+            id: payload.node.id,
+            title: payload.node.title ?? null,
+            type: payload.node.type ?? null,
+          }
           : null;
         args.onProgress({
           status: payload.status,
@@ -785,10 +785,10 @@ export function useAiPathTriggerEvent(): {
             },
             dependency: runPreflight.dependencyReport
               ? {
-                  errors: runPreflight.dependencyReport.errors,
-                  warnings: runPreflight.dependencyReport.warnings,
-                  strictReady: runPreflight.dependencyReport.strictReady,
-                }
+                errors: runPreflight.dependencyReport.errors,
+                warnings: runPreflight.dependencyReport.warnings,
+                strictReady: runPreflight.dependencyReport.strictReady,
+              }
               : null,
             dataContract: {
               errors: runPreflight.dataContractReport.errors,

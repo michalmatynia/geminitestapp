@@ -13,6 +13,7 @@ import {
   SectionHeader,
   EmptyState,
   SearchInput,
+  FormActions,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -120,14 +121,13 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
           return (
             <div className='flex justify-end gap-2'>
               {isEditing ? (
-                <>
-                  <Button size='xs' onClick={() => void saveTitle(session.id)}>
-                    Save
-                  </Button>
-                  <Button size='xs' variant='ghost' onClick={cancelEditing}>
-                    Cancel
-                  </Button>
-                </>
+                <FormActions
+                  onSave={() => void saveTitle(session.id)}
+                  onCancel={cancelEditing}
+                  saveText='Save'
+                  saveVariant='default'
+                  cancelVariant='ghost'
+                />
               ) : (
                 <>
                   <Button

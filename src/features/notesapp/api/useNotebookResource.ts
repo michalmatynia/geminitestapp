@@ -1,13 +1,101 @@
 'use client';
 
-import type { NotebookDto } from '@/shared/contracts/notes';
-import { useResource } from '@/shared/hooks/query/useResource';
+import { useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+
+import {
+  notebookSchema,
+  type NotebookDto,
+  type CreateNotebookDto,
+  type UpdateNotebookDto,
+} from '@/shared/contracts/notes';
+import type { DeleteResponse } from '@/shared/contracts/ui';
+import { api } from '@/shared/lib/api-client';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createListQueryV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 /**
- * Hook for Notebook CRUD operations using the generic useResource.
- * This provides standardized list, create, update, and remove mutations.
+ * Hook for Notebook CRUD operations using explicit v2 factories.
+ * This provides standardized list, create, update, and remove mutations with explicit meta.
  */
 export function useNotebookResource() {
-  return useResource<NotebookDto>('/api/notes/notebooks', QUERY_KEYS.notes.notebooks());
+  const queryClient = useQueryClient();
+  const queryKey = QUERY_KEYS.notes.notebooks();
+
+  const listQuery = createListQueryV2<NotebookDto>({
+    queryKey,
+    queryFn: async () => {
+      const data = await api.get<NotebookDto[]>('/api/notes/notebooks');
+      return z.array(notebookSchema).parse(data);
+    },
+    meta: {
+      source: 'notes.hooks.useNotebookResource.list',
+      operation: 'list',
+      resource: 'notes.notebooks',
+      domain: 'global',
+      queryKey,
+      tags: ['notes', 'notebooks'],
+    },
+  });
+
+  const createMutation = createCreateMutationV2<NotebookDto, CreateNotebookDto>({
+    mutationFn: (payload) => api.post<NotebookDto>('/api/notes/notebooks', payload),
+    mutationKey: queryKey,
+    meta: {
+      source: 'notes.hooks.useNotebookResource.create',
+      operation: 'create',
+      resource: 'notes.notebooks',
+      domain: 'global',
+      mutationKey: queryKey,
+      tags: ['notes', 'notebooks', 'create'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const updateMutation = createUpdateMutationV2<NotebookDto, UpdateNotebookDto & { id: string }>({
+    mutationFn: ({ id, ...payload }) =>
+      api.patch<NotebookDto>(`/api/notes/notebooks/${id}`, payload),
+    mutationKey: queryKey,
+    meta: {
+      source: 'notes.hooks.useNotebookResource.update',
+      operation: 'update',
+      resource: 'notes.notebooks',
+      domain: 'global',
+      mutationKey: queryKey,
+      tags: ['notes', 'notebooks', 'update'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const deleteMutation = createDeleteMutationV2<DeleteResponse, string>({
+    mutationFn: (id) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
+    mutationKey: queryKey,
+    meta: {
+      source: 'notes.hooks.useNotebookResource.delete',
+      operation: 'delete',
+      resource: 'notes.notebooks',
+      domain: 'global',
+      mutationKey: queryKey,
+      tags: ['notes', 'notebooks', 'delete'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  return {
+    listQuery,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+  };
 }

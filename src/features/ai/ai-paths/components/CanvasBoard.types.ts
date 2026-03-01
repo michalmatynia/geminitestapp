@@ -70,7 +70,7 @@ export interface CanvasBoardState {
   // UI Actions
   selectEdge: (edgeId: string | null) => void;
   setConfigOpen: (open: boolean) => void;
-  setEdgeRoutingMode: React.Dispatch<React.SetStateAction<EdgeRoutingMode>>;
+  setEdgeRoutingMode: (mode: EdgeRoutingMode) => void;
 
   // Event Handlers
   handlePointerDownNode: (nodeId: string, event: React.PointerEvent) => void;
@@ -102,7 +102,7 @@ export interface CanvasBoardState {
   centerOnCanvasPoint: (canvasX: number, canvasY: number) => void;
 
   // Derived UI State
-  selectionMarqueeRect: { x: number; y: number; width: number; height: number } | null;
+  selectionMarqueeRect: { left: number; top: number; width: number; height: number } | null;
   touchLongPressIndicator: { x: number; y: number; progress: number } | null;
   ConfirmationModal: React.ComponentType;
 

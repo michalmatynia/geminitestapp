@@ -120,7 +120,7 @@ export const clearLiteSettingsServerCache = (): void => {
 
 export const isLiteSettingsKey = (key: string): boolean => {
   const normalizedKey = key.trim();
-  return (LITE_SETTINGS_KEYS as readonly string[]).includes(normalizedKey);
+  return (LITE_SETTINGS_KEYS).includes(normalizedKey);
 };
 
 export const GET_handler = async (

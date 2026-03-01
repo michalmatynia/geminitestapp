@@ -11,10 +11,8 @@ import {
   useSelectionActions,
 } from '../context';
 import type { AiNode, PathFlowIntensity } from '@/shared/lib/ai-paths';
-import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 import {
   RENDERER_MODE_STORAGE_KEY,
-  EDGE_ROUTING_MODE_STORAGE_KEY,
   MINIMAP_VISIBILITY_STORAGE_KEY,
   type CanvasRendererMode,
   type SvgConnectorTooltipState,

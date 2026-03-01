@@ -124,10 +124,10 @@ export function SelectModal<T>({
                 className={`
                   w-full p-3 text-left rounded-md border transition-colors
                   ${
-                    selected.has(option.id)
-                      ? 'bg-primary/10 border-primary'
-                      : 'bg-card border-border hover:bg-muted'
-                  }
+              selected.has(option.id)
+                ? 'bg-primary/10 border-primary'
+                : 'bg-card border-border hover:bg-muted'
+              }
                   ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
               >

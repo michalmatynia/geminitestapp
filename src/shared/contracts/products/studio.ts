@@ -120,6 +120,38 @@ export function normalizeProductStudioSequenceGenerationMode(
   return 'auto';
 }
 
+export const productStudioRotateRequestSchema = z.object({
+  imageSlotIndex: z.number().int().min(0),
+  direction: z.enum(['left', 'right']),
+});
+
+export type ProductStudioRotateRequestDto = z.infer<typeof productStudioRotateRequestSchema>;
+
+export const productStudioAcceptRequestSchema = z.object({
+  imageSlotIndex: z.number().int().min(0),
+  generationSlotId: z.string().trim().min(1),
+  projectId: z.string().trim().nullable().optional(),
+});
+
+export type ProductStudioAcceptRequestDto = z.infer<typeof productStudioAcceptRequestSchema>;
+
+export const productStudioSendRequestSchema = z.object({
+  imageSlotIndex: z.number().int().min(0),
+  projectId: z.string().trim().nullable().optional(),
+  rotateBeforeSendDeg: z.literal(90).nullable().optional(),
+  sequenceGenerationMode: productStudioSequenceGenerationModeSchema.optional(),
+});
+
+export type ProductStudioSendRequestDto = z.infer<typeof productStudioSendRequestSchema>;
+
+export const productStudioLinkRequestSchema = z.object({
+  imageSlotIndex: z.number().int().min(0),
+  projectId: z.string().trim().nullable().optional(),
+  rotateBeforeSendDeg: z.literal(90).nullable().optional(),
+});
+
+export type ProductStudioLinkRequestDto = z.infer<typeof productStudioLinkRequestSchema>;
+
 /**
  * Product Draft Contracts
  */

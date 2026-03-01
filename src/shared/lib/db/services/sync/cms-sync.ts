@@ -65,7 +65,7 @@ export const syncCmsPages: SyncHandler = async ({ mongo, prisma, normalizeId, to
         showMenu: (doc as { showMenu?: boolean | null }).showMenu ?? true,
         components: Array.isArray((doc as { components?: unknown[] }).components)
           ? ((doc as { components?: Array<{ type: string; content: Record<string, unknown> }> })
-              .components ?? [])
+            .components ?? [])
           : [],
         createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
         updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -77,10 +77,10 @@ export const syncCmsPages: SyncHandler = async ({ mongo, prisma, normalizeId, to
   const deleted = await prisma.page.deleteMany();
   const created = data.length
     ? await prisma.page.createMany({
-        data: data.map(
-          ({ components: _components, ...rest }) => rest
-        ) as Prisma.PageCreateManyInput[],
-      })
+      data: data.map(
+        ({ components: _components, ...rest }) => rest
+      ) as Prisma.PageCreateManyInput[],
+    })
     : { count: 0 };
 
   const componentRows = data.flatMap((page) =>

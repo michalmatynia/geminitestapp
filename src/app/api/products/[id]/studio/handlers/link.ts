@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { linkProductImageToStudio } from '@/features/ai/image-studio/product-studio/product-studio-service';
+import { productStudioLinkRequestSchema as linkSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const linkSchema = z.object({
-  imageSlotIndex: z.number().int().min(0),
-  projectId: z.string().trim().nullable().optional(),
-  rotateBeforeSendDeg: z.literal(90).nullable().optional(),
-});
 
 export async function POST_handler(
   req: NextRequest,

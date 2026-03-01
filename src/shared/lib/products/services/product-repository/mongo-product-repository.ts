@@ -526,18 +526,18 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-            parameters: normalizeProductParameterValues(data.parameters),
-          }
+          parameters: normalizeProductParameterValues(data.parameters),
+        }
         : null),
       ...(data.imageLinks !== undefined
         ? {
-            imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
-          }
+          imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
+        }
         : null),
       ...(data.imageBase64s !== undefined
         ? {
-            imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
-          }
+          imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
+        }
         : null),
     };
     const result = await db

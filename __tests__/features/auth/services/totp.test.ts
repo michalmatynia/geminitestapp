@@ -39,11 +39,16 @@ vi.mock('crypto', async (importOriginal) => {
     digest: vi.fn(() => 'mockhash'),
   } as unknown as crypto.Hash));
 
-  return {
+  const mockedModule = {
     ...actual,
     randomBytes,
     createHmac,
     createHash,
+  };
+
+  return {
+    ...mockedModule,
+    default: mockedModule,
   };
 });
 

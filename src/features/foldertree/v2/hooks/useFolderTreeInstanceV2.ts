@@ -872,7 +872,7 @@ export function useFolderTreeInstanceV2(
         lastError: normalizedError,
         isApplying: false,
       }));
-      return createErrorAction(normalizedError!.code, normalizedError!.message);
+      return createErrorAction(normalizedError.code, normalizedError.message);
     }
   }, [adapter, instanceId, replaceNodes, store]);
 

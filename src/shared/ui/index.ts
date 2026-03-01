@@ -83,6 +83,7 @@ export * from './templates/SettingsFormModal';
 export * from './templates/FilterPanel';
 export * from './templates/SimpleSettingsList';
 export * from './templates/GenericApiConsole';
+export * from './templates/DocumentSearchPage';
 export {
   PanelHeader,
   PanelFilters,

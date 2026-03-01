@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { gunzipSync, gzipSync } from 'zlib';
-import { z } from 'zod';
+
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {

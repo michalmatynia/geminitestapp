@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { acceptProductStudioVariant } from '@/features/ai/image-studio/product-studio/product-studio-service';
+import { productStudioAcceptRequestSchema as acceptSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const acceptSchema = z.object({
-  imageSlotIndex: z.number().int().min(0),
-  generationSlotId: z.string().trim().min(1),
-  projectId: z.string().trim().nullable().optional(),
-});
 
 export async function POST_handler(
   req: NextRequest,

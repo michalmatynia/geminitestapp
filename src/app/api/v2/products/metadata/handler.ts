@@ -89,9 +89,9 @@ const mapPriceGroupResponse = <
     group: T
   ): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
     ...group,
-  currencyCode: group.currency?.code ?? group.currencyId,
-  groupType: resolveGroupType(group.type, group.sourceGroupId),
-});
+    currencyCode: group.currency?.code ?? group.currencyId,
+    groupType: resolveGroupType(group.type, group.sourceGroupId),
+  });
 
 const mapMongoPriceGroupResponse = (
   group: MongoPriceGroupDoc,
@@ -237,9 +237,9 @@ export async function GET_products_metadata_handler(
       );
       const currencyDocs = (currencyIds.length
         ? await mongo
-            .collection<MongoCurrencyDoc>('currencies')
-            .find({ id: { $in: currencyIds } })
-            .toArray()
+          .collection<MongoCurrencyDoc>('currencies')
+          .find({ id: { $in: currencyIds } })
+          .toArray()
         : []) as MongoCurrencyDoc[];
       const currencyById = new Map(
         currencyDocs.map((currency: MongoCurrencyDoc) => [String(currency.id ?? ''), currency])

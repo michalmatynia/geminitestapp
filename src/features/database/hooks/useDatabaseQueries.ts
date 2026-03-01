@@ -26,6 +26,7 @@ import type {
 } from '@/shared/contracts/database';
 import type { ListQuery, SingleQuery, MutationResult, UpdateMutation } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
+import type { ApiPayloadResult } from '@/shared/contracts/http';
 import {
   resolvePayloadErrorMessage,
   unwrapMutationResult,
@@ -61,7 +62,6 @@ import {
   runDatabaseEngineBackupNow,
   runDatabaseEngineBackupSchedulerTick,
   uploadDatabaseBackup,
-  type ApiPayloadResult,
 } from '../api';
 
 const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {

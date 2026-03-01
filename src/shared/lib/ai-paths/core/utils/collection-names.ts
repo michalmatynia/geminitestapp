@@ -176,24 +176,24 @@ const migrateSchemaSnapshotCollections = (
 
   const sources: NonNullable<DatabaseConfig['schemaSnapshot']>['sources'] = snapshot.sources
     ? (Object.fromEntries(
-        Object.entries(snapshot.sources).map(([provider, source]) => {
-          if (!source) return [provider, source];
-          const sourceCollections = source.collections.map((collection) => {
-            const canonical = canonicalizeAiPathsCollectionName(collection.name);
-            if (canonical !== collection.name) changed = true;
-            return canonical === collection.name ? collection : { ...collection, name: canonical };
-          });
-          return [
-            provider,
-            changed
-              ? {
-                  ...source,
-                  collections: sourceCollections,
-                }
-              : source,
-          ];
-        })
-      ) as NonNullable<DatabaseConfig['schemaSnapshot']>['sources'])
+      Object.entries(snapshot.sources).map(([provider, source]) => {
+        if (!source) return [provider, source];
+        const sourceCollections = source.collections.map((collection) => {
+          const canonical = canonicalizeAiPathsCollectionName(collection.name);
+          if (canonical !== collection.name) changed = true;
+          return canonical === collection.name ? collection : { ...collection, name: canonical };
+        });
+        return [
+          provider,
+          changed
+            ? {
+              ...source,
+              collections: sourceCollections,
+            }
+            : source,
+        ];
+      })
+    ) as NonNullable<DatabaseConfig['schemaSnapshot']>['sources'])
     : snapshot.sources;
 
   if (!changed) {

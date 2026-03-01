@@ -115,7 +115,7 @@ const GEMMA_VISION_MODEL_TEMPLATE: AiPathTemplate = {
       id: 'node-regex',
       type: 'regex',
       title: 'Extract Bounds JSON',
-      description: "Pulls the JSON object out of the model's text response.",
+      description: 'Pulls the JSON object out of the model\'s text response.',
       inputs: ['value'],
       outputs: ['result'],
       position: { x: 1460, y: 400 },

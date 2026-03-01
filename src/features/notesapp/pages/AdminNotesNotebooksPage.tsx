@@ -19,13 +19,12 @@ import {
   PageLayout,
   FormSection,
   FormField,
-  RefreshButton,
   LoadingState,
   StatusBadge,
-  SimpleSettingsList,
-  DropdownMenuItem,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -160,6 +159,135 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     }
   };
 
+  const columns = useMemo<ColumnDef<NotebookRecord>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Notebook Name',
+        cell: ({ row }) => {
+          const nb = row.original;
+          const isEditing = editingId === nb.id;
+
+          if (isEditing) {
+            return (
+              <Input
+                type='text'
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                className='h-8 py-0'
+                autoFocus
+              />
+            );
+          }
+
+          return (
+            <div className='flex items-center gap-2'>
+              <span className='font-medium'>{nb.name}</span>
+              {selectedNotebookId === nb.id && (
+                <StatusBadge status='Active' variant='active' size='sm' className='font-bold' />
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => {
+          const nb = row.original;
+          const isEditing = editingId === nb.id;
+
+          return (
+            <div className='flex items-center justify-end gap-2'>
+              {isEditing ? (
+                <>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleUpdate(nb.id);
+                    }}
+                    disabled={updateNotebook.isPending}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCancel();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateSettings({ selectedNotebookId: nb.id });
+                      router.push('/admin/notes');
+                    }}
+                  >
+                    Open
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditStart(nb);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleDuplicate(nb);
+                    }}
+                  >
+                    Duplicate
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    className='text-red-300 hover:text-red-200'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setNotebookToDelete(nb.id);
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [
+      editingId,
+      editingName,
+      selectedNotebookId,
+      updateNotebook.isPending,
+      updateSettings,
+      router,
+      handleUpdate,
+      handleEditCancel,
+      handleEditStart,
+      handleDuplicate,
+    ]
+  );
+
   if (loading) {
     return (
       <PageLayout title='Notebooks' description='Loading notebooks...'>
@@ -174,6 +302,12 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     <PageLayout
       title='Notebooks'
       description='Create and manage notebooks. Notes, folders, and tags are scoped per notebook.'
+      refresh={{
+        onRefresh: () => {
+          void notebooksQuery.refetch();
+        },
+        isRefreshing: notebooksQuery.isFetching,
+      }}
     >
       <div className='max-w-4xl space-y-6'>
         <FormSection title='Create Notebook' className='p-6'>
@@ -200,97 +334,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           </div>
         </FormSection>
 
-        <FormSection
-          title='Your Notebooks'
-          className='p-6'
-          actions={
-            <RefreshButton
-              onRefresh={(): void => {
-                void notebooksQuery.refetch();
-              }}
-              isRefreshing={loading}
-            />
-          }
-        >
-          <SimpleSettingsList
-            items={notebooks.map((nb) => ({
-              id: nb.id,
-              title: (
-                <div className='flex items-center gap-2'>
-                  {editingId === nb.id ? (
-                    <Input
-                      type='text'
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      className='h-7 py-0'
-                      autoFocus
-                    />
-                  ) : (
-                    <>
-                      <span>{nb.name}</span>
-                      {selectedNotebookId === nb.id && (
-                        <StatusBadge
-                          status='Active'
-                          variant='active'
-                          size='sm'
-                          className='font-bold'
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
-              ),
-              original: nb,
-            }))}
-            isLoading={loading}
-            onSelect={(item) => {
-              if (editingId === item.id) return;
-              updateSettings({ selectedNotebookId: item.id });
-              router.push('/admin/notes');
-            }}
-            onEdit={(item) => handleEditStart(item.original)}
-            onDelete={(item) => setNotebookToDelete(item.id)}
-            renderActions={(item) =>
-              editingId === item.id ? (
-                <div className='flex items-center gap-1'>
-                  <Button
-                    variant='outline'
-                    size='xs'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleUpdate(item.id);
-                    }}
-                    disabled={updateNotebook.isPending}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='xs'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditCancel();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : null
-            }
-            renderExtraActions={(item) => (
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  void handleDuplicate(item.original);
-                }}
-              >
-                Duplicate
-              </DropdownMenuItem>
-            )}
-            emptyMessage='No notebooks created yet. Create your first notebook to start organizing your thoughts.'
-            columns={2}
-          />
-        </FormSection>
+        <StandardDataTablePanel columns={columns} data={notebooks} isLoading={loading} />
       </div>
 
       <ConfirmModal

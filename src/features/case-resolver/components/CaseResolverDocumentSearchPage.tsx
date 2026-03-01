@@ -3,13 +3,6 @@
 import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { DocumentSearchPage } from '@/features/document-search';
-import type {
-  CaseResolverCategory,
-  CaseResolverFile,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-} from '@/shared/contracts/case-resolver';
 import {
   Button,
   EmptyState,
@@ -18,12 +11,19 @@ import {
   SelectSimple,
   Card,
   Badge,
+  DocumentSearchPage,
 } from '@/shared/ui';
 
 import {
   CaseResolverPageContextValue,
   useCaseResolverPageContext,
 } from '../context/CaseResolverPageContext';
+import type {
+  CaseResolverFile,
+  CaseResolverTag,
+  CaseResolverIdentifier,
+  CaseResolverCategory,
+} from '@/shared/contracts/case-resolver';
 
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';

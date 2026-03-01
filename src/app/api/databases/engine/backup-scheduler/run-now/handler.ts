@@ -10,13 +10,16 @@ import {
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logSystemError } from '@/shared/lib/observability/system-logger';
-import { databaseEngineBackupRunNowRequestSchema as runNowSchema } from '@/shared/contracts/database';
+import { 
+  databaseEngineBackupRunNowRequestSchema as runNowSchema,
+  type DatabaseEngineBackupRunNowRequestDto 
+} from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const resolveTargets = (
-  dbType: z.infer<typeof runNowSchema>['dbType']
+  dbType: DatabaseEngineBackupRunNowRequestDto['dbType']
 ): Array<'mongodb' | 'postgresql'> => {
   if (dbType === 'all') return ['mongodb', 'postgresql'];
   return [dbType];

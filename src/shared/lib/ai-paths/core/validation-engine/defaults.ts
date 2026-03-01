@@ -165,13 +165,13 @@ const sanitizeRule = (
       : (index + 1) * 10;
   const conditions = Array.isArray(rawRule.conditions)
     ? rawRule.conditions
-        .map((condition: AiPathsValidationCondition, conditionIndex: number) =>
-          sanitizeCondition(condition, conditionIndex)
-        )
-        .filter(
-          (condition: AiPathsValidationCondition | null): condition is AiPathsValidationCondition =>
-            Boolean(condition)
-        )
+      .map((condition: AiPathsValidationCondition, conditionIndex: number) =>
+        sanitizeCondition(condition, conditionIndex)
+      )
+      .filter(
+        (condition: AiPathsValidationCondition | null): condition is AiPathsValidationCondition =>
+          Boolean(condition)
+      )
     : [];
 
   if (conditions.length === 0) return null;
@@ -515,14 +515,14 @@ export const normalizeAiPathsValidationConfig = (
   const collectionMap =
     source.collectionMap && typeof source.collectionMap === 'object'
       ? (Object.fromEntries(
-          Object.entries(source.collectionMap as Record<string, unknown>).filter(
-            ([key, val]: [string, unknown]): boolean =>
-              typeof key === 'string' &&
+        Object.entries(source.collectionMap as Record<string, unknown>).filter(
+          ([key, val]: [string, unknown]): boolean =>
+            typeof key === 'string' &&
               key.trim().length > 0 &&
               typeof val === 'string' &&
               val.trim().length > 0
-          )
-        ) as Record<string, string>)
+        )
+      ) as Record<string, string>)
       : { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP };
 
   const sanitizedRules = normalizeAiPathsValidationRules(source.rules);

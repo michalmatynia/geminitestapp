@@ -9,16 +9,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  EmptyState,
   FormSection,
   SectionHeader,
   Skeleton,
   Tag as UiTag,
   useToast,
   Breadcrumbs,
-  ActionMenu,
-  DropdownMenuItem,
-  PropertyRow,
+  SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -326,50 +323,24 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
               <Skeleton className='h-8 w-full' />
               <Skeleton className='h-8 w-full' />
             </div>
-          ) : caseIdentifiers.length === 0 ? (
-            <EmptyState
-              title='No case identifiers yet'
-              description='Create case identifiers to classify Case Resolver documents.'
-              action={
-                <Button onClick={openCreateModal} variant='outline'>
-                  <Plus className='mr-2 size-4' />
-                  Create First Case Identifier
-                </Button>
-              }
-            />
           ) : (
-            <div className='space-y-2'>
-              {caseIdentifiers.map((caseIdentifier: CaseResolverIdentifier) => (
-                <div
-                  key={caseIdentifier.id}
-                  className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
-                >
-                  <div className='min-w-0'>
-                    <UiTag
-                      label={caseIdentifier.name ?? caseIdentifier.value}
-                      color={caseIdentifier.color || '#f59e0b'}
-                      dot
-                    />
-                    <PropertyRow
-                      label='Path'
-                      value={caseIdentifierPathById.get(caseIdentifier.id) ?? caseIdentifier.name}
-                      className='mt-1'
-                    />
+            <SimpleSettingsList
+              items={caseIdentifiers.map((id: CaseResolverIdentifier) => ({
+                id: id.id,
+                title: (
+                  <div className='flex items-center gap-2'>
+                    <UiTag label={id.name ?? id.value} color={id.color || '#f59e0b'} dot />
                   </div>
-                  <ActionMenu ariaLabel={`Actions for identifier ${caseIdentifier.name}`}>
-                    <DropdownMenuItem onSelect={() => openEditModal(caseIdentifier)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className='text-destructive focus:text-destructive'
-                      onSelect={() => setCaseIdentifierToDelete(caseIdentifier)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </ActionMenu>
-                </div>
-              ))}
-            </div>
+                ),
+                description: caseIdentifierPathById.get(id.id) ?? id.name,
+                original: id,
+              }))}
+              isLoading={settingsStore.isLoading}
+              onEdit={(item) => openEditModal(item.original)}
+              onDelete={(item) => setCaseIdentifierToDelete(item.original)}
+              emptyMessage='No case identifiers yet. Create case identifiers to classify Case Resolver documents.'
+              columns={2}
+            />
           )}
         </div>
       </FormSection>

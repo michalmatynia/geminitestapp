@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 const FILES = [
   'src/features/products/validations/middleware.ts',
-  'src/features/products/services/productService.ts',
+  'src/shared/lib/products/services/productService.ts',
 ];
 
 describe('product formdata parsing guard', () => {

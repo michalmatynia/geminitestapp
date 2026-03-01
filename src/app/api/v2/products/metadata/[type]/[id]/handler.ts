@@ -16,6 +16,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,
+  MongoCatalogDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 
 const unwrapPayload = (value: unknown): Record<string, unknown> => {
@@ -79,9 +80,9 @@ const mapPriceGroupResponse = <
     group: T
   ): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
     ...group,
-  currencyCode: group.currency?.code ?? group.currencyId,
-  groupType: resolveGroupType(group.type, group.sourceGroupId),
-});
+    currencyCode: group.currency?.code ?? group.currencyId,
+    groupType: resolveGroupType(group.type, group.sourceGroupId),
+  });
 
 const mapMongoPriceGroupResponse = (
   group: MongoPriceGroupDoc,
@@ -407,11 +408,10 @@ export async function DELETE_products_metadata_id_handler(
       await mongo.collection<MongoPriceGroupDoc>('price_groups').deleteOne({
         $or: [{ id: resolvedId }, { groupId: resolvedId }],
       });
-      await mongo.collection('catalogs').updateMany(
-        { priceGroupIds: resolvedId },
-        { $pull: { priceGroupIds: resolvedId }, $set: { updatedAt: now } }
-      );
-      await mongo.collection('catalogs').updateMany(
+              await mongo.collection<MongoCatalogDoc>('catalogs').updateMany(
+                { priceGroupIds: resolvedId },
+                { $pull: { priceGroupIds: resolvedId }, $set: { updatedAt: now } } as any
+              );      await mongo.collection('catalogs').updateMany(
         { defaultPriceGroupId: resolvedId },
         { $set: { defaultPriceGroupId: null, updatedAt: now } }
       );

@@ -258,8 +258,9 @@ export async function postAutoScaleSlotHandler(
         metadata: {
           role: 'generation',
           sourceSlotId: sourceSlot.id,
-          relationType: requestRelationType || 'autoscale_v1',
+          relationType: 'autoscale:output',
           autoscale: {
+            mode: payload.mode,
             effectiveMode: processed.effectiveMode,
             sourceObjectBounds: processed.sourceObjectBounds,
             targetObjectBounds: processed.targetObjectBounds,

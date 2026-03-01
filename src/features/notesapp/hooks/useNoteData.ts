@@ -23,7 +23,7 @@ import {
 import {
   useNote as useNoteQuery,
   useNoteCategories as useNoteCategoriesQuery,
-  useNotebooks as useNotebooksQuery,
+  useNotebookResource,
   useNotes as useNotesQuery,
   useNoteTags as useNoteTagsQuery,
   useNoteThemes as useNoteThemesQuery,
@@ -101,8 +101,9 @@ export const useNote = (
   return useNoteQuery(noteId || null, options) as UseQueryResult<NoteWithRelations, Error>;
 };
 
-export const useNoteTree = (options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
-  return useNotebooksQuery(undefined, options);
+export const useNoteTree = (_options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
+  const { listQuery } = useNotebookResource();
+  return listQuery as UseQueryResult<NotebookRecord[], Error>;
 };
 
 export const useNoteTags = (options?: QueryOptions): UseQueryResult<TagRecord[], Error> => {

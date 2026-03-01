@@ -10,7 +10,7 @@ const { enqueueMock, pollMock, artifactUrlFromPathMock } = vi.hoisted(() => ({
   artifactUrlFromPathMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   playwrightNodeApi: {
     enqueue: enqueueMock,
     poll: pollMock,

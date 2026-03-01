@@ -1,15 +1,5 @@
 import type { AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
-
-export type PlaywrightArtifactLink = {
-  nodeId: string;
-  nodeTitle: string | null;
-  nodeType: string | null;
-  name: string;
-  path: string;
-  url: string | null;
-  mimeType: string | null;
-  kind: string | null;
-};
+import type { PlaywrightArtifactLink } from '@/shared/contracts/playwright';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

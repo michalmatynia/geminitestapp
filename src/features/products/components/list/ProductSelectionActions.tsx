@@ -37,7 +37,6 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   Input,
-  Textarea,
   SelectionBar,
   useToast,
   JSONImportModal,

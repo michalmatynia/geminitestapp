@@ -25,10 +25,14 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@/shared/ui', () => ({
-  Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
-  useToast: () => ({ toast: mocks.toast }),
-}));
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
+    useToast: () => ({ toast: mocks.toast }),
+  };
+});
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
@@ -60,6 +64,26 @@ vi.mock('@/features/ai/image-studio/context/SlotsContext', () => ({
 vi.mock('@/features/ai/image-studio/components/RightSidebarContext', () => ({
   useRightSidebarContext: () => ({
     switchToControls: mocks.switchToControls,
+  }),
+}));
+
+vi.mock('@/features/ai/image-studio/context/UiContext', () => ({
+  useUiCanvasState: () => ({
+    previewCanvasSize: 'regular',
+    imageTransformMode: 'none',
+    canvasImageOffset: { x: 0, y: 0 },
+    canvasBackgroundLayerEnabled: true,
+    canvasBackgroundColor: '#ffffff',
+  }),
+  useUiToolsState: () => ({
+    maskPreviewEnabled: false,
+    centerGuidesEnabled: false,
+    validatorEnabled: true,
+    formatterEnabled: false,
+    canvasSelectionEnabled: false,
+  }),
+  useUiActions: () => ({
+    setCanvasSelectionEnabled: vi.fn(),
   }),
 }));
 

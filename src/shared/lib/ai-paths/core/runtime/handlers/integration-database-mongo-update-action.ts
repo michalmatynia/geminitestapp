@@ -116,7 +116,6 @@ export async function handleDatabaseMongoUpdateAction({
 
   if (
     updatePayloadMode !== 'custom' &&
-    updatePayloadMode !== 'mapping' &&
     (updatePayloadMode as string) !== 'mongo'
   ) {
     const error =

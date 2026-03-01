@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button, Card, SelectSimple } from '@/shared/ui';
+import { Button, Card, SelectSimple, FormActions } from '@/shared/ui';
 import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
 import {
   PADDING_MIN,
@@ -345,23 +345,16 @@ export function AnalysisSettingsSection({
         ) : null}
       </div>
 
-      <div className='mt-3 flex flex-wrap items-center gap-2'>
-        <Button
-          type='button'
-          size='sm'
-          variant='outline'
-          onClick={handleAnalyze}
-          disabled={busy || !workingSlotId || !workingSlotImageSrc}
-          loading={busy}
-        >
-          {busyLabel}
-        </Button>
-        {busy ? (
-          <Button type='button' size='sm' variant='outline' onClick={handleCancel}>
-            Cancel Analysis
-          </Button>
-        ) : null}
-      </div>
+      <FormActions
+        onSave={handleAnalyze}
+        onCancel={busy ? handleCancel : undefined}
+        saveText={busyLabel}
+        cancelText='Cancel Analysis'
+        isSaving={busy}
+        isDisabled={!workingSlotId || !workingSlotImageSrc}
+        className='mt-3 !justify-start'
+        saveVariant='outline'
+      />
     </Card>
   );
 }

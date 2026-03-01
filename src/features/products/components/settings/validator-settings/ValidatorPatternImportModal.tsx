@@ -8,7 +8,7 @@ import type {
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { JSONImportModal, Button, useToast } from '@/shared/ui';
+import { JSONImportModal, useToast } from '@/shared/ui';
 
 import { VALIDATOR_SAMPLE_IMPORT_JSON } from './validator-documentation-clipboard';
 
@@ -58,8 +58,6 @@ export function ValidatorPatternImportModal({
   const [rawJson, setRawJson] = React.useState<string>(VALIDATOR_SAMPLE_IMPORT_JSON);
   const [parseError, setParseError] = React.useState<string | null>(null);
   const [lastResult, setLastResult] = React.useState<ImportValidationPatternsResult | null>(null);
-
-  const hasBlockingErrors = (lastResult?.errors.length ?? 0) > 0;
 
   const handleClose = (): void => {
     if (importMutation.isPending) return;

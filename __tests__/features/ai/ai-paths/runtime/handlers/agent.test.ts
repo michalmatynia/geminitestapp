@@ -5,7 +5,7 @@ import { handleAgent, handleLearnerAgent } from '@/shared/lib/ai-paths/core/runt
 
 import { createMockContext } from '../../test-utils';
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   agentApi: {
     enqueue: vi.fn(),
     poll: vi.fn(),

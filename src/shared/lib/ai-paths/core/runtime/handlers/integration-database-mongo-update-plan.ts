@@ -84,7 +84,6 @@ export async function buildMongoUpdatePlan({
 
   if (
     updatePayloadMode !== 'custom' &&
-    updatePayloadMode !== 'mapping' &&
     (updatePayloadMode as string) !== 'mongo'
   ) {
     const error =

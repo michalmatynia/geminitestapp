@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input, Textarea, FormField } from '@/shared/ui';
+import { Input, Textarea, FormField, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useDatabaseSaveQueryPresetDialogContext } from './DatabaseSaveQueryPresetDialogContext';
@@ -23,14 +23,11 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
       subtitle='Name this query to reuse it in other database nodes.'
       size='sm'
       footer={
-        <div className='flex justify-end gap-2'>
-          <Button type='button' variant='outline' onClick={(): void => onCancel()}>
-            Cancel
-          </Button>
-          <Button type='button' variant='default' onClick={(): void => onSave()}>
-            Save preset
-          </Button>
-        </div>
+        <FormActions
+          onSave={onSave}
+          onCancel={onCancel}
+          saveText='Save preset'
+        />
       }
     >
       <div className='space-y-4'>

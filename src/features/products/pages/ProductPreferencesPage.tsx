@@ -20,6 +20,7 @@ import {
   FormField,
   LoadingState,
   PageLayout,
+  FormActions,
 } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
@@ -238,8 +239,15 @@ export function ProductPreferencesPage(): React.JSX.Element {
         </FormSection>
 
         {/* Action Buttons */}
-        <div className='flex justify-between gap-3'>
+        <FormActions
+          onSave={() => void handleSave()}
+          onCancel={() => router.push('/admin/products')}
+          saveText='Save Preferences'
+          isSaving={updateMutation.isPending}
+          className='flex-row-reverse justify-between'
+        >
           <Button
+            type='button'
             variant='outline'
             onClick={() => void handleResetToDefault()}
             disabled={updateMutation.isPending}
@@ -247,19 +255,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
           >
             Reset to Default
           </Button>
-          <div className='flex gap-3'>
-            <Button
-              variant='outline'
-              onClick={() => router.push('/admin/products')}
-              disabled={updateMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button onClick={() => void handleSave()} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save Preferences'}
-            </Button>
-          </div>
-        </div>
+        </FormActions>
       </div>
     </PageLayout>
   );

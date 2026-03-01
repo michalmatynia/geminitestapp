@@ -200,18 +200,26 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       summary,
       ...meta,
     });
-    await repo.createRunEvent({
-      runId: run.id,
-      level: 'error',
-      message: summary ?? 'AI Paths runtime error',
-      metadata: {
-        error: error instanceof Error ? error.message : String(error),
-        runStartedAt,
-        runtimeFingerprint,
-        traceId,
-        ...meta,
-      },
-    });
+    // Persist the error event to MongoDB.  Guard with try/catch so that a MongoDB
+    // connectivity failure (e.g. MongoNetworkTimeoutError) does not propagate as an
+    // unhandled rejection — reportAiPathsError is called fire-and-forget (void) by all
+    // runtime callbacks and ErrorSystem.captureException above already recorded it.
+    try {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: summary ?? 'AI Paths runtime error',
+        metadata: {
+          error: error instanceof Error ? error.message : String(error),
+          runStartedAt,
+          runtimeFingerprint,
+          traceId,
+          ...meta,
+        },
+      });
+    } catch {
+      // DB write failed — the error was already captured above; suppress to avoid crash.
+    }
   };
   const toast = (): void => {};
 

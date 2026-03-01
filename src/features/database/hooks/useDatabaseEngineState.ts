@@ -39,6 +39,7 @@ import {
   useDatabaseEngineProviderPreview,
   useDatabaseEngineStatus,
   useAllCollectionsSchema,
+  useRedisOverview,
 } from '../hooks/useDatabaseQueries';
 
 export interface DatabaseCollectionRow extends UnifiedCollection {
@@ -50,6 +51,7 @@ export interface UseDatabaseEngineStateReturn {
   backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
   operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
+  redisOverview: _RedisOverview | undefined;
   activeView: DatabaseEngineWorkspaceView;
   setActiveView: (view: DatabaseEngineWorkspaceView) => void;
   rows: DatabaseCollectionRow[];
@@ -68,6 +70,19 @@ export interface UseDatabaseEngineStateReturn {
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
+  // Legacy aliases kept for backward compatibility with existing page components.
+  policyDraft: any;
+  setPolicyDraft: _Dispatch<_SetStateAction<any>>;
+  collectionRouteMapDraft: Record<string, string>;
+  setCollectionRouteMapDraft: _Dispatch<_SetStateAction<Record<string, string>>>;
+  operationJobs: _DatabaseEngineOperationJob[];
+  workspaceView: DatabaseEngineWorkspaceView;
+  setView: (view: DatabaseEngineWorkspaceView) => void;
+  validationErrors: string[];
+  saveConfiguration: () => Promise<void>;
+  isFetching: boolean;
+  saving: boolean;
+  refetch: () => void;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -80,6 +95,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
   const providerPreviewQuery = useDatabaseEngineProviderPreview();
+  const redisOverviewQuery = useRedisOverview();
   const schemaQuery = useAllCollectionsSchema();
 
   const activeView = (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine';
@@ -93,7 +109,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     [pathname, router, searchParams]
   );
 
-  const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'full' });
+  const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'all' });
 
   const updateSettingsBulk = useUpdateSettingsBulk();
 
@@ -183,19 +199,59 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     }
   };
 
+  const setPolicyDraft = useCallback<_Dispatch<_SetStateAction<any>>>((next) => {
+    setPolicy((prev: any) =>
+      typeof next === 'function' ? (next as (value: any) => any)(prev) : next
+    );
+    setIsDirty(true);
+  }, []);
+
+  const setCollectionRouteMapDraft = useCallback<
+    _Dispatch<_SetStateAction<Record<string, string>>>
+  >((next) => {
+    setCollectionRouteMap((prev) =>
+      typeof next === 'function'
+        ? (next as (value: Record<string, string>) => Record<string, string>)(prev)
+        : next
+    );
+    setIsDirty(true);
+  }, []);
+
+  const refetchAll = useCallback(() => {
+    void engineStatusQuery.refetch();
+    void backupSchedulerStatusQuery.refetch();
+    void operationsJobsQuery.refetch();
+    void providerPreviewQuery.refetch();
+    void redisOverviewQuery.refetch();
+    void schemaQuery.refetch();
+  }, [
+    backupSchedulerStatusQuery,
+    engineStatusQuery,
+    operationsJobsQuery,
+    providerPreviewQuery,
+    redisOverviewQuery,
+    schemaQuery,
+  ]);
+
+  const validationErrors = engineStatusQuery.data?.blockingIssues ?? [];
+  const operationJobs = operationsJobsQuery.data?.jobs ?? [];
+  const isLoading =
+    engineStatusQuery.isPending ||
+    backupSchedulerStatusQuery.isPending ||
+    operationsJobsQuery.isPending ||
+    redisOverviewQuery.isPending ||
+    settingsLoading;
+
   return {
     engineStatus: engineStatusQuery.data,
     backupSchedulerStatus: backupSchedulerStatusQuery.data,
     operationsJobs: operationsJobsQuery.data,
     providerPreview: providerPreviewQuery.data,
+    redisOverview: redisOverviewQuery.data,
     activeView,
     setActiveView,
     rows,
-    isLoading:
-      engineStatusQuery.isPending ||
-      backupSchedulerStatusQuery.isPending ||
-      operationsJobsQuery.isPending ||
-      settingsLoading,
+    isLoading,
     isSaving: updateSettingsBulk.isPending,
     policy,
     serviceRouteMap,
@@ -224,12 +280,18 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     saveSettings: handleSave,
     isDirty,
-    refetchAll: () => {
-      void engineStatusQuery.refetch();
-      void backupSchedulerStatusQuery.refetch();
-      void operationsJobsQuery.refetch();
-      void providerPreviewQuery.refetch();
-      void schemaQuery.refetch();
-    },
+    refetchAll,
+    policyDraft: policy,
+    setPolicyDraft,
+    collectionRouteMapDraft: collectionRouteMap,
+    setCollectionRouteMapDraft,
+    operationJobs,
+    workspaceView: activeView,
+    setView: setActiveView,
+    validationErrors,
+    saveConfiguration: handleSave,
+    isFetching: isLoading,
+    saving: updateSettingsBulk.isPending,
+    refetch: refetchAll,
   };
 }

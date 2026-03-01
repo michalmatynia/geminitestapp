@@ -11,11 +11,8 @@ import {
 } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
-import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
-import type {
-  DatabaseEngineProvider as DatabaseEngineProviderType,
-  DatabaseEnginePolicy,
-} from '@/shared/lib/db/database-engine-constants';
+import type { DatabaseEngineOperationJobDto, DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
+import type { DatabaseEnginePolicy } from '@/shared/lib/db/database-engine-constants';
 import {
   Button,
   FormSection,
@@ -37,10 +34,7 @@ import {
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
 import { DatabaseEngineProvider, useDatabaseEngineContext } from '../context/DatabaseEngineContext';
-import {
-  type DatabaseEngineWorkspaceView,
-  type DatabaseCollectionRow,
-} from '../hooks/useDatabaseEngineState';
+import { type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -96,10 +90,10 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
             size='xs'
             value={collectionRouteMapDraft[row.original.name] ?? 'auto'}
             onValueChange={(val) => {
-              setCollectionRouteMapDraft((prev: Record<string, DatabaseEngineProviderType>) => {
+              setCollectionRouteMapDraft((prev: Record<string, string>) => {
                 const next = { ...prev };
                 if (val === 'auto') delete next[row.original.name];
-                else next[row.original.name] = val as DatabaseEngineProviderType;
+                else next[row.original.name] = val;
                 return next;
               });
             }}

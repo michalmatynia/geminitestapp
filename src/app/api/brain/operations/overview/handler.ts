@@ -261,7 +261,7 @@ const collectChatbotDomain = async (
 
   jobs.forEach((job) => {
     if (job.status in counts) {
-      counts[job.status as keyof typeof counts] += 1;
+      counts[job.status] += 1;
     }
   });
 
@@ -270,7 +270,7 @@ const collectChatbotDomain = async (
     if (timestampMs === null) return [];
     return [{
       id: job.id,
-      status: job.status as TimedStatusRecord['status'],
+      status: job.status,
       timestampMs,
     }];
   });

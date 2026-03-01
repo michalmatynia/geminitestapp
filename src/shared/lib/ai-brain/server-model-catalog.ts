@@ -18,7 +18,7 @@ import { resolveOllamaBaseUrl } from './ollama-config';
 import { readStoredSettingValue } from './server';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
-const OLLAMA_MODELS_TIMEOUT_MS = 2_500;
+const OLLAMA_MODELS_TIMEOUT_MS = 4_500;
 
 type ListBrainModelsOptions = {
   family?: BrainModelFamily;
@@ -38,30 +38,103 @@ const normalizeUnique = (values: string[]): string[] => {
   return output;
 };
 
-const fetchLiveOllamaModels = async (): Promise<string[] | null> => {
+const buildOllamaBaseCandidates = (baseUrl: string): string[] => {
+  const trimmed = baseUrl.trim().replace(/\/+$/, '');
+  if (!trimmed) return [];
+
+  const candidates: string[] = [trimmed];
+  if (trimmed.toLowerCase().endsWith('/v1')) {
+    candidates.push(trimmed.replace(/\/v1$/i, ''));
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      const localhostUrl = new URL(parsed.toString());
+      localhostUrl.hostname = 'localhost';
+      const loopbackUrl = new URL(parsed.toString());
+      loopbackUrl.hostname = '127.0.0.1';
+      const dockerHostUrl = new URL(parsed.toString());
+      dockerHostUrl.hostname = 'host.docker.internal';
+      candidates.push(
+        localhostUrl.toString().replace(/\/+$/, ''),
+        loopbackUrl.toString().replace(/\/+$/, ''),
+        dockerHostUrl.toString().replace(/\/+$/, '')
+      );
+    }
+  } catch {
+    // Keep only the raw configured value if URL parsing fails.
+  }
+
+  return normalizeUnique(candidates);
+};
+
+const buildOllamaDiscoveryUrls = (baseUrl: string): string[] => {
+  const baseCandidates = buildOllamaBaseCandidates(baseUrl);
+  const urls: string[] = [];
+  baseCandidates.forEach((candidate: string): void => {
+    const normalized = candidate.replace(/\/+$/, '');
+    urls.push(`${normalized}/api/tags`);
+    urls.push(`${normalized}/v1/models`);
+    if (normalized.toLowerCase().endsWith('/v1')) {
+      const withoutV1 = normalized.replace(/\/v1$/i, '');
+      urls.push(`${withoutV1}/api/tags`);
+      urls.push(`${withoutV1}/v1/models`);
+    }
+  });
+  return normalizeUnique(urls);
+};
+
+const parseDiscoveredModelIds = (payload: unknown): string[] => {
+  if (!payload || typeof payload !== 'object') return [];
+  const record = payload as Record<string, unknown>;
+
+  const ollamaModels = Array.isArray(record['models'])
+    ? (record['models'] as Array<Record<string, unknown>>)
+    : [];
+  const fromOllamaTags = ollamaModels.map((model): string => {
+    const name = typeof model?.['name'] === 'string' ? model['name'] : '';
+    const modelId = typeof model?.['model'] === 'string' ? model['model'] : '';
+    return (name || modelId).trim();
+  });
+
+  const openAiCompatibleModels = Array.isArray(record['data'])
+    ? (record['data'] as Array<Record<string, unknown>>)
+    : [];
+  const fromOpenAiCompatible = openAiCompatibleModels.map((model): string => {
+    const id = typeof model?.['id'] === 'string' ? model['id'] : '';
+    return id.trim();
+  });
+
+  return normalizeUnique([...fromOllamaTags, ...fromOpenAiCompatible]);
+};
+
+const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OLLAMA_MODELS_TIMEOUT_MS);
   try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+    const response = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
     });
     if (!response.ok) return null;
-    const payload = (await response.json()) as {
-      models?: Array<{ name?: string | null }>;
-    };
-    return normalizeUnique(
-      (payload.models ?? [])
-        .map((model: { name?: string | null }): string =>
-          typeof model.name === 'string' ? model.name : ''
-        )
-        .filter(Boolean)
-    );
+    const payload = (await response.json()) as unknown;
+    return parseDiscoveredModelIds(payload);
   } catch {
     return null;
   } finally {
     clearTimeout(timeoutId);
   }
+};
+
+const fetchLiveOllamaModels = async (): Promise<string[] | null> => {
+  const discoveryUrls = buildOllamaDiscoveryUrls(OLLAMA_BASE_URL);
+  for (const url of discoveryUrls) {
+    const discovered = await fetchModelsFromUrl(url);
+    if (discovered !== null) return discovered;
+  }
+  return null;
 };
 
 const classifyBrainModelFamily = (modelId: string): BrainModelFamily => {
@@ -167,7 +240,10 @@ export const listBrainModels = async (
     liveOllamaModels === null
       ? {
         code: 'OLLAMA_UNAVAILABLE',
-        message: 'Live Ollama discovery failed. Showing Brain-configured model catalog only.',
+        message:
+          `Live Ollama discovery failed for ${OLLAMA_BASE_URL}. ` +
+          'Showing Brain-configured model catalog only. ' +
+          'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
       }
       : undefined;
 

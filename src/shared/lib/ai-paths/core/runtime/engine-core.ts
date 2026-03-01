@@ -509,13 +509,13 @@ export async function evaluateGraphInternal(
           if (cacheScope === 'run') {
             cacheScopeFingerprint = { runId: resolvedRunId };
           } else if (cacheScope === 'session' || cacheScope === 'activation') {
-             // Bind session/activation scope to the primary entity context
-             const entityId =
+            // Bind session/activation scope to the primary entity context
+            const entityId =
               pickString(triggerContext?.['entityId']) ??
               pickString(triggerContext?.['productId']);
-             if (entityId) {
-               cacheScopeFingerprint = { entityId };
-             }
+            if (entityId) {
+              cacheScopeFingerprint = { entityId };
+            }
           }
 
           const nodeHash =
@@ -556,12 +556,12 @@ export async function evaluateGraphInternal(
 
             // Guardrail: Reject status-only cache if node expects outputs
             if (validCacheHit && cacheSource) {
-               const hasData = Object.keys(cacheSource).some(k => k !== 'status' && k !== 'context');
-               const expectsData = (node.outputs ?? []).length > 0;
-               if (!hasData && expectsData) {
-                 validCacheHit = false;
-                 cacheSource = null;
-               }
+              const hasData = Object.keys(cacheSource).some(k => k !== 'status' && k !== 'context');
+              const expectsData = (node.outputs ?? []).length > 0;
+              if (!hasData && expectsData) {
+                validCacheHit = false;
+                cacheSource = null;
+              }
             }
           }
 

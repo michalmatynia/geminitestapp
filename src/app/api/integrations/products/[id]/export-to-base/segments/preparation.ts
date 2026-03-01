@@ -40,13 +40,13 @@ export const getProducerRefId = (value: unknown): string => {
   return '';
 };
 
-  const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
-    if (!Array.isArray(value)) return [];
-    return (value as unknown[]).filter(
-      (item): item is BaseFieldMapping =>
-        item !== null && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
-    );
-  };
+const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
+  if (!Array.isArray(value)) return [];
+  return (value as unknown[]).filter(
+    (item): item is BaseFieldMapping =>
+      item !== null && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
+  );
+};
 export const parseMappedParameterId = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
@@ -62,45 +62,45 @@ const remapLegacyParameterSourceMappings = async (args: {
   mappings: BaseFieldMapping[];
 }): Promise<BaseFieldMapping[]> => {
   const { mappings } = args;
-          const parameterMappings = mappings.filter((m) =>
-            String(m['sourceKey'] || '').startsWith('parameter:')
-          );
-          if (parameterMappings.length === 0) return mappings;      try {
-        const parameterRepository = await getParameterRepository();
-        const allParameters = await parameterRepository.listParameters({});
-        const paramsById = new Map<string, (typeof allParameters)[0]>();
-        allParameters.forEach((p) => {
-          paramsById.set(p.id, p);
-          paramsById.set(p.id.toLowerCase(), p);
-        });
+  const parameterMappings = mappings.filter((m) =>
+    String(m['sourceKey'] || '').startsWith('parameter:')
+  );
+  if (parameterMappings.length === 0) return mappings;      try {
+    const parameterRepository = await getParameterRepository();
+    const allParameters = await parameterRepository.listParameters({});
+    const paramsById = new Map<string, (typeof allParameters)[0]>();
+    allParameters.forEach((p) => {
+      paramsById.set(p.id, p);
+      paramsById.set(p.id.toLowerCase(), p);
+    });
   
-        return mappings.map((mapping) => {
-          const sourceKey = String(mapping['sourceKey'] || '');
-          if (!sourceKey.startsWith('parameter:')) return mapping;
+    return mappings.map((mapping) => {
+      const sourceKey = String(mapping['sourceKey'] || '');
+      if (!sourceKey.startsWith('parameter:')) return mapping;
   
-          const fullValue = sourceKey.replace(/^parameter:/, '');
-          const parts = fullValue.split('|');
-          const parameterId = parts[0]!;
-          const langSuffix = parts[1];
+      const fullValue = sourceKey.replace(/^parameter:/, '');
+      const parts = fullValue.split('|');
+      const parameterId = parts[0]!;
+      const langSuffix = parts[1];
   
-          const parameter = paramsById.get(parameterId) || paramsById.get(parameterId.toLowerCase());
+      const parameter = paramsById.get(parameterId) || paramsById.get(parameterId.toLowerCase());
   
-          if (parameter) {
-            let parameterName = parameter.name_en;
-            if (langSuffix === 'pl' && parameter.name_pl) {
-              parameterName = parameter.name_pl;
-            } else if (langSuffix === 'de' && parameter.name_de) {
-              parameterName = parameter.name_de;
-            }
+      if (parameter) {
+        let parameterName = parameter.name_en;
+        if (langSuffix === 'pl' && parameter.name_pl) {
+          parameterName = parameter.name_pl;
+        } else if (langSuffix === 'de' && parameter.name_de) {
+          parameterName = parameter.name_de;
+        }
   
-            const suffix = langSuffix ? `|${langSuffix}` : '';
-            return {
-              ...mapping,
-              sourceKey: `text_fields.features${suffix}.${parameterName}`,
-            };
-          }
-          return mapping;
-        });  } catch (error) {
+        const suffix = langSuffix ? `|${langSuffix}` : '';
+        return {
+          ...mapping,
+          sourceKey: `text_fields.features${suffix}.${parameterName}`,
+        };
+      }
+      return mapping;
+    });  } catch (error) {
     await ErrorSystem.logWarning('[export-to-base] Failed to remap legacy parameter mappings', {
       productId: args.productId,
       error: error instanceof Error ? error.message : String(error),

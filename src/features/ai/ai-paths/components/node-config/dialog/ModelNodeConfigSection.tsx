@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { Button, Card, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const BRAIN_DEFAULT_MODEL_OPTION_VALUE = '__brain_default_model__';
 
 export function ModelNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, nodes, edges, updateSelectedNodeConfig } = useAiPathConfig();
@@ -26,10 +28,18 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     [selectedNode?.config?.model, selectedNode?.inputs]
   );
 
-  if (selectedNode?.type !== 'model') return null;
+  const isModelNode = selectedNode?.type === 'model';
+
+  useEffect((): void => {
+    if (!isModelNode) return;
+    brainModelOptions.refresh();
+  }, [brainModelOptions.refresh, isModelNode, selectedNode?.id]);
+
+  if (!isModelNode) return null;
 
   const effectiveModelId = brainModelOptions.effectiveModelId.trim();
   const selectedModelId = modelConfig.modelId?.trim() || '';
+  const selectedModelValue = selectedModelId || BRAIN_DEFAULT_MODEL_OPTION_VALUE;
   const routingMisconfigured =
     !brainModelOptions.assignment.enabled ||
     brainModelOptions.assignment.provider !== 'model' ||
@@ -40,7 +50,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     !knownModels.some((modelId: string): boolean => modelId === selectedModelId);
   const modelOptions = [
     {
-      value: '',
+      value: BRAIN_DEFAULT_MODEL_OPTION_VALUE,
       label: `Use Brain default (${effectiveModelId || 'Not configured'})`,
     },
     ...knownModels.map((modelId: string) => ({
@@ -87,13 +97,28 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
       <FormField
         label='Model'
         description='Brain provides the model catalog and execution engine. This node chooses its runtime model and AI parameters.'
+        actions={
+          <Button
+            type='button'
+            variant='outline'
+            size='xs'
+            onClick={(): void => {
+              brainModelOptions.refresh();
+            }}
+            disabled={brainModelOptions.isLoading}
+          >
+            Refresh
+          </Button>
+        }
       >
         <SelectSimple
           size='sm'
           variant='subtle'
-          value={selectedModelId}
+          value={selectedModelValue}
           onValueChange={(value: string): void => {
-            updateModelConfig({ modelId: value.trim() });
+            updateModelConfig({
+              modelId: value === BRAIN_DEFAULT_MODEL_OPTION_VALUE ? '' : value.trim(),
+            });
           }}
           options={modelOptions}
           placeholder='Select a model'

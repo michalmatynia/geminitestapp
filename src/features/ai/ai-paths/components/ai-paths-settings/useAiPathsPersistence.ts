@@ -281,43 +281,6 @@ export function useAiPathsPersistence(
           void prefs.persistActivePathPreference(resolvedActivePathId);
         }
 
-        const remainingConfigKeys = loadedPaths
-          .filter((path) => path.id !== resolvedActivePathId)
-          .map((path) => `${PATH_CONFIG_PREFIX}${path.id}`);
-        if (remainingConfigKeys.length > 0) {
-          const prefetchRemainingConfigs = async (): Promise<void> => {
-            const prefetchStartedAt = Date.now();
-            try {
-              await fetchAiPathsSettingsByKeysCached(remainingConfigKeys, { timeoutMs: 12_000 });
-              const prefetchDurationMs = Date.now() - prefetchStartedAt;
-              if (prefetchDurationMs >= 200) {
-                console.info('[ai-paths-load] prefetched non-active path configs', {
-                  durationMs: prefetchDurationMs,
-                  pathConfigs: remainingConfigKeys.length,
-                });
-              }
-            } catch (error) {
-              logClientError(error, {
-                context: {
-                  source: 'useAiPathsPersistence',
-                  action: 'prefetchPathConfigs',
-                  level: 'warn',
-                  pathConfigs: remainingConfigKeys.length,
-                },
-              });
-            }
-          };
-          if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-            window.requestIdleCallback(() => {
-              void prefetchRemainingConfigs();
-            });
-          } else {
-            setTimeout(() => {
-              void prefetchRemainingConfigs();
-            }, 150);
-          }
-        }
-
         const totalDurationMs = Date.now() - loadStartedAt;
         if (totalDurationMs >= 300) {
           console.info('[ai-paths-load] hydrated active canvas path', {

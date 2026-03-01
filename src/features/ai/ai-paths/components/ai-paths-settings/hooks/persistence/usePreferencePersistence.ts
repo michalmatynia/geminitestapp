@@ -68,18 +68,18 @@ export function usePreferencePersistence(
 
   const resolveUserPreferences = useCallback(
     (settings: AiPathsSettingRecord[]): AiPathsUserPreferences | null => {
-    try {
-      const prefsItem = settings.find((s) => s.key === 'user_preferences');
-      if (!prefsItem?.value) return null;
-      const parsed = JSON.parse(prefsItem.value) as AiPathsUserPreferences;
-      const updatedAt = parsed.updatedAt ? Date.parse(parsed.updatedAt) : 0;
-      if (Date.now() - updatedAt > USER_PREFERENCES_STALE_MS) {
+      try {
+        const prefsItem = settings.find((s) => s.key === 'user_preferences');
+        if (!prefsItem?.value) return null;
+        const parsed = JSON.parse(prefsItem.value) as AiPathsUserPreferences;
+        const updatedAt = parsed.updatedAt ? Date.parse(parsed.updatedAt) : 0;
+        if (Date.now() - updatedAt > USER_PREFERENCES_STALE_MS) {
+          return null;
+        }
+        return parsed;
+      } catch {
         return null;
       }
-      return parsed;
-    } catch {
-      return null;
-    }
     },
     []
   );

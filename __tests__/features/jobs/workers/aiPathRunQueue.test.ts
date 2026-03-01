@@ -284,7 +284,7 @@ describe('AI Path Run Queue Worker', () => {
     it('throws service unavailable when worker is not running', async () => {
       getBrainAssignmentForFeatureMock.mockResolvedValueOnce({ enabled: false });
       await expect(assertAiPathRunQueueReady()).rejects.toThrow(
-        'AI Paths queue worker is unavailable'
+        'AI Paths execution is disabled in Brain settings'
       );
     });
   });

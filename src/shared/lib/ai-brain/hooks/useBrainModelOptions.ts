@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   getBrainCapabilityModelFamilies,
@@ -51,20 +51,40 @@ export function useBrainModelOptions({
   const targetFamilies = capability ? getBrainCapabilityModelFamilies(capability) : null;
 
   const models = useMemo((): string[] => {
-    const discovered = Array.isArray(modelsQuery.data?.models)
-      ? (modelsQuery.data?.models ?? []).filter((modelId) => {
-        if (!targetFamilies) return true;
-        const descriptor = modelsQuery.data?.descriptors?.[modelId];
-        return Boolean(descriptor?.family && targetFamilies.includes(descriptor.family));
-      })
-      : [];
-    return normalizeUnique([...discovered, ...(effectiveModelId ? [effectiveModelId] : [])]);
-  }, [effectiveModelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamilies]);
+    const discovered = Array.isArray(modelsQuery.data?.models) ? modelsQuery.data.models : [];
+    const sourceCatalogModels = [
+      ...(modelsQuery.data?.sources?.modelPresets ?? []),
+      ...(modelsQuery.data?.sources?.paidModels ?? []),
+      ...(modelsQuery.data?.sources?.configuredOllamaModels ?? []),
+      ...(modelsQuery.data?.sources?.liveOllamaModels ?? []),
+    ];
+    const candidates = normalizeUnique([...discovered, ...sourceCatalogModels]);
+    const compatible = candidates.filter((modelId: string): boolean => {
+      if (!targetFamilies) return true;
+      const descriptor = modelsQuery.data?.descriptors?.[modelId];
+      if (!descriptor?.family) {
+        // Preserve model discoverability when the catalog cannot classify a model yet.
+        return true;
+      }
+      return targetFamilies.includes(descriptor.family);
+    });
+    return normalizeUnique([...compatible, ...(effectiveModelId ? [effectiveModelId] : [])]);
+  }, [
+    effectiveModelId,
+    modelsQuery.data?.descriptors,
+    modelsQuery.data?.models,
+    modelsQuery.data?.sources,
+    targetFamilies,
+  ]);
 
   const sourceWarnings = useMemo((): string[] => {
     const message = modelsQuery.data?.warning?.message?.trim() ?? '';
     return message ? [message] : [];
   }, [modelsQuery.data?.warning?.message]);
+
+  const refresh = useCallback((): void => {
+    void modelsQuery.refetch();
+  }, [modelsQuery.refetch]);
 
   return {
     models,
@@ -72,8 +92,6 @@ export function useBrainModelOptions({
     assignment,
     effectiveModelId,
     sourceWarnings,
-    refresh: (): void => {
-      void modelsQuery.refetch();
-    },
+    refresh,
   };
 }

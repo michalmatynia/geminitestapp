@@ -7,10 +7,13 @@ import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import { useTagMappings, useExternalTags } from '@/features/integrations/hooks/useMarketplaceQueries';
+import {
+  useTagMappings,
+  useExternalTags,
+} from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useTags } from '@/features/products/hooks/useProductMetadataQueries';
+import { type TagMapping, type ExternalTag } from '@/shared/contracts/integrations';
 import { type ProductTag } from '@/shared/contracts/products';
-import { type TagMapping } from '@/shared/contracts/integrations';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseTagMapper(): React.JSX.Element {
@@ -23,7 +26,7 @@ export function BaseTagMapper(): React.JSX.Element {
   const fetchMutation = useFetchExternalTagsMutation();
   const saveMutation = useSaveTagMappingsMutation();
 
-  const config: GenericItemMapperConfig<ProductTag, any, TagMapping> = useMemo(
+  const config: GenericItemMapperConfig<ProductTag, ExternalTag, TagMapping> = useMemo(
     () => ({
       connectionId,
       connectionName,
@@ -31,8 +34,8 @@ export function BaseTagMapper(): React.JSX.Element {
       internalColumnHeader: 'Local Tag',
       externalColumnHeader: 'Marketplace Tag',
       internalItems: tagsQuery.data ?? [],
-      externalItems: externalTagsQuery.data ?? [],
-      currentMappings: (mappingsQuery.data ?? []) as unknown as TagMapping[],
+      externalItems: (externalTagsQuery.data ?? []),
+      currentMappings: mappingsQuery.data ?? [],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),

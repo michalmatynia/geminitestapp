@@ -7,10 +7,13 @@ import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import { useProducerMappings, useExternalProducers } from '@/features/integrations/hooks/useMarketplaceQueries';
+import {
+  useProducerMappings,
+  useExternalProducers,
+} from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
+import { type ProducerMapping, type ExternalProducer } from '@/shared/contracts/integrations';
 import { type Producer } from '@/shared/contracts/products';
-import { type ProducerMapping } from '@/shared/contracts/integrations';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseProducerMapper(): React.JSX.Element {
@@ -23,7 +26,7 @@ export function BaseProducerMapper(): React.JSX.Element {
   const fetchMutation = useFetchExternalProducersMutation();
   const saveMutation = useSaveProducerMappingsMutation();
 
-  const config: GenericItemMapperConfig<Producer, any, ProducerMapping> = useMemo(
+  const config: GenericItemMapperConfig<Producer, ExternalProducer, ProducerMapping> = useMemo(
     () => ({
       connectionId,
       connectionName,
@@ -31,8 +34,8 @@ export function BaseProducerMapper(): React.JSX.Element {
       internalColumnHeader: 'Local Producer',
       externalColumnHeader: 'Marketplace Producer',
       internalItems: producersQuery.data ?? [],
-      externalItems: externalProducersQuery.data ?? [],
-      currentMappings: (mappingsQuery.data ?? []) as unknown as ProducerMapping[],
+      externalItems: (externalProducersQuery.data ?? []),
+      currentMappings: mappingsQuery.data ?? [],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),

@@ -59,6 +59,32 @@ const debugQueueWarn = (message: string, context?: Record<string, unknown>): voi
   });
 };
 
+const isQueueTransportError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code;
+  if (typeof code === 'string') {
+    const normalized = code.toUpperCase();
+    if (
+      normalized === 'ECONNREFUSED' ||
+      normalized === 'ECONNRESET' ||
+      normalized === 'ETIMEDOUT' ||
+      normalized === 'EPIPE'
+    ) {
+      return true;
+    }
+  }
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('econnrefused') ||
+    message.includes('econnreset') ||
+    message.includes('timeout') ||
+    message.includes('socket') ||
+    message.includes('connection is closed') ||
+    message.includes('read only') ||
+    message.includes('not connected')
+  );
+};
+
 type AiPathRunJobData = {
   runId: string;
   type?: 'run' | 'recovery';
@@ -676,10 +702,31 @@ const waitForQueueReconciliation = async (): Promise<void> => {
 };
 
 export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus> => {
+  const aiPathsEnabled = await isAiPathsEnabled().catch(() => false);
+  if (!aiPathsEnabled) {
+    throw serviceUnavailableError(
+      'AI Paths execution is disabled in Brain settings. Enable AI Paths and retry.',
+      QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+      { feature: 'ai_paths' }
+    );
+  }
+
   startAiPathRunQueue();
   await waitForQueueReconciliation();
   const status = await getAiPathRunQueueStatus({ bypassCache: true });
   if (status.running) return status;
+
+  if (!REQUIRE_DURABLE_QUEUE) {
+    debugQueueWarn(
+      '[aiPathRunQueue] Worker not running, but durable queue is not required; allowing local fallback execution.',
+      {
+        queueRunning: status.running,
+        queueHealthy: status.healthy,
+        queuedCount: status.queuedCount,
+      }
+    );
+    return status;
+  }
 
   throw serviceUnavailableError(
     'AI Paths queue worker is unavailable. Please retry in a few seconds.',
@@ -854,6 +901,16 @@ export const enqueuePathRunJob = async (
         ...(delayMs > 0 ? { delay: delayMs } : {}),
       }
     );
+  } catch (error) {
+    if (!REQUIRE_DURABLE_QUEUE && isQueueTransportError(error)) {
+      debugQueueWarn(
+        `[aiPathRunQueue] Queue transport error; scheduling local fallback execution for run ${runId}.`,
+        { runId, delayMs, error: error instanceof Error ? error.message : String(error) }
+      );
+      scheduleLocalFallbackRun(runId, delayMs);
+      return;
+    }
+    throw error;
   } finally {
     if (owned) {
       await bullQueue.close();

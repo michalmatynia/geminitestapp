@@ -19,6 +19,53 @@ import type {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
+type ExportTemplateProvider = 'mongodb' | 'prisma';
+
+type SettingDoc = {
+  _id?: string | _ObjectId;
+  key?: string;
+  value?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+const LOG_SOURCE = 'export-template-repository';
+
+const toMongoId = (value: string): string | _ObjectId =>
+  _ObjectId.isValid(value) ? new _ObjectId(value) : value;
+
+const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
+  const provider = await _getProductDataProvider();
+  await logSystemEvent({
+    level: 'info',
+    source: LOG_SOURCE,
+    message: `Provider: ${provider}`,
+    context: { provider },
+  });
+  return provider as ExportTemplateProvider;
+};
+
+const logGuardFailure = async (
+  message: string,
+  error: unknown,
+  context: Record<string, unknown>
+): Promise<void> => {
+  try {
+    await logSystemEvent({
+      level: 'error',
+      source: LOG_SOURCE,
+      message,
+      error,
+      context: {
+        ...context,
+        guard: true,
+      },
+    });
+  } catch {
+    // keep guard path non-throwing
+  }
+};
+
 const SETTINGS_KEY = 'base_export_templates';
 const ACTIVE_TEMPLATE_KEY = 'base_export_active_template_id';
 const DEFAULT_INVENTORY_KEY = 'base_export_default_inventory_id';
@@ -514,14 +561,28 @@ export const deleteExportTemplate = async (id: string): Promise<boolean> => {
 export const getExportActiveTemplateId = async (
   scope?: ActiveTemplateScopeInput
 ): Promise<string | null> => {
-  const value = await readActiveTemplateValue();
-  const map = parseActiveTemplateMap(value);
-  const scopeKey = buildActiveTemplateScopeKey(scope);
-  if (scopeKey) {
-    const scopedTemplateId = map.byScope[scopeKey];
-    if (scopedTemplateId) return scopedTemplateId;
+  try {
+    const value = await readActiveTemplateValue();
+    const map = parseActiveTemplateMap(value);
+    const scopeKey = buildActiveTemplateScopeKey(scope);
+    if (scopeKey) {
+      const scopedTemplateId = map.byScope[scopeKey];
+      if (scopedTemplateId) return scopedTemplateId;
+    }
+    return map.defaultTemplateId ?? null;
+  } catch (error) {
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read active export template, returning null',
+      error,
+      {
+        action: 'getExportActiveTemplateId',
+        connectionId: scope?.connectionId ?? null,
+        inventoryId: scope?.inventoryId ?? null,
+        fallbackValue: null,
+      }
+    );
+    return null;
   }
-  return map.defaultTemplateId ?? null;
 };
 
 export const setExportActiveTemplateId = async (
@@ -544,8 +605,20 @@ export const setExportActiveTemplateId = async (
 };
 
 export const getExportDefaultInventoryId = async (): Promise<string | null> => {
-  const value = await readDefaultInventoryValue();
-  return value ? value : null;
+  try {
+    const value = await readDefaultInventoryValue();
+    return value ? value : null;
+  } catch (error) {
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read default export inventory, returning null',
+      error,
+      {
+        action: 'getExportDefaultInventoryId',
+        fallbackValue: null,
+      }
+    );
+    return null;
+  }
 };
 
 export const setExportDefaultInventoryId = async (value: string | null): Promise<void> => {
@@ -553,8 +626,20 @@ export const setExportDefaultInventoryId = async (value: string | null): Promise
 };
 
 export const getExportStockFallbackEnabled = async (): Promise<boolean> => {
-  const value = await readStockFallbackValue();
-  return value?.trim().toLowerCase() === 'true';
+  try {
+    const value = await readStockFallbackValue();
+    return value?.trim().toLowerCase() === 'true';
+  } catch (error) {
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read stock fallback flag, using disabled fallback',
+      error,
+      {
+        action: 'getExportStockFallbackEnabled',
+        fallbackValue: false,
+      }
+    );
+    return false;
+  }
 };
 
 export const setExportStockFallbackEnabled = async (enabled: boolean): Promise<void> => {
@@ -562,8 +647,20 @@ export const setExportStockFallbackEnabled = async (enabled: boolean): Promise<v
 };
 
 export const getExportDefaultConnectionId = async (): Promise<string | null> => {
-  const value = await readDefaultConnectionValue();
-  return value ? value : null;
+  try {
+    const value = await readDefaultConnectionValue();
+    return value ? value : null;
+  } catch (error) {
+    await logGuardFailure(
+      '[ExportTemplateRepository] Failed to read default export connection, returning null',
+      error,
+      {
+        action: 'getExportDefaultConnectionId',
+        fallbackValue: null,
+      }
+    );
+    return null;
+  }
 };
 
 export const setExportDefaultConnectionId = async (value: string | null): Promise<void> => {

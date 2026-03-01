@@ -7,6 +7,7 @@ import {
   setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   IntegrationRecord as Integration,
   IntegrationConnectionRecord as IntegrationConnection,
@@ -83,7 +84,19 @@ const resolveFallbackBaseConnectionId = async (
  * Returns the default Base.com connection ID for exports
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const storedConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
+  let storedConnectionId: string | null = null;
+  try {
+    storedConnectionId = normalizeOptionalId(await getExportDefaultConnectionId());
+  } catch (error) {
+    void ErrorSystem.logWarning(
+      'Failed to read Base.com default connection setting; returning null.',
+      {
+        service: 'exports.base.default-connection',
+        error: error instanceof Error ? error.message : String(error),
+      }
+    );
+    return NextResponse.json({ connectionId: null });
+  }
   if (!storedConnectionId) {
     return NextResponse.json({ connectionId: null });
   }
@@ -97,7 +110,15 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       await setExportDefaultConnectionId(resolvedConnectionId);
     }
     return NextResponse.json({ connectionId: resolvedConnectionId });
-  } catch {
+  } catch (error) {
+    void ErrorSystem.logWarning(
+      'Failed to resolve Base.com default connection fallback; using stored value.',
+      {
+        service: 'exports.base.default-connection',
+        storedConnectionId,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    );
     // Preserve existing behavior when connection validation fails unexpectedly.
     return NextResponse.json({ connectionId: storedConnectionId });
   }

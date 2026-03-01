@@ -114,4 +114,20 @@ describe('api/integrations/exports/base/default-connection handler', () => {
     expect(payload).toEqual({ connectionId: 'conn-keep' });
     expect(setExportDefaultConnectionIdMock).not.toHaveBeenCalled();
   });
+
+  it('returns null when reading default connection setting throws unexpectedly', async () => {
+    getExportDefaultConnectionIdMock.mockRejectedValue(new Error('settings read failed'));
+
+    const response = await GET_handler(
+      new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
+        method: 'GET',
+      }),
+      mockContext
+    );
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ connectionId: null });
+    expect(listIntegrationsMock).not.toHaveBeenCalled();
+  });
 });

@@ -1,4 +1,13 @@
-import type { AiNode, AiPathsValidationRule, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import type {
+  AiNode,
+  AiPathsValidationRule,
+  PathConfig,
+  PathMeta,
+  CentralDocsSnapshotSource,
+  CentralDocsSnapshotPayload,
+  CentralDocsSnapshotResponse,
+  CandidateChangeKind,
+} from '@/shared/contracts/ai-paths';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
@@ -14,30 +23,12 @@ export type RuleParseResult =
   | { ok: true; value: AiPathsValidationRule[] }
   | { ok: false; error: string };
 
-export type CentralDocsSnapshotSource = {
-  id: string;
-  path: string;
-  type: string;
-  hash: string;
-  assertionCount: number;
-  priority?: number | undefined;
-  tags?: string[] | undefined;
-  snippetNames?: string[] | undefined;
+export type {
+  CentralDocsSnapshotSource,
+  CentralDocsSnapshotPayload,
+  CentralDocsSnapshotResponse,
+  CandidateChangeKind,
 };
-
-export type CentralDocsSnapshotPayload = {
-  generatedAt: string;
-  snapshotHash: string;
-  warnings: string[];
-  sources: CentralDocsSnapshotSource[];
-};
-
-export type CentralDocsSnapshotResponse = {
-  snapshot: CentralDocsSnapshotPayload;
-  inferredCandidates: AiPathsValidationRule[];
-};
-
-export type CandidateChangeKind = 'new' | 'changed' | 'existing';
 
 export const parseJson = (value: string): unknown | null => {
   try {

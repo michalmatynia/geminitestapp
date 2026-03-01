@@ -1,5 +1,6 @@
 import {
   type CaseResolverCategory,
+  type CaseResolverCategoryTreeNode,
   type CaseResolverIdentifier,
   type CaseResolverTag,
 } from '@/shared/contracts/case-resolver';
@@ -290,10 +291,6 @@ export const normalizeCaseResolverCategories = (input: unknown): CaseResolverCat
 
   visit(null);
   return output;
-};
-
-export type CaseResolverCategoryTreeNode = CaseResolverCategory & {
-  children: CaseResolverCategoryTreeNode[];
 };
 
 export const buildCaseResolverCategoryTree = (

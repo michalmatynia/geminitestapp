@@ -1,27 +1,13 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { VectorShape } from '@/shared/ui';
+import type {
+  VectorOverlayResult,
+  VectorOverlayRequest,
+  VectorOverlayValue,
+} from '@/shared/contracts/vector';
 
-export interface VectorOverlayResult {
-  shapes: VectorShape[];
-  path: string;
-  points: Array<{ shapeId: string; points: VectorShape['points'] }>;
-}
-
-export interface VectorOverlayRequest {
-  title: string;
-  description?: string;
-  initialShapes?: VectorShape[];
-  onApply: (result: VectorOverlayResult) => void;
-  onCancel?: () => void;
-}
-
-export interface VectorOverlayValue {
-  vectorOverlay: VectorOverlayRequest | null;
-  openVectorOverlay: (request: VectorOverlayRequest) => void;
-  closeVectorOverlay: () => void;
-}
+export type { VectorOverlayResult, VectorOverlayRequest, VectorOverlayValue };
 
 export const VectorOverlayContext = createContext<VectorOverlayValue | undefined>(undefined);
 

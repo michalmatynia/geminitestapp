@@ -6,26 +6,13 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+import {
+  type ImageStudioRunStatus,
+  type ImageStudioRunRecord,
+  type ImageStudioRunsResponse as RunsResponse,
+} from '@/shared/contracts/image-studio';
 
-export type ImageStudioRunRecord = {
-  id: string;
-  projectId: string;
-  status: ImageStudioRunStatus;
-  dispatchMode: 'queued' | 'inline' | null;
-  expectedOutputs: number;
-  outputs: Array<{ id: string; filepath: string }>;
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-};
-
-type RunsResponse = {
-  runs: ImageStudioRunRecord[];
-  total: number;
-};
+export type { ImageStudioRunStatus, ImageStudioRunRecord };
 
 export function useImageStudioRuns() {
   const [statusFilter, setStatusFilter] = useState<'all' | ImageStudioRunStatus>('all');

@@ -197,3 +197,11 @@ export const productBulkImagesBase64RequestSchema = z.object({
 export type ProductBulkImagesBase64RequestDto = z.infer<
   typeof productBulkImagesBase64RequestSchema
 >;
+
+/**
+ * Product API Paged Result
+ */
+export type ProductsPagedResult = {
+  products: ProductWithImages[];
+  total: number;
+};

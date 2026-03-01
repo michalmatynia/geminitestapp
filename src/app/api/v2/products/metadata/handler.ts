@@ -183,7 +183,7 @@ const resolveUniqueGroupId = async (payload: Record<string, unknown>): Promise<s
 
   let candidate = baseGroupId;
   let sequence = 2;
-  while (true) {
+  while (sequence < 1000) {
     const existing = await prisma.priceGroup.findUnique({
       where: { groupId: candidate },
       select: { id: true },
@@ -192,6 +192,7 @@ const resolveUniqueGroupId = async (payload: Record<string, unknown>): Promise<s
     candidate = `${baseGroupId}_${sequence}`;
     sequence += 1;
   }
+  return `${baseGroupId}_${randomUUID()}`;
 };
 
 export async function GET_products_metadata_handler(
@@ -292,6 +293,11 @@ export async function POST_products_metadata_handler(
       const sourceGroupId = readString(payload, 'sourceGroupId');
       const typeValue = readString(payload, 'type') ?? readString(payload, 'groupType');
       const groupType = resolveGroupType(typeValue, sourceGroupId);
+
+      if (groupType === 'dependent' && !sourceGroupId) {
+        throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
+      }
+
       const explicitGroupId = readString(payload, 'groupId');
       const fallbackFromName = readString(payload, 'name');
       const fallbackFromCurrency = currencyCodeFromPayload ?? readString(payload, 'currencyCode');
@@ -301,7 +307,7 @@ export async function POST_products_metadata_handler(
 
       let groupId = baseGroupId;
       let sequence = 2;
-      while (true) {
+      while (sequence < 1000) {
         const existing = await mongo
           .collection<MongoPriceGroupDoc>('price_groups')
           .findOne({ groupId });
@@ -340,6 +346,11 @@ export async function POST_products_metadata_handler(
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type') ?? readString(payload, 'groupType');
     const groupType = resolveGroupType(typeValue, sourceGroupId);
+
+    if (groupType === 'dependent' && !sourceGroupId) {
+      throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
+    }
+
     const groupId = await resolveUniqueGroupId(payload);
     const name = readString(payload, 'name') ?? groupId;
 

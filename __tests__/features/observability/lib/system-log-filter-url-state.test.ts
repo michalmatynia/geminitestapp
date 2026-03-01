@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { SYSTEM_LOG_FILTER_DEFAULTS } from '@/features/observability/lib/log-triage-presets';
+import { SYSTEM_LOG_FILTER_DEFAULTS } from '@/shared/lib/observability/log-triage-presets';
 import {
   readSystemLogUrlState,
   writeSystemLogUrlState,

@@ -84,11 +84,11 @@ interface ColumnActionsProps {
 
 const ActionsCell: React.FC<ColumnActionsProps> = ({ row }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
-  const { onProductEditClick, onProductDeleteClick, onDuplicateProduct } =
+  const { onProductEditClick, onProductDeleteClick, onDuplicateProduct, onPrefetchProductDetail } =
     useProductListActionsContext();
 
   return (
-    <div className='flex justify-end'>
+    <div className='flex justify-end' onMouseEnter={() => onPrefetchProductDetail(product.id)}>
       <ActionMenu ariaLabel='Open row actions'>
         <DropdownMenuItem
           onSelect={(event: Event): void => {

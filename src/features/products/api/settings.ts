@@ -3,6 +3,9 @@ import type {
   ProductValidationPattern,
   ProductValidatorConfig,
   ProductValidatorSettings,
+  CreateProductValidationPatternDto as CreateValidationPatternPayload,
+  UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
+  ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products';
 import type {
   ProductValidatorImportRequest,
@@ -20,6 +23,7 @@ import {
   ProductCategoryWithChildren,
   ProductTag,
   ProductParameter,
+  ReorderProductCategoryDto as ReorderCategoryPayload,
 } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 
@@ -109,14 +113,6 @@ export async function updateCategory(
   return api.put<ProductCategory>(`/api/products/categories/${id}`, data);
 }
 
-export type ReorderCategoryPayload = {
-  categoryId: string;
-  parentId: string | null;
-  position: 'inside' | 'before' | 'after';
-  targetId?: string | null;
-  catalogId?: string;
-};
-
 export async function reorderCategory(payload: ReorderCategoryPayload): Promise<ProductCategory> {
   return api.post<ProductCategory>('/api/products/categories/reorder', payload);
 }
@@ -179,28 +175,11 @@ export async function getValidationPatterns(): Promise<ProductValidationPattern[
   return api.get<ProductValidationPattern[]>('/api/products/validator-patterns');
 }
 
-export type CreateValidationPatternPayload = Pick<
-  ProductValidationPattern,
-  'label' | 'target' | 'regex' | 'message'
-> &
-  Partial<
-    Omit<
-      ProductValidationPattern,
-      'id' | 'createdAt' | 'updatedAt' | 'label' | 'target' | 'regex' | 'message'
-    >
-  >;
-
 export async function createValidationPattern(
   data: CreateValidationPatternPayload
 ): Promise<ProductValidationPattern> {
   return api.post<ProductValidationPattern>('/api/products/validator-patterns', data);
 }
-
-export type UpdateValidationPatternPayload = Partial<
-  Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>
-> & {
-  expectedUpdatedAt?: string | null;
-};
 
 export async function updateValidationPattern(
   id: string,
@@ -212,15 +191,6 @@ export async function updateValidationPattern(
 export async function deleteValidationPattern(id: string): Promise<void> {
   return api.delete(`/api/products/validator-patterns/${id}`);
 }
-
-export type ReorderValidationPatternUpdatePayload = {
-  id: string;
-  sequence?: number;
-  sequenceGroupId?: string | null;
-  sequenceGroupLabel?: string | null;
-  sequenceGroupDebounceMs?: number;
-  expectedUpdatedAt?: string | null;
-};
 
 export async function reorderValidationPatterns(payload: {
   updates: ReorderValidationPatternUpdatePayload[];

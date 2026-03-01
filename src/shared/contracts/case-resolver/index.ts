@@ -123,6 +123,10 @@ export interface CaseResolverCategory extends DtoBase {
   updatedAt: string;
 }
 
+export type CaseResolverCategoryTreeNode = CaseResolverCategory & {
+  children: CaseResolverCategoryTreeNode[];
+};
+
 /**
  * Case Resolver Scan Slots
  */
@@ -159,6 +163,67 @@ export interface CaseResolverScanSlot {
 /**
  * Case Resolver OCR DTOs
  */
+export const caseResolverOcrJobStatusSchema = z.enum(['queued', 'running', 'completed', 'failed']);
+export type CaseResolverOcrJobStatus = z.infer<typeof caseResolverOcrJobStatusSchema>;
+
+export const caseResolverOcrJobDispatchModeSchema = z.enum(['queued', 'inline']);
+export type CaseResolverOcrJobDispatchMode = z.infer<typeof caseResolverOcrJobDispatchModeSchema>;
+
+export const caseResolverOcrErrorCategorySchema = z.enum([
+  'timeout',
+  'rate_limit',
+  'network',
+  'provider',
+  'validation',
+  'unknown',
+]);
+export type CaseResolverOcrErrorCategory = z.infer<typeof caseResolverOcrErrorCategorySchema>;
+
+export const caseResolverOcrJobRecordSchema = z.object({
+  id: z.string(),
+  status: caseResolverOcrJobStatusSchema,
+  filepath: z.string(),
+  model: z.string().nullable(),
+  prompt: z.string().nullable(),
+  retryOfJobId: z.string().nullable(),
+  correlationId: z.string().nullable(),
+  dispatchMode: caseResolverOcrJobDispatchModeSchema.nullable(),
+  attemptsMade: z.number(),
+  maxAttempts: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  resultText: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  errorCategory: caseResolverOcrErrorCategorySchema.nullable(),
+  retryableError: z.boolean().nullable(),
+});
+
+export type CaseResolverOcrJobRecord = z.infer<typeof caseResolverOcrJobRecordSchema>;
+
+export type CaseResolverOcrFileKind = 'image' | 'pdf';
+
+export type CaseResolverOcrPercentileSnapshot = {
+  count: number;
+  p50Ms: number;
+  p95Ms: number;
+  maxMs: number;
+};
+
+export type CaseResolverOcrObservabilitySnapshot = {
+  generatedAt: string;
+  sampleSize: number;
+  statuses: Record<CaseResolverOcrJobStatus, number>;
+  successRate: number;
+  retryRate: number;
+  retryableFailureRate: number;
+  failureCategories: Record<CaseResolverOcrErrorCategory, number>;
+  completionLatencyMs: CaseResolverOcrPercentileSnapshot;
+  backlogAgeMs: CaseResolverOcrPercentileSnapshot;
+  distinctCorrelationIds: number;
+};
+
 export const createCaseResolverOcrJobSchema = z.object({
   filepath: z.string().trim().min(1),
   model: z.string().trim().optional(),
@@ -638,6 +703,37 @@ export interface CaseResolverWorkspace extends NamedDto {
   relationGraph: CaseResolverRelationGraph;
   settings?: Record<string, unknown> | undefined;
 }
+
+export type CaseResolverWorkspaceMetadata = {
+  revision: number;
+  lastMutationId: string | null;
+  exists: boolean;
+};
+
+export type PersistCaseResolverWorkspaceSuccess = {
+  ok: true;
+  workspace: CaseResolverWorkspace;
+  idempotent: boolean;
+};
+
+export type PersistCaseResolverWorkspaceConflict = {
+  ok: false;
+  conflict: true;
+  workspace: CaseResolverWorkspace;
+  expectedRevision: number;
+  currentRevision: number;
+};
+
+export type PersistCaseResolverWorkspaceFailure = {
+  ok: false;
+  conflict: false;
+  error: string;
+};
+
+export type PersistCaseResolverWorkspaceResult =
+  | PersistCaseResolverWorkspaceSuccess
+  | PersistCaseResolverWorkspaceConflict
+  | PersistCaseResolverWorkspaceFailure;
 
 /**
  * Case Resolver Context DTOs

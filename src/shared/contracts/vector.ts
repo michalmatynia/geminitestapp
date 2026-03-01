@@ -120,3 +120,26 @@ export interface VectorCanvasState {
   zoom: number;
   pan: { x: number; y: number };
 }
+
+/**
+ * Vector Overlay Contracts
+ */
+export interface VectorOverlayResult {
+  shapes: VectorShape[];
+  path: string;
+  points: Array<{ shapeId: string; points: VectorPoint[] }>;
+}
+
+export interface VectorOverlayRequest {
+  title: string;
+  description?: string;
+  initialShapes?: VectorShape[];
+  onApply: (result: VectorOverlayResult) => void;
+  onCancel?: () => void;
+}
+
+export interface VectorOverlayValue {
+  vectorOverlay: VectorOverlayRequest | null;
+  openVectorOverlay: (request: VectorOverlayRequest) => void;
+  closeVectorOverlay: () => void;
+}

@@ -5,7 +5,7 @@ import {
   SYSTEM_LOG_TRIAGE_PRESETS,
   isSystemLogPresetActive,
   resolveSystemLogPresetFilters,
-} from '@/features/observability/lib/log-triage-presets';
+} from '@/shared/lib/observability/log-triage-presets';
 
 describe('log-triage-presets', () => {
   it('resolves recent-errors preset with a rolling 24-hour date window', () => {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useOfflineQueueStatus, type OfflineQueueItem } from '@/shared/hooks/offline';
+import { useOfflineQueueStatus } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useBackgroundSyncStatus } from '@/shared/providers/BackgroundSyncProvider';
@@ -20,8 +20,8 @@ import {
   MetadataItem,
   PropertyRow,
   Hint,
-  EmptyState,
   Card,
+  SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -238,34 +238,17 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             </Button>
           </div>
 
-          <Card
-            variant='subtle-compact'
+          <SimpleSettingsList
+            items={offlineQueue.items.map((item) => ({
+              id: item.id,
+              title: JSON.stringify(item.queryKey),
+              subtitle: new Date(item.timestamp).toLocaleString(),
+            }))}
+            emptyMessage='No pending synchronization mutations.'
             padding='sm'
-            className='max-h-60 space-y-2 overflow-y-auto border-border bg-muted/10 text-xs text-gray-300'
-          >
-            {offlineQueue.items.length === 0 ? (
-              <EmptyState
-                title='Queue Empty'
-                description='No pending synchronization mutations.'
-                variant='compact'
-                className='py-8'
-              />
-            ) : (
-              offlineQueue.items.map((item: OfflineQueueItem) => (
-                <Card
-                  key={item.id}
-                  variant='subtle-compact'
-                  padding='sm'
-                  className='border-white/10'
-                >
-                  <div className='truncate text-gray-200'>{JSON.stringify(item.queryKey)}</div>
-                  <div className='mt-1 text-[10px] text-gray-500'>
-                    {new Date(item.timestamp).toLocaleString()}
-                  </div>
-                </Card>
-              ))
-            )}
-          </Card>
+            itemClassName='!bg-muted/10 border-white/10'
+            className='max-h-60 overflow-y-auto'
+          />
         </FormSection>
       </div>
     </div>

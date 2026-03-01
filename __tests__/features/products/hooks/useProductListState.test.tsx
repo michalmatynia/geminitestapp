@@ -343,8 +343,8 @@ describe('useProductListState', () => {
     );
 
     const setCalls = mocks.setEditingProduct.mock.calls.map((call: unknown[]) => call[0]);
-    expect(setCalls).not.toContain(productA);
-    expect(setCalls).not.toContain(productB);
+    expect(setCalls).toContain(productA);
+    expect(setCalls).toContain(productB);
 
     const lastArg = mocks.setEditingProduct.mock.calls.at(-1)?.[0] as
       | ProductWithImages

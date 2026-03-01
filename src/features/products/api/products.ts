@@ -1,4 +1,8 @@
-import { ProductWithImages } from '@/shared/contracts/products';
+import {
+  type ProductWithImages,
+  type ProductsPagedResult,
+  type ProductFilterDto,
+} from '@/shared/contracts/products';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
@@ -6,49 +10,13 @@ const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 
 // This function fetches a list of products from the API.
 export async function getProducts(
-  filters: {
-    search?: string | undefined;
-    id?: string | undefined;
-    idMatchMode?: 'exact' | 'partial' | undefined;
-    sku?: string | undefined;
-    description?: string | undefined;
-    categoryId?: string | undefined;
-    minPrice?: number | undefined;
-    maxPrice?: number | undefined;
-    stockValue?: number | undefined;
-    stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-    startDate?: string | undefined;
-    endDate?: string | undefined;
-    advancedFilter?: string | undefined;
-    page?: number | undefined;
-    pageSize?: number | undefined;
-    catalogId?: string | undefined;
-    searchLanguage?: string | undefined;
-    baseExported?: boolean | undefined;
-  },
+  filters: ProductFilterDto,
   signal?: AbortSignal
 ): Promise<ProductWithImages[]> {
   const options: ApiClientOptions = {
     params: {
       fresh: 1,
-      search: filters.search,
-      id: filters.id,
-      idMatchMode: filters.idMatchMode,
-      sku: filters.sku,
-      description: filters.description,
-      categoryId: filters.categoryId,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      stockValue: filters.stockValue,
-      stockOperator: filters.stockOperator,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      advancedFilter: filters.advancedFilter,
-      page: filters.page,
-      pageSize: filters.pageSize,
-      catalogId: filters.catalogId,
-      searchLanguage: filters.searchLanguage,
-      baseExported: filters.baseExported,
+      ...filters,
     },
     cache: 'no-store',
   };
@@ -58,45 +26,13 @@ export async function getProducts(
 }
 
 export async function countProducts(
-  filters: {
-    search?: string | undefined;
-    id?: string | undefined;
-    idMatchMode?: 'exact' | 'partial' | undefined;
-    sku?: string | undefined;
-    description?: string | undefined;
-    categoryId?: string | undefined;
-    minPrice?: number | undefined;
-    maxPrice?: number | undefined;
-    stockValue?: number | undefined;
-    stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-    startDate?: string | undefined;
-    endDate?: string | undefined;
-    advancedFilter?: string | undefined;
-    catalogId?: string | undefined;
-    searchLanguage?: string | undefined;
-    baseExported?: boolean | undefined;
-  },
+  filters: ProductFilterDto,
   signal?: AbortSignal
 ): Promise<number> {
   try {
     const options: ApiClientOptions = {
       params: {
-        search: filters.search,
-        id: filters.id,
-        idMatchMode: filters.idMatchMode,
-        sku: filters.sku,
-        description: filters.description,
-        categoryId: filters.categoryId,
-        minPrice: filters.minPrice,
-        maxPrice: filters.maxPrice,
-        stockValue: filters.stockValue,
-        stockOperator: filters.stockOperator,
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        advancedFilter: filters.advancedFilter,
-        catalogId: filters.catalogId,
-        searchLanguage: filters.searchLanguage,
-        baseExported: filters.baseExported,
+        ...filters,
       },
       cache: 'no-store',
     };
@@ -109,61 +45,18 @@ export async function countProducts(
   }
 }
 
-export type ProductsPagedResult = {
-  products: ProductWithImages[];
-  total: number;
-};
-
-type ProductListFilters = {
-  search?: string | undefined;
-  id?: string | undefined;
-  idMatchMode?: 'exact' | 'partial' | undefined;
-  sku?: string | undefined;
-  description?: string | undefined;
-  categoryId?: string | undefined;
-  minPrice?: number | undefined;
-  maxPrice?: number | undefined;
-  stockValue?: number | undefined;
-  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  advancedFilter?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  catalogId?: string | undefined;
-  searchLanguage?: string | undefined;
-  baseExported?: boolean | undefined;
-};
-
 /**
  * Fetches products + total count in a single request via GET /api/products/paged.
  * Prefer this over calling getProducts() and countProducts() separately.
  */
 export async function getProductsWithCount(
-  filters: ProductListFilters,
+  filters: ProductFilterDto,
   signal?: AbortSignal
 ): Promise<ProductsPagedResult> {
   const options: ApiClientOptions = {
     params: {
       fresh: 1,
-      search: filters.search,
-      id: filters.id,
-      idMatchMode: filters.idMatchMode,
-      sku: filters.sku,
-      description: filters.description,
-      categoryId: filters.categoryId,
-      minPrice: filters.minPrice,
-      maxPrice: filters.maxPrice,
-      stockValue: filters.stockValue,
-      stockOperator: filters.stockOperator,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      advancedFilter: filters.advancedFilter,
-      page: filters.page,
-      pageSize: filters.pageSize,
-      catalogId: filters.catalogId,
-      searchLanguage: filters.searchLanguage,
-      baseExported: filters.baseExported,
+      ...filters,
     },
     cache: 'no-store',
   };

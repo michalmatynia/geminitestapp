@@ -17,6 +17,9 @@ import type {
   CaseResolverSettings,
   CaseResolverAssetKind,
   CaseResolverFileEditDraft,
+  CaseResolverCompiledSegment,
+  CaseResolverCompileResult,
+  CaseResolverDocumentVersion,
 } from '@/shared/contracts/case-resolver';
 
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
@@ -41,40 +44,13 @@ export type {
   CaseResolverScanSlot,
   CaseResolverDocumentDateProposal,
   CaseResolverFileEditDraft,
+  CaseResolverCompiledSegment,
+  CaseResolverCompileResult,
+  CaseResolverDocumentVersion,
 };
 
 import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
 import type { CaseResolverWorkspaceNormalizationDiagnostics } from './settings.workspace';
-
-export type CaseResolverDocumentVersion = 'original' | 'exploded';
-
-export interface CaseResolverCompiledSegment {
-  id: string;
-  nodeId: string | null;
-  role: string;
-  content: string;
-  title?: string;
-  text?: string;
-  includeInOutput?: boolean;
-  sourceFileId?: string | null;
-  metadata?: Record<string, unknown>;
-}
-
-export interface CaseResolverCompileResult {
-  segments: CaseResolverCompiledSegment[];
-  combinedContent: string;
-  prompt: string;
-  outputsByNode: Record<
-    string,
-    {
-      textfield: string;
-      plaintextContent: string;
-      plainText: string;
-      wysiwygContent: string;
-    }
-  >;
-  warnings: string[];
-}
 
 export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
 

@@ -7,7 +7,7 @@ import {
   createEmptyConnectionForm,
   type ConnectionFormState,
 } from '@/features/integrations/context/integrations-context-types';
-import { Button, FormSection } from '@/shared/ui';
+import { FormSection, FormActions } from '@/shared/ui';
 
 import { ConnectionFormFields } from './ConnectionFormFields';
 
@@ -47,26 +47,14 @@ export function ConnectionForm(): React.JSX.Element {
           setForm={setCreateForm}
           mode='create'
         />
-        <Button
-          className='w-full font-semibold'
-          type='button'
-          variant='solid'
-          disabled={isSaving}
-          onClick={() => {
-            void handleCreate();
-          }}
-        >
-          {isSaving ? 'Saving...' : 'Save connection'}
-        </Button>
-        <Button
-          className='w-full font-semibold'
-          type='button'
-          variant='outline'
-          disabled={isSaving}
-          onClick={resetForm}
-        >
-          Clear form
-        </Button>
+        <FormActions
+          onSave={() => void handleCreate()}
+          onCancel={resetForm}
+          saveText='Save connection'
+          cancelText='Clear form'
+          isSaving={isSaving}
+          className='flex-col !gap-2 *:w-full'
+        />
       </div>
     </FormSection>
   );

@@ -922,3 +922,22 @@ export interface RunStudioPayload {
 }
 
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+export type ImageStudioRunRecord = {
+  id: string;
+  projectId: string;
+  status: ImageStudioRunStatus;
+  dispatchMode: 'queued' | 'inline' | null;
+  expectedOutputs: number;
+  outputs: Array<{ id: string; filepath: string }>;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
+export type ImageStudioRunsResponse = {
+  runs: ImageStudioRunRecord[];
+  total: number;
+};

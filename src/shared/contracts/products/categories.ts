@@ -48,3 +48,16 @@ export const productCategoryFiltersSchema = z.object({
 });
 
 export type ProductCategoryFiltersDto = z.infer<typeof productCategoryFiltersSchema>;
+
+/**
+ * Product Category Reorder Contract
+ */
+export const reorderProductCategorySchema = z.object({
+  categoryId: z.string().trim().min(1),
+  parentId: z.string().trim().nullable().optional(),
+  position: z.enum(['inside', 'before', 'after']),
+  targetId: z.string().trim().nullable().optional(),
+  catalogId: z.string().trim().optional(),
+});
+
+export type ReorderProductCategoryDto = z.infer<typeof reorderProductCategorySchema>;

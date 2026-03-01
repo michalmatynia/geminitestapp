@@ -3,11 +3,16 @@
 import React from 'react';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { TestLogEntry } from '@/shared/contracts/integrations';
-import { StatusBadge, FormSection } from '@/shared/ui';
+import { StatusBadge, FormSection, SimpleSettingsList } from '@/shared/ui';
 
 export function ConnectionTestLog(): React.JSX.Element | null {
-  const { activeIntegration, isTesting, testLog, setSelectedStep, setShowTestLogModal } =
-    useIntegrationsContext();
+  const {
+    activeIntegration,
+    isTesting,
+    testLog,
+    setSelectedStep,
+    setShowTestLogModal,
+  } = useIntegrationsContext();
 
   if (!activeIntegration) return null;
 
@@ -24,30 +29,29 @@ export function ConnectionTestLog(): React.JSX.Element | null {
         <span className='text-xs text-gray-500'>{isTesting ? 'Running...' : 'Idle'}</span>
       </div>
 
-      {testLog.length === 0 ? (
-        <p className='mt-2 text-xs text-gray-500'>Run a connection test to see live updates.</p>
-      ) : (
-        <div className='mt-2 max-h-40 space-y-2 overflow-y-auto text-xs text-gray-400'>
-          {testLog.map((entry: TestLogEntry, index: number) => (
-            <div key={`${entry.step}-${index}`} className='flex items-center justify-between gap-3'>
-              <p>{entry.step}</p>
-              {entry.status !== 'pending' && (
-                <StatusBadge
-                  status={entry.status === 'ok' ? 'OK' : 'FAILED'}
-                  onClick={(): void => {
-                    setSelectedStep(
-                      entry.status !== 'pending'
-                        ? (entry as TestLogEntry & { status: 'ok' | 'failed' })
-                        : null
-                    );
-                    setShowTestLogModal(true);
-                  }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <SimpleSettingsList
+        items={testLog.map((entry, index) => ({
+          id: `${entry.step}-${index}`,
+          title: entry.step,
+        }))}
+        emptyMessage='Run a connection test to see live updates.'
+        padding='sm'
+        itemClassName='!bg-transparent border-none'
+        renderActions={(entry) => {
+          const logEntry = testLog.find((e, idx) => `${e.step}-${idx}` === entry.id);
+          if (!logEntry || logEntry.status === 'pending') return null;
+          return (
+            <StatusBadge
+              status={logEntry.status === 'ok' ? 'OK' : 'FAILED'}
+              onClick={() => {
+                setSelectedStep(logEntry as TestLogEntry & { status: 'ok' | 'failed' });
+                setShowTestLogModal(true);
+              }}
+            />
+          );
+        }}
+        className='mt-2 max-h-40 overflow-y-auto'
+      />
     </FormSection>
   );
 }

@@ -435,13 +435,28 @@ export function useProductListState(): ProductListContextType & {
     editOpenRequestTokenRef.current += 1;
   }, [editingProduct?.id]);
 
+  const prefetchProductDetail = useCallback(
+    (productId: string) => {
+      void queryClient.prefetchQuery({
+        queryKey: normalizeQueryKey(getProductDetailQueryKey(productId)),
+        queryFn: ({ signal }) =>
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(productId)}?fresh=1`, {
+            signal,
+            cache: 'no-store',
+            logError: false,
+            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+          }),
+        staleTime: 20_000,
+      });
+    },
+    [queryClient]
+  );
+
   const handleOpenEditModal = useCallback(
     (product: ProductWithImages) => {
       setActionError(null);
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
-      // Open modal immediately with list data; submit is blocked by requireHydratedEditProduct
-      setEditingProduct(product);
       void queryClient
         .fetchQuery({
           queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
@@ -452,7 +467,7 @@ export function useProductListState(): ProductListContextType & {
               logError: false,
               timeout: PRODUCT_DETAIL_TIMEOUT_MS,
             }),
-          staleTime: 0,
+          staleTime: 20_000,
         })
         .then((freshProduct: ProductWithImages) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
@@ -805,6 +820,7 @@ export function useProductListState(): ProductListContextType & {
       setRefreshTrigger,
       productNameKey: preferences.nameLocale,
       priceGroups,
+      onPrefetchProductDetail: prefetchProductDetail,
       onProductNameClick: handleOpenEditModal,
       onProductEditClick: handleOpenEditModal,
       onProductDeleteClick: setProductToDelete,
@@ -902,6 +918,7 @@ export function useProductListState(): ProductListContextType & {
       handleMassListSuccess,
       handleOpenCreate,
       handleOpenEditModal,
+      prefetchProductDetail,
       handleOpenExportSettings,
       handleOpenIntegrationsModal,
       handleProductsTableRender,

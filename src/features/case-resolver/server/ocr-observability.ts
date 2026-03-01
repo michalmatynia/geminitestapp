@@ -1,30 +1,13 @@
 import 'server-only';
 
-import {
-  listCaseResolverRecentOcrJobs,
-  type CaseResolverOcrErrorCategory,
-  type CaseResolverOcrJobRecord,
-} from './ocr-runtime-job-store';
+import type {
+  CaseResolverOcrErrorCategory,
+  CaseResolverOcrJobRecord,
+  CaseResolverOcrObservabilitySnapshot,
+  CaseResolverOcrPercentileSnapshot as PercentileSnapshot,
+} from '@/shared/contracts/case-resolver';
 
-type PercentileSnapshot = {
-  count: number;
-  p50Ms: number;
-  p95Ms: number;
-  maxMs: number;
-};
-
-export type CaseResolverOcrObservabilitySnapshot = {
-  generatedAt: string;
-  sampleSize: number;
-  statuses: Record<CaseResolverOcrJobRecord['status'], number>;
-  successRate: number;
-  retryRate: number;
-  retryableFailureRate: number;
-  failureCategories: Record<CaseResolverOcrErrorCategory, number>;
-  completionLatencyMs: PercentileSnapshot;
-  backlogAgeMs: PercentileSnapshot;
-  distinctCorrelationIds: number;
-};
+import { listCaseResolverRecentOcrJobs } from './ocr-runtime-job-store';
 
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;

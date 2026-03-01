@@ -8,7 +8,7 @@ import {
   type ConnectionFormState,
 } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import { Button, DetailModal } from '@/shared/ui';
+import { DetailModal, FormActions } from '@/shared/ui';
 
 import { ConnectionFormFields } from './ConnectionFormFields';
 import { toConnectionFormState } from './connectionFormUtils';
@@ -61,21 +61,12 @@ export function ConnectionEditModal({
       subtitle={`Update settings for "${connection.name}"`}
       size='lg'
       footer={
-        <div className='flex justify-end gap-2'>
-          <Button type='button' variant='outline' onClick={onClose} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button
-            type='button'
-            variant='solid'
-            onClick={() => {
-              void handleUpdate();
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Updating...' : 'Update connection'}
-          </Button>
-        </div>
+        <FormActions
+          onSave={() => void handleUpdate()}
+          onCancel={onClose}
+          saveText='Update connection'
+          isSaving={isSaving}
+        />
       }
     >
       <div className='space-y-3'>

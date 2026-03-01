@@ -4,36 +4,12 @@ import { randomUUID } from 'crypto';
 
 import { getRedisConnection } from '@/shared/lib/queue';
 
-export type CaseResolverOcrJobStatus = 'queued' | 'running' | 'completed' | 'failed';
-export type CaseResolverOcrJobDispatchMode = 'queued' | 'inline';
-export type CaseResolverOcrErrorCategory =
-  | 'timeout'
-  | 'rate_limit'
-  | 'network'
-  | 'provider'
-  | 'validation'
-  | 'unknown';
-
-export type CaseResolverOcrJobRecord = {
-  id: string;
-  status: CaseResolverOcrJobStatus;
-  filepath: string;
-  model: string | null;
-  prompt: string | null;
-  retryOfJobId: string | null;
-  correlationId: string | null;
-  dispatchMode: CaseResolverOcrJobDispatchMode | null;
-  attemptsMade: number;
-  maxAttempts: number;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  resultText: string | null;
-  errorMessage: string | null;
-  errorCategory: CaseResolverOcrErrorCategory | null;
-  retryableError: boolean | null;
-};
+import type {
+  CaseResolverOcrJobStatus,
+  CaseResolverOcrJobDispatchMode,
+  CaseResolverOcrErrorCategory,
+  CaseResolverOcrJobRecord,
+} from '@/shared/contracts/case-resolver';
 
 const OCR_RUNTIME_JOB_KEY_PREFIX = 'case-resolver:ocr:job:';
 const OCR_RUNTIME_JOB_RECENT_IDS_KEY = 'case-resolver:ocr:job:recent';

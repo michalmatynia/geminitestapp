@@ -1,7 +1,7 @@
 'use client';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Button, Checkbox, StatusBadge, FormSection, EmptyState } from '@/shared/ui';
+import { Button, Checkbox, StatusBadge, FormSection, EmptyState, FormActions } from '@/shared/ui';
 
 export function AllegroSettings(): React.JSX.Element {
   const {
@@ -62,10 +62,12 @@ export function AllegroSettings(): React.JSX.Element {
               <span className='text-gray-400'>Expires:</span> {allegroExpiresAt}
             </p>
           </FormSection>
-          <div className='flex flex-wrap items-center gap-3'>
-            <Button type='button' variant='default' onClick={handleAllegroAuthorize}>
-              {allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
-            </Button>
+
+          <FormActions
+            onSave={handleAllegroAuthorize}
+            saveText={allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
+            className='!justify-start'
+          >
             <Button
               type='button'
               variant='outline'
@@ -74,6 +76,7 @@ export function AllegroSettings(): React.JSX.Element {
               }}
               className='border-amber-500/50 text-amber-200 hover:border-amber-400'
               disabled={savingAllegroSandbox}
+              size='sm'
             >
               {savingAllegroSandbox ? 'Preparing...' : 'Test Sandbox Connection'}
             </Button>
@@ -86,6 +89,7 @@ export function AllegroSettings(): React.JSX.Element {
               <Button
                 type='button'
                 variant='outline'
+                size='sm'
                 onClick={() => {
                   void handleAllegroDisconnect();
                 }}
@@ -93,7 +97,7 @@ export function AllegroSettings(): React.JSX.Element {
                 Disconnect
               </Button>
             )}
-          </div>
+          </FormActions>
         </div>
       )}
     </FormSection>

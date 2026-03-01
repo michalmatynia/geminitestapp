@@ -425,6 +425,19 @@ export type ProductValidationPatternFormDataDto = z.infer<
   typeof productValidationPatternFormDataSchema
 >;
 
+export const reorderProductValidationPatternUpdateSchema = z.object({
+  id: z.string().trim().min(1),
+  sequence: z.number().int().min(0).optional(),
+  sequenceGroupId: z.string().trim().nullable().optional(),
+  sequenceGroupLabel: z.string().trim().nullable().optional(),
+  sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional(),
+  expectedUpdatedAt: z.string().trim().nullable().optional(),
+});
+
+export type ReorderProductValidationPatternUpdateDto = z.infer<
+  typeof reorderProductValidationPatternUpdateSchema
+>;
+
 /**
  * Product Studio Sequencing DTOs
  */

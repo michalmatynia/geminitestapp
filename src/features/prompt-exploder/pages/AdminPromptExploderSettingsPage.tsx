@@ -526,30 +526,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         </FormSection>
       </div>
 
-      <div className='flex flex-wrap items-center gap-2 pt-4 border-t border-white/5'>
-        <Button
-          type='button'
-          size='sm'
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={saveDisabled}
-          data-doc-id='settings_save'
-        >
-          Save Prompt Exploder Settings
-        </Button>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => {
-            setDraft(toSettingsDraft(parsedSettings));
-          }}
-          disabled={updateSetting.isPending}
-          data-doc-id='settings_reset_unsaved'
-        >
-          Reset Unsaved Changes
-        </Button>
+      <FormActions
+        onSave={() => void handleSave()}
+        onCancel={() => setDraft(toSettingsDraft(parsedSettings))}
+        saveText='Save Prompt Exploder Settings'
+        cancelText='Reset Unsaved Changes'
+        isSaving={updateSetting.isPending}
+        isDisabled={saveDisabled}
+        className='pt-4 border-t border-white/5 !justify-start'
+      >
         <span className='text-xs text-gray-500'>
           {brainModelOptions.isLoading
             ? 'Loading Brain model discovery...'
@@ -557,7 +542,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               ? brainModelOptions.sourceWarnings[0]
               : 'AI Brain routing connected. Prompt Exploder uses the dedicated Brain capability.'}
         </span>
-      </div>
+      </FormActions>
       <DocsTooltipEnhancer
         rootId='prompt-exploder-settings-docs-root'
         enabled={docsTooltipsEnabled}

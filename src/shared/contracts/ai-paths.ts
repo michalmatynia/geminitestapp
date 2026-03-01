@@ -403,6 +403,31 @@ export const aiPathsValidationRuleSchema = z.object({
 export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
 export type AiPathsValidationRule = AiPathsValidationRuleDto;
 
+export type CentralDocsSnapshotSource = {
+  id: string;
+  path: string;
+  type: string;
+  hash: string;
+  assertionCount: number;
+  priority?: number | undefined;
+  tags?: string[] | undefined;
+  snippetNames?: string[] | undefined;
+};
+
+export type CentralDocsSnapshotPayload = {
+  generatedAt: string;
+  snapshotHash: string;
+  warnings: string[];
+  sources: CentralDocsSnapshotSource[];
+};
+
+export type CentralDocsSnapshotResponse = {
+  snapshot: CentralDocsSnapshotPayload;
+  inferredCandidates: AiPathsValidationRule[];
+};
+
+export type CandidateChangeKind = 'new' | 'changed' | 'existing';
+
 export const aiPathsValidationDocsSyncStateSchema = z.object({
   lastSnapshotHash: z.string().optional(),
   lastSyncedAt: z.string().optional(),
@@ -673,6 +698,71 @@ export type TouchLongPressIndicatorState = {
 export interface HandleSelectNodeOptions {
   toggle?: boolean;
 }
+
+/**
+ * AI Path Runtime Profile Contracts
+ */
+export type RuntimeProfileHighlight = {
+  type: 'run' | 'iteration' | 'node';
+  phase?: 'start' | 'end' | undefined;
+  nodeId?: string | undefined;
+  nodeType?: string | undefined;
+  status?: string | undefined;
+  reason?: string | undefined;
+  iteration?: number | undefined;
+  durationMs?: number | undefined;
+  hashMs?: number | undefined;
+};
+
+export type RuntimeProfileNodeSpanStatus =
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cached'
+  | 'skipped'
+  | 'blocked';
+
+export type RuntimeProfileNodeSpan = {
+  spanId: string;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  iteration: number;
+  attempt: number;
+  status: RuntimeProfileNodeSpanStatus;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  error: string | null;
+  cached: boolean;
+};
+
+export type RuntimeProfileSnapshot = {
+  traceId: string;
+  recordedAt: string;
+  eventCount: number;
+  sampledEventCount: number;
+  droppedEventCount: number;
+  summary: {
+    durationMs: number;
+    iterationCount: number;
+    nodeCount: number;
+    edgeCount: number;
+    hottestNodes: Array<{
+      nodeId: string;
+      nodeType: string;
+      count: number;
+      totalMs: number;
+      maxMs: number;
+      avgMs: number;
+      errorCount: number;
+      cachedCount: number;
+      skippedCount: number;
+    }>;
+  } | null;
+  highlights: RuntimeProfileHighlight[];
+  nodeSpans: RuntimeProfileNodeSpan[];
+};
 
 /**
  * AI Path Repository Interfaces

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-
+import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -14,7 +14,7 @@ const coerceProvider = (value: unknown): 'auto' | 'mongodb' | 'prisma' | undefin
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, undefined, {
+  const parsed = await parseJsonBody(req, z.any(), {
     logPrefix: 'ai-paths.db-query',
   });
   if (!parsed.ok) return parsed.response;

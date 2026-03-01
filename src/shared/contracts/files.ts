@@ -122,6 +122,31 @@ export const imageFileListFiltersSchema = z.object({
 export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
 export type ImageFileListFilters = ImageFileListFiltersDto;
 
+/**
+ * Image Optimization DTOs
+ */
+export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
+export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+
+export type OptimizationOptions = {
+  format?: ImageFormat;
+  quality?: number;
+  width?: number;
+  height?: number;
+  size?: ImageSize;
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
+  withoutEnlargement?: boolean;
+};
+
+export type OptimizedImageResult = {
+  buffer: Buffer;
+  format: ImageFormat;
+  width: number;
+  height: number;
+  size: number;
+  metadata?: Record<string, unknown>;
+};
+
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
   getImageFileById(id: string): Promise<ImageFileRecord | null>;

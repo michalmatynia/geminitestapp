@@ -1,4 +1,11 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverWorkspace,
+  CaseResolverWorkspaceMetadata,
+  PersistCaseResolverWorkspaceResult,
+  PersistCaseResolverWorkspaceSuccess,
+  PersistCaseResolverWorkspaceConflict,
+  PersistCaseResolverWorkspaceFailure,
+} from '@/shared/contracts/case-resolver';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -82,37 +89,6 @@ type PersistWorkspaceInput = {
   expectedRevision: number;
   mutationId: string;
   source: string;
-};
-
-type PersistWorkspaceSuccess = {
-  ok: true;
-  workspace: CaseResolverWorkspace;
-  idempotent: boolean;
-};
-
-type PersistWorkspaceConflict = {
-  ok: false;
-  conflict: true;
-  workspace: CaseResolverWorkspace;
-  expectedRevision: number;
-  currentRevision: number;
-};
-
-type PersistWorkspaceFailure = {
-  ok: false;
-  conflict: false;
-  error: string;
-};
-
-export type PersistCaseResolverWorkspaceResult =
-  | PersistWorkspaceSuccess
-  | PersistWorkspaceConflict
-  | PersistWorkspaceFailure;
-
-export type CaseResolverWorkspaceMetadata = {
-  revision: number;
-  lastMutationId: string | null;
-  exists: boolean;
 };
 
 const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {

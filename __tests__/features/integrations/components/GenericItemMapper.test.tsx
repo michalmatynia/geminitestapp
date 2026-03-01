@@ -2,7 +2,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
-import { GenericItemMapper } from '@/features/integrations/components/marketplaces/category-mapper/GenericItemMapper';
+import { GenericMapper as GenericItemMapper } from '@/shared/ui/templates/mappers/GenericMapper';
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 
 // Mock the context hook
@@ -105,8 +105,8 @@ describe('GenericItemMapper', () => {
     const config = createConfig();
     render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
 
-    expect(screen.getByText(/Total:/)).toBeInTheDocument();
-    expect(screen.getByText(/Mapped:/)).toBeInTheDocument();
+    expect(screen.getByText(/Total/)).toBeInTheDocument();
+    expect(screen.getByText(/Mapped/)).toBeInTheDocument();
   });
 
   it('shows loading state when isLoadingInternal is true', () => {

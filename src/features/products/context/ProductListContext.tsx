@@ -98,6 +98,7 @@ export interface ProductListContextType {
   // Row Handlers
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
+  onPrefetchProductDetail: (productId: string) => void;
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
@@ -234,6 +235,7 @@ export interface ProductListActionsContextType {
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
   currencyCode: string;
+  onPrefetchProductDetail: (productId: string) => void;
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
@@ -440,6 +442,7 @@ export function ProductListProvider({
       productNameKey: value.productNameKey,
       priceGroups: value.priceGroups,
       currencyCode: value.currencyCode,
+      onPrefetchProductDetail: value.onPrefetchProductDetail,
       onProductNameClick: value.onProductNameClick,
       onProductEditClick: value.onProductEditClick,
       onProductDeleteClick: value.onProductDeleteClick,

@@ -40,9 +40,9 @@ export type AiPathsMaintenanceApplyResult = {
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';
-const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [250, 750, 1500, 3000];
+const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [500, 1500];
 const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
-const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 8_000;
+const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 25_000;
 
 let aiPathsSettingsCache: AiPathsSettingRecord[] | null = null;
 let aiPathsSettingsFetchedAt = 0;
@@ -183,6 +183,8 @@ const sleep = async (ms: number): Promise<void> => {
 
 const shouldRetrySettingsFetch = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
+  // Don't retry explicit client-side timeouts — if MongoDB was slow once it'll be slow again
+  if (error.name === 'TimeoutError') return false;
   const message = error.message.toLowerCase();
   return (
     message.includes('failed to fetch') ||
@@ -197,7 +199,11 @@ const fetchAiPathsSettingsResponse = async (): Promise<Response> => {
   let lastError: unknown;
   for (let attempt = 0; attempt <= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length; attempt += 1) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS);
+    const timeoutError = Object.assign(
+      new Error(`AI Paths settings request timed out after ${AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS}ms`),
+      { name: 'TimeoutError' }
+    );
+    const timeoutId = setTimeout(() => controller.abort(timeoutError), AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS);
     try {
       const response = await fetch('/api/ai-paths/settings', {
         credentials: 'include',

@@ -7,7 +7,7 @@ import {
   useFetchExternalProducersMutation,
   useSaveProducerMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import { useProducerMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
+import { useProducerMappings, useExternalProducers } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import { type Producer } from '@/shared/contracts/products';
 import { type ProducerMapping } from '@/shared/contracts/integrations';
@@ -17,7 +17,7 @@ export function BaseProducerMapper(): React.JSX.Element {
   const { connectionId, connectionName } = useCategoryMapper();
 
   const producersQuery = useProducers();
-  const externalProducersQuery = useFetchExternalProducersMutation();
+  const externalProducersQuery = useExternalProducers(connectionId ?? '');
   const mappingsQuery = useProducerMappings(connectionId ?? '');
 
   const fetchMutation = useFetchExternalProducersMutation();
@@ -37,17 +37,17 @@ export function BaseProducerMapper(): React.JSX.Element {
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),
       getExternalLabel: (item) => item.name,
-      getMappingInternalId: (m) => m.producerId,
+      getMappingInternalId: (m) => m.internalProducerId,
       getMappingExternalId: (m) => m.externalProducerId,
       onFetch: async () => {
-        const result = await fetchMutation.mutateAsync(connectionId ?? '');
-        return { message: `Fetched ${result.length} producers` };
+        const result = await fetchMutation.mutateAsync({ connectionId: connectionId ?? '' });
+        return { message: `Fetched ${result.fetched} producers` };
       },
       onSave: async (mappings) => {
         await saveMutation.mutateAsync({
           connectionId: connectionId ?? '',
           mappings: mappings.map((m) => ({
-            producerId: m.internalId,
+            internalProducerId: m.internalId,
             externalProducerId: m.externalId,
           })),
         });

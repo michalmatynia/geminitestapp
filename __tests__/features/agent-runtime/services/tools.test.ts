@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { runAgentTool } from '@/features/ai/agent-runtime/tools/index';
+import { runExtractionRequest } from '@/features/ai/agent-runtime/tools/run-agent-tool-extraction';
 import * as llmTools from '@/features/ai/agent-runtime/tools/llm';
 import * as playwrightBrowser from '@/features/ai/agent-runtime/tools/playwright/browser';
 import * as playwrightExtraction from '@/features/ai/agent-runtime/tools/playwright/extraction';
@@ -23,6 +24,14 @@ vi.mock('fs', () => ({
   },
 }));
 
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: vi.fn(async () => ({
+    modelId: 'mock-model',
+    temperature: 0.7,
+    maxTokens: 1000,
+  })),
+}));
+
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
     chatbotAgentRun: { findUnique: vi.fn(), update: vi.fn() },
@@ -35,16 +44,16 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 vi.mock('@/features/ai/agent-runtime/tools/playwright/browser', () => ({
   launchBrowser: vi.fn(),
   createBrowserContext: vi.fn(),
-  captureSnapshot: vi.fn(),
-  captureSessionContext: vi.fn(),
+  captureSnapshot: vi.fn(async () => ({ id: 'mock-snap', domText: '', url: '' })),
+  captureSessionContext: vi.fn(async () => ({})),
 }));
 
 vi.mock('@/features/ai/agent-runtime/tools/playwright/actions', () => ({
-  dismissConsent: vi.fn(),
-  ensureLoginFormVisible: vi.fn(),
-  checkForChallenge: vi.fn(),
-  inferLoginCandidates: vi.fn(),
-  findFirstVisible: vi.fn(),
+  dismissConsent: vi.fn(async () => {}),
+  ensureLoginFormVisible: vi.fn(async () => {}),
+  checkForChallenge: vi.fn(async () => false),
+  inferLoginCandidates: vi.fn(async () => []),
+  findFirstVisible: vi.fn(async () => null),
 }));
 
 vi.mock('@/features/ai/agent-runtime/tools/playwright/inventory', () => ({
@@ -62,6 +71,13 @@ vi.mock('@/features/ai/agent-runtime/tools/playwright/extraction', () => ({
 
 vi.mock('@/features/ai/agent-runtime/tools/search', () => ({
   fetchSearchResults: vi.fn(),
+}));
+
+vi.mock('@/features/ai/agent-runtime/tools/run-agent-tool-extraction', () => ({
+  runExtractionRequest: vi.fn(async () => ({
+    ok: true,
+    output: { extractionType: 'none', extractedTotal: 0 },
+  })),
 }));
 
 vi.mock('@/features/ai/agent-runtime/tools/llm', () => ({
@@ -85,31 +101,37 @@ vi.mock('@/features/ai/agent-runtime/tools/utils', async () => {
 
 // Mock Playwright objects
 const mockPage = {
-  goto: vi.fn(),
-  setContent: vi.fn(),
+  goto: vi.fn().mockResolvedValue(undefined),
+  setContent: vi.fn().mockResolvedValue(undefined),
   evaluate: vi.fn().mockResolvedValue('sample text'),
   on: vi.fn(),
   url: vi.fn().mockReturnValue('http://example.com'),
   locator: vi.fn().mockReturnValue({ first: vi.fn() }),
   video: vi.fn(),
-  bringToFront: vi.fn(),
+  bringToFront: vi.fn().mockResolvedValue(undefined),
   removeAllListeners: vi.fn(),
+  close: vi.fn().mockResolvedValue(undefined),
 };
 
 const mockContext = {
   newPage: vi.fn().mockResolvedValue(mockPage),
   pages: vi.fn().mockReturnValue([]),
-  close: vi.fn(),
+  close: vi.fn(async () => {}),
   browser: vi.fn(),
 };
 
 const mockBrowser = {
-  close: vi.fn(),
+  close: vi.fn(async () => {}),
 };
 
 describe('Agent Runtime - Tools', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPage.goto.mockResolvedValue(undefined);
+    mockPage.bringToFront.mockResolvedValue(undefined);
+    mockPage.close.mockResolvedValue(undefined);
+    mockContext.close.mockResolvedValue(undefined);
+    mockBrowser.close.mockResolvedValue(undefined);
     (playwrightBrowser.launchBrowser as any).mockResolvedValue(mockBrowser);
     (playwrightBrowser.createBrowserContext as any).mockResolvedValue(mockContext);
     (playwrightBrowser.captureSnapshot as any).mockResolvedValue({
@@ -137,6 +159,8 @@ describe('Agent Runtime - Tools', () => {
       },
     });
 
+    if (!result.ok) console.log('Tool error:', result.error);
+
     expect(playwrightBrowser.launchBrowser).toHaveBeenCalled();
     expect(mockPage.goto).toHaveBeenCalledWith(
       expect.stringContaining('example.com'),
@@ -158,22 +182,13 @@ describe('Agent Runtime - Tools', () => {
   });
 
   it('should handle extraction request (products)', async () => {
-    (playwrightExtraction.extractProductNames as any).mockResolvedValue(['Product A', 'Product B']);
-    (playwrightExtraction.waitForProductContent as any).mockResolvedValue(undefined);
-    (llmTools.validateExtractionWithLLM as any).mockResolvedValue({
-      valid: true,
-      acceptedItems: ['Product A', 'Product B'],
-      rejectedItems: [],
-      missingCount: 0,
-      issues: [],
-    });
-    (llmTools.normalizeExtractionItemsWithLLM as any).mockResolvedValue(['Product A', 'Product B']);
-    (llmTools.buildExtractionPlan as any).mockResolvedValue({
-      target: 'products',
-      fields: ['name'],
-      primarySelectors: ['.product'],
-      fallbackSelectors: [],
-      notes: null,
+    vi.mocked(runExtractionRequest).mockResolvedValueOnce({
+      ok: true,
+      output: {
+        extractionType: 'product_names',
+        extractedTotal: 2,
+        items: ['Product A', 'Product B'],
+      },
     });
 
     const result = await runAgentTool({

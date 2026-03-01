@@ -7,7 +7,7 @@ import {
   useFetchExternalTagsMutation,
   useSaveTagMappingsMutation,
 } from '@/features/integrations/hooks/useMarketplaceMutations';
-import { useTagMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
+import { useTagMappings, useExternalTags } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useTags } from '@/features/products/hooks/useProductMetadataQueries';
 import { type ProductTag } from '@/shared/contracts/products';
 import { type TagMapping } from '@/shared/contracts/integrations';
@@ -16,8 +16,8 @@ import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 export function BaseTagMapper(): React.JSX.Element {
   const { connectionId, connectionName, selectedCatalogId: catalogId } = useCategoryMapper();
 
-  const tagsQuery = useTags(catalogId);
-  const externalTagsQuery = useFetchExternalTagsMutation();
+  const tagsQuery = useTags(catalogId ?? undefined);
+  const externalTagsQuery = useExternalTags(connectionId ?? '');
   const mappingsQuery = useTagMappings(connectionId ?? '');
 
   const fetchMutation = useFetchExternalTagsMutation();
@@ -37,17 +37,17 @@ export function BaseTagMapper(): React.JSX.Element {
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),
       getExternalLabel: (item) => item.name,
-      getMappingInternalId: (m) => m.tagId,
+      getMappingInternalId: (m) => m.internalTagId,
       getMappingExternalId: (m) => m.externalTagId,
       onFetch: async () => {
-        const result = await fetchMutation.mutateAsync(connectionId ?? '');
-        return { message: `Fetched ${result.length} tags` };
+        const result = await fetchMutation.mutateAsync({ connectionId: connectionId ?? '' });
+        return { message: `Fetched ${result.fetched} tags` };
       },
       onSave: async (mappings) => {
         await saveMutation.mutateAsync({
           connectionId: connectionId ?? '',
           mappings: mappings.map((m) => ({
-            tagId: m.internalId,
+            internalTagId: m.internalId,
             externalTagId: m.externalId,
           })),
         });

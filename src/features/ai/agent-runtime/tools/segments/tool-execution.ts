@@ -385,11 +385,11 @@ export async function runAgentTool(
       },
     };
   } finally {
-    if (!injectedContext) {
-      await context?.close().catch(() => {});
+    if (!injectedContext && context) {
+      await context.close().catch(() => {});
     }
-    if (!injectedBrowser && !injectedContext) {
-      await launch?.close().catch(() => {});
+    if (!injectedBrowser && !injectedContext && launch) {
+      await launch.close().catch(() => {});
     }
   }
 }

@@ -50,6 +50,17 @@ const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   15000
 );
 
+// Server-side in-memory cache — survives across requests in the same Node.js process.
+// Prevents repeated cold-start MongoDB queries when the client re-fetches within the stale window.
+const SERVER_SETTINGS_CACHE_TTL_MS = 10_000;
+let serverSettingsCache: { records: AiPathsSettingRecord[]; cachedAt: number } | null = null;
+let serverSettingsFetchInflight: Promise<AiPathsSettingRecord[]> | null = null;
+
+const invalidateServerSettingsCache = (): void => {
+  serverSettingsCache = null;
+  serverSettingsFetchInflight = null;
+};
+
 export async function getAiPathsSettings(
   keys?: string[],
   options?: { bypassCache?: boolean }
@@ -57,19 +68,46 @@ export async function getAiPathsSettings(
   assertMongoConfigured();
 
   if (!keys || keys.length === 0) {
-    // Fetch index and then all configs
-    const indexRecord = await fetchMongoAiPathsSettings(
-      [AI_PATHS_INDEX_KEY],
-      AI_PATHS_MONGO_OP_TIMEOUT_MS
-    );
-    if (!indexRecord.length) return [];
-    const metas = parsePathMetas(indexRecord[0]?.value);
-    const configKeys = metas.map((m) => `${AI_PATHS_CONFIG_KEY_PREFIX}${m.id}`);
-    const triggerButtonsKey = AI_PATHS_TRIGGER_BUTTONS_KEY;
-    const allKeys = [AI_PATHS_INDEX_KEY, triggerButtonsKey, ...configKeys];
+    // Return server-side cache if fresh and not bypassed
+    if (
+      !options?.bypassCache &&
+      serverSettingsCache &&
+      Date.now() - serverSettingsCache.cachedAt < SERVER_SETTINGS_CACHE_TTL_MS
+    ) {
+      return serverSettingsCache.records;
+    }
+    // Deduplicate concurrent in-flight fetches
+    if (!options?.bypassCache && serverSettingsFetchInflight) {
+      return await serverSettingsFetchInflight;
+    }
 
-    // Recursive call WITH keys to perform the actual fetch
-    return getAiPathsSettings(allKeys, options);
+    const fetchAll = async (): Promise<AiPathsSettingRecord[]> => {
+      // Fetch index and then all configs
+      const indexRecord = await fetchMongoAiPathsSettings(
+        [AI_PATHS_INDEX_KEY],
+        AI_PATHS_MONGO_OP_TIMEOUT_MS
+      );
+      if (!indexRecord.length) return [];
+      const metas = parsePathMetas(indexRecord[0]?.value);
+      const configKeys = metas.map((m) => `${AI_PATHS_CONFIG_KEY_PREFIX}${m.id}`);
+      const triggerButtonsKey = AI_PATHS_TRIGGER_BUTTONS_KEY;
+      const allKeys = [AI_PATHS_INDEX_KEY, triggerButtonsKey, ...configKeys];
+
+      // Fetch with keys (no cache check — we already resolved the key list)
+      return getAiPathsSettings(allKeys, options);
+    };
+
+    const promise = fetchAll()
+      .then((records) => {
+        serverSettingsCache = { records, cachedAt: Date.now() };
+        return records;
+      })
+      .finally(() => {
+        serverSettingsFetchInflight = null;
+      });
+
+    serverSettingsFetchInflight = promise;
+    return await promise;
   }
 
   const normalizedKeys = keys.filter(isAiPathsKey);
@@ -239,6 +277,7 @@ export async function upsertAiPathsSettings(records: AiPathsSettingRecord[]): Pr
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
 
   await upsertMongoAiPathsSettings(normalized, AI_PATHS_MONGO_OP_TIMEOUT_MS);
+  invalidateServerSettingsCache();
 }
 
 export const upsertAiPathsSettingsBulk = upsertAiPathsSettings;
@@ -255,6 +294,7 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
 
   await deleteMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
+  invalidateServerSettingsCache();
   return normalizedKeys.length;
 }
 

@@ -1,16 +1,12 @@
 'use client';
 
+import type { ProductAiJobStatus as AiJobStatus } from '@/shared/contracts/products';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export interface AiJobStatus {
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
-  result?: unknown;
-  errorMessage?: string;
-  progress?: number;
-}
+export type { AiJobStatus };
 
 /**
  * Hook to poll AI job status

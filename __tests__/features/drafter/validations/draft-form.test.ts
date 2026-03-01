@@ -8,7 +8,7 @@ describe('draft-form validation', () => {
       const data = {
         name: 'Test Draft',
         iconColorMode: 'theme' as const,
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -20,7 +20,7 @@ describe('draft-form validation', () => {
         name: 'Test Draft',
         iconColorMode: 'custom' as const,
         iconColor: '#60a5fa',
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -31,7 +31,7 @@ describe('draft-form validation', () => {
       const data = {
         name: '',
         iconColorMode: 'theme' as const,
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -45,7 +45,7 @@ describe('draft-form validation', () => {
       const data = {
         name: '  Test Draft  ',
         iconColorMode: 'theme' as const,
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -60,7 +60,7 @@ describe('draft-form validation', () => {
         name: 'Test Draft',
         iconColorMode: 'custom' as const,
         iconColor: 'invalid',
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -75,7 +75,7 @@ describe('draft-form validation', () => {
         name: 'Test Draft',
         iconColorMode: 'custom' as const,
         iconColor: '#fff',
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -87,7 +87,7 @@ describe('draft-form validation', () => {
         name: 'Test Draft',
         iconColorMode: 'custom' as const,
         iconColor: '#60A5FA',
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);
@@ -99,7 +99,7 @@ describe('draft-form validation', () => {
         name: 'Test Draft',
         iconColorMode: 'theme' as const,
         iconColor: 'invalid',
-        openProductFormTab: 'basic' as const,
+        openProductFormTab: 'general' as const,
       };
 
       const result = draftSubmitSchema.safeParse(data);

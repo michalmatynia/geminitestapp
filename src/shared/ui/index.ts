@@ -78,13 +78,8 @@ export * from './documentation-section';
 export * from './Drawer';
 export * from './SidePanel';
 export * from './DynamicFilters';
+export * from './templates';
 export * from './templates/StandardDataTablePanel';
-export * from './templates/SettingsFormModal';
-export * from './templates/FilterPanel';
-export * from './templates/SimpleSettingsList';
-export * from './templates/GenericApiConsole';
-export * from './templates/DocumentSearchPage';
-export * from './templates/mappers';
 export {
   PanelHeader,
   PanelFilters,

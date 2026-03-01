@@ -182,3 +182,60 @@ export const filemakerPartyOptionSchema = z.object({
 
 export type FilemakerPartyOptionDto = z.infer<typeof filemakerPartyOptionSchema>;
 export type FilemakerPartyOption = FilemakerPartyOptionDto;
+
+export type FilemakerAddressFields = {
+  street: string;
+  streetNumber: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  countryId: string;
+};
+
+export type FilemakerEmailParserRule = {
+  id: string;
+  pattern: string;
+  flags?: string | null;
+  sequence?: number | null;
+};
+
+export type FilemakerEmailExtractionResult = {
+  emails: string[];
+  totalMatches: number;
+  invalidMatches: number;
+  usedDefaultRules: boolean;
+};
+
+export type FilemakerPhoneValidationRule = {
+  id: string;
+  pattern: string;
+  flags?: string | null;
+  sequence?: number | null;
+};
+
+export type FilemakerPhoneValidationResult = {
+  isValid: boolean;
+  normalizedPhoneNumber: string;
+  matchedRuleId: string | null;
+  usedDefaultRules: boolean;
+};
+
+export type UpsertFilemakerPartyEmailsResult = {
+  database: FilemakerDatabase;
+  partyFound: boolean;
+  createdEmailCount: number;
+  linkedEmailCount: number;
+  existingEmailCount: number;
+  invalidEmailCount: number;
+  appliedEmails: string[];
+};
+
+export type UpsertFilemakerPartyPhoneNumbersResult = {
+  database: FilemakerDatabase;
+  partyFound: boolean;
+  createdPhoneNumberCount: number;
+  linkedPhoneNumberCount: number;
+  existingPhoneNumberCount: number;
+  invalidPhoneNumberCount: number;
+  appliedPhoneNumbers: string[];
+};

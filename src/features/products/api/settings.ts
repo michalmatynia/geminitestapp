@@ -1,30 +1,32 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  ProductValidationPattern,
-  ProductValidatorConfig,
-  ProductValidatorSettings,
-  CreateProductValidationPatternDto as CreateValidationPatternPayload,
-  UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
-  ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
-} from '@/shared/contracts/products';
-import type {
-  ProductValidatorImportRequest,
-  ProductValidatorImportResult,
+import {
+  type ProductValidationPattern,
+  type ProductValidatorConfig,
+  type ProductValidatorSettings,
+  type CreateProductValidationPatternDto as CreateValidationPatternPayload,
+  type UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
+} from '@/shared/contracts/products/validation';
+import {
+  type ProductValidatorImportRequest,
+  type ProductValidatorImportResult,
 } from '@/shared/contracts/validator-import';
 
 export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
 export type ImportValidationPatternsResult = ProductValidatorImportResult;
 
 import {
-  Catalog,
-  CatalogRecord,
-  PriceGroup,
-  ProductCategory,
-  ProductCategoryWithChildren,
-  ProductTag,
-  ProductParameter,
-  ReorderProductCategoryDto as ReorderCategoryPayload,
-} from '@/shared/contracts/products';
+  type Catalog,
+  type CatalogRecord,
+  type PriceGroup,
+} from '@/shared/contracts/products/catalogs';
+import {
+  type ProductCategory,
+  type ProductCategoryWithChildren,
+  type ReorderProductCategoryDto as ReorderCategoryPayload,
+} from '@/shared/contracts/products/categories';
+import { type ProductTag } from '@/shared/contracts/products/tags';
+import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { api } from '@/shared/lib/api-client';
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {

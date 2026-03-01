@@ -128,22 +128,29 @@ export type ImageFileListFilters = ImageFileListFiltersDto;
 export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
 export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
 
-export type OptimizationOptions = {
-  format?: ImageFormat;
-  quality?: number;
-  width?: number;
+export type ImageSizeConfig = {
+  width: number;
   height?: number;
-  size?: ImageSize;
+  quality?: number;
+};
+
+export type OptimizationOptions = {
+  formats?: ImageFormat[];
+  sizes?: Partial<Record<ImageSize, ImageSizeConfig>>;
+  quality?: number;
+  progressive?: boolean;
   fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
   withoutEnlargement?: boolean;
 };
 
 export type OptimizedImageResult = {
-  buffer: Buffer;
   format: ImageFormat;
+  size: ImageSize;
+  buffer: Buffer;
   width: number;
   height: number;
-  size: number;
+  fileSize: number;
+  url?: string;
   metadata?: Record<string, unknown>;
 };
 

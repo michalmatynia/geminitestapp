@@ -249,3 +249,22 @@ export const baseImportRunItemRecordSchema = z.object({
   updatedAt: z.string(),
 });
 export type BaseImportRunItemRecord = z.infer<typeof baseImportRunItemRecordSchema>;
+
+export type BaseImportStartResponse = {
+  runId: string;
+  status: BaseImportRunStatus;
+  preflight?: BaseImportPreflight | null | undefined;
+  queueJobId: string | null;
+  summaryMessage: string | null;
+};
+
+export type BaseImportRunDetailResponse = {
+  run: BaseImportRunRecord;
+  items: BaseImportRunItemRecord[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+};

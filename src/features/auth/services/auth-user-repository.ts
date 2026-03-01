@@ -2,15 +2,7 @@ import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/servic
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-export type AuthUserRecord = {
-  id: string;
-  email: string;
-  name?: string | null;
-  passwordHash?: string | null;
-  image?: string | null;
-  emailVerified?: Date | null;
-};
+import type { AuthUserRecord } from '@/shared/contracts/auth';
 
 type MongoUserDoc = {
   email?: string | null;

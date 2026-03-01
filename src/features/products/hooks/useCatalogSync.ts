@@ -4,18 +4,19 @@ import { useQueries } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { Catalog } from '@/shared/contracts/products';
-import type { PriceGroupWithDetails } from '@/shared/contracts/products';
+import type { Catalog, PriceGroupWithDetails } from '@/shared/contracts/products';
+import type {
+  LanguageRecord,
+  CurrencyRecord,
+} from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-type LanguageRecord = { id: string; code: string; name: string };
 type LanguageOption = {
   value: 'name_en' | 'name_pl' | 'name_de';
   label: string;
 };
-type CurrencyRecord = { code?: string | null };
 
 const supportedLanguageMap: Record<string, LanguageOption> = {
   EN: { value: 'name_en', label: 'English' },

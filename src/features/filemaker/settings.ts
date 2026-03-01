@@ -30,12 +30,14 @@ import {
 
 import { ensureUniqueId, normalizeString, toIdToken } from './filemaker-settings.helpers';
 
-import {
-  type FilemakerEmailParserRule,
-  type FilemakerEmailExtractionResult,
-  type FilemakerPhoneValidationRule,
-  type FilemakerPhoneValidationResult,
-} from './filemaker-settings.extraction';
+import type {
+  FilemakerEmailParserRule,
+  FilemakerEmailExtractionResult,
+  FilemakerPhoneValidationRule,
+  FilemakerPhoneValidationResult,
+  UpsertFilemakerPartyEmailsResult,
+  UpsertFilemakerPartyPhoneNumbersResult,
+} from '@/shared/contracts/filemaker';
 
 import {
   createFilemakerAddress,
@@ -87,26 +89,6 @@ export type {
   FilemakerEmailExtractionResult,
   FilemakerPhoneValidationRule,
   FilemakerPhoneValidationResult,
-};
-
-export type UpsertFilemakerPartyEmailsResult = {
-  database: FilemakerDatabase;
-  partyFound: boolean;
-  createdEmailCount: number;
-  linkedEmailCount: number;
-  existingEmailCount: number;
-  invalidEmailCount: number;
-  appliedEmails: string[];
-};
-
-export type UpsertFilemakerPartyPhoneNumbersResult = {
-  database: FilemakerDatabase;
-  partyFound: boolean;
-  createdPhoneNumberCount: number;
-  linkedPhoneNumberCount: number;
-  existingPhoneNumberCount: number;
-  invalidPhoneNumberCount: number;
-  appliedPhoneNumbers: string[];
 };
 
 export const parseFilemakerDatabase = (raw: string | null | undefined): FilemakerDatabase => {

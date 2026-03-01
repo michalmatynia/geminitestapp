@@ -1,21 +1,22 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useMemo, useCallback, useEffect, Dispatch as _Dispatch, SetStateAction as _SetStateAction } from 'react';
 
 import type {
   DatabaseEngineStatus,
-  DatabaseEngineOperationJob,
+  DatabaseEngineOperationJob as _DatabaseEngineOperationJob,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
-  RedisOverview,
+  RedisOverview as _RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
   UnifiedCollection,
+  CollectionSchema,
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  isValidDatabaseEngineBackupTimeUtc,
+  isValidDatabaseEngineBackupTimeUtc as _isValidDatabaseEngineBackupTimeUtc,
   normalizeDatabaseEngineBackupSchedule,
 } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
@@ -28,85 +29,45 @@ import {
   DEFAULT_DATABASE_ENGINE_POLICY,
   type DatabaseEngineBackupSchedule,
   type DatabaseEngineOperationControls,
-  type DatabaseEnginePolicy,
-  type DatabaseEngineProvider,
-  type DatabaseEngineServiceRoute,
-  type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
-import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
-  useAllCollectionsSchema,
-  useDatabaseEngineOperationsJobs,
   useDatabaseBackupSchedulerStatus,
+  useDatabaseEngineOperationsJobs,
   useDatabaseEngineProviderPreview,
   useDatabaseEngineStatus,
-  useRedisOverview,
+  useAllCollectionsSchema,
 } from '../hooks/useDatabaseQueries';
 
-export type { DatabaseEngineWorkspaceView };
-
-export type DatabaseCollectionRow = UnifiedCollection;
-
-const services: DatabaseEngineServiceRoute[] = ['app', 'auth', 'product', 'integrations', 'cms'];
-
-const parseServiceRouteMap = (
-  raw: string | undefined
-): Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> => {
-  const parsed = parseJsonSetting<Record<string, unknown>>(raw, {});
-  const result: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> = {};
-  for (const service of services) {
-    const value = parsed[service];
-    if (value === 'mongodb' || value === 'prisma' || value === 'redis') {
-      result[service] = value;
-    }
-  }
-  return result;
-};
-
-const parseCollectionRouteMap = (
-  raw: string | undefined
-): Record<string, DatabaseEngineProvider> => {
-  const parsed = parseJsonSetting<Record<string, unknown>>(raw, {});
-  const result: Record<string, DatabaseEngineProvider> = {};
-  for (const [collection, provider] of Object.entries(parsed)) {
-    if (provider === 'mongodb' || provider === 'prisma' || provider === 'redis') {
-      result[collection] = provider;
-    }
-  }
-  return result;
-};
+export interface DatabaseCollectionRow extends UnifiedCollection {
+  assignedProvider: 'mongodb' | 'prisma' | 'auto';
+}
 
 export interface UseDatabaseEngineStateReturn {
-  workspaceView: DatabaseEngineWorkspaceView;
-  setView: (view: DatabaseEngineWorkspaceView) => void;
-  policyDraft: DatabaseEnginePolicy;
-  setPolicyDraft: Dispatch<SetStateAction<DatabaseEnginePolicy>>;
-  serviceRouteMapDraft: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>;
-  setServiceRouteMapDraft: Dispatch<
-    SetStateAction<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>>
-  >;
-  collectionRouteMapDraft: Record<string, DatabaseEngineProvider>;
-  setCollectionRouteMapDraft: Dispatch<SetStateAction<Record<string, DatabaseEngineProvider>>>;
-  backupScheduleDraft: DatabaseEngineBackupSchedule;
-  setBackupScheduleDraft: Dispatch<SetStateAction<DatabaseEngineBackupSchedule>>;
-  operationControlsDraft: DatabaseEngineOperationControls;
-  setOperationControlsDraft: Dispatch<SetStateAction<DatabaseEngineOperationControls>>;
-  rows: DatabaseCollectionRow[];
-  validationErrors: string[];
-  saveConfiguration: () => Promise<void>;
-  isLoading: boolean;
-  isFetching: boolean;
-  refetch: () => void;
   engineStatus: DatabaseEngineStatus | undefined;
-  operationJobs: DatabaseEngineOperationJob[];
-  operationQueueStatus: DatabaseEngineOperationsJobs['queueStatus'] | null;
   backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
-  redisOverview: RedisOverview | undefined;
+  operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
-  saving: boolean;
+  activeView: DatabaseEngineWorkspaceView;
+  setActiveView: (view: DatabaseEngineWorkspaceView) => void;
+  rows: DatabaseCollectionRow[];
+  isLoading: boolean;
+  isSaving: boolean;
+  policy: any;
+  serviceRouteMap: Record<string, string>;
+  collectionRouteMap: Record<string, string>;
+  backupSchedule: DatabaseEngineBackupSchedule;
+  operationControls: DatabaseEngineOperationControls;
+  updatePolicy: (updates: Partial<any>) => void;
+  updateServiceRoute: (service: string, provider: string) => void;
+  updateCollectionRoute: (collection: string, provider: string) => void;
+  updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
+  updateOperationControls: (updates: Partial<DatabaseEngineOperationControls>) => void;
+  saveSettings: () => Promise<void>;
+  isDirty: boolean;
+  refetchAll: () => void;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -115,84 +76,68 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const settingsQuery = useSettingsMap({ scope: 'all' });
-  const updateSettingsBulk = useUpdateSettingsBulk();
-  const schemaQuery = useAllCollectionsSchema();
-  const redisQuery = useRedisOverview(400);
   const engineStatusQuery = useDatabaseEngineStatus();
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
+  const providerPreviewQuery = useDatabaseEngineProviderPreview();
+  const schemaQuery = useAllCollectionsSchema();
 
-  const [workspaceView, setWorkspaceView] = useState<DatabaseEngineWorkspaceView>(
-    (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine'
-  );
+  const activeView = (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine';
 
-  const policyFromSettings = useMemo(
-    () =>
-      parseJsonSetting<DatabaseEnginePolicy>(
-        settingsQuery.data?.get(DATABASE_ENGINE_POLICY_KEY),
-        DEFAULT_DATABASE_ENGINE_POLICY
-      ),
-    [settingsQuery.data]
-  );
-
-  const serviceRouteMapFromSettings = useMemo(
-    () => parseServiceRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY)),
-    [settingsQuery.data]
+  const setActiveView = useCallback(
+    (view: DatabaseEngineWorkspaceView) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('view', view);
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [pathname, router, searchParams]
   );
 
-  const collectionRouteMapFromSettings = useMemo(
-    () =>
-      parseCollectionRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY)),
-    [settingsQuery.data]
+  const { data: settingsMap, isPending: settingsLoading } = useSettingsMap({ scope: 'full' });
+
+  const updateSettingsBulk = useUpdateSettingsBulk();
+
+  const [policy, setPolicy] = useState<any>(DEFAULT_DATABASE_ENGINE_POLICY);
+  const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
+  const [collectionRouteMap, setCollectionRouteMap] = useState<Record<string, string>>({});
+  const [backupSchedule, setBackupSchedule] = useState<DatabaseEngineBackupSchedule>(
+    normalizeDatabaseEngineBackupSchedule(null)
+  );
+  const [operationControls, setOperationControls] = useState<DatabaseEngineOperationControls>(
+    DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
   );
 
-  const backupScheduleFromSettings = useMemo(
-    () =>
-      normalizeDatabaseEngineBackupSchedule(
-        settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY)
-      ),
-    [settingsQuery.data]
-  );
-
-  const operationControlsFromSettings = useMemo(
-    () =>
-      normalizeDatabaseEngineOperationControls(
-        settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY) ??
-          DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
-      ),
-    [settingsQuery.data]
-  );
-
-  const [policyDraft, setPolicyDraft] = useState<DatabaseEnginePolicy>(policyFromSettings);
-  const [serviceRouteMapDraft, setServiceRouteMapDraft] = useState(serviceRouteMapFromSettings);
-  const [collectionRouteMapDraft, setCollectionRouteMapDraft] = useState(
-    collectionRouteMapFromSettings
-  );
-  const [backupScheduleDraft, setBackupScheduleDraft] = useState(backupScheduleFromSettings);
-  const [operationControlsDraft, setOperationControlsDraft] = useState(
-    operationControlsFromSettings
-  );
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
-    setPolicyDraft(policyFromSettings);
-    setServiceRouteMapDraft(serviceRouteMapFromSettings);
-    setCollectionRouteMapDraft(collectionRouteMapFromSettings);
-    setBackupScheduleDraft(backupScheduleFromSettings);
-    setOperationControlsDraft(operationControlsFromSettings);
-  }, [
-    policyFromSettings,
-    serviceRouteMapFromSettings,
-    collectionRouteMapFromSettings,
-    backupScheduleFromSettings,
-    operationControlsFromSettings,
-  ]);
+    if (settingsMap) {
+      setPolicy(
+        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_POLICY_KEY), DEFAULT_DATABASE_ENGINE_POLICY)
+      );
+      setServiceRouteMap(
+        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY), {})
+      );
+      setCollectionRouteMap(
+        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY), {})
+      );
+      setBackupSchedule(
+        normalizeDatabaseEngineBackupSchedule(settingsMap.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY))
+      );
+      setOperationControls(
+        parseJsonSetting(
+          settingsMap.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY),
+          DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
+        )
+      );
+      setIsDirty(false);
+    }
+  }, [settingsMap]);
 
   const rows = useMemo<DatabaseCollectionRow[]>(() => {
     const data = schemaQuery.data;
     if (!data) return [];
     const byName = new Map<string, DatabaseCollectionRow>();
-    data.collections.forEach((collection) => {
+    data.collections.forEach((collection: CollectionSchema) => {
       const existing = byName.get(collection.name);
       const isMongo = collection.provider === 'mongodb';
       if (existing) {
@@ -222,92 +167,69 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [schemaQuery.data]);
 
-  const providerPreviewQuery = useDatabaseEngineProviderPreview(
-    rows.length > 0 ? rows.map((r) => r.name) : undefined
-  );
-
-  const validationErrors = useMemo(() => {
-    const issues: string[] = [];
-    const validateTarget = (dbType: DatabaseEngineBackupType): void => {
-      const target = backupScheduleDraft[dbType];
-      if (!backupScheduleDraft.schedulerEnabled || !target.enabled) return;
-      if (!isValidDatabaseEngineBackupTimeUtc(target.timeUtc)) {
-        issues.push(`${dbType} schedule time must be HH:MM (UTC).`);
-      }
-    };
-    validateTarget('mongodb');
-    validateTarget('postgresql');
-    return issues;
-  }, [backupScheduleDraft]);
-
-  const saveConfiguration = async () => {
-    if (validationErrors.length > 0) {
-      toast(validationErrors[0] ?? 'Validation failed', { variant: 'error' });
-      return;
-    }
+  const handleSave = async () => {
     try {
       await updateSettingsBulk.mutateAsync([
-        { key: DATABASE_ENGINE_POLICY_KEY, value: JSON.stringify(policyDraft) },
-        { key: DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY, value: JSON.stringify(serviceRouteMapDraft) },
-        {
-          key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
-          value: JSON.stringify(collectionRouteMapDraft),
-        },
-        { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value: JSON.stringify(backupScheduleDraft) },
-        {
-          key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
-          value: JSON.stringify(operationControlsDraft),
-        },
+        { key: DATABASE_ENGINE_POLICY_KEY, value: JSON.stringify(policy) },
+        { key: DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY, value: JSON.stringify(serviceRouteMap) },
+        { key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY, value: JSON.stringify(collectionRouteMap) },
+        { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value: JSON.stringify(backupSchedule) },
+        { key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY, value: JSON.stringify(operationControls) },
       ]);
-      toast('Configuration saved.', { variant: 'success' });
-    } catch (_e) {
-      toast('Failed to save configuration.', { variant: 'error' });
+      setIsDirty(false);
+      toast('Database engine settings saved', { variant: 'success' });
+    } catch (_error) {
+      toast('Failed to save database engine settings', { variant: 'error' });
     }
   };
 
-  const setView = useCallback(
-    (nextView: DatabaseEngineWorkspaceView) => {
-      setWorkspaceView(nextView);
-      const params = new URLSearchParams(searchParams.toString());
-      if (nextView === 'engine') params.delete('view');
-      else params.set('view', nextView);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [pathname, router, searchParams]
-  );
-
   return {
-    workspaceView,
-    setView,
-    policyDraft,
-    setPolicyDraft,
-    serviceRouteMapDraft,
-    setServiceRouteMapDraft,
-    collectionRouteMapDraft,
-    setCollectionRouteMapDraft,
-    backupScheduleDraft,
-    setBackupScheduleDraft,
-    operationControlsDraft,
-    setOperationControlsDraft,
+    engineStatus: engineStatusQuery.data,
+    backupSchedulerStatus: backupSchedulerStatusQuery.data,
+    operationsJobs: operationsJobsQuery.data,
+    providerPreview: providerPreviewQuery.data,
+    activeView,
+    setActiveView,
     rows,
-    validationErrors,
-    saveConfiguration,
-    isLoading: settingsQuery.isLoading || schemaQuery.isLoading,
-    isFetching: settingsQuery.isFetching || schemaQuery.isFetching,
-    refetch: () => {
-      void settingsQuery.refetch();
-      void schemaQuery.refetch();
-      void redisQuery.refetch();
+    isLoading:
+      engineStatusQuery.isPending ||
+      backupSchedulerStatusQuery.isPending ||
+      operationsJobsQuery.isPending ||
+      settingsLoading,
+    isSaving: updateSettingsBulk.isPending,
+    policy,
+    serviceRouteMap,
+    collectionRouteMap,
+    backupSchedule,
+    operationControls,
+    updatePolicy: (updates) => {
+      setPolicy((prev: any) => ({ ...prev, ...updates }));
+      setIsDirty(true);
+    },
+    updateServiceRoute: (service, provider) => {
+      setServiceRouteMap((prev) => ({ ...prev, [service]: provider }));
+      setIsDirty(true);
+    },
+    updateCollectionRoute: (collection, provider) => {
+      setCollectionRouteMap((prev) => ({ ...prev, [collection]: provider }));
+      setIsDirty(true);
+    },
+    updateBackupSchedule: (updates) => {
+      setBackupSchedule((prev) => ({ ...prev, ...updates }));
+      setIsDirty(true);
+    },
+    updateOperationControls: (updates) => {
+      setOperationControls((prev) => ({ ...prev, ...updates }));
+      setIsDirty(true);
+    },
+    saveSettings: handleSave,
+    isDirty,
+    refetchAll: () => {
       void engineStatusQuery.refetch();
       void backupSchedulerStatusQuery.refetch();
       void operationsJobsQuery.refetch();
+      void providerPreviewQuery.refetch();
+      void schemaQuery.refetch();
     },
-    engineStatus: engineStatusQuery.data,
-    operationJobs: operationsJobsQuery.data?.jobs ?? [],
-    operationQueueStatus: operationsJobsQuery.data?.queueStatus ?? null,
-    backupSchedulerStatus: backupSchedulerStatusQuery.data,
-    redisOverview: redisQuery.data,
-    providerPreview: providerPreviewQuery.data,
-    saving: updateSettingsBulk.isPending,
   };
 }

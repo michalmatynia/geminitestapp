@@ -5,34 +5,16 @@ import { useCallback } from 'react';
 import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
-import type { ProductWithImages } from '@/shared/contracts/products';
-import { productSchema } from '@/shared/contracts/products';
+import {
+  type ProductWithImages,
+  productSchema,
+  type ProductFilterDto as UseProductsFilters,
+} from '@/shared/contracts/products';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { refetchProductsAndCounts } from './productCache';
-
-export interface UseProductsFilters {
-  search?: string | undefined;
-  id?: string | undefined;
-  idMatchMode?: 'exact' | 'partial' | undefined;
-  sku?: string | undefined;
-  description?: string | undefined;
-  categoryId?: string | undefined;
-  minPrice?: number | undefined;
-  maxPrice?: number | undefined;
-  stockValue?: number | undefined;
-  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  advancedFilter?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  catalogId?: string | undefined;
-  searchLanguage?: string | undefined;
-  baseExported?: boolean | undefined;
-}
 
 export interface UseProductsOptions {
   enabled?: boolean;

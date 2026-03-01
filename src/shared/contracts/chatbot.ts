@@ -253,6 +253,24 @@ export type ChatbotContextSegmentDto = z.infer<typeof chatbotContextSegmentSchem
 export type ChatbotContextSegment = ChatbotContextSegmentDto;
 
 /**
+ * Chatbot Global Context DTOs
+ */
+export type ChatbotContextItemSource = 'manual' | 'pdf';
+
+export interface ChatbotContextItem {
+  id: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  source?: ChatbotContextItemSource;
+  createdAt: string;
+}
+
+export interface ChatbotContextDraft extends ChatbotContextItem {
+  active: boolean;
+}
+
+/**
  * Agent Runtime Snapshot Contract
  */
 export const agentGoalSchema = z.object({
@@ -388,6 +406,17 @@ export const modelProfileSchema = z.object({
 
 export type ModelProfileDto = z.infer<typeof modelProfileSchema>;
 export type ModelProfile = ModelProfileDto;
+
+export type ExtendedModelProfile = ModelProfile & {
+  normalized: string;
+  size: number | null;
+  isRerank: boolean;
+  isVision: boolean;
+  isCode: boolean;
+  isInstruct: boolean;
+  isChat: boolean;
+  isReasoning: boolean;
+};
 
 export const modelTaskRuleSchema = z.object({
   id: z.string().optional(),

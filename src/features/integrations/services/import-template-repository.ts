@@ -6,9 +6,9 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
-  ImportExportTemplate as DomainImportExportTemplate,
-  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
-} from '@/shared/contracts/data-import-export';
+  Template,
+  TemplateMapping,
+} from '@/shared/contracts/integrations';
 import {
   normalizeBaseImportParameterImportSettings,
   defaultBaseImportParameterImportSettings,
@@ -31,9 +31,6 @@ const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
   });
   return provider as ImportTemplateProvider;
 };
-
-export type Template = DomainImportExportTemplate;
-export type TemplateMapping = DomainImportExportTemplateMapping;
 
 const SETTINGS_KEY = 'base_import_templates';
 const SAMPLE_PRODUCT_KEY = 'base_import_sample_product_id';

@@ -28,18 +28,6 @@ import { type ApiPayloadResult } from '@/shared/contracts/http';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 
-export type {
-  CrudRequest,
-  CrudResult,
-  DatabasePreviewGroup,
-  DatabasePreviewPayload,
-  DatabasePreviewRequest,
-  DatabaseSyncDirection,
-  DatabaseType,
-  DatabaseInfoResponse,
-  SqlQueryResult,
-};
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

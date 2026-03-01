@@ -15,8 +15,6 @@ import type {
   DatabaseRestoreResponse,
   MultiSchemaResponse,
   RedisOverview as RedisOverviewResponse,
-} from '@/shared/contracts/database';
-import type {
   CrudRequest,
   CrudResult,
   DatabasePreviewMode,

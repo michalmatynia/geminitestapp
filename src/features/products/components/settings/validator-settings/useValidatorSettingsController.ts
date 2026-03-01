@@ -2,11 +2,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  CreateValidationPatternPayload,
-  ReorderValidationPatternUpdatePayload,
-  UpdateValidationPatternPayload,
-} from '@/features/products/api/settings';
+import {
+  type CreateProductValidationPatternDto as CreateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
+  type UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
+} from '@/shared/contracts/products/validation';
 import {
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,

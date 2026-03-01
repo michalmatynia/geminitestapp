@@ -12,16 +12,8 @@ import {
   type FilemakerPhoneNumberLink,
   type FilemakerPerson,
 } from './types';
+import type { FilemakerAddressFields } from '@/shared/contracts/filemaker';
 import { normalizePhoneNumbers, normalizeString } from './filemaker-settings.helpers';
-
-export type FilemakerAddressFields = {
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  countryId: string;
-};
 
 export const normalizeAddressFields = (value: {
   street?: unknown;

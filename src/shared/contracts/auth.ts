@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
-import { productAdvancedFilterPresetSchema } from './products';
+import { productAdvancedFilterPresetSchema } from './products/filters';
 
 /**
  * Auth User DTOs
@@ -17,6 +17,15 @@ export const authUserSchema = dtoBaseSchema.extend({
 });
 
 export type AuthUser = z.infer<typeof authUserSchema>;
+
+export type AuthUserRecord = {
+  id: string;
+  email: string;
+  name?: string | null;
+  passwordHash?: string | null;
+  image?: string | null;
+  emailVerified?: Date | null;
+};
 
 export const createUserSchema = authUserSchema
   .omit({

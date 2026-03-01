@@ -2,33 +2,28 @@ import sharp from 'sharp';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
-export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';
+import type {
+  ImageFormat,
+  ImageSize,
+  ImageSizeConfig,
+  OptimizationOptions,
+  OptimizedImageResult,
+} from '@/shared/contracts/files';
 
-const DEFAULT_IMAGE_SIZES: Record<ImageSize, { width: number; height?: number; quality?: number }> =
-  {
-    thumbnail: { width: 150, height: 150, quality: 80 },
-    small: { width: 300, quality: 85 },
-    medium: { width: 600, quality: 90 },
-    large: { width: 1200, quality: 95 },
-    original: { width: 2000, quality: 100 },
-  };
-
-export type OptimizationOptions = {
-  formats?: ImageFormat[];
-  sizes?: Partial<Record<ImageSize, { width: number; height?: number; quality?: number }>>;
-  quality?: number;
-  progressive?: boolean;
+export type {
+  ImageFormat,
+  ImageSize,
+  ImageSizeConfig,
+  OptimizationOptions,
+  OptimizedImageResult,
 };
 
-export type OptimizedImageResult = {
-  format: ImageFormat;
-  size: ImageSize;
-  buffer: Buffer;
-  width: number;
-  height: number;
-  fileSize: number;
-  url?: string;
+const DEFAULT_IMAGE_SIZES: Record<ImageSize, ImageSizeConfig> = {
+  thumbnail: { width: 150, height: 150, quality: 80 },
+  small: { width: 300, quality: 85 },
+  medium: { width: 600, quality: 90 },
+  large: { width: 1200, quality: 95 },
+  original: { width: 2000, quality: 100 },
 };
 
 const DEFAULT_OPTIONS: OptimizationOptions = {

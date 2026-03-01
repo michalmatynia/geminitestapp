@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { ObjectId } from 'mongodb';
+import { ObjectId as _ObjectId } from 'mongodb';
 
 import {
   getDefaultImageRetryPresets,
@@ -10,44 +10,14 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
+import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   ImageRetryPreset,
-  Template as DomainImportExportTemplate,
-  TemplateMapping as DomainImportExportTemplateMapping,
+  Template,
+  TemplateMapping,
 } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-type SettingDoc = {
-  _id: string | ObjectId;
-  key?: string;
-  value?: string;
-  updatedAt?: Date;
-  createdAt?: Date;
-};
-
-const toMongoId = (id: string): string | ObjectId => {
-  if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
-  return id;
-};
-
-type ExportTemplateProvider = 'mongodb' | 'prisma';
-const LOG_SOURCE = 'export-template-repository';
-
-const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
-  const provider = await getProductDataProvider();
-  await logSystemEvent({
-    level: 'info',
-    source: LOG_SOURCE,
-    message: `Provider: ${provider}`,
-    context: { provider },
-  });
-  return provider as ExportTemplateProvider;
-};
-
-export type Template = DomainImportExportTemplate;
-export type TemplateMapping = DomainImportExportTemplateMapping;
 
 const SETTINGS_KEY = 'base_export_templates';
 const ACTIVE_TEMPLATE_KEY = 'base_export_active_template_id';

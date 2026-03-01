@@ -310,6 +310,8 @@ describe('useProductListState', () => {
 
     act(() => {
       result.current.onProductEditClick(productA);
+    });
+    act(() => {
       result.current.onProductEditClick(productB);
     });
 

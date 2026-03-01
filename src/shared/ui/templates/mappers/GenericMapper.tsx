@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
+import { useEffect, useMemo, useCallback, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { StandardDataTablePanel, EmptyState, useToast } from '@/shared/ui';
+import { StandardDataTablePanel } from '../StandardDataTablePanel';
+import { EmptyState } from '../../empty-state';
+import { useToast } from '../../use-toast';
 
-import { usePendingMappings } from './usePendingMappings';
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
 import { GenericMapperStats } from './GenericMapperStats';
 import { GenericMapperExternalCell } from './GenericMapperExternalCell';
@@ -55,6 +58,95 @@ export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
 
 export interface GenericItemMapperProps<TInternal, TExternal, TMapping> {
   config: GenericItemMapperConfig<TInternal, TExternal, TMapping>;
+}
+
+type UsePendingMappingsConfig<TMapping> = {
+  mappings: TMapping[];
+  internalIds: string[];
+  getInternalId: (mapping: TMapping) => string;
+  getExternalId: (mapping: TMapping) => string | null;
+  isActive?: (mapping: TMapping) => boolean;
+};
+
+type MappingStats = {
+  total: number;
+  mapped: number;
+  pending: number;
+};
+
+export type PendingExternalMappingsState = {
+  pendingMappings: Map<string, string | null>;
+  getCurrentMapping: (internalId: string) => string | null;
+  handleMappingChange: (internalId: string, externalId: string | null) => void;
+  resetPendingMappings: () => void;
+  stats: MappingStats;
+};
+
+function useMappingsState<TMapping>({
+  mappings,
+  internalIds,
+  getInternalId,
+  getExternalId,
+  isActive,
+}: UsePendingMappingsConfig<TMapping>): PendingExternalMappingsState {
+  const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
+
+  const mappingByInternalId = useMemo(() => {
+    const next = new Map<string, string | null>();
+    for (const mapping of mappings) {
+      if (isActive && !isActive(mapping)) continue;
+      next.set(getInternalId(mapping), getExternalId(mapping));
+    }
+    return next;
+  }, [getExternalId, getInternalId, isActive, mappings]);
+
+  const getCurrentMapping = useCallback(
+    (internalId: string): string | null => {
+      if (pendingMappings.has(internalId)) {
+        return pendingMappings.get(internalId) ?? null;
+      }
+      return mappingByInternalId.get(internalId) ?? null;
+    },
+    [mappingByInternalId, pendingMappings]
+  );
+
+  const handleMappingChange = useCallback(
+    (internalId: string, externalId: string | null): void => {
+      setPendingMappings((prev: Map<string, string | null>) => {
+        const next = new Map(prev);
+        const savedValue = mappingByInternalId.get(internalId) ?? null;
+        if (savedValue === externalId) {
+          next.delete(internalId);
+        } else {
+          next.set(internalId, externalId);
+        }
+        return next;
+      });
+    },
+    [mappingByInternalId]
+  );
+
+  const resetPendingMappings = useCallback(() => {
+    setPendingMappings(new Map());
+  }, []);
+
+  const stats = useMemo<MappingStats>(() => {
+    const total = internalIds.length;
+    const mapped = internalIds.filter((id: string) => getCurrentMapping(id) !== null).length;
+    return {
+      total,
+      mapped,
+      pending: pendingMappings.size,
+    };
+  }, [getCurrentMapping, internalIds, pendingMappings.size]);
+
+  return {
+    pendingMappings,
+    getCurrentMapping,
+    handleMappingChange,
+    resetPendingMappings,
+    stats,
+  };
 }
 
 export function GenericMapper<TInternal, TExternal, TMapping>({
@@ -107,8 +199,8 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
     [externalItems, getExternalId, getExternalLabel]
   );
 
-  const { pendingMappings, getCurrentMapping, handleMappingChange, resetPendingMappings, stats } =
-    usePendingMappings({
+  const { pendingMappings, getCurrentMapping, handleMappingChange, resetPendingMappings, stats }: PendingExternalMappingsState =
+    useMappingsState<TMapping>({
       mappings: currentMappings,
       internalIds: sortedInternalItems.map((item) => getInternalId(item)),
       getInternalId: getMappingInternalId,
@@ -231,10 +323,10 @@ export function GenericMapper<TInternal, TExternal, TMapping>({
           />
         }
         alerts={
-          <GenericMapperStats 
-            total={stats.total} 
-            mapped={stats.mapped} 
-            pending={stats.pending} 
+          <GenericMapperStats
+            total={stats.total}
+            mapped={stats.mapped}
+            pending={stats.pending}
             itemLabel={title}
           />
         }

@@ -18,7 +18,6 @@ import {
 } from './listings';
 import { type Integration, type ImageTransformOptions, type ImageRetryPreset } from './base';
 import { type IntegrationConnection } from './connections';
-import { type TemplateMapping, type Template } from './templates';
 import {
   baseImportPreflightIssueSchema,
   type BaseImportItemStatus,
@@ -27,10 +26,17 @@ import {
   type BaseImportErrorClass,
   type BaseImportParameterImportSummary,
   type BaseImportRunRecord,
-  type BaseImportRunStatus,
-  type BaseImportPreflight,
+  type BaseImportRunStatus as _BaseImportRunStatus,
+  type BaseImportPreflight as _BaseImportPreflight,
 } from './base-com';
 import type { ImportTemplateParameterImport } from '../data-import-export';
+
+import {
+  type ImportExportTemplate as Template,
+  type ImportExportTemplateMapping as TemplateMapping,
+} from '../data-import-export';
+
+export type { Template, TemplateMapping };
 
 /**
  * Session DTOs
@@ -533,23 +539,40 @@ export type BaseImportItemRecord = {
   finishedAt: string | null;
 };
 
-export type BaseImportRunDetailResponse = {
-  run: BaseImportRunRecord;
-  items: BaseImportItemRecord[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-  };
+/**
+ * Base Import processing
+ */
+
+import type {
+  Product as ProductRecord,
+  CreateProduct as ProductCreateInput,
+} from '../products';
+
+export type ImportDecision =
+  | { type: 'create' }
+  | { type: 'update'; target: ProductRecord }
+  | { type: 'skip'; code: BaseImportErrorCode; message: string }
+  | { type: 'fail'; code: BaseImportErrorCode; message: string };
+
+export type ProcessItemResult = {
+  status: Exclude<BaseImportItemStatus, 'pending' | 'processing'>;
+  action: BaseImportItemAction | null;
+  importedProductId?: string | null;
+  baseProductId?: string | null;
+  sku?: string | null;
+  errorCode?: BaseImportErrorCode | null;
+  errorClass?: BaseImportErrorClass | null;
+  errorMessage?: string | null;
+  retryable?: boolean | null;
+  nextRetryAt?: string | null;
+  lastErrorAt?: string | null;
+  payloadSnapshot?: ProductCreateInput | null;
+  parameterImportSummary?: BaseImportParameterImportSummary | null;
 };
 
-export type BaseImportStartResponse = {
-  runId: string;
-  status: BaseImportRunStatus;
-  preflight?: BaseImportPreflight | null | undefined;
-  queueJobId: string | null;
-  summaryMessage: string | null;
+export type NormalizedMappedProduct = ProductCreateInput & {
+  producerIds?: string[];
+  tagIds?: string[];
 };
 
 export const defaultBaseImportParameterImportSettings: ImportTemplateParameterImport = {

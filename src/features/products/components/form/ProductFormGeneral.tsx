@@ -436,7 +436,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       {!hasCatalogs && (
-        <Alert variant='warning' className='mb-6'>
+        <Alert variant='warning' className='mb-6' data-testid='product-form-no-catalog-warning'>
           <p className='text-sm'>
             Select a catalog to edit product titles and descriptions. Language fields are based on
             catalog settings.

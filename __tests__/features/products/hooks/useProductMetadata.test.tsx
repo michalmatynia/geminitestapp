@@ -5,6 +5,7 @@ import { useProductMetadata } from '@/features/products/hooks/useProductMetadata
 import * as metadataQueries from '@/features/products/hooks/useProductMetadataQueries';
 import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
@@ -25,6 +26,16 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useSaveProducerMutation: vi.fn(),
 }));
 
+vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+  logClientError: vi.fn(),
+}));
+
+vi.mock('@/features/products/hooks/editingProductHydration', () => ({
+  isEditingProductHydrated: vi.fn(() => false),
+  markEditingProductHydrated: vi.fn((p: unknown) => p),
+  warnNonHydratedEditProduct: vi.fn(),
+}));
+
 type QueryResult<T> = {
   data: T;
   isLoading: boolean;
@@ -34,6 +45,13 @@ type QueryResult<T> = {
 const queryResult = <T,>(data: T): QueryResult<T> => ({
   data,
   isLoading: false,
+  error: null,
+});
+
+const queryResultSuccess = <T,>(data: T): QueryResult<T> & { isSuccess: boolean } => ({
+  data,
+  isLoading: false,
+  isSuccess: true,
   error: null,
 });
 
@@ -143,5 +161,46 @@ describe('useProductMetadata', () => {
     await waitFor(() => {
       expect(result.current.selectedCatalogIds[0]).toBe('catalog-b');
     });
+  });
+
+  it('does NOT fire logClientError guard when catalog/language queries are still loading', () => {
+    // Default queryResult does not include isSuccess — simulates a pending/loading state.
+    vi.mocked(metadataQueries.useCatalogs).mockReturnValue(queryResult([]) as never);
+    vi.mocked(metadataQueries.useLanguages).mockReturnValue(queryResult([]) as never);
+    const product = buildProduct({ id: 'p-loading', catalogId: 'cat-1', catalogs: [] });
+
+    renderHook(() => useProductMetadata({ product }));
+
+    expect(logClientError).not.toHaveBeenCalled();
+  });
+
+  it('fires logClientError guard when both queries succeed but filteredLanguages is empty for editing product', () => {
+    // Scenario: catalog IS found but its languageIds don't match any language in the system.
+    // selectedCatalogs resolves, languageIdSet is populated, but filter produces no matches.
+    // This is the guard's target: data loaded, yet form fields would be invisible.
+    vi.mocked(metadataQueries.useCatalogs).mockReturnValue(
+      queryResultSuccess([
+        { id: 'cat-missing', name: 'Ghost Catalog', languageIds: ['nonexistent-lang'] },
+      ]) as never
+    );
+    vi.mocked(metadataQueries.useLanguages).mockReturnValue(
+      queryResultSuccess([{ id: 'lang-en', code: 'en', name: 'English' }]) as never
+    );
+    const product = buildProduct({ id: 'p-broken', catalogId: 'cat-missing', catalogs: [] });
+
+    renderHook(() => useProductMetadata({ product }));
+
+    expect(logClientError).toHaveBeenCalledTimes(1);
+    const [err, extra] = vi.mocked(logClientError).mock.calls[0] as [
+      Error,
+      { context: Record<string, unknown> },
+    ];
+    expect(err.message).toContain('filteredLanguages empty');
+    expect(extra.context['productId']).toBe('p-broken');
+    expect(extra.context['service']).toBe('products');
+    expect(extra.context['category']).toBe('form-guard');
+    expect(extra.context['isHydrated']).toBe(false);
+    expect(extra.context['languagesCount']).toBe(1);
+    expect(extra.context['catalogsCount']).toBe(1);
   });
 });

@@ -4,6 +4,10 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
+import type {
+  ChatbotContextItem as ContextItem,
+  ChatbotContextDraft as ContextDraft,
+} from '@/shared/contracts/chatbot';
 
 import {
   useChatbotContextSettingsQuery,
@@ -11,18 +15,7 @@ import {
   useUploadChatbotContextPdfMutation,
 } from './useChatbotContextQueries';
 
-export type ContextItem = {
-  id: string;
-  title: string;
-  content: string;
-  tags?: string[];
-  source?: 'manual' | 'pdf';
-  createdAt: string;
-};
-
-export type ContextDraft = ContextItem & {
-  active: boolean;
-};
+export type { ContextItem, ContextDraft };
 
 const buildContextItems = (rawItems?: string): ContextItem[] => {
   if (rawItems) {

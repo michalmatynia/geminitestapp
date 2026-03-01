@@ -5,6 +5,7 @@ import type {
   ModelProfileDto as ModelProfile,
   ModelTaskRuleDto as ModelTaskRule,
   ChatbotTimelineEntryDto as TimelineEntry,
+  ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -24,17 +25,6 @@ export const parseModelSize = (normalized: string): number | null => {
   if (normalized.includes('small') || normalized.includes('mini')) return 3;
   if (normalized.includes('tiny')) return 1.5;
   return null;
-};
-
-export type ExtendedModelProfile = ModelProfile & {
-  normalized: string;
-  size: number | null;
-  isRerank: boolean;
-  isVision: boolean;
-  isCode: boolean;
-  isInstruct: boolean;
-  isChat: boolean;
-  isReasoning: boolean;
 };
 
 export const buildModelProfile = (name: string): ExtendedModelProfile => {

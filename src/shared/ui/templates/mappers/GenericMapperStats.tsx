@@ -1,5 +1,5 @@
 import React from 'react';
-import { MetadataItem } from '@/shared/ui';
+import { MetadataItem } from '../../metadata-item';
 
 export type GenericMapperStatsProps = {
   total: number;

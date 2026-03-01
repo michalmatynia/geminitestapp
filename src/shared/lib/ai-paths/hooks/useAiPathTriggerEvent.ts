@@ -830,7 +830,15 @@ export function useAiPathTriggerEvent(): {
 
       if (!enqueueResult.ok) {
         reportProgress({ status: 'error', progress: 0 });
-        toast(enqueueResult.error || 'Failed to enqueue AI Path run.', { variant: 'error' });
+        const errorMsg = enqueueResult.error || 'Failed to enqueue AI Path run.';
+        const isBrainError =
+          typeof errorMsg === 'string' &&
+          (errorMsg.includes('Brain settings') ||
+            errorMsg.includes('AI Paths execution is disabled'));
+        toast(
+          isBrainError ? `${errorMsg} Go to /admin/brain to configure.` : errorMsg,
+          { variant: 'error', duration: isBrainError ? 10_000 : undefined }
+        );
         return;
       }
 
@@ -849,7 +857,7 @@ export function useAiPathTriggerEvent(): {
           ? (queuedRun as { id: string }).id
           : null
       );
-      toast('AI Path run queued.', { variant: 'success' });
+      toast('AI Path run queued. Track progress at /admin/ai-paths/queue', { variant: 'success' });
 
       if (args.entityType === 'product') {
         scheduleQueuedProductRefresh(args.entityId);

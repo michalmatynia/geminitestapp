@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import { DropdownMenuItem, LoadingState, EmptyState, ActionMenu } from '@/shared/ui';
+import { DropdownMenuItem } from '../dropdown-menu';
+import { ActionMenu } from '../ActionMenu';
+import { EmptyState } from '../empty-state';
+import { LoadingState } from '../LoadingState';
 import { cn } from '@/shared/utils';
 
 export interface SimpleSettingsListItem {

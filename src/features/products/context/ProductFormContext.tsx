@@ -4,6 +4,10 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { useFormState } from 'react-hook-form';
 
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
+import {
+  isEditingProductHydrated,
+  warnNonHydratedEditProduct,
+} from '@/features/products/hooks/editingProductHydration';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
 import { ProductParameterValue } from '@/shared/contracts/products';
 import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
@@ -413,6 +417,19 @@ function ProductFormSubProviders({
   const markNonFormInteraction = (): void => {
     nonFormDirtyTrackingLockedRef.current = true;
   };
+
+  // Provider-level hydration guard: fires once on mount when a non-hydrated product
+  // reaches this provider with requireHydratedEditProduct=true.
+  // The ref prevents duplicate logs on re-renders.
+  const hydratedWarnedRef = useRef(false);
+  useEffect(() => {
+    if (!requireHydratedEditProduct) return;
+    if (!product) return;
+    if (isEditingProductHydrated(product)) return;
+    if (hydratedWarnedRef.current) return;
+    hydratedWarnedRef.current = true;
+    warnNonHydratedEditProduct(product);
+  }, [requireHydratedEditProduct, product]);
 
   return (
     <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>

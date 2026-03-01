@@ -1,4 +1,5 @@
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const EDIT_PRODUCT_HYDRATED_FLAG = '__editProductHydrated';
 
@@ -21,5 +22,24 @@ export const isEditingProductHydrated = (
 ): boolean => {
   if (!product) return false;
   return Boolean((product as HydratedProductWithImages)[EDIT_PRODUCT_HYDRATED_FLAG]);
+};
+
+/**
+ * Logs a structured client error when a non-hydrated product is passed to
+ * the edit provider. Call from guards only — not from render paths.
+ */
+export const warnNonHydratedEditProduct = (product: ProductWithImages): void => {
+  logClientError(
+    new Error('[ProductForm] Non-hydrated product passed to edit provider'),
+    {
+      context: {
+        service: 'products',
+        category: 'hydration-guard',
+        productId: product.id,
+        catalogId: typeof product.catalogId === 'string' ? product.catalogId : '',
+        catalogsLength: Array.isArray(product.catalogs) ? product.catalogs.length : -1,
+      },
+    }
+  );
 };
 

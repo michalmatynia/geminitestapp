@@ -2,14 +2,19 @@ import 'server-only';
 
 import {
   processTraderaListingJob,
-  type TraderaListingJobInput,
+  type TraderaListingJobInput as _TraderaListingJobInput,
 } from '@/features/integrations/services/tradera-listing-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { createManagedQueue } from '@/shared/lib/queue';
+import { createManagedQueue, type ManagedQueue } from '@/shared/lib/queue';
 
-type TraderaListingQueueJobData = TraderaListingJobInput;
+type TraderaListingQueueJobData = {
+  listingId: string;
+  action: 'list' | 'relist';
+  source?: 'manual' | 'scheduler' | 'api';
+  jobId?: string;
+};
 
-const queue = createManagedQueue<TraderaListingQueueJobData>({
+const queue: ManagedQueue<TraderaListingQueueJobData> = createManagedQueue<TraderaListingQueueJobData>({
   name: 'tradera-listings',
   concurrency: 1,
   defaultJobOptions: {
@@ -17,11 +22,11 @@ const queue = createManagedQueue<TraderaListingQueueJobData>({
     removeOnComplete: true,
     removeOnFail: false,
   },
-  processor: async (data, jobId) => {
+  processor: async (data: TraderaListingQueueJobData, jobId: string) => {
     await processTraderaListingJob({ ...data, jobId });
     return { ok: true, listingId: data.listingId, action: data.action };
   },
-  onCompleted: async (jobId, _result, data) => {
+  onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
     await ErrorSystem.logInfo('Tradera listing job completed', {
       service: 'tradera-listing-queue',
       listingId: data.listingId,
@@ -29,7 +34,11 @@ const queue = createManagedQueue<TraderaListingQueueJobData>({
       jobId,
     });
   },
-  onFailed: async (jobId, error, data) => {
+  onFailed: async (
+    jobId: string,
+    error: Error,
+    data: TraderaListingQueueJobData
+  ) => {
     await ErrorSystem.captureException(error, {
       service: 'tradera-listing-queue',
       listingId: data.listingId,

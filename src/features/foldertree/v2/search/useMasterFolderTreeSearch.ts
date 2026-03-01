@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { MasterTreeNode, MasterFolderTreeSearchResult } from '@/shared/contracts/master-folder-tree';
 
-export type MasterFolderTreeSearchResult = {
-  node: MasterTreeNode;
-};
+export type { MasterFolderTreeSearchResult };
 
 export function useMasterFolderTreeSearch(
   nodes: MasterTreeNode[],

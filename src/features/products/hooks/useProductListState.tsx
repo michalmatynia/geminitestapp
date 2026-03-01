@@ -457,6 +457,8 @@ export function useProductListState(): ProductListContextType & {
       setActionError(null);
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
+      // Open modal immediately with list data; submit is blocked by requireHydratedEditProduct
+      setEditingProduct(product);
       void queryClient
         .fetchQuery({
           queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),

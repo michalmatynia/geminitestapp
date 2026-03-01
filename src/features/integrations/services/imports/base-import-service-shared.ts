@@ -12,6 +12,9 @@ import type {
   BaseImportRunStatus,
   PriceGroupLookup,
   BaseConnectionContext,
+  ImportDecision,
+  ProcessItemResult,
+  NormalizedMappedProduct,
 } from '@/shared/contracts/integrations';
 
 export type {
@@ -25,22 +28,12 @@ export type {
   BaseImportRunStatus,
   PriceGroupLookup,
   BaseConnectionContext,
+  ImportDecision,
+  ProcessItemResult,
+  NormalizedMappedProduct,
 };
 
-import type {
-  Product as ProductRecord,
-  CreateProduct as ProductCreateInput,
-} from '@/shared/contracts/products';
-
-export const BASE_DETAILS_BATCH_SIZE = 100;
-export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 export const MAX_IMAGES_PER_PRODUCT = 15;
-
-const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;
-const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
-const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
-const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
-const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
 
 export type StartBaseImportRunInput = BaseImportRunParams;
 
@@ -52,32 +45,11 @@ export type ProductLookupMaps = {
   externalTagToInternalTagId: Map<string, string>;
 };
 
-export type ImportDecision =
-  | { type: 'create' }
-  | { type: 'update'; target: ProductRecord }
-  | { type: 'skip'; code: BaseImportErrorCode; message: string }
-  | { type: 'fail'; code: BaseImportErrorCode; message: string };
-
-export type ProcessItemResult = {
-  status: Exclude<BaseImportItemStatus, 'pending' | 'processing'>;
-  action: BaseImportItemRecord['action'];
-  importedProductId?: string | null;
-  baseProductId?: string | null;
-  sku?: string | null;
-  errorCode?: BaseImportErrorCode | null;
-  errorClass?: BaseImportErrorClass | null;
-  errorMessage?: string | null;
-  retryable?: boolean | null;
-  nextRetryAt?: string | null;
-  lastErrorAt?: string | null;
-  payloadSnapshot?: ProductCreateInput | null;
-  parameterImportSummary?: BaseImportParameterImportSummary | null;
-};
-
-export type NormalizedMappedProduct = ProductCreateInput & {
-  producerIds?: string[];
-  tagIds?: string[];
-};
+const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;
+const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
+const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
+const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
+const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
 
 const toPositiveIntOrFallback = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -110,6 +82,9 @@ export const BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = toPositiveIntOrFallback(
   process.env['BASE_IMPORT_HEARTBEAT_EVERY_ITEMS'],
   DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS
 );
+
+export const BASE_DETAILS_BATCH_SIZE = 100;
+export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 export const nowIso = (): string => new Date().toISOString();
 

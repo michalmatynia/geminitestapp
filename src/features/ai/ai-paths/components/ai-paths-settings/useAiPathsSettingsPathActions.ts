@@ -388,14 +388,28 @@ export function useAiPathsSettingsPathActions({
       const duplicateName = resolveDuplicatePathName(
         sourceMeta?.name || sourceConfig.name || `Path ${sourceId.slice(0, 6)}`
       );
-      const duplicatedNodes = normalizeNodes(
-        JSON.parse(JSON.stringify(sourceConfig.nodes ?? [])) as AiNode[]
-      );
-      const duplicatedEdges = sanitizeEdges(
-        duplicatedNodes,
-        JSON.parse(JSON.stringify(sourceConfig.edges ?? [])) as Edge[]
-      );
-      const selectedNodeId = sourceConfig.uiState?.selectedNodeId ?? null;
+      const duplicateBaseConfig: PathConfig = {
+        ...sourceConfig,
+        id: duplicateId,
+        name: duplicateName,
+        nodes: JSON.parse(JSON.stringify(sourceConfig.nodes ?? [])) as AiNode[],
+        edges: JSON.parse(JSON.stringify(sourceConfig.edges ?? [])) as Edge[],
+        updatedAt: now,
+        isLocked: false,
+        runtimeState: {},
+        lastRunAt: null,
+        runCount: 0,
+        uiState: {
+          selectedNodeId: sourceConfig.uiState?.selectedNodeId ?? null,
+          configOpen: false,
+        },
+      };
+      const repairedDuplicateConfig = repairPathNodeIdentities(
+        migratePathConfigCollections(duplicateBaseConfig).config
+      ).config;
+      const duplicatedNodes = normalizeNodes(repairedDuplicateConfig.nodes);
+      const duplicatedEdges = sanitizeEdges(duplicatedNodes, repairedDuplicateConfig.edges);
+      const selectedNodeId = repairedDuplicateConfig.uiState?.selectedNodeId ?? null;
       const resolvedSelectedNodeId =
         selectedNodeId &&
         duplicatedNodes.some((node: AiNode): boolean => node.id === selectedNodeId)
@@ -403,16 +417,9 @@ export function useAiPathsSettingsPathActions({
           : (duplicatedNodes[0]?.id ?? null);
 
       const duplicateConfig: PathConfig = {
-        ...sourceConfig,
-        id: duplicateId,
-        name: duplicateName,
+        ...repairedDuplicateConfig,
         nodes: duplicatedNodes,
         edges: duplicatedEdges,
-        updatedAt: now,
-        isLocked: false,
-        runtimeState: {},
-        lastRunAt: null,
-        runCount: 0,
         uiState: {
           selectedNodeId: resolvedSelectedNodeId,
           configOpen: false,

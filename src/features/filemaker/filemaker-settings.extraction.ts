@@ -2,33 +2,18 @@ import {
   FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
   FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
 } from './settings-constants';
+import type {
+  FilemakerEmailParserRule,
+  FilemakerEmailExtractionResult,
+  FilemakerPhoneValidationRule,
+  FilemakerPhoneValidationResult,
+} from '@/shared/contracts/filemaker';
 
-export type FilemakerEmailParserRule = {
-  id: string;
-  pattern: string;
-  flags?: string | null;
-  sequence?: number | null;
-};
-
-export type FilemakerEmailExtractionResult = {
-  emails: string[];
-  totalMatches: number;
-  invalidMatches: number;
-  usedDefaultRules: boolean;
-};
-
-export type FilemakerPhoneValidationRule = {
-  id: string;
-  pattern: string;
-  flags?: string | null;
-  sequence?: number | null;
-};
-
-export type FilemakerPhoneValidationResult = {
-  isValid: boolean;
-  normalizedPhoneNumber: string;
-  matchedRuleId: string | null;
-  usedDefaultRules: boolean;
+export type {
+  FilemakerEmailParserRule,
+  FilemakerEmailExtractionResult,
+  FilemakerPhoneValidationRule,
+  FilemakerPhoneValidationResult,
 };
 
 export const DEFAULT_FILEMAKER_EMAIL_PARSER_RULES: FilemakerEmailParserRule[] = [

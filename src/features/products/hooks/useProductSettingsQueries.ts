@@ -3,18 +3,24 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  Catalog,
-  CatalogRecord,
-  PriceGroup,
-  ProductCategory,
-  ProductCategoryWithChildren,
-  ProductParameter,
-  ProductSimpleParameter,
-  ProductTag,
-  ProductValidationPattern,
-  ProductValidatorConfig,
-  ProductValidatorSettings,
-} from '@/shared/contracts/products';
+  type Catalog,
+  type CatalogRecord,
+  type PriceGroup,
+} from '@/shared/contracts/products/catalogs';
+import {
+  type ProductCategory,
+  type ProductCategoryWithChildren,
+} from '@/shared/contracts/products/categories';
+import {
+  type ProductParameter,
+  type ProductSimpleParameter,
+} from '@/shared/contracts/products/parameters';
+import { type ProductTag } from '@/shared/contracts/products/tags';
+import {
+  type ProductValidationPattern,
+  type ProductValidatorConfig,
+  type ProductValidatorSettings,
+} from '@/shared/contracts/products/validation';
 import type {
   UpdateMutation,
   DeleteMutation,

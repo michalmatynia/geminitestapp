@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectSimple } from '@/shared/ui';
+import { SelectSimple } from '../../select-simple';
 
 export type GenericMapperExternalCellProps = {
   value: string | null;

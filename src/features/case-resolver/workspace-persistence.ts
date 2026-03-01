@@ -2,9 +2,9 @@ import type {
   CaseResolverWorkspace,
   CaseResolverWorkspaceMetadata,
   PersistCaseResolverWorkspaceResult,
-  PersistCaseResolverWorkspaceSuccess,
-  PersistCaseResolverWorkspaceConflict,
-  PersistCaseResolverWorkspaceFailure,
+  PersistCaseResolverWorkspaceSuccess as _PersistCaseResolverWorkspaceSuccess,
+  PersistCaseResolverWorkspaceConflict as _PersistCaseResolverWorkspaceConflict,
+  PersistCaseResolverWorkspaceFailure as _PersistCaseResolverWorkspaceFailure,
 } from '@/shared/contracts/case-resolver';
 
 import {

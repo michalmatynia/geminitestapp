@@ -2,12 +2,11 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
-import type {
-  BaseImportStartResponse,
-  BaseImportRunDetailResponse,
-  ImageRetryPreset,
-  ImageRetryPresetDto,
-} from './integrations';
+import {
+  type BaseImportStartResponse,
+  type BaseImportRunDetailResponse,
+} from './integrations/base-com';
+import { type ImageRetryPreset, type ImageRetryPresetDto } from './integrations/base';
 
 /**
  * Data Import/Export DTOs

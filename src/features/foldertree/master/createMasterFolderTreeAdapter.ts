@@ -1,62 +1,19 @@
 import type {
   MasterFolderTreeAdapterV3,
-  MasterFolderTreePersistContext,
-  MasterFolderTreePersistOperation,
+  MasterFolderTreePersistContext as _MasterFolderTreePersistContext,
+  MasterFolderTreePersistOperation as _MasterFolderTreePersistOperation,
+  DecodedMasterTreeNode,
+  CreateMasterFolderTreeAdapterOptions,
+  MoveOperation as _MoveOperation,
+  ReorderOperation as _ReorderOperation,
+  RenameOperation as _RenameOperation,
+  ReplaceNodesOperation as _ReplaceNodesOperation,
 } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { MasterTreeId as _MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { createMasterFolderTreeAdapterV3 } from '../v2/adapter/createMasterFolderTreeAdapterV3';
 
-type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
-type ReorderOperation = Extract<MasterFolderTreePersistOperation, { type: 'reorder' }>;
-type RenameOperation = Extract<MasterFolderTreePersistOperation, { type: 'rename' }>;
-type ReplaceNodesOperation = Extract<MasterFolderTreePersistOperation, { type: 'replace_nodes' }>;
-
-export type DecodedMasterTreeNode<TEntity extends string = string> = {
-  entity: TEntity;
-  id: string;
-  nodeId: MasterTreeId;
-};
-
-export type CreateMasterFolderTreeAdapterOptions<TEntity extends string> = {
-  decodeNodeId: (nodeId: MasterTreeId) => DecodedMasterTreeNode<TEntity> | null;
-  fetchState?:
-    | ((instanceId?: string) => Promise<{ nodes: MasterTreeNode[]; version?: number | undefined }>)
-    | undefined;
-  loadNodes?: (() => Promise<MasterTreeNode[]>) | undefined;
-  handlers?: {
-    onMove?:
-      | ((input: {
-          operation: MoveOperation;
-          context: MasterFolderTreePersistContext;
-          node: DecodedMasterTreeNode<TEntity>;
-          targetParent: DecodedMasterTreeNode<TEntity> | null;
-        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
-      | undefined;
-    onReorder?:
-      | ((input: {
-          operation: ReorderOperation;
-          context: MasterFolderTreePersistContext;
-          node: DecodedMasterTreeNode<TEntity>;
-          target: DecodedMasterTreeNode<TEntity>;
-        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
-      | undefined;
-    onRename?:
-      | ((input: {
-          operation: RenameOperation;
-          context: MasterFolderTreePersistContext;
-          node: DecodedMasterTreeNode<TEntity>;
-          nextName: string;
-        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
-      | undefined;
-    onReplaceNodes?:
-      | ((input: {
-          operation: ReplaceNodesOperation;
-          context: MasterFolderTreePersistContext;
-        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
-      | undefined;
-  };
-};
+export type { DecodedMasterTreeNode, CreateMasterFolderTreeAdapterOptions };
 
 export function createMasterFolderTreeAdapter<TEntity extends string>({
   decodeNodeId,

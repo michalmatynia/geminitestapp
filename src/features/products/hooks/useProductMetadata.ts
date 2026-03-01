@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 
 import type { Language } from '@/shared/contracts/internationalization';
 import type {
@@ -14,6 +14,8 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductFormData } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { isEditingProductHydrated } from './editingProductHydration';
 
 import {
   useCatalogs,
@@ -375,6 +377,37 @@ export function useProductMetadata({
 
     return { filteredLanguages, filteredPriceGroups };
   }, [catalogsQuery.data, languagesQuery.data, priceGroupsQuery.data, selectedCatalogIds]);
+
+  // Guard: detect "form fields invisible" failure condition.
+  // Fires only AFTER both catalog and language queries succeed — never during loading.
+  useEffect(() => {
+    if (!product?.id) return;
+    if (!catalogsQuery.isSuccess || !languagesQuery.isSuccess) return;
+    if (selectedCatalogIds.length === 0) return;
+    if (filteredLanguages.length > 0) return;
+    logClientError(
+      new Error('[ProductForm] filteredLanguages empty after queries resolved'),
+      {
+        context: {
+          service: 'products',
+          category: 'form-guard',
+          productId: product.id,
+          isHydrated: isEditingProductHydrated(product),
+          selectedCatalogIds,
+          catalogsCount: catalogsQuery.data?.length ?? 0,
+          languagesCount: languagesQuery.data?.length ?? 0,
+        },
+      }
+    );
+  }, [
+    product,
+    catalogsQuery.isSuccess,
+    catalogsQuery.data,
+    languagesQuery.isSuccess,
+    languagesQuery.data,
+    selectedCatalogIds,
+    filteredLanguages,
+  ]);
 
   return {
     catalogs: catalogsQuery.data || [],

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
@@ -163,7 +165,8 @@ export function useUsersState(): UseUsersStateReturn {
         u.name?.toLowerCase().includes(q) ||
         u.id.toLowerCase().includes(q)
     );
-  }, [search, users]);
+  }, [users, search]);
+
 
   const handleRoleChange = useCallback((userId: string, roleId: string) => {
     setLocalUserRoles((prev) => {

@@ -278,6 +278,64 @@ export type MasterFolderTreeActionResult = {
   error?: { message: string; code?: string; details?: unknown };
 };
 
+export type MasterFolderTreeSearchResult = {
+  node: MasterTreeNode;
+};
+
+export type DecodedMasterTreeNode<TEntity extends string = string> = {
+  entity: TEntity;
+  id: string;
+  nodeId: MasterTreeId;
+};
+
+export type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
+export type ReorderOperation = Extract<MasterFolderTreePersistOperation, { type: 'reorder' }>;
+export type RenameOperation = Extract<MasterFolderTreePersistOperation, { type: 'rename' }>;
+export type ReplaceNodesOperation = Extract<
+  MasterFolderTreePersistOperation,
+  { type: 'replace_nodes' }
+>;
+
+export type CreateMasterFolderTreeAdapterOptions<TEntity extends string> = {
+  decodeNodeId: (nodeId: MasterTreeId) => DecodedMasterTreeNode<TEntity> | null;
+  fetchState?:
+    | ((instanceId?: string) => Promise<{ nodes: MasterTreeNode[]; version?: number | undefined }>)
+    | undefined;
+  loadNodes?: (() => Promise<MasterTreeNode[]>) | undefined;
+  handlers?: {
+    onMove?:
+      | ((input: {
+          operation: MoveOperation;
+          context: MasterFolderTreePersistContext;
+          node: DecodedMasterTreeNode<TEntity>;
+          targetParent: DecodedMasterTreeNode<TEntity> | null;
+        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
+      | undefined;
+    onReorder?:
+      | ((input: {
+          operation: ReorderOperation;
+          context: MasterFolderTreePersistContext;
+          node: DecodedMasterTreeNode<TEntity>;
+          target: DecodedMasterTreeNode<TEntity>;
+        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
+      | undefined;
+    onRename?:
+      | ((input: {
+          operation: RenameOperation;
+          context: MasterFolderTreePersistContext;
+          node: DecodedMasterTreeNode<TEntity>;
+          nextName: string;
+        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
+      | undefined;
+    onReplaceNodes?:
+      | ((input: {
+          operation: ReplaceNodesOperation;
+          context: MasterFolderTreePersistContext;
+        }) => Promise<MasterTreeNode[] | void> | MasterTreeNode[] | void)
+      | undefined;
+  };
+};
+
 /**
  * Master Folder Tree Profile DTOs
  */

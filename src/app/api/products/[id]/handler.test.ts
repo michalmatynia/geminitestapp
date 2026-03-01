@@ -89,8 +89,21 @@ describe('products/[id] handler cache invalidation', () => {
     const response = await PATCH_handler(request, buildContext(), { id: 'product-1' });
 
     expect(response.status).toBe(200);
+    expect(updateProductMock).toHaveBeenCalledTimes(1);
+    expect(updateProductMock).toHaveBeenCalledWith('product-1', { price: 11.5 }, {});
     expect(invalidateProductMock).toHaveBeenCalledTimes(1);
     expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
+  });
+
+  it('forwards stock-only PATCH updates without parameters payload', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({ ok: true, data: { stock: 7 } });
+    const request = {} as NextRequest;
+
+    const response = await PATCH_handler(request, buildContext(), { id: 'product-1' });
+
+    expect(response.status).toBe(200);
+    expect(updateProductMock).toHaveBeenCalledTimes(1);
+    expect(updateProductMock).toHaveBeenCalledWith('product-1', { stock: 7 }, {});
   });
 
   it('invalidates product cache after successful DELETE', async () => {

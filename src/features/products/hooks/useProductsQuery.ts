@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
@@ -21,6 +21,9 @@ export interface UseProductsOptions {
 }
 
 const PRODUCTS_STALE_MS = 10_000;
+
+const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
+  [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
 
 export function useProducts(
   filters: UseProductsFilters,
@@ -87,19 +90,22 @@ export function useProductsWithCount(
   refetch: () => Promise<void>;
 } {
   const queryClient = useQueryClient();
+  const enabled = options?.enabled ?? true;
+  const prefetchKeyRef = useRef<string>('');
 
   // Single request replaces the previous two parallel queries (getProducts + countProducts).
   // The query key starts with QUERY_KEYS.products.lists() so refetchProductsAndCounts()
   // invalidates it automatically on mutations.
-  const queryKey = [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
+  const queryKey = useMemo(() => getProductsPagedQueryKey(filters), [filters]);
   const query = createSingleQueryV2({
     id: JSON.stringify(filters) + ':paged',
     queryKey,
     queryFn: async (): Promise<{ products: ProductWithImages[]; total: number }> =>
       getProductsWithCount(filters),
+    placeholderData: (previous) => previous,
     staleTime: PRODUCTS_STALE_MS,
     refetchOnMount: 'always',
-    enabled: options?.enabled ?? true,
+    enabled,
     meta: {
       source: 'products.hooks.useProductsWithCount',
       operation: 'detail',
@@ -109,6 +115,35 @@ export function useProductsWithCount(
       tags: ['products', 'list', 'count'],
     },
   });
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (!query.data) return;
+
+    const currentPage = typeof filters.page === 'number' && filters.page > 0 ? filters.page : 1;
+    const currentPageSize =
+      typeof filters.pageSize === 'number' && filters.pageSize > 0 ? filters.pageSize : 20;
+    const totalPages = Math.max(1, Math.ceil(query.data.total / currentPageSize));
+    if (currentPage >= totalPages) return;
+
+    const nextFilters: UseProductsFilters = {
+      ...filters,
+      page: currentPage + 1,
+      pageSize: currentPageSize,
+    };
+    const nextQueryKey = getProductsPagedQueryKey(nextFilters);
+    const prefetchKey = JSON.stringify(nextQueryKey);
+    if (prefetchKeyRef.current === prefetchKey) return;
+    prefetchKeyRef.current = prefetchKey;
+
+    if (queryClient.getQueryData(nextQueryKey) !== undefined) return;
+
+    void queryClient.prefetchQuery({
+      queryKey: nextQueryKey,
+      queryFn: () => getProductsWithCount(nextFilters),
+      staleTime: PRODUCTS_STALE_MS,
+    });
+  }, [enabled, filters, query.data, queryClient]);
 
   const refetch = useCallback(async (): Promise<void> => {
     await refetchProductsAndCounts(queryClient);

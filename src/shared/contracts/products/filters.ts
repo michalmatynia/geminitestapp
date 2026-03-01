@@ -423,7 +423,22 @@ const getAdvancedFilterPayloadValidationError = (value: string): string | null =
   }
 };
 
+const PRODUCT_FILTER_PAGE_SIZE_DEFAULT = 20;
+const PRODUCT_FILTER_PAGE_SIZE_MAX = 48;
+
 export const productFilterSchema = commonListQuerySchema.extend({
+  pageSize: z.preprocess((value: unknown) => {
+    const parsed =
+      typeof value === 'number'
+        ? Math.trunc(value)
+        : typeof value === 'string'
+          ? Number.parseInt(value, 10)
+          : Number.NaN;
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return PRODUCT_FILTER_PAGE_SIZE_DEFAULT;
+    }
+    return Math.min(PRODUCT_FILTER_PAGE_SIZE_MAX, parsed);
+  }, z.number().int().min(1).max(PRODUCT_FILTER_PAGE_SIZE_MAX).default(PRODUCT_FILTER_PAGE_SIZE_DEFAULT)),
   id: z.string().trim().optional(),
   idMatchMode: z.enum(['exact', 'partial']).optional(),
   sku: z.string().trim().optional(),

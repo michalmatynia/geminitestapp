@@ -9,6 +9,7 @@ import type {
   ProductListPreferences,
 } from '@/shared/contracts/products';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
@@ -41,7 +42,7 @@ const mapProductListPreferences = (
     'name_en',
   catalogFilter: data?.productListCatalogFilter || 'all',
   currencyCode: data?.productListCurrencyCode ?? 'PLN',
-  pageSize: data?.productListPageSize || 12,
+  pageSize: normalizeProductPageSize(data?.productListPageSize, 12),
   thumbnailSource: data?.productListThumbnailSource || 'file',
   filtersCollapsedByDefault: data?.productListFiltersCollapsedByDefault ?? false,
   advancedFilterPresets: data?.productListAdvancedFilterPresets ?? [],
@@ -174,7 +175,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
 
   const setPageSize = useCallback(
     async (size: number) => {
-      await setPreference({ pageSize: size });
+      await setPreference({ pageSize: normalizeProductPageSize(size, 12) });
     },
     [setPreference]
   );

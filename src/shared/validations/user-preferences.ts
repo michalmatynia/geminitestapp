@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { JsonValue, UserPreferences } from '@/shared/contracts/auth';
 import { productAdvancedFilterPresetSchema } from '@/shared/contracts/products';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
 export const USER_PREFERENCES_HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -153,7 +154,10 @@ export const normalizeUserPreferencesUpdatePayload = (
     normalized.productListCurrencyCode = normalizeNullableString(payload.productListCurrencyCode);
   }
   if (payload.productListPageSize !== undefined) {
-    normalized.productListPageSize = payload.productListPageSize;
+    normalized.productListPageSize =
+      payload.productListPageSize === null
+        ? null
+        : normalizeProductPageSize(payload.productListPageSize, 12);
   }
   if (payload.productListThumbnailSource !== undefined) {
     normalized.productListThumbnailSource = payload.productListThumbnailSource;

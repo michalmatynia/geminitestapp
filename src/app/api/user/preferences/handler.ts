@@ -7,6 +7,7 @@ import {
   warmUserPreferencesCache,
 } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { UpdateUserPreferencesInput as UserPreferencesData } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -52,7 +53,7 @@ const buildUserPreferencesResponse = (
   productListNameLocale: preferences?.productListNameLocale ?? 'name_en',
   productListCatalogFilter: preferences?.productListCatalogFilter ?? 'all',
   productListCurrencyCode: preferences?.productListCurrencyCode ?? 'PLN',
-  productListPageSize: preferences?.productListPageSize ?? 12,
+  productListPageSize: normalizeProductPageSize(preferences?.productListPageSize, 12),
   productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
   productListAdvancedFilterPresets: preferences?.productListAdvancedFilterPresets ?? [],

@@ -102,7 +102,6 @@ const buildListProjectStage = (filters: ProductFilters): Document | null => {
     categoryId: 1,
     categories: { $slice: ['$categories', 1] },
     catalogId: 1,
-    catalogs: { $slice: ['$catalogs', 1] },
     name_en: 1,
     name_pl: 1,
     name_de: 1,
@@ -112,7 +111,43 @@ const buildListProjectStage = (filters: ProductFilters): Document | null => {
     updatedAt: 1,
     imageLinks: { $slice: ['$imageLinks', 1] },
     imageBase64s: { $literal: [] },
-    images: { $slice: ['$images', 1] },
+    images: {
+      $map: {
+        input: { $slice: ['$images', 1] },
+        as: 'image',
+        in: {
+          productId: '$$image.productId',
+          imageFileId: '$$image.imageFileId',
+          assignedAt: '$$image.assignedAt',
+          imageFile: {
+            id: '$$image.imageFile.id',
+            filepath: '$$image.imageFile.filepath',
+          },
+        },
+      },
+    },
+    catalogs: {
+      $map: {
+        input: { $slice: ['$catalogs', 1] },
+        as: 'catalog',
+        in: {
+          catalogId: '$$catalog.catalogId',
+          assignedAt: '$$catalog.assignedAt',
+          catalog: {
+            id: '$$catalog.catalog.id',
+          },
+        },
+      },
+    },
+    categories: {
+      $map: {
+        input: { $slice: ['$categories', 1] },
+        as: 'category',
+        in: {
+          categoryId: '$$category.categoryId',
+        },
+      },
+    },
   };
 };
 

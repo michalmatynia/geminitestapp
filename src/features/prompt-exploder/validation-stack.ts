@@ -29,6 +29,14 @@ const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
 const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =
   'case-resolver-prompt-exploder';
 
+const KNOWN_STACK_SCOPE_ALIASES: Readonly<Record<string, ValidatorScope>> = {
+  'prompt-exploder': PROMPT_EXPLODER_VALIDATOR_SCOPE,
+  prompt_exploder: PROMPT_EXPLODER_VALIDATOR_SCOPE,
+  image_studio_prompt_exploder: PROMPT_EXPLODER_VALIDATOR_SCOPE,
+  'case-resolver-prompt-exploder': CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+  case_resolver_prompt_exploder: CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+};
+
 export const DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK: PromptExploderValidationRuleStack =
   'prompt-exploder';
 
@@ -55,10 +63,17 @@ const normalizeStackValue = (
   return (value.id || '').trim();
 };
 
+const normalizeStackAliasKey = (value: string): string => value.trim().toLowerCase();
+
 const toRuntimeScope = (validatorScope: ValidatorScope): PromptExploderRuntimeValidationScope =>
   validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
+
+const canonicalStackIdFromScope = (scope: ValidatorScope): PromptExploderValidationRuleStack =>
+  scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
+    ? 'case-resolver-prompt-exploder'
+    : 'prompt-exploder';
 
 const findFirstListByScope = (
   patternLists: ValidatorPatternList[],
@@ -121,6 +136,35 @@ const resolveStackByScope = (
   };
 };
 
+const resolveKnownStackAlias = (
+  stack: string,
+  patternLists: ValidatorPatternList[]
+): PromptExploderValidationStackResolution | null => {
+  const aliasScope = KNOWN_STACK_SCOPE_ALIASES[normalizeStackAliasKey(stack)];
+  if (!aliasScope) return null;
+
+  const matchedList = findFirstListByScope(patternLists, aliasScope);
+  if (matchedList) {
+    return {
+      stack: matchedList.id,
+      scope: toRuntimeScope(matchedList.scope),
+      validatorScope: matchedList.scope,
+      list: matchedList,
+      usedFallback: false,
+      reason: 'exact_match',
+    };
+  }
+
+  return {
+    stack: canonicalStackIdFromScope(aliasScope),
+    scope: toRuntimeScope(aliasScope),
+    validatorScope: aliasScope,
+    list: undefined,
+    usedFallback: false,
+    reason: 'exact_match',
+  };
+};
+
 export const resolvePromptExploderValidationStack = (args: {
   stack: PromptExploderValidationRuleStack | null | undefined;
   patternLists?: ValidatorPatternList[] | null | undefined;
@@ -144,6 +188,11 @@ export const resolvePromptExploderValidationStack = (args: {
         usedFallback: false,
         reason: 'exact_match',
       };
+    }
+
+    const aliasResolution = resolveKnownStackAlias(normalizedStack, patternLists);
+    if (aliasResolution) {
+      return aliasResolution;
     }
   }
 

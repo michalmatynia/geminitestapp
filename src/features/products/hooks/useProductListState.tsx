@@ -19,6 +19,7 @@ import { ProductTableSkeleton } from '@/features/products/components/list/Produc
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  normalizeProductPageSize,
 } from '@/features/products/constants';
 import {
   EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
@@ -31,7 +32,10 @@ import {
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
-import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
+import {
+  isEditingProductHydrated,
+  markEditingProductHydrated,
+} from '@/features/products/hooks/editingProductHydration';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
@@ -64,6 +68,19 @@ const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
 const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
 const DRAFT_DETAIL_TIMEOUT_MS = 30_000;
 
+export const shouldAdoptIncomingEditProductDetail = (input: {
+  currentProduct: ProductWithImages;
+  incomingProduct: ProductWithImages;
+  isEditHydrating: boolean;
+}): boolean => {
+  const { currentProduct, incomingProduct, isEditHydrating } = input;
+  if (incomingProduct.id !== currentProduct.id) return false;
+  const hydrated = isEditingProductHydrated(currentProduct);
+  if (!hydrated && !isEditHydrating) return false;
+  if (hydrated && !isIncomingProductDetailNewer(incomingProduct, currentProduct)) return false;
+  return true;
+};
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
@@ -80,6 +97,7 @@ export function useProductListState(): ProductListContextType & {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isEditHydrating, setIsEditHydrating] = useState(false);
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const productImageBaseUrl =
@@ -425,14 +443,22 @@ export function useProductListState(): ProductListContextType & {
     if (!editingProduct?.id) return;
     const fresh = editingProductDetailQuery.data;
     if (!fresh) return;
-    if (fresh.id !== editingProduct.id) return;
-    if (!isIncomingProductDetailNewer(fresh, editingProduct)) return;
+    if (
+      !shouldAdoptIncomingEditProductDetail({
+        currentProduct: editingProduct,
+        incomingProduct: fresh,
+        isEditHydrating,
+      })
+    ) {
+      return;
+    }
     setEditingProduct(markEditingProductHydrated(fresh));
-  }, [editingProduct, editingProductDetailQuery.data, setEditingProduct]);
+  }, [editingProduct, editingProductDetailQuery.data, isEditHydrating, setEditingProduct]);
 
   useEffect(() => {
     if (editingProduct?.id) return;
     editOpenRequestTokenRef.current += 1;
+    setIsEditHydrating(false);
   }, [editingProduct?.id]);
 
   const prefetchProductDetail = useCallback(
@@ -457,8 +483,8 @@ export function useProductListState(): ProductListContextType & {
       setActionError(null);
       editOpenRequestTokenRef.current += 1;
       const requestToken = editOpenRequestTokenRef.current;
-      // Open modal immediately with list data; submit is blocked by requireHydratedEditProduct
-      setEditingProduct(product);
+      setEditingProduct(null);
+      setIsEditHydrating(true);
       void queryClient
         .fetchQuery({
           queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
@@ -474,9 +500,11 @@ export function useProductListState(): ProductListContextType & {
         .then((freshProduct: ProductWithImages) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
           setEditingProduct(markEditingProductHydrated(freshProduct));
+          setIsEditHydrating(false);
         })
         .catch((error: unknown) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
+          setIsEditHydrating(false);
           if (error instanceof ApiError && error.status === 404) {
             toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
             setRefreshTrigger((prev: number) => prev + 1);
@@ -493,6 +521,8 @@ export function useProductListState(): ProductListContextType & {
   useEffect(() => {
     if (!openProductIdFromQuery) {
       openingProductFromQueryRef.current = null;
+      editOpenRequestTokenRef.current += 1;
+      setIsEditHydrating(false);
       return;
     }
     if (editingProduct?.id === openProductIdFromQuery) return;
@@ -502,6 +532,8 @@ export function useProductListState(): ProductListContextType & {
     const requestToken = editOpenRequestTokenRef.current;
 
     setActionError(null);
+    setEditingProduct(null);
+    setIsEditHydrating(true);
     void queryClient
       .fetchQuery({
         queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
@@ -520,9 +552,11 @@ export function useProductListState(): ProductListContextType & {
       .then((freshProduct: ProductWithImages) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;
         setEditingProduct(markEditingProductHydrated(freshProduct));
+        setIsEditHydrating(false);
       })
       .catch((error: unknown) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;
+        setIsEditHydrating(false);
         if (error instanceof ApiError && error.status === 404) {
           toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
           setRefreshTrigger((prev: number) => prev + 1);
@@ -548,14 +582,16 @@ export function useProductListState(): ProductListContextType & {
     if (!(error instanceof ApiError) || error.status !== 404) return;
 
     setEditingProduct(null);
+    setIsEditHydrating(false);
     toast('This product was deleted or is unavailable.', { variant: 'warning' });
     setRefreshTrigger((prev: number) => prev + 1);
   }, [editingProduct?.id, editingProductDetailQuery.error, setEditingProduct, toast]);
 
   const handleSetPageSize = useCallback(
     (size: number) => {
-      setPageSize(size);
-      void updatePageSize(size);
+      const normalizedPageSize = normalizeProductPageSize(size, 12);
+      setPageSize(normalizedPageSize);
+      void updatePageSize(normalizedPageSize);
     },
     [setPageSize, updatePageSize]
   );
@@ -633,7 +669,9 @@ export function useProductListState(): ProductListContextType & {
   );
 
   const handleCloseEdit = useCallback(() => {
+    editOpenRequestTokenRef.current += 1;
     setEditingProduct(null);
+    setIsEditHydrating(false);
     clearProductEditorQueryParams();
   }, [clearProductEditorQueryParams, setEditingProduct]);
 
@@ -862,6 +900,7 @@ export function useProductListState(): ProductListContextType & {
         setCreateDraft(null);
       },
       editingProduct,
+      isEditHydrating,
       onCloseEdit: handleCloseEdit,
       onEditSuccess: handleEditSuccess,
       onEditSave: handleEditSave,
@@ -932,6 +971,7 @@ export function useProductListState(): ProductListContextType & {
       integrationBadgeStatuses,
       integrationsProduct,
       isCreateOpen,
+      isEditHydrating,
       isPromptOpen,
       setIsPromptOpen,
       handleConfirmSku,

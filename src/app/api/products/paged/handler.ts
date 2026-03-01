@@ -1,8 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/shared/lib/products/services/productService';
 import type { ProductFiltersParsed } from '@/shared/lib/products/validations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { env } from '@/shared/lib/env';
+
+const shouldLogTiming = () => env.DEBUG_API_TIMING;
+
+const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
+  const parts = Object.entries(entries)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
+  return parts.join(', ');
+};
+
+const attachTimingHeaders = (
+  response: Response,
+  entries: Record<string, number | null | undefined>
+): void => {
+  const value = buildServerTiming(entries);
+  if (value) {
+    response.headers.set('Server-Timing', value);
+  }
+};
 
 /**
  * GET /api/products/paged
@@ -13,7 +34,22 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
  * Prisma continues to use parallel findMany + count queries.
  */
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const timings: Record<string, number | null | undefined> = {};
   const filters = ctx.query as ProductFiltersParsed;
+  const serviceStart = performance.now();
   const result = await productService.getProductsWithCount(filters);
-  return NextResponse.json(result);
+  timings['service'] = performance.now() - serviceStart;
+  timings['total'] = ctx.getElapsedMs();
+
+  if (shouldLogTiming()) {
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] products.paged.GET',
+      context: timings,
+    });
+  }
+
+  const response = NextResponse.json(result);
+  attachTimingHeaders(response, timings);
+  return response;
 }

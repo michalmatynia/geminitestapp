@@ -125,6 +125,7 @@ export interface ProductListContextType {
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;
   editingProduct: ProductWithImages | null;
+  isEditHydrating: boolean;
   onCloseEdit: () => void;
   onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
@@ -263,6 +264,7 @@ export interface ProductListModalsContextType {
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;
   editingProduct: ProductWithImages | null;
+  isEditHydrating: boolean;
   onCloseEdit: () => void;
   onEditSuccess: (info?: { queued?: boolean }) => void;
   onEditSave: (saved: ProductWithImages) => void;
@@ -473,6 +475,7 @@ export function ProductListProvider({
       onCloseCreate: value.onCloseCreate,
       onCreateSuccess: value.onCreateSuccess,
       editingProduct: value.editingProduct,
+      isEditHydrating: value.isEditHydrating,
       onCloseEdit: value.onCloseEdit,
       onEditSuccess: value.onEditSuccess,
       onEditSave: value.onEditSave,

@@ -6,7 +6,9 @@ import { ListProductModal } from '@/features/integrations/components/listings/Li
 import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
+import { isEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
+import { FormModal, Skeleton } from '@/shared/ui';
 
 import { ProductFormModal } from './modals/ProductFormModal';
 
@@ -26,6 +28,7 @@ export function ProductModals(): React.JSX.Element {
     onCloseCreate,
     onCreateSuccess,
     editingProduct,
+    isEditHydrating,
     onCloseEdit,
     onEditSuccess,
     onEditSave,
@@ -48,6 +51,17 @@ export function ProductModals(): React.JSX.Element {
     onSelectIntegrationFromModal,
   } = useProductListModalsContext();
 
+  const hydratedEditingProduct =
+    editingProduct && isEditingProductHydrated(editingProduct) ? editingProduct : null;
+  const showEditLoadingModal = isEditHydrating || (Boolean(editingProduct) && !hydratedEditingProduct);
+  const editProviderKey = hydratedEditingProduct
+    ? [
+      hydratedEditingProduct.id,
+      'hydrated',
+      hydratedEditingProduct.updatedAt ?? '',
+    ].join(':')
+    : null;
+
   return (
     <>
       {isCreateOpen && (
@@ -68,16 +82,51 @@ export function ProductModals(): React.JSX.Element {
         </ProductFormProvider>
       )}
 
-      {editingProduct && (
+      {showEditLoadingModal && (
+        <FormModal
+          open={showEditLoadingModal}
+          onClose={onCloseEdit}
+          title='Edit Product'
+          subtitle='Loading full product details before editing.'
+          onSave={() => {}}
+          isSaveDisabled
+          hasUnsavedChanges={false}
+          saveText='Update'
+          cancelText='Close'
+          size='xl'
+          className='md:min-w-[63rem] max-w-[66rem]'
+        >
+          <div className='space-y-6 py-2'>
+            <div className='rounded-lg border border-border/60 p-4 space-y-3'>
+              <Skeleton className='h-4 w-52' />
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-2'>
+                <Skeleton className='h-9 w-full' />
+                <Skeleton className='h-9 w-full' />
+                <Skeleton className='h-9 w-full' />
+              </div>
+            </div>
+            <div className='rounded-lg border border-border/60 p-4 space-y-3'>
+              <Skeleton className='h-4 w-44' />
+              <Skeleton className='h-9 w-full' />
+              <Skeleton className='h-20 w-full' />
+            </div>
+            <p className='text-sm text-muted-foreground'>
+              Please wait while complete product data is loaded.
+            </p>
+          </div>
+        </FormModal>
+      )}
+
+      {hydratedEditingProduct && editProviderKey && (
         <ProductFormProvider
-          key={editingProduct.id}
-          product={editingProduct}
+          key={editProviderKey}
+          product={hydratedEditingProduct}
           onSuccess={onEditSuccess}
           onEditSave={onEditSave}
           requireHydratedEditProduct
         >
           <ProductFormModal
-            isOpen={!!editingProduct}
+            isOpen={!!hydratedEditingProduct}
             onClose={onCloseEdit}
             title='Edit Product'
             submitButtonText='Update'

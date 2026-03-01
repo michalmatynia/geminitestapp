@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
+import { PRODUCT_PAGE_SIZE_OPTIONS } from '@/features/products/constants';
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   useProductListActionsContext,
@@ -182,7 +183,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       onPageChange={setPage}
       pageSize={pageSize}
       onPageSizeChange={setPageSize}
-      pageSizeOptions={[12, 24, 48, 96]}
+      pageSizeOptions={[...PRODUCT_PAGE_SIZE_OPTIONS]}
       showPageSize
       showLabels={false}
       variant='compact'

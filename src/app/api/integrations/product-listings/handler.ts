@@ -3,16 +3,35 @@ import { z } from 'zod';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
+  getProductListingRepository,
   getIntegrationRepository,
-  listProductListingsByProductIdsAcrossProviders,
-  listAllProductListingsAcrossProviders,
 } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { env } from '@/shared/lib/env';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = 'base' | 'tradera';
 type ProductListingBadgesPayload = Record<string, Partial<Record<MarketplaceBadgeKey, string>>>;
+const shouldLogTiming = () => env.DEBUG_API_TIMING;
+
+const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
+  const parts = Object.entries(entries)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+    .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
+  return parts.join(', ');
+};
+
+const attachTimingHeaders = (
+  response: Response,
+  entries: Record<string, number | null | undefined>
+): void => {
+  const value = buildServerTiming(entries);
+  if (value) {
+    response.headers.set('Server-Timing', value);
+  }
+};
 
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
@@ -73,21 +92,29 @@ const parseRequestedProductIds = (req: NextRequest): string[] => {
   return normalizeRequestedProductIds(raw.split(',')).slice(0, PRODUCT_IDS_PARAM_LIMIT);
 };
 
-const buildPayload = async (requestedProductIds: string[]): Promise<Response> => {
+const buildPayload = async (
+  requestedProductIds: string[],
+  timings?: Record<string, number | null | undefined>
+): Promise<Response> => {
   const normalizedRequestedProductIds = normalizeRequestedProductIds(requestedProductIds).slice(
     0,
     PRODUCT_IDS_PARAM_LIMIT
   );
 
   const integrationRepository = await getIntegrationRepository();
+  const listingRepository = await getProductListingRepository();
+  const lookupStart = performance.now();
   const listingsPromise =
     normalizedRequestedProductIds.length > 0
-      ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
-      : listAllProductListingsAcrossProviders();
+      ? listingRepository.getListingsByProductIds(normalizedRequestedProductIds)
+      : listingRepository.listAllListings();
   const [listings, integrations] = await Promise.all([
     listingsPromise,
     integrationRepository.listIntegrations(),
   ]);
+  if (timings) {
+    timings['lookup'] = performance.now() - lookupStart;
+  }
 
   const integrationMarketplaceById = new Map<string, MarketplaceBadgeKey>();
   for (const integration of integrations) {
@@ -116,6 +143,7 @@ const buildPayload = async (requestedProductIds: string[]): Promise<Response> =>
   };
 
   const byProduct = new Map<string, Partial<Record<MarketplaceBadgeKey, string>>>();
+  const assembleStart = performance.now();
   for (const listing of listings) {
     const marketplace =
       integrationMarketplaceById.get(listing.integrationId) ??
@@ -143,6 +171,9 @@ const buildPayload = async (requestedProductIds: string[]): Promise<Response> =>
       });
     }
   }
+  if (timings) {
+    timings['assemble'] = performance.now() - assembleStart;
+  }
 
   return NextResponse.json(Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload);
 };
@@ -152,7 +183,19 @@ const buildPayload = async (requestedProductIds: string[]): Promise<Response> =>
  * Returns listing badge statuses grouped by marketplace for each product.
  */
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  return buildPayload(parseRequestedProductIds(req));
+  const timings: Record<string, number | null | undefined> = {};
+  const totalStart = performance.now();
+  const response = await buildPayload(parseRequestedProductIds(req), timings);
+  timings['total'] = performance.now() - totalStart;
+  attachTimingHeaders(response, timings);
+  if (shouldLogTiming()) {
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] integrations.product-listings.GET',
+      context: timings,
+    });
+  }
+  return response;
 }
 
 /**
@@ -160,12 +203,26 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
  * Returns listing badge statuses grouped by marketplace for requested products.
  */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const timings: Record<string, number | null | undefined> = {};
+  const totalStart = performance.now();
   const parsed = await parseJsonBody(req, productIdsBodySchema, {
     logPrefix: 'integrations.product-listings.POST',
   });
   if (!parsed.ok) {
+    timings['total'] = performance.now() - totalStart;
+    attachTimingHeaders(parsed.response, timings);
     return parsed.response;
   }
 
-  return buildPayload(parsed.data.productIds);
+  const response = await buildPayload(parsed.data.productIds, timings);
+  timings['total'] = performance.now() - totalStart;
+  attachTimingHeaders(response, timings);
+  if (shouldLogTiming()) {
+    await logSystemEvent({
+      level: 'info',
+      message: '[timing] integrations.product-listings.POST',
+      context: timings,
+    });
+  }
+  return response;
 }

@@ -23,6 +23,7 @@ import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
+import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {
@@ -312,7 +313,7 @@ export function useProductData({
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(initialPageSize || 20);
+  const [pageSize, setPageSize] = useState(() => normalizeProductPageSize(initialPageSize, 20));
   const [search, setSearch] = useState('');
   const [productId, setProductId] = useState('');
   const [idMatchMode, setIdMatchMode] = useState<'exact' | 'partial'>('exact');
@@ -339,7 +340,7 @@ export function useProductData({
     if (!preferencesLoaded) return;
 
     if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
-    if (initialPageSize) setPageSize(initialPageSize);
+    if (initialPageSize) setPageSize(normalizeProductPageSize(initialPageSize, 20));
     const normalizedAdvancedFilter = initialAppliedAdvancedFilter?.trim() ?? '';
     if (
       normalizedAdvancedFilter.length > 0 &&
@@ -467,7 +468,10 @@ export function useProductData({
   }, [refreshTrigger, refresh]);
 
   const handleSetPage = useCallback((p: number) => setPage(p), []);
-  const handleSetPageSize = useCallback((size: number) => setPageSize(size), []);
+  const handleSetPageSize = useCallback(
+    (size: number) => setPageSize(normalizeProductPageSize(size, 20)),
+    []
+  );
   const handleSetSearch = useCallback((s: string) => setSearch(s), []);
   const handleSetProductId = useCallback((s: string) => setProductId(s), []);
   const handleSetIdMatchMode = useCallback((mode: 'exact' | 'partial') => setIdMatchMode(mode), []);

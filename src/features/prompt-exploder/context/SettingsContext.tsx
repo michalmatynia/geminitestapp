@@ -47,6 +47,8 @@ import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../se
 import type { PromptExploderLearnedTemplate, PromptExploderSettings } from '../types';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  normalizePromptExploderValidationRuleStack,
+  promptExploderValidationStackFromBridgeSource,
   type PromptExploderRuntimeValidationScope,
 } from '../validation-stack';
 
@@ -108,6 +110,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [hasUnsavedLearningDraft, setHasUnsavedLearningDraft] = useState(false);
   const [hasUnsavedParserTuningDrafts, setHasUnsavedParserTuningDrafts] = useState(false);
   const [incomingBridgeSource, setIncomingBridgeSource] = useState<string | null>(null);
+  const [learningDraftHydratedFrom, setLearningDraftHydratedFrom] = useState<string | null>(null);
 
   const setLearningDraft = useCallback((value: React.SetStateAction<LearningDraft>) => {
     setHasUnsavedLearningDraft(true);
@@ -145,6 +148,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const preferredValidatorScope = shouldPreferCaseResolverValidationStack
     ? 'case-resolver-prompt-exploder'
     : 'prompt-exploder';
+  const validatorPatternListsHydrationSignature = useMemo(
+    () => validatorPatternLists.map((list) => `${list.id}:${list.scope}:${list.updatedAt}`).join('|'),
+    [validatorPatternLists]
+  );
 
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
@@ -178,6 +185,48 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       window.removeEventListener('storage', handleStorage);
     };
   }, [isCaseResolverReturnTarget]);
+
+  useEffect(() => {
+    if (settingsQuery.isLoading) return;
+
+    const hydrationSignature = [
+      rawExploderSettings ?? '__missing__',
+      shouldPreferCaseResolverValidationStack ? 'case-resolver' : 'prompt-exploder',
+      validatorPatternListsHydrationSignature || '__no-lists__',
+    ].join('::');
+    if (learningDraftHydratedFrom === hydrationSignature) return;
+
+    const persistedStack = normalizePromptExploderValidationRuleStack(
+      promptExploderSettings.runtime.validationRuleStack,
+      validatorPatternLists
+    );
+    const preferredStack = shouldPreferCaseResolverValidationStack
+      ? promptExploderValidationStackFromBridgeSource('case-resolver', validatorPatternLists)
+      : persistedStack;
+
+    setLearningDraftState({
+      runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
+      runtimeValidationRuleStack: preferredStack,
+      enabled: promptExploderSettings.learning.enabled,
+      similarityThreshold: promptExploderSettings.learning.similarityThreshold,
+      templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
+      benchmarkSuggestionUpsertTemplates:
+        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? true,
+      minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
+      maxTemplates: promptExploderSettings.learning.maxTemplates,
+      autoActivateLearnedTemplates: promptExploderSettings.learning.autoActivateLearnedTemplates,
+    });
+    setHasUnsavedLearningDraft(false);
+    setLearningDraftHydratedFrom(hydrationSignature);
+  }, [
+    learningDraftHydratedFrom,
+    promptExploderSettings,
+    rawExploderSettings,
+    settingsQuery.isLoading,
+    shouldPreferCaseResolverValidationStack,
+    validatorPatternLists,
+    validatorPatternListsHydrationSignature,
+  ]);
 
   const runtimeResolution = useMemo((): {
     selection: PromptValidationOrchestrationResult;

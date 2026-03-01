@@ -52,7 +52,7 @@ const resolveProductRepository = async (
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository() as unknown as Promise<ImageFileRepository>;
 
-const normalizeProductPayloadForStorage = <TData extends Record<string, unknown>>(
+const normalizeCreateProductPayloadForStorage = <TData extends Record<string, unknown>>(
   data: TData
 ): TData => {
   const payload = data as TData & {
@@ -62,6 +62,20 @@ const normalizeProductPayloadForStorage = <TData extends Record<string, unknown>
   return {
     ...(payload as TData),
     parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
+    imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
+  } as TData;
+};
+
+const normalizeUpdateProductPayloadForStorage = <TData extends Record<string, unknown>>(
+  data: TData
+): TData => {
+  const payload = data as TData & {
+    parameters?: ProductParameterValue[] | null;
+    imageFileIds?: string[] | null;
+  };
+  return {
+    ...(payload as TData),
+    ...(Array.isArray(payload.parameters) ? { parameters: payload.parameters } : {}),
     imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
   } as TData;
 };
@@ -281,7 +295,7 @@ async function createProduct(
     });
   }
 
-  const normalized = normalizeProductPayloadForStorage(validation.data);
+  const normalized = normalizeCreateProductPayloadForStorage(validation.data);
 
   const product = await productRepository.createProduct(normalized);
   if (!product) {
@@ -343,7 +357,7 @@ async function bulkCreateProducts(
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {
-      validatedData.push(normalizeProductPayloadForStorage(validation.data));
+      validatedData.push(normalizeCreateProductPayloadForStorage(validation.data));
     }
   }
 
@@ -373,7 +387,7 @@ async function updateProduct(
     });
   }
 
-  const normalized = normalizeProductPayloadForStorage(validation.data);
+  const normalized = normalizeUpdateProductPayloadForStorage(validation.data);
 
   const product = await productRepository.updateProduct(id, normalized);
   if (!product) {

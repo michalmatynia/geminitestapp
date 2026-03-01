@@ -528,6 +528,91 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
   return await fetchCaseResolverWorkspaceRecord(source, { fresh: true });
 };
 
+type FetchIfStaleResult =
+  | { updated: false; revision: number }
+  | { updated: true; workspace: CaseResolverWorkspace };
+
+/**
+ * Single conditional HTTP request that replaces the old two-step waterfall
+ * (metadata pre-flight → full workspace fetch). The server compares the stored
+ * revision against `currentRevision` and returns the full workspace only when
+ * it has advanced. On a cache hit the response is a small JSON object with
+ * `upToDate: true` — no workspace data is transferred.
+ */
+export const fetchCaseResolverWorkspaceIfStale = async (
+  source: string,
+  currentRevision: number
+): Promise<FetchIfStaleResult> => {
+  const startedAt = Date.now();
+  const normalizedRevision = Math.max(0, Math.floor(currentRevision));
+  const url =
+    `/api/settings?key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}` +
+    `&fresh=1&ifRevisionGt=${normalizedRevision}`;
+  try {
+    const response = await fetchSettingsPayloadWithTimeout({
+      url,
+      timeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+    });
+    if (!response.ok) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'conditional_fetch_failed',
+        message: `HTTP ${response.status}`,
+        durationMs: Date.now() - startedAt,
+      });
+      return { updated: false, revision: normalizedRevision };
+    }
+    const payload = (await response.json()) as unknown;
+    // Server signals the client revision is current — no data transfer needed
+    if (
+      payload !== null &&
+      typeof payload === 'object' &&
+      !Array.isArray(payload) &&
+      (payload as Record<string, unknown>)['upToDate'] === true
+    ) {
+      const serverRevisionRaw = (payload as Record<string, unknown>)['revision'];
+      const revision =
+        typeof serverRevisionRaw === 'number' && Number.isFinite(serverRevisionRaw) &&
+        serverRevisionRaw > 0
+          ? Math.floor(serverRevisionRaw)
+          : normalizedRevision;
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'conditional_fetch_up_to_date',
+        workspaceRevision: revision,
+        durationMs: Date.now() - startedAt,
+      });
+      return { updated: false, revision };
+    }
+    // Server returned updated workspace payload
+    const workspaceRecord = resolveWorkspaceRecordFromSettingsPayload(payload);
+    if (!workspaceRecord) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'conditional_fetch_no_record',
+        durationMs: Date.now() - startedAt,
+      });
+      return { updated: false, revision: normalizedRevision };
+    }
+    const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'conditional_fetch_updated',
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+      durationMs: Date.now() - startedAt,
+    });
+    return { updated: true, workspace };
+  } catch (error: unknown) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'conditional_fetch_error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      durationMs: Date.now() - startedAt,
+    });
+    return { updated: false, revision: normalizedRevision };
+  }
+};
+
 /**
  * Strip re-derivable content fields before persisting to reduce payload size.
  * For `document` files we keep html as the canonical source and omit markdown/plaintext.

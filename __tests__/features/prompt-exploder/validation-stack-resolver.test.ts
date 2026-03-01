@@ -30,6 +30,33 @@ describe('prompt exploder validation stack resolver', () => {
     ).toThrow(PromptValidationScopeResolutionError);
   });
 
+  it('resolves known case-resolver stack id without fallback when lists are unavailable', () => {
+    const resolution = resolvePromptExploderValidationStack({
+      stack: 'case-resolver-prompt-exploder',
+      patternLists: [],
+      preferredScope: 'case-resolver-prompt-exploder',
+      strictUnknownStack: true,
+    });
+
+    expect(resolution.reason).toBe('exact_match');
+    expect(resolution.usedFallback).toBe(false);
+    expect(resolution.scope).toBe('case_resolver_prompt_exploder');
+    expect(resolution.stack).toBe('case-resolver-prompt-exploder');
+  });
+
+  it('resolves legacy image_studio_prompt_exploder alias without fallback', () => {
+    const resolution = resolvePromptExploderValidationStack({
+      stack: 'image_studio_prompt_exploder',
+      patternLists: [],
+      strictUnknownStack: true,
+    });
+
+    expect(resolution.reason).toBe('exact_match');
+    expect(resolution.usedFallback).toBe(false);
+    expect(resolution.scope).toBe('prompt_exploder');
+    expect(resolution.stack).toBe('prompt-exploder');
+  });
+
   it('falls back with invalid_stack reason in non-strict mode', () => {
     const lists = parseValidatorPatternLists(null);
     const resolution = resolvePromptExploderValidationStack({

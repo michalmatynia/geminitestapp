@@ -17,6 +17,36 @@ import {
 } from '../types/listings';
 
 const LISTING_COLLECTION = 'product_listings';
+let listingIndexesEnsured: Promise<void> | null = null;
+
+const ensureListingIndexes = async (): Promise<void> => {
+  if (!listingIndexesEnsured) {
+    listingIndexesEnsured = (async (): Promise<void> => {
+      const db = await getMongoDb();
+      const collection = db.collection<ProductListingDocument>(LISTING_COLLECTION);
+      await Promise.all([
+        collection.createIndex({ productId: 1 }, { name: 'product_listings_productId' }),
+        collection.createIndex({ connectionId: 1 }, { name: 'product_listings_connectionId' }),
+        collection.createIndex({ integrationId: 1 }, { name: 'product_listings_integrationId' }),
+        collection.createIndex({ status: 1 }, { name: 'product_listings_status' }),
+        collection.createIndex({ createdAt: -1 }, { name: 'product_listings_createdAt_desc' }),
+      ]);
+    })();
+  }
+
+  try {
+    await listingIndexesEnsured;
+  } catch (error) {
+    listingIndexesEnsured = null;
+    throw error;
+  }
+};
+
+const getListingCollection = async () => {
+  await ensureListingIndexes();
+  const db = await getMongoDb();
+  return db.collection<ProductListingDocument>(LISTING_COLLECTION);
+};
 
 /**
  * MongoDB Document
@@ -361,9 +391,9 @@ const prismaRepository: ProductListingRepository = {
 
 const mongoRepository: ProductListingRepository = {
   getListingsByProductId: async (productId: string): Promise<ProductListingWithDetails[]> => {
+    const collection = await getListingCollection();
     const db = await getMongoDb();
-    const docs = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
+    const docs = await collection
       .find(buildLookupFilter('productId', productId))
       .sort({ createdAt: -1 })
       .toArray();
@@ -425,15 +455,13 @@ const mongoRepository: ProductListingRepository = {
   },
 
   getListingById: async (id: string): Promise<ProductListingRecord | null> => {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .findOne(buildLookupFilter('_id', id));
+    const collection = await getListingCollection();
+    const doc = await collection.findOne(buildLookupFilter('_id', id));
     return doc ? toListingRecord(doc) : null;
   },
 
   createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
-    const db = await getMongoDb();
+    const collection = await getListingCollection();
     const now = new Date();
     const id = randomUUID();
     const doc: ProductListingDocument = {
@@ -484,30 +512,28 @@ const mongoRepository: ProductListingRepository = {
       createdAt: now,
       updatedAt: now,
     };
-    await db.collection<ProductListingDocument>(LISTING_COLLECTION).insertOne(doc);
+    await collection.insertOne(doc);
     return mongoRepository
       .getListingsByProductId(input.productId)
       .then((list) => list.find((l) => l.id === id)!);
   },
 
   updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
-    const db = await getMongoDb();
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(buildLookupFilter('_id', id), {
-        $set: { externalListingId, updatedAt: new Date() },
-      });
+    const collection = await getListingCollection();
+    await collection.updateOne(buildLookupFilter('_id', id), {
+      $set: { externalListingId, updatedAt: new Date() },
+    });
   },
 
   updateListingStatus: async (id: string, status: string): Promise<void> => {
-    const db = await getMongoDb();
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(buildLookupFilter('_id', id), { $set: { status, updatedAt: new Date() } });
+    const collection = await getListingCollection();
+    await collection.updateOne(buildLookupFilter('_id', id), {
+      $set: { status, updatedAt: new Date() },
+    });
   },
 
   updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
-    const db = await getMongoDb();
+    const collection = await getListingCollection();
     const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
     delete updateData['id'];
     delete updateData['productId'];
@@ -522,24 +548,22 @@ const mongoRepository: ProductListingRepository = {
     if (input.lastStatusCheckAt)
       updateData['lastStatusCheckAt'] = new Date(input.lastStatusCheckAt);
 
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(buildLookupFilter('_id', id), {
-        $set: updateData as unknown as UpdateFilter<ProductListingDocument>,
-      });
+    await collection.updateOne(buildLookupFilter('_id', id), {
+      $set: updateData as unknown as UpdateFilter<ProductListingDocument>,
+    });
   },
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
-    const db = await getMongoDb();
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(buildLookupFilter('_id', id), { $set: { inventoryId, updatedAt: new Date() } });
+    const collection = await getListingCollection();
+    await collection.updateOne(buildLookupFilter('_id', id), {
+      $set: { inventoryId, updatedAt: new Date() },
+    });
   },
 
   appendExportHistory: async (
     id: string,
     event: ProductListingExportEventRecord
   ): Promise<void> => {
-    const db = await getMongoDb();
+    const collection = await getListingCollection();
 
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
@@ -547,29 +571,25 @@ const mongoRepository: ProductListingRepository = {
       expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
     };
 
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(buildLookupFilter('_id', id), {
-        $push: {
-          exportHistory: {
-            $each: [normalizedEvent],
-            $position: 0,
-            $slice: 50,
-          },
+    await collection.updateOne(buildLookupFilter('_id', id), {
+      $push: {
+        exportHistory: {
+          $each: [normalizedEvent],
+          $position: 0,
+          $slice: 50,
         },
-        $set: { updatedAt: new Date() },
-      } as unknown as UpdateFilter<ProductListingDocument>);
+      },
+      $set: { updatedAt: new Date() },
+    } as unknown as UpdateFilter<ProductListingDocument>);
   },
   deleteListing: async (id: string): Promise<void> => {
-    const db = await getMongoDb();
-    await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .deleteOne(buildLookupFilter('_id', id));
+    const collection = await getListingCollection();
+    await collection.deleteOne(buildLookupFilter('_id', id));
   },
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
-    const db = await getMongoDb();
-    const count = await db.collection<ProductListingDocument>(LISTING_COLLECTION).countDocuments({
+    const collection = await getListingCollection();
+    const count = await collection.countDocuments({
       $and: [
         buildLookupFilter('productId', productId),
         buildLookupFilter('connectionId', connectionId),
@@ -580,29 +600,22 @@ const mongoRepository: ProductListingRepository = {
 
   getListingsByProductIds: async (productIds: string[]): Promise<ProductListingRecord[]> => {
     if (productIds.length === 0) return [];
-    const db = await getMongoDb();
-    const listings = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .find(buildLookupFilterForIds('productId', productIds))
-      .toArray();
+    const collection = await getListingCollection();
+    const listings = await collection.find(buildLookupFilterForIds('productId', productIds)).toArray();
     return listings.map(toListingRecord);
   },
 
   getListingsByConnection: async (connectionId: string): Promise<ProductListingRecord[]> => {
-    const db = await getMongoDb();
-    const listings = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .find(buildLookupFilter('connectionId', connectionId))
-      .toArray();
+    const collection = await getListingCollection();
+    const listings = await collection.find(buildLookupFilter('connectionId', connectionId)).toArray();
     return listings.map(toListingRecord);
   },
 
   listAllListings: async (): Promise<
     Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > => {
-    const db = await getMongoDb();
-    const listings = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
+    const collection = await getListingCollection();
+    const listings = await collection
       .find({}, { projection: { productId: 1, status: 1, integrationId: 1, marketplaceData: 1 } })
       .toArray();
     return listings.map((l) => ({

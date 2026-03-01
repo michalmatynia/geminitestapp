@@ -590,6 +590,38 @@ export async function GET_handler(
       });
       return response;
     }
+    // Conditional fetch: if client provides its current revision, return upToDate signal instead
+    // of the full value when the stored revision has not advanced beyond what the client has.
+    const ifRevisionGtParam = req.nextUrl.searchParams.get('ifRevisionGt');
+    const ifRevisionGt =
+      ifRevisionGtParam !== null ? Number.parseInt(ifRevisionGtParam, 10) : null;
+    if (
+      requestedKey === CASE_RESOLVER_WORKSPACE_KEY &&
+      ifRevisionGt !== null &&
+      Number.isFinite(ifRevisionGt) &&
+      ifRevisionGt >= 0
+    ) {
+      const storedMeta = parseCaseResolverWorkspaceMetadata(value);
+      if (value === null || storedMeta.revision <= ifRevisionGt) {
+        const upToDateResponse = NextResponse.json(
+          { key: requestedKey, revision: storedMeta.revision, upToDate: true },
+          {
+            headers: {
+              'Cache-Control': SETTINGS_CACHE_CONTROL,
+              'X-Cache': value === null ? 'key-missing' : 'revision-current',
+            },
+          }
+        );
+        await attachProviderHeader(upToDateResponse);
+        attachTimingHeaders(upToDateResponse, {
+          total: performance.now() - requestStart,
+          cache: 0,
+          ...timings,
+        });
+        return upToDateResponse;
+      }
+      // Stored revision > client revision — fall through to return full payload
+    }
     const payload: SettingRecord[] = value === null ? [] : [{ key: requestedKey, value }];
     const response = NextResponse.json(payload, {
       headers: {

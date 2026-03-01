@@ -125,6 +125,36 @@ describe('prompt validation orchestrator runtime', () => {
     expect(runtimeC.identity.cacheKey).not.toBe(runtimeA.identity.cacheKey);
   });
 
+  it('treats known case-resolver stack aliases as explicit when validator lists are empty', () => {
+    resetPromptValidationRuntimeSelectionCache();
+    const promptSettings = buildPromptSettings(
+      buildRegexRule({
+        id: 'segment.case_resolver.heading.sample',
+        pattern: '^ALLOW$',
+        appliesToScopes: ['case_resolver_prompt_exploder'],
+        promptExploderTreatAsHeading: true,
+      })
+    );
+
+    const runtime = resolvePromptValidationRuntime({
+      promptSettings,
+      promptExploderSettings: defaultPromptExploderSettings,
+      validatorPatternLists: [],
+      runtimeRuleProfile: 'all',
+      runtimeValidationRuleStack: 'case_resolver_prompt_exploder',
+      learningEnabled: true,
+      minApprovalsForMatching: 1,
+      maxTemplates: 1000,
+      preferredValidatorScope: 'case-resolver-prompt-exploder',
+      strictUnknownStack: true,
+    });
+
+    expect(runtime.stackResolution.reason).toBe('exact_match');
+    expect(runtime.stackResolution.usedFallback).toBe(false);
+    expect(runtime.identity.scope).toBe('case_resolver_prompt_exploder');
+    expect(runtime.identity.stack).toBe('case-resolver-prompt-exploder');
+  });
+
   it('uses explicit runtime cache key entries in parser cache', () => {
     resetPromptExploderRuntimePatternCache();
 

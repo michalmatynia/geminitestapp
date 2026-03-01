@@ -125,8 +125,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   return (
     <PromptExploderErrorBoundary>
       <PromptExploderProvider>
-        <div id='prompt-exploder-docs-root'>
+        <div id='prompt-exploder-docs-root' className='flex h-full flex-col min-h-0'>
           <ListPanel
+            className='flex flex-1 flex-col min-h-0'
+            contentClassName='flex-1 min-h-0'
             header={
               <PromptExploderHeaderBar
                 docsTooltipsEnabled={docsTooltipsEnabled}
@@ -134,7 +136,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               />
             }
           >
-            <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full space-y-4'>
+            <Tabs
+              value={activeTab}
+              onValueChange={handleTabChange}
+              className='flex flex-1 flex-col min-h-0 w-full space-y-4'
+            >
               <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
                 <TabsTrigger value='workspace' className='h-10'>
                   Workspace
@@ -144,7 +150,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value='workspace' className='space-y-4'>
+              <TabsContent value='workspace' className='flex-1 min-h-0 overflow-y-auto space-y-4 pb-4'>
                 <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
                   <div className='space-y-4'>
                     <SourcePromptPanel />
@@ -164,7 +170,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 <BenchmarkReportPanel />
               </TabsContent>
 
-              <TabsContent value='docs'>
+              <TabsContent value='docs' className='flex-1 min-h-0 overflow-y-auto'>
                 <PromptExploderDocsTab />
               </TabsContent>
             </Tabs>

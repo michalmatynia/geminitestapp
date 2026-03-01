@@ -18,6 +18,33 @@ export const PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY = 'product_images_extern
 export const PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY =
   'product_studio_sequence_generation_mode';
 export const DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL = 'http://localhost:3000';
+export const PRODUCT_PAGE_SIZE_OPTIONS = [12, 24, 48] as const;
+export const PRODUCT_PAGE_SIZE_MAX = 48;
+const PRODUCT_PAGE_SIZE_MIN = 1;
+
+export const normalizeProductPageSize = (
+  value: unknown,
+  fallback: number = PRODUCT_PAGE_SIZE_OPTIONS[0]
+): number => {
+  const fallbackValue =
+    Number.isFinite(fallback) && fallback > 0
+      ? Math.floor(fallback)
+      : PRODUCT_PAGE_SIZE_OPTIONS[0];
+
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return Math.min(PRODUCT_PAGE_SIZE_MAX, Math.max(PRODUCT_PAGE_SIZE_MIN, fallbackValue));
+  }
+
+  return Math.min(PRODUCT_PAGE_SIZE_MAX, Math.max(PRODUCT_PAGE_SIZE_MIN, Math.floor(parsed)));
+};
+
 export const PRODUCT_VALIDATION_REPLACEMENT_FIELDS = [
   'sku',
   'ean',

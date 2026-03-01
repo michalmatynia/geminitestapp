@@ -27,10 +27,13 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import {
+  fetchCaseResolverWorkspaceIfStale,
   fetchCaseResolverWorkspaceMetadata,
   fetchCaseResolverWorkspaceRecord,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
+  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
 } from '../workspace-persistence';
 
 import {
@@ -318,15 +321,41 @@ export function AdminCaseResolverCasesProvider({
         getCaseResolverWorkspaceRevision(parsedWorkspace),
         lastPersistedWorkspaceRevisionRef.current
       );
-      const metadata = await fetchCaseResolverWorkspaceMetadata('cases_page_route_sync');
+
+      // Fast path: use navigation cache if it was recently primed with a newer revision
+      // (e.g. user just came back from editing a case — workspace is known fresh, skip network)
+      const cachedWorkspace = readCaseResolverNavigationWorkspace();
+      if (cachedWorkspace) {
+        const cachedRevision = getCaseResolverWorkspaceRevision(cachedWorkspace);
+        if (cachedRevision > inMemoryRevision) {
+          if (isCancelled) return;
+          setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+            const currentRevision = getCaseResolverWorkspaceRevision(current);
+            if (cachedRevision <= currentRevision) return current;
+            lastPersistedWorkspaceValueRef.current = JSON.stringify(cachedWorkspace);
+            lastPersistedWorkspaceRevisionRef.current = cachedRevision;
+            logCaseResolverWorkspaceEvent({
+              source: 'cases_page',
+              action: 'route_sync_workspace_nav_cache',
+              workspaceRevision: cachedRevision,
+            });
+            return cachedWorkspace;
+          });
+          return;
+        }
+      }
+
+      // Single conditional fetch: server returns the workspace only when its revision
+      // is greater than inMemoryRevision, otherwise returns a lightweight upToDate signal.
+      // Replaces the previous 2-request waterfall (metadata pre-flight + workspace fetch).
+      const result = await fetchCaseResolverWorkspaceIfStale(
+        'cases_page_route_sync',
+        inMemoryRevision
+      );
       if (isCancelled) return;
-      const shouldFetchWorkspace =
-        metadata === null
-          ? !canHydrateWorkspaceFromStore
-          : metadata.exists !== false && metadata.revision > inMemoryRevision;
-      if (!shouldFetchWorkspace) return;
-      const latestWorkspace = await fetchCaseResolverWorkspaceRecord('cases_page_route_sync');
-      if (!latestWorkspace || isCancelled) return;
+      if (!result.updated) return;
+
+      const latestWorkspace = result.workspace;
       const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
         const currentRevision = getCaseResolverWorkspaceRevision(current);
@@ -340,12 +369,13 @@ export function AdminCaseResolverCasesProvider({
         });
         return latestWorkspace;
       });
+      // Prime navigation cache so repeat navigations within 2 min skip the network entirely
+      primeCaseResolverNavigationWorkspace(latestWorkspace);
     })();
     return (): void => {
       isCancelled = true;
     };
   }, [
-    canHydrateWorkspaceFromStore,
     lastPersistedWorkspaceRevisionRef,
     parsedWorkspace,
     pathname,

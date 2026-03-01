@@ -5,20 +5,15 @@ import { useEffect, useRef } from 'react';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 
+import { flattenVisibleNodesV2 } from '../core/engine';
 import { resolveKeyboardAction } from '../operations/keyboard';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
-import type { FolderTreeNodeView } from '../types';
 
 export type UseFolderTreeKeyboardNavOptions = {
   /** The tree controller to drive. */
   controller: MasterFolderTreeController;
   /** The instance ID used to register with the runtime bus. */
   instanceId: string;
-  /**
-   * Ref that must be kept up-to-date with the currently visible flattened rows.
-   * The viewport's `rows` array is the source of truth.
-   */
-  visibleRowsRef: React.RefObject<FolderTreeNodeView[]>;
   /** Called when the user presses Delete/Backspace on a selected node. */
   onDeleteRequest?: ((nodeId: MasterTreeId) => void) | undefined;
   /**
@@ -33,18 +28,20 @@ export type UseFolderTreeKeyboardNavOptions = {
 /**
  * Opt-in hook that registers keyboard navigation for a tree instance.
  * Must be used inside a MasterFolderTreeRuntimeProvider subtree.
+ *
+ * Visible rows are derived automatically from controller.roots and
+ * controller.expandedNodeIds — no separate ref required.
  */
 export function useFolderTreeKeyboardNav({
   controller,
   instanceId,
-  visibleRowsRef,
   onDeleteRequest,
   scrollToNode,
   enabled = true,
 }: UseFolderTreeKeyboardNavOptions): void {
   const runtime = useMasterFolderTreeRuntime();
 
-  // Keep refs to avoid re-registering on every render
+  // Keep refs so the handler always reads the latest values without re-registering
   const controllerRef = useRef(controller);
   controllerRef.current = controller;
 
@@ -58,40 +55,38 @@ export function useFolderTreeKeyboardNav({
     if (!enabled || !instanceId) return;
 
     const handler = (event: KeyboardEvent): void => {
-      const visibleRows = visibleRowsRef.current ?? [];
-      const action = resolveKeyboardAction({
-        event,
-        controller: controllerRef.current,
-        visibleRows,
-      });
+      const ctrl = controllerRef.current;
+      // Derive visible rows from the controller at call time — always up-to-date
+      const visibleRows = flattenVisibleNodesV2(ctrl.roots, ctrl.expandedNodeIds);
+      const action = resolveKeyboardAction({ event, controller: ctrl, visibleRows });
       if (!action) return;
 
       event.preventDefault();
 
       switch (action.type) {
         case 'select': {
-          controllerRef.current.selectNode(action.nodeId);
+          ctrl.selectNode(action.nodeId);
           scrollToNodeRef.current?.(action.nodeId);
           break;
         }
         case 'expand': {
-          controllerRef.current.expandNode(action.nodeId);
+          ctrl.expandNode(action.nodeId);
           break;
         }
         case 'collapse': {
-          controllerRef.current.collapseNode(action.nodeId);
+          ctrl.collapseNode(action.nodeId);
           break;
         }
         case 'start_rename': {
-          controllerRef.current.startRename(action.nodeId);
+          ctrl.startRename(action.nodeId);
           break;
         }
         case 'cancel_rename': {
-          controllerRef.current.cancelRename();
+          ctrl.cancelRename();
           break;
         }
         case 'commit_rename': {
-          void controllerRef.current.commitRename();
+          void ctrl.commitRename();
           break;
         }
         case 'request_delete': {
@@ -106,5 +101,5 @@ export function useFolderTreeKeyboardNav({
     };
 
     return runtime.registerKeyboardHandler(instanceId, handler);
-  }, [enabled, instanceId, runtime, visibleRowsRef]);
+  }, [enabled, instanceId, runtime]);
 }

@@ -169,7 +169,7 @@ export function useDatabaseNodeConfigState() {
     queryTemplateValue,
     isUpdateAction,
     updateSelectedNodeConfig,
-    toast: toast as Toast,
+    toast: toast,
   });
   const { handleProviderChange, handleActionCategoryChange, applyActionConfig } =
     useDatabaseActionConfig({

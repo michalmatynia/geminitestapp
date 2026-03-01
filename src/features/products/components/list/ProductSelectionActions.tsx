@@ -40,6 +40,7 @@ import {
   Textarea,
   SelectionBar,
   useToast,
+  JSONImportModal,
 } from '@/shared/ui';
 import {
   buildPresetBundle,
@@ -73,7 +74,6 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const [presetName, setPresetName] = useState('');
   const [savingPreset, setSavingPreset] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [importJsonText, setImportJsonText] = useState('');
   const [importingPresets, setImportingPresets] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
@@ -195,7 +195,6 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
 
   const closeImportDialog = (): void => {
     setIsImportDialogOpen(false);
-    setImportJsonText('');
     setImportingPresets(false);
   };
 
@@ -260,15 +259,15 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     [toast]
   );
 
-  const handleImportFromDialog = async (): Promise<void> => {
-    if (!importJsonText.trim()) {
+  const handleImportFromDialog = async (value: string): Promise<void> => {
+    if (!value.trim()) {
       toast('Paste JSON to import.', { variant: 'error' });
       return;
     }
 
     try {
       setImportingPresets(true);
-      const parsedPayload: unknown = JSON.parse(importJsonText);
+      const parsedPayload: unknown = JSON.parse(value);
       await importPresets(parsedPayload);
       closeImportDialog();
     } catch (error) {
@@ -559,38 +558,16 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         </div>
       </AppModal>
 
-      <AppModal
+      <JSONImportModal
         isOpen={isImportDialogOpen}
         onClose={closeImportDialog}
         title='Import Filter Presets'
         subtitle='Paste preset JSON or a preset bundle to merge into your saved presets.'
-        size='md'
-        footer={
-          <>
-            <Button type='button' variant='outline' onClick={closeImportDialog}>
-              Cancel
-            </Button>
-            <Button
-              type='button'
-              onClick={() => {
-                void handleImportFromDialog();
-              }}
-              disabled={importingPresets}
-            >
-              {importingPresets ? 'Importing...' : 'Import Presets'}
-            </Button>
-          </>
-        }
-      >
-        <div className='space-y-2'>
-          <Textarea
-            value={importJsonText}
-            onChange={(event) => setImportJsonText(event.target.value)}
-            placeholder='Paste preset JSON here...'
-            className='min-h-[180px] font-mono text-xs'
-          />
-        </div>
-      </AppModal>
+        onImport={handleImportFromDialog}
+        isLoading={importingPresets}
+        confirmText='Import Presets'
+        placeholder='Paste preset JSON here...'
+      />
 
       <input
         ref={importFileInputRef}

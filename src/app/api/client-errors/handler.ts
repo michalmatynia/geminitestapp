@@ -8,24 +8,15 @@ import {
 } from '@/shared/lib/observability/log-redaction';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
-import type { ErrorContext } from '@/shared/contracts/observability';
+import {
+  clientErrorPayloadSchema,
+  type ErrorContext,
+} from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
 const MAX_CLIENT_CONTEXT_BYTES = 16_000;
 const MAX_CLIENT_VALUE_LENGTH = 2_000;
-
-const clientErrorPayloadSchema = z.object({
-  message: z.string().trim().min(1).max(2_000).optional(),
-  name: z.string().trim().min(1).max(120).optional(),
-  stack: z.string().trim().max(20_000).nullable().optional(),
-  url: z.string().trim().max(2_000).optional(),
-  timestamp: z.string().trim().max(200).optional(),
-  digest: z.string().trim().max(256).optional(),
-  userAgent: z.string().trim().max(1_000).optional(),
-  componentStack: z.string().trim().max(8_000).nullable().optional(),
-  context: z.unknown().optional(),
-});
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

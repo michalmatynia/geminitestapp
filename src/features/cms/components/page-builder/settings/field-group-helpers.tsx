@@ -5,7 +5,6 @@ import React from 'react';
 import { Input, Label } from '@/shared/ui';
 
 import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
-import { useOptionalSettingsForm } from './SettingsFormContext';
 
 import type { SettingsField } from '../../../types/page-builder';
 
@@ -70,9 +69,8 @@ function renderFieldGroups(
   onChange?: (key: string, value: unknown) => void,
   resolveField?: (field: SettingsField) => SettingsField
 ): React.ReactNode[] {
-  const context = useOptionalSettingsForm();
-  const effectiveSettings = settings || context?.values || {};
-  const effectiveOnChange = onChange || context?.onChange;
+  const effectiveSettings = settings ?? {};
+  const effectiveOnChange = onChange;
 
   return groups.map((group: FieldGroup) => {
     if (group.kind === 'single') {

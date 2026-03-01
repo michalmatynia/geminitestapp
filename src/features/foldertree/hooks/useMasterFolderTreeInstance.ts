@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type {
   FolderTreeIconSlot,
@@ -34,8 +34,11 @@ import {
   useFolderTreeInstanceV2,
   type UseFolderTreeInstanceV2Options,
 } from '../v2/hooks/useFolderTreeInstanceV2';
+import { useFolderTreeKeyboardNav } from '../v2/hooks/useFolderTreeKeyboardNav';
 import { useMasterFolderTreeRuntime } from '../v2/runtime/MasterFolderTreeRuntimeProvider';
 import { useMasterFolderTreeConfig } from './useMasterFolderTreeConfig';
+
+import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -48,6 +51,11 @@ export type UseMasterFolderTreeInstanceOptions = Omit<
   selectedNodeId?: UseFolderTreeInstanceV2Options['initialSelectedNodeId'];
   expandedNodeIds?: UseFolderTreeInstanceV2Options['initiallyExpandedNodeIds'];
   initiallyExpandedNodeIds?: UseFolderTreeInstanceV2Options['initiallyExpandedNodeIds'];
+  /**
+   * Called when the user presses Delete/Backspace on a selected node while keyboard
+   * navigation is active. Requires `profile.keyboard.enabled = true` to take effect.
+   */
+  onKeyboardDeleteRequest?: ((nodeId: MasterTreeId) => void) | undefined;
 };
 
 type ResolveMasterFolderTreeIconInput = {
@@ -105,12 +113,19 @@ export function useMasterFolderTreeInstance({
   panelCollapsed: boolean;
   setPanelCollapsed: (collapsed: boolean) => void;
   hasPersistedUiState: boolean;
+  /**
+   * Pass this ref to FolderTreeViewportV2's `scrollToNodeRef` prop.
+   * The viewport will fill it in, enabling programmatic scroll-to-node
+   * (used automatically by keyboard navigation and expandToNode).
+   */
+  scrollToNodeRef: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null>;
 } {
   const { toast } = useToast();
   const runtime = useMasterFolderTreeRuntime();
   const {
     nodes,
     selectedNodeId,
+    onKeyboardDeleteRequest,
     initiallyExpandedNodeIds: fallbackInitiallyExpandedNodeIds,
     expandedNodeIds: fallbackExpandedNodeIds,
     ...restControllerOptions
@@ -290,6 +305,22 @@ export function useMasterFolderTreeInstance({
     instanceId: instance,
   });
 
+  // Scroll-to-node ref — pass to FolderTreeViewportV2's scrollToNodeRef prop.
+  // The viewport fills it in; keyboard nav and expandToNode use it automatically.
+  const scrollToNodeRef = useRef<((nodeId: MasterTreeId) => void) | null>(null);
+  const scrollToNode = useCallback((nodeId: MasterTreeId): void => {
+    scrollToNodeRef.current?.(nodeId);
+  }, []);
+
+  // Keyboard navigation — enabled when profile.keyboard.enabled is true (default: false).
+  useFolderTreeKeyboardNav({
+    controller,
+    instanceId: instance,
+    onDeleteRequest: onKeyboardDeleteRequest,
+    scrollToNode,
+    enabled: profile.keyboard?.enabled ?? false,
+  });
+
   useEffect(() => {
     void controller.replaceNodes(nodes, 'external_sync');
   }, [controller.replaceNodes, nodes]);
@@ -372,5 +403,6 @@ export function useMasterFolderTreeInstance({
     panelCollapsed,
     setPanelCollapsed,
     hasPersistedUiState,
+    scrollToNodeRef,
   };
 }

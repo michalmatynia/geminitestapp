@@ -26,8 +26,19 @@ export function useLocalExecutionTriggers(
     ) => Promise<{ status: string; error?: unknown; state: RuntimeState }>;
   },
   outcome: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    finalizeLocalRunOutcome: (outcome: any, meta: any) => void;
+    finalizeLocalRunOutcome: (
+      outcome: {
+        status: 'completed' | 'paused' | 'canceled' | 'error';
+        error?: unknown;
+        state: RuntimeState;
+      },
+      meta: {
+        startedAt: string;
+        startedAtMs: number;
+        triggerEvent: string | null;
+        triggerContext: Record<string, unknown> | null;
+      }
+    ) => void;
   }
 ) {
   const getConnectedSimulationNodesForTrigger = useCallback(

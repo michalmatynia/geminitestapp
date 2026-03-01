@@ -29,6 +29,11 @@ import {
   resolvePathSaveBlockedMessage,
 } from './useAiPathsPersistence.helpers';
 import {
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
+  parseRuntimeState,
+} from '../AiPathsSettingsUtils';
+import {
   type AiPathsUiState,
   type PathSaveOptions,
   type UseAiPathsPersistenceArgs,
@@ -226,9 +231,9 @@ export function useAiPathsPersistence(
             config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
           );
           setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
-          setParserSamples(config.parserSamples ?? {});
-          setUpdaterSamples(config.updaterSamples ?? {});
-          setRuntimeState(config.runtimeState ?? {});
+          setParserSamples(normalizeParserSamples(config.parserSamples));
+          setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
+          setRuntimeState(parseRuntimeState(config.runtimeState));
           setLastRunAt(config.lastRunAt ?? null);
           setIsPathLocked(Boolean(config.isLocked));
           setIsPathActive(config.isActive !== false);

@@ -292,7 +292,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
     <div className='container mx-auto py-8'>
       <SectionHeader
         title='Folder Tree Profiles'
-        description='Configure placeholders, nesting rules, and icons for each folder tree instance.'
+        description='Configure placeholders, nesting rules, icons, and capabilities (keyboard nav, multi-selection, search) for each folder tree instance.'
         className='mb-6'
       />
 
@@ -721,6 +721,264 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   placeholder='note=FileText'
                 />
               </FormField>
+
+              {/* ── Capabilities ── */}
+              <div>
+                <p className='mb-3 text-xs font-medium uppercase tracking-wide text-gray-400'>
+                  Capabilities
+                </p>
+                <div className='grid gap-6 lg:grid-cols-3'>
+                  {/* Keyboard Navigation */}
+                  <div className='space-y-2'>
+                    <p className='text-xs font-semibold text-gray-300'>Keyboard Navigation</p>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.keyboard?.enabled ?? false}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              keyboard: { ...current.keyboard, enabled: checked === true },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Enable keyboard nav</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.keyboard?.arrowNavigation ?? true}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              keyboard: {
+                                ...current.keyboard,
+                                arrowNavigation: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Arrow key navigation</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.keyboard?.enterToRename ?? true}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              keyboard: {
+                                ...current.keyboard,
+                                enterToRename: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Enter to rename</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.keyboard?.deleteKey ?? false}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              keyboard: { ...current.keyboard, deleteKey: checked === true },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Delete key</span>
+                      </Card>
+                    </label>
+                  </div>
+
+                  {/* Multi-Selection */}
+                  <div className='space-y-2'>
+                    <p className='text-xs font-semibold text-gray-300'>Multi-Selection</p>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.multiSelect?.enabled ?? false}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              multiSelect: {
+                                ...current.multiSelect,
+                                enabled: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Enable multi-selection</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.multiSelect?.ctrlClick ?? true}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              multiSelect: {
+                                ...current.multiSelect,
+                                ctrlClick: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Ctrl/Cmd+click toggle</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.multiSelect?.shiftClick ?? true}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              multiSelect: {
+                                ...current.multiSelect,
+                                shiftClick: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Shift+click range</span>
+                      </Card>
+                    </label>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.multiSelect?.selectAll ?? true}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              multiSelect: {
+                                ...current.multiSelect,
+                                selectAll: checked === true,
+                              },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Ctrl/Cmd+A select all</span>
+                      </Card>
+                    </label>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className='space-y-2'>
+                    <p className='text-xs font-semibold text-gray-300'>Search Bar</p>
+                    <label className='block cursor-pointer'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='flex items-start gap-2 border-border/50 bg-card/30'
+                      >
+                        <Checkbox
+                          checked={profile.search?.enabled ?? false}
+                          onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                            updateProfile(meta.id, (current) => ({
+                              ...current,
+                              search: { ...current.search, enabled: checked === true },
+                            }));
+                          }}
+                        />
+                        <span className='text-xs text-gray-300'>Enable search bar</span>
+                      </Card>
+                    </label>
+                    <FormField label='Filter Mode'>
+                      <SelectSimple
+                        size='sm'
+                        value={profile.search?.filterMode ?? 'highlight'}
+                        options={[
+                          { value: 'highlight', label: 'Highlight matches' },
+                          { value: 'filter_tree', label: 'Filter tree' },
+                        ]}
+                        onValueChange={(value: string): void => {
+                          updateProfile(meta.id, (current) => ({
+                            ...current,
+                            search: {
+                              ...current.search,
+                              filterMode: value as 'highlight' | 'filter_tree',
+                            },
+                          }));
+                        }}
+                      />
+                    </FormField>
+                    <FormField label='Debounce (ms)'>
+                      <Input
+                        type='number'
+                        min={0}
+                        max={2000}
+                        value={profile.search?.debounceMs ?? 200}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          const parsed = parseInt(event.target.value, 10);
+                          updateProfile(meta.id, (current) => ({
+                            ...current,
+                            search: {
+                              ...current.search,
+                              debounceMs: Number.isFinite(parsed) ? parsed : 200,
+                            },
+                          }));
+                        }}
+                      />
+                    </FormField>
+                    <FormField label='Min Query Length'>
+                      <Input
+                        type='number'
+                        min={0}
+                        max={10}
+                        value={profile.search?.minQueryLength ?? 1}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          const parsed = parseInt(event.target.value, 10);
+                          updateProfile(meta.id, (current) => ({
+                            ...current,
+                            search: {
+                              ...current.search,
+                              minQueryLength: Number.isFinite(parsed) ? parsed : 1,
+                            },
+                          }));
+                        }}
+                      />
+                    </FormField>
+                  </div>
+                </div>
+              </div>
             </Card>
           );
         })}

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
@@ -18,79 +17,10 @@ import {
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
+import { createProductValidationPatternSchema as createPatternSchema } from '@/shared/contracts/products';
+export { createPatternSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const replacementFieldSchema = z.enum(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
-
-export const createPatternSchema = z.object({
-  label: z.string().trim().min(1, 'Label is required'),
-  target: z.enum([
-    'name',
-    'description',
-    'sku',
-    'price',
-    'stock',
-    'category',
-    'size_length',
-    'size_width',
-    'length',
-    'weight',
-  ]),
-  locale: z.string().trim().nullable().optional(),
-  regex: z.string().min(1, 'Regex is required'),
-  flags: z.string().trim().nullable().optional(),
-  message: z.string().trim().min(1, 'Message is required'),
-  severity: z.enum(['error', 'warning']).optional(),
-  enabled: z.boolean().optional(),
-  replacementEnabled: z.boolean().optional(),
-  replacementAutoApply: z.boolean().optional(),
-  skipNoopReplacementProposal: z.boolean().optional(),
-  replacementValue: z.string().trim().nullable().optional(),
-  replacementFields: z.array(replacementFieldSchema).optional(),
-  replacementAppliesToScopes: z
-    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-    .optional(),
-  runtimeEnabled: z.boolean().optional(),
-  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
-  runtimeConfig: z.string().trim().nullable().optional(),
-  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
-  denyBehaviorOverride: z.enum(['ask_again', 'mute_session']).nullable().optional(),
-  validationDebounceMs: z.number().int().min(0).max(30000).optional(),
-  sequenceGroupId: z.string().trim().nullable().optional(),
-  sequenceGroupLabel: z.string().trim().nullable().optional(),
-  sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional(),
-  sequence: z.number().int().min(0).nullable().optional(),
-  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
-  maxExecutions: z.number().int().min(1).max(20).optional(),
-  passOutputToNext: z.boolean().optional(),
-  launchEnabled: z.boolean().optional(),
-  launchAppliesToScopes: z
-    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-    .optional(),
-  launchScopeBehavior: z.enum(['gate', 'condition_only']).optional(),
-  launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
-  launchSourceField: z.string().trim().nullable().optional(),
-  launchOperator: z
-    .enum([
-      'equals',
-      'not_equals',
-      'contains',
-      'starts_with',
-      'ends_with',
-      'regex',
-      'gt',
-      'gte',
-      'lt',
-      'lte',
-      'is_empty',
-      'is_not_empty',
-    ])
-    .optional(),
-  launchValue: z.string().nullable().optional(),
-  launchFlags: z.string().trim().nullable().optional(),
-  appliesToScopes: z.array(z.enum(['draft_template', 'product_create', 'product_edit'])).optional(),
-});
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
   const safety = validateRegexSafety(regexSource, flags);

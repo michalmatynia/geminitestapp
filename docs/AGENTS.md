@@ -91,7 +91,52 @@ Auth settings (roles, permissions, policies) are stored in the Mongo `settings` 
 
 ## Notes & Folder Tree
 
-- Folder tree UI + helpers live in `src/features/foldertree/` and are reused by notes.
+The Master Folder Tree is a shared, production-grade tree engine used by **10 independent instances**:
+`notes`, `image_studio`, `product_categories`, `cms_page_builder`, `case_resolver`,
+`case_resolver_cases`, `validator_list_tree`, `validator_pattern_tree`,
+`prompt_exploder_hierarchy`, `brain_catalog_tree`.
+
+**Key directories:**
+- `src/features/foldertree/v2/` — engine root (barrel: `index.ts`)
+  - `hooks/useFolderTreeInstanceV2.ts` — main React hook; returns `MasterFolderTreeController`
+  - `hooks/useFolderTreeKeyboardNav.ts` — opt-in keyboard navigation hook
+  - `components/FolderTreeViewportV2.tsx` — virtualized tree viewport (TanStack Virtual)
+  - `components/FolderTreeContextMenu.tsx` — right-click context menu wrapper
+  - `runtime/MasterFolderTreeRuntimeProvider.tsx` — cross-instance runtime bus (undo, keyboard dispatch)
+  - `operations/` — pure-function utilities: `expansion`, `keyboard`, `selection`, `search`, `clipboard`, `bulk`, `node-status`
+  - `search/` — search bar components + `FolderTreeSearchViewport` composite
+  - `adapter/createMasterFolderTreeAdapterV3.ts` — adapter factory (prepare/apply/commit/rollback)
+- `src/shared/contracts/master-folder-tree.ts` — `MasterFolderTreeController`, `FolderTreeProfileV2`, `MasterTreeNodeStatus`
+- `src/shared/utils/folder-tree-profiles-v2.ts` — Zod schemas, `parseFolderTreeProfilesV2`, `defaultFolderTreeProfilesV2`
+
+**Controller capabilities (all optional, backward-compatible):**
+- `expandToNode(nodeId)` — expands all ancestors to reveal a deep node
+- `scrollToNode(nodeId)` — programmatically scrolls viewport (requires `scrollToNodeRef` on viewport)
+- `selectedNodeIds` (Set) + `toggleSelectNode`, `selectNodeRange`, `selectAllNodes`, `clearMultiSelection`, `setSelectedNodeIds` — multi-selection
+- `expandNode/collapseNode/expandAll/collapseAll`, `startRename/commitRename/cancelRename`, `moveNode/reorderNode/dropNodeToRoot`, `undo`, `replaceNodes`, `refreshFromAdapter`
+
+**Profile-driven capabilities** (`FolderTreeProfileV2` optional sections):
+- `keyboard` — arrow nav, Enter-to-rename, Delete key
+- `multiSelect` — Ctrl+click, Shift+click, Ctrl+A
+- `search` — built-in search bar, debounce, filter modes (`highlight` | `filter_tree`)
+- `badges` — children count or custom metadata badge
+- `statusIcons` — per-status icon IDs; read from `node.metadata['_status']` (`loading|error|locked|warning|success`)
+
+**Viewport props** (all optional, zero overhead when absent):
+- `renderNode` — custom row renderer (receives `FolderTreeViewportRenderNodeInput` incl. `nodeStatus`)
+- `contextMenuItems(node, controller)` — right-click menu factory per row
+- `estimateRowHeight` — number or per-row function for dynamic virtualization
+- `autoExpandOnHoverMs` — auto-expand collapsed folders on drag hover (default 600ms)
+- `scrollToNodeRef` — wires `scrollToNode` into the controller
+- `onNodeDrop`, `canDrop`, `resolveDropPosition`, `canStartDrag`, `onNodeDragStart` — drop customization
+
+**Node status convention:** set `node.metadata['_status']` to one of the `MasterTreeNodeStatus` values;
+the default row renderer shows a colored status glyph automatically. Use `getMasterTreeNodeStatus(node)` to read it.
+
+**Operations (pure functions, no React):** `getAncestorIds`, `resolveKeyboardAction`,
+`resolveNextSelectedNodeIds`, `isNodeInSelection`, `getSelectionBoundary`,
+`searchMasterTreeNodes`, `filterMasterTreeToMatches`, `captureMasterTreeClipboard`,
+`applyMasterTreePaste`, `bulkMoveNodes`, `bulkDeleteNodes`, `getMasterTreeNodeStatus`
 
 ## Integrations
 

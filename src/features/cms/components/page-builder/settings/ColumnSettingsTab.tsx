@@ -29,17 +29,18 @@ export function ColumnSettingsTab(): React.JSX.Element | null {
   if (!selectedColumn) return null;
   const columnDef = getBlockDefinition('Column');
   if (!columnDef) return null;
+  const columnSettings = columnSettingsForRender ?? selectedColumn.settings;
 
   return (
     <SettingsFormProvider
-      values={columnSettingsForRender ?? selectedColumn.settings}
+      values={columnSettings}
       onChange={handleColumnSettingChange}
     >
       <div className='space-y-4'>
         {renderFieldGroups(
           groupSettingsFields(prependManagementFields(columnDef.settingsSchema)),
-          undefined,
-          undefined,
+          columnSettings,
+          handleColumnSettingChange,
           (f) =>
             columnHeightMode === 'inherit' && f.key === 'height' ? { ...f, disabled: true } : f
         )}

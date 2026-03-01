@@ -66,6 +66,7 @@ export function BrainCatalogTree({
   const {
     appearance: { rootDropUi },
     controller,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'brain_catalog_tree',
     nodes: masterNodes,
@@ -97,6 +98,7 @@ export function BrainCatalogTree({
     <MasterFolderTreeRuntimeProvider>
       <FolderTreeViewportV2
         controller={controller}
+        scrollToNodeRef={scrollToNodeRef}
         rootDropUi={rootDropUi}
         renderNode={renderNode}
         enableDnd={!isPending}

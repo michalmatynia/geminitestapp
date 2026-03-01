@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   normalizeCaseResolverPublicFilepath,
@@ -18,15 +17,10 @@ import {
   enqueueCaseResolverOcrJob,
   startCaseResolverOcrQueue,
 } from '@/features/case-resolver/workers/caseResolverOcrQueue';
+import { createCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
-const createCaseResolverOcrJobSchema = z.object({
-  filepath: z.string().trim().min(1),
-  model: z.string().trim().optional(),
-  prompt: z.string().trim().optional(),
-  correlationId: z.string().trim().optional(),
-});
 const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

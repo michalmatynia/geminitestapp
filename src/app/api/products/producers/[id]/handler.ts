@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProducerRepository } from '@/features/products/server';
+import { updateProducerSchema } from '@/shared/contracts/products';
+export { updateProducerSchema as producerUpdateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
-
-export const producerUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
-  website: z.string().trim().nullable().optional(),
-});
 
 export async function PUT_handler(
   _req: NextRequest,
@@ -16,7 +13,7 @@ export async function PUT_handler(
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
-  const data = ctx.body as z.infer<typeof producerUpdateSchema>;
+  const data = ctx.body as z.infer<typeof updateProducerSchema>;
   const name = typeof data.name === 'string' ? data.name.trim() : undefined;
 
   const repository = await getProducerRepository();

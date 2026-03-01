@@ -1,26 +1,14 @@
 import { z } from 'zod';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ImportExportTemplateMapping } from '@/shared/contracts/data-import-export';
+import {
+  type BaseFieldMapping,
+  type BaseExportProductLike,
+  type BaseExportRequestData,
+  baseExportRequestSchema as exportSchema,
+} from '@/shared/contracts/integrations';
 
-export const exportSchema = z.object({
-  connectionId: z.string().min(1),
-  inventoryId: z.string().min(1),
-  templateId: z.string().optional(),
-  allowDuplicateSku: z.boolean().optional(),
-  exportImagesAsBase64: z.boolean().optional(),
-  imageBase64Mode: z.enum(['base-only', 'full-data-uri']).optional(),
-  imagesOnly: z.boolean().optional(),
-  listingId: z.string().optional(),
-  externalListingId: z.string().optional(),
-  imageTransform: z
-    .object({
-      forceJpeg: z.boolean().optional(),
-      maxDimension: z.number().int().positive().optional(),
-      jpegQuality: z.number().int().min(10).max(100).optional(),
-    })
-    .optional(),
-});
-export type BaseExportRequestData = z.infer<typeof exportSchema>;
+export type { BaseFieldMapping, BaseExportProductLike, BaseExportRequestData };
+export { exportSchema };
 
 export const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set(['categoryid', 'category_id', 'category']);
 export const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
@@ -69,17 +57,4 @@ export const guessExtension = (mime: string): string => {
   if (normalized === 'image/png') return '.png';
   if (normalized === 'image/webp') return '.webp';
   return '.jpg';
-};
-
-export type BaseFieldMapping = ImportExportTemplateMapping;
-
-export type BaseExportProductLike = {
-  id: string;
-  sku?: string | null;
-  categoryId?: string | null;
-  producers?: Array<{ id: string; [key: string]: unknown }>;
-  tags?: Array<{ tagId?: string; id?: string }>;
-  catalogs?: Array<{ catalogId: string; [key: string]: unknown }>;
-  parameters?: Array<{ name?: string; id?: string; value?: unknown }>;
-  [key: string]: unknown;
 };

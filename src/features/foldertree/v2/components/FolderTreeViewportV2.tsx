@@ -5,14 +5,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { FolderTreeNodeView } from '../types';
 
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { MasterFolderTreeController, MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
 import { EmptyState } from '@/shared/ui';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,
+  MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+
+import { getMasterTreeNodeStatus } from '../operations/node-status';
+import { FolderTreeContextMenu } from './FolderTreeContextMenu';
+import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
@@ -42,6 +47,8 @@ export type FolderTreeViewportRenderNodeInput = {
   isDragging: boolean;
   isDropTarget: boolean;
   dropPosition: MasterTreeDropPosition | null;
+  /** Semantic status from node.metadata['_status']. Null when not set. */
+  nodeStatus: MasterTreeNodeStatus | null;
   select: () => void;
   toggleExpand: () => void;
   startRename: () => void;
@@ -114,6 +121,13 @@ export type FolderTreeViewportV2Props = {
       }
     | undefined;
   /**
+   * Optional context menu factory. Called per rendered row with the hovered node and controller.
+   * Return an empty array to suppress the menu for that node. Zero overhead when undefined.
+   */
+  contextMenuItems?:
+    | ((node: MasterTreeNode, controller: MasterFolderTreeController) => FolderTreeContextMenuItem[])
+    | undefined;
+  /**
    * Estimate row height for virtualization. Pass a number for a fixed height
    * (default: 34) or a function for per-row dynamic sizing.
    */
@@ -133,6 +147,22 @@ export type FolderTreeViewportV2Props = {
 const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
 const defaultRootDropActiveClassName = 'border-sky-200/55 bg-sky-500/12 text-sky-100';
 
+const STATUS_ICON_CHARS: Record<MasterTreeNodeStatus, string> = {
+  loading: '⏳',
+  error: '✕',
+  locked: '🔒',
+  warning: '⚠',
+  success: '✓',
+};
+
+const STATUS_COLOR_CLASSES: Record<MasterTreeNodeStatus, string> = {
+  loading: 'text-blue-400',
+  error: 'text-red-400',
+  locked: 'text-amber-400',
+  warning: 'text-yellow-400',
+  success: 'text-green-400',
+};
+
 const DefaultRow = ({
   node,
   depth,
@@ -142,6 +172,7 @@ const DefaultRow = ({
   isMultiSelected,
   isDragging,
   dropPosition,
+  nodeStatus,
   select,
   toggleExpand,
 }: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
@@ -180,6 +211,14 @@ const DefaultRow = ({
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
       )}
       <span className='truncate'>{node.name}</span>
+      {nodeStatus ? (
+        <span
+          aria-label={nodeStatus}
+          className={`ml-auto shrink-0 text-xs ${isSelected ? 'text-white/80' : STATUS_COLOR_CLASSES[nodeStatus]}`}
+        >
+          {STATUS_ICON_CHARS[nodeStatus]}
+        </span>
+      ) : null}
     </button>
   );
 };
@@ -198,6 +237,7 @@ export function FolderTreeViewportV2({
   onNodeDragStart,
   canStartDrag,
   rootDropUi,
+  contextMenuItems,
   estimateRowHeight,
   autoExpandOnHoverMs = 600,
   scrollToNodeRef,
@@ -534,6 +574,7 @@ export function FolderTreeViewportV2({
                 const isDropTarget = controller.dragState?.targetId === node.id;
                 const dropPosition =
                   controller.dragState?.targetId === node.id ? controller.dragState.position : null;
+                const nodeStatus = getMasterTreeNodeStatus(node);
 
                 const rowNode = renderNode ? (
                   renderNode({
@@ -547,6 +588,7 @@ export function FolderTreeViewportV2({
                     isDragging: Boolean(isDragging),
                     isDropTarget: Boolean(isDropTarget),
                     dropPosition,
+                    nodeStatus,
                     select: () => controller.selectNode(node.id),
                     toggleExpand: () => controller.toggleNodeExpanded(node.id),
                     startRename: () => controller.startRename(node.id),
@@ -563,11 +605,22 @@ export function FolderTreeViewportV2({
                     isDragging={Boolean(isDragging)}
                     isDropTarget={Boolean(isDropTarget)}
                     dropPosition={dropPosition}
+                    nodeStatus={nodeStatus}
                     select={() => controller.selectNode(node.id)}
                     toggleExpand={() => controller.toggleNodeExpanded(node.id)}
                     startRename={() => controller.startRename(node.id)}
                   />
                 );
+
+                const renderedRow = contextMenuItems ? (
+                  <FolderTreeContextMenu
+                    node={node}
+                    controller={controller}
+                    items={contextMenuItems(node, controller)}
+                  >
+                    {rowNode}
+                  </FolderTreeContextMenu>
+                ) : rowNode;
 
                 return (
                   <div
@@ -714,7 +767,7 @@ export function FolderTreeViewportV2({
                         : undefined
                     }
                   >
-                    {rowNode}
+                    {renderedRow}
                   </div>
                 );
               })}

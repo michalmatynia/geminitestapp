@@ -64,6 +64,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     controller,
     panelCollapsed,
     setPanelCollapsed,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'notes',
     nodes: masterNodes,
@@ -135,6 +136,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <FolderTreeViewportV2
           controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
           rootDropUi={rootDropUi}
           resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
             const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);

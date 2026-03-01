@@ -12,17 +12,14 @@ import {
   type ImageStudioAutoScalerMode,
   type ImageStudioCenterShadowPolicy,
   type ImageStudioCenterDetectionMode,
+  type UploadedClientAutoScaleImage,
+  type ImageStudioAutoScaleMetadata,
 } from '@/shared/contracts/image-studio';
 import {
   coerceBoolean,
   coerceFiniteNumber,
   isFileLike,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-
-export type UploadedClientAutoScaleImage = {
-  buffer: Buffer;
-  mime: string;
-};
 
 export async function parseAutoScalerRequestPayload(
   req: NextRequest
@@ -149,21 +146,6 @@ export const buildClientPayloadSignature = (
     return `dataurl:${createHash('sha1').update(payload.dataUrl.trim()).digest('hex').slice(0, 20)}`;
   }
   return null;
-};
-
-export type ImageStudioAutoScaleMetadata = {
-  effectiveMode?: string;
-  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
-  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
-  layout?: ImageStudioNormalizedCenterLayout | null;
-  detectionUsed?: string | null;
-  confidenceBefore?: number | null;
-  detectionDetails?: ImageStudioDetectionDetails | null;
-  scale?: number | null;
-  whitespaceBefore?: ImageStudioWhitespaceMetrics | null;
-  whitespaceAfter?: ImageStudioWhitespaceMetrics | null;
-  objectAreaPercentBefore?: number | null;
-  objectAreaPercentAfter?: number | null;
 };
 
 export function readAutoScaleMetadataFromSlot(

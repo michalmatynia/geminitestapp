@@ -12,6 +12,7 @@ import type {
   FolderTreeProfileV2,
   FolderTreeSearchConfig,
   FolderTreeSelectionBehavior,
+  MasterTreeNodeStatus,
 } from '../contracts/master-folder-tree';
 
 export type {
@@ -26,6 +27,7 @@ export type {
   FolderTreeProfileV2,
   FolderTreeSearchConfig,
   FolderTreeSelectionBehavior,
+  MasterTreeNodeStatus,
 };
 
 import {
@@ -345,6 +347,25 @@ const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z.object(
   minQueryLength: z.number().optional(),
 });
 
+const nodeStatusValues: [MasterTreeNodeStatus, ...MasterTreeNodeStatus[]] = [
+  'loading',
+  'error',
+  'locked',
+  'warning',
+  'success',
+];
+
+const statusIconsSchema: z.ZodType<Partial<Record<MasterTreeNodeStatus, string | null>>> = z.object({
+  loading: z.string().nullable().optional(),
+  error: z.string().nullable().optional(),
+  locked: z.string().nullable().optional(),
+  warning: z.string().nullable().optional(),
+  success: z.string().nullable().optional(),
+});
+
+// Expose the valid status values for consumers
+export const masterTreeNodeStatusValues: readonly MasterTreeNodeStatus[] = nodeStatusValues;
+
 const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
   version: z.literal(2).optional().default(2),
   placeholders: z
@@ -410,6 +431,7 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
   keyboard: keyboardConfigSchema.optional(),
   multiSelect: multiSelectConfigSchema.optional(),
   search: searchConfigSchema.optional(),
+  statusIcons: statusIconsSchema.optional(),
 });
 
 const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
@@ -448,6 +470,7 @@ const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV2 => ({
   keyboard: profile.keyboard ? { ...profile.keyboard } : undefined,
   multiSelect: profile.multiSelect ? { ...profile.multiSelect } : undefined,
   search: profile.search ? { ...profile.search } : undefined,
+  statusIcons: profile.statusIcons ? { ...profile.statusIcons } : undefined,
 });
 
 export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
@@ -1040,6 +1063,11 @@ const coerceProfileV2 = (
         ? parsed.data.interactions.selectionBehavior
         : fallback.interactions.selectionBehavior,
     },
+    badges: parsed.data.badges,
+    keyboard: parsed.data.keyboard,
+    multiSelect: parsed.data.multiSelect,
+    search: parsed.data.search,
+    statusIcons: parsed.data.statusIcons,
   };
 };
 

@@ -140,7 +140,7 @@ const createAppliedTx = (tx: FolderTreeTransaction): FolderTreeAppliedTransactio
 const normalizeError = (
   operationType: MasterFolderTreePersistOperation['type'] | 'unknown',
   error: unknown
-): FolderTreeState['lastError'] => ({
+): NonNullable<FolderTreeState['lastError']> => ({
   code: 'PERSIST_FAILED',
   message: error instanceof Error ? error.message : 'Failed to persist tree operation.',
   operationType,

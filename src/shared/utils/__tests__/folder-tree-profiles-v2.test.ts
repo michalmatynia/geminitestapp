@@ -189,4 +189,75 @@ describe('folder-tree-profiles-v2', () => {
       })
     ).toBe(false);
   });
+
+  it('old JSON without optional capability fields parses to undefined (backward compat)', () => {
+    const parsed = parseFolderTreeProfilesV2(
+      JSON.stringify({
+        notes: {
+          version: 2,
+          placeholders: { preset: 'sublime', style: 'ghost', emphasis: 'subtle', rootDropLabel: 'Drop to Root', inlineDropLabel: 'Drop here' },
+          icons: { slots: { folderClosed: 'Folder', folderOpen: 'FolderOpen', file: 'FileText', root: 'Folder', dragHandle: 'GripVertical' }, byKind: {} },
+          nesting: { defaultAllow: false, blockedTargetKinds: [], rules: [] },
+          interactions: { selectionBehavior: 'click_away' },
+        },
+      })
+    );
+
+    expect(parsed.notes.badges).toBeUndefined();
+    expect(parsed.notes.keyboard).toBeUndefined();
+    expect(parsed.notes.multiSelect).toBeUndefined();
+    expect(parsed.notes.search).toBeUndefined();
+    expect(parsed.notes.statusIcons).toBeUndefined();
+  });
+
+  it('roundtrips capability sections through parseFolderTreeProfilesV2', () => {
+    const parsed = parseFolderTreeProfilesV2(
+      JSON.stringify({
+        notes: {
+          version: 2,
+          placeholders: { preset: 'sublime', style: 'ghost', emphasis: 'subtle', rootDropLabel: 'Drop to Root', inlineDropLabel: 'Drop here' },
+          icons: { slots: { folderClosed: 'Folder', folderOpen: 'FolderOpen', file: 'FileText', root: 'Folder', dragHandle: 'GripVertical' }, byKind: {} },
+          nesting: { defaultAllow: false, blockedTargetKinds: [], rules: [] },
+          interactions: { selectionBehavior: 'click_away' },
+          keyboard: { enabled: true, arrowNavigation: true, enterToRename: false, deleteKey: true },
+          multiSelect: { enabled: true, ctrlClick: true, shiftClick: false, selectAll: true },
+          search: { enabled: true, debounceMs: 150, filterMode: 'filter_tree', matchFields: ['name', 'path'], minQueryLength: 2 },
+          statusIcons: { loading: 'Loader', error: 'AlertCircle', success: 'CheckCircle' },
+          badges: { field: 'children_count', position: 'trailing', style: 'count' },
+        },
+      })
+    );
+
+    const profile = parsed.notes;
+    expect(profile.keyboard?.enabled).toBe(true);
+    expect(profile.keyboard?.enterToRename).toBe(false);
+    expect(profile.keyboard?.deleteKey).toBe(true);
+    expect(profile.multiSelect?.enabled).toBe(true);
+    expect(profile.multiSelect?.shiftClick).toBe(false);
+    expect(profile.search?.enabled).toBe(true);
+    expect(profile.search?.debounceMs).toBe(150);
+    expect(profile.search?.filterMode).toBe('filter_tree');
+    expect(profile.search?.matchFields).toEqual(['name', 'path']);
+    expect(profile.search?.minQueryLength).toBe(2);
+    expect(profile.statusIcons?.loading).toBe('Loader');
+    expect(profile.statusIcons?.error).toBe('AlertCircle');
+    expect(profile.statusIcons?.success).toBe('CheckCircle');
+    expect(profile.statusIcons?.warning).toBeUndefined();
+    expect(profile.badges?.field).toBe('children_count');
+    expect(profile.badges?.style).toBe('count');
+  });
+
+  it('unrecognized statusIcons values parse to undefined', () => {
+    const parsed = parseFolderTreeProfilesV2(
+      JSON.stringify({
+        notes: {
+          statusIcons: { invalid_status: 'SomeIcon', loading: 'Loader2' },
+        },
+      })
+    );
+    // Only known status keys survive
+    expect(parsed.notes.statusIcons?.loading).toBe('Loader2');
+    // Unknown keys are stripped by Zod schema
+    expect((parsed.notes.statusIcons as Record<string, unknown>)?.['invalid_status']).toBeUndefined();
+  });
 });

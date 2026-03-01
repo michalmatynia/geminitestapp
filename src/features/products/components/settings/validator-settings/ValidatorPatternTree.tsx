@@ -171,6 +171,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
   const {
     appearance: { rootDropUi },
     controller,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'validator_pattern_tree',
     nodes: masterNodes,
@@ -264,6 +265,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
       <ValidatorPatternTreeContext.Provider value={contextValue}>
         <FolderTreeViewportV2
           controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
           rootDropUi={rootDropUi}
           renderNode={renderNode}
           enableDnd={!isPending}

@@ -213,10 +213,11 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   if (!selectedBlock) return null;
   const blockDef = getBlockDefinition(selectedBlock.type);
   if (!blockDef) return null;
+  const blockSettingsForRender = rowSettingsForRender ?? selectedBlock.settings;
 
   return (
     <SettingsFormProvider
-      values={rowSettingsForRender ?? selectedBlock.settings}
+      values={blockSettingsForRender}
       onChange={handleBlockSettingChange}
     >
       <div className='space-y-4'>
@@ -233,12 +234,14 @@ export function BlockSettingsTab(): React.JSX.Element | null {
         )}
         {isImageElementInContainer && isInBackgroundMode
           ? renderFieldGroups(
-            groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS))
+            groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)),
+            blockSettingsForRender,
+            handleBlockSettingChange
           )
           : renderFieldGroups(
             groupSettingsFields(prependManagementFields(blockDef.settingsSchema)),
-            undefined,
-            undefined,
+            blockSettingsForRender,
+            handleBlockSettingChange,
             (f) =>
               selectedBlock.type === 'AppEmbed' && f.key === 'appId'
                 ? { ...f, options: appEmbedOptions }

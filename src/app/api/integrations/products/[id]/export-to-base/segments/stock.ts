@@ -1,6 +1,38 @@
 import { fetchBaseWarehouses, normalizeStockKey } from '@/features/integrations/server';
 import { type BaseFieldMapping } from './common';
 
+const inferTypedWarehouseId = (value: string): { typed: string; numeric: string } | null => {
+  const match = value.match(/([a-z]+)[_-]?(\d+)/i);
+  if (!match?.[1] || !match?.[2]) return null;
+  const typed = `${match[1].toLowerCase()}_${match[2]}`;
+  return { typed, numeric: match[2] };
+};
+
+const resolveWarehouseCandidate = (
+  value: string,
+  validWarehouseIds: Set<string>,
+  aliases: Record<string, string> | null
+): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const directAlias = aliases?.[trimmed];
+  if (directAlias && validWarehouseIds.has(directAlias)) {
+    return directAlias;
+  }
+
+  const normalized = normalizeStockKey(trimmed);
+  if (normalized) {
+    const aliased = aliases?.[normalized];
+    if (aliased && validWarehouseIds.has(aliased)) return aliased;
+    if (validWarehouseIds.has(normalized)) return normalized;
+  }
+
+  if (validWarehouseIds.has(trimmed)) return trimmed;
+
+  return null;
+};
+
 export const resolveWarehouseAndStockMappings = async ({
   imagesOnly,
   token,
@@ -29,12 +61,6 @@ export const resolveWarehouseAndStockMappings = async ({
       const warehouses = await fetchBaseWarehouses(token, targetInventoryId);
       const warehouseIdSet = new Set<string>();
       const warehouseAliases: Record<string, string> = {};
-      const inferTypedWarehouseId = (value: string) => {
-        const match = value.match(/([a-z]+)[_-]?(\d+)/i);
-        if (!match?.[1] || !match?.[2]) return null;
-        const typed = `${match[1].toLowerCase()}_${match[2]}`;
-        return { typed, numeric: match[2] };
-      };
       for (const warehouse of warehouses) {
         const warehouseRecord = warehouse as Record<string, unknown>;
         const typedWarehouseId =
@@ -43,13 +69,12 @@ export const resolveWarehouseAndStockMappings = async ({
         const inferred = typedWarehouseId ?? inferTypedWarehouseId(warehouse['id'])?.typed;
         if (inferred) {
           warehouseIdSet.add(inferred);
+          const numeric = inferTypedWarehouseId(inferred)?.numeric;
+          if (numeric) {
+            warehouseAliases[numeric] = inferred;
+          }
           if (inferred !== warehouse['id']) {
-            const numeric = inferTypedWarehouseId(inferred)?.numeric;
-            if (numeric) {
-              warehouseAliases[numeric] = inferred;
-            } else {
-              warehouseAliases[warehouse['id']] = inferred;
-            }
+            warehouseAliases[warehouse['id']] = inferred;
           }
         }
         if (typedWarehouseId && typedWarehouseId !== warehouse['id']) {
@@ -67,27 +92,53 @@ export const resolveWarehouseAndStockMappings = async ({
 
   let effectiveMappings = mappings;
   if (!imagesOnly && validWarehouseIds) {
+    if (warehouseId) {
+      warehouseId = resolveWarehouseCandidate(warehouseId, validWarehouseIds, stockWarehouseAliases);
+    }
+
     const warehouseIdMapping = mappings.find(
       (m) => String(m['targetField']).toLowerCase() === 'warehouse_id'
     );
     if (warehouseIdMapping) {
       const mappedValue = String(warehouseIdMapping['sourceKey'] || '').trim();
-      if (mappedValue && (validWarehouseIds.has(mappedValue) || /^\d+$/.test(mappedValue))) {
-        warehouseId = mappedValue;
+      if (mappedValue) {
+        const resolvedMappedValue = resolveWarehouseCandidate(
+          mappedValue,
+          validWarehouseIds,
+          stockWarehouseAliases
+        );
+        if (resolvedMappedValue) {
+          warehouseId = resolvedMappedValue;
+        }
       }
     }
 
-    effectiveMappings = mappings.map((mapping) => {
-      const targetField = String(mapping['targetField'] || '').toLowerCase();
-      if (targetField.startsWith('stock_')) {
+    effectiveMappings = mappings
+      .map((mapping) => {
+        const targetField = String(mapping['targetField'] || '').toLowerCase();
+        if (!targetField.startsWith('stock_')) {
+          return mapping;
+        }
         const rawKey = targetField.replace(/^stock_/, '');
         const normalized = normalizeStockKey(rawKey);
-        if (normalized !== rawKey) {
-          return { ...mapping, targetField: `stock_${normalized}` };
+        if (!normalized) {
+          return null;
         }
-      }
-      return mapping;
-    });
+        const aliased = stockWarehouseAliases?.[normalized] ?? normalized;
+        const resolvedStockKey = validWarehouseIds.has(aliased)
+          ? aliased
+          : validWarehouseIds.has(normalized)
+            ? normalized
+            : null;
+        if (!resolvedStockKey) {
+          return null;
+        }
+        if (resolvedStockKey !== rawKey) {
+          return { ...mapping, targetField: `stock_${resolvedStockKey}` };
+        }
+        return mapping;
+      })
+      .filter((mapping): mapping is BaseFieldMapping => Boolean(mapping));
   }
 
   return {

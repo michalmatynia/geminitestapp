@@ -93,6 +93,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   const {
     appearance: { resolveIcon, rootDropUi },
     controller,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'case_resolver',
     nodes: masterNodes,
@@ -108,9 +109,14 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
 
   const handleSearchSelect = useCallback(
     (node: MasterTreeNode): void => {
+      controller.expandToNode?.(node.id);
       controller.selectNode(node.id);
+      const ref = scrollToNodeRef;
+      setTimeout((): void => {
+        ref.current?.(node.id);
+      }, 0);
     },
-    [controller]
+    [controller, scrollToNodeRef]
   );
 
   const canStartTreeDrag = React.useCallback(
@@ -292,6 +298,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
         <div className='min-h-0 flex-1 overflow-auto p-2'>
           <FolderTreeViewportV2
             controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
             canStartDrag={canStartTreeDrag}
             rootDropUi={rootDropUi}
             canDrop={({ draggedNodeId, targetId, position, defaultAllowed }): boolean => {

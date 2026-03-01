@@ -11,17 +11,14 @@ import {
   type ImageStudioDetectionDetails,
   type ImageStudioCenterShadowPolicy,
   type ImageStudioCenterDetectionMode,
+  type UploadedClientCenterImage,
+  type ImageStudioCenterMetadata,
 } from '@/shared/contracts/image-studio';
 import {
   coerceBoolean,
   coerceFiniteNumber,
   isFileLike,
 } from '@/features/ai/image-studio/server/image-handler-utils';
-
-export type UploadedClientCenterImage = {
-  buffer: Buffer;
-  mime: string;
-};
 
 export async function parseCenterRequestPayload(
   req: NextRequest
@@ -150,17 +147,6 @@ export const buildClientPayloadSignature = (
     return `dataurl:${createHash('sha1').update(payload.dataUrl.trim()).digest('hex').slice(0, 20)}`;
   }
   return null;
-};
-
-export type ImageStudioCenterMetadata = {
-  effectiveMode?: string;
-  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
-  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
-  layout?: ImageStudioCenterLayoutMetadata | null;
-  detectionUsed?: ImageStudioObjectDetectionUsed | null;
-  confidenceBefore?: number | null;
-  detectionDetails?: ImageStudioDetectionDetails | null;
-  scale?: number | null;
 };
 
 export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): ImageStudioCenterMetadata {

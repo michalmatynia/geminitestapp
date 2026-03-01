@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
@@ -9,20 +8,12 @@ import {
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { ActivityTypes } from '@/shared/constants/observability';
+import {
+  databaseSyncRequestSchema as syncSchema,
+  type DatabaseSyncRequestDto,
+} from '@/shared/contracts/database';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, forbiddenError } from '@/shared/errors/app-error';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
-import { logSystemError } from '@/shared/lib/observability/system-logger';
-import { logActivity } from '@/shared/utils/observability/activity-service';
-import { logger } from '@/shared/utils/logger';
-
-const syncSchema = z.object({
-  direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']),
-  skipAuthCollections: z.boolean().optional(),
-  manual: z.boolean().optional(),
-});
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();

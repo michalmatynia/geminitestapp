@@ -1,8 +1,43 @@
 import { z } from 'zod';
+import type { ImportExportTemplateMapping } from '../data-import-export';
 
 /**
  * Base.com Metadata DTOs
  */
+
+export type BaseFieldMapping = ImportExportTemplateMapping;
+
+export type BaseExportProductLike = {
+  id: string;
+  sku?: string | null;
+  categoryId?: string | null;
+  producers?: Array<{ id: string; [key: string]: unknown }>;
+  tags?: Array<{ tagId?: string; id?: string }>;
+  catalogs?: Array<{ catalogId: string; [key: string]: unknown }>;
+  parameters?: Array<{ name?: string; id?: string; value?: unknown }>;
+  [key: string]: unknown;
+};
+
+export const baseExportRequestSchema = z.object({
+  connectionId: z.string().min(1),
+  inventoryId: z.string().min(1),
+  templateId: z.string().optional(),
+  allowDuplicateSku: z.boolean().optional(),
+  exportImagesAsBase64: z.boolean().optional(),
+  imageBase64Mode: z.enum(['base-only', 'full-data-uri']).optional(),
+  imagesOnly: z.boolean().optional(),
+  listingId: z.string().optional(),
+  externalListingId: z.string().optional(),
+  imageTransform: z
+    .object({
+      forceJpeg: z.boolean().optional(),
+      maxDimension: z.number().int().positive().optional(),
+      jpegQuality: z.number().int().min(10).max(100).optional(),
+    })
+    .optional(),
+});
+
+export type BaseExportRequestData = z.infer<typeof baseExportRequestSchema>;
 
 export const baseInventorySchema = z.object({
   id: z.string(),

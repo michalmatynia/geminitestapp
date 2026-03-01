@@ -844,6 +844,42 @@ export const imageStudioAutoScalerResponseSchema = z.object({
 
 export type ImageStudioAutoScalerResponse = z.infer<typeof imageStudioAutoScalerResponseSchema>;
 
+export type UploadedClientCenterImage = {
+  buffer: Buffer;
+  mime: string;
+};
+
+export type ImageStudioCenterMetadata = {
+  effectiveMode?: string;
+  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
+  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
+  layout?: ImageStudioCenterLayoutMetadata | null;
+  detectionUsed?: ImageStudioObjectDetectionUsed | null;
+  confidenceBefore?: number | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
+  scale?: number | null;
+};
+
+export type UploadedClientAutoScaleImage = {
+  buffer: Buffer;
+  mime: string;
+};
+
+export type ImageStudioAutoScaleMetadata = {
+  effectiveMode?: string;
+  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
+  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
+  layout?: ImageStudioNormalizedCenterLayout | null;
+  detectionUsed?: string | null;
+  confidenceBefore?: number | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
+  scale?: number | null;
+  whitespaceBefore?: ImageStudioWhitespaceMetrics | null;
+  whitespaceAfter?: ImageStudioWhitespaceMetrics | null;
+  objectAreaPercentBefore?: number | null;
+  objectAreaPercentAfter?: number | null;
+};
+
 export interface RunStudioPayload {
   projectId: string;
   operation?: 'generate' | 'center_object' | undefined;

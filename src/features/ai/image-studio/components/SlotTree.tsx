@@ -118,6 +118,7 @@ export function SlotTree({
     controller,
     panelCollapsed,
     setPanelCollapsed,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'image_studio',
     nodes: masterNodes,
@@ -332,6 +333,7 @@ export function SlotTree({
       >
         <FolderTreeViewportV2
           controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
           className='space-y-0.5'
           emptyLabel='No folders yet. Create a folder or add cards here.'
           rootDropUi={rootDropUi}

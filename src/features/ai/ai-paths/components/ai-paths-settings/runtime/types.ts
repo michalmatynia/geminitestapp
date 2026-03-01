@@ -23,20 +23,14 @@ import type {
 export type { QueuedRun } from '@/shared/lib/ai-paths';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import type { Toast } from '@/shared/contracts/ui';
 
 /**
  * The actual UI toast function type used in runtime hooks.
  * Different from ToastFn in @/shared/contracts/ai-paths-runtime which is the
  * shadcn-style API used inside NodeHandlerContext by engine handlers.
  */
-export type UiToastFn = (
-  message: string,
-  options?: {
-    variant?: 'success' | 'error' | 'info' | 'warning';
-    duration?: number;
-    error?: unknown;
-  }
-) => void;
+export type UiToastFn = Toast;
 
 /**
  * Args required by useAiPathsServerExecution

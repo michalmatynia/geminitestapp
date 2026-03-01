@@ -155,7 +155,9 @@ export function SectionSettingsTab(): React.JSX.Element | null {
             selectedSection.type === 'Grid'
               ? prependManagementFields(sectionDef.settingsSchema)
               : sectionDef.settingsSchema
-          )
+          ),
+          selectedSection.settings,
+          handleSectionSettingChangeWithGridColumns
         )}
         <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
           <div className='flex gap-2'>

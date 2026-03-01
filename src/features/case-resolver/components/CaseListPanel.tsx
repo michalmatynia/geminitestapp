@@ -340,6 +340,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     appearance: { resolveIcon, rootDropUi },
     controller,
     hasPersistedUiState,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'case_resolver_cases',
     nodes: masterNodes,
@@ -679,6 +680,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           />
           <FolderTreeViewportV2
             controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
             enableDnd={!isHierarchyLocked}
             canStartDrag={canStartDrag}
             canDrop={canDrop}

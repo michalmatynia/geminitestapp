@@ -8,7 +8,7 @@ import type {
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { AppModal, Button, FormField, Textarea, useToast } from '@/shared/ui';
+import { JSONImportModal, Button, useToast } from '@/shared/ui';
 
 import { VALIDATOR_SAMPLE_IMPORT_JSON } from './validator-documentation-clipboard';
 
@@ -146,136 +146,96 @@ export function ValidatorPatternImportModal({
   };
 
   return (
-    <AppModal
+    <JSONImportModal
       isOpen={open}
       onClose={handleClose}
+      onImport={handleApply}
+      onPreview={handlePreview}
+      previewText='Preview Import'
       title='Import Validator Patterns JSON'
       subtitle='Paste JSON to create, update, or replace product validator patterns and sequences.'
-      size='lg'
-      closeOnOutside={!importMutation.isPending}
-      closeOnEscape={!importMutation.isPending}
-      footer={
-        <>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(): void => {
-              setRawJson(VALIDATOR_SAMPLE_IMPORT_JSON);
-              setParseError(null);
-              setLastResult(null);
-            }}
-            disabled={importMutation.isPending}
-          >
-            Load Sample
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => {
-              void handlePreview();
-            }}
-            loading={importMutation.isPending}
-            disabled={importMutation.isPending}
-          >
-            Preview Import
-          </Button>
-          <Button
-            type='button'
-            onClick={() => {
-              void handleApply();
-            }}
-            loading={importMutation.isPending}
-            disabled={importMutation.isPending || hasBlockingErrors}
-            title={
-              hasBlockingErrors
-                ? 'Resolve preview errors before applying import.'
-                : 'Apply import changes'
-            }
-          >
-            Apply Import
-          </Button>
-        </>
+      confirmText='Apply Import'
+      isLoading={importMutation.isPending}
+      value={rawJson}
+      onChange={(val) => {
+        setRawJson(val);
+        if (parseError) setParseError(null);
+        if (lastResult) setLastResult(null);
+      }}
+      onLoadSample={(): void => {
+        setRawJson(VALIDATOR_SAMPLE_IMPORT_JSON);
+        setParseError(null);
+        setLastResult(null);
+      }}
+      actions={
+        <div className='hidden'>
+          {/* Load Sample is already in JSONImportModal footer if onLoadSample is provided */}
+        </div>
       }
     >
-      <div className='space-y-4'>
-        <FormField label='Validation Patterns JSON'>
-          <Textarea
-            value={rawJson}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-              setRawJson(event.target.value);
-              if (parseError) setParseError(null);
-              if (lastResult) setLastResult(null);
-            }}
-            className='min-h-[320px] font-mono text-xs'
-            spellCheck={false}
-            placeholder='Paste validator import JSON here'
-          />
-        </FormField>
+      {parseError ? (
+        <div className='rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
+          JSON parse error: {parseError}
+        </div>
+      ) : null}
 
-        {parseError ? (
-          <div className='rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
-            JSON parse error: {parseError}
+      {lastResult ? (
+        <div className='space-y-3 rounded-md border border-border/60 bg-background/20 p-3'>
+          <div className='flex flex-wrap items-center gap-2 text-xs'>
+            <span className='rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-cyan-200'>
+              Scope: {lastResult.scope}
+            </span>
+            <span className='rounded border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-violet-200'>
+              Mode: {lastResult.mode}
+            </span>
+            <span className='rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-emerald-200'>
+              Create: {lastResult.summary.createCount}
+            </span>
+            <span className='rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-amber-200'>
+              Update: {lastResult.summary.updateCount}
+            </span>
+            <span className='rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-red-200'>
+              Delete: {lastResult.summary.deleteCount}
+            </span>
+            <span className='rounded border border-slate-500/40 bg-slate-500/10 px-2 py-1 text-slate-200'>
+              Skip: {lastResult.summary.skipCount}
+            </span>
           </div>
-        ) : null}
 
-        {lastResult ? (
-          <div className='space-y-3 rounded-md border border-border/60 bg-background/20 p-3'>
-            <div className='flex flex-wrap items-center gap-2 text-xs'>
-              <span className='rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-cyan-200'>
-                Scope: {lastResult.scope}
-              </span>
-              <span className='rounded border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-violet-200'>
-                Mode: {lastResult.mode}
-              </span>
-              <span className='rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-emerald-200'>
-                Create: {lastResult.summary.createCount}
-              </span>
-              <span className='rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-amber-200'>
-                Update: {lastResult.summary.updateCount}
-              </span>
-              <span className='rounded border border-red-500/40 bg-red-500/10 px-2 py-1 text-red-200'>
-                Delete: {lastResult.summary.deleteCount}
-              </span>
-              <span className='rounded border border-slate-500/40 bg-slate-500/10 px-2 py-1 text-slate-200'>
-                Skip: {lastResult.summary.skipCount}
-              </span>
-            </div>
-
-            {lastResult.errors.length > 0 ? (
-              <div className='space-y-2'>
-                <p className='text-xs font-semibold text-red-200'>
-                  Import issues ({lastResult.errors.length})
-                </p>
-                <div className='max-h-36 space-y-1 overflow-y-auto rounded border border-red-500/30 bg-red-500/5 p-2 text-xs text-red-100'>
-                  {lastResult.errors.map((error, index) => (
-                    <p key={`${error.code ?? 'error'}-${index}`}>
-                      {error.code ? `[${error.code}] ` : ''}
-                      {error.message}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className='text-xs text-emerald-200'>No import issues detected.</p>
-            )}
-
+          {lastResult.errors.length > 0 ? (
             <div className='space-y-2'>
-              <p className='text-xs font-semibold text-slate-200'>
-                Planned operations ({lastResult.operations.length})
+              <p className='text-xs font-semibold text-red-200'>
+                Import issues ({lastResult.errors.length})
               </p>
-              <div className='max-h-52 space-y-1 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 text-xs text-slate-200'>
-                {lastResult.operations.map((operation, index) => (
-                  <p key={`${operation.patternId ?? operation.code ?? operation.label}-${index}`}>
-                    <span className='font-semibold uppercase'>{operation.action}</span> |{' '}
-                    {operation.code ?? operation.patternId ?? 'n/a'} | {operation.label}
-                    {operation.reason ? ` | ${operation.reason}` : ''}
+              <div className='max-h-36 space-y-1 overflow-y-auto rounded border border-red-500/30 bg-red-500/5 p-2 text-xs text-red-100'>
+                {lastResult.errors.map((error, index) => (
+                  <p key={`${error.code ?? 'error'}-${index}`}>
+                    {error.code ? `[${error.code}] ` : ''}
+                    {error.message}
                   </p>
                 ))}
               </div>
             </div>
+          ) : (
+            <p className='text-xs text-emerald-200'>No import issues detected.</p>
+          )}
+
+          <div className='space-y-2'>
+            <p className='text-xs font-semibold text-slate-200'>
+              Planned operations ({lastResult.operations.length})
+            </p>
+            <div className='max-h-52 space-y-1 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 text-xs text-slate-200'>
+              {lastResult.operations.map((operation, index) => (
+                <p key={`${operation.patternId ?? operation.code ?? operation.label}-${index}`}>
+                  <span className='font-semibold uppercase'>{operation.action}</span> |{' '}
+                  {operation.code ?? operation.patternId ?? 'n/a'} | {operation.label}
+                  {operation.reason ? ` | ${operation.reason}` : ''}
+                </p>
+              ))}
+            </div>
           </div>
-        ) : null}
-      </div>
-    </AppModal>
+        </div>
+      ) : null}
+    </JSONImportModal>
   );
 }

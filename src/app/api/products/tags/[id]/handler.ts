@@ -2,14 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getTagRepository } from '@/features/products/server';
+import { updateProductTagSchema } from '@/shared/contracts/products';
+export { updateProductTagSchema as productTagUpdateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
-
-export const productTagUpdateSchema = z.object({
-  name: z.string().min(1).optional(),
-  color: z.string().nullable().optional(),
-  catalogId: z.string().min(1).optional(),
-});
 
 /**
  * PUT /api/products/tags/[id]
@@ -20,7 +16,7 @@ export async function PUT_handler(
   ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const data = ctx.body as z.infer<typeof productTagUpdateSchema>;
+  const data = ctx.body as z.infer<typeof updateProductTagSchema>;
   const { name, catalogId } = data;
 
   const repository = await getTagRepository();

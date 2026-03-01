@@ -10,6 +10,7 @@ import type {
   DatabaseActionCategory,
   DatabaseConfig,
   DbQueryConfig,
+  DatabaseOperation,
 } from '@/shared/lib/ai-paths';
 
 export function useDatabaseActionConfig(args: {
@@ -18,7 +19,7 @@ export function useDatabaseActionConfig(args: {
   appDbProvider: 'prisma' | 'mongodb';
   resolvedProvider: 'prisma' | 'mongodb';
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
-  mapOperationFromActionCategory: (cat: DatabaseActionCategory) => string;
+  mapOperationFromActionCategory: (cat: DatabaseActionCategory) => DatabaseOperation;
 }) {
   const handleProviderChange = useCallback(
     (nextProvider: DbQueryConfig['provider']) => {

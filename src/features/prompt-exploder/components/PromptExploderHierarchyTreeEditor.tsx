@@ -106,6 +106,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   const {
     appearance: { rootDropUi },
     controller,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'prompt_exploder_hierarchy',
     nodes: masterNodes,
@@ -211,6 +212,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
       <div className='max-h-[260px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
         <FolderTreeViewportV2
           controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
           enableDnd
           className='space-y-0.5'
           emptyLabel={emptyLabel}

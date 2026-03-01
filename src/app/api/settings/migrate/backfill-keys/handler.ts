@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
+import { 
+  settingsBackfillRequestSchema as backfillSchema,
+  type SettingsBackfillResult as BackfillResult 
+} from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -10,19 +13,6 @@ import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy'
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter } from 'mongodb';
-
-const backfillSchema = z.object({
-  dryRun: z.boolean().optional(),
-  limit: z.number().int().min(1).max(5000).optional(),
-  manual: z.boolean().optional(),
-});
-
-type BackfillResult = {
-  matched: number;
-  modified: number;
-  remaining: number;
-  sampleIds?: string[];
-};
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();

@@ -1,22 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
-import type { ProductValidationInstanceDenyBehaviorMapDto as ProductValidationInstanceDenyBehaviorMap } from '@/shared/contracts/products';
+import {
+  type ProductValidationInstanceDenyBehaviorMapDto as ProductValidationInstanceDenyBehaviorMap,
+  updateProductValidatorSettingsSchema as updateValidatorSettingsSchema,
+} from '@/shared/contracts/products';
+export { updateValidatorSettingsSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-
-const instanceDenyBehaviorSchema = z.object({
-  draft_template: z.enum(['ask_again', 'mute_session']),
-  product_create: z.enum(['ask_again', 'mute_session']),
-  product_edit: z.enum(['ask_again', 'mute_session']),
-});
-
-export const updateValidatorSettingsSchema = z.object({
-  enabledByDefault: z.boolean().optional(),
-  formatterEnabledByDefault: z.boolean().optional(),
-  instanceDenyBehavior: instanceDenyBehaviorSchema.optional(),
-});
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getValidationPatternRepository();

@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProducerRepository } from '@/features/products/server';
+import { createProducerSchema } from '@/shared/contracts/products';
+export { createProducerSchema as producerCreateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError } from '@/shared/errors/app-error';
-
-export const producerCreateSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  website: z.string().trim().nullable().optional(),
-});
 
 /**
  * GET /api/products/producers
@@ -26,7 +23,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * Creates a new producer.
  */
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = ctx.body as z.infer<typeof producerCreateSchema>;
+  const data = ctx.body as z.infer<typeof createProducerSchema>;
   const { name } = data;
   const trimmedName = name.trim();
 

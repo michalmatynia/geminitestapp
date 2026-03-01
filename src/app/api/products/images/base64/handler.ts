@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
+import { productBulkImagesBase64RequestSchema as bulkSchema } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-const bulkSchema = z.object({
-  productIds: z.array(z.string().min(1)).min(1),
-});
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, bulkSchema, {

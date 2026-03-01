@@ -157,6 +157,27 @@ export interface CaseResolverScanSlot {
 }
 
 /**
+ * Case Resolver OCR DTOs
+ */
+export const createCaseResolverOcrJobSchema = z.object({
+  filepath: z.string().trim().min(1),
+  model: z.string().trim().optional(),
+  prompt: z.string().trim().optional(),
+  correlationId: z.string().trim().optional(),
+});
+
+export type CreateCaseResolverOcrJobDto = z.infer<typeof createCaseResolverOcrJobSchema>;
+
+export const retryCaseResolverOcrJobSchema = z.object({
+  action: z.literal('retry'),
+  model: z.string().trim().optional(),
+  prompt: z.string().trim().optional(),
+  correlationId: z.string().trim().optional(),
+});
+
+export type RetryCaseResolverOcrJobDto = z.infer<typeof retryCaseResolverOcrJobSchema>;
+
+/**
  * Case Resolver History
  */
 export const caseResolverDocumentHistoryEntrySchema = z.object({

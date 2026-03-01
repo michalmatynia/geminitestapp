@@ -65,7 +65,7 @@ describe('applyMasterTreePaste', () => {
     const result = await applyMasterTreePaste({ clipboard, targetParentId: null, controller, instanceId: 'notes' });
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.reason).toContain('copy');
+      expect(result.reason.toLowerCase()).toContain('copy');
     }
     expect(controller.moveNode).not.toHaveBeenCalled();
   });

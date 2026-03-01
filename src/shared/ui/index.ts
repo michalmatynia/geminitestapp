@@ -82,6 +82,7 @@ export * from './templates/StandardDataTablePanel';
 export * from './templates/SettingsFormModal';
 export * from './templates/FilterPanel';
 export * from './templates/SimpleSettingsList';
+export * from './templates/GenericApiConsole';
 export {
   PanelHeader,
   PanelFilters,

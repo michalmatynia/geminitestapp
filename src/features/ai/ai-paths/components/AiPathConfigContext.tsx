@@ -14,6 +14,7 @@ import type {
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
+import type { Toast } from '@/shared/contracts/ui';
 
 import {
   useGraphState,
@@ -113,10 +114,7 @@ export interface AiPathOrchestratorData {
     nodeOverride?: AiNode | undefined;
     edgesOverride?: Edge[] | undefined;
   }) => Promise<boolean>;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
+  toast: Toast;
 }
 const AiPathOrchestratorContext = createContext<AiPathOrchestratorData | null>(null);
 export const useAiPathOrchestrator = (): AiPathOrchestratorData => {

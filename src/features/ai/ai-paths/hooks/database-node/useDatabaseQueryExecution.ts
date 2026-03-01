@@ -7,6 +7,7 @@ import type {
   DbQueryConfig,
   RuntimeState,
 } from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui';
 
 export function useDatabaseQueryExecution(args: {
   selectedNodeId: string;
@@ -16,7 +17,7 @@ export function useDatabaseQueryExecution(args: {
   queryTemplateValue: string;
   isUpdateAction: boolean;
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
-  toast: (message: string, options?: { variant?: string }) => void;
+  toast: Toast;
 }) {
   const [testQueryResult, setTestQueryResult] = useState<string>('');
   const [testQueryLoading, setTestQueryLoading] = useState(false);

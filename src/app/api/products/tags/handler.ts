@@ -2,14 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getTagRepository } from '@/features/products/server';
+import { createProductTagSchema } from '@/shared/contracts/products';
+export { createProductTagSchema as productTagCreateSchema };
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-
-export const productTagCreateSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  color: z.string().nullable().optional(),
-  catalogId: z.string().min(1, 'Catalog ID is required'),
-});
 
 /**
  * GET /api/products/tags
@@ -36,7 +32,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
  * Creates a new product tag.
  */
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const data = ctx.body as z.infer<typeof productTagCreateSchema>;
+  const data = ctx.body as z.infer<typeof createProductTagSchema>;
   const { name, catalogId } = data;
 
   const repository = await getTagRepository();

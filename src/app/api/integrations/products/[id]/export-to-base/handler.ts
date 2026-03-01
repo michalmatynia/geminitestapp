@@ -564,7 +564,6 @@ export async function postExportToBaseHandler(
 
     if (
       !imagesOnly &&
-      canRetryWrite &&
       !result.success &&
       warehouseMismatch &&
       allowStockFallback

@@ -295,6 +295,9 @@ export type FolderTreeNestingRuleV2 = {
   allow: boolean;
 };
 
+/** Semantic status that can be attached to any node via node.metadata['_status']. */
+export type MasterTreeNodeStatus = 'loading' | 'error' | 'locked' | 'warning' | 'success';
+
 export type FolderTreeBadgeSpec = {
   /** Which data to display. 'children_count' shows folder child count; 'custom' uses metadata['_badge']. */
   field: 'children_count' | 'custom';
@@ -371,6 +374,11 @@ export type FolderTreeProfileV2 = {
   multiSelect?: Partial<FolderTreeMultiSelectConfig> | undefined;
   /** Built-in search/filter configuration. Undefined = disabled. */
   search?: Partial<FolderTreeSearchConfig> | undefined;
+  /**
+   * Icon IDs (from the project's icon registry) to display per node status in the default row renderer.
+   * Nodes set their status via metadata['_status']. Undefined = no status icons shown.
+   */
+  statusIcons?: Partial<Record<MasterTreeNodeStatus, string | null>> | undefined;
 };
 
 export const useMasterFolderTreeOptionsSchema = z.object({

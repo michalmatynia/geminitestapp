@@ -28,6 +28,7 @@ import type {
   DbNodePreset,
   ClusterPreset,
 } from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui';
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type { RunHistoryFilter } from '../run-history-panel';
 import type { HistoryNodeOption } from '../run-history-utils';
@@ -297,12 +298,7 @@ export interface UseAiPathsSettingsStateReturn {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-  toast: (
-    message: string,
-    options?: {
-      variant?: 'default' | 'success' | 'error' | 'warning' | 'info';
-    }
-  ) => void;
+  toast: Toast;
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
   persistActivePathPreference: (pathId: string | null) => Promise<void>;

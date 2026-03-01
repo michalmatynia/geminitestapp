@@ -136,57 +136,59 @@ export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
 export type ProductValidationPattern = ProductValidationPatternDto;
 
-export const createProductValidationPatternSchema = productValidationPatternSchema
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    locale: z.string().nullable().optional(),
-    flags: z.string().nullable().optional(),
-    severity: productValidationSeveritySchema.nullable().optional(),
-    enabled: z.boolean().optional(),
-    replacementEnabled: z.boolean().optional(),
-    replacementAutoApply: z.boolean().optional(),
-    skipNoopReplacementProposal: z.boolean().optional(),
-    replacementValue: z.string().nullable().optional(),
-    replacementFields: z.array(z.string()).optional(),
-    runtimeEnabled: z.boolean().optional(),
-    runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
-    runtimeConfig: z.string().nullable().optional(),
-    postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
-    denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable().optional(),
-    validationDebounceMs: z.number().optional(),
-    sequenceGroupId: z.string().nullable().optional(),
-    sequenceGroupLabel: z.string().nullable().optional(),
-    sequenceGroupDebounceMs: z.number().optional(),
-    sequence: z.number().nullable().optional(),
-    chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
-    maxExecutions: z.number().optional(),
-    passOutputToNext: z.boolean().optional(),
-    launchEnabled: z.boolean().optional(),
-    launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
-    launchSourceField: z.string().nullable().optional(),
-    launchOperator: z
-      .enum([
-        'equals',
-        'not_equals',
-        'contains',
-        'starts_with',
-        'ends_with',
-        'regex',
-        'gt',
-        'gte',
-        'lt',
-        'lte',
-        'is_empty',
-        'is_not_empty',
-      ])
-      .optional(),
-    launchValue: z.string().nullable().optional(),
-    launchFlags: z.string().nullable().optional(),
-  });
+export const createProductValidationPatternSchema = z.object({
+  label: z.string().trim().min(1, 'Label is required'),
+  target: productValidationTargetSchema,
+  locale: z.string().trim().nullable().optional(),
+  regex: z.string().min(1, 'Regex is required'),
+  flags: z.string().trim().nullable().optional(),
+  message: z.string().trim().min(1, 'Message is required'),
+  severity: productValidationSeveritySchema.optional(),
+  enabled: z.boolean().optional(),
+  replacementEnabled: z.boolean().optional(),
+  replacementAutoApply: z.boolean().optional(),
+  skipNoopReplacementProposal: z.boolean().optional(),
+  replacementValue: z.string().trim().nullable().optional(),
+  replacementFields: z.array(z.string()).optional(),
+  replacementAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+  runtimeEnabled: z.boolean().optional(),
+  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
+  runtimeConfig: z.string().trim().nullable().optional(),
+  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
+  denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable().optional(),
+  validationDebounceMs: z.number().int().min(0).max(30000).optional(),
+  sequenceGroupId: z.string().trim().nullable().optional(),
+  sequenceGroupLabel: z.string().trim().nullable().optional(),
+  sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional(),
+  sequence: z.number().int().min(0).nullable().optional(),
+  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
+  maxExecutions: z.number().int().min(1).max(20).optional(),
+  passOutputToNext: z.boolean().optional(),
+  launchEnabled: z.boolean().optional(),
+  launchAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+  launchScopeBehavior: productValidationLaunchScopeBehaviorSchema.optional(),
+  launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
+  launchSourceField: z.string().trim().nullable().optional(),
+  launchOperator: z
+    .enum([
+      'equals',
+      'not_equals',
+      'contains',
+      'starts_with',
+      'ends_with',
+      'regex',
+      'gt',
+      'gte',
+      'lt',
+      'lte',
+      'is_empty',
+      'is_not_empty',
+    ])
+    .optional(),
+  launchValue: z.string().nullable().optional(),
+  launchFlags: z.string().trim().nullable().optional(),
+  appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+});
 
 export type CreateProductValidationPatternDto = z.infer<
   typeof createProductValidationPatternSchema
@@ -228,6 +230,18 @@ export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
 export type ProductValidatorSettings = ProductValidatorSettingsDto;
 export type ProductValidationInstanceDenyBehaviorMap = ProductValidationInstanceDenyBehaviorMapDto;
+
+export const updateProductValidatorSettingsSchema = z.object({
+  enabledByDefault: z.boolean().optional(),
+  formatterEnabledByDefault: z.boolean().optional(),
+  instanceDenyBehavior: z
+    .record(productValidationInstanceScopeSchema, productValidationDenyBehaviorSchema)
+    .optional(),
+});
+
+export type UpdateProductValidatorSettingsDto = z.infer<
+  typeof updateProductValidatorSettingsSchema
+>;
 
 export const productValidatorConfigSchema = z.object({
   enabledByDefault: z.boolean(),

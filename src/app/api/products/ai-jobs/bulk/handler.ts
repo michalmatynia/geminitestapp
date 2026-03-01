@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
-import { productAiJobTypeSchema } from '@/shared/contracts/jobs';
+import {
+  productAiJobTypeSchema,
+  bulkAiJobRequestSchema as bulkJobSchema,
+} from '@/shared/contracts/jobs';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-
-const bulkJobSchema = z.object({
-  type: productAiJobTypeSchema,
-  config: z.record(z.string(), z.unknown()).optional(),
-});
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, bulkJobSchema, {

@@ -4,3 +4,5 @@ export { FolderTreeSearchBar } from './FolderTreeSearchBar';
 export type { FolderTreeSearchBarProps } from './FolderTreeSearchBar';
 export { MasterFolderTreeSearchResults } from './MasterFolderTreeSearchResults';
 export type { MasterFolderTreeSearchResultsProps } from './MasterFolderTreeSearchResults';
+export { FolderTreeSearchViewport } from './FolderTreeSearchViewport';
+export type { FolderTreeSearchViewportProps } from './FolderTreeSearchViewport';

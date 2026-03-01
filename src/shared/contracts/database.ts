@@ -8,6 +8,14 @@ export type DatabaseType = z.infer<typeof databaseTypeSchema>;
 export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
 export type DatabaseSyncDirection = z.infer<typeof databaseSyncDirectionSchema>;
 
+export const databaseSyncRequestSchema = z.object({
+  direction: databaseSyncDirectionSchema,
+  skipAuthCollections: z.boolean().optional(),
+  manual: z.boolean().optional(),
+});
+
+export type DatabaseSyncRequestDto = z.infer<typeof databaseSyncRequestSchema>;
+
 export const databasePreviewModeSchema = z.enum([
   'full',
   'stats',
@@ -461,6 +469,14 @@ export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProvide
 
 export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
+export const databaseEngineBackupRunNowRequestSchema = z.object({
+  dbType: z.enum(['mongodb', 'postgresql', 'all']).default('all'),
+});
+
+export type DatabaseEngineBackupRunNowRequestDto = z.infer<
+  typeof databaseEngineBackupRunNowRequestSchema
+>;
+
 export const databaseEngineBackupRunNowResponseSchema = z.object({
   success: z.boolean(),
   queued: z.array(
@@ -624,6 +640,14 @@ export const settingsBackfillResultSchema = z.object({
 });
 
 export type SettingsBackfillResult = z.infer<typeof settingsBackfillResultSchema>;
+
+export const settingsBackfillRequestSchema = z.object({
+  dryRun: z.boolean().optional(),
+  limit: z.number().int().min(1).max(5000).optional(),
+  manual: z.boolean().optional(),
+});
+
+export type SettingsBackfillRequestDto = z.infer<typeof settingsBackfillRequestSchema>;
 
 // Backward-compatible DTO aliases used across API/UI modules.
 export type DatabaseTypeDto = DatabaseType;

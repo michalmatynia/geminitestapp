@@ -30,6 +30,7 @@ import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-en
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import prisma from '@/shared/lib/db/prisma';
+import { upsertSettingSchema as settingSchema } from '@/shared/contracts/settings';
 import {
   SettingRecord,
   getCachedSettings,
@@ -290,13 +291,6 @@ const readCurrentSettingValue = async (
 
   return provider === 'mongodb' ? readMongo() : readPrisma();
 };
-
-const settingSchema = z.object({
-  key: z.string().trim().min(1),
-  value: z.string(),
-  expectedRevision: z.number().int().min(0).optional(),
-  mutationId: z.string().trim().min(1).max(200).optional(),
-});
 
 const WORKSPACE_REVISION_PATTERN = /"workspaceRevision"\s*:\s*(\d+)/;
 const WORKSPACE_LAST_MUTATION_PATTERN = /"lastMutationId"\s*:\s*(null|"([^"\\]|\\.)*")/;

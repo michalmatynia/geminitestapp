@@ -189,3 +189,11 @@ export const productWithImagesSchema = productSchema.extend({
 });
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
 export type ProductWithImages = ProductWithImagesDto;
+
+export const productBulkImagesBase64RequestSchema = z.object({
+  productIds: z.array(z.string().min(1)).min(1),
+});
+
+export type ProductBulkImagesBase64RequestDto = z.infer<
+  typeof productBulkImagesBase64RequestSchema
+>;

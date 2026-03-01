@@ -333,3 +333,20 @@ export type TransientRecoverySettings = z.infer<typeof transientRecoverySettings
 export const TRANSIENT_RECOVERY_KEYS = {
   settings: 'transient_recovery_settings',
 } as const;
+
+/**
+ * Client Error Reporting DTOs
+ */
+export const clientErrorPayloadSchema = z.object({
+  message: z.string().trim().min(1).max(2_000).optional(),
+  name: z.string().trim().min(1).max(120).optional(),
+  stack: z.string().trim().max(20_000).nullable().optional(),
+  url: z.string().trim().max(2_000).optional(),
+  timestamp: z.string().trim().max(200).optional(),
+  digest: z.string().trim().max(256).optional(),
+  userAgent: z.string().trim().max(1_000).optional(),
+  componentStack: z.string().trim().max(8_000).nullable().optional(),
+  context: z.unknown().optional(),
+});
+
+export type ClientErrorPayloadDto = z.infer<typeof clientErrorPayloadSchema>;

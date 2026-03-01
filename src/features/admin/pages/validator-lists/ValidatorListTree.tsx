@@ -71,6 +71,7 @@ export function ValidatorListTree({
   const {
     appearance: { rootDropUi },
     controller,
+    scrollToNodeRef,
   } = useMasterFolderTreeInstance({
     instance: 'validator_list_tree',
     nodes: masterNodes,
@@ -114,6 +115,7 @@ export function ValidatorListTree({
         <FolderTreePanel masterInstance='validator_list_tree'>
           <FolderTreeViewportV2
             controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
             rootDropUi={rootDropUi}
             renderNode={renderNode}
             enableDnd={!isPending}

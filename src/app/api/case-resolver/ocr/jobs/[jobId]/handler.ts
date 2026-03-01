@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import {
   createCaseResolverOcrJob,
@@ -14,15 +13,10 @@ import {
   enqueueCaseResolverOcrJob,
   startCaseResolverOcrQueue,
 } from '@/features/case-resolver/workers/caseResolverOcrQueue';
+import { retryCaseResolverOcrJobSchema } from '@/shared/contracts/case-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 
-const retryCaseResolverOcrJobSchema = z.object({
-  action: z.literal('retry'),
-  model: z.string().trim().optional(),
-  prompt: z.string().trim().optional(),
-  correlationId: z.string().trim().optional(),
-});
 const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
 export async function GET_handler(

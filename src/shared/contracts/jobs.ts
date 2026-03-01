@@ -101,6 +101,13 @@ export const productAiJobResultSchema = z.record(z.string(), z.unknown());
 export type ProductAiJobResultDto = z.infer<typeof productAiJobResultSchema>;
 export type ProductAiJobResult = ProductAiJobResultDto;
 
+export const bulkAiJobRequestSchema = z.object({
+  type: productAiJobTypeSchema,
+  config: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type BulkAiJobRequestDto = z.infer<typeof bulkAiJobRequestSchema>;
+
 export const productAiJobSchema = jobSchema.extend({
   productId: z.string(),
   jobType: productAiJobTypeSchema.optional(),

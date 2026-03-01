@@ -12,19 +12,19 @@ export const productTagSchema = namedDtoSchema.extend({
 export type ProductTagDto = z.infer<typeof productTagSchema>;
 export type ProductTag = ProductTagDto;
 
-export const createProductTagSchema = productTagSchema
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    color: z.string().nullable().optional(),
-  });
+export const createProductTagSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  color: z.string().nullable().optional(),
+  catalogId: z.string().min(1, 'Catalog ID is required'),
+});
 
 export type ProductTagCreateInputDto = z.infer<typeof createProductTagSchema>;
 
-export const updateProductTagSchema = createProductTagSchema.partial();
+export const updateProductTagSchema = z.object({
+  name: z.string().min(1).optional(),
+  color: z.string().nullable().optional(),
+  catalogId: z.string().min(1).optional(),
+});
 
 export type ProductTagUpdateInputDto = z.infer<typeof updateProductTagSchema>;
 

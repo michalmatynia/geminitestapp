@@ -101,15 +101,15 @@ export function useCaseResolverStateWorkspaceHydration({
         isPromptExploderReturnFlow
           ? true
           : metadata === null
-          ? true
-          : metadata.exists !== false && metadata.revision >= currentRevision;
+            ? true
+            : metadata.exists !== false && metadata.revision >= currentRevision;
       const snapshot = shouldFetchRecord
         ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap', {
-            requiredFileId: requestedFileId,
-            attemptProfile: isPromptExploderReturnFlow ? 'context_fast' : 'default',
-            maxTotalMs: isPromptExploderReturnFlow ? 6_500 : undefined,
-            attemptTimeoutMs: isPromptExploderReturnFlow ? 2_200 : undefined,
-          })
+          requiredFileId: requestedFileId,
+          attemptProfile: isPromptExploderReturnFlow ? 'context_fast' : 'default',
+          maxTotalMs: isPromptExploderReturnFlow ? 6_500 : undefined,
+          attemptTimeoutMs: isPromptExploderReturnFlow ? 2_200 : undefined,
+        })
         : null;
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {

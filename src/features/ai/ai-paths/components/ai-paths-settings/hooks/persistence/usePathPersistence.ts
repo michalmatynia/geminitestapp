@@ -317,15 +317,14 @@ export function usePathPersistence(
             normalizedExpectedConfig.nodes.find(
               (node: AiNode): boolean => node.id === expectedNode.id
             ) ??
-            (normalizedExpectedNodeByIndex &&
-            normalizedExpectedNodeByIndex.type === expectedNode.type
+            (normalizedExpectedNodeByIndex?.type === expectedNode.type
               ? normalizedExpectedNodeByIndex
               : undefined) ??
             findBySignature(normalizedExpectedConfig.nodes, expectedNode);
           const persistedNode: AiNode | undefined = normalizedExpectedNode
             ? finalConfig.nodes.find(
-                (node: AiNode): boolean => node.id === normalizedExpectedNode.id
-              ) ?? findBySignature(finalConfig.nodes, normalizedExpectedNode)
+              (node: AiNode): boolean => node.id === normalizedExpectedNode.id
+            ) ?? findBySignature(finalConfig.nodes, normalizedExpectedNode)
             : undefined;
           const expectedConfigHash = stableStringify(normalizedExpectedNode?.config ?? null);
           const persistedConfigHash = stableStringify(persistedNode?.config ?? null);

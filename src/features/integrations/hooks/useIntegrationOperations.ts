@@ -61,10 +61,6 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     null
   );
   const scopedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
-  const scopedProductIdsParam = useMemo(
-    () => scopedProductIds.map((productId) => encodeURIComponent(productId)).join(','),
-    [scopedProductIds]
-  );
   const scopedListingBadgesQueryKey = useMemo(
     () =>
       [...listingBadgesQueryKey, { productIds: scopedProductIds }] as const,
@@ -76,8 +72,9 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     queryKey: scopedListingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        return await api.get<ListingBadgesPayload>(
-          `/api/integrations/product-listings?productIds=${scopedProductIdsParam}`,
+        return await api.post<ListingBadgesPayload>(
+          '/api/integrations/product-listings',
+          { productIds: scopedProductIds },
           {
             cache: 'no-store',
           }

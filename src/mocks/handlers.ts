@@ -363,6 +363,9 @@ export const handlers = [
   http.get('/api/integrations/product-listings', () => {
     return HttpResponse.json({});
   }),
+  http.post('/api/integrations/product-listings', () => {
+    return HttpResponse.json({});
+  }),
 
   http.get('/api/integrations/queues/tradera', () => {
     return HttpResponse.json({

@@ -59,7 +59,7 @@ const safeDecode = (value: string): string => {
 };
 
 const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =>
-  return Array.from(
+  Array.from(
     new Set(
       productIds
         .map((value) => safeDecode(value).trim())

@@ -1,12 +1,14 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET } from '@/app/api/integrations/product-listings/route';
+import { GET, POST } from '@/app/api/integrations/product-listings/route';
 
+const listByProductIdsMock = vi.hoisted(() => vi.fn());
 const listAllListingsMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/integrations/server', () => ({
+vi.mock('@/features/integrations/server', () => ({
+  listProductListingsByProductIdsAcrossProviders: listByProductIdsMock,
   listAllProductListingsAcrossProviders: listAllListingsMock,
   getIntegrationRepository: () => ({
     listIntegrations: listIntegrationsMock,
@@ -73,5 +75,48 @@ describe('api/integrations/product-listings', () => {
         base: 'queued',
       },
     });
+  });
+
+  it('returns listing badges via POST payload productIds', async () => {
+    listIntegrationsMock.mockResolvedValue([{ id: 'integration-1', slug: 'base-com' }]);
+    listByProductIdsMock.mockResolvedValue([
+      {
+        productId: 'product-3',
+        status: 'active',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+    ]);
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/integrations/product-listings', {
+        method: 'POST',
+        body: JSON.stringify({
+          productIds: ['product-3', 'product-3'],
+        }),
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listByProductIdsMock).toHaveBeenCalledWith(['product-3']);
+    expect(payload).toEqual({
+      'product-3': {
+        base: 'active',
+      },
+    });
+  });
+
+  it('returns 400 for invalid POST payload', async () => {
+    const response = await POST(
+      new NextRequest('http://localhost/api/integrations/product-listings', {
+        method: 'POST',
+        body: JSON.stringify({
+          productIds: [],
+        }),
+      })
+    );
+
+    expect(response.status).toBe(400);
   });
 });

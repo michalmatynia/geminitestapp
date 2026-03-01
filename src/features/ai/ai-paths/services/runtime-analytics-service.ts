@@ -40,7 +40,7 @@ const SUMMARY_CACHE_TTL_MS = parseEnvNumber(
 );
 const SUMMARY_QUERY_TIMEOUT_MS = parseEnvNumber(
   'AI_PATHS_RUNTIME_SUMMARY_TIMEOUT_MS',
-  2_500,
+  5_000,
   250,
   60_000
 );
@@ -52,7 +52,7 @@ const DURATION_SAMPLE_LIMIT = parseEnvNumber(
 );
 const TRACE_RUN_SAMPLE_LIMIT = parseEnvNumber(
   'AI_PATHS_RUNTIME_TRACE_RUN_SAMPLE_LIMIT',
-  500,
+  100,
   20,
   10_000
 );
@@ -399,6 +399,8 @@ const loadRuntimeTraceAnalytics = async (input: {
         createdBefore: input.to.toISOString(),
         limit: TRACE_RUN_SAMPLE_LIMIT,
         offset: 0,
+        // Skip countDocuments — we only need the sample for trace analysis, not the total.
+        includeTotal: false,
       }),
       SUMMARY_QUERY_TIMEOUT_MS,
       'ai-paths runtime trace analytics query'

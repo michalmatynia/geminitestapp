@@ -63,6 +63,7 @@ import type { Row } from '@tanstack/react-table';
 import { useProductListSelection } from './product-list/useProductListSelection';
 import { useProductListModals } from './product-list/useProductListModals';
 import { useProductListUrlSync } from './product-list/useProductListUrlSync';
+import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
 
 const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
 const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
@@ -160,6 +161,7 @@ export function useProductListState(): ProductListContextType & {
   const queuedProductIds = useQueuedProductIds();
 
   useProductSync();
+  useProductAiPathsRunSync();
 
   const {
     preferences,

@@ -861,6 +861,16 @@ export function useAiPathTriggerEvent(): {
 
       if (args.entityType === 'product') {
         scheduleQueuedProductRefresh(args.entityId);
+        // Notify the product list so it can show the "Queued" badge and trigger
+        // the completion highlight when the run finishes. Uses a CustomEvent to
+        // avoid a circular dependency (shared → features).
+        if (args.entityId && typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('ai-path-product-run-queued', {
+              detail: { productId: args.entityId },
+            })
+          );
+        }
       }
       if (args.entityType === 'note') {
         void invalidateNotes(queryClient);

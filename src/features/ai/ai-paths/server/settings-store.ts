@@ -52,7 +52,14 @@ const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
 
 // Server-side in-memory cache — survives across requests in the same Node.js process.
 // Prevents repeated cold-start MongoDB queries when the client re-fetches within the stale window.
-const SERVER_SETTINGS_CACHE_TTL_MS = 10_000;
+// Override via AI_PATHS_SERVER_SETTINGS_CACHE_TTL_MS env var (milliseconds, 5000–600000).
+const SERVER_SETTINGS_CACHE_TTL_MS = (() => {
+  const raw = process.env['AI_PATHS_SERVER_SETTINGS_CACHE_TTL_MS'];
+  if (!raw) return 60_000;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 60_000;
+  return Math.max(5_000, Math.min(600_000, parsed));
+})();
 let serverSettingsCache: { records: AiPathsSettingRecord[]; cachedAt: number } | null = null;
 let serverSettingsFetchInflight: Promise<AiPathsSettingRecord[]> | null = null;
 

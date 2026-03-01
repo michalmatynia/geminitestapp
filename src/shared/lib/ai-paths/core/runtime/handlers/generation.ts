@@ -120,7 +120,18 @@ const filterImageUrlsByOutboundPolicy = (input: {
   }> = [];
 
   input.imageUrls.forEach((url: string): void => {
-    const resolvedUrl = resolveImageUrlForOutboundPolicy(url);
+    const trimmedUrl = url.trim();
+    const resolvedUrl = resolveImageUrlForOutboundPolicy(trimmedUrl);
+
+    // Relative URLs (e.g. /uploads/products/…) are self-hosted assets on this server.
+    // Resolving them via the outbound policy would block them in development when the app
+    // base URL is localhost.  We resolve them to absolute form so the model can fetch them,
+    // but skip the outbound policy check — they cannot reach external or private networks.
+    if (trimmedUrl.startsWith('/') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('../')) {
+      allowed.push(resolvedUrl);
+      return;
+    }
+
     const decision = evaluateOutboundUrlPolicy(resolvedUrl);
     if (decision.allowed) {
       allowed.push(resolvedUrl);

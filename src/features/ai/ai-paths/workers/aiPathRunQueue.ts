@@ -713,7 +713,11 @@ export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus>
 
   startAiPathRunQueue();
   await waitForQueueReconciliation();
-  const status = await getAiPathRunQueueStatus({ bypassCache: true });
+  // Use the short-lived cache (QUEUE_STATUS_CACHE_TTL_MS, default 2 s) instead of bypassing it.
+  // Bypassing forces a full analytics recomputation on every enqueue (Redis pipeline +
+  // MongoDB trace query) which was causing enqueue to block for 5–15 s.
+  // A 2-second stale status is accurate enough for a pre-enqueue health check.
+  const status = await getAiPathRunQueueStatus();
   if (status.running) return status;
 
   if (!REQUIRE_DURABLE_QUEUE) {

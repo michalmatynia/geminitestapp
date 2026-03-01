@@ -31,6 +31,39 @@ const LOCAL_HOSTS = new Set<string>([
 
 const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.200']);
 
+/**
+ * Returns the set of `host` strings (hostname[:port]) that belong to this app's own
+ * configured asset origin.  Only AI_PATHS_ASSET_BASE_URL is consulted so that broader
+ * app-URL env vars (NEXT_PUBLIC_APP_URL, NEXTAUTH_URL) don't accidentally open localhost
+ * in environments where those vars are set to http://localhost:xxxx.
+ *
+ * Set AI_PATHS_ASSET_BASE_URL to your app's public base URL (e.g. http://localhost:3000
+ * in dev or https://myapp.example.com in production) to allow AI-Paths model nodes to
+ * fetch self-hosted product images.
+ *
+ * Evaluated on every call (no module-level cache) so that tests can override env vars.
+ */
+const resolveAppSelfOriginHosts = (): Set<string> => {
+  const envCandidates: (string | null | undefined)[] = [
+    process.env['AI_PATHS_ASSET_BASE_URL'],
+  ];
+  const hosts = new Set<string>();
+  for (const candidate of envCandidates) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    try {
+      const raw = candidate.trim();
+      const withProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw) ? raw : `https://${raw}`;
+      const parsed = new URL(withProtocol);
+      // Store host (hostname:port) for precise matching — avoids allowing every port on localhost.
+      const host = parsed.host.toLowerCase();
+      if (host) hosts.add(host);
+    } catch {
+      // Unparseable env value — skip.
+    }
+  }
+  return hosts;
+};
+
 const parseHostRules = (raw: string | undefined): OutboundHostRule[] => {
   if (!raw || raw.trim().length === 0) return [];
   return raw
@@ -155,6 +188,20 @@ export const evaluateOutboundUrlPolicy = (rawUrl: string): OutboundUrlPolicyDeci
   }
 
   if (allowMatched) {
+    return {
+      allowed: true,
+      reason: null,
+      hostname,
+      normalizedUrl: parsed.toString(),
+    };
+  }
+
+  // Allow the app's own configured asset origin (AI_PATHS_ASSET_BASE_URL).
+  // Compared by host (hostname:port) so that only the exact configured port is allowed,
+  // which prevents accidentally opening unrelated localhost services (e.g. Ollama on :11434).
+  // Must come after the denylist check so admins can still explicitly deny self-origin.
+  const selfOriginHosts = resolveAppSelfOriginHosts();
+  if (selfOriginHosts.size > 0 && selfOriginHosts.has(parsed.host.toLowerCase())) {
     return {
       allowed: true,
       reason: null,

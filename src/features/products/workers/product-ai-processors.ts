@@ -29,6 +29,15 @@ import { badRequestError, operationFailedError } from '@/shared/errors/app-error
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
+// OpenAI's HTTP request body limit is ~20 MB.  Keep well inside that.
+const MAX_IMAGES = 10;
+// 4 MB base64 string ≈ 3 MB raw image — enough for any reasonable product photo.
+const MAX_IMAGE_BASE64_BYTES = 4 * 1024 * 1024;
+// Total base64 budget for all images in one request (≈ 15 MB).
+const MAX_TOTAL_IMAGE_BASE64_BYTES = 15 * 1024 * 1024;
+// Prompt character cap — ~100 k chars ≈ 25 k tokens, generous for any product prompt.
+const MAX_PROMPT_CHARS = 100_000;
+
 export type JobPayload = {
   isTest?: boolean;
   imageUrls?: string[];
@@ -50,13 +59,17 @@ export type Job = ProductAiJobRecord & {
 
 const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionContentPart[]> => {
   if (!imageUrls.length) return [] as ChatCompletionContentPart[];
+
+  // Honour the per-request image count limit up front.
+  const cappedUrls = imageUrls.slice(0, MAX_IMAGES);
+
   const imageFileRepository = await getImageFileRepository();
   const imageFiles = await imageFileRepository.listImageFiles();
   const imageFileMap = new Map<string, ImageFileRecord>(
     imageFiles.map((file: ImageFileRecord) => [file.filepath, file])
   );
 
-  const imagePromises = imageUrls.map(
+  const imagePromises = cappedUrls.map(
     async (item: string): Promise<ChatCompletionContentPart | null> => {
       try {
         let base64Image: string;
@@ -75,6 +88,8 @@ const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionConte
           const record = imageFileMap.get(item);
           if (record) mimetype = record.mimetype;
         }
+        // Drop images that individually exceed the per-image size budget.
+        if (base64Image.length > MAX_IMAGE_BASE64_BYTES) return null;
         return {
           type: 'image_url' as const,
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
@@ -85,19 +100,32 @@ const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionConte
     }
   );
 
-  return (await Promise.all(imagePromises)).filter(
+  const parts = (await Promise.all(imagePromises)).filter(
     (
       img: ChatCompletionContentPart | null
     ): img is Extract<ChatCompletionContentPart, { type: 'image_url' }> => Boolean(img)
   );
+
+  // Apply the total-size budget: drop trailing images once we'd exceed the cap.
+  let totalBytes = 0;
+  const budgeted: typeof parts = [];
+  for (const part of parts) {
+    const url = (part as { image_url: { url: string } }).image_url.url;
+    totalBytes += url.length;
+    if (totalBytes > MAX_TOTAL_IMAGE_BASE64_BYTES) break;
+    budgeted.push(part);
+  }
+  return budgeted;
 };
 
 export async function processGraphModel(job: Job): Promise<Record<string, unknown>> {
   const { payload, productId } = job;
-  const prompt = typeof payload.prompt === 'string' ? payload.prompt.trim() : '';
-  if (!prompt) {
+  const rawPrompt = typeof payload.prompt === 'string' ? payload.prompt.trim() : '';
+  if (!rawPrompt) {
     throw badRequestError('Graph model job missing prompt', { jobId: job.id });
   }
+  const prompt =
+    rawPrompt.length > MAX_PROMPT_CHARS ? rawPrompt.slice(0, MAX_PROMPT_CHARS) : rawPrompt;
   const source =
     typeof payload.source === 'string' && payload.source.trim()
       ? payload.source.trim()

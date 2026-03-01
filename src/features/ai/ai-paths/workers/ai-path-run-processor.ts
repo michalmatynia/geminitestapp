@@ -52,6 +52,10 @@ const NON_RETRYABLE_PATTERNS = [
   // Bad request payloads
   'referenced record not found',
   'record not found',
+  // Oversized API payloads — larger context/images won't help on retry
+  'request body too large',
+  'payload too large',
+  'request entity too large',
 ] as const;
 
 const isNonRetryableRunError = (error: unknown): boolean => {
@@ -63,6 +67,18 @@ const isNonRetryableRunError = (error: unknown): boolean => {
     (error as { retryable?: boolean }).retryable === false
   ) {
     return true;
+  }
+
+  // HTTP 400 Bad Request from AI providers (OpenAI, Anthropic, Gemini) is never
+  // recoverable by retrying the same payload.  HTTP 429 (rate-limit) is retryable
+  // so we exclude it here.
+  if (error !== null && typeof error === 'object') {
+    const httpStatus =
+      (error as { status?: unknown }).status ??
+      (error as { httpStatus?: unknown }).httpStatus;
+    if (typeof httpStatus === 'number' && httpStatus === 400) {
+      return true;
+    }
   }
 
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';

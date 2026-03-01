@@ -3,7 +3,8 @@ import { describe, it, expect } from 'vitest';
 import {
   mapBaseProduct,
   extractBaseImageUrls,
-} from '@/shared/lib/integrations/services/imports/base-mapper';
+} from '@/features/integrations/services/imports/base-mapper';
+
 
 describe('Base Mapper', () => {
   describe('extractBaseImageUrls', () => {

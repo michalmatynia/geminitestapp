@@ -194,11 +194,13 @@ function ProductFormSubmitController({
   onEditSave,
   children,
   nonFormDirtyTrackingLockedRef,
+  requireHydratedEditProduct,
 }: {
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   children: React.ReactNode;
   nonFormDirtyTrackingLockedRef: { current: boolean };
+  requireHydratedEditProduct?: boolean;
 }) {
   const {
     methods,
@@ -232,6 +234,7 @@ function ProductFormSubmitController({
       refreshImages: refreshImagesFromProduct,
       onSuccess,
       onEditSave,
+      requireHydratedEditProduct,
     });
 
   useEffect(() => {
@@ -354,6 +357,7 @@ export function ProductFormProvider({
   onSuccess,
   onEditSave,
   requireSku = true,
+  requireHydratedEditProduct = false,
   initialSku,
   initialCatalogId,
 }: {
@@ -363,6 +367,7 @@ export function ProductFormProvider({
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   requireSku?: boolean;
+  requireHydratedEditProduct?: boolean;
   initialSku?: string;
   initialCatalogId?: string;
 }): React.ReactNode {
@@ -379,6 +384,7 @@ export function ProductFormProvider({
         initialCatalogId={initialCatalogId}
         onSuccess={onSuccess}
         onEditSave={onEditSave}
+        requireHydratedEditProduct={requireHydratedEditProduct}
       >
         {children}
       </ProductFormSubProviders>
@@ -393,6 +399,7 @@ function ProductFormSubProviders({
   initialCatalogId,
   onSuccess,
   onEditSave,
+  requireHydratedEditProduct,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
@@ -400,6 +407,7 @@ function ProductFormSubProviders({
   initialCatalogId?: string;
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
+  requireHydratedEditProduct?: boolean;
 }) {
   const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
   const markNonFormInteraction = (): void => {
@@ -414,6 +422,7 @@ function ProductFormSubProviders({
         initialCatalogId={initialCatalogId}
         onSuccess={onSuccess}
         onEditSave={onEditSave}
+        requireHydratedEditProduct={requireHydratedEditProduct}
         nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
       >
         {children}
@@ -429,6 +438,7 @@ function ProductFormSubProvidersInner({
   initialCatalogId,
   onSuccess,
   onEditSave,
+  requireHydratedEditProduct,
   nonFormDirtyTrackingLockedRef,
 }: {
   children: React.ReactNode;
@@ -437,6 +447,7 @@ function ProductFormSubProvidersInner({
   initialCatalogId?: string;
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
+  requireHydratedEditProduct?: boolean;
   nonFormDirtyTrackingLockedRef: { current: boolean };
 }) {
   const onInteraction = useProductFormInteraction() || (() => {});
@@ -466,6 +477,7 @@ function ProductFormSubProvidersInner({
             <ProductFormSubmitController
               onSuccess={onSuccess}
               onEditSave={onEditSave}
+              requireHydratedEditProduct={requireHydratedEditProduct}
               nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
             >
               {children}

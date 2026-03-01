@@ -25,6 +25,12 @@ vi.mock('@/features/ai/chatbot/api', () => ({
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
+  usePathname: vi.fn(() => '/'),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+  })),
 }));
 
 // Mock useAgentCreatorSettings

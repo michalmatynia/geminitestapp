@@ -18,7 +18,7 @@ import {
   listDrafts,
   updateDraft,
   deleteDraft,
-} from '@/shared/lib/drafter/services/draft-repository';
+} from '@/features/drafter/services/draft-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 vi.mock('mongodb', async () => {
@@ -37,8 +37,11 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: vi.fn(),
 }));
 
-vi.mock('@/features/products/server', () => ({
+vi.mock('@/shared/lib/products/services/product-provider', () => ({
   getProductDataProvider: vi.fn().mockResolvedValue('mongodb'),
+}));
+
+vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: vi.fn(),
 }));
 

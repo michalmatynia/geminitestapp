@@ -8,7 +8,7 @@ import {
   useAsset3DCategories,
   useAsset3DTags,
   useAsset3DById,
-} from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
+} from '@/features/viewer3d/hooks/useAsset3dQueries';
 import { server } from '@/mocks/server';
 
 const createWrapper = () => {

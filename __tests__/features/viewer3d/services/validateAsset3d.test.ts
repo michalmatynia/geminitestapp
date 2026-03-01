@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { validate3DFile, isValid3DAsset } from '@/shared/lib/viewer3d/utils/validateAsset3d';
+import { validate3DFile, isValid3DAsset } from '@/features/viewer3d/utils/validateAsset3d';
 
 describe('validateAsset3d', () => {
   describe('validate3DFile', () => {

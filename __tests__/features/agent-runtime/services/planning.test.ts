@@ -1,9 +1,12 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { buildPlanWithLLM, evaluatePlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
-// Mock fetch for Ollama inside tests
-// global.fetch = vi.fn();
+// Mock the AI Brain client
+vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
+  runBrainChatCompletion: vi.fn(),
+}));
 
 // Mock prisma used in logging
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -16,8 +19,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 describe('Agent Runtime - Planning', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    global.fetch = vi.fn();
+    vi.resetAllMocks();
   });
 
   describe('buildPlanWithLLM', () => {
@@ -34,31 +36,31 @@ describe('Agent Runtime - Planning', () => {
       const mockOptimize = { optimizedSteps: [] };
 
       // Mock sequential responses for Plan -> Dedupe -> Guard -> Eval -> Optimize
-      (global.fetch as any)
+      vi.mocked(runBrainChatCompletion)
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () =>
-            await Promise.resolve({ message: { content: JSON.stringify(mockPlan) } }),
+          text: JSON.stringify(mockPlan),
+          vendor: 'ollama',
+          modelId: 'llama3',
         })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () =>
-            await Promise.resolve({ message: { content: JSON.stringify(mockDedupe) } }),
+          text: JSON.stringify(mockDedupe),
+          vendor: 'ollama',
+          modelId: 'llama3',
         })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () =>
-            await Promise.resolve({ message: { content: JSON.stringify(mockGuard) } }),
+          text: JSON.stringify(mockGuard),
+          vendor: 'ollama',
+          modelId: 'llama3',
         })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () =>
-            await Promise.resolve({ message: { content: JSON.stringify(mockEval) } }),
+          text: JSON.stringify(mockEval),
+          vendor: 'ollama',
+          modelId: 'llama3',
         })
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () =>
-            await Promise.resolve({ message: { content: JSON.stringify(mockOptimize) } }),
+          text: JSON.stringify(mockOptimize),
+          vendor: 'ollama',
+          modelId: 'llama3',
         });
 
       const result = await buildPlanWithLLM({
@@ -74,7 +76,7 @@ describe('Agent Runtime - Planning', () => {
     });
 
     it('should fallback to heuristic on LLM failure', async () => {
-      (global.fetch as any).mockRejectedValue(new Error('LLM Down'));
+      vi.mocked(runBrainChatCompletion).mockRejectedValue(new Error('LLM Down'));
 
       const result = await buildPlanWithLLM({
         prompt: 'Search for X',
@@ -88,14 +90,10 @@ describe('Agent Runtime - Planning', () => {
     });
 
     it('should fallback to heuristic on Invalid JSON', async () => {
-      const mockResponse = {
-        message: {
-          content: 'Not JSON',
-        },
-      };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValue({
+        text: 'Not JSON',
+        vendor: 'ollama',
+        modelId: 'llama3',
       });
 
       const result = await buildPlanWithLLM({
@@ -116,15 +114,10 @@ describe('Agent Runtime - Planning', () => {
         revisedSteps: [],
       };
 
-      const mockResponse = {
-        message: {
-          content: JSON.stringify(mockEval),
-        },
-      };
-
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
+      vi.mocked(runBrainChatCompletion).mockResolvedValue({
+        text: JSON.stringify(mockEval),
+        vendor: 'ollama',
+        modelId: 'llama3',
       });
 
       const result = await evaluatePlanWithLLM({

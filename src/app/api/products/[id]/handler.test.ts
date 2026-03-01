@@ -9,12 +9,14 @@ const {
   validateProductUpdateMiddlewareMock,
   parseJsonBodyMock,
   invalidateProductMock,
+  logSystemEventMock,
 } = vi.hoisted(() => ({
   updateProductMock: vi.fn(),
   deleteProductMock: vi.fn(),
   validateProductUpdateMiddlewareMock: vi.fn(),
   parseJsonBodyMock: vi.fn(),
   invalidateProductMock: vi.fn(),
+  logSystemEventMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
@@ -36,6 +38,10 @@ vi.mock('@/features/products/performance/cached-service', () => ({
   CachedProductService: {
     invalidateProduct: invalidateProductMock,
   },
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: logSystemEventMock,
 }));
 
 import { DELETE_handler, PATCH_handler, PUT_handler } from './handler';
@@ -70,6 +76,11 @@ describe('products/[id] handler cache invalidation', () => {
     expect(response.status).toBe(200);
     expect(invalidateProductMock).toHaveBeenCalledTimes(1);
     expect(invalidateProductMock).toHaveBeenCalledWith('product-1');
+    const timingHeader = response.headers.get('Server-Timing');
+    expect(timingHeader).toContain('formData;dur=');
+    expect(timingHeader).toContain('validation;dur=');
+    expect(timingHeader).toContain('serviceUpdate;dur=');
+    expect(timingHeader).toContain('total;dur=');
   });
 
   it('invalidates product cache after successful PATCH', async () => {

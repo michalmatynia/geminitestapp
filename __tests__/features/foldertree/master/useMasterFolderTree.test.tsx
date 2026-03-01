@@ -4,7 +4,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useMasterFolderTree } from '@/shared/lib/foldertree/master/useMasterFolderTree';
+import { useMasterFolderTree } from '@/features/foldertree/master/useMasterFolderTree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const createNodes = (): MasterTreeNode[] => [

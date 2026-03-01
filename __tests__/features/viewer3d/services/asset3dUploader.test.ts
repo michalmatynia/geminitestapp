@@ -2,8 +2,8 @@ import fs from 'fs/promises';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { prismaAsset3DRepository } from '@/shared/lib/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
-import { uploadAsset3D, deleteAsset3D } from '@/shared/lib/viewer3d/utils/asset3dUploader';
+import { prismaAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
+import { uploadAsset3D, deleteAsset3D } from '@/features/viewer3d/utils/asset3dUploader';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 vi.mock('fs/promises', () => ({
@@ -14,7 +14,7 @@ vi.mock('fs/promises', () => ({
   },
 }));
 
-vi.mock('@/shared/lib/viewer3d/services/asset3d-repository/prisma-asset3d-repository', () => ({
+vi.mock('@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository', () => ({
   prismaAsset3DRepository: {
     createAsset3D: vi.fn(),
     getAsset3DById: vi.fn(),

@@ -405,6 +405,7 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
 
   const mask = shadowPolicy === 'include_shadow' ? foregroundMask : coreMask;
   const components = resolveConnectedComponents(mask, width, height);
+
   const bestComponent = selectBestConnectedComponent(
     components,
     width,

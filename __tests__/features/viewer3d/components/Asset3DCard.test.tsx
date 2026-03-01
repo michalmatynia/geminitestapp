@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { Asset3DCard } from '@/shared/lib/viewer3d/components/Asset3DCard';
-import { useAdmin3DAssetsContext } from '@/shared/lib/viewer3d/context/Admin3DAssetsContext';
-import { useAdmin3DAssetsState } from '@/shared/lib/viewer3d/hooks/useAdmin3DAssetsState';
+import { Asset3DCard } from '@/features/viewer3d/components/Asset3DCard';
+import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
+import { useAdmin3DAssetsState } from '@/features/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
-vi.mock('@/shared/lib/viewer3d/context/Admin3DAssetsContext', () => ({
+vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
   useAdmin3DAssetsContext: vi.fn(),
 }));
 

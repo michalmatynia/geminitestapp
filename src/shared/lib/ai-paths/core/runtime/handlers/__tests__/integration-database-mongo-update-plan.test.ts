@@ -203,7 +203,7 @@ describe('buildMongoUpdatePlan', () => {
       dbConfig: {
         operation: 'update',
         mode: 'replace',
-        updatePayloadMode: 'mapping',
+        updatePayloadMode: 'invalid' as any,
       } as unknown as DatabaseConfig,
       queryConfig: {
         provider: 'auto',
@@ -265,6 +265,7 @@ describe('buildMongoUpdatePlan', () => {
       dbConfig: {
         operation: 'update',
         mode: 'replace',
+        updatePayloadMode: 'custom',
         mappings: [
           {
             targetPath: '__translation_description_payload__',

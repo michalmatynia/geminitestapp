@@ -44,7 +44,7 @@ describe('Client Errors API', () => {
       expect.objectContaining({
         service: 'client-error-reporter',
         url: 'http://localhost/test',
-        extra: { userId: '123' },
+        userId: '123',
       })
     );
   });
@@ -87,8 +87,32 @@ describe('Client Errors API', () => {
       }),
       expect.objectContaining({
         service: 'client-error-reporter',
-        extra: {},
       })
     );
+  });
+
+  it('drops noisy local API network fetch failures in non-production environments', async () => {
+    const req = new NextRequest('http://localhost/api/client-errors', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: 'Failed to fetch',
+        name: 'Error',
+        context: {
+          endpoint: '/api/drafts',
+          method: 'GET',
+        },
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(res.status).toBe(200);
+    expect(data).toEqual({
+      ok: true,
+      success: true,
+      dropped: true,
+      reason: 'network_fetch_failed',
+    });
+    expect(ErrorSystem.captureException).not.toHaveBeenCalled();
   });
 });

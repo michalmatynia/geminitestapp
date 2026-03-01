@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import ProductForm from '@/features/products/components/ProductForm';
@@ -38,7 +38,7 @@ function ProductFormModalInner({
   } = useProductFormContext();
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
 
-  const getEntityJson = (): Record<string, unknown> => {
+  const getEntityJson = useCallback((): Record<string, unknown> => {
     const values = getValues() as unknown as Record<string, unknown>;
     const base = (product ?? {}) as unknown as Record<string, unknown>;
     return {
@@ -46,7 +46,7 @@ function ProductFormModalInner({
       ...values,
       ...(product?.id ? { id: product.id } : {}),
     };
-  };
+  }, [getValues, product]);
 
   const actions = (
     <TriggerButtonBar
@@ -66,6 +66,7 @@ function ProductFormModalInner({
         void handleSubmit();
       }}
       isSaving={uploading}
+      disableCloseWhileSaving
       hasUnsavedChanges={hasUnsavedChanges}
       saveText={submitButtonText}
       cancelText='Close'

@@ -42,7 +42,7 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
     paddingPercent,
     paddingXPercent: config?.paddingXPercent ?? paddingPercent,
     paddingYPercent: config?.paddingYPercent ?? paddingPercent,
-    fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? true,
+    fillMissingCanvasWhite: config?.fillMissingCanvasWhite ?? false,
     targetCanvasWidth:
       config?.targetCanvasWidth != null
         ? Math.max(

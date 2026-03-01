@@ -32,6 +32,10 @@ vi.mock('@/features/ai/chatbot/workers/chatbot-job-processor', () => ({
   processJob: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  getBrainAssignmentForFeature: vi.fn().mockResolvedValue({ enabled: true }),
+}));
+
 // Import after mocks
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/ai/chatbot/workers/chatbot-job-processor';
@@ -45,14 +49,17 @@ describe('Chatbot Job Queue Worker', () => {
     vi.mocked(processJob).mockClear();
   });
 
-  it('starts the worker', () => {
+  it('starts the worker', async () => {
     startChatbotJobQueue();
-    // Check if any instance's startWorker was called
-    const instances = vi.mocked(createManagedQueue).mock.results.map((r) => r.value);
-    const startWorkerCalled = instances.some(
-      (i: any) => i.startWorker && i.startWorker.mock.calls.length > 0
-    );
-    expect(startWorkerCalled).toBe(true);
+
+    // Check if any instance's startWorker was called (wait for async startup)
+    await vi.waitFor(() => {
+      const instances = vi.mocked(createManagedQueue).mock.results.map((r) => r.value);
+      const startWorkerCalled = instances.some(
+        (i: any) => i.startWorker && i.startWorker.mock.calls.length > 0
+      );
+      if (!startWorkerCalled) throw new Error('Worker not started');
+    });
   });
 
   it('processes a pending job successfully', async () => {

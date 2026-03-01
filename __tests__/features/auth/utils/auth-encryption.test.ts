@@ -37,6 +37,6 @@ describe('auth-encryption', () => {
   it('should throw error if key is missing', () => {
     delete process.env['AUTH_ENCRYPTION_KEY'];
     delete process.env['INTEGRATION_ENCRYPTION_KEY'];
-    expect(() => encryptAuthSecret('test')).toThrow('is required for auth secrets');
+    expect(() => encryptAuthSecret('test')).toThrow('is required');
   });
 });

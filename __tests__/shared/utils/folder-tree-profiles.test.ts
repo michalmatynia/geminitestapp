@@ -22,6 +22,7 @@ describe('folder-tree-profiles-v2', () => {
       'validator_pattern_tree',
       'prompt_exploder_hierarchy',
       'brain_catalog_tree',
+      'brain_routing_tree',
     ]);
   });
 

@@ -75,6 +75,16 @@ describe('AI Paths DB provider fallback', () => {
       isInternal: true,
     });
     isCollectionAllowedMock.mockReturnValue(true);
+
+    parseJsonBodyMock.mockImplementation(async (req: Request) => {
+      try {
+        const text = await req.text();
+        const data = text ? JSON.parse(text) : {};
+        return { ok: true, data };
+      } catch {
+        return { ok: false, response: new Response(JSON.stringify({ error: 'Invalid JSON body.' }), { status: 400 }) };
+      }
+    });
   });
 
   afterEach(() => {
@@ -83,17 +93,14 @@ describe('AI Paths DB provider fallback', () => {
   });
 
   it('falls back to mongodb in db-update when primary provider is not configured', async () => {
-    parseJsonBodyMock.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        provider: 'auto',
-        collection: 'products',
-        query: { id: 'product-1' },
-        updates: { name_en: 'Updated name' },
-        single: true,
-        idType: 'string',
-      },
-    });
+    const payload = {
+      provider: 'auto',
+      collection: 'products',
+      query: { id: 'product-1' },
+      updates: { name_en: 'Updated name' },
+      single: true,
+      idType: 'string',
+    };
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
     const updateOneMock = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
@@ -108,7 +115,11 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await (postAiPathsDbUpdateHandler as any)(
-      createRequest('/api/ai-paths/db-update'),
+      new Request('http://localhost/api/ai-paths/db-update', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
       {}
     );
     const body = (await response.json()) as Record<string, unknown>;
@@ -126,30 +137,30 @@ describe('AI Paths DB provider fallback', () => {
     );
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
-      { $set: { name_en: 'Updated name' } }
+      { $set: { name_en: 'Updated name' } },
+      expect.any(Object)
     );
   });
 
   it('rejects unmapped collection names that are not allowlisted', async () => {
-    parseJsonBodyMock.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        provider: 'auto',
-        collection: 'Product',
-        query: { id: 'product-1' },
-        updates: { name_en: 'Updated name' },
-        single: true,
-        idType: 'string',
-      },
-    });
+    const payload = {
+      provider: 'auto',
+      collection: 'Product',
+      query: { id: 'product-1' },
+      updates: { name_en: 'Updated name' },
+      single: true,
+      idType: 'string',
+    };
     isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
 
     await expect(
       postAiPathsDbUpdateHandler(
-        createRequest('/api/ai-paths/db-update') as Parameters<
-          typeof postAiPathsDbUpdateHandler
-        >[0],
-        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+        new Request('http://localhost/api/ai-paths/db-update', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        }) as any,
+        {} as any
       )
     ).rejects.toThrow('Collection not allowlisted');
 
@@ -158,20 +169,17 @@ describe('AI Paths DB provider fallback', () => {
   });
 
   it('maps collection name only when explicit collectionMap is provided', async () => {
-    parseJsonBodyMock.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        provider: 'auto',
-        collection: 'Product',
-        collectionMap: {
-          Product: 'products',
-        },
-        query: { id: 'product-1' },
-        updates: { name_en: 'Updated name' },
-        single: true,
-        idType: 'string',
+    const payload = {
+      provider: 'auto',
+      collection: 'Product',
+      collectionMap: {
+        Product: 'products',
       },
-    });
+      query: { id: 'product-1' },
+      updates: { name_en: 'Updated name' },
+      single: true,
+      idType: 'string',
+    };
     isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('mongodb');
 
@@ -187,7 +195,11 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await (postAiPathsDbUpdateHandler as any)(
-      createRequest('/api/ai-paths/db-update'),
+      new Request('http://localhost/api/ai-paths/db-update', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
       {}
     );
     const body = (await response.json()) as Record<string, unknown>;
@@ -201,15 +213,12 @@ describe('AI Paths DB provider fallback', () => {
   });
 
   it('falls back to mongodb in db-action when primary provider does not support action', async () => {
-    parseJsonBodyMock.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        provider: 'auto',
-        collection: 'products',
-        action: 'aggregate',
-        pipeline: [{ $match: { id: 'product-1' } }],
-      },
-    });
+    const payload = {
+      provider: 'auto',
+      collection: 'products',
+      action: 'aggregate',
+      pipeline: [{ $match: { id: 'product-1' } }],
+    };
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
     const aggregateToArrayMock = vi.fn().mockResolvedValue([{ id: 'product-1' }]);
@@ -224,7 +233,11 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await (postAiPathsDbActionHandler as any)(
-      createRequest('/api/ai-paths/db-action'),
+      new Request('http://localhost/api/ai-paths/db-action', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
       {}
     );
     const body = (await response.json()) as Record<string, unknown>;
@@ -246,16 +259,13 @@ describe('AI Paths DB provider fallback', () => {
   });
 
   it('falls back to mongodb in db-action when prisma returns record-not-found on updateOne', async () => {
-    parseJsonBodyMock.mockResolvedValueOnce({
-      ok: true,
-      data: {
-        provider: 'auto',
-        collection: 'products',
-        action: 'updateOne',
-        filter: { id: 'product-1' },
-        update: { name_en: 'Updated name' },
-      },
-    });
+    const payload = {
+      provider: 'auto',
+      collection: 'products',
+      action: 'updateOne',
+      filter: { id: 'product-1' },
+      update: { name_en: 'Updated name' },
+    };
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
     const prismaUpdateMock = vi
@@ -276,7 +286,11 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await (postAiPathsDbActionHandler as any)(
-      createRequest('/api/ai-paths/db-action'),
+      new Request('http://localhost/api/ai-paths/db-action', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
       {}
     );
     const body = (await response.json()) as Record<string, unknown>;

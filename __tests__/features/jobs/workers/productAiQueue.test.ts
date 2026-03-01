@@ -30,6 +30,9 @@ vi.mock('@/shared/lib/products/services/product-ai-job-repository', () => ({
 
 vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: vi.fn(),
   },
@@ -39,7 +42,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
 import { dispatchProductAiJob } from '@/features/products/workers/product-ai-processors';
 import { getProductAiJobRepository } from '@/shared/lib/products/services/product-ai-job-repository';
 import { startProductAiJobQueue } from '@/features/products/workers/productAiQueue';
-import { ErrorSystem } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 describe('Product AI Job Queue Worker', () => {
   const mockJobRepo = {

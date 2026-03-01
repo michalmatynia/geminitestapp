@@ -4,8 +4,8 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   PlaywrightSettingsProvider,
   usePlaywrightSettings,
-} from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
-import { buildPlaywrightSettings } from '@/shared/lib/playwright/utils/personas';
+} from '@/features/playwright/context/PlaywrightSettingsContext';
+import { buildPlaywrightSettings } from '@/features/playwright/utils/personas';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 const TestComponent = () => {

@@ -26,7 +26,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/shared/lib/foldertree', () => ({
+vi.mock('@/features/foldertree', () => ({
   MasterFolderTree: ({
     controller,
     renderNode,

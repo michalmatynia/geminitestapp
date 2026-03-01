@@ -1,10 +1,11 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -13,9 +14,12 @@ import type {
 import type { ProductImageSlot } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
-import { delay } from '@/shared/utils';
 
-import { invalidateProductsAndCounts } from './productCache';
+import {
+  isEditingProductHydrated,
+  markEditingProductHydrated,
+} from './editingProductHydration';
+import { getProductDetailQueryKey } from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
 
 import type { BaseSyntheticEvent } from 'react';
@@ -37,6 +41,7 @@ export interface UseProductFormSubmitProps {
   refreshImages: (savedProduct: ProductWithImages) => void;
   onSuccess?: ((info?: { queued?: boolean }) => void) | undefined;
   onEditSave?: ((saved: ProductWithImages) => void) | undefined;
+  requireHydratedEditProduct?: boolean;
 }
 
 export interface UseProductFormSubmitResult {
@@ -174,6 +179,66 @@ function buildFormData(
   return formData;
 }
 
+type ProductListWithCountShape = {
+  products: ProductWithImages[];
+  total: number;
+};
+
+const patchProductInArray = (
+  products: ProductWithImages[],
+  savedProduct: ProductWithImages
+): ProductWithImages[] => {
+  let changed = false;
+  const next = products.map((item: ProductWithImages) => {
+    if (item.id !== savedProduct.id) return item;
+    changed = true;
+    return { ...item, ...savedProduct };
+  });
+  return changed ? next : products;
+};
+
+const patchProductInQueryCache = (
+  cacheValue: unknown,
+  savedProduct: ProductWithImages
+): unknown => {
+  if (Array.isArray(cacheValue)) {
+    return patchProductInArray(cacheValue as ProductWithImages[], savedProduct);
+  }
+  if (!cacheValue || typeof cacheValue !== 'object') return cacheValue;
+  if (!('products' in cacheValue)) return cacheValue;
+
+  const typed = cacheValue as ProductListWithCountShape;
+  if (!Array.isArray(typed.products)) return cacheValue;
+
+  const nextProducts = patchProductInArray(typed.products, savedProduct);
+  if (nextProducts === typed.products) return cacheValue;
+  return {
+    ...typed,
+    products: nextProducts,
+  };
+};
+
+const patchProductCaches = (queryClient: QueryClient, savedProduct: ProductWithImages): void => {
+  queryClient.setQueryData(
+    getProductDetailQueryKey(savedProduct.id),
+    (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
+  );
+  queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+  queryClient.setQueriesData(
+    { queryKey: QUERY_KEYS.products.lists() },
+    (old: unknown) => patchProductInQueryCache(old, savedProduct)
+  );
+};
+
+const invalidateProductCachesInBackground = (
+  queryClient: QueryClient,
+  productId: string
+): void => {
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) });
+};
+
 export function useProductFormSubmit({
   product,
   methods,
@@ -190,6 +255,7 @@ export function useProductFormSubmit({
   refreshImages,
   onSuccess,
   onEditSave,
+  requireHydratedEditProduct = false,
 }: UseProductFormSubmitProps): UseProductFormSubmitResult {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -200,6 +266,18 @@ export function useProductFormSubmit({
 
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
+
+  const createMutationRef = useRef(createMutation);
+  createMutationRef.current = createMutation;
+  const updateMutationRef = useRef(updateMutation);
+  updateMutationRef.current = updateMutation;
+
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+  const onEditSaveRef = useRef(onEditSave);
+  onEditSaveRef.current = onEditSave;
+  const refreshImagesRef = useRef(refreshImages);
+  refreshImagesRef.current = refreshImages;
 
   useEffect((): (() => void) => {
     return (): void => {
@@ -222,6 +300,13 @@ export function useProductFormSubmit({
         setUploadError(null);
         setUploadSuccess(false);
 
+        if (product && requireHydratedEditProduct && !isEditingProductHydrated(product)) {
+          const message = 'Product details are still loading. Wait a moment and try again.';
+          setUploadError(message);
+          toast(message, { variant: 'warning' });
+          return;
+        }
+
         try {
           const formData = buildFormData(
             data,
@@ -238,24 +323,24 @@ export function useProductFormSubmit({
           );
 
           const savedProduct = product
-            ? await updateMutation.mutateAsync({ id: product.id, data: formData })
-            : await createMutation.mutateAsync(formData);
+            ? await updateMutationRef.current.mutateAsync({ id: product.id, data: formData })
+            : await createMutationRef.current.mutateAsync(formData);
 
           const isQueued = savedProduct == null;
 
           if (isQueued) {
-            onSuccess?.({ queued: true });
+            onSuccessRef.current?.({ queued: true });
             return;
           }
 
-          await delay(500);
-
-          await invalidateProductsAndCounts(queryClient);
+          const resolvedProduct = savedProduct as ProductWithImages;
+          patchProductCaches(queryClient, resolvedProduct);
+          invalidateProductCachesInBackground(queryClient, resolvedProduct.id);
 
           if (!product) {
-            onSuccess?.();
+            onSuccessRef.current?.();
           } else {
-            refreshImages(savedProduct as ProductWithImages);
+            refreshImagesRef.current(resolvedProduct);
             setUploadSuccess(true);
             if (successTimerRef.current) {
               clearTimeout(successTimerRef.current);
@@ -263,11 +348,11 @@ export function useProductFormSubmit({
             successTimerRef.current = setTimeout(() => {
               setUploadSuccess(false);
             }, 3000);
-            if (!onSuccess) {
+            if (!onSuccessRef.current) {
               toast('Product updated successfully.', { variant: 'success' });
             }
-            onEditSave?.(savedProduct as ProductWithImages);
-            onSuccess?.();
+            onEditSaveRef.current?.(markEditingProductHydrated(resolvedProduct));
+            onSuccessRef.current?.();
           }
         } catch (error: unknown) {
           logClientError(error, {
@@ -310,12 +395,7 @@ export function useProductFormSubmit({
       selectedNoteIds,
       parameterValues,
       studioProjectId,
-      createMutation,
-      updateMutation,
-      onSuccess,
       queryClient,
-      refreshImages,
-      onEditSave,
       toast,
       confirm,
     ]

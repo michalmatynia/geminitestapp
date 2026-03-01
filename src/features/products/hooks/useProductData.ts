@@ -27,6 +27,7 @@ import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {
   productsAllQueryKey,
+  productsListsQueryKey,
   productsCountsQueryKey,
   getProductDetailQueryKey,
   refetchProductsAndCounts,
@@ -174,12 +175,12 @@ export function useUpdateProductMutation(): UseMutationResult<
       return updateProduct(id, data);
     },
     {
-      queryKey: productsAllQueryKey,
+      queryKey: productsListsQueryKey,
       extraInvalidateKeys: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
-      }) => [getProductDetailQueryKey(variables.id)],
+      }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
       errorMessage: 'Failed to update product',

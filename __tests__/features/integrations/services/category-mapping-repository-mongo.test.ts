@@ -4,7 +4,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getCategoryMappingRepository } from '@/shared/lib/integrations/services/category-mapping-repository';
+import { getCategoryMappingRepository } from '@/features/integrations/services/category-mapping-repository';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

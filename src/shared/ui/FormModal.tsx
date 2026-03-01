@@ -17,6 +17,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
   children: ReactNode;
   onSave: () => void;
   isSaving?: boolean;
+  disableCloseWhileSaving?: boolean;
   isSaveDisabled?: boolean;
   hasUnsavedChanges?: boolean;
   saveText?: string;
@@ -40,6 +41,7 @@ export function FormModal({
   children,
   onSave,
   isSaving = false,
+  disableCloseWhileSaving = false,
   isSaveDisabled = false,
   hasUnsavedChanges,
   saveText = 'Save',
@@ -55,9 +57,14 @@ export function FormModal({
 }: FormModalProps): React.JSX.Element | null {
   const isCurrentlyOpen = isOpen ?? open;
   if (!isCurrentlyOpen) return null;
+  const isCloseLocked = disableCloseWhileSaving && isSaving;
+  const handleRequestClose = (): void => {
+    if (isCloseLocked) return;
+    onClose();
+  };
   const handleOpenChange = (nextOpen: boolean): void => {
     if (!nextOpen) {
-      onClose();
+      handleRequestClose();
     }
   };
   const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
@@ -102,7 +109,13 @@ export function FormModal({
       <div className='flex flex-wrap items-center justify-end gap-2'>
         {actions}
         {showCancelButton ? (
-          <Button type='button' onClick={onClose} variant='outline' className='min-w-[100px]'>
+          <Button
+            type='button'
+            onClick={handleRequestClose}
+            disabled={isCloseLocked}
+            variant='outline'
+            className='min-w-[100px]'
+          >
             {cancelText}
           </Button>
         ) : null}
@@ -121,6 +134,9 @@ export function FormModal({
       padding={padding}
       header={header}
       showClose={false}
+      lockClose={isCloseLocked}
+      closeOnOutside={!isCloseLocked}
+      closeOnEscape={!isCloseLocked}
       className={className}
     >
       {children}

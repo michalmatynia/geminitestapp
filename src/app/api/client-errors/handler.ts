@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-
 import {
   isSensitiveKey,
   REDACTED_VALUE,
@@ -17,6 +15,10 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
 const MAX_CLIENT_CONTEXT_BYTES = 16_000;
 const MAX_CLIENT_VALUE_LENGTH = 2_000;
+const NETWORK_FETCH_FAILURE_MESSAGES = new Set([
+  'failed to fetch',
+  'networkerror when attempting to fetch resource.',
+]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -77,6 +79,21 @@ const sanitizeClientContext = (value: unknown): Record<string, unknown> | null =
   }
 };
 
+const isNoisyDevNetworkFetchFailure = (
+  error: Error,
+  context: Record<string, unknown> | null
+): boolean => {
+  if (process.env['NODE_ENV'] === 'production') return false;
+  const normalizedMessage = error.message.trim().toLowerCase();
+  if (!NETWORK_FETCH_FAILURE_MESSAGES.has(normalizedMessage)) return false;
+  const endpoint = typeof context?.['endpoint'] === 'string' ? context['endpoint'].trim() : '';
+  const method =
+    typeof context?.['method'] === 'string' ? context['method'].trim().toUpperCase() : '';
+  if (!endpoint.startsWith('/api/')) return false;
+  if (method && method !== 'GET' && method !== 'HEAD') return false;
+  return true;
+};
+
 export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -135,6 +152,13 @@ export async function POST_handler(
     normalizedError.stack = truncateString(fallbackStack, 20_000);
   }
 
+  if (isNoisyDevNetworkFetchFailure(normalizedError, sanitizedContext)) {
+    return NextResponse.json(
+      { ok: true, success: true, dropped: true, reason: 'network_fetch_failed' },
+      { status: 200 }
+    );
+  }
+
   const context: ErrorContext = {
     ...(sanitizedContext ?? {}),
     ...(typeof payload.url === 'string' ? { url: payload.url } : {}),
@@ -145,7 +169,6 @@ export async function POST_handler(
       ? { componentStack: payload.componentStack }
       : {}),
     ...(!parsed.success ? { payloadInvalid: true } : {}),
-    extra: sanitizedContext ?? {},
     source: 'client.error.reporter',
     service: 'client-error-reporter',
   };

@@ -97,8 +97,12 @@ describe('Chatbot API', () => {
   });
 
   it('should return fallback models when model listing fails', async () => {
+    // Intercept all discovery attempts across different base URLs
     server.use(
-      http.get(`${OLLAMA_BASE_URL}/api/tags`, () => {
+      http.get(/.*\/api\/tags/, () => {
+        return new HttpResponse('Provider down', { status: 502 });
+      }),
+      http.get(/.*\/v1\/models/, () => {
         return new HttpResponse('Provider down', { status: 502 });
       })
     );

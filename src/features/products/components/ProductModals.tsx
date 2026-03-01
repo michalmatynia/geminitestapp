@@ -74,6 +74,7 @@ export function ProductModals(): React.JSX.Element {
           product={editingProduct}
           onSuccess={onEditSuccess}
           onEditSave={onEditSave}
+          requireHydratedEditProduct
         >
           <ProductFormModal
             isOpen={!!editingProduct}

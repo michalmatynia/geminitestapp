@@ -10,7 +10,7 @@ import {
   deleteExportTemplate,
   setExportActiveTemplateId,
   getExportActiveTemplateId,
-} from '@/shared/lib/integrations/services/export-template-repository';
+} from '@/features/integrations/services/export-template-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('ExportTemplateRepository', () => {

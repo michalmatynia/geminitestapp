@@ -297,10 +297,14 @@ export function usePathPersistence(
         const finalConfig = persistedConfig ?? config;
         if (options?.nodeOverride) {
           const expectedNode = options.nodeOverride;
+          const normalizedExpectedConfig = sanitizePathConfig(config);
+          const normalizedExpectedNode: AiNode | undefined = normalizedExpectedConfig.nodes.find(
+            (node: AiNode): boolean => node.id === expectedNode.id
+          );
           const persistedNode: AiNode | undefined = finalConfig.nodes.find(
             (node: AiNode): boolean => node.id === expectedNode.id
           );
-          const expectedConfigHash = stableStringify(expectedNode.config ?? null);
+          const expectedConfigHash = stableStringify(normalizedExpectedNode?.config ?? null);
           const persistedConfigHash = stableStringify(persistedNode?.config ?? null);
           if (!persistedNode || expectedConfigHash !== persistedConfigHash) {
             throw new Error(`Node save verification failed for ${expectedNode.id}`);

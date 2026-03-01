@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
+
+import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import { postAiPathsDbActionHandler } from '../db-command/handler';
@@ -12,13 +14,12 @@ const coerceProvider = (value: unknown): 'auto' | 'mongodb' | 'prisma' | undefin
 };
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  let body: Record<string, unknown>;
-  try {
-    body = (await req.json()) as Record<string, unknown>;
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, undefined, {
+    logPrefix: 'ai-paths.db-query',
+  });
+  if (!parsed.ok) return parsed.response;
 
+  const body = parsed.data as Record<string, unknown>;
   const provider = coerceProvider(body['provider']);
   const mappedPayload: Record<string, unknown> = {
     ...(provider ? { provider } : {}),

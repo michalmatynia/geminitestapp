@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { defaultPlaywrightSettings } from '@/shared/lib/playwright/constants/playwright';
+import { defaultPlaywrightSettings } from '@/features/playwright/constants/playwright';
 import {
   normalizePlaywrightPersonas,
   arePlaywrightSettingsEqual,
   findPlaywrightPersonaMatch,
   buildPlaywrightSettings,
-} from '@/shared/lib/playwright/utils/personas';
+} from '@/features/playwright/utils/personas';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 describe('Playwright Persona Utils', () => {

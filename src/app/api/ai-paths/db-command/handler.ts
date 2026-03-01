@@ -561,10 +561,21 @@ export async function postAiPathsDbActionHandler(
     }
 
     if (action === 'findOne') {
-      const item = await collectionRef.findOne(
+      let item = await collectionRef.findOne(
         normalizedFilter,
         projection ? { projection } : undefined
       );
+
+      if (
+        !item &&
+        idType !== 'objectId' &&
+        typeof normalizedFilter['_id'] === 'string' &&
+        looksLikeObjectId(normalizedFilter['_id'])
+      ) {
+        const retryFilter = { ...normalizedFilter, _id: new ObjectId(normalizedFilter['_id']) };
+        item = await collectionRef.findOne(retryFilter, projection ? { projection } : undefined);
+      }
+
       return withProviderPayload(provider, requestedProvider, {
         item,
         count: item ? 1 : 0,
@@ -711,7 +722,15 @@ export async function postAiPathsDbActionHandler(
 
   try {
     const result = await runActionWithProvider(primaryProvider);
-    return NextResponse.json(result);
+    const finalResult = {
+      ...result,
+      collection: resolvedCollection,
+      requestedCollection,
+      ...(collectionResolution.mappedFrom
+        ? { collectionMappedFrom: collectionResolution.mappedFrom }
+        : {}),
+    };
+    return NextResponse.json(finalResult);
   } catch (primaryError) {
     const isResolutionError = isProviderResolutionError(primaryError);
     const isRecordNotFoundOnPrimaryPrisma =
@@ -744,6 +763,11 @@ export async function postAiPathsDbActionHandler(
       const fallbackResult = await runActionWithProvider(fallbackProvider);
       return NextResponse.json({
         ...fallbackResult,
+        collection: resolvedCollection,
+        requestedCollection,
+        ...(collectionResolution.mappedFrom
+          ? { collectionMappedFrom: collectionResolution.mappedFrom }
+          : {}),
         fallback: {
           used: true,
           requestedProvider: requestedProvider ?? 'auto',

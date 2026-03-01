@@ -8,7 +8,7 @@ import {
   resolveFolderTargetPathForMasterNode,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
+} from '@/features/ai/image-studio/utils/master-folder-tree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

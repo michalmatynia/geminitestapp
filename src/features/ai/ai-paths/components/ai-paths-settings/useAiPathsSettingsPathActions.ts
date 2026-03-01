@@ -180,45 +180,51 @@ export function useAiPathsSettingsPathActions({
 
   const applyPathConfigState = useCallback(
     (config: PathConfig): void => {
-      const normalized = normalizeNodes(config.nodes);
+      const migratedConfig = migratePathConfigCollections(config).config;
+      const repairedConfig = repairPathNodeIdentities(migratedConfig).config;
+      const normalized = normalizeNodes(repairedConfig.nodes);
       setNodes(normalized);
-      setEdges(sanitizeEdges(normalized, config.edges));
-      setPathName(config.name);
-      setPathDescription(config.description);
-      setActiveTrigger(normalizeTriggerLabel(config.trigger));
+      setEdges(sanitizeEdges(normalized, repairedConfig.edges));
+      setPathName(repairedConfig.name);
+      setPathDescription(repairedConfig.description);
+      setActiveTrigger(normalizeTriggerLabel(repairedConfig.trigger));
       setExecutionMode(
-        config.executionMode === 'local' || config.executionMode === 'server'
-          ? config.executionMode
+        repairedConfig.executionMode === 'local' || repairedConfig.executionMode === 'server'
+          ? repairedConfig.executionMode
           : 'server'
       );
       setFlowIntensity(
-        config.flowIntensity === 'off' ||
-          config.flowIntensity === 'low' ||
-          config.flowIntensity === 'medium' ||
-          config.flowIntensity === 'high'
-          ? config.flowIntensity
+        repairedConfig.flowIntensity === 'off' ||
+          repairedConfig.flowIntensity === 'low' ||
+          repairedConfig.flowIntensity === 'medium' ||
+          repairedConfig.flowIntensity === 'high'
+          ? repairedConfig.flowIntensity
           : 'medium'
       );
       setRunMode(
-        config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
-          ? config.runMode
-          : config.runMode === 'queue'
+        repairedConfig.runMode === 'automatic' ||
+          repairedConfig.runMode === 'manual' ||
+          repairedConfig.runMode === 'step'
+          ? repairedConfig.runMode
+          : repairedConfig.runMode === 'queue'
             ? 'automatic'
             : 'manual'
       );
-      setStrictFlowMode(config.strictFlowMode !== false);
+      setStrictFlowMode(repairedConfig.strictFlowMode !== false);
       setBlockedRunPolicy(
-        config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
+        repairedConfig.blockedRunPolicy === 'complete_with_warning'
+          ? 'complete_with_warning'
+          : 'fail_run'
       );
-      setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
-      setParserSamples(normalizeParserSamples(config.parserSamples));
-      setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
-      setRuntimeState(parseRuntimeState(config.runtimeState));
-      setLastRunAt(config.lastRunAt ?? null);
-      setIsPathLocked(Boolean(config.isLocked));
-      setIsPathActive(config.isActive !== false);
+      setAiPathsValidation(normalizeAiPathsValidationConfig(repairedConfig.aiPathsValidation));
+      setParserSamples(normalizeParserSamples(repairedConfig.parserSamples));
+      setUpdaterSamples(normalizeUpdaterSamples(repairedConfig.updaterSamples));
+      setRuntimeState(parseRuntimeState(repairedConfig.runtimeState));
+      setLastRunAt(repairedConfig.lastRunAt ?? null);
+      setIsPathLocked(Boolean(repairedConfig.isLocked));
+      setIsPathActive(repairedConfig.isActive !== false);
 
-      const preferredNodeId = config.uiState?.selectedNodeId ?? null;
+      const preferredNodeId = repairedConfig.uiState?.selectedNodeId ?? null;
       const resolvedNodeId =
         preferredNodeId && normalized.some((node: AiNode): boolean => node.id === preferredNodeId)
           ? preferredNodeId

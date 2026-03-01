@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   startBaseImportRun,
   startBaseImportRunResponse,
-} from '@/shared/lib/integrations/services/imports/base-import-run-starter';
-import type { StartBaseImportRunInput } from '@/shared/lib/integrations/services/imports/base-import-service';
+} from '@/features/integrations/services/imports/base-import-run-starter';
+import type { StartBaseImportRunInput } from '@/features/integrations/services/imports/base-import-service';
 import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations';
 
 const prepareBaseImportRunMock = vi.hoisted(() => vi.fn());
@@ -12,13 +12,13 @@ const updateBaseImportRunQueueJobMock = vi.hoisted(() => vi.fn());
 const toStartResponseMock = vi.hoisted(() => vi.fn());
 const enqueueBaseImportRunJobMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/shared/lib/integrations/services/imports/base-import-service', () => ({
+vi.mock('@/features/integrations/services/imports/base-import-service', () => ({
   prepareBaseImportRun: prepareBaseImportRunMock,
   updateBaseImportRunQueueJob: updateBaseImportRunQueueJobMock,
   toStartResponse: toStartResponseMock,
 }));
 
-vi.mock('@/shared/lib/integrations/workers/baseImportQueue', () => ({
+vi.mock('@/features/integrations/workers/baseImportQueue', () => ({
   enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
 }));
 

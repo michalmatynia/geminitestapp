@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { encryptSecret } from '@/shared/lib/security/encryption';
 
 vi.mock('server-only', () => ({}));

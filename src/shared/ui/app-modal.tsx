@@ -24,6 +24,7 @@ type AppModalProps = {
   variant?: 'default' | 'glass' | undefined;
   padding?: 'default' | 'none' | undefined;
   showClose?: boolean | undefined;
+  lockClose?: boolean | undefined;
   closeOnOutside?: boolean | undefined;
   closeOnEscape?: boolean | undefined;
   onInteractOutside?: ((event: Event) => void) | undefined;
@@ -57,6 +58,7 @@ export function AppModal({
   variant = 'default',
   padding = 'default',
   showClose = true,
+  lockClose = false,
   closeOnOutside = true,
   closeOnEscape = true,
   onInteractOutside,
@@ -67,8 +69,11 @@ export function AppModal({
   bodyClassName,
 }: AppModalProps): React.JSX.Element {
   const isCurrentlyOpen = isOpen ?? open ?? false;
+  const canClose = !lockClose;
 
   const handleOpenChange = (newOpen: boolean): void => {
+    if (!newOpen && !canClose) return;
+
     if (onOpenChange) {
       // Many existing call sites pass a close-only callback here.
       // Treat zero-arg handlers as "close only" to avoid fighting controlled open state.
@@ -87,14 +92,14 @@ export function AppModal({
   };
 
   const handleInteractOutside = (event: Event): void => {
-    if (!closeOnOutside) {
+    if (!closeOnOutside || !canClose) {
       event.preventDefault();
     }
     onInteractOutside?.(event);
   };
 
   const handleEscapeKeyDown = (event: KeyboardEvent): void => {
-    if (!closeOnEscape) {
+    if (!closeOnEscape || !canClose) {
       event.preventDefault();
     }
     onEscapeKeyDown?.(event);
@@ -146,6 +151,7 @@ export function AppModal({
                       <Button
                         type='button'
                         onClick={() => handleOpenChange(false)}
+                        disabled={!canClose}
                         variant='outline'
                         size='sm'
                       >

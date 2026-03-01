@@ -4,6 +4,12 @@ import {
   requiresHumanApproval,
   evaluateApprovalGateWithLLM,
 } from '@/features/ai/agent-runtime/audit/gate';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+
+// Mock the AI Brain client
+vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
+  runBrainChatCompletion: vi.fn(),
+}));
 
 describe('Agent Runtime - Audit Gate', () => {
   describe('requiresHumanApproval (Heuristic)', () => {
@@ -34,22 +40,20 @@ describe('Agent Runtime - Audit Gate', () => {
 
   describe('evaluateApprovalGateWithLLM', () => {
     beforeEach(() => {
-      global.fetch = vi.fn();
+      vi.resetAllMocks();
     });
 
     it('should parse LLM response correctly', async () => {
-      const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            requiresApproval: true,
-            reason: 'Payment detected',
-            riskLevel: 'high',
-          }),
-        },
+      const mockResult = {
+        requiresApproval: true,
+        reason: 'Payment detected',
+        riskLevel: 'high',
       };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(mockResponse),
+
+      vi.mocked(runBrainChatCompletion).mockResolvedValue({
+        text: JSON.stringify(mockResult),
+        vendor: 'ollama',
+        modelId: 'llama3',
       });
 
       const result = await evaluateApprovalGateWithLLM({
@@ -63,7 +67,7 @@ describe('Agent Runtime - Audit Gate', () => {
     });
 
     it('should fallback to null on error', async () => {
-      (global.fetch as any).mockRejectedValue(new Error('Down'));
+      vi.mocked(runBrainChatCompletion).mockRejectedValue(new Error('Down'));
       const result = await evaluateApprovalGateWithLLM({
         prompt: 'Buy stuff',
         step: { title: 'Click Pay' } as any,

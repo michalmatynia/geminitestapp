@@ -26,22 +26,30 @@ export function CanvasSvgNodeLayer({
   }, [cullPadding, view.scale, view.x, view.y, viewportSize]);
 
   const renderNodes = React.useMemo((): AiNode[] => {
-    if (!worldViewport) return nodes;
-    return nodes.filter((node: AiNode) => {
-      const left = node.position.x;
-      const top = node.position.y;
-      const right = node.position.x + NODE_WIDTH;
-      const bottom = node.position.y + NODE_MIN_HEIGHT;
-      if (
-        right >= worldViewport.minX &&
-        left <= worldViewport.maxX &&
-        bottom >= worldViewport.minY &&
-        top <= worldViewport.maxY
-      ) {
-        return true;
-      }
-      if (selectedNodeIdSet.has(node.id)) return true;
-      return false;
+    const visibleNodes = !worldViewport
+      ? nodes
+      : nodes.filter((node: AiNode) => {
+          const left = node.position.x;
+          const top = node.position.y;
+          const right = node.position.x + NODE_WIDTH;
+          const bottom = node.position.y + NODE_MIN_HEIGHT;
+          if (
+            right >= worldViewport.minX &&
+            left <= worldViewport.maxX &&
+            bottom >= worldViewport.minY &&
+            top <= worldViewport.maxY
+          ) {
+            return true;
+          }
+          if (selectedNodeIdSet.has(node.id)) return true;
+          return false;
+        });
+
+    const seenNodeIds = new Set<string>();
+    return visibleNodes.filter((node: AiNode): boolean => {
+      if (seenNodeIds.has(node.id)) return false;
+      seenNodeIds.add(node.id);
+      return true;
     });
   }, [nodes, selectedNodeIdSet, worldViewport]);
 

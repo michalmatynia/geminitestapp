@@ -80,14 +80,24 @@ describe('image-studio analysis shared', () => {
       { r: 220, g: 15, b: 15 }
     );
 
-    const includeShadow = detectObjectBoundsForLayoutFromRgba(rgba, width, height, {
-      detection: 'white_bg_first_colored_pixel',
-      shadowPolicy: 'include_shadow',
-    });
-    const excludeShadow = detectObjectBoundsForLayoutFromRgba(rgba, width, height, {
-      detection: 'white_bg_first_colored_pixel',
-      shadowPolicy: 'exclude_shadow',
-    });
+    const includeShadow = detectObjectBoundsForLayoutFromRgba(
+      rgba,
+      width,
+      height,
+      normalizeImageStudioAnalysisLayoutConfig({
+        detection: 'white_bg_first_colored_pixel',
+        shadowPolicy: 'include_shadow',
+      })
+    );
+    const excludeShadow = detectObjectBoundsForLayoutFromRgba(
+      rgba,
+      width,
+      height,
+      normalizeImageStudioAnalysisLayoutConfig({
+        detection: 'white_bg_first_colored_pixel',
+        shadowPolicy: 'exclude_shadow',
+      })
+    );
 
     expect(includeShadow).not.toBeNull();
     expect(excludeShadow).not.toBeNull();
@@ -119,7 +129,7 @@ describe('image-studio analysis shared', () => {
       { r: 25, g: 140, b: 240 }
     );
 
-    const analysis = analyzeImageObjectFromRgba({
+    const result = analyzeImageObjectFromRgba({
       pixelData: rgba,
       width,
       height,
@@ -129,7 +139,8 @@ describe('image-studio analysis shared', () => {
       },
     });
 
-    expect(analysis).not.toBeNull();
+    expect(result).not.toBeNull();
+    const analysis = result?.analysis;
     expect(analysis?.sourceObjectBounds).toEqual({ left: 4, top: 3, width: 8, height: 9 });
     expect(analysis?.detectionUsed).toBe('white_bg_first_colored_pixel');
     expect(analysis?.confidence).toBeGreaterThan(0);

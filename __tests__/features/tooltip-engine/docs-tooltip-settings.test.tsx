@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   readDocsTooltipsEnabled,
   useDocsTooltipsSetting,
-} from '@/shared/lib/tooltip-engine/docs-tooltip-settings';
+} from '@/features/tooltip-engine/docs-tooltip-settings';
 
 describe('docs-tooltip-settings', () => {
   afterEach(() => {

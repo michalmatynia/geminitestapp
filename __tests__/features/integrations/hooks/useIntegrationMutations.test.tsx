@@ -8,7 +8,7 @@ import {
   useDeleteConnection,
   useDisconnectAllegro,
   useUpsertConnection,
-} from '@/shared/lib/integrations/hooks/useIntegrationMutations';
+} from '@/features/integrations/hooks/useIntegrationMutations';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

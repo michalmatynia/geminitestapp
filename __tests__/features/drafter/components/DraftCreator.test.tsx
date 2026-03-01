@@ -2,7 +2,7 @@ import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { render } from '@/__tests__/test-utils';
-import { DraftCreator } from '@/shared/lib/drafter/components/DraftCreator';
+import { DraftCreator } from '@/features/drafter/components/DraftCreator';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({

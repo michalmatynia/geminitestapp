@@ -31,6 +31,7 @@ import {
   resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
+import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
@@ -90,6 +91,7 @@ export function useProductListState(): ProductListContextType & {
   const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
   const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
   const openingProductFromQueryRef = useRef<string | null>(null);
+  const editOpenRequestTokenRef = useRef(0);
   const jobHighlightTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const queryClient = useQueryClient();
 
@@ -425,12 +427,21 @@ export function useProductListState(): ProductListContextType & {
     if (!fresh) return;
     if (fresh.id !== editingProduct.id) return;
     if (!isIncomingProductDetailNewer(fresh, editingProduct)) return;
-    setEditingProduct(fresh);
+    setEditingProduct(markEditingProductHydrated(fresh));
   }, [editingProduct, editingProductDetailQuery.data, setEditingProduct]);
+
+  useEffect(() => {
+    if (editingProduct?.id) return;
+    editOpenRequestTokenRef.current += 1;
+  }, [editingProduct?.id]);
 
   const handleOpenEditModal = useCallback(
     (product: ProductWithImages) => {
       setActionError(null);
+      editOpenRequestTokenRef.current += 1;
+      const requestToken = editOpenRequestTokenRef.current;
+      // Open modal immediately with list data; submit is blocked by requireHydratedEditProduct
+      setEditingProduct(product);
       void queryClient
         .fetchQuery({
           queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
@@ -444,9 +455,11 @@ export function useProductListState(): ProductListContextType & {
           staleTime: 0,
         })
         .then((freshProduct: ProductWithImages) => {
-          setEditingProduct(freshProduct);
+          if (editOpenRequestTokenRef.current !== requestToken) return;
+          setEditingProduct(markEditingProductHydrated(freshProduct));
         })
         .catch((error: unknown) => {
+          if (editOpenRequestTokenRef.current !== requestToken) return;
           if (error instanceof ApiError && error.status === 404) {
             toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
             setRefreshTrigger((prev: number) => prev + 1);
@@ -468,6 +481,8 @@ export function useProductListState(): ProductListContextType & {
     if (editingProduct?.id === openProductIdFromQuery) return;
     if (openingProductFromQueryRef.current === openProductIdFromQuery) return;
     openingProductFromQueryRef.current = openProductIdFromQuery;
+    editOpenRequestTokenRef.current += 1;
+    const requestToken = editOpenRequestTokenRef.current;
 
     setActionError(null);
     void queryClient
@@ -486,9 +501,11 @@ export function useProductListState(): ProductListContextType & {
         staleTime: 0,
       })
       .then((freshProduct: ProductWithImages) => {
-        setEditingProduct(freshProduct);
+        if (editOpenRequestTokenRef.current !== requestToken) return;
+        setEditingProduct(markEditingProductHydrated(freshProduct));
       })
       .catch((error: unknown) => {
+        if (editOpenRequestTokenRef.current !== requestToken) return;
         if (error instanceof ApiError && error.status === 404) {
           toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
           setRefreshTrigger((prev: number) => prev + 1);

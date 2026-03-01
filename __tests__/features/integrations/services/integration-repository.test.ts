@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Integration, IntegrationConnection } from '@prisma/client';
 
-import { getIntegrationRepository } from '@/shared/lib/integrations/services/integration-repository';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 import {

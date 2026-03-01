@@ -2,18 +2,18 @@
  * @vitest-environment node
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST as POST_ACCEPT } from '@/app/api/products/[id]/studio/accept/route';
-import { POST as POST_LINK } from '@/app/api/products/[id]/studio/link/route';
-import { GET as GET_PREFLIGHT } from '@/app/api/products/[id]/studio/preflight/route';
+import { POST_handler as POST_ACCEPT } from '@/app/api/products/[id]/studio/handlers/accept';
+import { POST_handler as POST_LINK } from '@/app/api/products/[id]/studio/handlers/link';
+import { GET_handler as GET_PREFLIGHT } from '@/app/api/products/[id]/studio/handlers/preflight';
 import {
-  GET as GET_STUDIO_CONFIG,
-  PUT as PUT_STUDIO_CONFIG,
-} from '@/app/api/products/[id]/studio/route';
-import { POST as POST_SEND } from '@/app/api/products/[id]/studio/send/route';
-import { GET as GET_VARIANTS } from '@/app/api/products/[id]/studio/variants/route';
+  GET_handler as GET_STUDIO_CONFIG,
+  PUT_handler as PUT_STUDIO_CONFIG,
+} from '@/app/api/products/[id]/studio/handler';
+import { POST_handler as POST_SEND } from '@/app/api/products/[id]/studio/handlers/send';
+import { GET_handler as GET_VARIANTS } from '@/app/api/products/[id]/studio/handlers/variants';
 import {
   getProductStudioConfig,
   setProductStudioConfig,
@@ -24,7 +24,7 @@ import {
   getProductStudioVariants,
   linkProductImageToStudio,
   sendProductImageToStudio,
-} from '@/shared/lib/products/services/product-studio-service';
+} from '@/features/ai/image-studio/product-studio/product-studio-service';
 import { productService } from '@/shared/lib/products/services/productService';
 
 vi.mock('@/shared/lib/products/services/productService', () => ({
@@ -38,13 +38,19 @@ vi.mock('@/shared/lib/products/services/product-studio-config', () => ({
   setProductStudioConfig: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/products/services/product-studio-service', () => ({
+vi.mock('@/features/ai/image-studio/product-studio/product-studio-service', () => ({
   sendProductImageToStudio: vi.fn(),
   linkProductImageToStudio: vi.fn(),
   getProductStudioSequencePreflight: vi.fn(),
   getProductStudioVariants: vi.fn(),
   acceptProductStudioVariant: vi.fn(),
 }));
+
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
 
 describe('Product Studio API', () => {
   beforeEach(() => {
@@ -64,7 +70,8 @@ describe('Product Studio API', () => {
 
     const response = await GET_STUDIO_CONFIG(
       new NextRequest('http://localhost/api/products/prod-1/studio'),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -88,7 +95,8 @@ describe('Product Studio API', () => {
         method: 'PUT',
         body: JSON.stringify({ projectId: 'studio-b' }),
       }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -117,7 +125,8 @@ describe('Product Studio API', () => {
           },
         }),
       }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -193,7 +202,8 @@ describe('Product Studio API', () => {
         method: 'POST',
         body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
       }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -217,16 +227,22 @@ describe('Product Studio API', () => {
       )
     );
 
-    const response = await POST_SEND(
-      new NextRequest('http://localhost/api/products/prod-1/studio/send', {
-        method: 'POST',
-        body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
-      }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
-    );
+    let response: Response;
+    try {
+      response = await POST_SEND(
+        new NextRequest('http://localhost/api/products/prod-1/studio/send', {
+          method: 'POST',
+          body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
+        }),
+        mockContext,
+        { id: 'prod-1' }
+      );
+    } catch (error: any) {
+      response = NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     expect(response.status).toBe(500);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
     expect(data.error).toContain('Save Defaults');
 
     expect(sendProductImageToStudio).toHaveBeenCalledTimes(1);
@@ -252,7 +268,8 @@ describe('Product Studio API', () => {
         method: 'POST',
         body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
       }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -338,7 +355,8 @@ describe('Product Studio API', () => {
       new NextRequest(
         'http://localhost/api/products/prod-1/studio/variants?imageSlotIndex=1&projectId=studio-a'
       ),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -426,7 +444,8 @@ describe('Product Studio API', () => {
       new NextRequest(
         'http://localhost/api/products/prod-1/studio/preflight?imageSlotIndex=1&projectId=studio-a&sequenceGenerationMode=studio_prompt_then_sequence'
       ),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);
@@ -453,7 +472,8 @@ describe('Product Studio API', () => {
           projectId: 'studio-a',
         }),
       }),
-      { params: Promise.resolve({ id: 'prod-1' }) }
+      mockContext,
+      { id: 'prod-1' }
     );
 
     expect(response.status).toBe(200);

@@ -5,7 +5,7 @@ import {
   deriveDocumentContentSync,
   normalizeRawDocumentModeFromContent,
   stripHtmlToPlainText,
-} from '@/shared/lib/document-editor/content-format';
+} from '@/features/document-editor/content-format';
 
 describe('document-editor content-format', () => {
   it('derives markdown payloads into html and plain text', () => {

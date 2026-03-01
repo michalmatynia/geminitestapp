@@ -4,7 +4,7 @@ import {
   IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX,
   getImageStudioProjectSettingsKey,
   sanitizeImageStudioProjectIdForSettings,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 describe('studio-settings project key helpers', () => {
   it('sanitizes project id for settings key use', () => {

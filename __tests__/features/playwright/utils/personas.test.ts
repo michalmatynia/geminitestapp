@@ -6,7 +6,7 @@ import {
   normalizePlaywrightPersonas,
   buildPlaywrightSettings,
   createPlaywrightPersonaId,
-} from '@/shared/lib/playwright/utils/personas';
+} from '@/features/playwright/utils/personas';
 
 describe('playwright personas', () => {
   describe('createPlaywrightPersonaId', () => {

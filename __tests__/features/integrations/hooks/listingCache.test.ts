@@ -9,7 +9,7 @@ import {
   invalidateListingRuntimeQueues,
   invalidateProductListingsAndBadges,
   listingBadgesQueryKey,
-} from '@/shared/lib/integrations/hooks/listingCache';
+} from '@/features/integrations/hooks/listingCache';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 describe('listingCache helpers', () => {

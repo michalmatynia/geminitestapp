@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeVersionGraph,
   computeTimelineLayout,
-} from '@/shared/lib/ai/image-studio/utils/version-graph';
+} from '@/features/ai/image-studio/utils/version-graph';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Factory ──────────────────────────────────────────────────────────────────

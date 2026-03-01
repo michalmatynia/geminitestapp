@@ -1,17 +1,17 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { updateAsset3D } from '@/shared/lib/viewer3d/api';
-import { Asset3DEditModal } from '@/shared/lib/viewer3d/components/Asset3DEditModal';
-import { useAdmin3DAssetsContext } from '@/shared/lib/viewer3d/context/Admin3DAssetsContext';
-import { useAdmin3DAssetsState } from '@/shared/lib/viewer3d/hooks/useAdmin3DAssetsState';
+import { updateAsset3D } from '@/features/viewer3d/api';
+import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
+import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
+import { useAdmin3DAssetsState } from '@/features/viewer3d/hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const { logClientErrorMock } = vi.hoisted(() => ({
   logClientErrorMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/viewer3d/api', () => ({
+vi.mock('@/features/viewer3d/api', () => ({
   updateAsset3D: vi.fn(),
 }));
 
@@ -19,7 +19,7 @@ vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 
-vi.mock('@/shared/lib/viewer3d/context/Admin3DAssetsContext', () => ({
+vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
   useAdmin3DAssetsContext: vi.fn(),
 }));
 

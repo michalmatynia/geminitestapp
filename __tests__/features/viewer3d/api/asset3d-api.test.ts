@@ -9,7 +9,7 @@ import {
   deleteAsset3DById,
   fetchCategories,
   fetchTags,
-} from '@/shared/lib/viewer3d/api';
+} from '@/features/viewer3d/api';
 import { server } from '@/mocks/server';
 import type { Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 

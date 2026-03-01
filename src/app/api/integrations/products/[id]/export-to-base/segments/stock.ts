@@ -1,4 +1,5 @@
 import { fetchBaseWarehouses, normalizeStockKey } from '@/features/integrations/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { type BaseFieldMapping } from './common';
 
 const inferTypedWarehouseId = (value: string): { typed: string; numeric: string } | null => {
@@ -33,13 +34,20 @@ const resolveWarehouseCandidate = (
   return null;
 };
 
+const logWarehouseWarning = (message: string, context: Record<string, unknown>): void => {
+  void ErrorSystem.logWarning(message, {
+    service: 'export-to-base.stock-segment',
+    ...context,
+  });
+};
+
 export const resolveWarehouseAndStockMappings = async ({
   imagesOnly,
   token,
   targetInventoryId,
   initialWarehouseId,
   mappings,
-  productId: _productId,
+  productId,
 }: {
   imagesOnly: boolean;
   token: string;
@@ -85,15 +93,36 @@ export const resolveWarehouseAndStockMappings = async ({
       if (Object.keys(warehouseAliases).length > 0) {
         stockWarehouseAliases = warehouseAliases;
       }
-    } catch {
-      // skip warehouse validation on API failure
+    } catch (error) {
+      logWarehouseWarning(
+        '[export-to-base] Failed to fetch inventory warehouses; skipping warehouse validation.',
+        {
+          productId,
+          inventoryId: targetInventoryId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
     }
   }
 
   let effectiveMappings = mappings;
   if (!imagesOnly && validWarehouseIds) {
+    const droppedStockMappings = new Set<string>();
+
     if (warehouseId) {
+      const requestedWarehouseId = warehouseId;
       warehouseId = resolveWarehouseCandidate(warehouseId, validWarehouseIds, stockWarehouseAliases);
+      if (!warehouseId) {
+        logWarehouseWarning(
+          '[export-to-base] Requested warehouse is not available in target inventory; clearing warehouse.',
+          {
+            productId,
+            inventoryId: targetInventoryId,
+            requestedWarehouseId,
+            availableWarehouseCount: validWarehouseIds.size,
+          }
+        );
+      }
     }
 
     const warehouseIdMapping = mappings.find(
@@ -109,6 +138,16 @@ export const resolveWarehouseAndStockMappings = async ({
         );
         if (resolvedMappedValue) {
           warehouseId = resolvedMappedValue;
+        } else {
+          logWarehouseWarning(
+            '[export-to-base] Template warehouse_id mapping does not exist in target inventory; ignoring mapped warehouse.',
+            {
+              productId,
+              inventoryId: targetInventoryId,
+              mappedWarehouseId: mappedValue,
+              availableWarehouseCount: validWarehouseIds.size,
+            }
+          );
         }
       }
     }
@@ -131,6 +170,7 @@ export const resolveWarehouseAndStockMappings = async ({
             ? normalized
             : null;
         if (!resolvedStockKey) {
+          droppedStockMappings.add(rawKey);
           return null;
         }
         if (resolvedStockKey !== rawKey) {
@@ -139,6 +179,18 @@ export const resolveWarehouseAndStockMappings = async ({
         return mapping;
       })
       .filter((mapping): mapping is BaseFieldMapping => Boolean(mapping));
+
+    if (droppedStockMappings.size > 0) {
+      logWarehouseWarning(
+        '[export-to-base] Dropped stock_* mappings that are not valid for target inventory.',
+        {
+          productId,
+          inventoryId: targetInventoryId,
+          droppedStockMappings: Array.from(droppedStockMappings),
+          availableWarehouseCount: validWarehouseIds.size,
+        }
+      );
+    }
   }
 
   return {

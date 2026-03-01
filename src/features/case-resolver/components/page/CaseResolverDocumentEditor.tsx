@@ -37,6 +37,7 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import {
   resolvePromptExploderTransferStatusLabel,
@@ -385,25 +386,25 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
                 />
-                <SelectSimple
-                  value={encodedAddresser === 'none' ? '' : encodedAddresser}
+                <CaseResolverPartySelectField
+                  label='From'
+                  value={encodedAddresser}
                   onValueChange={(v) =>
                     updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
                   }
                   options={partyOptions}
                   placeholder='From...'
                   disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
                 />
-                <SelectSimple
-                  value={encodedAddressee === 'none' ? '' : encodedAddressee}
+                <CaseResolverPartySelectField
+                  label='To'
+                  value={encodedAddressee}
                   onValueChange={(v) =>
                     updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
                   }
                   options={partyOptions}
                   placeholder='To...'
                   disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
                 />
               </div>
 

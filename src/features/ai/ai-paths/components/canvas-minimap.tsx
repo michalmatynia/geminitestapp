@@ -82,6 +82,15 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
     return edgePaths.filter((_, index: number): boolean => index % step === 0);
   }, [edgePaths]);
 
+  const minimapNodes = React.useMemo((): AiNode[] => {
+    const seenNodeIds = new Set<string>();
+    return nodes.filter((node: AiNode): boolean => {
+      if (seenNodeIds.has(node.id)) return false;
+      seenNodeIds.add(node.id);
+      return true;
+    });
+  }, [nodes]);
+
   return (
     <div
       className='absolute right-4 top-4 z-20 rounded-md border border-border/60 bg-card/45 p-1.5 backdrop-blur'
@@ -180,11 +189,12 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
             />
           )
         )}
-        {nodes.map((node: AiNode): React.JSX.Element => {
+        {minimapNodes.map((node: AiNode): React.JSX.Element => {
           const isSelected = selectedNodeIdSet.has(node.id);
           return (
             <rect
               key={`minimap-node-${node.id}`}
+              data-minimap-node-id={node.id}
               x={node.position.x}
               y={node.position.y}
               width={NODE_WIDTH}

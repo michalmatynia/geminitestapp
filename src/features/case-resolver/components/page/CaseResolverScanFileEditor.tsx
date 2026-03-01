@@ -33,6 +33,7 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
@@ -548,28 +549,24 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   triggerClassName='bg-card/20 border-border/60'
                 />
               </FormField>
-              <FormField label='Addresser (From)'>
-                <SelectSimple
-                  value={encodedAddresser}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
-                  }
-                  options={partyOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-              <FormField label='Addressee (To)'>
-                <SelectSimple
-                  value={encodedAddressee}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
-                  }
-                  options={partyOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
+              <CaseResolverPartySelectField
+                label='Addresser (From)'
+                value={encodedAddresser}
+                onValueChange={(v) =>
+                  updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
+                }
+                options={partyOptions}
+                disabled={isEditingDocumentLocked}
+              />
+              <CaseResolverPartySelectField
+                label='Addressee (To)'
+                value={encodedAddressee}
+                onValueChange={(v) =>
+                  updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
+                }
+                options={partyOptions}
+                disabled={isEditingDocumentLocked}
+              />
               <FormField label='OCR Model'>
                 <Input
                   value={draft.scanOcrModel ?? ''}

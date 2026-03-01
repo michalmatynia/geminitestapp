@@ -5,6 +5,7 @@ import type { AiNode, DataContractNodeIssueSummary, RuntimeState } from '@/share
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';
+import { CanvasMinimap } from '../canvas-minimap';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
 
 const baseRuntimeState: RuntimeState = {
@@ -195,6 +196,32 @@ describe('Canvas node diagnostics badges', () => {
     );
 
     expect(container.querySelectorAll('[data-node-root="node-duplicate"]')).toHaveLength(1);
+  });
+
+  it('renders duplicate node ids only once in the minimap', () => {
+    const firstNode = buildNode({
+      id: 'node-duplicate',
+      title: 'First Duplicate',
+      position: { x: 20, y: 20 },
+    });
+    const secondNode = buildNode({
+      id: 'node-duplicate',
+      title: 'Second Duplicate',
+      position: { x: 260, y: 20 },
+    });
+    const value: CanvasBoardUIContextValue = {
+      ...buildContextValue({}, { node: firstNode }),
+      nodes: [firstNode, secondNode],
+      nodeById: new Map([[firstNode.id, firstNode]]),
+    };
+
+    const { container } = render(
+      <CanvasBoardUIProvider value={value}>
+        <CanvasMinimap />
+      </CanvasBoardUIProvider>
+    );
+
+    expect(container.querySelectorAll('[data-minimap-node-id="node-duplicate"]')).toHaveLength(1);
   });
 
   it('selects node on single click and does not open config when single-click-open is disabled', () => {

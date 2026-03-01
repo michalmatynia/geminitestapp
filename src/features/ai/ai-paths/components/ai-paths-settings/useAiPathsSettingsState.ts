@@ -150,10 +150,7 @@ export function useAiPathsSettingsState({
 
   const reportAiPathsError = useCallback(
     (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
-      const message =
-        fallbackMessage ??
-        (error instanceof Error ? error.message : String(error ?? 'Unknown error'));
-      validation.reportAiPathsError(message, context);
+      validation.reportAiPathsError(error, context, fallbackMessage);
     },
     [validation.reportAiPathsError]
   );

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { fetchBaseWarehousesMock } = vi.hoisted(() => ({
+const { fetchBaseWarehousesMock, logWarningMock } = vi.hoisted(() => ({
   fetchBaseWarehousesMock: vi.fn(),
+  logWarningMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/server', () => ({
@@ -18,11 +19,18 @@ vi.mock('@/features/integrations/server', () => ({
   },
 }));
 
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    logWarning: logWarningMock,
+  },
+}));
+
 import { resolveWarehouseAndStockMappings } from '@/app/api/integrations/products/[id]/export-to-base/segments/stock';
 
 describe('resolveWarehouseAndStockMappings', () => {
   beforeEach(() => {
     fetchBaseWarehousesMock.mockReset();
+    logWarningMock.mockReset();
   });
 
   it('maps numeric warehouse IDs to typed IDs from inventory warehouses', async () => {
@@ -129,5 +137,36 @@ describe('resolveWarehouseAndStockMappings', () => {
         targetField: 'stock_bl_15019',
       },
     ]);
+  });
+
+  it('clears invalid initial warehouse id and emits warning', async () => {
+    fetchBaseWarehousesMock.mockResolvedValue([
+      {
+        id: '15019',
+        name: 'Main',
+        is_default: true,
+        typedId: 'bl_15019',
+      },
+    ]);
+
+    const result = await resolveWarehouseAndStockMappings({
+      imagesOnly: false,
+      token: 'token',
+      targetInventoryId: 'inv-1',
+      initialWarehouseId: '15020',
+      mappings: [{ sourceKey: 'name', targetField: 'name' }],
+      productId: 'product-1',
+    });
+
+    expect(result.warehouseId).toBeNull();
+    expect(logWarningMock).toHaveBeenCalledWith(
+      expect.stringContaining('Requested warehouse is not available'),
+      expect.objectContaining({
+        service: 'export-to-base.stock-segment',
+        productId: 'product-1',
+        inventoryId: 'inv-1',
+        requestedWarehouseId: '15020',
+      })
+    );
   });
 });

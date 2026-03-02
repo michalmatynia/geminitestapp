@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
-import { logCaseResolverDurationMetric } from '../runtime/metrics';
-import { shouldAdoptIncomingWorkspace } from './useCaseResolverState.helpers.hydration';
 import {
-  fetchCaseResolverWorkspaceMetadata,
   fetchCaseResolverWorkspaceRecord,
+  fetchCaseResolverWorkspaceIfStale,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
+import { logCaseResolverDurationMetric } from '../runtime/metrics';
+import { shouldAdoptIncomingWorkspace } from './useCaseResolverState.helpers.hydration';
 
 export function useCaseResolverStateWorkspaceHydration({
   workspaceRef,
@@ -93,31 +93,27 @@ export function useCaseResolverStateWorkspaceHydration({
         });
       };
       const currentRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
-      const metadata = isPromptExploderReturnFlow
-        ? null
-        : await fetchCaseResolverWorkspaceMetadata('case_view_bootstrap');
-      if (!isMountedRef.current || cancelled) return;
-      const shouldFetchRecord =
-        isPromptExploderReturnFlow
-          ? true
-          : metadata === null
-            ? true
-            : metadata.exists !== false && metadata.revision >= currentRevision;
-      const snapshot = shouldFetchRecord
-        ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap', {
+      let snapshot: CaseResolverWorkspace | null = null;
+
+      if (isPromptExploderReturnFlow) {
+        snapshot = await fetchCaseResolverWorkspaceRecord('case_view_bootstrap', {
           requiredFileId: requestedFileId,
-          attemptProfile: isPromptExploderReturnFlow ? 'context_fast' : 'default',
-          maxTotalMs: isPromptExploderReturnFlow ? 6_500 : undefined,
-          attemptTimeoutMs: isPromptExploderReturnFlow ? 2_200 : undefined,
-        })
-        : null;
+          attemptProfile: 'context_fast',
+          maxTotalMs: 6_500,
+          attemptTimeoutMs: 2_200,
+        });
+      } else {
+        const result = await fetchCaseResolverWorkspaceIfStale(
+          'case_view_bootstrap',
+          currentRevision
+        );
+        if (result.updated) {
+          snapshot = result.workspace;
+        }
+      }
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {
-        finishBootstrap(
-          metadata
-            ? `metadata_revision=${metadata.revision} exists=${metadata.exists ? 'true' : 'false'}`
-            : 'metadata=unavailable'
-        );
+        finishBootstrap('snapshot_unavailable');
         if (canHydrateWorkspaceFromStore && requestedFileResolvedInWorkspace) {
           logCaseResolverWorkspaceEvent({
             source: 'case_view_bootstrap',

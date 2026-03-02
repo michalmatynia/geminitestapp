@@ -132,16 +132,40 @@ export const handleFunctionNode: NodeHandler = ({
     };
   }
 
+  const startedAt = Date.now();
+
   try {
     const result = fn(nodeInputs, fnContext);
 
-    if (result !== null && typeof result === 'object' && !Array.isArray(result)) {
-      return result as RuntimePortValues;
+    const elapsedMs = Date.now() - startedAt;
+    if (typeof config?.maxExecutionMs === 'number' && elapsedMs > config.maxExecutionMs) {
+      return {
+        ...prevOutputs,
+        status: 'failed',
+        error: `Function script exceeded maxExecutionMs (${elapsedMs}ms > ${config.maxExecutionMs}ms).`,
+        errorCode: 'FUNCTION_EXECUTION_TIMEOUT',
+      };
     }
 
-    return {
-      value: result as unknown,
-    };
+    const outputs: RuntimePortValues =
+      result !== null && typeof result === 'object' && !Array.isArray(result)
+        ? (result as RuntimePortValues)
+        : { value: result as unknown };
+
+    if (typeof config?.maxOutputBytes === 'number' && config.maxOutputBytes > 0) {
+      const serialized = safeStringify(outputs);
+      const size = typeof serialized === 'string' ? serialized.length : 0;
+      if (size > config.maxOutputBytes) {
+        return {
+          ...prevOutputs,
+          status: 'failed',
+          error: `Function script output too large (${size} bytes > ${config.maxOutputBytes} bytes).`,
+          errorCode: 'FUNCTION_OUTPUT_TOO_LARGE',
+        };
+      }
+    }
+
+    return outputs;
   } catch (error) {
     const serializedError =
       error instanceof Error ? error.message : safeStringify(error ?? 'Unknown error');

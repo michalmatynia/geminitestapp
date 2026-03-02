@@ -5,11 +5,18 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 import type { StateConfig } from '@/shared/contracts/ai-paths-core/nodes';
 
-import { parseJsonSafe } from '../../utils';
+import { parseJsonSafe, safeStringify } from '../../utils';
 
 const coerceNumber = (value: unknown, fallback: number): number => {
   const numeric = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
+};
+
+const exceedsSizeLimit = (value: unknown, maxBytes?: number | null): boolean => {
+  if (!maxBytes || maxBytes <= 0) return false;
+  const serialized = safeStringify(value);
+  const size = typeof serialized === 'string' ? serialized.length : 0;
+  return size > maxBytes;
 };
 
 export const handleStateNode: NodeHandler = ({
@@ -35,6 +42,7 @@ export const handleStateNode: NodeHandler = ({
   }
 
   const current = variables[key];
+  const maxValueBytes = config?.maxValueBytes;
 
   if (mode === 'read') {
     let next = current;
@@ -44,9 +52,25 @@ export const handleStateNode: NodeHandler = ({
           ? parseJsonSafe(config.initialJson)
           : undefined;
       if (initial !== undefined) {
+        if (exceedsSizeLimit(initial, maxValueBytes)) {
+          return {
+            ...prevOutputs,
+            status: 'failed',
+            error: `State initial value exceeds maxValueBytes limit.`,
+            errorCode: 'STATE_VALUE_TOO_LARGE',
+          };
+        }
         setVariable(key, initial);
         next = initial;
       } else if (nodeInputs['value'] !== undefined) {
+        if (exceedsSizeLimit(nodeInputs['value'], maxValueBytes)) {
+          return {
+            ...prevOutputs,
+            status: 'failed',
+            error: `State value exceeds maxValueBytes limit.`,
+            errorCode: 'STATE_VALUE_TOO_LARGE',
+          };
+        }
         setVariable(key, nodeInputs['value']);
         next = nodeInputs['value'];
       }
@@ -58,6 +82,14 @@ export const handleStateNode: NodeHandler = ({
 
   if (mode === 'write') {
     const value = nodeInputs['value'];
+    if (exceedsSizeLimit(value, maxValueBytes)) {
+      return {
+        ...prevOutputs,
+        status: 'failed',
+        error: `State value exceeds maxValueBytes limit.`,
+        errorCode: 'STATE_VALUE_TOO_LARGE',
+      };
+    }
     setVariable(key, value);
     return {
       value,
@@ -69,6 +101,14 @@ export const handleStateNode: NodeHandler = ({
     const base = coerceNumber(current, 0);
     const delta = coerceNumber(nodeInputs['delta'] ?? 1, 1);
     const next = base + delta;
+    if (exceedsSizeLimit(next, maxValueBytes)) {
+      return {
+        ...prevOutputs,
+        status: 'failed',
+        error: `State value exceeds maxValueBytes limit.`,
+        errorCode: 'STATE_VALUE_TOO_LARGE',
+      };
+    }
     setVariable(key, next);
     return {
       value: next,

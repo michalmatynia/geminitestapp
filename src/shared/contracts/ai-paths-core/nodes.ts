@@ -319,6 +319,18 @@ export const functionConfigSchema = z.object({
    * argument to the function. This is parsed at runtime.
    */
   contextJson: z.string().optional(),
+  /**
+   * Optional soft limit on how long the script is allowed to run.
+   * If the measured execution time exceeds this, the node will fail with
+   * FUNCTION_EXECUTION_TIMEOUT even if the script produced a result.
+   */
+  maxExecutionMs: z.number().int().min(1).max(10_000).optional(),
+  /**
+   * Optional soft limit on the serialized size of the outputs object.
+   * If the JSON stringified outputs exceed this many bytes (approximate),
+   * the node will fail with FUNCTION_OUTPUT_TOO_LARGE.
+   */
+  maxOutputBytes: z.number().int().min(1024).max(512_000).optional(),
 });
 
 export type FunctionConfigDto = z.infer<typeof functionConfigSchema>;
@@ -336,10 +348,32 @@ export const switchConfigSchema = z.object({
   inputPort: z.string().optional(),
   cases: z.array(switchCaseConfigSchema).optional(),
   defaultCaseId: z.string().optional(),
+  /**
+   * Optional limit on how many cases are allowed for this node.
+   * If the configured cases exceed this count, the node will fail with
+   * SWITCH_CASE_LIMIT_EXCEEDED to prevent excessively large switch tables.
+   */
+  maxCaseCount: z.number().int().min(1).max(500).optional(),
 });
 
 export type SwitchConfigDto = z.infer<typeof switchConfigSchema>;
 export type SwitchConfig = SwitchConfigDto;
+
+export const stateConfigSchema = z.object({
+  key: z.string().optional(),
+  mode: z.enum(['read', 'write', 'increment']).optional(),
+  initialJson: z.string().optional(),
+  /**
+   * Optional soft limit on the serialized size of the stored value.
+   * If the JSON stringified value exceeds this many bytes (approximate),
+   * the node will fail with STATE_VALUE_TOO_LARGE and will not update
+   * the shared variable.
+   */
+  maxValueBytes: z.number().int().min(1024).max(512_000).optional(),
+});
+
+export type StateConfigDto = z.infer<typeof stateConfigSchema>;
+export type StateConfig = StateConfigDto;
 
 export const bundleConfigSchema = z.object({
   keys: z.array(z.string()).optional(),
@@ -996,13 +1030,7 @@ export const nodeConfigSchema = z.object({
   math: mathConfigSchema.optional(),
   template: templateConfigSchema.optional(),
   function: functionConfigSchema.optional(),
-  state: z
-    .object({
-      key: z.string().optional(),
-      mode: z.enum(['read', 'write', 'increment']).optional(),
-      initialJson: z.string().optional(),
-    })
-    .optional(),
+  state: stateConfigSchema.optional(),
   switch: switchConfigSchema.optional(),
   bundle: bundleConfigSchema.optional(),
   gate: gateConfigSchema.optional(),

@@ -10,6 +10,43 @@ const MAX_VALUE_LENGTH = 4000;
 const MAX_STACK_LENGTH = 20000;
 const MAX_CAUSE_DEPTH = 5;
 
+type CentralLogPayload = {
+  level: SystemLogLevel;
+  message: string;
+  source?: string | null;
+  category?: string | null;
+  context?: Record<string, unknown> | null;
+  stack?: string | null;
+  path?: string | null;
+  method?: string | null;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+  fingerprint?: string | null;
+  createdAt: string;
+};
+
+const CENTRAL_LOG_WEBHOOK_URL = process.env['CENTRAL_LOG_WEBHOOK_URL'];
+
+const forwardToCentralizedLogging = async (payload: CentralLogPayload): Promise<void> => {
+  if (typeof window !== 'undefined') return;
+  if (!CENTRAL_LOG_WEBHOOK_URL) return;
+
+  try {
+    await fetch(CENTRAL_LOG_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    // Last‑chance fallback: avoid throwing from logger
+    // eslint-disable-next-line no-console
+    console.error('[system-logger] Failed to forward log to centralized sink', error);
+  }
+};
+
 type CreateSystemLogFn = (input: {
   level: SystemLogLevel;
   message: string;
@@ -413,6 +450,22 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     } else {
       console.log(consoleMsg, context);
     }
+
+    void forwardToCentralizedLogging({
+      level: input.level ?? 'info',
+      message: input.message,
+      source: input.source ?? null,
+      category: category ?? null,
+      context,
+      stack: errorInfo?.stack ?? null,
+      path: input.request?.url ? requestInfo.path ?? null : null,
+      method: requestInfo.method ?? null,
+      statusCode: input.statusCode ?? null,
+      requestId: input.requestId ?? requestInfo.requestId ?? null,
+      userId: input.userId ?? null,
+      fingerprint: fingerprint ?? null,
+      createdAt: new Date().toISOString(),
+    });
 
     if (typeof window !== 'undefined') {
       return;

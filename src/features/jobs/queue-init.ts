@@ -114,6 +114,7 @@ export const initializeQueues = (): void => {
       import('@/features/product-sync/workers/productSyncBackfillQueue'),
       import('@/features/product-sync/workers/productSyncSchedulerQueue'),
       import('@/features/case-resolver/workers/caseResolverOcrQueue'),
+      import('@/shared/lib/observability/workers/systemLogAlertsQueue'),
     ]);
 
     // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)
@@ -129,6 +130,11 @@ export const initializeQueues = (): void => {
     )?.();
     (
       (queueModules[12] as Record<string, unknown>)['startProductSyncSchedulerQueue'] as
+        | (() => void)
+        | undefined
+    )?.();
+    (
+      (queueModules[14] as Record<string, unknown>)['startSystemLogAlertsQueue'] as
         | (() => void)
         | undefined
     )?.();

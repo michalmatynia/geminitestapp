@@ -402,23 +402,59 @@ function LogMetrics(): React.JSX.Element {
             <Hint uppercase className='mb-2 font-semibold' variant='muted'>
               Traffic Origins
             </Hint>
-            <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
-              {metrics.topSources.map((item: { source: string; count: number }) => (
-                <PropertyRow
-                  key={item.source}
-                  label={
-                    <StatusBadge
-                      status={item.source}
-                      variant='neutral'
-                      size='sm'
-                      className='font-mono h-4'
+            <div className='space-y-3'>
+              <div>
+                <Hint uppercase variant='muted' className='mb-1 text-[10px]'>
+                  Top Sources
+                </Hint>
+                <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
+                  {metrics.topSources.map((item: { source: string; count: number }) => (
+                    <PropertyRow
+                      key={item.source}
+                      label={
+                        <StatusBadge
+                          status={item.source}
+                          variant='neutral'
+                          size='sm'
+                          className='font-mono h-4'
+                        />
+                      }
+                      value={item.count}
+                      className='bg-white/5 px-2 py-1 rounded'
+                      variant='subtle'
                     />
-                  }
-                  value={item.count}
-                  className='bg-white/5 px-2 py-1 rounded'
-                  variant='subtle'
-                />
-              ))}
+                  ))}
+                  {metrics.topSources.length === 0 && (
+                    <div className='text-[11px] text-gray-600'>No source data for this filter.</div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Hint uppercase variant='muted' className='mb-1 text-[10px]'>
+                  Top Paths
+                </Hint>
+                <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
+                  {metrics.topPaths.map((item: { path: string; count: number }) => (
+                    <PropertyRow
+                      key={item.path}
+                      label={
+                        <StatusBadge
+                          status={item.path}
+                          variant='neutral'
+                          size='sm'
+                          className='font-mono h-4'
+                        />
+                      }
+                      value={item.count}
+                      className='bg-white/5 px-2 py-1 rounded'
+                      variant='subtle'
+                    />
+                  ))}
+                  {metrics.topPaths.length === 0 && (
+                    <div className='text-[11px] text-gray-600'>No path data for this filter.</div>
+                  )}
+                </div>
+              </div>
             </div>
           </Card>
         </div>
@@ -496,6 +532,7 @@ function LogList(): React.JSX.Element {
     setPage,
     interpretLogMutation,
     logInterpretations,
+    handleFilterChange,
   } = useSystemLogsContext();
   const aiInterpretationTooltip =
     getDocumentationTooltip(
@@ -660,6 +697,46 @@ function LogList(): React.JSX.Element {
                     <MetadataItem label='Error Name' value={errorName} />
                     <MetadataItem label='Fingerprint' value={fingerprint} mono />
                   </div>
+                  {(log.requestId || log.userId || fingerprint) && (
+                    <div className='mt-3 flex flex-wrap gap-2 text-[11px]'>
+                      {log.requestId && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('requestId', log.requestId ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View all in request
+                        </Button>
+                      )}
+                      {log.userId && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('userId', log.userId ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View all for user
+                        </Button>
+                      )}
+                      {fingerprint && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('fingerprint', fingerprint ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View similar errors
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {log.stack && (

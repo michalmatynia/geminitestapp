@@ -622,6 +622,32 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                               Resolution: {output.width ?? '?'} x {output.height ?? '?'}
                             </div>
                           </div>
+                          <div className='mt-1 flex flex-wrap items-center gap-1.5 text-[11px]'>
+                            <Button
+                              asChild
+                              size='xs'
+                              variant='outline'
+                              className='h-6 px-2 text-[11px]'
+                            >
+                              <a
+                                href={output.filepath}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                Open
+                              </a>
+                            </Button>
+                            <Button
+                              size='xs'
+                              variant='outline'
+                              className='h-6 px-2 text-[11px]'
+                              onClick={() => {
+                                void navigator.clipboard.writeText(output.filepath).catch(() => {});
+                              }}
+                            >
+                              Copy URL
+                            </Button>
+                          </div>
                         </Card>
                       ))}
                     </div>

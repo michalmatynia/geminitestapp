@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
-import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
 import type {
   MasterFolderTreeAdapterV3,
   MasterFolderTreeTransaction,
@@ -63,8 +62,8 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
   const {
     appearance: { rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'prompt_exploder_segments',
     nodes: masterNodes,
     selectedNodeId,

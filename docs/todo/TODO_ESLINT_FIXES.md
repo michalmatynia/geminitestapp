@@ -1,17 +1,22 @@
 # ESLint Fixes Progress
 
+> Historical note:
+> This progress log predates later refactors. Some file paths here may no longer
+> be current; verify against the current source tree before using it as an
+> action list.
+
 ## Phase 1: Easy Fixes (Type Definitions) - COMPLETED ✅
 
 ### Fixed Files:
 
-- ✅ `src/features/products/validations/index.ts` - Added eslint-disable for typedef
-- ✅ `src/shared/hooks/use-undo.ts` - Added proper types
+- ✅ `src/shared/lib/products/validations/index.ts` - Added eslint-disable for typedef
+- ✅ `src/shared/hooks/ui/use-undo.ts` - Added proper types
 - ✅ `src/features/products/components/settings/modals/CatalogModal.tsx` - Added eslint-disable comments
 - ✅ `src/features/products/components/settings/modals/CountryModal.tsx` - Added eslint-disable comments
 - ✅ `src/features/products/components/settings/modals/CurrencyModal.tsx` - Added eslint-disable comments
 - ✅ `src/features/products/components/settings/modals/LanguageModal.tsx` - Added eslint-disable comments
 - ✅ `src/features/products/components/settings/modals/PriceGroupModal.tsx` - Added eslint-disable comments
-- ✅ `src/features/products/utils/productUtils.ts` - Added eslint-disable for no-explicit-any
+- ✅ `src/shared/lib/products/utils/productUtils.ts` - Added eslint-disable for no-explicit-any
 
 ## Phase 2: Hook Files (Missing Return Types) - COMPLETED ✅
 

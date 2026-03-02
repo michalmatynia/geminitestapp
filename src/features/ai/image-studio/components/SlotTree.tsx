@@ -3,11 +3,12 @@
 import { Folder, FolderOpen, GripVertical, LayoutGrid } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
   isInternalMasterTreeNode,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
@@ -116,10 +117,9 @@ export function SlotTree({
     profile,
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
     controller,
-    panelCollapsed,
-    setPanelCollapsed,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'image_studio',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
@@ -156,31 +156,32 @@ export function SlotTree({
   } = actions;
 
   const icons = useMemo(
-    () => ({
-      FolderClosedIcon: resolveIcon({
-        slot: 'folderClosed',
-        kind: 'folder',
-        fallback: Folder,
-        fallbackId: 'Folder',
+    () =>
+      resolveFolderTreeIconSet(resolveIcon, {
+        FolderClosedIcon: {
+          slot: 'folderClosed',
+          kind: 'folder',
+          fallback: Folder,
+          fallbackId: 'Folder',
+        },
+        FolderOpenIcon: {
+          slot: 'folderOpen',
+          kind: 'folder',
+          fallback: FolderOpen,
+          fallbackId: 'FolderOpen',
+        },
+        FileIcon: {
+          slot: 'file',
+          kind: 'card',
+          fallback: LayoutGrid,
+          fallbackId: 'LayoutGrid',
+        },
+        DragHandleIcon: {
+          slot: 'dragHandle',
+          fallback: GripVertical,
+          fallbackId: 'GripVertical',
+        },
       }),
-      FolderOpenIcon: resolveIcon({
-        slot: 'folderOpen',
-        kind: 'folder',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
-      }),
-      FileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'card',
-        fallback: LayoutGrid,
-        fallbackId: 'LayoutGrid',
-      }),
-      DragHandleIcon: resolveIcon({
-        slot: 'dragHandle',
-        fallback: GripVertical,
-        fallbackId: 'GripVertical',
-      }),
-    }),
     [resolveIcon]
   );
 

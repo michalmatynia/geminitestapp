@@ -4,14 +4,14 @@ import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree'
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 
-import { useMasterFolderTreeAppearance } from './useMasterFolderTreeAppearance';
+import { useFolderTreeAppearance, type FolderTreeAppearance } from './useFolderTreeAppearance';
 
-export function useMasterFolderTreeConfig(instance: FolderTreeInstance): {
+export function useFolderTreeProfileConfig(instance: FolderTreeInstance): {
   profile: FolderTreeProfileV2;
-  appearance: ReturnType<typeof useMasterFolderTreeAppearance>;
+  appearance: FolderTreeAppearance;
 } {
   const profile = useFolderTreeProfile(instance) as unknown as FolderTreeProfileV2;
-  const appearance = useMasterFolderTreeAppearance(profile);
+  const appearance = useFolderTreeAppearance(profile);
 
   return { profile, appearance };
 }

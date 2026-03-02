@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ConfirmModal } from '@/shared/ui';
+import type { AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import { JobQueueProvider, useJobQueueContext } from './JobQueueContext';
 import { JobQueueControls } from './JobQueueControls';
 import { JobQueueOverview } from './job-queue-overview';
@@ -93,6 +94,7 @@ export function JobQueuePanel(props: {
   activePathId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
+  visibility?: AiPathRunVisibility;
   isActive?: boolean;
 }): React.JSX.Element {
   return (

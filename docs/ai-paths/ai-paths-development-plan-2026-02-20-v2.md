@@ -1,5 +1,10 @@
 # AI Paths Development Plan v2 (2026-02-20)
 
+> Historical plan note:
+> This plan predates the move of AI Paths core runtime modules into
+> `src/shared/lib/ai-paths/core/`. Use current shared-core paths when mapping
+> implementation work.
+
 ## Objective
 
 Continue AI Paths development from the current compile/runtime baseline and deliver production-grade correctness, reliability, security, and observability by staged rollout.
@@ -106,21 +111,21 @@ Continue AI Paths development from the current compile/runtime baseline and deli
 ### A. Contracts and Compiler
 
 1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/ai-paths.ts`
-2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/definitions/index.ts`
-3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/utils/graph.ts`
-4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/utils/dependency-inspector.ts`
+2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/definitions/index.ts`
+3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.ts`
+4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/dependency-inspector.ts`
 
 ### B. Runtime and Node Policies
 
-1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/engine.ts`
-2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/`
+1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine.ts`
+2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/`
 3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/RuntimeNodeConfigSection.tsx`
 
 ### C. Run Orchestration and Queue
 
 1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-service.ts`
 2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-executor.ts`
-3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/workers/aiPathRunQueue.ts`
+3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
 4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/queue/queue-factory.ts`
 
 ### D. API and Streaming
@@ -131,10 +136,10 @@ Continue AI Paths development from the current compile/runtime baseline and deli
 
 ### E. Security
 
-1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/image-base64.ts`
-2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/aiDescriptionService.ts`
-3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-http-handler.ts`
-4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-api-advanced-handler.ts`
+1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/products/services/image-base64.ts`
+2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/products/services/productAiService.ts`
+3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-http-handler.ts`
+4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts`
 
 ## Quality Gates
 

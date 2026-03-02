@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree/master/createMasterFolderTreeAdapter';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
 
@@ -34,7 +34,7 @@ export type CaseResolverCasesMasterTreeAdapterOperations = {
 export const createCaseResolverMasterTreeAdapter = (
   operations: CaseResolverMasterTreeAdapterOperations
 ) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeCaseResolverMasterNodeId,
     handlers: {
       onMove: async ({
@@ -114,7 +114,7 @@ export const createCaseResolverMasterTreeAdapter = (
 export const createCaseResolverCasesMasterTreeAdapter = (
   operations: CaseResolverCasesMasterTreeAdapterOperations
 ) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeCaseResolverCaseMasterNodeId,
     handlers: {
       onMove: async ({

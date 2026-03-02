@@ -16,7 +16,9 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
-type CaseResolverAssetPatch = Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>;
+type CaseResolverAssetPatch = Partial<
+  Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>
+>;
 type CaseResolverAssetUpdateOptions = {
   persistToast?: string;
   persistNow?: boolean;

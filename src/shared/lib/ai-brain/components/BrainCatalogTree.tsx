@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  MasterFolderTreeRuntimeProvider,
+  useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import type {
@@ -66,8 +65,8 @@ export function BrainCatalogTree({
   const {
     appearance: { rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'brain_catalog_tree',
     nodes: masterNodes,
     adapter,
@@ -95,15 +94,13 @@ export function BrainCatalogTree({
   );
 
   return (
-    <MasterFolderTreeRuntimeProvider>
-      <FolderTreeViewportV2
-        controller={controller}
-        scrollToNodeRef={scrollToNodeRef}
-        rootDropUi={rootDropUi}
-        renderNode={renderNode}
-        enableDnd={!isPending}
-        emptyLabel='No catalog entries'
-      />
-    </MasterFolderTreeRuntimeProvider>
+    <FolderTreeViewportV2
+      controller={controller}
+      scrollToNodeRef={scrollToNodeRef}
+      rootDropUi={rootDropUi}
+      renderNode={renderNode}
+      enableDnd={!isPending}
+      emptyLabel='No catalog entries'
+    />
   );
 }

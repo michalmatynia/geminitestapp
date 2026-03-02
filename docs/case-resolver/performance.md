@@ -5,7 +5,7 @@ status: 'active'
 related_components:
   - 'src/features/case-resolver/workspace-persistence.ts'
   - 'src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx'
-  - 'src/features/jobs/workers/caseResolverOcrQueue.ts'
+  - 'src/features/case-resolver/workers/caseResolverOcrQueue.ts'
 ---
 
 # Case Resolver Performance Guide
@@ -62,7 +62,7 @@ Key dimensions:
 1. Run tests:
    - `npx vitest run src/features/case-resolver/__tests__ --reporter=dot`
 2. Run focused lint:
-   - `npx eslint src/features/jobs/workers/caseResolverOcrQueue.ts src/features/case-resolver/server/ocr-runtime-job-store.ts`
+   - `npx eslint src/features/case-resolver/workers/caseResolverOcrQueue.ts src/features/case-resolver/server/ocr-runtime-job-store.ts`
 3. Verify save telemetry in debug panel (`dur`, `size`).
 4. Exercise case list with large dataset and confirm incremental rendering remains responsive.
 5. Trigger OCR with retryable failures and confirm:

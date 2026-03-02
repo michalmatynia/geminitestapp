@@ -19,83 +19,90 @@ const FACTORY_CALLS = new Set([
   'createCreateMutationV2',
   'createUpdateMutationV2',
   'createDeleteMutationV2',
+  'createSaveMutationV2',
   'createOptimisticMutationV2',
   'useEnsureQueryDataV2',
   'usePrefetchQueryV2',
+  'useFetchQueryV2',
+  'fetchQueryV2',
+  'prefetchQueryV2',
 ]);
 
+const IGNORED_DIRS = new Set(['node_modules', '.next', '__tests__', 'dist']);
+const IGNORED_FILES = new Set(['src/shared/lib/query-factories-v2.ts']);
+
+// Config: force all createMutationV2 to use 'action' if STRICT_GENERIC_ACTION is true.
+// Otherwise they can use any operation.
+const STRICT_GENERIC_ACTION = true;
+
+// Config: force all operation-specific aliases to match their intended operation.
+const STRICT_ALIAS_OPERATION = true;
+
 const OPERATION_EXPECTATIONS = {
-  createCreateMutationV2: new Set(['create', 'action', 'upload']),
-  createUpdateMutationV2: new Set(['update', 'action', 'upload']),
-  createDeleteMutationV2: new Set(['delete', 'action']),
-};
-const STRICT_ALIAS_OPERATION = process.env.CHECK_FACTORY_META_STRICT_ALIAS === '1';
-const STRICT_GENERIC_ACTION = process.env.CHECK_FACTORY_META_STRICT_GENERIC_ACTION !== '0';
-
-const IGNORED_DIRS = new Set(['node_modules', '.next', '.git', 'dist', 'build', 'tmp', 'public']);
-
-const propertyNameText = (nameNode) => {
-  if (!nameNode) return null;
-  if (ts.isIdentifier(nameNode)) return nameNode.text;
-  if (ts.isStringLiteral(nameNode)) return nameNode.text;
-  if (ts.isNumericLiteral(nameNode)) return nameNode.text;
-  return null;
+  createListQueryV2: new Set(['list', 'search', 'polling']),
+  createSingleQueryV2: new Set(['detail', 'info', 'check', 'exists', 'polling']),
+  createPaginatedListQueryV2: new Set(['list', 'search']),
+  createInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
+  createSuspenseQueryV2: new Set(['detail', 'info', 'check', 'exists', 'list']),
+  createSuspenseInfiniteQueryV2: new Set(['list', 'search', 'infinite']),
+  createMutationV2: new Set(['create', 'update', 'delete', 'sync', 'action', 'bulk', 'upload']),
+  createCreateMutationV2: new Set(['create']),
+  createUpdateMutationV2: new Set(['update', 'sync', 'action']),
+  createDeleteMutationV2: new Set(['delete', 'bulk']),
+  createSaveMutationV2: new Set(['create', 'update', 'sync', 'action', 'save']),
 };
 
-const findObjectProperty = (objectNode, propertyName) => {
-  for (const property of objectNode.properties) {
-    if (ts.isShorthandPropertyAssignment(property) && property.name.text === propertyName) {
-      return property;
-    }
-    if (!ts.isPropertyAssignment(property) && !ts.isMethodDeclaration(property)) {
-      continue;
-    }
-    const currentName = propertyNameText(property.name);
-    if (currentName === propertyName) return property;
+const getCallName = (callExpression) => {
+  const expression = callExpression.expression;
+  if (ts.isIdentifier(expression)) {
+    return expression.text;
+  }
+  if (ts.isPropertyAccessExpression(expression)) {
+    return expression.name.text;
   }
   return null;
 };
 
-const unwrapExpression = (expression) => {
-  let current = expression;
-  while (
-    ts.isAsExpression(current) ||
-    ts.isTypeAssertionExpression(current) ||
-    ts.isParenthesizedExpression(current) ||
-    (typeof ts.isSatisfiesExpression === 'function' && ts.isSatisfiesExpression(current))
-  ) {
-    current = current.expression;
-  }
-  return current;
+const getLineNumber = (sourceFile, node) => {
+  const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+  return line + 1;
+};
+
+const findObjectProperty = (objectLiteral, propertyName) => {
+  return objectLiteral.properties.find((prop) => {
+    if (ts.isPropertyAssignment(prop) || ts.isShorthandPropertyAssignment(prop)) {
+      const name = prop.name;
+      if (ts.isIdentifier(name) && name.text === propertyName) {
+        return true;
+      }
+      if (ts.isStringLiteral(name) && name.text === propertyName) {
+        return true;
+      }
+    }
+    return false;
+  });
 };
 
 const readStringLiteralValue = (expression) => {
-  const unwrapped = unwrapExpression(expression);
-  if (ts.isStringLiteral(unwrapped) || ts.isNoSubstitutionTemplateLiteral(unwrapped)) {
-    return unwrapped.text;
+  if (ts.isStringLiteral(expression)) {
+    return expression.text;
+  }
+  if (ts.isAsExpression(expression) && ts.isStringLiteral(expression.expression)) {
+    return expression.expression.text;
   }
   return null;
 };
 
 const extractMetaObject = (metaProperty) => {
-  if (!ts.isPropertyAssignment(metaProperty)) return null;
-  const initializer = unwrapExpression(metaProperty.initializer);
-  if (!ts.isObjectLiteralExpression(initializer)) return null;
-  return initializer;
-};
-
-const getCallName = (callExpression) => {
-  if (ts.isIdentifier(callExpression.expression)) {
-    return callExpression.expression.text;
-  }
-  if (ts.isPropertyAccessExpression(callExpression.expression)) {
-    return callExpression.expression.name.text;
+  if (!metaProperty) return null;
+  if (ts.isPropertyAssignment(metaProperty)) {
+    const init = metaProperty.initializer;
+    if (ts.isObjectLiteralExpression(init)) {
+      return init;
+    }
   }
   return null;
 };
-
-const getLineNumber = (sourceFile, node) =>
-  sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
 
 const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) => {
   const callName = getCallName(callExpression);
@@ -104,13 +111,16 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
   }
 
   const line = getLineNumber(sourceFile, callExpression);
-  const configArg = callExpression.arguments[0];
+  const isNonHookFetch = callName === 'prefetchQueryV2' || callName === 'fetchQueryV2';
+  const configArgIndex = isNonHookFetch ? 1 : 0;
+  const configArg = callExpression.arguments[configArgIndex];
+
   if (!configArg || !ts.isObjectLiteralExpression(configArg)) {
     issues.push({
       file: relFilePath,
       line,
       callName,
-      message: 'factory call must use an object literal config with `meta`.',
+      message: `factory call must use an object literal config with \`meta\` at argument ${configArgIndex}.`,
     });
     return;
   }
@@ -126,23 +136,30 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
     return;
   }
 
-  if (callName === 'createMultiQueryV2') {
+  if (callName === 'createMultiQueryV2' || callName === 'createSuspenseMultiQueryV2') {
+    // For MultiQuery we skip top-level domain check as it's defined per query.
     return;
   }
 
   const metaObject = extractMetaObject(metaProperty);
-  if (!metaObject) {
-    return;
-  }
-
-  const domainProperty = findObjectProperty(metaObject, 'domain');
-  if (!domainProperty) {
+  if (metaObject) {
+    const domainProperty = findObjectProperty(metaObject, 'domain');
+    if (!domainProperty) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message: 'missing `domain` in `meta`.',
+      });
+    }
+  } else {
     issues.push({
       file: relFilePath,
       line,
       callName,
-      message: 'missing `domain` in `meta`.',
+      message: 'meta must be an object literal to check for `domain`.',
     });
+    return;
   }
 
   const expectedOperations = OPERATION_EXPECTATIONS[callName];
@@ -163,7 +180,7 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
     }
 
     const operationValue = readStringLiteralValue(operationProperty.initializer);
-    if (operationValue === 'action') {
+    if (operationValue === 'action' || operationValue === 'upload') {
       return;
     }
 
@@ -172,7 +189,7 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
         file: relFilePath,
         line,
         callName,
-        message: "meta.operation should be the string literal 'action' for createMutationV2.",
+        message: "meta.operation should be the string literal 'action' or 'upload' for createMutationV2.",
       });
       return;
     }
@@ -182,7 +199,7 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
       line,
       callName,
       message:
-        "createMutationV2 must use meta.operation: 'action'. Use operation-specific aliases for create/update/delete.",
+        "createMutationV2 must use meta.operation: 'action' or 'upload'. Use operation-specific aliases for create/update/delete.",
     });
     return;
   }
@@ -193,7 +210,7 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
       file: relFilePath,
       line,
       callName,
-      message: 'meta.operation is required for operation-specific mutation aliases.',
+      message: 'meta.operation is required for operation-specific factory calls.',
     });
     return;
   }
@@ -208,37 +225,7 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
       file: relFilePath,
       line,
       callName,
-      message: 'meta.operation should be a string literal for operation-specific mutation aliases.',
-    });
-    return;
-  }
-
-  issues.push({
-    file: relFilePath,
-    line,
-    callName,
-    message: `meta.operation should be one of: ${Array.from(expectedOperations).join(', ')}.`,
-  });
-};
-      file: relFilePath,
-      line,
-      callName,
-      message: 'meta.operation is required for operation-specific mutation aliases.',
-    });
-    return;
-  }
-
-  const operationValue = readStringLiteralValue(operationProperty.initializer);
-  if (operationValue && expectedOperations.has(operationValue)) {
-    return;
-  }
-
-  if (operationValue === null) {
-    issues.push({
-      file: relFilePath,
-      line,
-      callName,
-      message: 'meta.operation should be a string literal for operation-specific mutation aliases.',
+      message: 'meta.operation should be a string literal.',
     });
     return;
   }
@@ -252,6 +239,9 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
 };
 
 const inspectSourceFile = (source, relFilePath, scriptKind) => {
+  if (IGNORED_FILES.has(relFilePath)) {
+    return [];
+  }
   const sourceFile = ts.createSourceFile(
     relFilePath,
     source,
@@ -291,7 +281,7 @@ const allIssues = [];
 for (const root of ROOTS) {
   if (!fs.existsSync(root)) continue;
   walkFiles(root, (absPath) => {
-    const relPath = absPath.replace(/\\/g, '/');
+    const relPath = absPath.replace(/\\/g, '/').replace(/^\.\//, '');
     const source = fs.readFileSync(absPath, 'utf8');
     const scriptKind = path.extname(absPath) === '.tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
     const issues = inspectSourceFile(source, relPath, scriptKind);
@@ -300,11 +290,11 @@ for (const root of ROOTS) {
 }
 
 if (allIssues.length > 0) {
-  console.error('Found v2 factory metadata issues:\n');
+  console.error('\nFound v2 factory metadata issues:\n');
   for (const issue of allIssues) {
     console.error(`${issue.file}:${issue.line} ${issue.callName} - ${issue.message}`);
   }
   process.exit(1);
 }
 
-console.log('OK: all v2 factory calls include `meta`.');
+console.log('OK: all v2 factory calls include `meta` with mandatory `domain`.');

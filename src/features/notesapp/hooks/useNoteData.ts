@@ -54,9 +54,9 @@ import type { DeleteResponse } from '@/shared/contracts/ui';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
   createDeleteMutationV2,
   createUpdateMutationV2,
+  createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateNoteDetail } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -220,7 +220,6 @@ export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Erro
 };
 
 export const useUpdateNoteRelationsMutation = (noteId: string) => {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.detail(noteId);
   return createUpdateMutationV2<
     void,
@@ -235,20 +234,17 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
       source: 'notes.hooks.useUpdateNoteRelationsMutation',
       operation: 'update',
       resource: 'notes.relations',
-      domain: 'global',
+      domain: 'notes',
       mutationKey,
       tags: ['notes', 'relations', 'update'],
     },
-    onSuccess: () => {
-      void invalidateNoteDetail(queryClient, noteId);
-    },
+    invalidate: (queryClient) => invalidateNoteDetail(queryClient, noteId),
   });
 };
 
 export const useCreateNoteFileMutation = (noteId?: string) => {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
-  return createCreateMutationV2<
+  return createMutationV2<
     NoteFileRecord,
     {
       slotIndex: number;
@@ -289,13 +285,13 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
             source: 'notes.hooks.useCreateNoteFileMutation',
             operation: 'upload',
             resource: 'notes.files',
-            domain: 'global',
+            domain: 'notes',
             mutationKey,
             tags: ['notes', 'files', 'upload'],
           },
-          onSuccess: () => {
+          invalidate: async (queryClient) => {
             if (noteId) {
-              void invalidateNoteDetail(queryClient, noteId);
+              await invalidateNoteDetail(queryClient, noteId);
             }
           },
         });

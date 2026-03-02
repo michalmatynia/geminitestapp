@@ -1,5 +1,11 @@
 # AI Paths Development Plan (2026-02-20)
 
+> Historical plan note:
+> This document was written before AI Paths core runtime modules were
+> consolidated under `src/shared/lib/ai-paths/core/`. Treat any older
+> feature-local core paths as historical and map them to the shared core
+> location when implementing follow-up work.
+
 ## Scope
 
 This plan continues AI Paths development after the graph compile/fan-in enforcement rollout and focuses on runtime correctness, reliability, security, and observability.
@@ -77,20 +83,20 @@ This plan continues AI Paths development after the graph compile/fan-in enforcem
 
 1. Runtime contracts:
    - `src/shared/contracts/ai-paths.ts`
-   - `src/features/ai/ai-paths/lib/core/definitions/index.ts`
+   - `src/shared/lib/ai-paths/core/definitions/index.ts`
 2. Compiler and validation:
-   - `src/features/ai/ai-paths/lib/core/utils/graph.ts`
-   - `src/features/ai/ai-paths/lib/core/validation-engine/evaluator.ts`
-   - `src/features/ai/ai-paths/lib/core/validation-engine/defaults.ts`
+   - `src/shared/lib/ai-paths/core/utils/graph.ts`
+   - `src/shared/lib/ai-paths/core/validation-engine/evaluator.ts`
+   - `src/shared/lib/ai-paths/core/validation-engine/defaults.ts`
 3. Runtime engine and handlers:
-   - `src/features/ai/ai-paths/lib/core/runtime/engine.ts`
-   - `src/features/ai/ai-paths/lib/core/runtime/handlers/integration-http-handler.ts`
-   - `src/features/ai/ai-paths/lib/core/runtime/handlers/integration-api-advanced-handler.ts`
-   - `src/features/ai/ai-paths/lib/core/runtime/handlers/integration-poll-handler.ts`
+   - `src/shared/lib/ai-paths/core/runtime/engine.ts`
+   - `src/shared/lib/ai-paths/core/runtime/handlers/integration-http-handler.ts`
+   - `src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts`
+   - `src/shared/lib/ai-paths/core/runtime/handlers/integration-poll-handler.ts`
 4. Run orchestration and queue:
    - `src/features/ai/ai-paths/services/path-run-service.ts`
    - `src/features/ai/ai-paths/services/path-run-executor.ts`
-   - `src/features/jobs/workers/aiPathRunQueue.ts`
+   - `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
    - `src/shared/lib/queue/queue-factory.ts`
 5. API entrypoints:
    - `src/app/api/ai-paths/runs/enqueue/handler.ts`
@@ -101,8 +107,8 @@ This plan continues AI Paths development after the graph compile/fan-in enforcem
    - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.ts`
    - `src/features/ai/ai-paths/components/run-timeline.tsx`
 7. Security-linked image fetch paths:
-   - `src/features/products/services/image-base64.ts`
-   - `src/features/products/services/aiDescriptionService.ts`
+   - `src/shared/lib/products/services/image-base64.ts`
+   - `src/features/products/workers/productAiQueue.ts`
 
 ## Test Strategy
 

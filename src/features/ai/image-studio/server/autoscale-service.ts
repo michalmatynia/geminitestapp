@@ -196,7 +196,7 @@ export async function processAutoScalerPayload(input: {
       },
       detectionUsed: scaled.detectionUsed,
       confidenceBefore: scaled.confidenceBefore,
-      detectionDetails: scaled.detectionDetails,
+      detectionDetails: scaled.detectionDetails ?? null,
       scale: scaled.scale,
       whitespaceBefore: scaled.whitespaceBefore,
       whitespaceAfter: scaled.whitespaceAfter,

@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
@@ -23,7 +23,7 @@ export const createImageStudioMasterTreeAdapter = ({
   renameFolder,
   renameSlot,
 }: ImageStudioMasterTreeAdapterOptions) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeImageStudioMasterNodeId,
     handlers: {
       onMove: async ({

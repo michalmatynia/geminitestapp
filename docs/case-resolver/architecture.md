@@ -20,7 +20,7 @@ Case Resolver is split across three layers:
    - Next.js route handlers in `src/app/api/case-resolver/*`.
    - Workspace state stored through settings APIs with revision checks.
 3. Async processing layer
-   - OCR jobs handled by BullMQ worker in `src/features/jobs/workers/caseResolverOcrQueue.ts`.
+   - OCR jobs handled by BullMQ worker in `src/features/case-resolver/workers/caseResolverOcrQueue.ts`.
 
 ## Workspace Persistence Flow
 

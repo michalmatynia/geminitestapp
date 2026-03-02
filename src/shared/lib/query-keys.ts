@@ -260,7 +260,8 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
       jobQueue: (filters: unknown) =>
         [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue', { filters }] as const,
-      queueStatus: () => [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'] as const,
+      queueStatus: (filters?: unknown) =>
+        [...QUERY_KEYS.ai.aiPaths.all, 'queue-status', filters ? { filters } : 'all'] as const,
     },
     insights: {
       all: ['ai', 'insights'] as const,

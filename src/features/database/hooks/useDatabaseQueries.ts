@@ -35,6 +35,7 @@ import {
   createSingleQueryV2,
   createCreateMutationV2,
   createUpdateMutationV2,
+  createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { dbKeys } from '@/shared/lib/query-key-exports';
 
@@ -86,7 +87,7 @@ export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfo
       operation: 'list',
       resource: 'system.databases.backups',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'backups'],
     },
   });
@@ -144,7 +145,7 @@ export function useUploadBackupMutation(): MutationResult<
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createMutationV2({
     mutationFn: (variables: {
       dbType: DatabaseType;
       file: File;
@@ -227,7 +228,7 @@ export function useDatabasePreview(input: {
       operation: 'detail',
       resource: 'system.databases.preview',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'preview'],
     },
   });
@@ -263,7 +264,7 @@ export function useSqlQueryMutation(): MutationResult<
 
 export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createMutationV2({
     mutationFn: (input: CrudRequest) => executeCrudOperation(input),
     mutationKey,
     meta: {
@@ -291,7 +292,7 @@ export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
       operation: 'detail',
       resource: 'system.databases.schema',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'schema'],
     },
   });
@@ -309,7 +310,7 @@ export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse
       operation: 'detail',
       resource: 'system.databases.redis-overview',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'redis', 'overview'],
     },
   });
@@ -328,7 +329,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
       operation: 'polling',
       resource: 'system.databases.engine-status',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'engine', 'status'],
     },
   });
@@ -347,7 +348,7 @@ export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBa
       operation: 'polling',
       resource: 'system.databases.backup-scheduler-status',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'engine', 'backup-scheduler'],
     },
   });
@@ -368,7 +369,7 @@ export function useDatabaseEngineOperationsJobs(
       operation: 'polling',
       resource: 'system.databases.engine-operations-jobs',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'engine', 'operations-jobs'],
     },
   });
@@ -456,7 +457,7 @@ export function useDatabaseEngineProviderPreview(
       operation: 'polling',
       resource: 'system.databases.engine-provider-preview',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'engine', 'provider-preview'],
     },
   });
@@ -541,7 +542,7 @@ export function useJsonBackups(): SingleQuery<{ backups: string[] }> {
       operation: 'detail',
       resource: 'system.databases.json-backups',
       domain: 'database',
-      queryKey,
+
       tags: ['database', 'json-backups'],
     },
   });

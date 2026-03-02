@@ -31,7 +31,7 @@ export type UseNodeFileWorkspaceStateProps = {
   onSnapshotChange: (
     updated: CaseResolverNodeFileSnapshot,
     options?: NodeFileSnapshotPersistOptions
-  ) => void;
+  ) => Promise<boolean> | boolean;
 };
 
 const renderNodeTemplate = (template: string, variables: Record<string, string>): string =>
@@ -264,17 +264,22 @@ export function useNodeFileWorkspaceState({
 
   const handleManualSave = useCallback(() => {
     if (!hasPendingSnapshotChanges) return;
-    onSnapshotChange(buildCurrentSnapshot(), {
-      persistNow: true,
-      persistToast: 'Node file updated.',
-      source: 'node_file_manual_save',
-    });
-    setHasPendingSnapshotChanges(false);
-    logCaseResolverWorkspaceEvent({
-      source: 'node_file_workspace',
-      action: 'node_file_snapshot_manual_save',
-      message: `asset_id=${assetId}`,
-    });
+    void (async (): Promise<void> => {
+      const didPersist = await onSnapshotChange(buildCurrentSnapshot(), {
+        persistNow: true,
+        persistToast: 'Node file updated.',
+        source: 'node_file_manual_save',
+      });
+      if (didPersist === false) {
+        return;
+      }
+      setHasPendingSnapshotChanges(false);
+      logCaseResolverWorkspaceEvent({
+        source: 'node_file_workspace',
+        action: 'node_file_snapshot_manual_save',
+        message: `asset_id=${assetId}`,
+      });
+    })();
   }, [assetId, buildCurrentSnapshot, hasPendingSnapshotChanges, onSnapshotChange]);
 
   // Actions

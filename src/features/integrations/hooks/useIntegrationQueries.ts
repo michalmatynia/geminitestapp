@@ -140,7 +140,7 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
       source: 'integrations.hooks.usePlaywrightPersonas',
       operation: 'list',
       resource: 'playwright.personas',
-      domain: 'integrations',
+      domain: 'playwright',
       queryKey,
       tags: ['playwright', 'personas'],
     },

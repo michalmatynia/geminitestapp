@@ -22,7 +22,7 @@ export function useCurrencies(): ListQuery<CurrencyOption> {
       source: 'internationalization.hooks.useCurrencies',
       operation: 'list',
       resource: 'internationalization.currencies',
-      queryKey,
+      domain: 'internationalization',
       tags: ['internationalization', 'currencies'],
     },
   });
@@ -37,7 +37,7 @@ export function useCountries(): ListQuery<CountryOption> {
       source: 'internationalization.hooks.useCountries',
       operation: 'list',
       resource: 'internationalization.countries',
-      queryKey,
+      domain: 'internationalization',
       tags: ['internationalization', 'countries'],
     },
   });
@@ -52,7 +52,7 @@ export function useLanguages(): ListQuery<Language> {
       source: 'internationalization.hooks.useLanguages',
       operation: 'list',
       resource: 'internationalization.languages',
-      queryKey,
+      domain: 'internationalization',
       tags: ['internationalization', 'languages'],
     },
   });

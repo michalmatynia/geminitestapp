@@ -25,8 +25,29 @@ export * from './app-embeds';
 export * from './auth';
 export * from './base';
 export * from './case-resolver';
-// Resolve TS2308: Ambiguity between case-resolver and prompt-exploder
-export type { CaseResolverCaptureRole } from './case-resolver';
+// Resolve TS2308: Ambiguity between case-resolver and case-resolver-capture
+export type {
+  CaseResolverCaptureRole,
+  CaseResolverCaptureAction,
+  CaseResolverCaptureProposalMatchKind,
+  CaseResolverCaptureProposal,
+  CaseResolverCaptureDocumentDateAction,
+  CaseResolverCaptureDocumentDateProposal,
+  CaseResolverCaptureProposalState,
+  CaseResolverCaptureCleanupReport,
+  CaseResolverCaptureCleanupResult,
+} from './case-resolver-capture';
+export {
+  caseResolverCaptureRoleSchema,
+  caseResolverCaptureActionSchema,
+  caseResolverCaptureProposalMatchKindSchema,
+  caseResolverCaptureProposalSchema,
+  caseResolverCaptureDocumentDateActionSchema,
+  caseResolverCaptureDocumentDateProposalSchema,
+  caseResolverCaptureProposalStateSchema,
+  caseResolverCaptureCleanupReportSchema,
+  caseResolverCaptureCleanupResultSchema,
+} from './case-resolver-capture';
 export * from './chatbot';
 export * from './cms-menu';
 export * from './cms-theme';

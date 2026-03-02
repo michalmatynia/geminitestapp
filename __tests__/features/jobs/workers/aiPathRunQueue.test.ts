@@ -16,6 +16,7 @@ import {
 } from '@/features/ai/ai-paths/workers/ai-path-run-queue-slo';
 
 const getRuntimeAnalyticsSummaryMock = vi.hoisted(() => vi.fn());
+const getRuntimeAnalyticsAvailabilityMock = vi.hoisted(() => vi.fn());
 const recordRuntimeRunStartedMock = vi.hoisted(() => vi.fn());
 const recordRuntimeRunFinishedMock = vi.hoisted(() => vi.fn());
 const recordRuntimeRunQueuedMock = vi.hoisted(() => vi.fn());
@@ -31,6 +32,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
+  getRuntimeAnalyticsAvailability: getRuntimeAnalyticsAvailabilityMock,
   getRuntimeAnalyticsSummary: getRuntimeAnalyticsSummaryMock,
   recordRuntimeRunStarted: recordRuntimeRunStartedMock,
   recordRuntimeRunFinished: recordRuntimeRunFinishedMock,
@@ -69,6 +71,10 @@ describe('AI Path Run Queue Worker', () => {
     recordRuntimeRunStartedMock.mockResolvedValue(undefined);
     recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
     recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
+    getRuntimeAnalyticsAvailabilityMock.mockResolvedValue({
+      enabled: false,
+      storage: 'disabled',
+    });
     getAiInsightsQueueStatusMock.mockResolvedValue({
       running: true,
       healthy: true,
@@ -283,6 +289,33 @@ describe('AI Path Run Queue Worker', () => {
       await getAiPathRunQueueStatus({ bypassCache: true });
 
       expect(mockRepo.getQueueStats).toHaveBeenCalledTimes(2);
+    });
+
+    it('keys queue status cache by visibility scope', async () => {
+      mockRepo.getQueueStats
+        .mockResolvedValueOnce({ queuedCount: 1, oldestQueuedAt: null })
+        .mockResolvedValueOnce({ queuedCount: 2, oldestQueuedAt: null });
+
+      const globalStatus = await getAiPathRunQueueStatus({ visibility: 'global' });
+      const scopedStatus = await getAiPathRunQueueStatus({
+        visibility: 'scoped',
+        userId: 'user-1',
+      });
+
+      expect(globalStatus.queuedCount).toBe(1);
+      expect(scopedStatus.queuedCount).toBe(2);
+      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(1, undefined);
+      expect(mockRepo.getQueueStats).toHaveBeenNthCalledWith(2, { userId: 'user-1' });
+    });
+
+    it('passes the scoped user id through to queue stats reads', async () => {
+      await getAiPathRunQueueStatus({
+        bypassCache: true,
+        visibility: 'scoped',
+        userId: 'user-123',
+      });
+
+      expect(mockRepo.getQueueStats).toHaveBeenCalledWith({ userId: 'user-123' });
     });
 
     it('throws service unavailable when worker is not running', async () => {

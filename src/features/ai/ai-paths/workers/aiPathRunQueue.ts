@@ -18,6 +18,7 @@ import { configurationError, serviceUnavailableError } from '@/shared/errors/app
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { AiPathRunVisibility } from '@/shared/contracts/ai-paths';
 import {
   type AiPathRunQueueBaseStatus,
   type AiPathRunQueueStatus,
@@ -366,8 +367,8 @@ type AiPathRunQueueHotStatus = {
   timeSinceLastPoll: number;
 };
 
-let queueStatusCache: { value: AiPathRunQueueStatus; expiresAt: number } | null = null;
-let queueStatusInFlight: Promise<AiPathRunQueueStatus> | null = null;
+let queueStatusCache = new Map<string, { value: AiPathRunQueueStatus; expiresAt: number }>();
+let queueStatusInFlight = new Map<string, Promise<AiPathRunQueueStatus>>();
 let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } | null = null;
 let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
 let aiPathsEnabledCache: { value: boolean; expiresAt: number } | null = null;
@@ -383,6 +384,8 @@ const EMPTY_BRAIN_ANALYTICS_24H: AiPathRunQueueStatus['brainAnalytics24h'] = {
 
 type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;
+  visibility?: AiPathRunVisibility;
+  userId?: string | null;
 };
 
 const readQueueHealthSnapshot = async () => {
@@ -403,11 +406,25 @@ const readQueueHealthSnapshot = async () => {
     };
 };
 
-const readAiPathRunQueueBaseStatus = async (now: number): Promise<AiPathRunQueueBaseStatus> => {
+const getQueueStatusScopeKey = (
+  visibility: AiPathRunVisibility,
+  options: GetAiPathRunQueueStatusOptions
+): string => {
+  if (visibility === 'global') return 'global';
+  return `scoped:${options.userId?.trim() || 'anonymous'}`;
+};
+
+const readAiPathRunQueueBaseStatus = async (
+  now: number,
+  options: GetAiPathRunQueueStatusOptions
+): Promise<AiPathRunQueueBaseStatus> => {
   const health = await readQueueHealthSnapshot();
   const repo = await getPathRunRepository();
+  const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
   const [stats, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
-    repo.getQueueStats(),
+    repo.getQueueStats(
+      visibility === 'scoped' && options.userId ? { userId: options.userId } : undefined
+    ),
     getAiInsightsQueueStatusSnapshot(),
     getRuntimeAnalyticsAvailability(),
   ]);
@@ -496,8 +513,11 @@ const finalizeAiPathRunQueueStatus = (
   };
 };
 
-const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
-  const baseStatus = await readAiPathRunQueueBaseStatus(now);
+const readAiPathRunQueueStatus = async (
+  now: number,
+  options: GetAiPathRunQueueStatusOptions
+): Promise<AiPathRunQueueStatus> => {
+  const baseStatus = await readAiPathRunQueueBaseStatus(now, options);
   if (!baseStatus.runtimeAnalytics?.enabled) {
     return finalizeAiPathRunQueueStatus(baseStatus);
   }
@@ -531,19 +551,23 @@ export const getAiPathRunQueueStatus = async (
 ): Promise<AiPathRunQueueStatus> => {
   const now = Date.now();
   const bypassCache = options.bypassCache === true;
-  if (!bypassCache && queueStatusCache && queueStatusCache.expiresAt > now) {
-    return queueStatusCache.value;
+  const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
+  const scopeKey = getQueueStatusScopeKey(visibility, options);
+  const cached = queueStatusCache.get(scopeKey);
+  if (!bypassCache && cached && cached.expiresAt > now) {
+    return cached.value;
   }
-  if (!bypassCache && queueStatusInFlight) {
-    return queueStatusInFlight;
+  const inFlight = queueStatusInFlight.get(scopeKey);
+  if (!bypassCache && inFlight) {
+    return inFlight;
   }
 
   const fetchStatus = async (): Promise<AiPathRunQueueStatus> => {
-    const status = await readAiPathRunQueueStatus(now);
-    queueStatusCache = {
+    const status = await readAiPathRunQueueStatus(now, options);
+    queueStatusCache.set(scopeKey, {
       value: status,
       expiresAt: Date.now() + QUEUE_STATUS_CACHE_TTL_MS,
-    };
+    });
     return status;
   };
 
@@ -551,11 +575,11 @@ export const getAiPathRunQueueStatus = async (
     return fetchStatus();
   }
 
-  queueStatusInFlight = fetchStatus();
+  queueStatusInFlight.set(scopeKey, fetchStatus());
   try {
-    return await queueStatusInFlight;
+    return await queueStatusInFlight.get(scopeKey)!;
   } finally {
-    queueStatusInFlight = null;
+    queueStatusInFlight.delete(scopeKey);
   }
 };
 
@@ -958,5 +982,9 @@ export const __testOnly = {
   clearAiPathsEnabledCache(): void {
     aiPathsEnabledCache = null;
     aiPathsEnabledInFlight = null;
+    queueStatusCache.clear();
+    queueStatusInFlight.clear();
+    queueHotStatusCache = null;
+    queueHotStatusInFlight = null;
   },
 };

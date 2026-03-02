@@ -4,7 +4,7 @@ This document defines how the Node Validator infers additional candidate rules d
 
 ## Source-driven inference layers
 
-- `node_docs_catalog` (`src/features/ai/ai-paths/lib/core/docs/node-docs.ts`)
+- `node_docs_catalog` (`src/shared/lib/ai-paths/core/docs/node-docs.ts`)
 - `docs_snippet` (`src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts`)
 - `semantic_nodes_catalog` (`docs/ai-paths/semantic-grammar/nodes/index.json`)
 - `tooltip_docs_catalog` (`docs/ai-paths/tooltip-catalog.json`)

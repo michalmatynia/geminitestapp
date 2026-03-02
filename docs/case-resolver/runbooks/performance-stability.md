@@ -37,7 +37,7 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
 ### Validation Commands
 
 - `npx vitest run src/features/case-resolver/__tests__ --reporter=dot`
-- `npx eslint src/features/jobs/workers/caseResolverOcrQueue.ts src/features/case-resolver/server/ocr-runtime-job-store.ts`
+- `npx eslint src/features/case-resolver/workers/caseResolverOcrQueue.ts src/features/case-resolver/server/ocr-runtime-job-store.ts`
 
 ### Signals to Inspect
 

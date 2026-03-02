@@ -20,7 +20,6 @@ import * as THREE from 'three';
 import type {
   Asset3dLightingPreset,
   Asset3dEnvironmentPreset,
-  Viewer3DState,
   Viewer3DSettings,
 } from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

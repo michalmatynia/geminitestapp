@@ -18,7 +18,7 @@ When FastComet is selected, new uploads should be sent to FastComet.
 
 ### 2. Storage service layer
 
-Created `src/features/files/services/storage/file-storage-service.ts` with:
+Created `src/shared/lib/files/services/storage/file-storage-service.ts` with:
 
 - Provider/settings resolution from DB + env fallback
 - FastComet upload client (multipart POST)
@@ -28,7 +28,7 @@ Created `src/features/files/services/storage/file-storage-service.ts` with:
 
 ### 3. Upload path wiring
 
-- `src/features/files/utils/fileUploader.ts`
+- `src/shared/lib/files/file-uploader.ts`
   - Uploads now route through `uploadToConfiguredStorage(...)`
   - In FastComet mode, uploads are sent to FastComet
   - Optional local mirror copy is supported (`keepLocalCopy`)
@@ -41,7 +41,7 @@ Created `src/features/files/services/storage/file-storage-service.ts` with:
   - Uses storage-aware delete function
 - `src/app/api/files/preview/handler.ts`
   - Tries local copy first, falls back to remote fetch for URL paths
-- `src/features/files/utils/fileUploader.ts`
+- `src/shared/lib/files/file-uploader.ts`
   - `getDiskPathFromPublicPath` now supports URL-based filepaths via pathname mapping
 
 ### 5. Admin UI

@@ -9,7 +9,8 @@
 ## Table of Contents
 
 1. [General Principles](#general-principles)
-2. [FilterPanel Best Practices](#filterpanel-best-practices)
+2. [Data Transfer Objects (DTOs) and Contracts](#data-transfer-objects-dtos-and-contracts)
+3. [FilterPanel Best Practices](#filterpanel-best-practices)
 3. [Picker Best Practices](#picker-best-practices)
 4. [State Management](#state-management)
 5. [Performance Optimization](#performance-optimization)
@@ -75,6 +76,84 @@ const handleFilterChange = (key: string, value: any) => {
 ```typescript
 // Components don't provide context, they're pure
 <FilterPanel defaultValues={filters} />  // No effect
+```
+
+---
+
+## Data Transfer Objects (DTOs) and Contracts
+
+**Purpose:** Ensure type safety and consistency across the entire stack (Frontend <-> API <-> Backend).
+
+### 1. Centralize Types in `src/shared/contracts/`
+
+All domain-specific types, interfaces, and Zod schemas MUST be located in `src/shared/contracts/`. This directory serves as the "Single Source of Truth" for the project's data structures.
+
+✅ **Good:** Import from contracts
+
+```typescript
+import type { ProductDto } from '@/shared/contracts/products';
+```
+
+❌ **Avoid:** Local type definitions for domain objects
+
+```typescript
+// Don't define this in features/products/types.ts
+export type Product = { id: string; name: string; ... };
+```
+
+### 2. Use Zod for Schema-Backed DTOs
+
+Prefer Zod schemas for defining DTOs to enable both static type inference and runtime validation.
+
+```typescript
+// src/shared/contracts/my-feature.ts
+import { z } from 'zod';
+
+export const myFeatureSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: z.enum(['active', 'inactive']),
+});
+
+export type MyFeatureDto = z.infer<typeof myFeatureSchema>;
+export type MyFeature = MyFeatureDto;
+```
+
+### 3. Maintain Backward Compatibility
+
+When refactoring, use type aliases to maintain backward compatibility with existing code while transitioning to centralized DTOs.
+
+```typescript
+// Use Dto suffix for the "pure" data structure
+export type AiNodeDto = z.infer<typeof aiNodeSchema>;
+// Alias for legacy code
+export type AiNode = AiNodeDto;
+```
+
+### 4. Explicit Type Safety in Factories
+
+When using query and mutation factories (`createListQueryV2`, `createMutationV2`), always provide explicit types or ensure the generic inference is clean. Avoid using `any` casts unless absolutely necessary for complex tuple inference.
+
+✅ **Good:** Typed success callbacks
+
+```typescript
+invalidate: async (queryClient, data: ProductDto) => {
+  await invalidateProductDetail(queryClient, data.id);
+}
+```
+
+### 5. Standardized Metadata
+
+Every API request MUST include a `meta` object with correct `domain`, `resource`, and `operation` fields for telemetry and debugging.
+
+```typescript
+meta: {
+  source: 'features.my-feature.hooks.useMyQuery',
+  operation: 'list',
+  resource: 'my-feature.items',
+  domain: 'global', // Choose from TanstackFactoryDomain enum
+  tags: ['my-feature', 'items'],
+}
 ```
 
 ---

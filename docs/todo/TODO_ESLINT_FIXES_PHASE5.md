@@ -1,5 +1,9 @@
 # ESLint Fixes - Phase 5 (Hybrid Approach)
 
+> Historical note:
+> This phase log was written before several shared-code moves. Treat the file
+> list as historical context, not as a guaranteed current path map.
+
 ## Progress Summary
 
 - Phase 1-4 (Completed): 27 files fixed with disable comments
@@ -12,12 +16,12 @@
 - Fixed: Lines 29, 54 - Replaced `any` with proper types using `typeof` extracts
 - Status: Fixed
 
-### 2. `src/features/products/utils/productUtils.ts`
+### 2. `src/shared/lib/products/utils/productUtils.ts`
 
 - Fixed: Line 16 - Added proper `ProductRecord` type import and usage
 - Status: Fixed
 
-### 3. `src/features/products/types/index.ts`
+### 3. `src/shared/contracts/products/index.ts`
 
 - Fixed: Added `ProductRecord` export to fix import error
 - Status: Fixed
@@ -27,7 +31,7 @@
 - Fixed: Line 31 - Removed unnecessary type assertion
 - Status: Fixed
 
-### 5. `src/features/jobs/services/product-ai-job-repository/index.ts`
+### 5. `src/shared/lib/products/services/product-ai-job-repository/index.ts`
 
 - Fixed: Line 23 - Added return type annotation
 - Status: Fixed

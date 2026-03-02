@@ -5,18 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { BrainRoutingTree } from '@/shared/lib/ai-brain/components/BrainRoutingTree';
 import { defaultBrainAssignment, defaultBrainSettings, BRAIN_CAPABILITY_KEYS } from '@/shared/lib/ai-brain/settings';
 
-const useMasterFolderTreeInstanceMock = vi.fn();
+const useMasterFolderTreeShellMock = vi.fn();
 let latestTreeOptions: unknown = null;
 
-vi.mock('@/features/foldertree', () => ({
-  useMasterFolderTreeInstance: (options: unknown) => {
-    latestTreeOptions = options;
-    return useMasterFolderTreeInstanceMock(options);
-  },
-}));
-
 vi.mock('@/features/foldertree/v2', () => ({
-  MasterFolderTreeRuntimeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useMasterFolderTreeShell: (options: unknown) => {
+    latestTreeOptions = options;
+    return useMasterFolderTreeShellMock(options);
+  },
   FolderTreeViewportV2: ({
     controller,
   }: {
@@ -34,7 +30,7 @@ vi.mock('@/features/foldertree/v2', () => ({
 
 describe('BrainRoutingTree', () => {
   it('binds to brain routing master instance and renders grouped route nodes', () => {
-    useMasterFolderTreeInstanceMock.mockImplementation((options: { nodes: unknown[] }) => ({
+    useMasterFolderTreeShellMock.mockImplementation((options: { nodes: unknown[] }) => ({
       appearance: {
         rootDropUi: {
           label: 'Move here',
@@ -45,7 +41,9 @@ describe('BrainRoutingTree', () => {
       controller: {
         nodes: options.nodes,
       },
-      scrollToNodeRef: { current: null },
+      viewport: {
+        scrollToNodeRef: { current: null },
+      },
     }));
 
     const effectiveCapabilityAssignments = Object.fromEntries(

@@ -2,7 +2,7 @@
 
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import type { CreateMutation } from '@/shared/contracts/ui';
-import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useCsvImportMutation(): CreateMutation<
@@ -10,7 +10,7 @@ export function useCsvImportMutation(): CreateMutation<
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const mutationKey = QUERY_KEYS.products.all;
-  return createCreateMutationV2({
+  return createMutationV2({
     mutationFn: async ({
       file,
       onProgress,

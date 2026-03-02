@@ -11,7 +11,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   Button,
   Input,
-  Label,
   Alert,
   Card,
   CardHeader,
@@ -19,6 +18,8 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
+  FormField,
+  Hint,
 } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
@@ -76,15 +77,15 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
           password,
           callbackUrl: '/admin',
         });
-      } catch (error) {
-        logClientError(error, { context: { source: 'RegisterPage', action: 'signIn', email } });
+      } catch (signInErr) {
+        logClientError(signInErr, { context: { source: 'RegisterPage', action: 'signIn', email } });
         const message =
-          error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
+          signInErr instanceof Error ? signInErr.message : 'Sign-in failed. Please try again.';
         setError(message);
       }
-    } catch (error) {
-      logClientError(error, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
-      const message = error instanceof Error ? error.message : 'Failed to create account.';
+    } catch (err) {
+      logClientError(err, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
+      const message = err instanceof Error ? err.message : 'Failed to create account.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -92,91 +93,86 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-      <Card className='w-full max-w-md shadow-lg'>
-        <CardHeader>
-          <CardTitle>Create account</CardTitle>
-          <CardDescription>Create a new account with email and password.</CardDescription>
+    <div className='flex min-h-screen items-center justify-center bg-gray-950 px-4'>
+      <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]' />
+      <Card className='w-full max-w-md border-border/60 bg-card/40 backdrop-blur-xl shadow-2xl relative z-10'>
+        <CardHeader className='space-y-1 pb-6'>
+          <CardTitle className='text-2xl font-bold tracking-tight'>Create account</CardTitle>
+          <CardDescription className='text-gray-400'>
+            Enter your details to register for the platform.
+          </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          {error ? (
-            <Alert variant='error' className='p-3 text-xs'>
-              {error}
-            </Alert>
-          ) : null}
-          {!allowSignup ? (
-            <Alert variant='warning' className='p-3 text-xs'>
-              Self-service registration is disabled. Please contact an administrator.
-            </Alert>
-          ) : null}
+        <CardContent>
           <form
-            className='space-y-4'
+            className='space-y-5'
             onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}
           >
-            <div className='space-y-2'>
-              <Label className='text-sm text-gray-300' htmlFor='name'>
-                Name (optional)
-              </Label>
+            {error && (
+              <Alert variant='error' className='text-xs'>
+                {error}
+              </Alert>
+            )}
+            {!allowSignup && (
+              <Alert variant='warning' className='text-xs'>
+                Self-service registration is disabled. Please contact an administrator.
+              </Alert>
+            )}
+
+            <FormField label='Full Name' description='Display name for your profile (optional).'>
               <Input
                 id='name'
-                type='text'
-                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                placeholder='John Doe'
                 value={name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setName(event.target.value)
-                }
+                onChange={(e) => setName(e.target.value)}
                 disabled={!allowSignup}
+                className='h-10 bg-gray-900/50'
               />
-            </div>
-            <div className='space-y-2'>
-              <Label className='text-sm text-gray-300' htmlFor='email'>
-                Email
-              </Label>
+            </FormField>
+
+            <FormField label='Email Address' required>
               <Input
                 id='email'
                 type='email'
-                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                placeholder='name@example.com'
                 value={email}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setEmail(event.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={!allowSignup}
+                className='h-10 bg-gray-900/50'
               />
-            </div>
-            <div className='space-y-2'>
-              <Label className='text-sm text-gray-300' htmlFor='password'>
-                Password
-              </Label>
+            </FormField>
+
+            <FormField label='Password' required>
               <Input
                 id='password'
                 type='password'
-                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                placeholder='••••••••'
                 value={password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
                 disabled={!allowSignup}
+                className='h-10 bg-gray-900/50'
               />
-              <p className='text-xs text-gray-500'>
-                Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.
-              </p>
-            </div>
+              <div className='mt-2 flex justify-between items-center px-1'>
+                <Hint>Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.</Hint>
+              </div>
+            </FormField>
+
             <Button
-              className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
+              className='w-full h-11 text-base font-semibold shadow-lg shadow-primary/20'
               type='submit'
               disabled={isSubmitting || !allowSignup}
+              loading={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create account'}
+              Create Account
             </Button>
           </form>
         </CardContent>
-        <CardFooter className='justify-center'>
-          <p className='text-xs text-gray-400'>
+        <CardFooter className='flex flex-col gap-4 border-t border-white/5 pt-6'>
+          <p className='text-sm text-gray-400'>
             Already have an account?{' '}
-            <Link href='/auth/signin' className='text-white hover:underline'>
+            <Link href='/auth/signin' className='text-primary font-medium hover:underline'>
               Sign in
             </Link>
           </p>

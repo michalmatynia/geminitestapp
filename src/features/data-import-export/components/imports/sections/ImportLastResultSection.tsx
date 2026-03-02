@@ -3,7 +3,7 @@
 import React from 'react';
 import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import { FormSection, Hint } from '@/shared/ui';
+import { FormSection, Hint, StatusBadge } from '@/shared/ui';
 
 export function ImportLastResultSection(): React.JSX.Element | null {
   const { lastResult, activeImportRunId } = useImportExport();
@@ -12,9 +12,10 @@ export function ImportLastResultSection(): React.JSX.Element | null {
 
   return (
     <FormSection title='Last import summary' className='p-4'>
-      <p className='mt-1 text-sm text-gray-300'>
-        Run {lastResult.runId} is {lastResult.status}.
-      </p>
+      <div className='flex items-center gap-2 mt-1'>
+        <span className='text-sm text-gray-300'>Run {lastResult.runId} is</span>
+        <StatusBadge status={lastResult.status} className='font-bold' />
+      </div>
       {lastResult.summaryMessage ? (
         <p className='mt-1 text-xs text-gray-400'>{lastResult.summaryMessage}</p>
       ) : null}

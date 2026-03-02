@@ -127,8 +127,8 @@ describe('useNodeFileWorkspaceState manual snapshot persistence', () => {
     logCaseResolverWorkspaceEventMock.mockReset();
   });
 
-  it('does not autosave on graph mutation and only persists on manual save', () => {
-    const onSnapshotChange = vi.fn();
+  it('does not autosave on graph mutation and only persists on manual save', async () => {
+    const onSnapshotChange = vi.fn(async () => true);
     const snapshot = createSnapshot();
 
     const { result, rerender } = renderHook(() =>
@@ -149,8 +149,58 @@ describe('useNodeFileWorkspaceState manual snapshot persistence', () => {
     expect(onSnapshotChange).not.toHaveBeenCalled();
     expect(result.current.hasPendingSnapshotChanges).toBe(true);
 
-    act(() => {
+    await act(async () => {
       result.current.handleManualSave();
+      await Promise.resolve();
+    });
+
+    expect(onSnapshotChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps pending snapshot changes when manual save fails', async () => {
+    const onSnapshotChange = vi.fn(async () => false);
+    const snapshot = createSnapshot();
+
+    const { result, rerender } = renderHook(() =>
+      useNodeFileWorkspaceState({
+        assetId: 'asset-1',
+        assetName: 'Node File',
+        snapshot,
+        onSnapshotChange,
+      })
+    );
+
+    graphNodes = [createPromptNode('node-1', 120)];
+    rerender();
+
+    await act(async () => {
+      result.current.handleManualSave();
+      await Promise.resolve();
+    });
+
+    expect(onSnapshotChange).toHaveBeenCalledTimes(1);
+    expect(result.current.hasPendingSnapshotChanges).toBe(true);
+  });
+
+  it('clears pending snapshot changes after successful manual save', async () => {
+    const onSnapshotChange = vi.fn(async () => true);
+    const snapshot = createSnapshot();
+
+    const { result, rerender } = renderHook(() =>
+      useNodeFileWorkspaceState({
+        assetId: 'asset-1',
+        assetName: 'Node File',
+        snapshot,
+        onSnapshotChange,
+      })
+    );
+
+    graphNodes = [createPromptNode('node-1', 120)];
+    rerender();
+
+    await act(async () => {
+      result.current.handleManualSave();
+      await Promise.resolve();
     });
 
     expect(onSnapshotChange).toHaveBeenCalledTimes(1);

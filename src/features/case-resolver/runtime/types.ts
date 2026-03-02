@@ -1,11 +1,9 @@
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverWorkspace,
+  CaseResolverRequestedContextStatus,
+} from '@/shared/contracts/case-resolver';
 
-export type CaseResolverRequestedContextStatus =
-  | 'idle'
-  | 'loading'
-  | 'ready'
-  | 'missing_not_found'
-  | 'missing_unavailable';
+export type { CaseResolverRequestedContextStatus };
 
 export type CaseResolverRuntimeWorkspaceSlice = {
   value: CaseResolverWorkspace;

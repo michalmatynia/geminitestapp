@@ -4,6 +4,17 @@ import type {
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
+  CaseViewMode,
+  CaseSortKey,
+  CaseSortOrder,
+  CaseSearchScope,
+  CaseFileTypeFilter,
+  CaseStatusFilter,
+  CaseLockedFilter,
+  CaseSentFilter,
+  CaseHierarchyFilter,
+  CaseReferencesFilter,
+  CaseListViewDefaults,
 } from '@/shared/contracts/case-resolver';
 
 export type {
@@ -12,34 +23,17 @@ export type {
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
-};
-
-export type CaseViewMode = 'list' | 'hierarchy';
-export type CaseSortKey =
-  | 'updated'
-  | 'created'
-  | 'happeningDate'
-  | 'name'
-  | 'status'
-  | 'signature'
-  | 'locked'
-  | 'sent';
-export type CaseSortOrder = 'asc' | 'desc';
-export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
-export type CaseFileTypeFilter = 'all' | 'case' | 'document' | 'scanfile' | 'note';
-export type CaseStatusFilter = 'all' | 'pending' | 'completed';
-export type CaseLockedFilter = 'all' | 'locked' | 'unlocked';
-export type CaseSentFilter = 'all' | 'sent' | 'not_sent';
-export type CaseHierarchyFilter = 'all' | 'root' | 'child';
-export type CaseReferencesFilter = 'all' | 'with_references' | 'without_references';
-
-export type CaseListViewDefaults = {
-  viewMode: CaseViewMode;
-  sortBy: CaseSortKey;
-  sortOrder: CaseSortOrder;
-  searchScope: CaseSearchScope;
-  filtersCollapsedByDefault: boolean;
-  showNestedContent: boolean;
+  CaseViewMode,
+  CaseSortKey,
+  CaseSortOrder,
+  CaseSearchScope,
+  CaseFileTypeFilter,
+  CaseStatusFilter,
+  CaseLockedFilter,
+  CaseSentFilter,
+  CaseHierarchyFilter,
+  CaseReferencesFilter,
+  CaseListViewDefaults,
 };
 
 export type CaseResolverCaseListConfirmationState = {

@@ -187,7 +187,7 @@ export async function processCenterPayload(input: {
       authoritativeSource: 'source_slot',
       detectionUsed: centered.detectionUsed,
       confidenceBefore: centered.confidenceBefore,
-      detectionDetails: centered.detectionDetails,
+      detectionDetails: centered.detectionDetails ?? null,
       scale: centered.scale,
       layout: {
         paddingPercent: normalizedLayout.paddingPercent,

@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2/adapter/createMasterFolderTreeAdapterV3';
+import type {
+  MasterFolderTreePersistContext,
+  MasterFolderTreePersistOperation,
+} from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const decodeNodeId = (nodeId: string) => {
@@ -14,6 +18,11 @@ const decodeNodeId = (nodeId: string) => {
 };
 
 describe('createMasterFolderTreeAdapterV3', () => {
+  const context: MasterFolderTreePersistContext = {
+    previousNodes: [],
+    nextNodes: [],
+  };
+
   it('delegates move operations through apply', async () => {
     const onMove = vi.fn();
     const adapter = createMasterFolderTreeAdapterV3({
@@ -73,5 +82,55 @@ describe('createMasterFolderTreeAdapterV3', () => {
       nodes,
       version: 2,
     });
+  });
+
+  it('skips rename handler when normalized name is empty', async () => {
+    const onRename = vi.fn();
+    const adapter = createMasterFolderTreeAdapterV3({
+      decodeNodeId,
+      handlers: {
+        onRename,
+      },
+    });
+
+    const operation: Extract<MasterFolderTreePersistOperation, { type: 'rename' }> = {
+      type: 'rename',
+      nodeId: 'folder:root',
+      name: '   ',
+    };
+
+    await adapter.applyOperation?.(operation, context);
+
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
+  it('delegates reorder operations only when both nodes decode', async () => {
+    const onReorder = vi.fn();
+    const adapter = createMasterFolderTreeAdapterV3({
+      decodeNodeId,
+      handlers: {
+        onReorder,
+      },
+    });
+
+    const validOperation: Extract<MasterFolderTreePersistOperation, { type: 'reorder' }> = {
+      type: 'reorder',
+      nodeId: 'folder:alpha',
+      targetId: 'folder:beta',
+      position: 'before',
+    };
+
+    await adapter.applyOperation?.(validOperation, context);
+    expect(onReorder).toHaveBeenCalledTimes(1);
+
+    const invalidOperation: Extract<MasterFolderTreePersistOperation, { type: 'reorder' }> = {
+      type: 'reorder',
+      nodeId: 'folder:alpha',
+      targetId: 'unknown',
+      position: 'after',
+    };
+
+    await adapter.applyOperation?.(invalidOperation, context);
+    expect(onReorder).toHaveBeenCalledTimes(1);
   });
 });

@@ -220,7 +220,7 @@ export async function centerAndScaleObjectByLayout(
   scale: number;
   detectionUsed: ImageStudioCenterDetectionMode;
   confidenceBefore: number;
-  detectionDetails: ImageStudioDetectionDetails | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
   layoutPolicyVersion: string | null;
   detectionPolicyDecision: string | null;
 }> {

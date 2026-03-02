@@ -49,4 +49,4 @@ Case Resolver is the legal/case workspace module for:
 - State orchestration: `src/features/case-resolver/hooks/useCaseResolverState.ts`
 - Persistence/telemetry: `src/features/case-resolver/workspace-persistence.ts`
 - APIs: `src/app/api/case-resolver/*`
-- OCR worker: `src/features/jobs/workers/caseResolverOcrQueue.ts`
+- OCR worker: `src/features/case-resolver/workers/caseResolverOcrQueue.ts`

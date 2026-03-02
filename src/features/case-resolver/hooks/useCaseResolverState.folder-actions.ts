@@ -8,6 +8,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 
 import { normalizeFolderPath, normalizeFolderPaths, renameFolderPath } from '../settings';
+import { deleteCaseResolverNodeFileSnapshot } from '../workspace-persistence';
 import {
   collectCaseScopeIds,
   removeOwnedFolderRecordsWithinPath,
@@ -134,6 +135,9 @@ export const useCaseResolverStateFolderActions = ({
           const removedAssetIds = new Set<string>(
             assetsInDeletedFolder.map((asset: CaseResolverAssetFile): string => asset.id)
           );
+          const removedNodeFileAssetIds = assetsInDeletedFolder
+            .filter((asset: CaseResolverAssetFile): boolean => asset.kind === 'node_file')
+            .map((asset: CaseResolverAssetFile): string => asset.id);
 
           updateWorkspace(
             (current) => {
@@ -244,6 +248,13 @@ export const useCaseResolverStateFolderActions = ({
           setSelectedFolderPath((current: string | null): string | null =>
             current && isPathWithinFolder(current, normalizedFolder) ? null : current
           );
+          if (removedNodeFileAssetIds.length > 0) {
+            void Promise.allSettled(
+              removedNodeFileAssetIds.map((assetId: string) =>
+                deleteCaseResolverNodeFileSnapshot(assetId, 'case_view_folder_delete')
+              )
+            );
+          }
         },
       });
     },

@@ -398,6 +398,7 @@ describe('case resolver asset actions lock races', () => {
       .assets.find((asset) => asset.kind === 'node_file' && asset.folder === 'analysis/maps');
 
     expect(createdAsset).toBeTruthy();
+    expect(createdAsset?.textContent).toBe('');
     expect(parseNodeFileSnapshot(createdAsset?.textContent ?? '')).toMatchObject({
       kind: 'case_resolver_node_file_snapshot_v1',
       nodes: [],

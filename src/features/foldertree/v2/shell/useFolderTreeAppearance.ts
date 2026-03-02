@@ -9,35 +9,38 @@ import type {
 } from '@/shared/contracts/master-folder-tree';
 import {
   getFolderTreePlaceholderClasses,
-  resolveFolderTreeIconV2,
+  type FolderTreePlaceholderClassSet,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import { resolveFolderTreeIconV2 } from '@/shared/utils/folder-tree-profiles-v2';
 
 import type { LucideIcon } from 'lucide-react';
 
-type ResolveMasterFolderTreeIconInput = {
+export type ResolveFolderTreeIconInput = {
   slot: FolderTreeIconSlot;
   kind?: string | null;
   fallback: LucideIcon;
   fallbackId?: string | null;
 };
 
-type MasterFolderTreeRootDropUi = {
+export type FolderTreeRootDropUi = {
   label: string;
   idleClassName: string;
   activeClassName: string;
 };
 
-export function useMasterFolderTreeAppearance(profile: FolderTreeProfileV2): {
-  placeholderClasses: ReturnType<typeof getFolderTreePlaceholderClasses>;
-  rootDropUi: MasterFolderTreeRootDropUi;
-  resolveIcon: (input: ResolveMasterFolderTreeIconInput) => LucideIcon;
-} {
+export type FolderTreeAppearance = {
+  placeholderClasses: FolderTreePlaceholderClassSet;
+  rootDropUi: FolderTreeRootDropUi;
+  resolveIcon: (input: ResolveFolderTreeIconInput) => LucideIcon;
+};
+
+export function useFolderTreeAppearance(profile: FolderTreeProfileV2): FolderTreeAppearance {
   const placeholderClasses = useMemo(
     () => getFolderTreePlaceholderClasses(profile.placeholders.preset),
     [profile.placeholders.preset]
   );
 
-  const rootDropUi = useMemo<MasterFolderTreeRootDropUi>(
+  const rootDropUi = useMemo<FolderTreeRootDropUi>(
     () => ({
       label: profile.placeholders.rootDropLabel,
       idleClassName: placeholderClasses.rootIdle,
@@ -47,7 +50,7 @@ export function useMasterFolderTreeAppearance(profile: FolderTreeProfileV2): {
   );
 
   const resolveIcon = useCallback(
-    ({ slot, kind, fallback, fallbackId = null }: ResolveMasterFolderTreeIconInput): LucideIcon => {
+    ({ slot, kind, fallback, fallbackId = null }: ResolveFolderTreeIconInput): LucideIcon => {
       const resolvedIconId = resolveFolderTreeIconV2(profile, slot, kind) ?? fallbackId ?? null;
       if (!resolvedIconId) return fallback;
       return ICON_LIBRARY_MAP[resolvedIconId] ?? fallback;

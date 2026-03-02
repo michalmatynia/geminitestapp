@@ -4,6 +4,7 @@ import {
   type CaseResolverFileType,
   type CaseResolverFolderRecord,
   type CaseResolverWorkspace,
+  type CaseResolverWorkspaceNormalizationDiagnostics,
 } from '@/shared/contracts/case-resolver';
 import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
 import {
@@ -24,17 +25,11 @@ import {
   buildCaseResolverFolderRecords,
   parseCaseResolverFolderRecords,
 } from './settings-folder-records';
-import { buildCaseResolverRelationGraph } from './settings-relation-graph';
+import * as caseResolverRelationGraph from './settings-relation-graph';
 import {
   createCaseResolverAssetFile,
   normalizeCaseResolverFolderTimestamps,
 } from './settings-workspace-helpers';
-
-export type CaseResolverWorkspaceNormalizationDiagnostics = {
-  ownershipRepairedCount: number;
-  ownershipUnresolvedCount: number;
-  droppedDuplicateCount: number;
-};
 
 const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
   {
@@ -131,7 +126,7 @@ const resolveSafeCaseParentId = (
 };
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
-  const relationGraph = buildCaseResolverRelationGraph({
+  const relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
     source: null,
     folders: [],
     files: [],
@@ -302,6 +297,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         size: asset.size,
         textContent: asset.textContent,
         description: asset.description,
+        metadata: asset.metadata,
         createdAt: normalizedCreatedAt,
         updatedAt: normalizedUpdatedAt,
       });
@@ -370,7 +366,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
     assets: sanitizedAssets,
     fallbackTimestamp: now,
   });
-  const relationGraph = buildCaseResolverRelationGraph({
+  const relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
     source: workspaceRecord['relationGraph'],
     folders,
     files: normalizedFilesWithRelatedLinks,

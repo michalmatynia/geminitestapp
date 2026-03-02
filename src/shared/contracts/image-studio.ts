@@ -706,6 +706,86 @@ export const imageStudioDetectionDetailsSchema = z.object({
 
 export type ImageStudioDetectionDetails = z.infer<typeof imageStudioDetectionDetailsSchema>;
 
+/**
+ * Image Analysis DTOs
+ */
+
+export type PixelData = ArrayLike<number>;
+
+export const whiteBackgroundModelSchema = z.object({
+  r: z.number(),
+  g: z.number(),
+  b: z.number(),
+  chroma: z.number(),
+  whiteThreshold: z.number(),
+  chromaThreshold: z.number(),
+  chromaDeltaThreshold: z.number(),
+});
+
+export type WhiteBackgroundModel = z.infer<typeof whiteBackgroundModelSchema>;
+
+export const whiteForegroundMaskSourceSchema = z.enum(['foreground', 'core']);
+export type WhiteForegroundMaskSource = z.infer<typeof whiteForegroundMaskSourceSchema>;
+
+export const connectedComponentSchema = z.object({
+  left: z.number(),
+  top: z.number(),
+  right: z.number(),
+  bottom: z.number(),
+  pixelCount: z.number(),
+  touchesBorder: z.boolean(),
+  centroidX: z.number(),
+  centroidY: z.number(),
+});
+
+export type ConnectedComponent = z.infer<typeof connectedComponentSchema>;
+
+export const imageStudioAnalysisResultSchema = z.object({
+  sourceObjectBounds: imageStudioCenterObjectBoundsSchema,
+  bounds: imageStudioCenterObjectBoundsSchema,
+  detectionUsed: imageStudioObjectDetectionUsedSchema,
+  confidence: z.number().finite().min(0).max(1),
+  detectionDetails: imageStudioDetectionDetailsSchema.nullable().optional(),
+  details: imageStudioDetectionDetailsSchema.nullable().optional(),
+  policyVersion: z.string(),
+  policyReason: z.string(),
+  fallbackApplied: z.boolean(),
+  candidateDetections: imageStudioDetectionCandidateSummarySchema,
+  whitespace: imageStudioWhitespaceMetricsSchema,
+  objectAreaPercent: z.number(),
+  layout: imageStudioNormalizedCenterLayoutSchema,
+});
+
+export type ImageStudioAnalysisResult = z.infer<typeof imageStudioAnalysisResultSchema>;
+
+export const imageStudioAutoScalePlanSchema = z.object({
+  targetWidth: z.number(),
+  targetHeight: z.number(),
+  outputWidth: z.number(),
+  outputHeight: z.number(),
+  scale: z.number(),
+  offsetX: z.number(),
+  offsetY: z.number(),
+  paddingX: z.number(),
+  paddingY: z.number(),
+  sourceObjectBounds: imageStudioCenterObjectBoundsSchema,
+  targetObjectBounds: imageStudioCenterObjectBoundsSchema,
+  whitespaceBefore: imageStudioWhitespaceMetricsSchema,
+  whitespaceAfter: imageStudioWhitespaceMetricsSchema,
+  whitespace: imageStudioWhitespaceMetricsSchema,
+  objectAreaPercentBefore: z.number(),
+  objectAreaPercentAfter: z.number(),
+});
+
+export type ImageStudioAutoScalePlan = z.infer<typeof imageStudioAutoScalePlanSchema>;
+
+export const imageStudioAutoScaleAnalysisSchema = z.object({
+  analysis: imageStudioAnalysisResultSchema,
+  plan: imageStudioAutoScalePlanSchema,
+});
+
+export type ImageStudioAutoScaleAnalysis = z.infer<typeof imageStudioAutoScaleAnalysisSchema>;
+
 export const imageStudioAnalysisSummarySchema = z.object({
   width: z.number().int().positive(),
   height: z.number().int().positive(),

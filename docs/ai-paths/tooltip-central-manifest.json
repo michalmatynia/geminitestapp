@@ -12,7 +12,7 @@
     {
       "id": "ai-paths-node-docs",
       "type": "node_docs_catalog",
-      "path": "src/features/ai/ai-paths/lib/core/docs/node-docs.ts",
+      "path": "src/shared/lib/ai-paths/core/docs/node-docs.ts",
       "enabled": true,
       "priority": 20,
       "tags": ["ai-paths", "nodes", "palette", "config"]

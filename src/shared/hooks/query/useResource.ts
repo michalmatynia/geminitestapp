@@ -7,6 +7,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 /**
  * A generic hook to handle standard CRUD operations for a resource
@@ -14,7 +15,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
  */
 export function useResource<T extends { id: string }>(
   resourcePath: string,
-  queryKey: readonly unknown[]
+  queryKey: readonly unknown[],
+  options?: { domain?: TanstackFactoryDomain }
 ): {
   list: ListQuery<T, T[]>;
   create: MutationResult<T, Partial<T>>;
@@ -23,6 +25,7 @@ export function useResource<T extends { id: string }>(
 } {
   const normalizedResourcePath = resourcePath.replace(/^\/+|\/+$/g, '') || 'resource';
   const resourceTag = normalizedResourcePath.replaceAll('/', '.');
+  const domain = options?.domain ?? 'global';
 
   // List all items
   const list = createListQueryV2<T, T[]>({
@@ -33,7 +36,7 @@ export function useResource<T extends { id: string }>(
       source: 'shared.hooks.query.useResource.list',
       operation: 'list',
       resource: normalizedResourcePath,
-      domain: 'global',
+      domain,
       tags: ['resource', resourceTag, 'list'],
     },
   });
@@ -47,7 +50,7 @@ export function useResource<T extends { id: string }>(
       source: 'shared.hooks.query.useResource.create',
       operation: 'create',
       resource: normalizedResourcePath,
-      domain: 'global',
+      domain,
       tags: ['resource', resourceTag, 'create'],
     },
   });
@@ -69,7 +72,7 @@ export function useResource<T extends { id: string }>(
       source: 'shared.hooks.query.useResource.update',
       operation: 'update',
       resource: normalizedResourcePath,
-      domain: 'global',
+      domain,
       tags: ['resource', resourceTag, 'update'],
     },
   });
@@ -88,7 +91,7 @@ export function useResource<T extends { id: string }>(
       source: 'shared.hooks.query.useResource.delete',
       operation: 'delete',
       resource: normalizedResourcePath,
-      domain: 'global',
+      domain,
       tags: ['resource', resourceTag, 'delete'],
     },
   });

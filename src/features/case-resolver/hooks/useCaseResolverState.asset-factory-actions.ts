@@ -9,10 +9,8 @@ import {
 } from './useCaseResolverState.helpers';
 import {
   createCaseResolverAssetFile,
-  createEmptyNodeFileSnapshot,
   createCaseResolverFile,
   normalizeFolderPaths,
-  serializeNodeFileSnapshot,
 } from '../settings';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
@@ -251,7 +249,6 @@ export function useCaseResolverAssetFactoryActions({
           }),
           folder,
           kind: 'node_file',
-          textContent: serializeNodeFileSnapshot(createEmptyNodeFileSnapshot()),
         });
         createdAssetId = asset.id;
         return {

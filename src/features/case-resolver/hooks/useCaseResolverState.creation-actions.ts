@@ -3,8 +3,8 @@ import type {
   CaseResolverFile,
   CaseResolverFolderRecord,
   CaseResolverWorkspace,
+  CaseResolverRequestedCaseStatus,
 } from '@/shared/contracts/case-resolver';
-import { type CaseResolverRequestedCaseStatus } from '../types';
 import { createId, createUniqueFolderPath } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   appendOwnedFolderRecords,

@@ -30,7 +30,7 @@ type UseCaseResolverStateSelectionActionsResult = {
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
   handleUpdateSelectedAsset: (
-    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>>,
     options?: UpdateWorkspaceOptions
   ) => void;
   handleUpdateActiveFileParties: (
@@ -64,7 +64,7 @@ export const useCaseResolverStateSelectionActions = ({
 
   const handleUpdateSelectedAsset = useCallback(
     (
-      patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+      patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>>,
       options?: UpdateWorkspaceOptions
     ): void => {
       if (!selectedAssetId) return;

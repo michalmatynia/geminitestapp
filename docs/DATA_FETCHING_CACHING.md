@@ -1,89 +1,131 @@
-# Data Fetching and Caching Audit (2026-02-12)
+# Data Fetching and Caching Guide
 
-This document outlines the explicit caching semantics chosen for the various data fetching paths in the application.
+This document is the current high-level guide for data fetching and caching
+behavior across the application. Treat it as policy and architecture guidance,
+not as an exhaustive per-route inventory.
 
-## Caching Strategies
+## Scope
 
-We use three primary caching semantics provided by Next.js:
+The app uses both:
 
-1.  **`no-store`**: Data is fetched on every request. Used for highly dynamic, sensitive, or user-specific data.
-2.  **`force-cache`**: Data is cached indefinitely until manually invalidated. Used for static metadata.
-3.  **`next.revalidate`**: Data is cached for a specific duration (in seconds). Used for semi-static content.
+- server-side caching controls in Next.js route handlers and page loaders
+- client-side caching and invalidation through TanStack Query
 
----
+Key implementation surfaces:
 
-## API Route Audit
+- server routes: `src/app/api/`
+- query factories: `src/shared/lib/query-factories-v2.ts`
+- invalidation helpers: `src/shared/lib/query-invalidation.ts`
+- query provider bootstrapping: `src/shared/providers/QueryProvider.tsx`
+- settings store bootstrapping: `src/shared/providers/SettingsStoreProvider.tsx`
+- background sync hooks: `src/shared/providers/BackgroundSyncProvider.tsx`
 
-### 1. Dynamic Data (`no-store`)
+## Server-Side Caching Rules
 
-These routes handle data that changes frequently or is specific to the authenticated user.
+Use one of these deliberately:
 
-| Path                             | Rationale                                                        |
-| :------------------------------- | :--------------------------------------------------------------- |
-| `/api/chatbot/*`                 | Chat messages and sessions are highly dynamic and user-specific. |
-| `/api/auth/*`                    | Session and user data must always be fresh for security.         |
-| `/api/analytics/*`               | Event logs and summaries need to reflect the latest data.        |
-| `/api/search/*`                  | Search results depend on the query and must be fresh.            |
-| `/api/ai-paths/runs/*`           | Run statuses and logs are real-time.                             |
-| `/api/system/*`                  | Health checks and system diagnostics must be real-time.          |
-| `/api/settings` (with `debug=1`) | Debug info must never be cached.                                 |
+1. `no-store` / `force-dynamic`
+   - for authenticated data
+   - for operational and observability data
+   - for real-time run/job status
+   - for mutable configuration and security-sensitive payloads
+2. `revalidate`
+   - for semi-static metadata or catalog-like content
+   - for content that can tolerate bounded staleness
+3. `force-cache`
+   - only for effectively static metadata with very low churn
 
-### 2. Semi-Static Content (`next.revalidate`)
+Do not assume route defaults are safe. Route handlers under `src/app/api/`
+should state caching intent explicitly when the route is important to UX,
+security, or operations.
 
-These routes handle content that changes occasionally but can tolerate some staleness for performance gains.
+## Server Categories
 
-| Path                  | Revalidate | Rationale                                                                    |
-| :-------------------- | :--------- | :--------------------------------------------------------------------------- |
-| `/api/products`       | 60s        | Product listings are frequently updated but benefit from a short cache.      |
-| `/api/notes`          | 60s        | Personal notes are updated by the user, but a short cache helps performance. |
-| `/api/cms/pages`      | 300s       | CMS pages change less frequently than products.                              |
-| `/api/cms/blocks`     | 300s       | CMS components are reused across pages.                                      |
-| `/api/assets3d`       | 60s        | 3D asset metadata is semi-static.                                            |
-| `/api/settings` (GET) | 120s       | App settings are cached with a background revalidation.                      |
+### Usually `no-store`
 
-### 3. Static Metadata (`force-cache`)
+- auth/session/user data
+- settings and provider configuration
+- system logs, system activity, diagnostics
+- AI Paths runs, job state, chat sessions, live observability
+- database browsing/restore/backup operations
 
-These routes handle data that rarely, if ever, changes.
+### Usually short `revalidate`
 
-| Path              | Revalidate | Rationale                                         |
-| :---------------- | :--------- | :------------------------------------------------ |
-| `/api/languages`  | 3600s      | Available languages are almost static.            |
-| `/api/countries`  | 3600s      | Country lists are static.                         |
-| `/api/currencies` | 3600s      | Currency definitions change very rarely.          |
-| `/api/catalogs`   | 600s       | Product catalogs are mostly static configuration. |
+- product list/detail data
+- CMS/public content
+- file/media listings
+- catalogs and taxonomies
+- image-studio project listings
 
----
+### Usually long `revalidate` or static
 
-## Client-Side Caching (TanStack Query)
+- countries
+- currencies
+- languages
+- structural metadata that rarely changes
 
-While the API routes provide the server-side caching semantics, the client-side uses TanStack Query with its own `staleTime` and `gcTime` settings.
+## Client-Side Query Rules
 
-### Query Factories v2
+The preferred client data layer is the shared query-factory system, not ad hoc
+query usage everywhere.
 
-We use a set of standardized factories in `src/shared/lib/query-factories-v2.ts` to wrap TanStack Query hooks. These factories provide:
-- **Telemetry**: Automatic logging of start, success, retry, and error stages.
-- **Observability**: Required `meta` object for every call to track source, operation, and resource.
-- **Safety**: Runtime guards for `refetchInterval` and standard `staleTime`.
-- **Convenience**: Declarative invalidation and standardized optimistic updates.
+Factory responsibilities:
 
-#### Available Factories
+- required telemetry metadata
+- standardized stale time handling
+- invalidation hooks
+- optimistic update patterns
+- safer wrappers around TanStack Query primitives
 
-- `createListQueryV2`: For standard collection fetching.
-- `createSingleQueryV2`: For fetching individual resources by ID.
-- `createInfiniteQueryV2`: For paginated data with "Load More" patterns.
-- `createMultiQueryV2`: Telemetrized wrapper for `useQueries` (parallel fetching).
-- `createMutationV2`: Standardized mutations with `invalidateKeys` support.
-- `createOptimisticMutationV2`: Pattern for optimistic updates with automatic rollback.
-- `createSuspenseQueryV2` / `createSuspenseInfiniteQueryV2`: Support for React Suspense.
-- `useEnsureQueryDataV2` / `usePrefetchQueryV2`: Standardized pre-fetching logic.
+Common factory entrypoints:
 
-- **Standard fresh data**: `staleTime: 5 * 60 * 1000` (5 minutes).
-- **Real-time data**: `staleTime: 0`.
-- **Long-term data**: `staleTime: 60 * 60 * 1000` (1 hour).
+- `createListQueryV2`
+- `createSingleQueryV2`
+- `createInfiniteQueryV2`
+- `createMutationV2`
+- `createOptimisticMutationV2`
+- suspense and prefetch helpers
 
-## Manual Invalidation
+## Default Query Expectations
 
-When a `POST`, `PUT`, `PATCH`, or `DELETE` request is made to a route, we use the following mechanisms to invalidate the cache:
+- standard UI data: moderate stale time, usually minutes not seconds
+- real-time/operational data: `staleTime: 0` or explicit polling
+- static metadata: longer stale windows
 
-1.  **Server-side**: `revalidatePath` or `revalidateTag` (if using Next.js cache).
-2.  **Client-side**: Centralized invalidation helpers from `src/shared/lib/query-invalidation.ts`.
+Pick the smallest freshness guarantee that satisfies the user flow. Do not turn
+everything into real-time fetching.
+
+## Invalidation Rules
+
+After `POST`, `PUT`, `PATCH`, or `DELETE`:
+
+1. invalidate client query keys deliberately
+2. use centralized helpers when available
+3. revalidate server paths/tags when route or page cache semantics require it
+
+Prefer shared invalidation helpers over scattered bespoke key handling.
+
+## Root Runtime Considerations
+
+Caching behavior is influenced by the root provider stack:
+
+- `QueryProvider` enables shared query lifecycle behavior
+- query persistence is enabled for selected query keys
+- offline support is initialized at the root query layer
+- `BackgroundSyncProvider` can refresh system state on a timed cadence
+- `SettingsStoreProvider` separates admin and lite settings fetch behavior
+
+When debugging stale data, inspect both route-level caching and query-provider
+behavior before assuming a single source of truth.
+
+## Verification Commands
+
+```bash
+npm run check:factory-meta
+npm run check:factory-meta:strict
+npm run metrics:hotspots
+```
+
+If you need route-by-route confirmation, inspect the actual handler/page files
+under `src/app/api/` and `src/app/(frontend)/` rather than relying on old
+manual audit tables.

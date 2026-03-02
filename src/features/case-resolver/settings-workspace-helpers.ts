@@ -156,12 +156,17 @@ export const createCaseResolverAssetFile = (input: {
   size?: number | null | undefined;
   textContent?: string | null | undefined;
   description?: string | null | undefined;
+  metadata?: Record<string, unknown> | null | undefined;
   createdAt?: string;
   updatedAt?: string;
 }): CaseResolverAssetFile => {
   const now = new Date().toISOString();
   const createdAt = normalizeTimestamp(input.createdAt, now);
   const updatedAt = normalizeTimestamp(input.updatedAt, createdAt);
+  const metadata =
+    input.metadata && typeof input.metadata === 'object' && !Array.isArray(input.metadata)
+      ? { ...input.metadata }
+      : undefined;
   return {
     id: input.id,
     workspaceId: input.workspaceId ?? 'default',
@@ -191,6 +196,7 @@ export const createCaseResolverAssetFile = (input: {
         : null,
     textContent: typeof input.textContent === 'string' ? input.textContent : '',
     description: typeof input.description === 'string' ? input.description : '',
+    ...(metadata ? { metadata } : {}),
     createdAt,
     updatedAt,
   };

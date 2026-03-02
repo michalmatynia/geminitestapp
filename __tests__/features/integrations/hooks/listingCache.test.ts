@@ -50,10 +50,10 @@ describe('listingCache helpers', () => {
       queryKey: integrationJobsQueryKey,
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: aiPathsJobQueueQueryKey,
+      queryKey: [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'],
     });
     expect(invalidateQueries).toHaveBeenNthCalledWith(3, {
-      queryKey: aiPathsQueueStatusQueryKey,
+      queryKey: [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'],
     });
   });
 

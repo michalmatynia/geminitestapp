@@ -247,7 +247,7 @@ Tasks:
    - normalized layout signature
    - pipeline version
 3. Add lightweight benchmark tests:
-   - `src/features/ai/image-studio/analysis/__tests__/shared.perf.test.ts`
+   - under `src/features/ai/image-studio/analysis/__tests__/` (keep benchmark coverage separate from golden-regression assertions)
 
 Acceptance:
 

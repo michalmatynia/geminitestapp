@@ -13,6 +13,7 @@ import type {
   AiPathRunEventListOptions,
   AiPathRunEventRecord,
   AiPathRunListOptions,
+  AiPathRunQueueStatsOptions,
   AiPathRunNodeRecord,
   AiPathRunNodeUpdate,
   AiPathRunRecord,
@@ -587,14 +588,25 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     return mongoPathRunRepository.claimRunForProcessing(next.id || next._id);
   },
 
-  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+  async getQueueStats(
+    options: AiPathRunQueueStatsOptions = {}
+  ): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
     await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
-    const filter = {
+    const baseFilter = buildRunFilter({
+      ...(options.userId ? { userId: options.userId } : {}),
+      ...(options.pathId ? { pathId: options.pathId } : {}),
+      ...(options.source ? { source: options.source, sourceMode: options.sourceMode } : {}),
       status: 'queued',
+    });
+    const retryFilter = {
       $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }],
     };
+    const filter =
+      Object.keys(baseFilter).length > 0
+        ? { $and: [baseFilter, retryFilter] }
+        : { status: 'queued', ...retryFilter };
     const [queuedCount, oldest] = await Promise.all([
       db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
       db

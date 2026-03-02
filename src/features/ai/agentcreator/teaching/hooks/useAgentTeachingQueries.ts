@@ -14,6 +14,7 @@ import {
   createPaginatedListQueryV2,
   createCreateMutationV2,
   createUpdateMutationV2,
+  createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 
@@ -38,7 +39,7 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
   { collectionId: string; queryText: string; topK?: number; minScore?: number }
   > {
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<
+  return createMutationV2<
     AgentTeachingChatSource[],
     { collectionId: string; queryText: string; topK?: number; minScore?: number }
   >({
@@ -63,7 +64,7 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
       source: 'agentTeaching.hooks.useSearchEmbeddingCollectionMutation',
       operation: 'action',
       resource: 'agent-teaching.embedding-collections.search',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'search'],
     },
@@ -75,7 +76,7 @@ export function useTeachingChatMutation(): MutationResult<
   { agentId: string; messages: SimpleChatMessage[] }
   > {
   const mutationKey = agentTeachingKeys.agents();
-  return createCreateMutationV2<
+  return createMutationV2<
     { message: string; sources: AgentTeachingChatSource[] },
     { agentId: string; messages: SimpleChatMessage[] }
   >({
@@ -86,7 +87,7 @@ export function useTeachingChatMutation(): MutationResult<
       source: 'agentTeaching.hooks.useTeachingChatMutation',
       operation: 'action',
       resource: 'agent-teaching.chat',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'chat'],
     },
@@ -105,7 +106,7 @@ export function useTeachingAgents(options?: {
       source: 'agentTeaching.hooks.useTeachingAgents',
       operation: 'list',
       resource: 'agent-teaching.agents',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'agents'],
     },
@@ -121,7 +122,7 @@ export function useTeachingCollections(): ListQuery<AgentTeachingEmbeddingCollec
       source: 'agentTeaching.hooks.useTeachingCollections',
       operation: 'list',
       resource: 'agent-teaching.embedding-collections',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'collections'],
     },
@@ -143,7 +144,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
       source: 'agentTeaching.hooks.useUpsertTeachingAgentMutation',
       operation: 'update',
       resource: 'agent-teaching.agents',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'agents', 'upsert'],
     },
@@ -160,7 +161,7 @@ export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: str
       source: 'agentTeaching.hooks.useDeleteTeachingAgentMutation',
       operation: 'delete',
       resource: 'agent-teaching.agents',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'agents', 'delete'],
     },
@@ -183,7 +184,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
       source: 'agentTeaching.hooks.useUpsertEmbeddingCollectionMutation',
       operation: 'update',
       resource: 'agent-teaching.embedding-collections',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'upsert'],
     },
@@ -200,7 +201,7 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { i
       source: 'agentTeaching.hooks.useDeleteEmbeddingCollectionMutation',
       operation: 'delete',
       resource: 'agent-teaching.embedding-collections',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'collections', 'delete'],
     },
@@ -231,9 +232,9 @@ export function useEmbeddingDocuments(
     enabled: true,
     meta: {
       source: 'agentTeaching.hooks.useEmbeddingDocuments',
-      operation: 'detail',
+      operation: 'list',
       resource: 'agent-teaching.embedding-documents',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-teaching', 'documents'],
     },
@@ -285,7 +286,7 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
       source: 'agentTeaching.hooks.useAddEmbeddingDocumentMutation',
       operation: 'create',
       resource: 'agent-teaching.embedding-documents',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'documents', 'create'],
     },
@@ -308,7 +309,7 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
       source: 'agentTeaching.hooks.useDeleteEmbeddingDocumentMutation',
       operation: 'delete',
       resource: 'agent-teaching.embedding-documents',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-teaching', 'documents', 'delete'],
     },

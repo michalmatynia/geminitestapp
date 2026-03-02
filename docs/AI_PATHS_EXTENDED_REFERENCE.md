@@ -9,6 +9,14 @@ This document is the detailed operator/developer reference for AI Paths:
 - how to safely change, test, and roll out path updates
 - how AI Paths documentation governance works
 
+## Current Code Map
+
+- shared core runtime: `src/shared/lib/ai-paths/core/`
+- feature UI/services: `src/features/ai/ai-paths/`
+- API routes: `src/app/api/ai-paths/`
+- worker queue: `src/features/ai/ai-paths/workers/aiPathRunQueue.ts`
+- queue bootstrap: `src/features/jobs/queue-init.ts`
+
 ## Path Lifecycle
 
 1. Author path graph in Admin UI.

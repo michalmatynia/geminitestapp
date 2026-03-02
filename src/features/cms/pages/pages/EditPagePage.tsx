@@ -26,6 +26,7 @@ import {
   SearchableList,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
+import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 
 export default function EditPagePageLoader(): React.JSX.Element {
   const { id } = useParams();
@@ -64,9 +65,6 @@ function EditPageContent({
     });
     return map;
   }, [allSlugs]);
-
-  const normalizePageSlugValues = (slugs: Page['slugs']): string[] =>
-    (slugs ?? []).map((slug): string => (typeof slug === 'string' ? slug : slug.slug));
 
   const initialSelectedSlugIds = useMemo((): string[] => {
     if (!allSlugs.length) return [];

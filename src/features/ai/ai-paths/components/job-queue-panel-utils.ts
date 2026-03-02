@@ -24,6 +24,11 @@ export type QueueStatus = {
   processing: boolean;
   activeRuns: number;
   concurrency: number;
+  waitingCount: number;
+  failedCount: number;
+  completedCount: number;
+  delayedCount?: number;
+  pausedCount?: number;
   lastPollTime: number;
   timeSinceLastPoll: number;
   queuedCount: number;

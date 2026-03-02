@@ -21,6 +21,7 @@ import { stripCaseContextQueryParams } from './useCaseResolverState.helpers.requ
 import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import { logCaseResolverDurationMetric } from '../runtime';
+import { deleteCaseResolverNodeFileSnapshot } from '../workspace-persistence';
 
 import { useAdminCaseResolverCaptureActions } from './useAdminCaseResolverCaptureActions';
 import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorUiState';
@@ -606,6 +607,7 @@ export function useAdminCaseResolverPageState() {
 
       const viewBeforeDelete = editorUi.workspaceView;
       const runDelete = (): void => {
+        const shouldDeleteNodeFileSnapshot = target.kind === 'node_file';
         updateWorkspace(
           (current: CaseResolverWorkspace) => {
             const exists = current.assets.some((asset) => asset.id === assetId);
@@ -622,6 +624,9 @@ export function useAdminCaseResolverPageState() {
           setSelectedFolderPath(null);
         }
         editorUi.preserveWorkspaceView(viewBeforeDelete);
+        if (shouldDeleteNodeFileSnapshot) {
+          void deleteCaseResolverNodeFileSnapshot(assetId, 'case_view_asset_delete');
+        }
       };
 
       if (!caseResolverSettings.confirmDeleteDocument) {

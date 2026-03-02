@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { usePathname } from 'next/navigation';
 import { runsApi } from '@/shared/lib/ai-paths';
-import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
   createDeleteMutationV2,
@@ -101,11 +101,12 @@ export type JobQueueContextValue = {
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
 const DEFAULT_AUTO_REFRESH_INTERVAL = 10000;
-const ACTIVE_RUN_REFRESH_MIN_MS = 5000;
+const ACTIVE_RUN_REFRESH_INTERVAL_MS = 1000;
 const IDLE_RUN_REFRESH_MIN_MS = 30000;
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
 const POLLING_JITTER_MS = 500;
-const QUEUE_STATUS_POLL_INTERVAL_MS = 5_000;
+const QUEUE_STATUS_POLL_INTERVAL_MS = 1_000;
+const BURST_REFRESH_WINDOW_MS = 15_000;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const AI_PATH_RUN_QUEUE_CHANNEL = 'ai-path-queue';
 
@@ -140,12 +141,16 @@ export function JobQueueProvider({
   const [historySelection, setHistorySelection] = useState<Record<string, string>>({});
   const [streamStatuses, setStreamStatuses] = useState<Record<string, StreamConnectionStatus>>({});
   const streamSourcesRef = useRef<Map<string, EventSource>>(new Map());
+  const forceFreshRunsRef = useRef(false);
+  const forceFreshQueueStatusRef = useRef(false);
+  const previousQueueSignatureRef = useRef<string | null>(null);
   const [pausedStreams, setPausedStreams] = useState<Set<string>>(new Set());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const [autoRefreshInterval, setAutoRefreshInterval] = useState(DEFAULT_AUTO_REFRESH_INTERVAL);
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   const [isWindowFocused, setIsWindowFocused] = useState(true);
+  const [burstRefreshUntil, setBurstRefreshUntil] = useState(0);
   const [clearScope, setClearScope] = useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = useState<AiPathRunRecord | null>(null);
   const [queueHistory, setQueueHistory] = useState<QueueHistoryEntry[]>([]);
@@ -224,10 +229,18 @@ export function JobQueueProvider({
     isDocumentVisible &&
     isWindowFocused &&
     isPanelActive;
+  const isBurstRefreshActive = burstRefreshUntil > Date.now();
+
+  const markBurstRefresh = useCallback((): void => {
+    setBurstRefreshUntil(Date.now() + BURST_REFRESH_WINDOW_MS);
+  }, []);
 
   const resolveRunsRefetchInterval = useCallback(
     (query: { state: { data?: { runs?: AiPathRunRecord[] } } }): number | false => {
       if (!effectiveAutoRefreshEnabled) return false;
+      if (isBurstRefreshActive) {
+        return ACTIVE_RUN_REFRESH_INTERVAL_MS + Math.floor(Math.random() * POLLING_JITTER_MS);
+      }
       const runs = query.state.data?.runs ?? [];
       const hasActiveRuns = runs.some((run) =>
         ACTIVE_RUN_STATUSES.has(
@@ -236,14 +249,13 @@ export function JobQueueProvider({
             .toLowerCase()
         )
       );
-      return (
-        (hasActiveRuns
-          ? Math.max(ACTIVE_RUN_REFRESH_MIN_MS, autoRefreshInterval)
-          : Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval)) +
-        Math.floor(Math.random() * POLLING_JITTER_MS)
-      );
+      if (hasActiveRuns) {
+        return ACTIVE_RUN_REFRESH_INTERVAL_MS + Math.floor(Math.random() * POLLING_JITTER_MS);
+      }
+      return Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval) +
+        Math.floor(Math.random() * POLLING_JITTER_MS);
     },
-    [autoRefreshInterval, effectiveAutoRefreshEnabled]
+    [autoRefreshInterval, effectiveAutoRefreshEnabled, isBurstRefreshActive]
   );
 
   const runsQuery = createListQueryV2<
@@ -254,20 +266,25 @@ export function JobQueueProvider({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
       sourceMode,
+      visibility: visibility,
       query: normalizedQuery,
       status: statusFilter,
       page,
       pageSize,
     }),
     queryFn: async () => {
+      const fresh = forceFreshRunsRef.current;
+      forceFreshRunsRef.current = false;
       const options = {
         pathId: normalizedPathFilter || undefined,
         source: normalizedSourceFilter || undefined,
         sourceMode,
+        visibility: visibility,
         query: normalizedQuery || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         limit: pageSize,
         offset,
+        ...(fresh ? { fresh: true } : {}),
       };
       const response = await runsApi.list(options);
       if (!response.ok) throw new Error(response.error);
@@ -283,6 +300,7 @@ export function JobQueueProvider({
         pathId: normalizedPathFilter,
         source: normalizedSourceFilter,
         sourceMode,
+        visibility: visibility,
         query: normalizedQuery,
         status: statusFilter,
         page,
@@ -294,23 +312,52 @@ export function JobQueueProvider({
   });
 
   const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
-    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
+    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: visibility }),
     queryFn: async () => {
-      const response = await runsApi.queueStatus();
+      const fresh = forceFreshQueueStatusRef.current;
+      forceFreshQueueStatusRef.current = false;
+      const response = await runsApi.queueStatus({
+        visibility: visibility,
+        ...(fresh ? { fresh: true } : {}),
+      });
       if (!response.ok) throw new Error(response.error);
       return response.data as { status: QueueStatus };
     },
     enabled: isPanelActive,
-    refetchInterval: isPanelActive ? QUEUE_STATUS_POLL_INTERVAL_MS : false,
+    refetchInterval: effectiveAutoRefreshEnabled
+      ? QUEUE_STATUS_POLL_INTERVAL_MS + Math.floor(Math.random() * POLLING_JITTER_MS)
+      : false,
     meta: {
       source: 'ai-paths.job-queue',
       operation: 'polling',
       resource: 'ai-path-runs-queue-status',
-      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
+      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: visibility }),
       domain: 'global',
       criticality: 'normal',
     },
   });
+
+  const refetchQueueData = useCallback(
+    (options?: {
+      fresh?: boolean;
+      includeRuns?: boolean;
+      includeQueueStatus?: boolean;
+      markBurst?: boolean;
+    }): void => {
+      const includeRuns = options?.includeRuns !== false;
+      const includeQueueStatus = options?.includeQueueStatus !== false;
+      if (options?.fresh) {
+        if (includeRuns) forceFreshRunsRef.current = true;
+        if (includeQueueStatus) forceFreshQueueStatusRef.current = true;
+      }
+      if (options?.markBurst) {
+        markBurstRefresh();
+      }
+      if (includeRuns) void runsQuery.refetch();
+      if (includeQueueStatus) void queueStatusQuery.refetch();
+    },
+    [markBurstRefresh, queueStatusQuery, runsQuery]
+  );
 
   const clearRunsMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
@@ -327,7 +374,7 @@ export function JobQueueProvider({
     onSuccess: (res) => {
       toast(`Cleared ${res.deleted} runs.`, { variant: 'success' });
       setClearScope(null);
-      void runsQuery.refetch();
+      refetchQueueData({ fresh: true, markBurst: true });
     },
     meta: {
       source: 'ai-paths.job-queue',
@@ -348,7 +395,7 @@ export function JobQueueProvider({
     },
     onSuccess: () => {
       toast('Run canceled.', { variant: 'success' });
-      void runsQuery.refetch();
+      refetchQueueData({ fresh: true, markBurst: true });
     },
     meta: {
       source: 'ai-paths.job-queue',
@@ -369,7 +416,7 @@ export function JobQueueProvider({
     onSuccess: (_, _runId) => {
       setRunToDelete(null);
       toast('Run deleted.', { variant: 'success' });
-      void runsQuery.refetch();
+      refetchQueueData({ fresh: true, markBurst: true });
     },
     meta: {
       source: 'ai-paths.job-queue',
@@ -478,6 +525,25 @@ export function JobQueueProvider({
   useEffect(() => {
     if (!queueStatusQuery.data?.status) return;
     const status = queueStatusQuery.data.status;
+    const signature = JSON.stringify({
+      queuedCount: status.queuedCount ?? 0,
+      activeRuns: status.activeRuns ?? 0,
+      waitingCount: status.waitingCount ?? 0,
+      delayedCount: status.delayedCount ?? 0,
+      failedCount: status.failedCount ?? 0,
+    });
+    if (
+      previousQueueSignatureRef.current !== null &&
+      previousQueueSignatureRef.current !== signature &&
+      isPanelActive
+    ) {
+      refetchQueueData({
+        fresh: true,
+        includeQueueStatus: false,
+        markBurst: true,
+      });
+    }
+    previousQueueSignatureRef.current = signature;
     setQueueHistory((prev) => {
       const next = [
         ...prev,
@@ -490,14 +556,13 @@ export function JobQueueProvider({
       ];
       return next.slice(-120);
     });
-  }, [queueStatusQuery.data?.status]);
+  }, [isPanelActive, queueStatusQuery.data?.status, refetchQueueData]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const refreshQueueViews = (): void => {
       if (!isPanelActive) return;
-      void runsQuery.refetch();
-      void queueStatusQuery.refetch();
+      refetchQueueData({ fresh: true, markBurst: true });
     };
 
     const handleWindowEvent = (): void => {
@@ -524,7 +589,7 @@ export function JobQueueProvider({
         channel.close();
       }
     };
-  }, [isPanelActive, runsQuery.refetch, queueStatusQuery.refetch]);
+  }, [isPanelActive, refetchQueueData]);
 
   useEffect(() => {
     streamSourcesRef.current.forEach((source, runId) => {
@@ -675,8 +740,7 @@ export function JobQueueProvider({
       isDeletingRun: (id: string) =>
         deleteRunMutation.isPending && deleteRunMutation.variables === id,
       refetchQueueData: () => {
-        void runsQuery.refetch();
-        void queueStatusQuery.refetch();
+        refetchQueueData({ fresh: true, markBurst: true });
       },
       handleClearRuns: async (scope: 'terminal' | 'all') => {
         await clearRunsMutation.mutateAsync(scope);
@@ -721,8 +785,7 @@ export function JobQueueProvider({
       cancelRunMutation.variables,
       deleteRunMutation.isPending,
       deleteRunMutation.variables,
-      runsQuery.refetch,
-      queueStatusQuery.refetch,
+      refetchQueueData,
       clearRunsMutation.mutateAsync,
       cancelRunMutation.mutateAsync,
       deleteRunMutation.mutateAsync,

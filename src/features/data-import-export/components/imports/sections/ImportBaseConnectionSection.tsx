@@ -10,6 +10,7 @@ import {
   FormField,
   Hint,
   ToggleRow,
+  Card,
 } from '@/shared/ui';
 import type {
   InventoryOption,
@@ -55,112 +56,127 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
 
   return (
     <FormSection
-      title='Base.com'
-      description='Connected via Integrations. Load inventories to start importing.'
+      title='Base.com Connection'
+      description='Connect to Base.com, load inventories, and configure import settings.'
       actions={
         <StatusBadge
           status={isBaseConnected ? 'Connected' : 'Disconnected'}
           variant={isBaseConnected ? 'success' : 'error'}
         />
       }
-      className='p-4'
+      className='p-6'
     >
-      <div className='mt-4 space-y-4'>
-        <FormField label='Base connection for import'>
-          <SelectSimple
-            size='sm'
-            value={selectedBaseConnectionId || '__none__'}
-            onValueChange={(v: string): void =>
-              setSelectedBaseConnectionId(v === '__none__' ? '' : v)
-            }
-            disabled={baseConnections.length === 0}
-            options={[
-              { value: '__none__', label: 'Select a connection...' },
-              ...baseConnections.map((connection) => ({
-                value: connection.id,
-                label: connection.name,
-              })),
-            ]}
-            placeholder={
-              baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
-            }
-            triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-          />
-          <div className='mt-2 flex flex-wrap items-center gap-2'>
-            <Button
-              type='button'
-              size='sm'
-              variant='secondary'
-              onClick={(): void => {
-                void handleSaveDefaultBaseConnection();
-              }}
-              disabled={!selectedBaseConnectionId}
-              loading={savingDefaultConnection}
-              loadingText='Saving...'
-            >
-              Set as default Base connection
-            </Button>
-            <Hint>Saves this connection for import/export tools and one-click export.</Hint>
-          </div>
-        </FormField>
-
-        <div className='flex flex-wrap items-end gap-3'>
-          <Button
-            onClick={(): void => {
-              void handleLoadInventories();
-            }}
-            disabled={!selectedBaseConnectionId}
-            loading={loadingInventories}
-            loadingText='Loading inventories...'
-            className='h-9'
+      <div className='space-y-6'>
+        {/* Connection Setup */}
+        <div className='grid gap-6 md:grid-cols-2'>
+          <FormField
+            label='Base Connection'
+            description='Select which Base.com account to use for this import.'
           >
-            Load inventories
-          </Button>
-          <FormField label='Inventory' className='flex-1 min-w-[200px]'>
-            <SelectSimple
-              size='sm'
-              value={inventoryId}
-              onValueChange={setInventoryId}
-              disabled={inventories.length === 0}
-              options={inventories.map((inv: InventoryOption) => ({
-                value: inv.id,
-                label: inv.name,
-              }))}
-              placeholder={inventories.length === 0 ? 'Load inventories first' : 'Select inventory'}
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-            />
+            <div className='space-y-3'>
+              <SelectSimple
+                size='sm'
+                value={selectedBaseConnectionId || '__none__'}
+                onValueChange={(v: string): void =>
+                  setSelectedBaseConnectionId(v === '__none__' ? '' : v)
+                }
+                disabled={baseConnections.length === 0}
+                options={[
+                  { value: '__none__', label: 'Select a connection...' },
+                  ...baseConnections.map((connection) => ({
+                    value: connection.id,
+                    label: connection.name,
+                  })),
+                ]}
+                placeholder={
+                  baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
+                }
+              />
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => {
+                  void handleSaveDefaultBaseConnection();
+                }}
+                disabled={!selectedBaseConnectionId}
+                loading={savingDefaultConnection}
+                loadingText='Saving...'
+                className='w-full'
+              >
+                Set as default connection
+              </Button>
+            </div>
           </FormField>
-          <Button
-            type='button'
-            variant='secondary'
-            onClick={(): void => {
-              void handleClearInventory();
-            }}
-            disabled={!inventoryId}
-            className='h-9'
+
+          <FormField
+            label='Inventory & Limits'
+            description='Load and select an inventory to fetch products from.'
           >
-            Clear inventory
-          </Button>
-          <FormField label='Limit' className='w-40'>
-            <SelectSimple
-              size='sm'
-              value={limit}
-              onValueChange={setLimit}
-              options={[
-                { value: '1', label: '1' },
-                { value: '5', label: '5' },
-                { value: '10', label: '10' },
-                { value: '50', label: '50' },
-                { value: '100', label: '100' },
-                { value: 'all', label: 'All' },
-              ]}
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
-            />
+            <div className='space-y-3'>
+              <div className='flex gap-2'>
+                <SelectSimple
+                  size='sm'
+                  value={inventoryId}
+                  onValueChange={setInventoryId}
+                  disabled={inventories.length === 0}
+                  options={inventories.map((inv: InventoryOption) => ({
+                    value: inv.id,
+                    label: inv.name,
+                  }))}
+                  placeholder={
+                    inventories.length === 0 ? 'Load inventories first' : 'Select inventory'
+                  }
+                  className='flex-1'
+                />
+                <SelectSimple
+                  size='sm'
+                  value={limit}
+                  onValueChange={setLimit}
+                  options={[
+                    { value: '1', label: '1' },
+                    { value: '5', label: '5' },
+                    { value: '10', label: '10' },
+                    { value: '50', label: '50' },
+                    { value: '100', label: '100' },
+                    { value: 'all', label: 'All' },
+                  ]}
+                  className='w-20'
+                />
+              </div>
+              <div className='flex gap-2'>
+                <Button
+                  size='xs'
+                  variant='secondary'
+                  onClick={(): void => {
+                    void handleLoadInventories();
+                  }}
+                  disabled={!selectedBaseConnectionId}
+                  loading={loadingInventories}
+                  loadingText='Loading...'
+                  className='flex-1'
+                >
+                  Load inventories
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={(): void => {
+                    void handleClearInventory();
+                  }}
+                  disabled={!inventoryId}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
           </FormField>
         </div>
 
-        <div className='grid gap-4 md:grid-cols-2'>
-          <FormField label='Catalog'>
+        {/* Catalog & Template */}
+        <Card variant='glass' padding='md' className='grid gap-6 md:grid-cols-2 bg-white/5'>
+          <FormField label='Destination Catalog'>
             <SelectSimple
               size='sm'
               value={catalogId || '__none__'}
@@ -174,10 +190,9 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 })),
               ]}
               placeholder={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'}
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
           </FormField>
-          <FormField label='Import template'>
+          <FormField label='Import Template (Optional)'>
             <SelectSimple
               size='sm'
               value={importTemplateId || '__none__'}
@@ -191,13 +206,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 })),
               ]}
               placeholder='No template'
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
           </FormField>
-        </div>
+        </Card>
 
-        <div className='grid gap-4 md:grid-cols-3'>
-          <FormField label='Images'>
+        {/* Import Settings */}
+        <div className='grid gap-6 md:grid-cols-3'>
+          <FormField label='Image Handling'>
             <SelectSimple
               size='sm'
               value={imageMode}
@@ -206,24 +221,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 { value: 'links', label: 'Import image links' },
                 { value: 'download', label: 'Download product images' },
               ]}
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
             <Hint className='mt-2'>
-              Image links keep Base.com URLs. Download stores images in your uploads folder.
+              Download stores images locally in your uploads folder.
             </Hint>
           </FormField>
-          <FormField label='SKU Handling'>
-            <ToggleRow
-              label='Allow duplicate SKUs'
-              checked={allowDuplicateSku}
-              onCheckedChange={setAllowDuplicateSku}
-              className='border-none bg-transparent hover:bg-transparent p-0'
-            />
-            <Hint className='mt-2'>
-              When unchecked, products with existing SKUs will be skipped.
-            </Hint>
-          </FormField>
-          <FormField label='Import behavior'>
+
+          <FormField label='Import Strategy'>
             <SelectSimple
               size='sm'
               value={importMode}
@@ -231,38 +235,47 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 setImportMode(value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku')
               }
               options={[
-                {
-                  value: 'upsert_on_base_id',
-                  label: 'Upsert by Base ID',
-                },
-                {
-                  value: 'upsert_on_sku',
-                  label: 'Upsert by SKU',
-                },
-                {
-                  value: 'create_only',
-                  label: 'Create only',
-                },
+                { value: 'upsert_on_base_id', label: 'Upsert by Base ID' },
+                { value: 'upsert_on_sku', label: 'Upsert by SKU' },
+                { value: 'create_only', label: 'Create only' },
               ]}
-              triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
+            <div className='mt-3'>
+              <ToggleRow
+                label='Dry-run mode'
+                checked={importDryRun}
+                onCheckedChange={setImportDryRun}
+                className='border-none bg-transparent hover:bg-transparent p-0'
+                labelClassName='text-[11px] font-medium'
+              />
+            </div>
+          </FormField>
+
+          <FormField label='Validation'>
             <ToggleRow
-              label='Dry-run only'
-              checked={importDryRun}
-              onCheckedChange={setImportDryRun}
-              className='mt-3 border-none bg-transparent hover:bg-transparent p-0'
+              label='Allow duplicate SKUs'
+              checked={allowDuplicateSku}
+              onCheckedChange={setAllowDuplicateSku}
+              className='border-none bg-transparent hover:bg-transparent p-0'
+              labelClassName='text-[11px] font-medium'
             />
+            <Hint className='mt-2'>
+              Existing SKUs will be skipped if unchecked.
+            </Hint>
           </FormField>
         </div>
 
-        <div className='flex items-center justify-between gap-4'>
-          <Hint>Default catalog and price group must be configured before import.</Hint>
+        {/* Actions */}
+        <div className='flex items-center justify-between gap-4 border-t border-white/5 pt-6'>
+          <Hint variant='warning'>Ensure catalog and price group are correctly configured.</Hint>
           <Button
+            size='lg'
             onClick={(): void => {
               void handleImport();
             }}
             loading={importing}
             loadingText='Processing...'
+            className='px-8 shadow-lg shadow-primary/20'
           >
             {importDryRun ? 'Run dry-run' : 'Import products'}
           </Button>

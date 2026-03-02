@@ -15,6 +15,7 @@ import {
   createListQueryV2,
   createPaginatedListQueryV2,
   createSingleQueryV2,
+  prefetchQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -122,7 +123,7 @@ export function useProductsWithCount(
       error instanceof Error ? error : new Error('Failed to load products.'),
     meta: {
       source: 'products.hooks.useProductsWithCount',
-      operation: 'detail',
+      operation: 'list',
       resource: 'products.paged',
       domain: 'products',
       queryKey,
@@ -152,14 +153,22 @@ export function useProductsWithCount(
 
     if (queryClient.getQueryData(nextQueryKey) !== undefined) return;
 
-    void queryClient.prefetchQuery({
+    void prefetchQueryV2(queryClient, {
       queryKey: nextQueryKey,
       queryFn: async () => {
         const { products, total } = await getProductsWithCount(nextFilters);
         return { items: products, total };
       },
       staleTime: PRODUCTS_STALE_MS,
-    });
+      meta: {
+        source: 'products.hooks.useProductsWithCount.prefetch',
+        operation: 'list',
+        resource: 'products.paged',
+        domain: 'products',
+        queryKey: nextQueryKey,
+        tags: ['products', 'list', 'prefetch'],
+      },
+    })();
   }, [enabled, filters, query.data, queryClient]);
 
   const refetch = useCallback(async (): Promise<void> => {

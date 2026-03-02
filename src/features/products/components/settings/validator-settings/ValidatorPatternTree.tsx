@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  MasterFolderTreeRuntimeProvider,
+  useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
@@ -171,8 +170,8 @@ export function ValidatorPatternTree(): React.JSX.Element {
   const {
     appearance: { rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'validator_pattern_tree',
     nodes: masterNodes,
     initiallyExpandedNodeIds: masterNodes
@@ -261,33 +260,31 @@ export function ValidatorPatternTree(): React.JSX.Element {
   const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
 
   return (
-    <MasterFolderTreeRuntimeProvider>
-      <ValidatorPatternTreeContext.Provider value={contextValue}>
-        <FolderTreePanel masterInstance='validator_pattern_tree'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            rootDropUi={rootDropUi}
-            renderNode={renderNode}
-            enableDnd={!isPending}
-            emptyLabel='No patterns — click Add Pattern to create the first one'
-          />
-        </FolderTreePanel>
-        {selectedGroupId && selectedGroupDraft && (
-          <GroupSettingsPanel
-            groupId={selectedGroupId}
-            draft={selectedGroupDraft}
-            setGroupDrafts={setGroupDrafts}
-            onSave={(): void => {
-              void handleSaveSequenceGroup(selectedGroupId);
-            }}
-            onUngroup={(): void => {
-              void handleUngroup(selectedGroupId);
-            }}
-            isPending={isPending}
-          />
-        )}
-      </ValidatorPatternTreeContext.Provider>
-    </MasterFolderTreeRuntimeProvider>
+    <ValidatorPatternTreeContext.Provider value={contextValue}>
+      <FolderTreePanel masterInstance='validator_pattern_tree'>
+        <FolderTreeViewportV2
+          controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
+          rootDropUi={rootDropUi}
+          renderNode={renderNode}
+          enableDnd={!isPending}
+          emptyLabel='No patterns — click Add Pattern to create the first one'
+        />
+      </FolderTreePanel>
+      {selectedGroupId && selectedGroupDraft && (
+        <GroupSettingsPanel
+          groupId={selectedGroupId}
+          draft={selectedGroupDraft}
+          setGroupDrafts={setGroupDrafts}
+          onSave={(): void => {
+            void handleSaveSequenceGroup(selectedGroupId);
+          }}
+          onUngroup={(): void => {
+            void handleUngroup(selectedGroupId);
+          }}
+          isPending={isPending}
+        />
+      )}
+    </ValidatorPatternTreeContext.Provider>
   );
 }

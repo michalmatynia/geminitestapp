@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { type CaseResolverRequestedCaseStatus } from '../types';
+import type {
+  CaseResolverFile,
+  CaseResolverWorkspace,
+  CaseResolverRequestedCaseStatus,
+} from '@/shared/contracts/case-resolver';
 import {
   resolveCaseContainerIdForFileId,
   resolveCaseContainerIdForFolderPath,

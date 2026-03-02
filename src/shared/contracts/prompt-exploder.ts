@@ -906,6 +906,33 @@ export type BenchmarkSuggestionPreparation = {
   invalidSegmentTitles: string[];
 };
 
+/**
+ * Prompt Exploder Tree DTOs
+ */
+
+export const promptExploderTreeNodeKindSchema = z.enum([
+  'segment',
+  'list_item',
+  'subsection',
+  'subsection_item',
+  'hierarchy_item',
+]);
+
+export type PromptExploderTreeNodeKind = z.infer<typeof promptExploderTreeNodeKindSchema>;
+
+export const promptExploderTreeMetadataSchema = z.object({
+  kind: promptExploderTreeNodeKindSchema,
+  entityId: z.string(),
+  parentEntityId: z.string().nullable().optional(),
+  segmentType: z.string().nullable().optional(),
+  code: z.string().nullable().optional(),
+  condition: z.string().nullable().optional(),
+  guidance: z.string().nullable().optional(),
+  logicalOperator: z.string().nullable().optional(),
+});
+
+export type PromptExploderTreeMetadata = z.infer<typeof promptExploderTreeMetadataSchema>;
+
 export type ParsedPromptHeading = {
   code: string | null;
   title: string;

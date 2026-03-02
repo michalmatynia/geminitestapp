@@ -15,6 +15,7 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { forbiddenError } from '@/shared/errors/app-error';
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
@@ -41,6 +42,12 @@ const runsListResponseCache = new Map<
   string,
   { expiresAt: number; payload: { runs: unknown[]; total: number } }
 >();
+
+export const __testOnly = {
+  clearRunsListResponseCache(): void {
+    runsListResponseCache.clear();
+  },
+};
 
 const pruneRunsListResponseCache = (now: number): void => {
   for (const [key, entry] of runsListResponseCache.entries()) {
@@ -96,6 +103,8 @@ const TERMINAL_STATUSES: AiPathRunStatus[] = ['completed', 'failed', 'canceled',
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const url = new URL(req.url);
+  const visibilityParam = url.searchParams.get('visibility')?.trim().toLowerCase() || 'scoped';
+  const visibility = visibilityParam === 'global' ? 'global' : 'scoped';
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
   const nodeId = url.searchParams.get('nodeId')?.trim() || undefined;
   const query = url.searchParams.get('query')?.trim() || undefined;
@@ -114,6 +123,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     includeTotalParam === 'false' ||
     includeTotalParam === 'no'
   );
+  const freshParam = url.searchParams.get('fresh')?.trim().toLowerCase();
+  const fresh = freshParam === '1' || freshParam === 'true' || freshParam === 'yes';
   const limitRaw = limitParam ? Number.parseInt(limitParam, 10) : NaN;
   const offsetRaw = offsetParam ? Number.parseInt(offsetParam, 10) : NaN;
   const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : undefined;
@@ -121,8 +132,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const repo = await getPathRunRepository();
   scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
+  if (visibility === 'global' && !hasGlobalRunAccess) {
+    throw forbiddenError('Global run access denied.');
+  }
   const cacheKey = JSON.stringify({
-    userScope: hasGlobalRunAccess ? 'global' : access.userId,
+    visibility,
+    userScope: visibility === 'global' ? 'global' : access.userId,
     pathId: pathId ?? null,
     nodeId: nodeId ?? null,
     query: query ?? null,
@@ -134,7 +149,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     includeTotal,
   });
   const now = Date.now();
-  if (runsListResponseCacheTtlMs > 0) {
+  if (!fresh && runsListResponseCacheTtlMs > 0) {
     pruneRunsListResponseCache(now);
     const cached = runsListResponseCache.get(cacheKey);
     if (cached && cached.expiresAt > now) {
@@ -147,7 +162,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     }
   }
   const result = await repo.listRuns({
-    ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),
+    ...(visibility === 'scoped' ? { userId: access.userId } : {}),
     ...(pathId ? { pathId } : {}),
     ...(nodeId ? { nodeId } : {}),
     ...(query ? { query } : {}),
@@ -157,7 +172,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(offset !== undefined ? { offset } : {}),
     ...(includeTotal ? {} : { includeTotal: false }),
   });
-  if (runsListResponseCacheTtlMs > 0) {
+  if (!fresh && runsListResponseCacheTtlMs > 0) {
     runsListResponseCache.set(cacheKey, {
       expiresAt: now + runsListResponseCacheTtlMs,
       payload: result as { runs: unknown[]; total: number },

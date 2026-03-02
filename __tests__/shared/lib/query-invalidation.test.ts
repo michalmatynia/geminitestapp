@@ -161,6 +161,30 @@ describe('query-invalidation helpers', () => {
       expect(data?.runs[1]?.id).toBe('run-existing');
     });
 
+    it('optimistically prepends queued run into matching global queue cache', () => {
+      const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
+        visibility: 'global',
+        status: 'all',
+        page: 1,
+        pageSize: 25,
+      });
+      queryClient.setQueryData(queryKey, {
+        runs: [createRun({ id: 'run-existing' })],
+        total: 1,
+      });
+
+      helpers.optimisticallyInsertAiPathRunInQueueCache(
+        queryClient,
+        createRun({ id: 'run-global', status: 'queued' })
+      );
+
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(
+        queryKey
+      );
+      expect(data?.total).toBe(2);
+      expect(data?.runs[0]?.id).toBe('run-global');
+    });
+
     it('does not add queued run into completed-only cache', () => {
       const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
         status: 'completed',
@@ -193,6 +217,17 @@ describe('query-invalidation helpers', () => {
 
       expect(listener).toHaveBeenCalled();
       window.removeEventListener('ai-path-run-enqueued', listener as EventListener);
+    });
+
+    it('invalidates queue and queue-status using prefix keys', async () => {
+      await helpers.invalidateAiPathQueue(queryClient);
+
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'],
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'],
+      });
     });
   });
 });

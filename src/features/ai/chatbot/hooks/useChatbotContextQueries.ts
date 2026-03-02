@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
 import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
@@ -25,7 +23,7 @@ export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
       source: 'chatbot.hooks.useChatbotContextSettingsQuery',
       operation: 'list',
       resource: 'chatbot.context.settings',
-      domain: 'global',
+      domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'context', 'settings'],
     },
@@ -36,7 +34,6 @@ export function useSaveChatbotContextMutation(): MutationResult<
   SettingRecord,
   { key: string; value: string; errorLabel: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('save-context');
   return createUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
     mutationFn: ({ key, value, errorLabel }) => chatbotApi.saveSetting(key, value, errorLabel),
@@ -45,15 +42,11 @@ export function useSaveChatbotContextMutation(): MutationResult<
       source: 'chatbot.hooks.useSaveChatbotContextMutation',
       operation: 'update',
       resource: 'chatbot.context.settings',
-      domain: 'global',
+      domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'context', 'settings', 'save'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
-      });
-    },
+    invalidateKeys: [QUERY_KEYS.ai.chatbot.settings.allSettings('global-context')],
   });
 }
 
@@ -70,9 +63,9 @@ export function useUploadChatbotContextPdfMutation(): MutationResult<
     mutationKey,
     meta: {
       source: 'chatbot.hooks.useUploadChatbotContextPdfMutation',
-      operation: 'upload',
+      operation: 'create',
       resource: 'chatbot.context.pdf',
-      domain: 'global',
+      domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'context', 'upload', 'pdf'],
     },

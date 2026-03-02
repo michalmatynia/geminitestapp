@@ -94,3 +94,52 @@ export const caseResolverPdfExtractionPresetIdSchema = z.enum([
 export type CaseResolverPdfExtractionPresetId = z.infer<
   typeof caseResolverPdfExtractionPresetIdSchema
 >;
+
+export type CaseResolverWorkspaceNormalizationDiagnostics = {
+  ownershipRepairedCount: number;
+  ownershipUnresolvedCount: number;
+  droppedDuplicateCount: number;
+};
+
+export type CaseViewMode = 'list' | 'hierarchy';
+export type CaseSortKey =
+  | 'updated'
+  | 'created'
+  | 'happeningDate'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
+export type CaseSortOrder = 'asc' | 'desc';
+export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
+export type CaseFileTypeFilter = 'all' | 'case' | 'document' | 'scanfile' | 'note';
+export type CaseStatusFilter = 'all' | 'pending' | 'completed';
+export type CaseLockedFilter = 'all' | 'locked' | 'unlocked';
+export type CaseSentFilter = 'all' | 'sent' | 'not_sent';
+export type CaseHierarchyFilter = 'all' | 'root' | 'child';
+export type CaseReferencesFilter = 'all' | 'with_references' | 'without_references';
+
+export type CaseListViewDefaults = {
+  viewMode: CaseViewMode;
+  sortBy: CaseSortKey;
+  sortOrder: CaseSortOrder;
+  searchScope: CaseSearchScope;
+  filtersCollapsedByDefault: boolean;
+  showNestedContent: boolean;
+};
+
+export type CaseResolverRequestedContextStatus =
+  | 'idle'
+  | 'loading'
+  | 'ready'
+  | 'missing_not_found'
+  | 'missing_unavailable';
+
+export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
+
+export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
+export type CaseResolverRequestedCaseIssue = 'requested_file_missing' | 'workspace_unavailable';
+
+export type WorkspaceView = 'document' | 'relations';
+export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';

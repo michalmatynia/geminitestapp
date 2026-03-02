@@ -6,7 +6,7 @@ import type {
   ProductListingWithDetails,
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
-import { StatusBadge, Card, Button } from '@/shared/ui';
+import { StatusBadge, Card, PropertyRow, Hint } from '@/shared/ui';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
@@ -48,85 +48,98 @@ export function ProductListingDetails({
   };
 
   return (
-    <div className='flex-1'>
-      <div className='flex items-center gap-2'>
-        <span className='font-medium text-white'>{listing.integration.name}</span>
+    <div className='flex-1 min-w-0'>
+      <div className='flex items-center gap-2 mb-2'>
+        <span className='font-semibold text-white truncate'>{listing.integration.name}</span>
         <StatusBadge status={listing.status} />
       </div>
-      <p className='mt-1 text-xs text-gray-400'>Account: {listing.connection.name}</p>
-      {listing.externalListingId && (
-        <p className='text-xs text-gray-500'>External ID: {listing.externalListingId}</p>
-      )}
-      {listing.inventoryId && (
-        <p className='text-xs text-gray-500'>Inventory ID: {listing.inventoryId}</p>
-      )}
-      <div className='mt-2 space-y-1 text-xs text-gray-500'>
-        <p>Last export: {formatTimestamp(listing.listedAt)}</p>
-        {isTraderaListing && (
-          <>
-            <p>Expires: {formatTimestamp(listing.expiresAt)}</p>
-            <p>Next relist: {formatTimestamp(listing.nextRelistAt)}</p>
-            <p>Relist attempts: {listing.relistAttempts ?? 0}</p>
-          </>
+
+      <div className='grid gap-y-1.5'>
+        <PropertyRow label='Account' value={listing.connection.name} />
+        {listing.externalListingId && (
+          <PropertyRow label='External ID' value={listing.externalListingId} mono />
         )}
-        <p>Created: {formatTimestamp(listing.createdAt)}</p>
-        <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
-        {listing.failureReason ? (
-          <p className='text-red-300/90'>Failure: {listing.failureReason}</p>
-        ) : null}
-        {isBaseListing && <p>Exported fields: {getExportFieldsLabel()}</p>}
+        {listing.inventoryId && (
+          <PropertyRow label='Inventory ID' value={listing.inventoryId} mono />
+        )}
+
+        <div className='mt-1 pt-2 border-t border-white/5 space-y-1'>
+          <PropertyRow label='Last export' value={formatTimestamp(listing.listedAt)} variant='subtle' />
+          {isTraderaListing && (
+            <>
+              <PropertyRow label='Expires' value={formatTimestamp(listing.expiresAt)} variant='subtle' />
+              <PropertyRow label='Next relist' value={formatTimestamp(listing.nextRelistAt)} variant='subtle' />
+              <PropertyRow label='Relist attempts' value={String(listing.relistAttempts ?? 0)} variant='subtle' />
+            </>
+          )}
+          <PropertyRow label='Created' value={formatTimestamp(listing.createdAt)} variant='subtle' />
+          {listing.failureReason ? (
+            <PropertyRow
+              label='Failure'
+              value={listing.failureReason}
+              valueClassName='text-red-400 font-medium'
+            />
+          ) : null}
+          {isBaseListing && <PropertyRow label='Exported fields' value={getExportFieldsLabel()} variant='subtle' />}
+        </div>
       </div>
+
       {listing.exportHistory && listing.exportHistory.length > 0 ? (
-        <Card variant='subtle-compact' padding='sm' className='mt-3 bg-card/50'>
-          <div className='flex items-center justify-between'>
-            <p className='text-[10px] uppercase tracking-wide text-gray-500'>Export history</p>
-            <Button
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={(): void =>
-                setHistoryOpenByListing((prev) => ({
-                  ...prev,
-                  [listing.id]: !(prev[listing.id] ?? false),
-                }))
-              }
-              className='text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200'
-            >
+        <Card variant='glass' padding='none' className='mt-4 bg-white/5 overflow-hidden'>
+          <button
+            type='button'
+            onClick={(): void =>
+              setHistoryOpenByListing((prev: Record<string, boolean>) => ({
+                ...prev,
+                [listing.id]: !(prev[listing.id] ?? false),
+              }))
+            }
+            className='flex w-full items-center justify-between p-2 hover:bg-white/5 transition-colors group'
+          >
+            <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-gray-400'>
+              Export history ({listing.exportHistory?.length ?? 0})
+            </span>
+            <span className='text-[10px] text-gray-500 font-bold uppercase'>
               {(historyOpenByListing[listing.id] ?? false) ? 'Hide' : 'Show'}
-            </Button>
-          </div>
+            </span>
+          </button>
           {(historyOpenByListing[listing.id] ?? false) ? (
-            <div className='mt-2 space-y-2 text-xs text-gray-400'>
-              {listing.exportHistory
-                .slice(0, 5)
+            <div className='p-3 space-y-3 border-t border-white/5 max-h-60 overflow-y-auto'>
+              {(listing.exportHistory ?? [])
+                .slice(0, 10)
                 .map((event: ProductListingExportEvent, index: number) => (
-                  <div key={`${listing.id}-export-${index}`} className='grid gap-1'>
-                    <div className='flex items-center justify-between text-gray-300'>
-                      <span>{formatTimestamp(event.exportedAt)}</span>
-                      <span className='uppercase text-[10px] text-gray-500'>
-                        {event.status ?? 'success'}
+                  <div key={`${listing.id}-export-${index}`} className='space-y-1.5'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-[10px] font-mono text-gray-400'>
+                        {formatTimestamp(event.exportedAt)}
                       </span>
+                      <StatusBadge status={event.status ?? 'success'} size='sm' />
                     </div>
-                    <div className='grid gap-1'>
-                      <span>Inventory: {formatListValue(event.inventoryId)}</span>
-                      <span>Template: {formatListValue(event.templateId)}</span>
-                      <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                    <div className='grid gap-1 px-1'>
+                      <PropertyRow label='Inventory' value={formatListValue(event.inventoryId)} variant='subtle' />
+                      <PropertyRow label='Template' value={formatListValue(event.templateId)} variant='subtle' />
+                      <PropertyRow label='Warehouse' value={formatListValue(event.warehouseId)} variant='subtle' />
                       {event.externalListingId && (
-                        <span>External ID: {event.externalListingId}</span>
+                        <PropertyRow label='External ID' value={event.externalListingId} mono variant='subtle' />
                       )}
-                      {event.fields && event.fields.length > 0 ? (
-                        <span>Fields: {event.fields.join(', ')}</span>
-                      ) : (
-                        <span>Fields: &mdash;</span>
-                      )}
+                      <PropertyRow
+                        label='Fields'
+                        value={event.fields && event.fields.length > 0 ? event.fields.join(', ') : '—'}
+                        variant='subtle'
+                      />
                     </div>
+                    {index < Math.min(listing.exportHistory?.length ?? 0, 10) - 1 && (
+                      <div className='mt-3 border-b border-white/5' />
+                    )}
                   </div>
                 ))}
             </div>
           ) : null}
         </Card>
       ) : (
-        <p className='mt-2 text-xs text-gray-600'>No export history recorded.</p>
+        <div className='mt-3 px-1'>
+          <Hint>No export history recorded for this marketplace connection.</Hint>
+        </div>
       )}
     </div>
   );

@@ -23,6 +23,7 @@ import {
 } from '@/shared/lib/products/utils/priceCalculation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -440,11 +441,19 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
       const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
       const prefetchListings = (): void => {
-        void queryClient.prefetchQuery({
+        void prefetchQueryV2(queryClient, {
           queryKey: productListingsQueryKey(product.id),
           queryFn: () => fetchProductListings(product.id),
           staleTime: 30 * 1000,
-        });
+          meta: {
+            source: 'products.columns.integrations.prefetchListings',
+            operation: 'list',
+            resource: 'integrations.listings',
+            domain: 'integrations',
+            queryKey: productListingsQueryKey(product.id),
+            tags: ['integrations', 'listings', 'prefetch'],
+          },
+        })();
       };
       return (
         <div className='inline-flex items-center gap-1'>

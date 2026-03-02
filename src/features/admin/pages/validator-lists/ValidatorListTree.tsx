@@ -2,10 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
-  MasterFolderTreeRuntimeProvider,
+  useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
@@ -71,8 +70,8 @@ export function ValidatorListTree({
   const {
     appearance: { rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'validator_list_tree',
     nodes: masterNodes,
     adapter,
@@ -110,19 +109,17 @@ export function ValidatorListTree({
   );
 
   return (
-    <MasterFolderTreeRuntimeProvider>
-      <ValidatorListTreeContext.Provider value={contextValue}>
-        <FolderTreePanel masterInstance='validator_list_tree'>
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            rootDropUi={rootDropUi}
-            renderNode={renderNode}
-            enableDnd={!isPending}
-            emptyLabel='No validation pattern lists'
-          />
-        </FolderTreePanel>
-      </ValidatorListTreeContext.Provider>
-    </MasterFolderTreeRuntimeProvider>
+    <ValidatorListTreeContext.Provider value={contextValue}>
+      <FolderTreePanel masterInstance='validator_list_tree'>
+        <FolderTreeViewportV2
+          controller={controller}
+          scrollToNodeRef={scrollToNodeRef}
+          rootDropUi={rootDropUi}
+          renderNode={renderNode}
+          enableDnd={!isPending}
+          emptyLabel='No validation pattern lists'
+        />
+      </FolderTreePanel>
+    </ValidatorListTreeContext.Provider>
   );
 }

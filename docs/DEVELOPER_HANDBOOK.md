@@ -1,6 +1,6 @@
 # Developer Handbook: UI Consolidation Patterns
 
-**Last Updated:** February 13, 2026
+**Last Updated:** March 3, 2026
 **Project Status:** Production-Ready ✅
 **Framework:** Next.js 16.1.1 + React 19.2.3 + TypeScript 5.9.3
 
@@ -271,7 +271,7 @@ interface FilterPanelProps {
 
 ```typescript
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPickerDropdown';
-import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers/types';
+import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers';
 
 const groups: PickerGroup<MyType>[] = [
   {
@@ -336,7 +336,7 @@ interface GenericPickerDropdownProps<T> {
 
 ```typescript
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
-import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
+import type { GridPickerItem } from '@/shared/ui/templates/pickers';
 
 const items: GridPickerItem<MyType>[] = [
   {
@@ -845,7 +845,7 @@ const filterConfig = useMemo(() => {
 ### Core Documentation
 
 - **Component Patterns Guide:** `docs/COMPONENT_PATTERNS.md`
-- **TypeScript Types:** `src/shared/ui/templates/pickers/types.ts`
+- **TypeScript Types:** `src/shared/contracts/ui.ts` (re-exported by `src/shared/ui/templates/pickers/index.ts`)
 - **Shared UI Exports:** `src/shared/ui/index.ts`
 
 ### Component Files
@@ -875,10 +875,10 @@ const filterConfig = useMemo(() => {
 1. **Check the FAQ** above
 2. **Review real examples** in `/src/features/` (ProductFilters, NotesFilters, etc.)
 3. **Read test files** in `__tests__/` for usage patterns
-4. **Refer to types** in `src/shared/ui/templates/pickers/types.ts`
+4. **Refer to types** in `src/shared/contracts/ui.ts` or the picker barrel `src/shared/ui/templates/pickers/index.ts`
 
 ---
 
-**Last Updated:** February 13, 2026
+**Last Updated:** March 3, 2026
 **Version:** 1.0 (Production-Ready)
 **Maintained By:** UI Consolidation Project

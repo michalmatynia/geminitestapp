@@ -714,7 +714,7 @@ export function useUploadStudioAssets(
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
       source: 'imageStudio.hooks.useUploadStudioAssets',
-      operation: 'upload',
+      operation: 'create',
       resource: 'image-studio.assets',
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
@@ -736,7 +736,7 @@ export function useImportStudioAssetsFromDrive(
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
       source: 'imageStudio.hooks.useImportStudioAssetsFromDrive',
-      operation: 'upload',
+      operation: 'create',
       resource: 'image-studio.assets.import',
       domain: 'image_studio',
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),

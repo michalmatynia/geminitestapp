@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { decodeCmsMasterNodeId, fromCmsZoneNodeId } from './cms-master-tree';
@@ -8,7 +8,7 @@ import type { PageZone } from '../../../types/page-builder';
 export const createCmsMasterTreeAdapter = (
   applySectionMoveByZoneIndex: (sectionId: string, zone: PageZone, toIndex: number) => void
 ) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeCmsMasterNodeId,
     handlers: {
       onMove: ({ operation, context, node, targetParent }): void => {

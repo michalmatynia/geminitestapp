@@ -3,8 +3,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Plus } from 'lucide-react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
-import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
 import type {
   MasterFolderTreeAdapterV3,
   MasterFolderTreeTransaction,
@@ -79,8 +78,8 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
   const {
     appearance: { rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'prompt_exploder_hierarchy',
     nodes: masterNodes,
     externalRevision: treeRevision,

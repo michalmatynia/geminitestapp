@@ -226,8 +226,12 @@ export const invalidateProductListingsAndBadges = async (
 export const invalidateListingRuntimeQueues = async (queryClient: QueryClient): Promise<void> => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.integrations() }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({}) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.queueStatus() }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'],
+    }),
   ]);
 };
 
@@ -572,8 +576,12 @@ export const invalidateAiPathRunDetail = (queryClient: QueryClient, runId: strin
 
 export const invalidateAiPathQueue = async (queryClient: QueryClient): Promise<void> => {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({}) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.queueStatus() }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue'],
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'],
+    }),
   ]);
 };
 

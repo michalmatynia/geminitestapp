@@ -141,7 +141,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('paths-all')}
             className='space-y-4'
           >
-            {activeTab === 'paths-all' ? <JobQueuePanel isActive /> : null}
+            {activeTab === 'paths-all' ? <JobQueuePanel visibility='global' isActive /> : null}
           </TabsContent>
 
           <TabsContent
@@ -150,7 +150,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             aria-labelledby={getTriggerId('paths')}
             className='space-y-4'
           >
-            {activeTab === 'paths' ? <JobQueuePanel sourceFilter='ai_paths_ui' isActive /> : null}
+            {activeTab === 'paths' ? (
+              <JobQueuePanel sourceFilter='ai_paths_ui' visibility='global' isActive />
+            ) : null}
           </TabsContent>
 
           <TabsContent
@@ -160,7 +162,12 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             className='space-y-4'
           >
             {activeTab === 'paths-external' ? (
-              <JobQueuePanel sourceFilter='ai_paths_ui' sourceMode='exclude' isActive />
+              <JobQueuePanel
+                sourceFilter='ai_paths_ui'
+                sourceMode='exclude'
+                visibility='global'
+                isActive
+              />
             ) : null}
             <div id='export-jobs'>
               <ProductListingJobsPanel showBackToProducts={false} />

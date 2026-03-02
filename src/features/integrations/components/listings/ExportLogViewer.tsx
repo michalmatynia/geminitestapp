@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { Alert, CopyButton, CollapsibleSection } from '@/shared/ui';
+import { CopyButton, CollapsibleSection, LogList, type LogEntry } from '@/shared/ui';
 import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
 
 interface ExportLog {
@@ -31,20 +31,17 @@ export function ExportLogViewer({
 
   const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
 
-  if (logs.length === 0) return null;
+  const logEntries = useMemo((): LogEntry[] => {
+    return logs.map((log, index) => ({
+      id: `${log.timestamp}-${index}`,
+      timestamp: log.timestamp,
+      level: log.level,
+      message: log.message,
+      context: log.context,
+    }));
+  }, [logs]);
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'error':
-        return 'text-red-400 border-red-500/20 bg-red-500/5';
-      case 'warn':
-        return 'text-amber-400 border-amber-500/20 bg-amber-500/5';
-      case 'debug':
-        return 'text-purple-400 border-purple-500/20 bg-purple-500/5';
-      default:
-        return 'text-sky-400 border-sky-500/20 bg-sky-500/5';
-    }
-  };
+  if (logs.length === 0) return null;
 
   return (
     <CollapsibleSection
@@ -71,42 +68,11 @@ export function ExportLogViewer({
           />
         </div>
 
-        <div className='space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar'>
-          {logs.map((log, index) => {
-            const levelClass = getLevelColor(log.level);
-            return (
-              <Alert key={index} variant='info' className={`py-2 px-3 border ${levelClass}`}>
-                <div className='flex flex-col gap-1'>
-                  <div className='flex items-center justify-between gap-4'>
-                    <span className='font-mono text-[10px] opacity-60'>
-                      {new Date(log.timestamp).toLocaleTimeString()}
-                    </span>
-                    <span className='text-[9px] font-bold uppercase tracking-wider opacity-80'>
-                      {log.level}
-                    </span>
-                  </div>
-                  <div className='text-xs leading-relaxed font-medium break-words'>
-                    {log.message}
-                  </div>
-                  <div className='mt-1'>
-                    {log.context && Object.keys(log.context).length > 0 && (
-                      <CollapsibleSection
-                        title='Context Data'
-                        variant='subtle'
-                        className='mt-1'
-                        titleClassName='text-[10px] text-gray-500'
-                      >
-                        <pre className='mt-1 overflow-x-auto rounded bg-black/40 p-2 font-mono text-[10px] text-gray-300'>
-                          {JSON.stringify(log.context, null, 2)}
-                        </pre>
-                      </CollapsibleSection>
-                    )}
-                  </div>
-                </div>
-              </Alert>
-            );
-          })}
-        </div>
+        <LogList
+          logs={logEntries}
+          maxHeight='400px'
+          className='pr-2 custom-scrollbar'
+        />
       </div>
     </CollapsibleSection>
   );

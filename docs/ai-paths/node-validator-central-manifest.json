@@ -68,7 +68,7 @@
     {
       "id": "node-docs-catalog",
       "type": "node_docs_catalog",
-      "path": "src/features/ai/ai-paths/lib/core/docs/node-docs.ts",
+      "path": "src/shared/lib/ai-paths/core/docs/node-docs.ts",
       "enabled": true,
       "priority": 80,
       "tags": ["catalog"]

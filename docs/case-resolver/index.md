@@ -5,7 +5,7 @@ status: 'active'
 related_components:
   - 'src/features/case-resolver'
   - 'src/app/api/case-resolver'
-  - 'src/features/jobs/workers/caseResolverOcrQueue.ts'
+  - 'src/features/case-resolver/workers/caseResolverOcrQueue.ts'
 ---
 
 # Case Resolver Documentation

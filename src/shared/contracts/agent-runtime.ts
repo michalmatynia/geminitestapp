@@ -241,6 +241,18 @@ export const agentToolRequestSchema = z.object({
 
 export type AgentToolRequest = z.infer<typeof agentToolRequestSchema>;
 
+export type PlaywrightToolRequest = {
+  name: 'playwright';
+  input: {
+    prompt?: string;
+    browser?: string;
+    runId?: string;
+    runHeadless?: boolean;
+    stepId?: string;
+    stepLabel?: string;
+  };
+};
+
 export const agentToolResultSchema = z.object({
   success: z.boolean(),
   output: z.unknown().optional(),
@@ -249,6 +261,13 @@ export const agentToolResultSchema = z.object({
 });
 
 export type AgentToolResult = z.infer<typeof agentToolResultSchema>;
+
+export type AgentToolResultV2 = {
+  ok: boolean;
+  output?: ToolOutput;
+  error?: string;
+  errorId?: string;
+};
 
 export const toolOutputSchema = z.object({
   url: z.string().optional(),

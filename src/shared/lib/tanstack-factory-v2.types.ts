@@ -32,7 +32,15 @@ export type TanstackFactoryDomain =
   | 'playwright'
   | 'jobs'
   | 'observability'
-  | 'chatbot';
+  | 'chatbot'
+  | 'agent_creator'
+  | 'drafter'
+  | 'files'
+  | 'viewer3d'
+  | 'analytics'
+  | 'internationalization'
+  | 'viewer3d'
+  | 'analytics';
 
 export type TanstackFactoryMeta = {
   source: string;

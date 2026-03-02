@@ -14,7 +14,7 @@ import {
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2, prefetchQueryV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -82,8 +82,9 @@ export function useProductEditHydration({
 
   const prefetchProductDetail = useCallback(
     (productId: string) => {
-      void queryClient.prefetchQuery({
-        queryKey: normalizeQueryKey(getProductDetailQueryKey(productId)),
+      const queryKey = normalizeQueryKey(getProductDetailQueryKey(productId));
+      void prefetchQueryV2(queryClient, {
+        queryKey,
         queryFn: ({ signal }) =>
           api.get<ProductWithImages>(`/api/products/${encodeURIComponent(productId)}?fresh=1`, {
             signal,
@@ -92,7 +93,15 @@ export function useProductEditHydration({
             timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
         staleTime: 20_000,
-      });
+        meta: {
+          source: 'products.hooks.useProductEditHydration.prefetchProductDetail',
+          operation: 'detail',
+          resource: 'products.detail',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'detail', 'prefetch'],
+        },
+      })();
     },
     [queryClient]
   );
@@ -106,18 +115,26 @@ export function useProductEditHydration({
       setEditingProduct(product);
       setIsEditHydrating(true);
 
-      void queryClient
-        .fetchQuery({
-          queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
-          queryFn: ({ signal }) =>
-            api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
-              signal,
-              cache: 'no-store',
-              logError: false,
-              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-            }),
-          staleTime: 0,
-        })
+      const queryKey = normalizeQueryKey(getProductDetailQueryKey(product.id));
+      void fetchQueryV2(queryClient, {
+        queryKey,
+        queryFn: ({ signal }) =>
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
+            signal,
+            cache: 'no-store',
+            logError: false,
+            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+          }),
+        staleTime: 0,
+        meta: {
+          source: 'products.hooks.useProductEditHydration.handleOpenEditModal',
+          operation: 'detail',
+          resource: 'products.detail',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'detail', 'fetch'],
+        },
+      })()
         .then((freshProduct: ProductWithImages) => {
           if (editOpenRequestTokenRef.current !== requestToken) return;
           setEditingProduct(markEditingProductHydrated(freshProduct));
@@ -186,21 +203,30 @@ export function useProductEditHydration({
     setActionError(null);
     setEditingProduct(null);
     setIsEditHydrating(true);
-    void queryClient
-      .fetchQuery({
-        queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
-        queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(
-            `/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
-            {
-              signal,
-              cache: 'no-store',
-              logError: false,
-              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-            }
-          ),
-        staleTime: 0,
-      })
+
+    const queryKey = normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery));
+    void fetchQueryV2(queryClient, {
+      queryKey,
+      queryFn: ({ signal }) =>
+        api.get<ProductWithImages>(
+          `/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
+          {
+            signal,
+            cache: 'no-store',
+            logError: false,
+            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+          }
+        ),
+      staleTime: 0,
+      meta: {
+        source: 'products.hooks.useProductEditHydration.openingProductFromQuery',
+        operation: 'detail',
+        resource: 'products.detail',
+        domain: 'products',
+        queryKey,
+        tags: ['products', 'detail', 'fetch'],
+      },
+    })()
       .then((freshProduct: ProductWithImages) => {
         if (editOpenRequestTokenRef.current !== requestToken) return;
         setEditingProduct(markEditingProductHydrated(freshProduct));

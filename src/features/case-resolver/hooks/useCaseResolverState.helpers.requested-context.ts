@@ -1,5 +1,7 @@
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { CaseResolverRequestedCaseIssue } from '../types';
+import type {
+  CaseResolverFile,
+  CaseResolverRequestedCaseIssue,
+} from '@/shared/contracts/case-resolver';
 
 const normalizeRequestedFileId = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim() : '';

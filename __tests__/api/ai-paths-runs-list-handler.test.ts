@@ -37,7 +37,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
   resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
 }));
 
-import { GET_handler } from '@/app/api/ai-paths/runs/handler';
+import { GET_handler, __testOnly } from '@/app/api/ai-paths/runs/handler';
 
 const mockContext: ApiHandlerContext = {
   requestId: 'test-req-id',
@@ -48,6 +48,7 @@ const mockContext: ApiHandlerContext = {
 describe('AI Paths runs list handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    __testOnly.clearRunsListResponseCache();
     requireAiPathsRunAccessMock.mockResolvedValue({ userId: 'user-1', isAdmin: true });
     requireAiPathsAccessMock.mockResolvedValue({ userId: 'user-1', isAdmin: true });
     enforceAiPathsActionRateLimitMock.mockResolvedValue(undefined);
@@ -140,6 +141,78 @@ describe('AI Paths runs list handler', () => {
         source: 'ai_paths_ui',
         sourceMode: 'exclude',
         limit: 50,
+      })
+    );
+  });
+
+  it('allows explicit global visibility for users with global run access', async () => {
+    canAccessGlobalAiPathRunsMock.mockReturnValue(true);
+
+    await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/runs?visibility=global&limit=10'),
+      mockContext
+    );
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        userId: expect.any(String),
+      })
+    );
+  });
+
+  it('rejects explicit global visibility without global run access', async () => {
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/ai-paths/runs?visibility=global&limit=10'),
+        mockContext
+      )
+    ).rejects.toMatchObject({ httpStatus: 403 });
+  });
+
+  it('bypasses the list response cache when fresh=1 is provided', async () => {
+    listRunsMock
+      .mockResolvedValueOnce({ runs: [], total: 1 })
+      .mockResolvedValueOnce({ runs: [], total: 2 });
+
+    const first = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/runs?pathId=fresh-run-cache&fresh=1'),
+      mockContext
+    );
+    const second = await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/runs?pathId=fresh-run-cache&fresh=1'),
+      mockContext
+    );
+
+    expect((await first.json()) as AiPathRunListResult).toEqual({ runs: [], total: 1 });
+    expect((await second.json()) as AiPathRunListResult).toEqual({ runs: [], total: 2 });
+    expect(listRunsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses distinct cache keys for scoped and global visibility', async () => {
+    canAccessGlobalAiPathRunsMock.mockReturnValue(true);
+
+    await GET_handler(
+      new NextRequest('http://localhost/api/ai-paths/runs?pathId=visibility-split&limit=1'),
+      mockContext
+    );
+    await GET_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/runs?pathId=visibility-split&limit=1&visibility=global'
+      ),
+      mockContext
+    );
+
+    expect(listRunsMock).toHaveBeenCalledTimes(2);
+    expect(listRunsMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        userId: 'user-1',
+      })
+    );
+    expect(listRunsMock).toHaveBeenNthCalledWith(
+      2,
+      expect.not.objectContaining({
+        userId: expect.any(String),
       })
     );
   });

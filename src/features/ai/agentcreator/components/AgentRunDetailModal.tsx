@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList, Card } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList, Card, PropertyRow } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { useAgentRunsContext } from '../context/AgentRunsContext';
@@ -35,19 +35,20 @@ export function AgentRunDetailModal({
 
         <TabsContent value='summary' className='space-y-4 pt-4'>
           <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
-            <h3 className='text-sm font-medium text-white mb-2'>Run Information</h3>
-            <div className='grid grid-cols-2 gap-4 text-xs'>
-              <div>
-                <p className='text-gray-500 mb-1'>Status</p>
-                <StatusBadge status={selectedAgentRun.status} />
-              </div>
-              <div>
-                <p className='text-gray-500'>Model</p>
-                <p className='text-gray-200'>{selectedAgentRun.model || 'n/a'}</p>
+            <h3 className='text-sm font-medium text-white mb-4'>Run Information</h3>
+            <div className='grid grid-cols-2 gap-6'>
+              <div className='space-y-3'>
+                <PropertyRow label='Status' value={<StatusBadge status={selectedAgentRun.status} />} />
+                <PropertyRow label='Model' value={selectedAgentRun.model} />
+                <PropertyRow label='Created' value={new Date(selectedAgentRun.createdAt || 0).toLocaleString()} />
               </div>
               <div className='col-span-2'>
-                <p className='text-gray-500'>Prompt</p>
-                <p className='text-gray-200 whitespace-pre-wrap'>{selectedAgentRun.prompt}</p>
+                <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2 block'>
+                  Primary Prompt
+                </span>
+                <div className='rounded border border-white/5 bg-black/20 p-3 text-xs text-gray-200 whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto'>
+                  {selectedAgentRun.prompt}
+                </div>
               </div>
             </div>
           </Card>

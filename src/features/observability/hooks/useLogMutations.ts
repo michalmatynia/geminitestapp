@@ -17,7 +17,7 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> 
       operation: 'delete',
       resource: 'system.logs',
       domain: 'observability',
-      mutationKey: logsKeys.all,
+
       tags: ['observability', 'logs', 'delete'],
     },
     invalidate: (queryClient) => invalidateSystemLogs(queryClient),
@@ -33,7 +33,7 @@ export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
       operation: 'create',
       resource: 'system.diagnostics.mongo-indexes',
       domain: 'observability',
-      mutationKey: diagnosticsKeys.mongo(),
+
       tags: ['observability', 'diagnostics', 'mongo'],
     },
     invalidate: (queryClient) => invalidateSystemDiagnostics(queryClient),
@@ -49,7 +49,7 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
       operation: 'create',
       resource: 'system.logs.insights',
       domain: 'observability',
-      mutationKey: logsKeys.all,
+
       tags: ['observability', 'logs', 'insights'],
     },
     invalidate: (queryClient) => invalidateSystemLogs(queryClient),
@@ -65,7 +65,8 @@ export function useInterpretLog(): UpdateMutation<{ insight: AiInsightRecord }, 
       source: 'observability.hooks.useInterpretLog',
       operation: 'create',
       resource: 'system.logs.interpret',
-      mutationKey: logsKeys.all,
+      domain: 'observability',
+
       tags: ['observability', 'logs', 'interpret'],
     },
   });

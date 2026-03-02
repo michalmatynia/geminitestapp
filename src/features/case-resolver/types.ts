@@ -20,15 +20,13 @@ import type {
   CaseResolverCompiledSegment,
   CaseResolverCompileResult,
   CaseResolverDocumentVersion,
+  CaseResolverWorkspaceNormalizationDiagnostics,
+  CaseResolverEditorMode,
+  CaseResolverRequestedCaseStatus,
+  CaseResolverRequestedCaseIssue,
+  WorkspaceView,
+  EditorDetailsTab,
 } from '@/shared/contracts/case-resolver';
-
-import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import type { CountryOption } from '@/shared/contracts/internationalization';
-
-import type {
-  CaseResolverPromptExploderApplyUiDiagnostics,
-  CaseResolverPromptExploderPendingPayload,
-} from './hooks/useCaseResolverState.prompt-exploder-sync';
 
 export type {
   CaseResolverFile,
@@ -43,22 +41,31 @@ export type {
   CaseResolverTag,
   CaseResolverScanSlot,
   CaseResolverDocumentDateProposal,
+  CaseResolverWorkspace,
+  CaseResolverEditorNodeContext,
+  CaseResolverSettings,
+  CaseResolverAssetKind,
   CaseResolverFileEditDraft,
   CaseResolverCompiledSegment,
   CaseResolverCompileResult,
   CaseResolverDocumentVersion,
+  CaseResolverWorkspaceNormalizationDiagnostics,
+  CaseResolverEditorMode,
+  CaseResolverRequestedCaseStatus,
+  CaseResolverRequestedCaseIssue,
+  WorkspaceView,
+  EditorDetailsTab,
 };
 
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
+import type { CountryOption } from '@/shared/contracts/internationalization';
+
+import type {
+  CaseResolverPromptExploderApplyUiDiagnostics,
+  CaseResolverPromptExploderPendingPayload,
+} from './hooks/useCaseResolverState.prompt-exploder-sync';
+
 import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
-import type { CaseResolverWorkspaceNormalizationDiagnostics } from './settings.workspace';
-
-export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
-
-export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
-export type CaseResolverRequestedCaseIssue = 'requested_file_missing' | 'workspace_unavailable';
-
-export type WorkspaceView = 'document' | 'relations';
-export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 
 export type CaseResolverStateValue = {
   workspace: CaseResolverWorkspace;
@@ -151,7 +158,7 @@ export type CaseResolverStateValue = {
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
   handleUpdateSelectedAsset: (
-    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description' | 'metadata'>>,
     options?: {
       persistToast?: string;
       persistNow?: boolean;

@@ -13,6 +13,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunEventListOptions,
   AiPathRunListOptions,
+  AiPathRunQueueStatsOptions,
   AiPathRunNodeRecord,
   AiPathRunRepository,
   AiPathRunRecord,
@@ -416,12 +417,25 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     return prismaPathRunRepository.claimRunForProcessing(run.id);
   },
 
-  async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
+  async getQueueStats(
+    options: AiPathRunQueueStatsOptions = {}
+  ): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
     const now = new Date();
-    const where: Prisma.AiPathRunWhereInput = {
+    const baseWhere = buildRunWhere({
+      ...(options.userId ? { userId: options.userId } : {}),
+      ...(options.pathId ? { pathId: options.pathId } : {}),
+      ...(options.source ? { source: options.source, sourceMode: options.sourceMode } : {}),
       status: 'queued',
-      OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
-    };
+    });
+    const where: Prisma.AiPathRunWhereInput =
+      Object.keys(baseWhere).length > 0
+        ? {
+          AND: [baseWhere, { OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }] }],
+        }
+        : {
+          status: 'queued',
+          OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+        };
     const [queuedCount, oldest] = await Promise.all([
       prisma.aiPathRun.count({ where }),
       prisma.aiPathRun.findFirst({

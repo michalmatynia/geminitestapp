@@ -1,7 +1,6 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-
 import {
   fetchSettingsCached,
   fetchLiteSettingsCached,
@@ -94,7 +93,7 @@ export function useSettingsMap(options?: {
     retry: 1,
     meta: {
       source: 'shared.hooks.useSettingsMap',
-      operation: 'list',
+      operation: 'detail',
       resource: 'settings',
       domain: 'global',
       tags: ['settings', 'map', scope],
@@ -118,7 +117,7 @@ export function useLiteSettingsMap(options?: {
     retry: 1,
     meta: {
       source: 'shared.hooks.useLiteSettingsMap',
-      operation: 'list',
+      operation: 'detail',
       resource: 'settings',
       domain: 'global',
       tags: ['settings', 'map', 'lite'],
@@ -127,8 +126,6 @@ export function useLiteSettingsMap(options?: {
 }
 
 export function useUpdateSetting(): MutationResult<SystemSetting, { key: string; value: string }> {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2<SystemSetting, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.settings.mutation('update-setting'),
     mutationFn: async ({ key, value }: { key: string; value: string }): Promise<SystemSetting> => {
@@ -136,9 +133,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
       invalidateSettingsCache();
       return res;
     },
-    onSuccess: (): void => {
-      void invalidateAllSettings(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAllSettings(queryClient),
     meta: {
       source: 'shared.hooks.useUpdateSetting',
       operation: 'update',

@@ -1,12 +1,19 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-02-20'
+last_reviewed: '2026-03-03'
 status: 'active'
 ---
 
 # Central Documentation Index
 
 This is the centralized index for engineering and operations documentation in this repository.
+
+## Agent Overlays
+
+- Agent guide: [`docs/AGENTS.md`](./AGENTS.md)
+- Claude overlay: [`docs/CLAUDE.md`](./CLAUDE.md)
+- Copilot overlay: [`docs/COPILOT.md`](./COPILOT.md)
+- Deep scanned architecture reference: [`GEMINI.md`](../GEMINI.md)
 
 ## Feature Documentation
 
@@ -26,6 +33,15 @@ This is the centralized index for engineering and operations documentation in th
 
 - Case Resolver runbooks: [`docs/case-resolver/runbooks/`](./case-resolver/runbooks/)
 - Prompt Exploder operations runbook: [`docs/PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md`](./PROMPT_EXPLODER_OPERATIONS_RUNBOOK.md)
+
+## Generated Artifacts
+
+- Route and architecture metrics: [`docs/metrics/`](./metrics/)
+- AI Paths semantic grammar: [`docs/ai-paths/semantic-grammar/`](./ai-paths/semantic-grammar/)
+- Validator semantic grammar: [`docs/validator/semantic-grammar/`](./validator/semantic-grammar/)
+
+Generated docs should be refreshed by their scripts instead of edited manually
+when possible.
 
 ## Documentation Governance
 

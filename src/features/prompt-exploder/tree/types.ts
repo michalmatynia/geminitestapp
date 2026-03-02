@@ -1,24 +1,12 @@
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  PromptExploderTreeNodeKind,
+  PromptExploderTreeMetadata,
+} from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_TREE_NODE_PREFIX = 'prompt_exploder_tree:';
 
-export type PromptExploderTreeNodeKind =
-  | 'segment'
-  | 'list_item'
-  | 'subsection'
-  | 'subsection_item'
-  | 'hierarchy_item';
-
-export type PromptExploderTreeMetadata = {
-  kind: PromptExploderTreeNodeKind;
-  entityId: string;
-  parentEntityId?: string | null;
-  segmentType?: string | null;
-  code?: string | null;
-  condition?: string | null;
-  guidance?: string | null;
-  logicalOperator?: string | null;
-};
+export type { PromptExploderTreeNodeKind, PromptExploderTreeMetadata };
 
 export const toPromptExploderTreeNodeId = (
   kind: PromptExploderTreeNodeKind,

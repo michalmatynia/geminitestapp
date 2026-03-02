@@ -189,9 +189,9 @@ export function useDatabaseNodeConfigState() {
     queryFn: () => dbApi.schema() as unknown as Promise<SchemaData>,
     meta: {
       source: 'ai.ai-paths.database-node.schema',
-      operation: 'action',
+      operation: 'list',
       resource: 'database.schema',
-      domain: 'global',
+      domain: 'database',
     },
   });
 
@@ -199,15 +199,15 @@ export function useDatabaseNodeConfigState() {
     mutationFn: async (_provider) => {
       await dbApi.schema();
     },
+    invalidateKeys: [['ai-paths', 'database', 'schema']],
     onSuccess: () => {
-      void schemaQuery.refetch();
       toast('Schema synced', { variant: 'success' });
     },
     meta: {
       source: 'ai.ai-paths.database-node.sync-schema',
       operation: 'action',
       resource: 'database.schema',
-      domain: 'global',
+      domain: 'database',
     },
   });
 

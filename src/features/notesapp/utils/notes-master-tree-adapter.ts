@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import { decodeNotesMasterNodeId, fromFolderMasterNodeId } from './master-folder-tree';
@@ -28,7 +28,7 @@ export const resolveNotesFolderTargetForNode = (
 };
 
 export const createNotesMasterTreeAdapter = (operations: NotesMasterTreeOperations) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeNotesMasterNodeId,
     handlers: {
       onMove: async ({ operation, context, node, targetParent }): Promise<void> => {

@@ -5,12 +5,14 @@ import { useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface RealtimeConfig {
   queryKey?: readonly unknown[];
   interval?: number;
   enabled?: boolean;
   onUpdate?: (data: unknown) => void;
+  domain?: TanstackFactoryDomain;
 }
 
 // Hook for real-time data updates with WebSocket fallback to polling
@@ -22,6 +24,7 @@ export function useRealtimeQuery<TData>(
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const domain = config?.domain ?? 'global';
 
   const query = createListQueryV2<TData, TData>({
     queryKey,
@@ -33,7 +36,7 @@ export function useRealtimeQuery<TData>(
       source: 'shared.hooks.query.useRealtimeQuery',
       operation: 'polling',
       resource: 'realtime-query',
-      domain: 'global',
+      domain,
       tags: ['realtime', 'polling'],
     },
   });

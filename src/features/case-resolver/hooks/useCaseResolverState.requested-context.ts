@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-
-import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '../types';
+import type {
+  CaseResolverWorkspace,
+  CaseResolverRequestedCaseIssue,
+  CaseResolverRequestedCaseStatus,
+} from '@/shared/contracts/case-resolver';
 import {
   fetchCaseResolverWorkspaceRecordDetailed,
   getCaseResolverWorkspaceRevision,

@@ -1,4 +1,6 @@
 import type {
+  CaseResolverAssetFile,
+  CaseResolverNodeFileSnapshot,
   CaseResolverWorkspace,
   CaseResolverWorkspaceMetadata,
   PersistCaseResolverWorkspaceResult,
@@ -13,6 +15,8 @@ import type {
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  parseNodeFileSnapshot,
+  serializeNodeFileSnapshot,
   getCaseResolverWorkspaceNormalizationDiagnostics,
   normalizeCaseResolverWorkspace,
   parseCaseResolverWorkspace,
@@ -24,6 +28,10 @@ const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
 const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY = '__caseResolverWorkspaceNavigationCache';
 const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS = 2 * 60 * 1000;
 const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
+const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
+export const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY =
+  'nodeFileSnapshotStorage';
+const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
 const CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT = 150;
 const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
 const CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT = 120;
@@ -79,6 +87,13 @@ type PersistWorkspaceInput = {
   expectedRevision: number;
   mutationId: string;
   source: string;
+};
+
+type ExternalizeNodeFileSnapshotsResult = {
+  workspace: CaseResolverWorkspace;
+  migratedCount: number;
+  failedCount: number;
+  migratedBytes: number;
 };
 
 const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {
@@ -291,6 +306,46 @@ const resolveWorkspaceRecordFromSettingsPayload = (payload: unknown): SettingsRe
   );
 };
 
+const resolveSettingRecordFromSettingsPayload = (
+  payload: unknown,
+  key: string
+): SettingsRecordLike | null => {
+  const records = readSettingsRecordsFromPayload(payload);
+  return (
+    records.find(
+      (entry: SettingsRecordLike): boolean => entry?.key === key && typeof entry?.value === 'string'
+    ) ?? null
+  );
+};
+
+export const buildCaseResolverNodeFileSnapshotKey = (assetId: string): string =>
+  `${CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX}${assetId.trim()}`;
+
+const readCaseResolverNodeFileSnapshotStorageMode = (
+  asset: Pick<CaseResolverAssetFile, 'metadata'>
+): string | null => {
+  const metadata = asset.metadata;
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+  const candidate = (metadata as Record<string, unknown>)[
+    CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
+  ];
+  return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : null;
+};
+
+const markCaseResolverNodeFileSnapshotAsKeyed = (
+  asset: CaseResolverAssetFile
+): CaseResolverAssetFile => ({
+  ...asset,
+  textContent: '',
+  metadata: {
+    ...(asset.metadata ?? {}),
+    [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]:
+      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED,
+  },
+});
+
 const fetchSettingsPayloadWithTimeout = async (input: {
   url: string;
   timeoutMs: number;
@@ -313,6 +368,179 @@ const fetchSettingsPayloadWithTimeout = async (input: {
     }
   }
 };
+
+const buildSettingRecordFetchAttempts = ({
+  key,
+  strategy,
+  fresh,
+}: {
+  key: string;
+  strategy: 'light_then_heavy' | 'light_only' | 'heavy_only';
+  fresh: boolean;
+}): Array<{ scope: 'light' | 'heavy'; key: string; url: string }> => {
+  const attemptScopes: Array<'light' | 'heavy'> =
+    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
+  const attempts: Array<{ scope: 'light' | 'heavy'; key: string; url: string }> = [];
+  attemptScopes.forEach((scope): void => {
+    if (fresh) {
+      attempts.push({
+        scope,
+        key: `${scope}_fresh_key`,
+        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(key)}`,
+      });
+    }
+    attempts.push({
+      scope,
+      key: `${scope}_cached_key`,
+      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(key)}`,
+    });
+  });
+  return attempts;
+};
+
+const fetchSettingRecordValue = async ({
+  key,
+  source,
+  strategy = 'light_then_heavy',
+  fresh = true,
+  timeoutMs = CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+}: {
+  key: string;
+  source: string;
+  strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
+  fresh?: boolean;
+  timeoutMs?: number;
+}): Promise<string | null> => {
+  const attempts = buildSettingRecordFetchAttempts({ key, strategy, fresh });
+  for (const attempt of attempts) {
+    try {
+      const response = await fetchSettingsPayloadWithTimeout({
+        url: attempt.url,
+        timeoutMs,
+      });
+      if (!response.ok) continue;
+      const payload = (await response.json()) as unknown;
+      const record = resolveSettingRecordFromSettingsPayload(payload, key);
+      if (!record || typeof record.value !== 'string') continue;
+      return record.value;
+    } catch (error: unknown) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'node_file_snapshot_fetch_failed',
+        message: `key=${key} attempt=${attempt.key} ${error instanceof Error ? error.message : 'unknown_error'}`,
+      });
+    }
+  }
+  return null;
+};
+
+const persistSettingValue = async ({
+  key,
+  value,
+  source,
+}: {
+  key: string;
+  value: string;
+  source: string;
+}): Promise<boolean> => {
+  try {
+    const response = await fetch('/api/settings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key,
+        value,
+      }),
+    });
+    if (!response.ok) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'node_file_snapshot_persist_failed',
+        message: `key=${key} status=${response.status}`,
+      });
+      return false;
+    }
+    return true;
+  } catch (error: unknown) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'node_file_snapshot_persist_failed',
+      message: `key=${key} ${error instanceof Error ? error.message : 'unknown_error'}`,
+    });
+    return false;
+  }
+};
+
+export const fetchCaseResolverNodeFileSnapshotText = async (
+  assetId: string,
+  source = 'node_file_workspace_load'
+): Promise<string | null> => {
+  const normalizedAssetId = assetId.trim();
+  if (!normalizedAssetId) return null;
+  const key = buildCaseResolverNodeFileSnapshotKey(normalizedAssetId);
+  const value = await fetchSettingRecordValue({
+    key,
+    source,
+  });
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+  return value;
+};
+
+export const fetchCaseResolverNodeFileSnapshot = async (
+  assetId: string,
+  source = 'node_file_workspace_load'
+): Promise<CaseResolverNodeFileSnapshot | null> => {
+  const rawValue = await fetchCaseResolverNodeFileSnapshotText(assetId, source);
+  if (rawValue === null) return null;
+  return parseNodeFileSnapshot(rawValue);
+};
+
+const persistCaseResolverNodeFileSnapshotText = async ({
+  assetId,
+  textContent,
+  source,
+}: {
+  assetId: string;
+  textContent: string;
+  source: string;
+}): Promise<boolean> => {
+  const normalizedAssetId = assetId.trim();
+  if (!normalizedAssetId) return false;
+  return persistSettingValue({
+    key: buildCaseResolverNodeFileSnapshotKey(normalizedAssetId),
+    value: textContent,
+    source,
+  });
+};
+
+export const persistCaseResolverNodeFileSnapshot = async ({
+  assetId,
+  snapshot,
+  source = 'node_file_manual_save',
+}: {
+  assetId: string;
+  snapshot: CaseResolverNodeFileSnapshot;
+  source?: string;
+}): Promise<boolean> =>
+  persistCaseResolverNodeFileSnapshotText({
+    assetId,
+    textContent: serializeNodeFileSnapshot(snapshot),
+    source,
+  });
+
+export const deleteCaseResolverNodeFileSnapshot = async (
+  assetId: string,
+  source = 'node_file_delete'
+): Promise<boolean> =>
+  persistCaseResolverNodeFileSnapshotText({
+    assetId,
+    textContent: '',
+    source,
+  });
 
 const readWorkspaceMetadata = (
   payload: WorkspaceMetadataLike | null
@@ -718,6 +946,118 @@ export const fetchCaseResolverWorkspaceIfStale = async (
   }
 };
 
+const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
+  fileBytes: number;
+  assetBytes: number;
+  nodeFileInlineBytes: number;
+  settingsBytes: number;
+  largestEntries: string[];
+} => {
+  const largestEntries: Array<{ label: string; bytes: number }> = [];
+  const registerLargest = (label: string, bytes: number): void => {
+    largestEntries.push({ label, bytes });
+  };
+
+  const fileBytes = (workspace.files ?? []).reduce((sum, file): number => {
+    const bytes = JSON.stringify(file).length;
+    registerLargest(`file:${file.id}:${file.name}`, bytes);
+    return sum + bytes;
+  }, 0);
+  const assetBytes = (workspace.assets ?? []).reduce((sum, asset): number => {
+    const bytes = JSON.stringify(asset).length;
+    registerLargest(`asset:${asset.id}:${asset.name}`, bytes);
+    return sum + bytes;
+  }, 0);
+  const nodeFileInlineBytes = (workspace.assets ?? []).reduce((sum, asset): number => {
+    if (asset.kind !== 'node_file' || typeof asset.textContent !== 'string') return sum;
+    return sum + asset.textContent.length;
+  }, 0);
+  const settingsBytes =
+    workspace.settings && typeof workspace.settings === 'object'
+      ? JSON.stringify(workspace.settings).length
+      : 0;
+
+  return {
+    fileBytes,
+    assetBytes,
+    nodeFileInlineBytes,
+    settingsBytes,
+    largestEntries: largestEntries
+      .sort((left, right): number => right.bytes - left.bytes)
+      .slice(0, 5)
+      .map((entry): string => `${entry.label}=${formatByteCount(entry.bytes)}`),
+  };
+};
+
+const externalizeInlineNodeFileSnapshotsForPersist = async (
+  workspace: CaseResolverWorkspace,
+  source: string
+): Promise<ExternalizeNodeFileSnapshotsResult> => {
+  if (!Array.isArray(workspace.assets) || workspace.assets.length === 0) {
+    return {
+      workspace,
+      migratedCount: 0,
+      failedCount: 0,
+      migratedBytes: 0,
+    };
+  }
+
+  let didChange = false;
+  let migratedCount = 0;
+  let failedCount = 0;
+  let migratedBytes = 0;
+
+  const nextAssets = await Promise.all(
+    workspace.assets.map(async (asset): Promise<CaseResolverAssetFile> => {
+      if (asset.kind !== 'node_file') return asset;
+
+      const inlineText = typeof asset.textContent === 'string' ? asset.textContent : '';
+      const trimmedInlineText = inlineText.trim();
+      const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
+      const isKeyed = storageMode === CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
+
+      if (trimmedInlineText.length === 0) {
+        if (!inlineText && !isKeyed) return asset;
+        didChange = didChange || inlineText.length > 0;
+        return {
+          ...asset,
+          textContent: '',
+        };
+      }
+
+      if (isKeyed) {
+        didChange = true;
+        return {
+          ...asset,
+          textContent: '',
+        };
+      }
+
+      const didPersist = await persistCaseResolverNodeFileSnapshotText({
+        assetId: asset.id,
+        textContent: inlineText,
+        source: `${source}_node_file_externalize`,
+      });
+      if (!didPersist) {
+        failedCount += 1;
+        return asset;
+      }
+
+      migratedCount += 1;
+      migratedBytes += inlineText.length;
+      didChange = true;
+      return markCaseResolverNodeFileSnapshotAsKeyed(asset);
+    })
+  );
+
+  return {
+    workspace: didChange ? { ...workspace, assets: nextAssets } : workspace,
+    migratedCount,
+    failedCount,
+    migratedBytes,
+  };
+};
+
 /**
  * Strip re-derivable content fields before persisting to reduce payload size.
  * For `document` files we keep html as the canonical source and omit markdown/plaintext.
@@ -727,54 +1067,72 @@ export const fetchCaseResolverWorkspaceIfStale = async (
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
-  if (!Array.isArray(workspace.files) || workspace.files.length === 0) {
-    return workspace;
-  }
-  const compactedFiles = workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
-    const fileRecord = file as unknown as Record<string, unknown>;
-    const isScanFile = file.fileType === 'scanfile';
-    const rawHistory = fileRecord['documentHistory'];
-    const compactedHistory = Array.isArray(rawHistory)
-      ? rawHistory.map((entry: unknown) => {
-        if (!entry || typeof entry !== 'object') return entry;
-        const entryRecord = entry as Record<string, unknown>;
-        const rest = { ...entryRecord };
-        if (isScanFile) {
-          delete rest['documentContent'];
-          delete rest['documentContentHtml'];
-          delete rest['documentContentPlainText'];
-        } else {
-          delete rest['documentContentMarkdown'];
-          delete rest['documentContentPlainText'];
-        }
-        return rest;
-      })
-      : rawHistory;
-    if (isScanFile) {
+  const compactedFiles = Array.isArray(workspace.files)
+    ? workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
+      const fileRecord = file as unknown as Record<string, unknown>;
+      const isScanFile = file.fileType === 'scanfile';
+      const rawHistory = fileRecord['documentHistory'];
+      const compactedHistory = Array.isArray(rawHistory)
+        ? rawHistory.map((entry: unknown) => {
+          if (!entry || typeof entry !== 'object') return entry;
+          const entryRecord = entry as Record<string, unknown>;
+          const rest = { ...entryRecord };
+          if (isScanFile) {
+            delete rest['documentContent'];
+            delete rest['documentContentHtml'];
+            delete rest['documentContentPlainText'];
+          } else {
+            delete rest['documentContentMarkdown'];
+            delete rest['documentContentPlainText'];
+          }
+          return rest;
+        })
+        : rawHistory;
+      if (isScanFile) {
+        const {
+          documentContent: _content,
+          documentContentHtml: _html,
+          documentContentPlainText: _plainText,
+          originalDocumentContent: _original,
+          explodedDocumentContent: _exploded,
+          ...fileRest
+        } = file;
+        return {
+          ...fileRest,
+          documentHistory: compactedHistory,
+        } as CaseResolverWorkspace['files'][number];
+      }
       const {
-        documentContent: _content,
-        documentContentHtml: _html,
+        documentContentMarkdown: _markdown,
         documentContentPlainText: _plainText,
-        originalDocumentContent: _original,
-        explodedDocumentContent: _exploded,
         ...fileRest
       } = file;
       return {
         ...fileRest,
         documentHistory: compactedHistory,
       } as CaseResolverWorkspace['files'][number];
-    }
-    const {
-      documentContentMarkdown: _markdown,
-      documentContentPlainText: _plainText,
-      ...fileRest
-    } = file;
-    return {
-      ...fileRest,
-      documentHistory: compactedHistory,
-    } as CaseResolverWorkspace['files'][number];
-  });
-  return { ...workspace, files: compactedFiles };
+    })
+    : workspace.files;
+
+  const compactedAssets = Array.isArray(workspace.assets)
+    ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
+      if (asset.kind !== 'node_file') return asset;
+      const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
+      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
+      const shouldStripInlineText =
+        inlineText.length === 0 ||
+        storageMode === CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
+      if (!shouldStripInlineText) return asset;
+      const { textContent: _textContent, ...assetRest } = asset;
+      return assetRest as CaseResolverWorkspace['assets'][number];
+    })
+    : workspace.assets;
+
+  return {
+    ...workspace,
+    files: compactedFiles,
+    assets: compactedAssets,
+  };
 };
 
 export const persistCaseResolverWorkspaceSnapshot = async (
@@ -795,7 +1153,25 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
     ].join(' '),
   });
-  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(normalizedWorkspace);
+  const externalizedNodeFiles = await externalizeInlineNodeFileSnapshotsForPersist(
+    normalizedWorkspace,
+    input.source
+  );
+  if (externalizedNodeFiles.migratedCount > 0 || externalizedNodeFiles.failedCount > 0) {
+    logCaseResolverWorkspaceEvent({
+      source: input.source,
+      action: 'node_file_snapshot_externalize',
+      mutationId: input.mutationId,
+      workspaceRevision: getCaseResolverWorkspaceRevision(externalizedNodeFiles.workspace),
+      durationMs: Date.now() - startedAt,
+      message: [
+        `migrated_count=${externalizedNodeFiles.migratedCount}`,
+        `failed_count=${externalizedNodeFiles.failedCount}`,
+        `migrated_bytes=${externalizedNodeFiles.migratedBytes}`,
+      ].join(' '),
+    });
+  }
+  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(externalizedNodeFiles.workspace);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);
   const payloadBytes = serializedWorkspace.length;
   logCaseResolverWorkspaceEvent({
@@ -808,6 +1184,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   });
   if (isCaseResolverWorkspacePayloadTooLarge(payloadBytes)) {
     const maxPayloadBytes = getCaseResolverWorkspaceMaxPayloadBytes();
+    const payloadSummary = summarizeWorkspacePersistPayload(workspaceForPersist);
     const message = [
       'Case Resolver workspace is too large to save safely.',
       `Payload: ${formatByteCount(payloadBytes)}.`,
@@ -822,7 +1199,14 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
       payloadBytes,
       durationMs: Date.now() - startedAt,
-      message,
+      message: [
+        message,
+        `files=${formatByteCount(payloadSummary.fileBytes)}`,
+        `assets=${formatByteCount(payloadSummary.assetBytes)}`,
+        `nodefile_inline=${formatByteCount(payloadSummary.nodeFileInlineBytes)}`,
+        `settings=${formatByteCount(payloadSummary.settingsBytes)}`,
+        `largest=${payloadSummary.largestEntries.join(', ')}`,
+      ].join(' '),
     });
     return {
       ok: false,

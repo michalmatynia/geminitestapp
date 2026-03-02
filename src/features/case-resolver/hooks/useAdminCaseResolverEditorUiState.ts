@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type EditorDetailsTab, type WorkspaceView } from '../types';
-import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverFileEditDraft,
+  EditorDetailsTab,
+  WorkspaceView,
+} from '@/shared/contracts/case-resolver';
 
 export function useAdminCaseResolverEditorUiState({
   editingDocumentDraft,
@@ -26,7 +29,7 @@ export function useAdminCaseResolverEditorUiState({
 
   const preserveWorkspaceView = useCallback((view: WorkspaceView): void => {
     window.setTimeout((): void => {
-      setWorkspaceView((current) => (current === view ? current : view));
+      setWorkspaceView((current: WorkspaceView) => (current === view ? current : view));
     }, 0);
   }, []);
 

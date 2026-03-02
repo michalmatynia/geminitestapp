@@ -1,5 +1,10 @@
 # AI Paths Improvement Plan: Phase 3 (2026-03-23 to 2026-04-03)
 
+> Historical plan note:
+> This phase document references an earlier AI Paths runtime layout. The current
+> shared runtime core lives under `src/shared/lib/ai-paths/core/`, and exact
+> filenames may differ from the original plan text below.
+
 ## Objective
 
 Ship a policy-driven side-effect execution model so AI Paths no longer relies on implicit one-time suppression (`executed.*` sets). The phase focuses on deterministic behavior across loops/retries while preventing duplicate external effects.
@@ -91,8 +96,8 @@ Acceptance:
 
 Files:
 
-1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/engine.ts`
-2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/execution-helpers.ts`
+1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine.ts`
+2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/execution-helpers.ts`
 
 Tasks:
 
@@ -110,10 +115,10 @@ Acceptance:
 
 Files:
 
-1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-http-handler.ts`
-2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-api-advanced-handler.ts`
-3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-handler.ts`
-4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/model-handler.ts`
+1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-http-handler.ts`
+2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts`
+3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler.ts`
+4. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/generation.ts`
 
 Tasks:
 
@@ -148,9 +153,9 @@ Acceptance:
 
 Test files:
 
-1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai-paths/lib/core/runtime/engine.test.ts`
+1. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/lib/core/runtime/engine.test.ts`
 2. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.test.ts`
-3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/__tests__/`
+3. `/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/__tests__/`
 
 Required scenarios:
 

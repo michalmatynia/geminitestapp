@@ -5,12 +5,18 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { AiPathsProvider } from '@/features/ai/ai-paths/context';
-import { type AiNode } from '@/shared/contracts/case-resolver';
-import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
+import {
+  type AiNode,
+  type CaseResolverAssetFile,
+  type CaseResolverNodeFileSnapshot,
+} from '@/shared/contracts/case-resolver';
 import { Button, EmptyState, Card } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
+import {
+  createEmptyNodeFileSnapshot,
+  parseNodeFileSnapshot,
+} from '../settings';
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
@@ -20,6 +26,11 @@ import {
 } from '../hooks/useNodeFileWorkspaceState';
 import { NodeFilePanel } from './NodeFilePanel';
 import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
+import {
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
+  fetchCaseResolverNodeFileSnapshot,
+  persistCaseResolverNodeFileSnapshot,
+} from '../workspace-persistence';
 
 // ─── inner canvas component ───────────────────────────────────────────────────
 
@@ -28,6 +39,12 @@ export type NodeFileSnapshotPersistOptions = {
   persistNow?: boolean;
   persistToast?: string;
   source?: string;
+};
+
+type ResolvedNodeFileSnapshotState = {
+  isLoading: boolean;
+  snapshot: CaseResolverNodeFileSnapshot;
+  source: 'keyed' | 'inline_legacy' | 'empty_default';
 };
 
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
@@ -280,17 +297,98 @@ function CaseResolverNodeFileWorkspaceStateProviderBridge(
 
 export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   const { selectedAsset, onUpdateSelectedAsset } = useCaseResolverPageContext();
+  const selectedAssetId = selectedAsset?.id ?? null;
+  const selectedAssetKind = selectedAsset?.kind ?? null;
+  const selectedAssetTextContent =
+    typeof selectedAsset?.textContent === 'string' ? selectedAsset.textContent : '';
+  const [resolvedSnapshot, setResolvedSnapshot] = React.useState<ResolvedNodeFileSnapshotState>({
+    isLoading: false,
+    snapshot: createEmptyNodeFileSnapshot(),
+    source: 'empty_default',
+  });
 
-  const snapshot = useMemo(
-    () => parseNodeFileSnapshot(selectedAsset?.textContent ?? ''),
-    [selectedAsset?.id]
-  );
+  useEffect(() => {
+    if (selectedAssetKind !== 'node_file' || !selectedAssetId) {
+      setResolvedSnapshot({
+        isLoading: false,
+        snapshot: createEmptyNodeFileSnapshot(),
+        source: 'empty_default',
+      });
+      return;
+    }
+
+    const inlineText = selectedAssetTextContent;
+    const hasInlineSnapshot = inlineText.trim().length > 0;
+    const inlineSnapshot = hasInlineSnapshot
+      ? parseNodeFileSnapshot(inlineText)
+      : createEmptyNodeFileSnapshot();
+
+    setResolvedSnapshot({
+      isLoading: true,
+      snapshot: inlineSnapshot,
+      source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+    });
+
+    let isCancelled = false;
+    void (async (): Promise<void> => {
+      const keyedSnapshot = await fetchCaseResolverNodeFileSnapshot(
+        selectedAssetId,
+        'node_file_workspace_load'
+      );
+      if (isCancelled) return;
+      if (keyedSnapshot) {
+        setResolvedSnapshot({
+          isLoading: false,
+          snapshot: keyedSnapshot,
+          source: 'keyed',
+        });
+        return;
+      }
+      setResolvedSnapshot({
+        isLoading: false,
+        snapshot: inlineSnapshot,
+        source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+      });
+    })();
+
+    return (): void => {
+      isCancelled = true;
+    };
+  }, [selectedAssetId, selectedAssetKind, selectedAssetTextContent]);
 
   const handleSnapshotChange = useCallback(
-    (updated: CaseResolverNodeFileSnapshot, options?: NodeFileSnapshotPersistOptions): void => {
-      onUpdateSelectedAsset({ textContent: serializeNodeFileSnapshot(updated) }, options);
+    async (
+      updated: CaseResolverNodeFileSnapshot,
+      options?: NodeFileSnapshotPersistOptions
+    ): Promise<boolean> => {
+      if (!selectedAsset || selectedAsset.kind !== 'node_file') return false;
+      const didPersistSnapshot = await persistCaseResolverNodeFileSnapshot({
+        assetId: selectedAsset.id,
+        snapshot: updated,
+        source: options?.source ?? 'node_file_manual_save',
+      });
+      if (!didPersistSnapshot) {
+        return false;
+      }
+      const nextMetadata: CaseResolverAssetFile['metadata'] = {
+        ...(selectedAsset.metadata ?? {}),
+        [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
+      };
+      onUpdateSelectedAsset(
+        {
+          textContent: '',
+          metadata: nextMetadata,
+        },
+        options
+      );
+      setResolvedSnapshot({
+        isLoading: false,
+        snapshot: updated,
+        source: 'keyed',
+      });
+      return true;
     },
-    [onUpdateSelectedAsset]
+    [onUpdateSelectedAsset, selectedAsset]
   );
 
   if (selectedAsset?.kind !== 'node_file') {
@@ -303,7 +401,17 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     );
   }
 
-  const initialNodes: AiNode[] = snapshot.nodes.map(
+  if (resolvedSnapshot.isLoading && resolvedSnapshot.source === 'empty_default') {
+    return (
+      <EmptyState
+        title='Loading node file'
+        description='Loading node file map...'
+        className='h-[420px] bg-card/20'
+      />
+    );
+  }
+
+  const initialNodes: AiNode[] = resolvedSnapshot.snapshot.nodes.map(
     (node: AiNode): AiNode => ({
       ...node,
       createdAt: node.createdAt ?? new Date().toISOString(),
@@ -314,9 +422,9 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
 
   return (
     <AiPathsProvider
-      key={selectedAsset.id}
+      key={`${selectedAsset.id}:${resolvedSnapshot.source}`}
       initialNodes={initialNodes}
-      initialEdges={snapshot.edges}
+      initialEdges={resolvedSnapshot.snapshot.edges}
       initialLoading={false}
       initialRuntimeState={{
         status: 'idle',
@@ -332,7 +440,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       <CaseResolverNodeFileWorkspaceStateProviderBridge
         assetId={selectedAsset.id}
         assetName={selectedAsset.name}
-        snapshot={snapshot}
+        snapshot={resolvedSnapshot.snapshot}
         onSnapshotChange={handleSnapshotChange}
       />
     </AiPathsProvider>

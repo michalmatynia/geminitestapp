@@ -1,7 +1,16 @@
 'use client';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Button, Checkbox, StatusBadge, FormSection, EmptyState, FormActions } from '@/shared/ui';
+import {
+  Button,
+  StatusBadge,
+  FormSection,
+  EmptyState,
+  FormActions,
+  ToggleRow,
+  PropertyRow,
+  Card,
+} from '@/shared/ui';
 
 export function AllegroSettings(): React.JSX.Element {
   const {
@@ -23,83 +32,75 @@ export function AllegroSettings(): React.JSX.Element {
     <FormSection
       title='Allegro OAuth'
       description='Provide your Allegro client ID and client secret in the connection fields, then authorize access.'
-      className='space-y-4 text-sm text-gray-200'
+      className='p-6'
     >
-      <FormSection variant='subtle' className='p-3 text-xs text-gray-300'>
-        <div className='flex items-center justify-between gap-3'>
-          <div className='flex flex-col'>
-            <span>Use Allegro sandbox</span>
-            <span className='text-[11px] text-gray-500'>
-              Switches API + OAuth to sandbox endpoints.
-            </span>
-          </div>
-          <Checkbox
-            className='h-4 w-4 accent-emerald-400'
-            checked={Boolean(activeConnection?.allegroUseSandbox)}
-            onCheckedChange={(checked: boolean) => {
-              void handleAllegroSandboxToggle(Boolean(checked));
-            }}
-            disabled={!activeConnection || savingAllegroSandbox}
-          />
-        </div>
-      </FormSection>
-
-      {!activeConnection ? (
-        <EmptyState
-          title='No connection'
-          description='Add a connection first to enable Allegro authorization.'
-          variant='compact'
-          className='bg-card/20 py-8'
+      <div className='space-y-6'>
+        <ToggleRow
+          label='Use Allegro sandbox'
+          description='Switches API + OAuth to sandbox endpoints.'
+          checked={Boolean(activeConnection?.allegroUseSandbox)}
+          onCheckedChange={(checked: boolean) => {
+            void handleAllegroSandboxToggle(Boolean(checked));
+          }}
+          disabled={!activeConnection || savingAllegroSandbox}
+          className='bg-white/5 border-white/5'
         />
-      ) : (
-        <div className='space-y-3'>
-          <FormSection variant='subtle' className='p-3 text-xs text-gray-300'>
-            <div className='flex items-center justify-between'>
-              <span>Authorization status</span>
-              <StatusBadge status={allegroConnected ? 'Connected' : 'Not connected'} />
-            </div>
-            <p className='mt-2'>
-              <span className='text-gray-400'>Expires:</span> {allegroExpiresAt}
-            </p>
-          </FormSection>
 
-          <FormActions
-            onSave={handleAllegroAuthorize}
-            saveText={allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
-            className='!justify-start'
-          >
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => {
-                void handleAllegroSandboxConnect();
-              }}
-              className='border-amber-500/50 text-amber-200 hover:border-amber-400'
-              disabled={savingAllegroSandbox}
-              size='sm'
+        {!activeConnection ? (
+          <EmptyState
+            title='No connection'
+            description='Add a connection first to enable Allegro authorization.'
+            variant='compact'
+            className='bg-card/20 py-8'
+          />
+        ) : (
+          <div className='space-y-4'>
+            <Card variant='glass' padding='md' className='bg-white/5 space-y-3'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm font-medium text-white'>Authorization status</span>
+                <StatusBadge status={allegroConnected ? 'Connected' : 'Not connected'} />
+              </div>
+              <PropertyRow label='Expires' value={allegroExpiresAt} />
+            </Card>
+
+            <FormActions
+              onSave={handleAllegroAuthorize}
+              saveText={allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
+              className='!justify-start gap-3'
             >
-              {savingAllegroSandbox ? 'Preparing...' : 'Test Sandbox Connection'}
-            </Button>
-            <StatusBadge
-              status={activeConnection?.allegroUseSandbox ? 'Sandbox' : 'Production'}
-              variant={activeConnection?.allegroUseSandbox ? 'warning' : 'neutral'}
-              className='font-semibold'
-            />
-            {allegroConnected && (
               <Button
                 type='button'
                 variant='outline'
                 size='sm'
                 onClick={() => {
-                  void handleAllegroDisconnect();
+                  void handleAllegroSandboxConnect();
                 }}
+                className='border-amber-500/50 text-amber-200 hover:border-amber-400'
+                disabled={savingAllegroSandbox}
               >
-                Disconnect
+                {savingAllegroSandbox ? 'Preparing...' : 'Test Sandbox Connection'}
               </Button>
-            )}
-          </FormActions>
-        </div>
-      )}
+              <StatusBadge
+                status={activeConnection?.allegroUseSandbox ? 'Sandbox' : 'Production'}
+                variant={activeConnection?.allegroUseSandbox ? 'warning' : 'neutral'}
+                className='font-semibold'
+              />
+              {allegroConnected && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    void handleAllegroDisconnect();
+                  }}
+                >
+                  Disconnect
+                </Button>
+              )}
+            </FormActions>
+          </div>
+        )}
+      </div>
     </FormSection>
   );
 }

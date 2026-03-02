@@ -516,6 +516,8 @@ export const aiPathRunEventListOptionsSchema = z.object({
 export type AiPathRunEventListOptionsDto = z.infer<typeof aiPathRunEventListOptionsSchema>;
 export type AiPathRunEventListOptions = AiPathRunEventListOptionsDto;
 
+export type AiPathRunVisibility = 'scoped' | 'global';
+
 export const aiPathRunListOptionsSchema = z.object({
   id: z.string().optional(),
   userId: z.string().nullable().optional(),
@@ -536,6 +538,13 @@ export const aiPathRunListOptionsSchema = z.object({
 
 export type AiPathRunListOptionsDto = z.infer<typeof aiPathRunListOptionsSchema>;
 export type AiPathRunListOptions = AiPathRunListOptionsDto;
+
+export type AiPathRunQueueStatsOptions = {
+  userId?: string | null;
+  pathId?: string;
+  source?: string;
+  sourceMode?: 'include' | 'exclude';
+};
 
 export const aiPathRunListResultSchema = z.object({
   runs: z.array(aiPathRunSchema),
@@ -729,7 +738,9 @@ export type AiPathRunRepository = {
   listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;
   deleteRuns(options?: AiPathRunListOptions): Promise<{ count: number }>;
   claimNextQueuedRun(): Promise<AiPathRunRecord | null>;
-  getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
+  getQueueStats(
+    options?: AiPathRunQueueStatsOptions
+  ): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
   createRunNodes(runId: string, nodes: AiNode[]): Promise<void>;
   upsertRunNode(
     runId: string,

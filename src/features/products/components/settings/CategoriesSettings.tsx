@@ -3,8 +3,11 @@
 import { ChevronLeft, ChevronRight, GripVertical, Plus } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
-import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+import {
+  FolderTreeViewportV2,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
@@ -141,9 +144,8 @@ export function CategoriesSettings(): React.JSX.Element {
   const {
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
     controller,
-    panelCollapsed,
-    setPanelCollapsed,
-  } = useMasterFolderTreeInstance({
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+  } = useMasterFolderTreeShell({
     instance: 'product_categories',
     nodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
@@ -351,13 +353,14 @@ export function CategoriesSettings(): React.JSX.Element {
   }, [showModal, parentOptions, formData.parentId]);
 
   const { DragHandleIcon } = useMemo(
-    () => ({
-      DragHandleIcon: resolveIcon({
-        slot: 'dragHandle',
-        fallback: GripVertical,
-        fallbackId: 'GripVertical',
+    () =>
+      resolveFolderTreeIconSet(resolveIcon, {
+        DragHandleIcon: {
+          slot: 'dragHandle',
+          fallback: GripVertical,
+          fallbackId: 'GripVertical',
+        },
       }),
-    }),
     [resolveIcon]
   );
 

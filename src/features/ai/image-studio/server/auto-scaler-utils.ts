@@ -35,7 +35,7 @@ export type ImageStudioAutoScalerResult = {
   targetObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidenceBefore: number;
-  detectionDetails: ImageStudioDetectionDetails | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
   policyVersion: string;
   policyReason: string;
   fallbackApplied: boolean;
@@ -53,7 +53,7 @@ export type ImageStudioAnalysisSummary = {
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidence: number;
-  detectionDetails: ImageStudioDetectionDetails | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
   policyVersion: string;
   policyReason: string;
   fallbackApplied: boolean;

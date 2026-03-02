@@ -19,7 +19,7 @@ Main references:
 Code contracts:
 
 - `src/shared/contracts/ai-paths-semantic-grammar.ts`
-- `src/features/ai/ai-paths/lib/core/semantic-grammar/`
+- `src/shared/lib/ai-paths/core/semantic-grammar/`
 
 Generate per-node scaffolds:
 

@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  createCaseResolverAssetFile,
   createCaseResolverFile,
   createDefaultCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
 import {
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
@@ -516,14 +518,38 @@ describe('case-resolver workspace persistence', () => {
         },
       ],
     });
+    const migratedNodeFileAsset = createCaseResolverAssetFile({
+      id: 'node-asset-keyed',
+      name: 'Migrated Node File',
+      folder: '',
+      kind: 'node_file',
+      textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-1"}]}',
+      metadata: {
+        [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
+      },
+    });
+    const legacyNodeFileAsset = createCaseResolverAssetFile({
+      id: 'node-asset-inline',
+      name: 'Legacy Node File',
+      folder: '',
+      kind: 'node_file',
+      textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
+    });
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       files: [scanfile, documentFile],
+      assets: [migratedNodeFileAsset, legacyNodeFileAsset],
     };
 
     const compacted = compactCaseResolverWorkspaceForPersist(workspace);
     const compactedScan = compacted.files.find((file) => file.id === 'scan-persist-1');
     const compactedDoc = compacted.files.find((file) => file.id === 'doc-persist-1');
+    const compactedMigratedNodeAsset = compacted.assets.find(
+      (asset) => asset.id === 'node-asset-keyed'
+    );
+    const compactedLegacyNodeAsset = compacted.assets.find(
+      (asset) => asset.id === 'node-asset-inline'
+    );
 
     expect(compactedScan).toBeDefined();
     expect(compactedDoc).toBeDefined();
@@ -548,6 +574,9 @@ describe('case-resolver workspace persistence', () => {
     expect(docHistory && 'documentContentMarkdown' in docHistory).toBe(false);
     expect(docHistory && 'documentContentPlainText' in docHistory).toBe(false);
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
+
+    expect(compactedMigratedNodeAsset && 'textContent' in compactedMigratedNodeAsset).toBe(false);
+    expect(compactedLegacyNodeAsset?.textContent).toContain('legacy-node');
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

@@ -16,6 +16,7 @@ export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(jobKeys.realtime(), getJobStatus, {
     interval: 5000, // 5 second fallback
     enabled: true,
+    domain: 'jobs',
   });
 }
 
@@ -24,6 +25,7 @@ export function useJobStatus(jobId: string): UseQueryResult<unknown, Error> {
   return useRealtimeQuery(jobKeys.status(jobId), () => getJobStatusDetail(jobId), {
     interval: 2000, // 2 second fallback for individual jobs
     enabled: !!jobId,
+    domain: 'jobs',
   });
 }
 

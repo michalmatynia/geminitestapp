@@ -13,6 +13,9 @@ import {
   EmptyState,
   FormActions,
   useToast,
+  PropertyRow,
+  Card,
+  Hint,
 } from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
@@ -49,7 +52,7 @@ export function BaselinkerSettings(): React.JSX.Element {
     <FormSection
       title='Baselinker API'
       description='Enter your Baselinker API token in the connection fields, then test the connection to verify it works.'
-      className='space-y-4 text-sm text-gray-200'
+      className='p-6'
     >
       {!activeConnection ? (
         <EmptyState
@@ -59,30 +62,68 @@ export function BaselinkerSettings(): React.JSX.Element {
           className='bg-card/20 py-8'
         />
       ) : (
-        <div className='space-y-3'>
-          <FormSection variant='subtle' className='p-3 text-xs text-gray-300'>
-            <div className='flex items-center justify-between'>
-              <span>Connection status</span>
-              <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
-            </div>
-            <p className='mt-2'>
-              <span className='text-gray-400'>Last verified:</span> {baseTokenUpdatedAt}
-            </p>
-            {activeConnection.baseLastInventoryId && (
-              <p className='mt-1'>
-                <span className='text-gray-400'>Last inventory:</span>{' '}
-                {activeConnection.baseLastInventoryId}
-              </p>
-            )}
-          </FormSection>
+        <div className='space-y-6'>
+          {/* Connection Status */}
+          <div className='grid gap-6 md:grid-cols-2'>
+            <Card variant='glass' padding='md' className='bg-white/5 space-y-3'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm font-medium text-white'>Connection status</span>
+                <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
+              </div>
+              <PropertyRow label='Last verified' value={baseTokenUpdatedAt} />
+              {activeConnection.baseLastInventoryId && (
+                <PropertyRow label='Last inventory' value={activeConnection.baseLastInventoryId} />
+              )}
+              <div className='pt-2'>
+                <Button
+                  type='button'
+                  onClick={() => {
+                    void handleBaselinkerTest(activeConnection);
+                  }}
+                  loading={isTesting}
+                  variant='outline'
+                  size='xs'
+                  className='w-full'
+                >
+                  {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
+                </Button>
+              </div>
+            </Card>
 
+            <div className='space-y-4'>
+              <FormField
+                label='Sync Interval'
+                description='How often to check for status updates.'
+              >
+                <div className='flex items-center gap-2'>
+                  <Input
+                    type='number'
+                    min='1'
+                    value={syncIntervalMinutes}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      setSyncIntervalMinutes(event.target.value)
+                    }
+                    size='sm'
+                    className='w-24 h-9'
+                  />
+                  <span className='text-xs text-gray-500 font-medium uppercase'>Minutes</span>
+                </div>
+              </FormField>
+
+              <Hint>
+                Frequent sync ensures real-time listing status but consumes more API credits.
+              </Hint>
+            </div>
+          </div>
+
+          {/* OneClick Configuration */}
           <FormSection
-            title='Default OneClick connection'
+            title='Default OneClick Export'
             description='Used by Product List one-click export to Base.com (BL button).'
             variant='subtle'
-            className='p-3 text-xs text-gray-300'
+            className='p-4 bg-white/5 border border-white/5'
           >
-            <div className='mt-2 space-y-2'>
+            <div className='space-y-3 mt-2'>
               <SelectSimple
                 value={defaultOneClickConnectionId || undefined}
                 onValueChange={(value: string): void => {
@@ -97,69 +138,39 @@ export function BaselinkerSettings(): React.JSX.Element {
                 }))}
                 placeholder='Select default connection...'
                 disabled={connections.length === 0}
-                variant='subtle'
                 size='sm'
-                triggerClassName='w-full'
               />
               {defaultExportConnectionId ? (
-                <div className='text-[10px] text-gray-400'>
-                  Current default ID: {defaultExportConnectionId}
-                </div>
-              ) : null}
-            </div>
-          </FormSection>
-
-          <FormSection
-            title='Listing sync interval'
-            description='Controls how often Base.com is checked for listing status updates.'
-            variant='subtle'
-            className='p-3 text-xs text-gray-300'
-          >
-            <div className='mt-2'>
-              <FormField label='Interval (Minutes)'>
-                <Input
-                  type='number'
-                  min='1'
-                  value={syncIntervalMinutes}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setSyncIntervalMinutes(event.target.value)
-                  }
+                <PropertyRow
+                  label='Active Default ID'
+                  value={defaultExportConnectionId}
+                  mono
                   variant='subtle'
-                  size='sm'
-                  className='w-32'
                 />
-              </FormField>
+              ) : (
+                <Hint>No default connection configured yet.</Hint>
+              )}
             </div>
           </FormSection>
 
-          <div className='flex flex-wrap items-center gap-3 pt-2'>
-            <Button
-              type='button'
-              onClick={() => {
-                void handleBaselinkerTest(activeConnection);
-              }}
-              loading={isTesting}
-              variant='solid'
-              size='sm'
-            >
-              {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
-            </Button>
-          </div>
-
-          <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-400'>
-            <p>
-              To get your API token, log in to{' '}
-              <a
-                href='https://baselinker.com'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-purple-300 hover:text-purple-200'
-              >
-                Baselinker
-              </a>{' '}
-              → My Account → API.
-            </p>
-          </div>
+          {/* Help Card */}
+          <Card variant='subtle-compact' padding='sm' className='bg-blue-500/5 border-blue-500/20'>
+            <div className='flex gap-3 text-xs text-blue-300/80'>
+              <span className='shrink-0'>ℹ</span>
+              <p>
+                To get your API token, log in to{' '}
+                <a
+                  href='https://baselinker.com'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-blue-300 underline hover:text-blue-200'
+                >
+                  Baselinker
+                </a>{' '}
+                → My Account → API.
+              </p>
+            </div>
+          </Card>
 
           <FormActions
             onSave={() => {
@@ -168,7 +179,7 @@ export function BaselinkerSettings(): React.JSX.Element {
             saveText='Save Baselinker Settings'
             isSaving={isSaving}
             isDisabled={!isDirty}
-            className='pt-4'
+            className='pt-4 border-t border-white/5'
           />
         </div>
       )}

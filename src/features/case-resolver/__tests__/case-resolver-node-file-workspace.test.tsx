@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,6 +9,8 @@ const setIsNodeInspectorOpenMock = vi.fn();
 const setConfigOpenMock = vi.fn();
 const handleManualSaveMock = vi.fn();
 const onUpdateSelectedAssetMock = vi.fn();
+const fetchCaseResolverNodeFileSnapshotMock = vi.fn(async () => null);
+const persistCaseResolverNodeFileSnapshotMock = vi.fn(async () => true);
 
 const snapshot: CaseResolverNodeFileSnapshot = {
   kind: 'case_resolver_node_file_snapshot_v1',
@@ -20,6 +22,7 @@ const snapshot: CaseResolverNodeFileSnapshot = {
 };
 
 let workspaceStateMock: Record<string, unknown>;
+let lastUseNodeFileWorkspaceStateProps: Record<string, unknown> | null = null;
 
 vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
   useCaseResolverPageContext: () => ({
@@ -34,8 +37,16 @@ vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
 }));
 
 vi.mock('@/features/case-resolver/settings', () => ({
+  createEmptyNodeFileSnapshot: () => snapshot,
   parseNodeFileSnapshot: () => snapshot,
-  serializeNodeFileSnapshot: () => 'serialized-snapshot',
+}));
+
+vi.mock('@/features/case-resolver/workspace-persistence', () => ({
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY: 'nodeFileSnapshotStorage',
+  fetchCaseResolverNodeFileSnapshot: (...args: unknown[]) =>
+    fetchCaseResolverNodeFileSnapshotMock(...args),
+  persistCaseResolverNodeFileSnapshot: (...args: unknown[]) =>
+    persistCaseResolverNodeFileSnapshotMock(...args),
 }));
 
 vi.mock('@/features/ai/ai-paths/context', () => ({
@@ -47,7 +58,10 @@ vi.mock('@/features/ai/ai-paths/components/canvas-board', () => ({
 }));
 
 vi.mock('@/features/case-resolver/hooks/useNodeFileWorkspaceState', () => ({
-  useNodeFileWorkspaceState: () => workspaceStateMock,
+  useNodeFileWorkspaceState: (props: Record<string, unknown>) => {
+    lastUseNodeFileWorkspaceStateProps = props;
+    return workspaceStateMock;
+  },
 }));
 
 vi.mock('@/features/case-resolver/components/NodeFileDocumentSearchPanel', () => ({
@@ -192,6 +206,11 @@ describe('CaseResolverNodeFileWorkspace', () => {
     setConfigOpenMock.mockReset();
     handleManualSaveMock.mockReset();
     onUpdateSelectedAssetMock.mockReset();
+    fetchCaseResolverNodeFileSnapshotMock.mockReset();
+    fetchCaseResolverNodeFileSnapshotMock.mockResolvedValue(null);
+    persistCaseResolverNodeFileSnapshotMock.mockReset();
+    persistCaseResolverNodeFileSnapshotMock.mockResolvedValue(true);
+    lastUseNodeFileWorkspaceStateProps = null;
     workspaceStateMock = createWorkspaceState();
   });
 
@@ -231,5 +250,25 @@ describe('CaseResolverNodeFileWorkspace', () => {
     expect(screen.getByTestId('canvas-board')).toBeInTheDocument();
     expect(screen.getByText('Empty canvas')).toBeInTheDocument();
     expect(screen.getByText('All changes saved')).toBeInTheDocument();
+  });
+
+  it('prefers a keyed snapshot when one is available', async () => {
+    fetchCaseResolverNodeFileSnapshotMock.mockResolvedValueOnce({
+      ...snapshot,
+      nodes: [],
+      edges: [{ id: 'edge-1' }],
+    });
+
+    render(<CaseResolverNodeFileWorkspace />);
+
+    await waitFor(() => {
+      expect(fetchCaseResolverNodeFileSnapshotMock).toHaveBeenCalledWith(
+        'asset-node-file',
+        'node_file_workspace_load'
+      );
+      expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toMatchObject({
+        edges: [{ id: 'edge-1' }],
+      });
+    });
   });
 });

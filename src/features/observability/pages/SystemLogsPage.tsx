@@ -864,7 +864,7 @@ function AiLogInterpreter(): React.JSX.Element {
   );
 }
 
-function LogList(): React.JSX.Element {
+function EventStreamPanel(): React.JSX.Element {
   const {
     logsQuery,
     logs,
@@ -1456,7 +1456,7 @@ function SystemLogsContent(): React.JSX.Element {
           <AiLogInterpreter />
         </div>
 
-        <LogList />
+        <EventStreamPanel />
       </div>
     </PageLayout>
   );

@@ -73,7 +73,7 @@ The Playwright node config UI includes a template picker with reusable script st
 
 Template source:
 
-- `src/features/ai/ai-paths/lib/core/playwright/script-templates.ts`
+- `src/shared/lib/ai-paths/core/playwright/script-templates.ts`
 
 ## Config Surface
 
@@ -95,7 +95,7 @@ Primary config keys:
 
 For canonical defaults and config schema, see:
 
-- `src/features/ai/ai-paths/lib/core/playwright/default-config.ts`
+- `src/shared/lib/ai-paths/core/playwright/default-config.ts`
 - `src/shared/contracts/ai-paths.ts`
 
 ## Artifact Access

@@ -197,7 +197,7 @@ const toFallbackMeta = (meta: TanstackFactoryMeta | null | undefined): TanstackF
   mutationKey: meta?.mutationKey,
   criticality: meta?.criticality,
   samplingRate: meta?.samplingRate,
-  domain: meta?.domain,
+  domain: meta?.domain ?? 'global',
   tags: meta?.tags,
 });
 

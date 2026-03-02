@@ -12,10 +12,11 @@ import {
   fromCaseResolverCaseNodeId,
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
@@ -339,9 +340,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const {
     appearance: { resolveIcon, rootDropUi },
     controller,
-    hasPersistedUiState,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    panel: { hasPersistedState: hasPersistedUiState },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'case_resolver_cases',
     nodes: masterNodes,
     adapter,
@@ -355,23 +356,21 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     setExpandedNodeIds: controller.setExpandedNodeIds,
   });
 
-  const FolderClosedIcon = useMemo(
+  const { FolderClosedIcon, FolderOpenIcon } = useMemo(
     () =>
-      resolveIcon({
-        slot: 'folderClosed',
-        kind: 'case_entry',
-        fallback: Folder,
-        fallbackId: 'Folder',
-      }),
-    [resolveIcon]
-  );
-  const FolderOpenIcon = useMemo(
-    () =>
-      resolveIcon({
-        slot: 'folderOpen',
-        kind: 'case_entry',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
+      resolveFolderTreeIconSet(resolveIcon, {
+        FolderClosedIcon: {
+          slot: 'folderClosed',
+          kind: 'case_entry',
+          fallback: Folder,
+          fallbackId: 'Folder',
+        },
+        FolderOpenIcon: {
+          slot: 'folderOpen',
+          kind: 'case_entry',
+          fallback: FolderOpen,
+          fallbackId: 'FolderOpen',
+        },
       }),
     [resolveIcon]
   );

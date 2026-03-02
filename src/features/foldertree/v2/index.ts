@@ -15,5 +15,6 @@ export * from './operations/search';
 export * from './operations/selection';
 export * from './runtime/MasterFolderTreeRuntimeProvider';
 export * from './search';
+export * from './shell';
 export * from './settings';
 export * from './types';

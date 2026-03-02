@@ -1,24 +1,29 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { Folder } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree/hooks/useMasterFolderTreeInstance';
+import { useMasterFolderTreeShell } from '@/features/foldertree/v2/shell/useMasterFolderTreeShell';
 import {
   FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   getFolderTreeUiStateV2Key,
 } from '@/features/foldertree/v2/settings';
-import { type FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeNode } from '@/shared/utils';
+import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 
 const {
   useSettingsStoreMock,
   useUpdateSettingMock,
   useUpdateSettingsBulkMock,
   useFolderTreeInstanceV2Mock,
+  useFolderTreeProfileConfigMock,
   toastMock,
 } = vi.hoisted(() => ({
   useSettingsStoreMock: vi.fn(),
   useUpdateSettingMock: vi.fn(),
   useUpdateSettingsBulkMock: vi.fn(),
   useFolderTreeInstanceV2Mock: vi.fn(),
+  useFolderTreeProfileConfigMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -35,19 +40,9 @@ vi.mock('@/features/foldertree/v2/hooks/useFolderTreeInstanceV2', () => ({
   useFolderTreeInstanceV2: (options: unknown): unknown => useFolderTreeInstanceV2Mock(options),
 }));
 
-vi.mock('@/features/foldertree/hooks/useMasterFolderTreeConfig', () => ({
-  useMasterFolderTreeConfig: () => ({
-    profile: {} as unknown,
-    appearance: {
-      placeholderClasses: {} as unknown,
-      rootDropUi: {
-        label: 'Drop here',
-        idleClassName: '',
-        activeClassName: '',
-      },
-      resolveIcon: ({ fallback }: { fallback: unknown }) => fallback,
-    },
-  }),
+vi.mock('@/features/foldertree/v2/shell/useFolderTreeProfileConfig', () => ({
+  useFolderTreeProfileConfig: (instance: FolderTreeInstance): unknown =>
+    useFolderTreeProfileConfigMock(instance),
 }));
 
 vi.mock('@/shared/ui/toast', () => ({
@@ -91,9 +86,9 @@ const createSettingsStore = ({
   };
 };
 
-const buildNode = (id: string) => ({
+const buildNode = (id: string): MasterTreeNode => ({
   id,
-  type: 'folder' as const,
+  type: 'folder',
   kind: 'folder',
   parentId: null,
   name: id,
@@ -103,7 +98,7 @@ const buildNode = (id: string) => ({
 
 const createMockController = () => ({
   nodes: [buildNode('folder-a')],
-  roots: [buildNode('folder-a')],
+  roots: [{ ...buildNode('folder-a'), children: [] }],
   validationIssues: [],
   selectedNodeId: null,
   selectedNode: null,
@@ -140,7 +135,7 @@ const createMockController = () => ({
   clearError: vi.fn(),
 });
 
-describe('useMasterFolderTreeInstance expansion sync', () => {
+describe('useMasterFolderTreeShell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useUpdateSettingMock.mockReturnValue({
@@ -148,6 +143,25 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
     });
     useUpdateSettingsBulkMock.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue(undefined),
+    });
+    useFolderTreeProfileConfigMock.mockReturnValue({
+      profile: createDefaultFolderTreeProfilesV2().notes,
+      appearance: {
+        placeholderClasses: {
+          lineIdle: 'line-idle',
+          lineActive: 'line-active',
+          badgeIdle: 'badge-idle',
+          badgeActive: 'badge-active',
+          rootIdle: 'root-idle',
+          rootActive: 'root-active',
+        },
+        rootDropUi: {
+          label: 'Drop to root',
+          idleClassName: 'idle',
+          activeClassName: 'active',
+        },
+        resolveIcon: () => Folder,
+      },
     });
   });
 
@@ -168,7 +182,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
     useFolderTreeInstanceV2Mock.mockReturnValue(controller);
 
     const { rerender } = renderHook(() =>
-      useMasterFolderTreeInstance({
+      useMasterFolderTreeShell({
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
@@ -209,7 +223,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
     expect(controller.setExpandedNodeIds).not.toHaveBeenCalled();
   });
 
-  it('preserves persisted empty expansion arrays (fully collapsed state)', async () => {
+  it('preserves persisted empty expansion arrays and surfaces persisted state metadata', async () => {
     const controller = createMockController();
     const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_cases');
     const settingsStore = createSettingsStore({
@@ -226,7 +240,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
     useFolderTreeInstanceV2Mock.mockReturnValue(controller);
 
     const { result } = renderHook(() =>
-      useMasterFolderTreeInstance({
+      useMasterFolderTreeShell({
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
@@ -241,7 +255,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
       initiallyExpandedNodeIds: unknown[];
     };
     expect(initialOptions.initiallyExpandedNodeIds).toEqual([]);
-    expect(result.current.hasPersistedUiState).toBe(true);
+    expect(result.current.panel.hasPersistedState).toBe(true);
   });
 
   it('keeps live replay behavior when expandedNodeIds is controlled by caller', async () => {
@@ -258,7 +272,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
 
     const { rerender, result } = renderHook(
       (props: { externalExpanded: string[] }) =>
-        useMasterFolderTreeInstance({
+        useMasterFolderTreeShell({
           instance,
           nodes: [buildNode('folder-a')],
           adapter: undefined,
@@ -272,7 +286,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
     await waitFor(() => {
       expect(controller.setExpandedNodeIds).toHaveBeenCalledWith(['folder-a']);
     });
-    expect(result.current.hasPersistedUiState).toBe(false);
+    expect(result.current.panel.hasPersistedState).toBe(false);
 
     controller.setExpandedNodeIds.mockClear();
     settingsStore = createSettingsStore({
@@ -285,6 +299,41 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
 
     await waitFor(() => {
       expect(controller.setExpandedNodeIds).toHaveBeenCalledWith(['folder-b']);
+    });
+  });
+
+  it('returns shared profile/appearance and persists panel collapse changes', async () => {
+    const controller = createMockController();
+    const mutateAsync = vi.fn().mockResolvedValue(undefined);
+    useUpdateSettingMock.mockReturnValue({
+      mutateAsync,
+    });
+    useSettingsStoreMock.mockImplementation(() =>
+      createSettingsStore({
+        entries: {
+          [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
+        },
+      })
+    );
+    useFolderTreeInstanceV2Mock.mockReturnValue(controller);
+
+    const { result } = renderHook(() =>
+      useMasterFolderTreeShell({
+        instance: 'notes',
+        nodes: [buildNode('folder-a')],
+      })
+    );
+
+    expect(result.current.profile).toEqual(createDefaultFolderTreeProfilesV2().notes);
+    expect(result.current.appearance.resolveIcon({ slot: 'file', fallback: Folder })).toBe(Folder);
+
+    result.current.panel.setCollapsed(true);
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledWith({
+        key: 'folder_tree_ui_state::notes',
+        value: expect.stringContaining('"panelCollapsed":true'),
+      });
     });
   });
 });

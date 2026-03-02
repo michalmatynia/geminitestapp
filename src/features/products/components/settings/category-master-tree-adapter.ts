@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree';
+import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -13,7 +13,7 @@ export const createCategoryMasterTreeAdapter = ({
   selectedCatalogId,
   applyReorderPayload,
 }: CategoryMasterTreeAdapterOptions) =>
-  createMasterFolderTreeAdapter({
+  createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeCategoryMasterNodeId,
     handlers: {
       onMove: async ({ operation, context, node, targetParent }): Promise<void> => {

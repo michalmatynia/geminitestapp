@@ -3,10 +3,11 @@
 import { FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { FolderTreePanel } from '@/shared/ui';
@@ -62,10 +63,9 @@ export function NotesAppFolderTree(): React.JSX.Element {
   const {
     appearance: { rootDropUi, resolveIcon },
     controller,
-    panelCollapsed,
-    setPanelCollapsed,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    panel: { collapsed: panelCollapsed, setCollapsed: setPanelCollapsed },
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
     instance: 'notes',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
@@ -92,31 +92,32 @@ export function NotesAppFolderTree(): React.JSX.Element {
   );
 
   const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } = useMemo(
-    () => ({
-      FolderClosedIcon: resolveIcon({
-        slot: 'folderClosed',
-        kind: 'folder',
-        fallback: Folder,
-        fallbackId: 'Folder',
+    () =>
+      resolveFolderTreeIconSet(resolveIcon, {
+        FolderClosedIcon: {
+          slot: 'folderClosed',
+          kind: 'folder',
+          fallback: Folder,
+          fallbackId: 'Folder',
+        },
+        FolderOpenIcon: {
+          slot: 'folderOpen',
+          kind: 'folder',
+          fallback: FolderOpen,
+          fallbackId: 'FolderOpen',
+        },
+        FileIcon: {
+          slot: 'file',
+          kind: 'note',
+          fallback: FileText,
+          fallbackId: 'FileText',
+        },
+        DragHandleIcon: {
+          slot: 'dragHandle',
+          fallback: GripVertical,
+          fallbackId: 'GripVertical',
+        },
       }),
-      FolderOpenIcon: resolveIcon({
-        slot: 'folderOpen',
-        kind: 'folder',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
-      }),
-      FileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'note',
-        fallback: FileText,
-        fallbackId: 'FileText',
-      }),
-      DragHandleIcon: resolveIcon({
-        slot: 'dragHandle',
-        fallback: GripVertical,
-        fallbackId: 'GripVertical',
-      }),
-    }),
     [resolveIcon]
   );
 

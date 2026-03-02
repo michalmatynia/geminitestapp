@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   ProductDraftDto,
   CreateProductDraftDto,
@@ -34,6 +32,7 @@ export function useDraftQueries(): ListQuery<ProductDraftDto> {
       source: 'drafter.hooks.useDraftQueries',
       operation: 'list',
       resource: 'drafts',
+      domain: 'drafter',
       queryKey,
       tags: ['drafts', 'list'],
     },
@@ -53,13 +52,13 @@ export function useDraft(id: string | null): SingleQuery<ProductDraftDto> {
       source: 'drafter.hooks.useDraft',
       operation: 'detail',
       resource: 'drafts.detail',
+      domain: 'drafter',
       tags: ['drafts', 'detail'],
     },
   });
 }
 
 export function useCreateDraft(): MutationResult<ProductDraftDto, CreateProductDraftDto> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: (input: CreateProductDraftDto) => api.post<ProductDraftDto>('/api/drafts', input),
     mutationKey: draftKeys.lists(),
@@ -67,10 +66,11 @@ export function useCreateDraft(): MutationResult<ProductDraftDto, CreateProductD
       source: 'drafter.hooks.useCreateDraft',
       operation: 'create',
       resource: 'drafts',
+      domain: 'drafter',
       mutationKey: draftKeys.lists(),
       tags: ['drafts', 'create'],
     },
-    onSuccess: (created: ProductDraftDto) => {
+    invalidate: async (queryClient, created) => {
       queryClient.setQueryData<ProductDraftDto[]>(
         draftKeys.lists(),
         (current: ProductDraftDto[] | undefined) => {
@@ -79,7 +79,7 @@ export function useCreateDraft(): MutationResult<ProductDraftDto, CreateProductD
         }
       );
       queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(created.id), created);
-      void invalidateDrafts(queryClient);
+      return invalidateDrafts(queryClient);
     },
   });
 }
@@ -88,7 +88,6 @@ export function useUpdateDraft(): MutationResult<
   ProductDraftDto,
   { id: string; input: UpdateProductDraftDto }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftDto }) =>
       api.put<ProductDraftDto>(`/api/drafts/${id}`, input),
@@ -97,10 +96,11 @@ export function useUpdateDraft(): MutationResult<
       source: 'drafter.hooks.useUpdateDraft',
       operation: 'update',
       resource: 'drafts',
+      domain: 'drafter',
       mutationKey: draftKeys.lists(),
       tags: ['drafts', 'update'],
     },
-    onSuccess: (data: ProductDraftDto) => {
+    invalidate: async (queryClient, data) => {
       queryClient.setQueryData<ProductDraftDto[]>(
         draftKeys.lists(),
         (current: ProductDraftDto[] | undefined) => {
@@ -116,13 +116,12 @@ export function useUpdateDraft(): MutationResult<
       );
       queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(data.id), data);
       void invalidateDrafts(queryClient);
-      void invalidateDraftDetail(queryClient, data.id);
+      return invalidateDraftDetail(queryClient, data.id);
     },
   });
 }
 
 export function useDeleteDraft(): MutationResult<string, string> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/drafts/${id}`);
@@ -133,10 +132,11 @@ export function useDeleteDraft(): MutationResult<string, string> {
       source: 'drafter.hooks.useDeleteDraft',
       operation: 'delete',
       resource: 'drafts',
+      domain: 'drafter',
       mutationKey: draftKeys.lists(),
       tags: ['drafts', 'delete'],
     },
-    onSuccess: (deletedId: string): void => {
+    invalidate: async (queryClient, deletedId) => {
       queryClient.setQueryData<ProductDraftDto[]>(
         draftKeys.lists(),
         (current: ProductDraftDto[] | undefined) => {

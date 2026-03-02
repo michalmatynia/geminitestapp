@@ -3,10 +3,11 @@
 import { FileCode2, FileImage, FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
+  resolveFolderTreeIconSet,
+  useMasterFolderTreeShell,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import {
@@ -93,8 +94,8 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   const {
     appearance: { resolveIcon, rootDropUi },
     controller,
-    scrollToNodeRef,
-  } = useMasterFolderTreeInstance({
+    viewport: { scrollToNodeRef, revealNode },
+  } = useMasterFolderTreeShell({
     instance: 'case_resolver',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
@@ -109,14 +110,9 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
 
   const handleSearchSelect = useCallback(
     (node: MasterTreeNode): void => {
-      controller.expandToNode?.(node.id);
-      controller.selectNode(node.id);
-      const ref = scrollToNodeRef;
-      setTimeout((): void => {
-        ref.current?.(node.id);
-      }, 0);
+      revealNode(node.id);
     },
-    [controller, scrollToNodeRef]
+    [revealNode]
   );
 
   const canStartTreeDrag = React.useCallback(
@@ -225,55 +221,56 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     PdfFileIcon,
     DragHandleIcon,
   } = useMemo(
-    () => ({
-      FolderClosedIcon: resolveIcon({
-        slot: 'folderClosed',
-        kind: 'folder',
-        fallback: Folder,
-        fallbackId: 'Folder',
+    () =>
+      resolveFolderTreeIconSet(resolveIcon, {
+        FolderClosedIcon: {
+          slot: 'folderClosed',
+          kind: 'folder',
+          fallback: Folder,
+          fallbackId: 'Folder',
+        },
+        FolderOpenIcon: {
+          slot: 'folderOpen',
+          kind: 'folder',
+          fallback: FolderOpen,
+          fallbackId: 'FolderOpen',
+        },
+        DefaultFileIcon: {
+          slot: 'file',
+          kind: 'case_file',
+          fallback: FileText,
+          fallbackId: 'FileText',
+        },
+        ScanCaseFileIcon: {
+          slot: 'file',
+          kind: 'case_file_scan',
+          fallback: FileImage,
+          fallbackId: 'FileImage',
+        },
+        NodeFileIcon: {
+          slot: 'file',
+          kind: 'node_file',
+          fallback: FileCode2,
+          fallbackId: 'FileCode2',
+        },
+        ImageFileIcon: {
+          slot: 'file',
+          kind: 'asset_image',
+          fallback: FileImage,
+          fallbackId: 'FileImage',
+        },
+        PdfFileIcon: {
+          slot: 'file',
+          kind: 'asset_pdf',
+          fallback: FileText,
+          fallbackId: 'FileText',
+        },
+        DragHandleIcon: {
+          slot: 'dragHandle',
+          fallback: GripVertical,
+          fallbackId: 'GripVertical',
+        },
       }),
-      FolderOpenIcon: resolveIcon({
-        slot: 'folderOpen',
-        kind: 'folder',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
-      }),
-      DefaultFileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'case_file',
-        fallback: FileText,
-        fallbackId: 'FileText',
-      }),
-      ScanCaseFileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'case_file_scan',
-        fallback: FileImage,
-        fallbackId: 'FileImage',
-      }),
-      NodeFileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'node_file',
-        fallback: FileCode2,
-        fallbackId: 'FileCode2',
-      }),
-      ImageFileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'asset_image',
-        fallback: FileImage,
-        fallbackId: 'FileImage',
-      }),
-      PdfFileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'asset_pdf',
-        fallback: FileText,
-        fallbackId: 'FileText',
-      }),
-      DragHandleIcon: resolveIcon({
-        slot: 'dragHandle',
-        fallback: GripVertical,
-        fallbackId: 'GripVertical',
-      }),
-    }),
     [resolveIcon]
   );
 

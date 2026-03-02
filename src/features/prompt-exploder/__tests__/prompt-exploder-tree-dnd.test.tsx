@@ -15,21 +15,17 @@ import type {
 import type { FolderTreeViewportV2Props } from '@/features/foldertree/v2';
 
 const {
-  useMasterFolderTreeInstanceMock,
+  useMasterFolderTreeShellMock,
   useDocumentStateMock,
   useDocumentActionsMock,
   useSegmentEditorActionsMock,
   viewportPropsMock,
 } = vi.hoisted(() => ({
-  useMasterFolderTreeInstanceMock: vi.fn(),
+  useMasterFolderTreeShellMock: vi.fn(),
   useDocumentStateMock: vi.fn(),
   useDocumentActionsMock: vi.fn(),
   useSegmentEditorActionsMock: vi.fn(),
   viewportPropsMock: vi.fn(),
-}));
-
-vi.mock('@/features/foldertree', () => ({
-  useMasterFolderTreeInstance: (options: unknown) => useMasterFolderTreeInstanceMock(options),
 }));
 
 vi.mock('@/features/foldertree/v2', async () => {
@@ -38,6 +34,7 @@ vi.mock('@/features/foldertree/v2', async () => {
   );
   return {
     ...actual,
+    useMasterFolderTreeShell: (options: unknown): unknown => useMasterFolderTreeShellMock(options),
     FolderTreeViewportV2: (props: FolderTreeViewportV2Props): React.JSX.Element => {
       viewportPropsMock(props);
       return <div data-testid='folder-tree-viewport' />;
@@ -142,7 +139,7 @@ const getLatestViewportProps = (): FolderTreeViewportV2Props => {
 describe('Prompt Exploder master-tree DnD wiring', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useMasterFolderTreeInstanceMock.mockImplementation(() => ({
+    useMasterFolderTreeShellMock.mockImplementation(() => ({
       appearance: {
         rootDropUi: {
           label: 'Move to Root',
@@ -151,7 +148,9 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
         },
       },
       controller: createController(),
-      scrollToNodeRef: { current: null },
+      viewport: {
+        scrollToNodeRef: { current: null },
+      },
     }));
     useDocumentActionsMock.mockReturnValue({
       replaceSegments: vi.fn(),

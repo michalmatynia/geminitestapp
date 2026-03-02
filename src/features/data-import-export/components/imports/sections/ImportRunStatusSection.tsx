@@ -3,8 +3,7 @@
 import React, { useMemo } from 'react';
 import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import { Button, FormSection, Badge, Hint } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, FormSection, Hint, StatusBadge } from '@/shared/ui';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {
   const {
@@ -133,24 +132,14 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       className='p-4'
       actions={
         <div className='flex items-center gap-2'>
-          <Badge
-            variant='outline'
-            className={cn(
-              'text-[10px] uppercase font-bold',
-              activeRun.status === 'completed'
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                : activeRun.status === 'partial_success'
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  : activeRun.status === 'failed'
-                    ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-            )}
-          >
-            {activeRun.status}
-          </Badge>
+          <StatusBadge
+            status={activeRun.status}
+            className='font-bold'
+          />
           <Button
             type='button'
             variant='secondary'
+            size='sm'
             onClick={(): void => {
               void handleResumeImport();
             }}
@@ -161,6 +150,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           <Button
             type='button'
             variant='secondary'
+            size='sm'
             onClick={(): void => {
               void handleCancelImport();
             }}
@@ -170,7 +160,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           >
             Cancel run
           </Button>
-          <Button type='button' variant='secondary' onClick={handleDownloadImportReport}>
+          <Button type='button' variant='secondary' size='sm' onClick={handleDownloadImportReport}>
             Download report
           </Button>
         </div>

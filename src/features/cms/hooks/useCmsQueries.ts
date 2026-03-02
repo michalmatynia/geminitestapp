@@ -42,6 +42,7 @@ import {
   createSingleQueryV2,
   createCreateMutationV2,
   createUpdateMutationV2,
+  createMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateCmsPages,
@@ -64,7 +65,8 @@ export function useCmsPages(domainId?: string | null): ListQuery<PageSummary> {
       source: 'cms.hooks.useCmsPages',
       operation: 'list',
       resource: 'cms.pages',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'pages'],
     },
   });
@@ -81,7 +83,8 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
       source: 'cms.hooks.useCmsPage',
       operation: 'detail',
       resource: 'cms.pages.detail',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'pages', 'detail'],
     },
   });
@@ -99,7 +102,8 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
       source: 'cms.hooks.useCreatePage',
       operation: 'create',
       resource: 'cms.pages',
-      mutationKey: cmsKeys.pages.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'pages', 'create'],
     },
     invalidate: async (queryClient) => {
@@ -127,7 +131,8 @@ export function useUpdatePage(): UpdateMutation<
       source: 'cms.hooks.useUpdatePage',
       operation: 'update',
       resource: 'cms.pages',
-      mutationKey: cmsKeys.pages.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'pages', 'update'],
     },
     invalidate: async (queryClient, _data, variables) => {
@@ -149,7 +154,8 @@ export function useDeletePage(): UpdateMutation<string, string> {
       source: 'cms.hooks.useDeletePage',
       operation: 'delete',
       resource: 'cms.pages',
-      mutationKey: cmsKeys.pages.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'pages', 'delete'],
     },
     invalidate: async (queryClient) => {
@@ -167,7 +173,8 @@ export function useCmsSlugs(domainId?: string | null): ListQuery<Slug> {
       source: 'cms.hooks.useCmsSlugs',
       operation: 'list',
       resource: 'cms.slugs',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'slugs'],
     },
   });
@@ -183,7 +190,8 @@ export function useCmsAllSlugs(enabled: boolean = true): ListQuery<Slug> {
       source: 'cms.hooks.useCmsAllSlugs',
       operation: 'list',
       resource: 'cms.slugs.all',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'all'],
     },
   });
@@ -200,7 +208,8 @@ export function useCmsSlug(id?: string, domainId?: string): SingleQuery<Slug> {
       source: 'cms.hooks.useCmsSlug',
       operation: 'detail',
       resource: 'cms.slugs.detail',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'detail'],
     },
   });
@@ -217,7 +226,8 @@ export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[
       source: 'cms.hooks.useCmsSlugDomains',
       operation: 'detail',
       resource: 'cms.slugs.domains',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'domains'],
     },
   });
@@ -235,7 +245,8 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
       source: 'cms.hooks.useCreateSlug',
       operation: 'create',
       resource: 'cms.slugs',
-      mutationKey: cmsKeys.slugs.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'create'],
     },
     invalidate: async (queryClient) => {
@@ -267,7 +278,8 @@ export function useUpdateSlug(): UpdateMutation<
       source: 'cms.hooks.useUpdateSlug',
       operation: 'update',
       resource: 'cms.slugs',
-      mutationKey: cmsKeys.slugs.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'update'],
     },
     invalidate: async (queryClient, _data, variables) => {
@@ -289,7 +301,8 @@ export function useUpdateSlugDomains(): UpdateMutation<
       source: 'cms.hooks.useUpdateSlugDomains',
       operation: 'update',
       resource: 'cms.slugs.domains',
-      mutationKey: cmsKeys.slugs.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'domains', 'update'],
     },
     invalidate: (queryClient, _data, variables) => {
@@ -311,7 +324,8 @@ export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?:
       source: 'cms.hooks.useDeleteSlug',
       operation: 'delete',
       resource: 'cms.slugs',
-      mutationKey: cmsKeys.slugs.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'slugs', 'delete'],
     },
     invalidate: async (queryClient) => {
@@ -333,7 +347,8 @@ export function useCmsDomains(): ListQuery<CmsDomain> {
       source: 'cms.hooks.useCmsDomains',
       operation: 'list',
       resource: 'cms.domains',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'domains'],
     },
   });
@@ -351,7 +366,8 @@ export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string
       source: 'cms.hooks.useCreateCmsDomain',
       operation: 'create',
       resource: 'cms.domains',
-      mutationKey: cmsKeys.domains.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'domains', 'create'],
     },
     invalidate: async (queryClient) => {
@@ -372,7 +388,8 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
       source: 'cms.hooks.useDeleteCmsDomain',
       operation: 'delete',
       resource: 'cms.domains',
-      mutationKey: cmsKeys.domains.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'domains', 'delete'],
     },
     invalidate: async (queryClient) => {
@@ -396,7 +413,8 @@ export function useUpdateCmsDomain(): UpdateMutation<
       source: 'cms.hooks.useUpdateCmsDomain',
       operation: 'update',
       resource: 'cms.domains',
-      mutationKey: cmsKeys.domains.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'domains', 'update'],
     },
     invalidate: async (queryClient) => {
@@ -418,7 +436,8 @@ export function useCmsThemes(): ListQuery<CmsTheme> {
       source: 'cms.hooks.useCmsThemes',
       operation: 'list',
       resource: 'cms.themes',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'themes'],
     },
   });
@@ -435,7 +454,8 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
       source: 'cms.hooks.useCmsTheme',
       operation: 'detail',
       resource: 'cms.themes.detail',
-      queryKey,
+      domain: 'cms',
+
       tags: ['cms', 'themes', 'detail'],
     },
   });
@@ -453,7 +473,8 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
       source: 'cms.hooks.useCreateTheme',
       operation: 'create',
       resource: 'cms.themes',
-      mutationKey: cmsKeys.themes.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'themes', 'create'],
     },
     invalidate: async (queryClient) => {
@@ -477,7 +498,8 @@ export function useUpdateTheme(): UpdateMutation<
       source: 'cms.hooks.useUpdateTheme',
       operation: 'update',
       resource: 'cms.themes',
-      mutationKey: cmsKeys.themes.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'themes', 'update'],
     },
     invalidate: async (queryClient, _data, variables) => {
@@ -499,7 +521,8 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
       source: 'cms.hooks.useDeleteTheme',
       operation: 'delete',
       resource: 'cms.themes',
-      mutationKey: cmsKeys.themes.lists(),
+      domain: 'cms',
+
       tags: ['cms', 'themes', 'delete'],
     },
     invalidate: async (queryClient) => {
@@ -512,7 +535,7 @@ export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
-  return createCreateMutationV2({
+  return createMutationV2({
     mutationFn: async ({
       file,
       onProgress,
@@ -538,7 +561,8 @@ export function useUploadCmsMedia(): CreateMutation<
       source: 'cms.hooks.useUploadCmsMedia',
       operation: 'upload',
       resource: 'cms.media',
-      mutationKey: cmsKeys.mutation('upload-media'),
+      domain: 'cms',
+
       tags: ['cms', 'media', 'upload'],
     },
     invalidate: async (queryClient) => {

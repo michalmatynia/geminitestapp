@@ -7,7 +7,18 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { Pagination, Card, Badge, Alert, LoadingState, Button } from '@/shared/ui';
+import {
+  Pagination,
+  Card,
+  Badge,
+  Alert,
+  LoadingState,
+  Button,
+  PanelFilters,
+  SearchInput,
+  Checkbox,
+} from '@/shared/ui';
+import type { FilterField } from '@/shared/contracts/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
@@ -325,6 +336,21 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
   const pageStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const pageEnd = Math.min(total, page * PAGE_SIZE);
 
+  const filters: FilterField[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'all', label: 'All' },
+        { value: 'queued', label: 'Queued' },
+        { value: 'running', label: 'Running' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'failed', label: 'Failed' },
+      ],
+    },
+  ];
+
   if (!projectId) {
     return (
       <Card
@@ -371,60 +397,51 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
-      <Card
-        variant='subtle-compact'
-        padding='sm'
-        className='flex flex-wrap items-center justify-between gap-3 border-border/60 bg-card/40 text-xs text-muted-foreground'
-      >
-        <div className='flex flex-wrap items-center gap-2'>
-          <span className='whitespace-nowrap'>
-            Showing {pageStart}-{pageEnd} of {total} runs
-          </span>
-          <div className='flex flex-wrap items-center gap-2'>
-            <label className='flex items-center gap-1'>
-              <span className='text-[11px]'>Status</span>
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as 'all' | HistoryRunRecord['status'])
-                }
-                className='h-7 rounded border border-border/60 bg-background px-1 text-[11px] text-foreground'
-              >
-                <option value='all'>All</option>
-                <option value='queued'>Queued</option>
-                <option value='running'>Running</option>
-                <option value='completed'>Completed</option>
-                <option value='failed'>Failed</option>
-              </select>
-            </label>
-            <label className='flex items-center gap-1'>
-              <input
-                type='checkbox'
-                className='h-3.5 w-3.5 rounded border-border/60'
+      <PanelFilters
+        filters={filters}
+        values={{ status: statusFilter }}
+        onFilterChange={(key, value) => {
+          if (key === 'status') setStatusFilter(value as typeof statusFilter);
+        }}
+        actions={
+          <div className='flex flex-wrap items-center gap-3'>
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                id='show-slow'
                 checked={showSlowOnly}
-                onChange={(event) => setShowSlowOnly(event.target.checked)}
+                onCheckedChange={(checked) => setShowSlowOnly(Boolean(checked))}
               />
-              <span className='text-[11px]'>Slow only</span>
-            </label>
+              <label htmlFor='show-slow' className='text-[11px] text-muted-foreground cursor-pointer'>
+                Slow only
+              </label>
+            </div>
+            <SearchInput
+              placeholder='Search prompt / model / error'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+              size='sm'
+              className='h-7 w-44'
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              variant='compact'
+              showLabels={false}
+            />
           </div>
-        </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <input
-            type='search'
-            placeholder='Search prompt / model / error'
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            className='h-7 w-44 rounded border border-border/60 bg-background px-2 text-[11px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-ring/60'
-          />
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            variant='compact'
-            showLabels={false}
-          />
-        </div>
-      </Card>
+        }
+        compact
+        className='rounded-lg border border-border/60 bg-card/40 p-3'
+      />
+
+      <div className='flex items-center justify-between px-1 text-[10px] text-muted-foreground uppercase font-bold tracking-wider'>
+        <span>
+          Showing {pageStart}-{pageEnd} of {total} runs
+        </span>
+      </div>
+
       {filteredRuns.map((run) => {
         const prompt = run.request?.prompt?.trim() ?? '';
         const promptSummary =

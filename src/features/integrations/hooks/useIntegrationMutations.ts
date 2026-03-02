@@ -8,9 +8,8 @@ import type {
 import type { MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
   createMutationV2,
+  createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
@@ -23,7 +22,7 @@ export function useCreateIntegration(): MutationResult<
   { name: string; slug: string }
   > {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createCreateMutationV2<Integration, { name: string; slug: string }>({
+  return createMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),
     mutationKey,
     meta: {
@@ -124,7 +123,7 @@ type TestConnectionVariables = {
 
 export function useTestConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<TestConnectionResponse, TestConnectionVariables>({
+  return createMutationV2<TestConnectionResponse, TestConnectionVariables>({
     mutationFn: ({
       integrationId,
       connectionId,
@@ -149,7 +148,7 @@ export function useTestConnection() {
 
 export function useDisconnectAllegro() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<
+  return createMutationV2<
     Record<string, unknown>,
     { integrationId: string; connectionId: string }
   >({
@@ -175,7 +174,7 @@ export function useDisconnectAllegro() {
 
 export function useBaseApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<
+  return createMutationV2<
     { data?: unknown },
     { integrationId: string; connectionId: string; method: string; parameters: unknown }
   >({
@@ -198,7 +197,7 @@ export function useBaseApiRequest() {
 
 export function useAllegroApiRequest() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<
+  return createMutationV2<
     { status: number; statusText: string; data?: unknown; refreshed?: boolean },
     { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }
   >({
@@ -244,7 +243,7 @@ export function useUpdatePreferredTemplate() {
 
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createCreateMutationV2<{ message?: string }, void>({
+  return createMutationV2<{ message?: string }, void>({
     mutationFn: () => api.post<{ message?: string }>('/api/integrations/images/sync-base/all', {}),
     mutationKey,
     meta: {

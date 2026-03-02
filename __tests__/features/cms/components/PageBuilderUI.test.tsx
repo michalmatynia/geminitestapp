@@ -26,8 +26,11 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/features/foldertree', () => ({
-  MasterFolderTree: ({
+vi.mock('@/features/foldertree/v2', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/foldertree/v2')>();
+  return {
+    ...actual,
+  FolderTreeViewportV2: ({
     controller,
     renderNode,
   }: {
@@ -86,7 +89,7 @@ vi.mock('@/features/foldertree', () => ({
       ))}
     </div>
   ),
-  useMasterFolderTreeInstance: ({
+  useMasterFolderTreeShell: ({
     nodes,
     initiallyExpandedNodeIds,
   }: {
@@ -117,12 +120,15 @@ vi.mock('@/features/foldertree', () => ({
         startDrag: vi.fn(),
         clearDrag: vi.fn(),
       },
-      panelCollapsed: false,
-      setPanelCollapsed: vi.fn(),
+      panel: {
+        collapsed: false,
+        setCollapsed: vi.fn(),
+        hasPersistedState: false,
+      },
     };
   },
-  createMasterFolderTreeAdapter: vi.fn(() => ({})),
-}));
+  };
+});
 
 vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/admin/context/AdminLayoutContext')>();

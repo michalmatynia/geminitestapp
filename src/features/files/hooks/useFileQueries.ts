@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { ExpandedImageFile } from '@/features/products';
 import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -24,6 +22,7 @@ export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile
       source: 'files.hooks.useFileQueries',
       operation: 'list',
       resource: 'files',
+      domain: 'files',
       queryKey,
       tags: ['files', 'list'],
     },
@@ -31,7 +30,6 @@ export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile
 }
 
 export function useDeleteFile(): DeleteMutation {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: async (fileId: string): Promise<void> => {
       await api.delete(`/api/files/${fileId}`);
@@ -41,12 +39,11 @@ export function useDeleteFile(): DeleteMutation {
       source: 'files.hooks.useDeleteFile',
       operation: 'delete',
       resource: 'files',
+      domain: 'files',
       mutationKey: fileKeys.all,
       tags: ['files', 'delete'],
     },
-    onSuccess: (): void => {
-      void invalidateFiles(queryClient);
-    },
+    invalidate: (queryClient) => invalidateFiles(queryClient),
   });
 }
 
@@ -54,7 +51,6 @@ export function useUpdateFileTags(): UpdateMutation<
   ExpandedImageFile,
   { id: string; tags: string[] }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, tags }: { id: string; tags: string[] }) =>
       api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
@@ -63,11 +59,10 @@ export function useUpdateFileTags(): UpdateMutation<
       source: 'files.hooks.useUpdateFileTags',
       operation: 'update',
       resource: 'files.tags',
+      domain: 'files',
       mutationKey: fileKeys.all,
       tags: ['files', 'tags', 'update'],
     },
-    onSuccess: (): void => {
-      void invalidateFiles(queryClient);
-    },
+    invalidate: (queryClient) => invalidateFiles(queryClient),
   });
 }

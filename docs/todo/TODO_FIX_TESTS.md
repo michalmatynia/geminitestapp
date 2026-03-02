@@ -1,5 +1,10 @@
 # Test Fixes TODO List
 
+> Historical note:
+> This TODO captures an older failure triage pass. Some referenced file paths
+> and test names may have moved since later refactors. Verify current locations
+> in the source tree before acting on any item here.
+
 ## Issue Analysis Summary
 
 ### 1. Products API Tests (`__tests__/api/products/products.test.ts`)
@@ -8,7 +13,7 @@
 - **Root cause**: Tests use real prisma client without proper mocking
 - **Fix needed**: Add proper Prisma mock similar to other test files
 
-### 2. TOTP Tests (`__tests__/features/auth/totp.test.ts`)
+### 2. TOTP Tests (`__tests__/features/auth/services/totp.test.ts`)
 
 - **Problem**: 4 failing tests related to TOTP generation and verification
 - **Root cause**: Mocking issues with crypto.randomBytes and HMAC producing unpredictable results
@@ -21,7 +26,7 @@
   - "should handle reordering sections within zones" - expected 'RichText' to be 'Grid'
 - **Fix needed**: Investigate and fix the assertions
 
-### 4. AiPathRunRepository Test (`__tests__/features/ai-paths/services/path-run-repository.test.ts`)
+### 4. AiPathRunRepository Test (`__tests__/features/ai/ai-paths/services/path-run-repository.test.ts`)
 
 - **Problem**: "should list runs with filters" - expected +0 to be 1
 - **Fix needed**: Check filter logic

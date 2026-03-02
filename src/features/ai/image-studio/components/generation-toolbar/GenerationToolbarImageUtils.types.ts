@@ -81,7 +81,7 @@ export type ClientImageObjectAnalysisResult = {
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
   confidence: number;
-  detectionDetails: CenterDetectionDetails | null;
+  detectionDetails?: CenterDetectionDetails | null;
   policyVersion: string;
   policyReason: string;
   fallbackApplied: boolean;
@@ -96,7 +96,7 @@ export type AutoScaleCanvasResult = CenterLayoutResult & {
   outputWidth: number;
   outputHeight: number;
   confidenceBefore: number;
-  detectionDetails: CenterDetectionDetails | null;
+  detectionDetails?: CenterDetectionDetails | null;
   whitespaceBefore: ImageStudioObjectWhitespaceMetrics;
   whitespaceAfter: ImageStudioObjectWhitespaceMetrics;
   objectAreaPercentBefore: number;

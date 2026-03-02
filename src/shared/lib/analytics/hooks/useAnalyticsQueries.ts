@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
@@ -35,7 +33,8 @@ export function useAnalyticsSummary(input?: {
       source: 'analytics.hooks.useAnalyticsSummary',
       operation: 'detail',
       resource: 'analytics.summary',
-      queryKey,
+      domain: 'analytics',
+
       tags: ['analytics', 'summary'],
     },
   });
@@ -60,15 +59,14 @@ export function useAnalyticsInsights(
       source: 'analytics.hooks.useAnalyticsInsights',
       operation: 'detail',
       resource: 'analytics.insights',
-      queryKey,
+      domain: 'analytics',
+
       tags: ['analytics', 'insights'],
     },
   });
 }
 
 export function useRunAnalyticsInsight(): MutationResult<{ insight: AiInsightRecord }, void> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/analytics/insights'),
     mutationKey: analyticsKeys.all,
@@ -76,12 +74,10 @@ export function useRunAnalyticsInsight(): MutationResult<{ insight: AiInsightRec
       source: 'analytics.hooks.useRunAnalyticsInsight',
       operation: 'create',
       resource: 'analytics.insights',
-      mutationKey: analyticsKeys.all,
+      domain: 'analytics',
       tags: ['analytics', 'insights', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
-    },
+    invalidateKeys: [analyticsKeys.all],
   });
 }
 
@@ -111,7 +107,8 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
       source: 'analytics.hooks.useTrackEventMutation',
       operation: 'create',
       resource: 'analytics.events',
-      mutationKey: analyticsKeys.all,
+      domain: 'analytics',
+
       tags: ['analytics', 'events'],
     },
   });

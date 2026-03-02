@@ -72,7 +72,8 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
       source: 'viewer3d.hooks.useAssets3D',
       operation: 'list',
       resource: 'viewer3d.assets',
-      queryKey,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'assets'],
     },
   });
@@ -91,7 +92,8 @@ export function useAsset3DCategories(): ListQuery<string> {
       source: 'viewer3d.hooks.useAsset3DCategories',
       operation: 'list',
       resource: 'viewer3d.categories',
-      queryKey,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'categories'],
     },
   });
@@ -110,7 +112,8 @@ export function useAsset3DTags(): ListQuery<string> {
       source: 'viewer3d.hooks.useAsset3DTags',
       operation: 'list',
       resource: 'viewer3d.tags',
-      queryKey,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'tags'],
     },
   });
@@ -131,7 +134,8 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
       source: 'viewer3d.hooks.useAsset3DById',
       operation: 'detail',
       resource: 'viewer3d.asset',
-      queryKey,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'asset', 'detail'],
     },
   });
@@ -145,7 +149,8 @@ export function useDeleteAsset3DMutation(): DeleteMutation {
       source: 'viewer3d.hooks.useDeleteAsset3DMutation',
       operation: 'delete',
       resource: 'viewer3d.asset',
-      mutationKey: asset3dKeys.all,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'asset', 'delete'],
     },
     invalidate: (queryClient) => invalidateAsset3d(queryClient),
@@ -164,7 +169,8 @@ export function useUpdateAsset3DMutation(): UpdateMutation<
       source: 'viewer3d.hooks.useUpdateAsset3DMutation',
       operation: 'update',
       resource: 'viewer3d.asset',
-      mutationKey: asset3dKeys.all,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'asset', 'update'],
     },
     invalidate: (queryClient, data: Asset3DRecord) => {
@@ -192,7 +198,8 @@ export function useReindexAssets3DMutation(): UpdateMutation<
       source: 'viewer3d.hooks.useReindexAssets3DMutation',
       operation: 'update',
       resource: 'viewer3d.assets.reindex',
-      mutationKey: asset3dKeys.all,
+      domain: 'viewer3d',
+
       tags: ['viewer3d', 'assets', 'reindex'],
     },
     invalidate: (queryClient) => invalidateAsset3d(queryClient),

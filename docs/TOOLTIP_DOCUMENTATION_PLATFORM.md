@@ -4,7 +4,7 @@
 
 Centralize documentation and tooltip behavior into two isolated application-wide features:
 
-- `src/features/documentation`
+- `src/shared/lib/documentation`
 - `src/features/tooltip-engine`
 
 No module-level tooltip copy should be hardcoded in docs-enabled modules.
@@ -12,7 +12,7 @@ Tooltip content must be derived from documentation entries.
 
 ## Feature Boundaries
 
-### Documentation (`src/features/documentation`)
+### Documentation (`src/shared/lib/documentation`)
 
 Responsibilities:
 
@@ -24,11 +24,11 @@ Responsibilities:
 
 Current catalogs:
 
-- Image Studio: `src/features/documentation/catalogs/image-studio-docs.ts`
+- Image Studio: `src/shared/lib/documentation/catalogs/image-studio-docs.ts`
 - Prompt Exploder: `docs/prompt-exploder/tooltip-catalog.ts` bridged via
-  `src/features/documentation/catalogs/prompt-exploder.ts`
-- Validator: `src/features/documentation/catalogs/validator-docs.ts`
-- Shared cross-feature tooltip docs: `src/features/documentation/catalogs/shared-tooltip-docs.ts`
+  `src/shared/lib/documentation/catalogs/prompt-exploder.ts`
+- Validator: `src/shared/lib/documentation/catalogs/validator-docs.ts`
+- Shared cross-feature tooltip docs: `src/shared/lib/documentation/catalogs/shared-tooltip-docs.ts`
 
 ### Tooltip Engine (`src/features/tooltip-engine`)
 
@@ -44,7 +44,7 @@ Responsibilities:
 
 For a module to adopt docs-driven tooltips:
 
-1. Add docs entries to `src/features/documentation/catalogs/*`.
+1. Add docs entries to `src/shared/lib/documentation/catalogs/*`.
 2. Use doc ids in UI controls (`docId`, `data-doc-id`).
 3. Wrap UI with `DocumentationTooltip` or module adapter.
 4. For legacy DOM trees, attach `DocumentationTooltipEnhancer` at route root.

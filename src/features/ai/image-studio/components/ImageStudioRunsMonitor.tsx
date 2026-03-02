@@ -7,11 +7,12 @@ import {
   Card,
   Badge,
   LoadingState,
-  SelectSimple,
   StandardDataTablePanel,
   Checkbox,
+  PanelFilters,
 } from '@/shared/ui';
 import type { ColumnDef } from '@tanstack/react-table';
+import type { FilterField } from '@/shared/contracts/ui';
 
 const formatDateTime = (value: string | null | undefined): string => {
   if (!value) return 'n/a';
@@ -123,6 +124,21 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
     []
   );
 
+  const filters: FilterField[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'all', label: 'All' },
+        { value: 'queued', label: 'Queued' },
+        { value: 'running', label: 'Running' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'failed', label: 'Failed' },
+      ],
+    },
+  ];
+
   if (isLoading && !runs.length) {
     return (
       <Card
@@ -137,43 +153,32 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
-      <Card
-        variant='subtle-compact'
-        padding='sm'
-        className='flex flex-wrap items-center justify-between gap-3 border-border/60 bg-card/40 text-xs text-muted-foreground'
-      >
-        <div className='flex flex-wrap items-center gap-2'>
-          <span className='whitespace-nowrap'>
-            Runs: {stats.total} (Queued {stats.queuedCount}, Running {stats.runningCount})
-          </span>
-          <div className='flex items-center gap-2'>
-            <span className='text-[11px]'>Status</span>
-            <SelectSimple
-              size='xs'
-              value={statusFilter}
-              onValueChange={(val) => setStatusFilter(val as typeof statusFilter)}
-              options={[
-                { value: 'all', label: 'All' },
-                { value: 'queued', label: 'Queued' },
-                { value: 'running', label: 'Running' },
-                { value: 'completed', label: 'Completed' },
-                { value: 'failed', label: 'Failed' },
-              ]}
-              className='h-7 w-24'
-            />
+      <PanelFilters
+        filters={filters}
+        values={{ status: statusFilter }}
+        onFilterChange={(key, value) => {
+          if (key === 'status') setStatusFilter(value as typeof statusFilter);
+        }}
+        actions={
+          <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+            <span className='whitespace-nowrap'>
+              Runs: {stats.total} (Queued {stats.queuedCount}, Running {stats.runningCount})
+            </span>
+            <div className='flex items-center gap-2'>
+              <Checkbox
+                id='auto-refresh'
+                checked={autoRefreshEnabled}
+                onCheckedChange={(checked) => setAutoRefreshEnabled(Boolean(checked))}
+              />
+              <label htmlFor='auto-refresh' className='text-[11px] cursor-pointer'>
+                Auto-refresh
+              </label>
+            </div>
           </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Checkbox
-            id='auto-refresh'
-            checked={autoRefreshEnabled}
-            onCheckedChange={(checked) => setAutoRefreshEnabled(Boolean(checked))}
-          />
-          <label htmlFor='auto-refresh' className='text-[11px] cursor-pointer'>
-            Auto-refresh
-          </label>
-        </div>
-      </Card>
+        }
+        compact
+        className='rounded-lg border border-border/60 bg-card/40 p-3'
+      />
 
       <StandardDataTablePanel
         columns={columns}

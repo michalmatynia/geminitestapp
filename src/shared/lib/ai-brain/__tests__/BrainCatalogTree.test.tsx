@@ -6,18 +6,14 @@ import { ToastProvider } from '@/shared/ui/toast';
 import { BrainCatalogTree } from '@/shared/lib/ai-brain/components/BrainCatalogTree';
 import type { AiBrainCatalogEntry } from '@/shared/lib/ai-brain/settings';
 
-const useMasterFolderTreeInstanceMock = vi.fn();
+const useMasterFolderTreeShellMock = vi.fn();
 let latestTreeOptions: unknown = null;
 
-vi.mock('@/features/foldertree', () => ({
-  useMasterFolderTreeInstance: (options: unknown) => {
-    latestTreeOptions = options;
-    return useMasterFolderTreeInstanceMock(options);
-  },
-}));
-
 vi.mock('@/features/foldertree/v2', () => ({
-  MasterFolderTreeRuntimeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useMasterFolderTreeShell: (options: unknown) => {
+    latestTreeOptions = options;
+    return useMasterFolderTreeShellMock(options);
+  },
   FolderTreeViewportV2: ({
     controller,
   }: {
@@ -58,7 +54,7 @@ describe('BrainCatalogTree', () => {
   ];
 
   it('renders a flat list and binds to the brain catalog master instance', () => {
-    useMasterFolderTreeInstanceMock.mockImplementation((options: { nodes: unknown[] }) => ({
+    useMasterFolderTreeShellMock.mockImplementation((options: { nodes: unknown[] }) => ({
       appearance: {
         rootDropUi: {
           label: 'Move here',
@@ -69,6 +65,9 @@ describe('BrainCatalogTree', () => {
       controller: {
         nodes: options.nodes,
         reorderNode: vi.fn(),
+      },
+      viewport: {
+        scrollToNodeRef: { current: null },
       },
     }));
 
@@ -94,7 +93,7 @@ describe('BrainCatalogTree', () => {
 
   it('forwards reorder results to onChange in new order', async () => {
     const onChange = vi.fn();
-    useMasterFolderTreeInstanceMock.mockImplementation(
+    useMasterFolderTreeShellMock.mockImplementation(
       (options: {
         nodes: Array<{ id: string; sortOrder: number }>;
         adapter: {
@@ -134,6 +133,9 @@ describe('BrainCatalogTree', () => {
             },
           },
           controller,
+          viewport: {
+            scrollToNodeRef: { current: null },
+          },
         };
       }
     );

@@ -815,11 +815,13 @@ export const runsApi = {
     nodeId?: string;
     source?: string;
     sourceMode?: 'include' | 'exclude';
+    visibility?: 'scoped' | 'global';
     status?: string;
     query?: string;
     limit?: number;
     offset?: number;
     includeTotal?: boolean;
+    fresh?: boolean;
     timeoutMs?: number;
     signal?: AbortSignal;
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
@@ -828,6 +830,7 @@ export const runsApi = {
     if (options?.nodeId) params.set('nodeId', options.nodeId);
     if (options?.source) params.set('source', options.source);
     if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
+    if (options?.visibility) params.set('visibility', options.visibility);
     if (options?.status) params.set('status', options.status);
     if (options?.query) params.set('query', options.query);
     if (typeof options?.limit === 'number') params.set('limit', String(options.limit));
@@ -835,6 +838,7 @@ export const runsApi = {
     if (typeof options?.includeTotal === 'boolean') {
       params.set('includeTotal', options.includeTotal ? '1' : '0');
     }
+    if (options?.fresh) params.set('fresh', '1');
     const query = params.toString();
     const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
     return apiFetch<{ runs: unknown[]; total: number }>(url, {
@@ -868,8 +872,16 @@ export const runsApi = {
     );
   },
 
-  async queueStatus(): Promise<ApiResponse<{ status: unknown }>> {
-    return apiFetch<{ status: unknown }>('/api/ai-paths/runs/queue-status');
+  async queueStatus(options?: {
+    visibility?: 'scoped' | 'global';
+    fresh?: boolean;
+  }): Promise<ApiResponse<{ status: unknown }>> {
+    const params = new URLSearchParams();
+    if (options?.visibility) params.set('visibility', options.visibility);
+    if (options?.fresh) params.set('fresh', '1');
+    const query = params.toString();
+    const url = query ? `/api/ai-paths/runs/queue-status?${query}` : '/api/ai-paths/runs/queue-status';
+    return apiFetch<{ status: unknown }>(url);
   },
 
   async clear(options?: {

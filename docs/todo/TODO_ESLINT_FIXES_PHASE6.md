@@ -1,5 +1,9 @@
 # ESLint Fixes - Phase 6 ✅ COMPLETED
 
+> Historical note:
+> This completion log describes an earlier linting pass. Some file paths below
+> may predate later refactors or file moves.
+
 ## Summary
 
 Successfully addressed all ESLint errors by adding `eslint-disable` comments where appropriate and fixing type annotations.
@@ -15,7 +19,7 @@ Successfully addressed all ESLint errors by adding `eslint-disable` comments whe
 
 - File already had proper return types - no changes needed
 
-### 3. `src/features/products/services/productService.ts` (6 errors) ✅
+### 3. `src/shared/lib/products/services/productService.ts` (6 errors) ✅
 
 - Already had eslint-disable comment - no changes needed
 
@@ -23,7 +27,7 @@ Successfully addressed all ESLint errors by adding `eslint-disable` comments whe
 
 - Already had proper return types - no changes needed
 
-### 5. `src/shared/hooks/use-undo.ts` (5 errors) ✅
+### 5. `src/shared/hooks/ui/use-undo.ts` (5 errors) ✅
 
 - Already had proper return types - no changes needed
 
@@ -31,7 +35,7 @@ Successfully addressed all ESLint errors by adding `eslint-disable` comments whe
 
 - Already had proper return types - no changes needed
 
-### 7. `src/features/products/services/aiDescriptionService.ts` (1 error) ✅
+### 7. `src/shared/lib/products/services/productAiService.ts` (1 error) ✅
 
 - Already had eslint-disable comment - no changes needed
 

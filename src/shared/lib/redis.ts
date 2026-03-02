@@ -2,14 +2,6 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
-const REDIS_URL = process.env['REDIS_URL'];
-
-const globalForRedis = global as unknown as {
-  redis: Redis | undefined;
-};
-
-let redis: Redis | null = globalForRedis.redis ?? null;
-
 const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 
 const isTransientRedisTransportError = (error: unknown): boolean => {
@@ -42,31 +34,57 @@ const captureException = async (
   }
 };
 
-if (REDIS_URL && !redis) {
+const globalForRedis = global as unknown as {
+  redis: Redis | undefined;
+  redisInitializedAtMs?: number;
+};
+
+let redis: Redis | null = globalForRedis.redis ?? null;
+let redisInitializedAtMs: number | null = globalForRedis.redisInitializedAtMs ?? null;
+
+const ensureRedisClient = (): Redis | null => {
+  const url = process.env['REDIS_URL'];
+  if (!url) return null;
+  if (redis) return redis;
+
   try {
-    redis = new Redis(REDIS_URL, {
+    const startedAt = Date.now();
+    const client = new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: true,
     });
 
-    redis.on('error', (err) => {
+    client.on('error', (err) => {
       if (isTransientRedisTransportError(err)) return;
       void captureException(err, { service: 'redis', action: 'connection_error' });
     });
 
+    redis = client;
+    redisInitializedAtMs = startedAt;
+
     if (process.env.NODE_ENV !== 'production') {
-      globalForRedis.redis = redis;
+      globalForRedis.redis = client;
+      globalForRedis.redisInitializedAtMs = startedAt;
     }
   } catch (error) {
     void captureException(error, { service: 'redis', action: 'initialize_failed' });
+    redis = null;
   }
-}
+
+  return redis;
+};
 
 export function getRedisClient(): Redis | null {
-  return redis;
+  return ensureRedisClient();
 }
 
-export const isRedisEnabled = (): boolean => redis !== null;
+export const isRedisEnabled = (): boolean => {
+  return !!process.env['REDIS_URL'];
+};
+
+export const getRedisInitializationTimestampMs = (): number | null => {
+  return redisInitializedAtMs;
+};
 
 export async function closeRedisClient(): Promise<void> {
   if (redis) {

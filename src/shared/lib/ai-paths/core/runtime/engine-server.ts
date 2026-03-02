@@ -50,6 +50,7 @@ import {
 
 import prisma from '@/shared/lib/db/prisma';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 // Re-export types from core
 export * from './engine-core';
@@ -99,6 +100,8 @@ const resolveHandler = (type: string): NodeHandler | null => {
   return HANDLERS[type] || null;
 };
 
+let processStartedAtMs: number | null = null;
+
 export async function evaluateGraphServer(
   argsOrNodes: EvaluateGraphArgs | AiNode[],
   edges?: Edge[],
@@ -118,7 +121,26 @@ export async function evaluateGraphServer(
     resolvedOptions = argsOrNodes;
   }
 
+  const runtimeCallStartedAt = Date.now();
+  if (processStartedAtMs === null) {
+    processStartedAtMs = runtimeCallStartedAt;
+  }
+
+  const mongoStart = Date.now();
   const mongo = await getMongoClient();
+  const mongoDurationMs = Date.now() - mongoStart;
+
+  if (mongoDurationMs > 0) {
+    void logSystemEvent({
+      level: 'debug',
+      source: 'runtime-engine',
+      message: '[engine-server] Mongo client acquisition completed',
+      context: {
+        mongoDurationMs,
+        sinceProcessStartMs: runtimeCallStartedAt - (processStartedAtMs ?? runtimeCallStartedAt),
+      },
+    });
+  }
 
   const customResolveHandler = (type: string): NodeHandler | null => {
     const rh = resolvedOptions.resolveHandler;
@@ -129,7 +151,7 @@ export async function evaluateGraphServer(
     return resolveHandler(type);
   };
 
-  return evaluateGraphInternal(nodes, resolvedEdges, {
+  const result = await evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
     resolveHandler: customResolveHandler,
     services: {
@@ -138,6 +160,19 @@ export async function evaluateGraphServer(
       ...((resolvedOptions.services as Record<string, unknown>) ?? {}),
     },
   });
+
+  const runtimeCallDurationMs = Date.now() - runtimeCallStartedAt;
+  void logSystemEvent({
+    level: 'debug',
+    source: 'runtime-engine',
+    message: '[engine-server] evaluateGraphServer completed',
+    context: {
+      durationMs: runtimeCallDurationMs,
+      sinceProcessStartMs: runtimeCallStartedAt - (processStartedAtMs ?? runtimeCallStartedAt),
+    },
+  });
+
+  return result;
 }
 
 export async function evaluateGraphWithIteratorAutoContinue(

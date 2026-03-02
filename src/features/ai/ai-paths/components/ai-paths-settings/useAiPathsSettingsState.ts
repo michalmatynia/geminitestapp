@@ -22,6 +22,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
+import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 
 import { useAiPathsCanvasInteractions } from './useAiPathsCanvasInteractions';
 import { useAiPathsNodeSwitchConfirm } from './useAiPathsNodeSwitchConfirm';
@@ -345,7 +346,7 @@ export function useAiPathsSettingsState({
     });
 
     return [...palette, ...derived];
-  }, [triggerButtonsQuery.data]);
+  }, [triggerButtonsQuery.data, palette]);
 
   const {
     parserSampleLoading,
@@ -511,8 +512,7 @@ export function useAiPathsSettingsState({
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
     pruneRuntimeInputs: (_state, removed, remaining) => {
-      runtimeMgmt.pruneRuntimeInputs(removed, remaining);
-      return _state;
+      return pruneRuntimeInputsState(_state, removed, remaining);
     },
   });
 

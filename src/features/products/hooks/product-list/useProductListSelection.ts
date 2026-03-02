@@ -57,7 +57,14 @@ export function useProductListSelection({
       try {
         const allProducts = await queryClient.fetchQuery({
           queryKey: normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters })),
-          queryFn: () => getProducts(filters),
+          queryFn: () =>
+            getProducts({
+              ...filters,
+              page: filters.page ?? 1,
+              pageSize: filters.pageSize ?? 50,
+              advancedFilter: undefined,
+              baseExported: undefined,
+            }),
         });
 
         const newSelection: RowSelectionState = {};

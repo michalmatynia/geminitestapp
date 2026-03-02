@@ -1,14 +1,14 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect, Dispatch as _Dispatch, SetStateAction as _SetStateAction } from 'react';
+import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
 import type {
   DatabaseEngineStatus,
-  DatabaseEngineOperationJob as _DatabaseEngineOperationJob,
+  DatabaseEngineOperationJob,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
-  RedisOverview as _RedisOverview,
+  RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
   UnifiedCollection,
@@ -16,7 +16,6 @@ import type {
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  isValidDatabaseEngineBackupTimeUtc as _isValidDatabaseEngineBackupTimeUtc,
   normalizeDatabaseEngineBackupSchedule,
 } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
@@ -29,6 +28,7 @@ import {
   DEFAULT_DATABASE_ENGINE_POLICY,
   type DatabaseEngineBackupSchedule,
   type DatabaseEngineOperationControls,
+  type DatabaseEnginePolicy,
 } from '@/shared/lib/db/database-engine-constants';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -51,18 +51,18 @@ export interface UseDatabaseEngineStateReturn {
   backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
   operationsJobs: DatabaseEngineOperationsJobs | undefined;
   providerPreview: DatabaseEngineProviderPreview | undefined;
-  redisOverview: _RedisOverview | undefined;
+  redisOverview: RedisOverview | undefined;
   activeView: DatabaseEngineWorkspaceView;
   setActiveView: (view: DatabaseEngineWorkspaceView) => void;
   rows: DatabaseCollectionRow[];
   isLoading: boolean;
   isSaving: boolean;
-  policy: any;
+  policy: DatabaseEnginePolicy;
   serviceRouteMap: Record<string, string>;
   collectionRouteMap: Record<string, string>;
   backupSchedule: DatabaseEngineBackupSchedule;
   operationControls: DatabaseEngineOperationControls;
-  updatePolicy: (updates: Partial<any>) => void;
+  updatePolicy: (updates: Partial<DatabaseEnginePolicy>) => void;
   updateServiceRoute: (service: string, provider: string) => void;
   updateCollectionRoute: (collection: string, provider: string) => void;
   updateBackupSchedule: (updates: Partial<DatabaseEngineBackupSchedule>) => void;
@@ -71,18 +71,18 @@ export interface UseDatabaseEngineStateReturn {
   isDirty: boolean;
   refetchAll: () => void;
   // Legacy aliases kept for backward compatibility with existing page components.
-  policyDraft: any;
-  setPolicyDraft: _Dispatch<_SetStateAction<any>>;
+  policyDraft: DatabaseEnginePolicy;
+  setPolicyDraft: Dispatch<SetStateAction<DatabaseEnginePolicy>>;
   collectionRouteMapDraft: Record<string, string>;
-  setCollectionRouteMapDraft: _Dispatch<_SetStateAction<Record<string, string>>>;
-  operationJobs: _DatabaseEngineOperationJob[];
+  setCollectionRouteMapDraft: Dispatch<SetStateAction<Record<string, string>>>;
+  operationJobs: DatabaseEngineOperationJob[];
   workspaceView: DatabaseEngineWorkspaceView;
   setView: (view: DatabaseEngineWorkspaceView) => void;
+  isFetching: boolean;
   validationErrors: string[];
   saveConfiguration: () => Promise<void>;
-  isFetching: boolean;
-  saving: boolean;
   refetch: () => void;
+  saving: boolean;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -113,7 +113,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
 
   const updateSettingsBulk = useUpdateSettingsBulk();
 
-  const [policy, setPolicy] = useState<any>(DEFAULT_DATABASE_ENGINE_POLICY);
+  const [policy, setPolicy] = useState<DatabaseEnginePolicy>(DEFAULT_DATABASE_ENGINE_POLICY);
   const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
   const [collectionRouteMap, setCollectionRouteMap] = useState<Record<string, string>>({});
   const [backupSchedule, setBackupSchedule] = useState<DatabaseEngineBackupSchedule>(
@@ -194,53 +194,10 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       ]);
       setIsDirty(false);
       toast('Database engine settings saved', { variant: 'success' });
-    } catch (_error) {
+    } catch (error) {
       toast('Failed to save database engine settings', { variant: 'error' });
     }
   };
-
-  const setPolicyDraft = useCallback<_Dispatch<_SetStateAction<any>>>((next) => {
-    setPolicy((prev: any) =>
-      typeof next === 'function' ? (next as (value: any) => any)(prev) : next
-    );
-    setIsDirty(true);
-  }, []);
-
-  const setCollectionRouteMapDraft = useCallback<
-    _Dispatch<_SetStateAction<Record<string, string>>>
-  >((next) => {
-    setCollectionRouteMap((prev) =>
-      typeof next === 'function'
-        ? (next as (value: Record<string, string>) => Record<string, string>)(prev)
-        : next
-    );
-    setIsDirty(true);
-  }, []);
-
-  const refetchAll = useCallback(() => {
-    void engineStatusQuery.refetch();
-    void backupSchedulerStatusQuery.refetch();
-    void operationsJobsQuery.refetch();
-    void providerPreviewQuery.refetch();
-    void redisOverviewQuery.refetch();
-    void schemaQuery.refetch();
-  }, [
-    backupSchedulerStatusQuery,
-    engineStatusQuery,
-    operationsJobsQuery,
-    providerPreviewQuery,
-    redisOverviewQuery,
-    schemaQuery,
-  ]);
-
-  const validationErrors = engineStatusQuery.data?.blockingIssues ?? [];
-  const operationJobs = operationsJobsQuery.data?.jobs ?? [];
-  const isLoading =
-    engineStatusQuery.isPending ||
-    backupSchedulerStatusQuery.isPending ||
-    operationsJobsQuery.isPending ||
-    redisOverviewQuery.isPending ||
-    settingsLoading;
 
   return {
     engineStatus: engineStatusQuery.data,
@@ -251,7 +208,11 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     activeView,
     setActiveView,
     rows,
-    isLoading,
+    isLoading:
+      engineStatusQuery.isPending ||
+      backupSchedulerStatusQuery.isPending ||
+      operationsJobsQuery.isPending ||
+      settingsLoading,
     isSaving: updateSettingsBulk.isPending,
     policy,
     serviceRouteMap,
@@ -259,7 +220,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     backupSchedule,
     operationControls,
     updatePolicy: (updates) => {
-      setPolicy((prev: any) => ({ ...prev, ...updates }));
+      setPolicy((prev) => ({ ...prev, ...updates }));
       setIsDirty(true);
     },
     updateServiceRoute: (service, provider) => {
@@ -280,18 +241,38 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     },
     saveSettings: handleSave,
     isDirty,
-    refetchAll,
+    refetchAll: () => {
+      void engineStatusQuery.refetch();
+      void backupSchedulerStatusQuery.refetch();
+      void operationsJobsQuery.refetch();
+      void providerPreviewQuery.refetch();
+      void schemaQuery.refetch();
+      void redisOverviewQuery.refetch();
+    },
+    // Legacy aliases
     policyDraft: policy,
-    setPolicyDraft,
+    setPolicyDraft: setPolicy,
     collectionRouteMapDraft: collectionRouteMap,
-    setCollectionRouteMapDraft,
-    operationJobs,
+    setCollectionRouteMapDraft: setCollectionRouteMap,
+    operationJobs: operationsJobsQuery.data?.jobs ?? [],
     workspaceView: activeView,
     setView: setActiveView,
-    validationErrors,
+    isFetching:
+      engineStatusQuery.isFetching ||
+      backupSchedulerStatusQuery.isFetching ||
+      operationsJobsQuery.isFetching ||
+      schemaQuery.isFetching ||
+      redisOverviewQuery.isFetching,
+    validationErrors: [],
     saveConfiguration: handleSave,
-    isFetching: isLoading,
+    refetch: () => {
+      void engineStatusQuery.refetch();
+      void backupSchedulerStatusQuery.refetch();
+      void operationsJobsQuery.refetch();
+      void providerPreviewQuery.refetch();
+      void schemaQuery.refetch();
+      void redisOverviewQuery.refetch();
+    },
     saving: updateSettingsBulk.isPending,
-    refetch: refetchAll,
   };
 }

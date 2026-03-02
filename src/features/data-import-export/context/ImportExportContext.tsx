@@ -327,17 +327,19 @@ export function ImportExportProvider({
 
   const importParameterCacheQuery = useImportParameterCache(isBaseConnected);
   const importParameterCache = useMemo<ImportParameterCacheResponse | null>(() => {
-    return importParameterCacheQuery.data ?? null;
+    return (importParameterCacheQuery.data as ImportParameterCacheResponse) ?? null;
   }, [importParameterCacheQuery.data]);
-  const importSourceFields = useMemo<string[]>(() => {
-    const rawKeys = Array.isArray(importParameterCache?.keys) ? importParameterCache.keys : [];
+  const importSourceFields = useMemo<string[]>((): string[] => {
+    const data = importParameterCache;
+    const rawKeys = data && Array.isArray(data.keys) ? (data.keys as unknown[]) : [];
     const normalized = rawKeys
       .map((key: unknown): string => (typeof key === 'string' ? key.trim() : ''))
       .filter((key: string): boolean => key.length > 0);
     return Array.from(new Set(normalized)).sort((a: string, b: string) => a.localeCompare(b));
-  }, [importParameterCache?.keys]);
+  }, [importParameterCache]);
   const importSourceFieldValues = useMemo<Record<string, string>>(() => {
-    const rawValues = importParameterCache?.values;
+    const data = importParameterCache;
+    const rawValues = data?.values;
     if (!rawValues || typeof rawValues !== 'object') return {};
     const normalized: Record<string, string> = {};
     Object.entries(rawValues).forEach(([key, value]: [string, unknown]) => {
@@ -348,8 +350,7 @@ export function ImportExportProvider({
       normalized[normalizedKey] = normalizedValue;
     });
     return normalized;
-  }, [importParameterCache?.values]);
-
+  }, [importParameterCache]);
   const data = useImportExportData({
     selectedBaseConnectionId,
     isBaseConnected,

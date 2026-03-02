@@ -1,5 +1,9 @@
 import type { ImportResponse } from '@/shared/contracts/data-import-export';
-import type { BaseImportMode, ImageRetryPreset } from '@/shared/contracts/integrations';
+import type {
+  BaseImportMode,
+  ImageRetryPreset,
+  BaseImportPreflightIssue,
+} from '@/shared/contracts/integrations';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
@@ -269,8 +273,8 @@ export const createImportExportRuntimeActions = ({
         toast(res.summaryMessage || 'Import completed.', { variant: 'success' });
       } else if (res.status === 'failed') {
         const preflightErrors = (res.preflight?.issues ?? [])
-          .filter((issue) => issue.severity === 'error')
-          .map((issue) => issue.message);
+          .filter((issue: BaseImportPreflightIssue) => issue.severity === 'error')
+          .map((issue: BaseImportPreflightIssue) => issue.message);
         toast(preflightErrors[0] || res.summaryMessage || 'Import failed.', { variant: 'error' });
       }
     } catch (error: unknown) {

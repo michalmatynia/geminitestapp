@@ -1,8 +1,8 @@
 import {
   type ProductWithImages,
   type ProductsPagedResult,
-  type ProductFilterDto,
-} from '@/shared/contracts/products';
+} from '@/shared/contracts/products/product';
+import { type ProductFilterDto } from '@/shared/contracts/products/filters';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;

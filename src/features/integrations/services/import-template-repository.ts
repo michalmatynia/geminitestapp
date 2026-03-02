@@ -720,6 +720,8 @@ export const createImportTemplate = async (input: {
   const template: Template = {
     id: randomUUID(),
     name: input.name,
+    provider: 'base-com',
+    config: {},
     description: input.description ?? null,
     mappings: input.mappings ?? [],
     parameterImport: normalizeBaseImportParameterImportSettings(
@@ -746,8 +748,8 @@ export const updateImportTemplate = async (
   const index = templates.findIndex((template: Template) => template.id === id);
   if (index === -1) return null;
   const existing = templates[index]!;
-  const updated = {
-    id: existing.id,
+  const updated: Template = {
+    ...existing,
     name: input.name ?? existing.name,
     description: input.description !== undefined ? input.description : existing.description,
     mappings: input.mappings ?? existing.mappings,
@@ -756,9 +758,8 @@ export const updateImportTemplate = async (
         ? input.parameterImport
         : (existing.parameterImport ?? defaultBaseImportParameterImportSettings)
     ),
-    createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
-  } as Template;
+  };
   templates[index] = updated;
   await writeTemplatesValue(JSON.stringify(templates));
   return updated;

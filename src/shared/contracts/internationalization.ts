@@ -123,3 +123,10 @@ export const languageWithCountriesSchema = languageSchema.extend({
 export type LanguageWithCountriesDto = z.infer<typeof languageWithCountriesSchema>;
 export type LanguageWithCountries = LanguageWithCountriesDto;
 export type Language = LanguageWithCountriesDto;
+
+/**
+ * Persistence Inputs
+ */
+export type SaveCurrencyInput = Partial<CurrencyOption>;
+export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
+export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };

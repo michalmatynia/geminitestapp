@@ -17,7 +17,7 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,
   autoRelistEnabled: true,
   autoRelistLeadMinutes: 180,
-  schedulerEnabled: true,
+  schedulerEnabled: false,
   schedulerIntervalMs: 5 * 60 * 1000,
   allowSimulatedSuccess: false,
   listingFormUrl: 'https://www.tradera.com/sell/item/new',

@@ -5,19 +5,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import type {
   CatalogOption as CatalogRecord,
   ImportListItem,
-  ImportResponse,
-  Template,
   WarehouseOption,
 } from '@/shared/contracts/data-import-export';
 import type {
-  IntegrationWithConnections,
   BaseImportRunDetailResponse,
   BaseImportRunRecord,
   BaseImportStartResponse,
   BaseImportMode,
-  ImportParameterCacheResponse as IntegrationImportParameterCacheResponse,
+  ImportParameterCacheResponse,
   BaseInventory,
+  IntegrationWithConnections,
   ImageRetryPreset,
+  BaseImportStartResponse as ImportResponse,
+  Template,
 } from '@/shared/contracts/integrations';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -35,7 +35,7 @@ import {
   productMetadataKeys,
 } from '@/shared/lib/query-key-exports';
 
-export type ImportParameterCacheResponse = IntegrationImportParameterCacheResponse;
+export type { ImportParameterCacheResponse };
 export type { CatalogRecord };
 
 // --- Queries ---

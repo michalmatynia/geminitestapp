@@ -5,7 +5,7 @@ import React from 'react';
 import { ListPanel, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-type DocumentSearchPageProps = {
+export type DocumentSearchPageProps = {
   title: string;
   startAdornment?: React.ReactNode;
   titleAdornment?: React.ReactNode;

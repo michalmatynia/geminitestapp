@@ -11,11 +11,11 @@ import {
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider as _getProductDataProvider } from '@/shared/lib/products/services/product-provider';
-import type {
-  ImageRetryPreset,
-  Template,
-  TemplateMapping,
-} from '@/shared/contracts/integrations';
+import { type ImageRetryPreset } from '@/shared/contracts/integrations/base';
+import { type Template, type TemplateMapping } from '@/shared/contracts/integrations/templates';
+
+export type { Template, TemplateMapping };
+
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

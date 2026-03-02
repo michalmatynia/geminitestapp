@@ -9,7 +9,7 @@ import { startAllWorkers } from '@/shared/lib/queue/registry';
 let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
 const LOG_SOURCE = 'queue-init';
-const STARTUP_GATED_AI_QUEUE_NAMES = [
+const STARTUP_GATED_QUEUE_NAMES = [
   'ai-path-run',
   'chatbot',
   'agent',
@@ -17,6 +17,7 @@ const STARTUP_GATED_AI_QUEUE_NAMES = [
   'image-studio-sequence',
   'case-resolver-ocr',
   'ai-insights',
+  'tradera-relist-scheduler',
 ] as const;
 
 const runStartupBackupSchedulerCatchup = (): void => {
@@ -137,7 +138,7 @@ export const initializeQueues = (): void => {
       source: LOG_SOURCE,
       message: 'Starting BullMQ workers...',
     });
-    startAllWorkers({ excludeQueueNames: STARTUP_GATED_AI_QUEUE_NAMES });
+    startAllWorkers({ excludeQueueNames: STARTUP_GATED_QUEUE_NAMES });
 
     // AI workers are started with feature-aware gates to avoid running disabled capabilities.
     (

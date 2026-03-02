@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
+import { importTemplateParameterImportSchema } from '../data-import-export';
 
 export const templateMappingSchema = z.object({
   sourceKey: z.string(),
@@ -15,6 +16,7 @@ export const templateSchema = namedDtoSchema.extend({
   config: z.record(z.string(), z.unknown()),
   description: z.string().nullable().optional(),
   exportImagesAsBase64: z.boolean().optional(),
+  parameterImport: importTemplateParameterImportSchema.optional(),
 });
 
 export type Template = z.infer<typeof templateSchema>;

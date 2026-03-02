@@ -4,6 +4,8 @@ import {
   type CaseResolverIdentifier,
   type CaseResolverTag,
 } from '@/shared/contracts/case-resolver';
+
+export type { CaseResolverCategoryTreeNode };
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>

@@ -10,6 +10,7 @@ import {
 import {
   type ProductCategory,
   type ProductCategoryWithChildren,
+  type ReorderProductCategoryDto as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
 import {
   type ProductParameter,
@@ -20,7 +21,14 @@ import {
   type ProductValidationPattern,
   type ProductValidatorConfig,
   type ProductValidatorSettings,
+  type CreateProductValidationPatternDto as CreateValidationPatternPayload,
+  type UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
+import {
+  type ProductValidatorImportRequest as ImportValidationPatternsPayload,
+  type ProductValidatorImportResult as ImportValidationPatternsResult,
+} from '@/shared/contracts/validator-import';
 import type {
   UpdateMutation,
   DeleteMutation,
@@ -280,7 +288,7 @@ export function useSaveCategoryMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'categories', 'save'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductCategory> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -304,7 +312,7 @@ export function useDeleteCategoryMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'categories', 'delete'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
@@ -312,12 +320,12 @@ export function useDeleteCategoryMutation(): UpdateMutation<
 
 export function useReorderCategoryMutation(): UpdateMutation<
   ProductCategory,
-  api.ReorderCategoryPayload
+  ReorderCategoryPayload
   > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createUpdateMutationV2({
-    mutationFn: (payload: api.ReorderCategoryPayload) => api.reorderCategory(payload),
+    mutationFn: (payload: ReorderCategoryPayload) => api.reorderCategory(payload),
     mutationKey,
     meta: {
       source: 'products.hooks.useReorderCategoryMutation',
@@ -352,7 +360,7 @@ export function useSaveTagMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'tags', 'save'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductTag> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -376,7 +384,7 @@ export function useDeleteTagMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'tags', 'delete'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
@@ -400,7 +408,7 @@ export function useSaveParameterMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'parameters', 'save'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductParameter> }) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -424,7 +432,7 @@ export function useDeleteParameterMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'parameters', 'delete'],
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
@@ -455,7 +463,7 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
 
 export function useCreateValidationPatternMutation(): CreateMutation<
   ProductValidationPattern,
-  api.CreateValidationPatternPayload
+  CreateValidationPatternPayload
   > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
@@ -478,12 +486,12 @@ export function useCreateValidationPatternMutation(): CreateMutation<
 
 export function useUpdateValidationPatternMutation(): UpdateMutation<
   ProductValidationPattern,
-  { id: string; data: api.UpdateValidationPatternPayload }
+  { id: string; data: UpdateValidationPatternPayload }
   > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
-    mutationFn: ({ id, data }: { id: string; data: api.UpdateValidationPatternPayload }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateValidationPatternPayload }) =>
       api.updateValidationPattern(id, data),
     mutationKey,
     meta: {
@@ -522,12 +530,12 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
 
 export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updated: ProductValidationPattern[] },
-  { updates: api.ReorderValidationPatternUpdatePayload[] }
+  { updates: ReorderValidationPatternUpdatePayload[] }
   > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
-    mutationFn: (payload: { updates: api.ReorderValidationPatternUpdatePayload[] }) =>
+    mutationFn: (payload: { updates: ReorderValidationPatternUpdatePayload[] }) =>
       api.reorderValidationPatterns(payload),
     mutationKey,
     meta: {
@@ -545,13 +553,13 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
 }
 
 export function useImportValidationPatternsMutation(): UpdateMutation<
-  api.ImportValidationPatternsResult,
-  api.ImportValidationPatternsPayload
+  ImportValidationPatternsResult,
+  ImportValidationPatternsPayload
   > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
-    mutationFn: (payload: api.ImportValidationPatternsPayload) =>
+    mutationFn: (payload: ImportValidationPatternsPayload) =>
       api.importValidationPatterns(payload),
     mutationKey,
     meta: {

@@ -123,6 +123,8 @@ export function useDatabaseNodeConfigState() {
   const [pendingAiQuery, setPendingAiQuery] = useState<string>('');
   const [aiQueries, setAiQueries] = useState<AiQuery[]>([]);
   const [selectedAiQueryId, setSelectedAiQueryId] = useState<string>('');
+  const [testQueryResult, setTestQueryResult] = useState<unknown | null>(null);
+  const [testQueryLoading, setTestQueryLoading] = useState(false);
   const [queryValidatorEnabled, setQueryValidatorEnabled] = useState(true);
   const [queryFormatterEnabled, setQueryFormatterEnabled] = useState(true);
   const [selectedSnippetIndex, setSelectedSnippetIndex] = useState<number | null>(null);
@@ -153,14 +155,7 @@ export function useDatabaseNodeConfigState() {
     ? (databaseConfig.updateTemplate ?? '')
     : (queryConfig.queryTemplate ?? '');
 
-  const {
-    handleRunQuery,
-    updateQueryConfig,
-    testQueryResult,
-    setTestQueryResult,
-    testQueryLoading,
-    setTestQueryLoading,
-  } = useDatabaseQueryExecution({
+  const { handleRunQuery, updateQueryConfig } = useDatabaseQueryExecution({
     selectedNodeId,
     databaseConfig,
     queryConfig,
@@ -169,7 +164,9 @@ export function useDatabaseNodeConfigState() {
     isUpdateAction,
     updateSelectedNodeConfig,
     toast: toast,
-  });
+    setTestQueryResult,
+    setTestQueryLoading,
+  } as any);
   const { handleProviderChange, handleActionCategoryChange, applyActionConfig } =
     useDatabaseActionConfig({
       databaseConfig,

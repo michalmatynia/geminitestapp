@@ -124,7 +124,7 @@ export type MapStatusOptions = {
   fallbackCode?: string;
 };
 
-export interface ErrorContext {
+export interface AppErrorContext {
   userId?: string;
   requestId?: string;
   path?: string;

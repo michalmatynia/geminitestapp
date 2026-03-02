@@ -387,4 +387,8 @@ export const handlers = [
       timestamp: new Date().toISOString(),
     });
   }),
+
+  http.post('/api/integrations/products/:id/base/sku-check', () => {
+    return HttpResponse.json({ exists: false });
+  }),
 ];

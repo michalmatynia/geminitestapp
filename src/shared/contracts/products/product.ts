@@ -12,7 +12,7 @@ export const productCurrencySchema = namedDtoSchema.extend({
 });
 
 export type ProductCurrencyDto = z.infer<typeof productCurrencySchema>;
-export type CurrencyRecord = ProductCurrencyDto;
+export type ProductCurrencyRecord = ProductCurrencyDto;
 
 /**
  * Price Group With Details Contract

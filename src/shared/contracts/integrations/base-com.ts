@@ -234,21 +234,59 @@ export const baseImportRunItemRecordSchema = z.object({
   id: z.string(),
   runId: z.string(),
   externalId: z.string(),
+  itemId: z.string(),
+  baseProductId: z.string().nullable().optional(),
   sku: z.string().nullable().optional(),
   status: baseImportItemStatusSchema,
   action: baseImportItemActionSchema.nullable().optional(),
   productId: z.string().nullable().optional(),
+  importedProductId: z.string().nullable().optional(),
   error: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
   errorCode: baseImportErrorCodeSchema.nullable().optional(),
   errorClass: baseImportErrorClassSchema.nullable().optional(),
-  parameterImportSummary: baseImportParameterImportSummarySchema.optional(),
+  parameterImportSummary: baseImportParameterImportSummarySchema.nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  payloadSnapshot: z.unknown().optional(),
   startedAt: z.string().nullable().optional(),
   finishedAt: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  attempt: z.number(),
+  idempotencyKey: z.string().optional(),
+  retryable: z.boolean().nullable().optional(),
+  nextRetryAt: z.string().nullable().optional(),
+  lastErrorAt: z.string().nullable().optional(),
 });
 export type BaseImportRunItemRecord = z.infer<typeof baseImportRunItemRecordSchema>;
+
+export type BaseImportItemRecord = {
+  id: string;
+  runId: string;
+  externalId: string;
+  itemId: string;
+  baseProductId?: string | null;
+  sku?: string | null;
+  status: BaseImportItemStatus;
+  attempt: number;
+  idempotencyKey?: string;
+  action?: BaseImportItemAction | null;
+  productId?: string | null;
+  importedProductId?: string | null;
+  error?: string | null;
+  errorMessage?: string | null;
+  errorCode?: BaseImportErrorCode | null;
+  errorClass?: BaseImportErrorClass | null;
+  retryable?: boolean | null;
+  nextRetryAt?: string | null;
+  lastErrorAt?: string | null;
+  payloadSnapshot?: unknown;
+  parameterImportSummary?: BaseImportParameterImportSummary | null;
+  createdAt: string;
+  updatedAt: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+};
 
 export type BaseImportStartResponse = {
   runId: string;
@@ -268,3 +306,14 @@ export type BaseImportRunDetailResponse = {
     totalPages: number;
   };
 };
+
+export const importParameterCacheResponseSchema = z.object({
+  inventoryId: z.string().nullable().optional(),
+  productId: z.string().nullable().optional(),
+  keys: z.array(z.string()).optional(),
+  values: z.record(z.string(), z.string()).optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type ImportParameterCacheResponse = z.infer<typeof importParameterCacheResponseSchema>;
+

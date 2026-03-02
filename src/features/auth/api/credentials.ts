@@ -1,5 +1,7 @@
 import type { VerifyCredentialsResponse, Login } from '@/shared/contracts/auth';
 
+export type { VerifyCredentialsResponse, Login };
+
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
     return (await res.json()) as T;

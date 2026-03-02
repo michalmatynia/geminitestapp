@@ -11,6 +11,8 @@ import type {
   CaseResolverOcrJobRecord,
 } from '@/shared/contracts/case-resolver';
 
+export type { CaseResolverOcrErrorCategory, CaseResolverOcrJobRecord };
+
 const OCR_RUNTIME_JOB_KEY_PREFIX = 'case-resolver:ocr:job:';
 const OCR_RUNTIME_JOB_RECENT_IDS_KEY = 'case-resolver:ocr:job:recent';
 const OCR_RUNTIME_JOB_TTL_SECONDS = 60 * 60 * 6;

@@ -14,6 +14,7 @@ import type {
   RuntimeState,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui';
 import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 
 type ConfirmFn = (input: {
@@ -24,17 +25,10 @@ type ConfirmFn = (input: {
   onConfirm: () => void | Promise<void>;
 }) => void;
 
-type ToastFn = (
-  message: string,
-  options?: {
-    variant?: 'info' | 'success' | 'warning' | 'error';
-  }
-) => void;
-
 type UseAiPathsSettingsCleanupActionsInput = {
   activePathId: string | null;
   isPathLocked: boolean;
-  toast: ToastFn;
+  toast: Toast;
   confirm: ConfirmFn;
   runtimeState: RuntimeState;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;

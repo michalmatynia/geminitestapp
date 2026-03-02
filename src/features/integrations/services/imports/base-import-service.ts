@@ -275,7 +275,9 @@ export const prepareBaseImportRun = async (
 
   const createdAt = nowIso();
   const runItems: BaseImportItemRecord[] = ids.map((itemId) => ({
+    id: itemId,
     runId: run.id,
+    externalId: itemId,
     itemId,
     baseProductId: itemId,
     sku: null,
@@ -283,13 +285,15 @@ export const prepareBaseImportRun = async (
     attempt: 0,
     idempotencyKey: `${run.id}:${itemId}`,
     action: 'pending',
+    productId: null,
+    importedProductId: null,
+    error: null,
+    errorMessage: null,
     errorCode: null,
     errorClass: null,
-    errorMessage: null,
     retryable: null,
     nextRetryAt: null,
     lastErrorAt: null,
-    importedProductId: null,
     payloadSnapshot: null,
     createdAt,
     updatedAt: createdAt,

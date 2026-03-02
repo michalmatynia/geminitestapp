@@ -388,7 +388,11 @@ export function useProductData({
       page,
       pageSize,
       catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
-      searchLanguage: searchLanguage || undefined,
+      searchLanguage: (searchLanguage || undefined) as
+        | 'name_en'
+        | 'name_pl'
+        | 'name_de'
+        | undefined,
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
     }),
     [

@@ -1124,7 +1124,7 @@ const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {
     return { queue: null, owned: false };
   }
   return {
-    queue: new Queue(AI_PATH_RUN_QUEUE_NAME, { connection }),
+    queue: new Queue(AI_PATH_RUN_QUEUE_NAME, { connection: connection as any }),
     owned: true,
   };
 };

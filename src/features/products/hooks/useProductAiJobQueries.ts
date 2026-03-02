@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProductAiJobStatus as AiJobStatus } from '@/shared/contracts/products';
+import type { ProductAiJobStatusInfo as AiJobStatus } from '@/shared/contracts/products';
 import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

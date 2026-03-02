@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { renderTemplate, safeParseJson, dbApi } from '@/shared/lib/ai-paths';
 import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';
 import type {
@@ -18,9 +18,10 @@ export function useDatabaseQueryExecution(args: {
   isUpdateAction: boolean;
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
   toast: Toast;
+  setTestQueryResult: (result: unknown | null) => void;
+  setTestQueryLoading: (loading: boolean) => void;
 }) {
-  const [testQueryResult, setTestQueryResult] = useState<string>('');
-  const [testQueryLoading, setTestQueryLoading] = useState(false);
+  const { setTestQueryResult, setTestQueryLoading } = args;
 
   const handleRunQuery = useCallback(async () => {
     setTestQueryLoading(true);
@@ -88,7 +89,7 @@ export function useDatabaseQueryExecution(args: {
     } finally {
       setTestQueryLoading(false);
     }
-  }, [args]);
+  }, [args, setTestQueryLoading, setTestQueryResult]);
 
   const updateQueryConfig = useCallback(
     (patch: Partial<DbQueryConfig>, options?: { syncPreset?: boolean }) => {
@@ -106,9 +107,5 @@ export function useDatabaseQueryExecution(args: {
   return {
     handleRunQuery,
     updateQueryConfig,
-    testQueryResult,
-    setTestQueryResult,
-    testQueryLoading,
-    setTestQueryLoading,
   };
 }

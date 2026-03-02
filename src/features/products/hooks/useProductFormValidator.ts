@@ -426,7 +426,13 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
   const latestProductsQuery = createListQueryV2({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
-    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
+    queryFn: () =>
+      productsApi.getProducts({
+        page: 1,
+        pageSize: 4,
+        advancedFilter: undefined,
+        baseExported: undefined,
+      }),
     enabled: validatorEnabled && needsLatestProductSource,
     staleTime: 60_000,
     meta: {

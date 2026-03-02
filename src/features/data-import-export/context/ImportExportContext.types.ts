@@ -1,21 +1,23 @@
 import type {
-  ImportResponse,
-  InventoryOption,
-  Template,
-  TemplateMapping,
-  WarehouseOption,
+  ImportExportTemplateMapping as TemplateMapping,
   ImportListItem,
   ImportListStats,
-  ImportRunDetail,
   DebugWarehouses,
   CatalogOption,
+  InventoryOption,
+  WarehouseOption,
+  ImportExportTemplate as Template,
 } from '@/shared/contracts/data-import-export';
 import type {
-  BaseImportParameterImportSettings,
+  BaseImportStartResponse as ImportResponse,
+  BaseImportRunDetailResponse as ImportRunDetail,
+} from '@/shared/contracts/integrations/base-com';
+import type {
   BaseImportMode,
   IntegrationConnectionBasic,
   IntegrationWithConnections,
   ImageRetryPreset,
+  BaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';

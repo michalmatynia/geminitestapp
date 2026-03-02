@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { BaseImportPreflightIssue } from '@/shared/contracts/integrations';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { FormSection, Hint } from '@/shared/ui';
 
@@ -19,7 +20,7 @@ export function ImportLastResultSection(): React.JSX.Element | null {
       ) : null}
       {(lastResult.preflight?.issues?.length ?? 0) > 0 ? (
         <div className='mt-3 space-y-1 text-xs text-gray-400'>
-          {lastResult.preflight?.issues?.map((issue, index: number) => (
+          {lastResult.preflight?.issues?.map((issue: BaseImportPreflightIssue, index: number) => (
             <p key={`${issue.code}-${index}`}>• {issue.message}</p>
           ))}
         </div>

@@ -8,6 +8,8 @@ import type { AuthSecurityProfile } from '@/shared/contracts/auth';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
+export type { AuthSecurityProfile };
+
 type MongoProfileDoc = {
   _id: string;
   userId: string;

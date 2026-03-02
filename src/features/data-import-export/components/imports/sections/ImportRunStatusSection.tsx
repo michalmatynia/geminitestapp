@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import type { BaseImportItemRecord } from '@/shared/contracts/integrations';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { Button, FormSection, Badge, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -21,7 +22,9 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const runHasRetryableItems = useMemo(
     (): boolean =>
       Boolean(
-        activeImportRun?.items.some((item) => item.status === 'failed' || item.status === 'pending')
+        activeImportRun?.items.some(
+          (item: BaseImportItemRecord) => item.status === 'failed' || item.status === 'pending'
+        )
       ),
     [activeImportRun?.items]
   );
@@ -29,7 +32,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const runErrorItems = useMemo(
     () =>
       (activeImportRun?.items ?? [])
-        .filter((item) => item.status === 'failed' || item.errorMessage)
+        .filter((item: BaseImportItemRecord) => item.status === 'failed' || item.errorMessage)
         .slice(0, 10),
     [activeImportRun?.items]
   );
@@ -57,7 +60,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           created: number;
           written: number;
         },
-        item
+        item: BaseImportItemRecord
       ) => {
         const summary = item.parameterImportSummary;
         if (!summary) return acc;
@@ -108,8 +111,8 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const parameterSyncHistoryItems = useMemo(
     () =>
       (activeImportRun?.items ?? [])
-        .filter((item) => Boolean(item.parameterImportSummary))
-        .sort((a, b) => {
+        .filter((item: BaseImportItemRecord) => Boolean(item.parameterImportSummary))
+        .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => {
           const aTime = Date.parse(a.finishedAt ?? a.updatedAt ?? '');
           const bTime = Date.parse(b.finishedAt ?? b.updatedAt ?? '');
           if (!Number.isFinite(aTime) && !Number.isFinite(bTime)) return 0;
@@ -198,7 +201,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
           </p>
           {parameterSyncHistoryItems.length > 0 ? (
             <div className='mt-2 space-y-1'>
-              {parameterSyncHistoryItems.map((item) => (
+              {parameterSyncHistoryItems.map((item: BaseImportItemRecord) => (
                 <p
                   key={`${item.itemId}-${item.attempt}-parameter-sync`}
                   className='text-[11px] text-gray-400 font-mono truncate'
@@ -221,7 +224,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       {loadingImportRun ? <Hint className='mt-2'>Refreshing run status...</Hint> : null}
       {runErrorItems.length > 0 ? (
         <div className='mt-3 space-y-1 text-xs text-gray-400'>
-          {runErrorItems.map((item) => (
+          {runErrorItems.map((item: BaseImportItemRecord) => (
             <p key={`${item.itemId}-${item.attempt}`}>
               • {item.errorMessage || 'Import failed'}
               {item.sku ? ` (SKU: ${item.sku})` : ''}

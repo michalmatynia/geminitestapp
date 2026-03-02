@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
-import {
-  type ProductWithImages,
-  productSchema,
-  type ProductFilterDto as UseProductsFilters,
-} from '@/shared/contracts/products';
+import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
+import { type ProductFilterDto as UseProductsFilters } from '@/shared/contracts/products/filters';
+
+export type { UseProductsFilters };
+
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

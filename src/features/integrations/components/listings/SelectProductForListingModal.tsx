@@ -35,8 +35,11 @@ function SelectProductForListingModalContent(): React.JSX.Element {
   } = useProductSelectionForm();
 
   const productsQuery = useProductsWithCount({
+    page: 1,
     pageSize: 10,
     search: productSearch,
+    advancedFilter: undefined,
+    baseExported: undefined,
   });
 
   return (

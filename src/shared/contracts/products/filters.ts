@@ -483,6 +483,7 @@ export const productFilterSchema = commonListQuerySchema.extend({
 });
 
 export type ProductFilterDto = z.infer<typeof productFilterSchema>;
+export type ProductFilterInput = z.input<typeof productFilterSchema>;
 
 /**
  * Validation Contracts

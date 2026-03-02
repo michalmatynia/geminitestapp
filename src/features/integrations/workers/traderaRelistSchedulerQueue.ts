@@ -62,33 +62,58 @@ const queue = createManagedQueue<TraderaRelistSchedulerJobData>({
   },
 });
 
-let started = false;
-let repeatRegistered = false;
+type TraderaRelistSchedulerQueueState = {
+  workerStarted: boolean;
+  repeatRegistered: boolean;
+  startupInFlight: boolean;
+};
+
+const globalWithQueueState = globalThis as typeof globalThis & {
+  __traderaRelistSchedulerQueueState__?: TraderaRelistSchedulerQueueState;
+};
+
+const queueState =
+  globalWithQueueState.__traderaRelistSchedulerQueueState__ ??
+  (globalWithQueueState.__traderaRelistSchedulerQueueState__ = {
+    workerStarted: false,
+    repeatRegistered: false,
+    startupInFlight: false,
+  });
 
 export const startTraderaRelistSchedulerQueue = (): void => {
-  if (!started) {
-    started = true;
-    queue.startWorker();
-  }
-
-  if (repeatRegistered) return;
-  repeatRegistered = true;
+  if (queueState.startupInFlight) return;
+  queueState.startupInFlight = true;
 
   void (async (): Promise<void> => {
-    const rawInterval = await getSettingValue(TRADERA_SETTINGS_KEYS.schedulerIntervalMs);
-    const intervalMs = parseMs(rawInterval, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs);
-    await queue.enqueue(
-      { type: 'scheduled-tick' },
-      {
-        repeat: { every: intervalMs },
-        jobId: 'tradera-relist-scheduler-tick',
+    try {
+      const enabled = await shouldRunTraderaRelistScheduler();
+      if (!enabled) return;
+
+      if (!queueState.workerStarted) {
+        queueState.workerStarted = true;
+        queue.startWorker();
       }
-    );
-  })().catch(async (error) => {
-    repeatRegistered = false;
-    await ErrorSystem.captureException(error, {
-      service: 'tradera-relist-scheduler-queue',
-      action: 'registerRepeat',
-    });
-  });
+
+      if (queueState.repeatRegistered) return;
+
+      const rawInterval = await getSettingValue(TRADERA_SETTINGS_KEYS.schedulerIntervalMs);
+      const intervalMs = parseMs(rawInterval, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs);
+      await queue.enqueue(
+        { type: 'scheduled-tick' },
+        {
+          repeat: { every: intervalMs },
+          jobId: 'tradera-relist-scheduler-tick',
+        }
+      );
+      queueState.repeatRegistered = true;
+    } catch (error) {
+      queueState.repeatRegistered = false;
+      await ErrorSystem.captureException(error, {
+        service: 'tradera-relist-scheduler-queue',
+        action: 'registerRepeat',
+      });
+    } finally {
+      queueState.startupInFlight = false;
+    }
+  })();
 };

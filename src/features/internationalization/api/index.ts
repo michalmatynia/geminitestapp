@@ -2,6 +2,9 @@ import type {
   CountryOption,
   CurrencyOption,
   Language,
+  SaveCurrencyInput,
+  SaveCountryInput,
+  SaveLanguageInput,
 } from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
 
@@ -28,10 +31,6 @@ export async function deleteCountry(id: string): Promise<void> {
 export async function deleteLanguage(id: string): Promise<void> {
   await api.delete(`/api/languages/${id}`);
 }
-
-export type SaveCurrencyInput = Partial<CurrencyOption>;
-export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
-export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };
 
 export async function saveCurrency(
   id: string | undefined,

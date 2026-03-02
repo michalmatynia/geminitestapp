@@ -9,7 +9,11 @@ export { ContentDisplayModal, type ContentDisplayModalProps } from './ContentDis
 export { FilterPanel, type FilterPanelProps } from './FilterPanel';
 export { SimpleSettingsList, type SimpleSettingsListItem } from './SimpleSettingsList';
 export { StandardDataTablePanel, type StandardDataTablePanelProps } from './StandardDataTablePanel';
-export { GenericApiConsole, type GenericApiConsoleProps } from './GenericApiConsole';
+export {
+  GenericApiConsole,
+  type GenericApiConsoleProps,
+  type ApiPreset,
+} from './GenericApiConsole';
 export { DocumentSearchPage, type DocumentSearchPageProps } from './DocumentSearchPage';
 export * from './mappers';
 export * from './modals';

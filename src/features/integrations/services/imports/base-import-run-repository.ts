@@ -648,6 +648,7 @@ export const getBaseImportRunDetail = async (
     run,
     items: paged.items,
     pagination: {
+
       page: paged.page,
       pageSize: paged.pageSize,
       totalItems: paged.totalItems,

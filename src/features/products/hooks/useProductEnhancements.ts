@@ -63,7 +63,13 @@ export function useProductCacheWarmup(productId?: string): void {
   useCacheWarmup([
     {
       queryKey: productsAllQueryKey,
-      queryFn: () => getProducts({}),
+      queryFn: () =>
+        getProducts({
+          page: 1,
+          pageSize: 10,
+          advancedFilter: undefined,
+          baseExported: undefined,
+        }),
       priority: 'high' as const,
     },
     {

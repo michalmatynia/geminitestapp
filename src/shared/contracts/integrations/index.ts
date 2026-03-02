@@ -26,15 +26,35 @@ import {
   type BaseImportErrorClass,
   type BaseImportParameterImportSummary,
   type BaseImportRunRecord,
-  type BaseImportRunStatus as _BaseImportRunStatus,
-  type BaseImportPreflight as _BaseImportPreflight,
+  type BaseImportRunStatus,
+  type BaseImportPreflight,
+  type BaseImportStartResponse,
+  type BaseImportRunDetailResponse,
+  type BaseImportItemRecord,
+  type ImportParameterCacheResponse,
 } from './base-com';
+
+export type {
+  BaseImportItemStatus,
+  BaseImportItemAction,
+  BaseImportErrorCode,
+  BaseImportErrorClass,
+  BaseImportParameterImportSummary,
+  BaseImportRunRecord,
+  BaseImportRunStatus,
+  BaseImportPreflight,
+  BaseImportStartResponse,
+  BaseImportRunDetailResponse,
+  BaseImportItemRecord,
+  ImportParameterCacheResponse,
+};
+
 import type { ImportTemplateParameterImport } from '../data-import-export';
 
 import {
-  type ImportExportTemplate as Template,
-  type ImportExportTemplateMapping as TemplateMapping,
-} from '../data-import-export';
+  type Template,
+  type TemplateMapping,
+} from './templates';
 
 export type { Template, TemplateMapping };
 
@@ -368,19 +388,10 @@ export const traderaCategoryRecordSchema = z.object({
 
 export type TraderaCategoryRecord = z.infer<typeof traderaCategoryRecordSchema>;
 
-export const importParameterCacheResponseSchema = z.object({
-  inventoryId: z.string().nullable().optional(),
-  productId: z.string().nullable().optional(),
-  keys: z.array(z.string()).optional(),
-  values: z.record(z.string(), z.string()).optional(),
-  updatedAt: z.string().optional(),
-});
-
-export type ImportParameterCacheResponse = z.infer<typeof importParameterCacheResponseSchema>;
-
 /**
- * Integration Repository Interfaces
+ * Base.com Listing processing
  */
+
 
 export type IntegrationRecord = Omit<Integration, 'createdAt' | 'updatedAt'> & {
   createdAt: string | Date;
@@ -487,58 +498,6 @@ export const integrationDefinitions = [
 export type ProductListingRecord = ProductListing;
 export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
 
-// Backward-compatible aliases for modules that still import *Dto names.
-export type ImageTransformOptionsDto = ImageTransformOptions;
-export type ImageRetryPresetDto = ImageRetryPreset;
-export type TemplateMappingDto = TemplateMapping;
-export type TemplateDto = Template;
-export type BaseInventoryDto = unknown;
-export type FetchMarketplaceCategoriesRequestDto = unknown;
-export type BulkCategoryMappingRequestDto = unknown;
-export type BaseImportItemStatusDto = BaseImportItemStatus;
-export type BaseImportModeDto = unknown;
-export type BaseImportRunRecordDto = BaseImportRunRecord;
-export type BaseImportStartResponseDto = BaseImportStartResponse;
-export type BaseImportRunDetailResponseDto = BaseImportRunDetailResponse;
-export type BaseImportParameterImportSettingsDto = ImportTemplateParameterImport;
-export type SessionCookieDto = SessionCookie;
-export type ImageUrlDiagnosticDto = ImageUrlDiagnostic;
-export type ImageExportDiagnosticsDto = ImageExportDiagnostics;
-export type CapturedLogDto = CapturedLog;
-export type IntegrationConnectionBasicDto = IntegrationConnectionBasic;
-export type IntegrationWithConnectionsDto = IntegrationWithConnections;
-export type ImportParameterCacheResponseDto = ImportParameterCacheResponse;
-export type ProductListingExportEventDto = ProductListingExportEvent;
-export type ListingAttemptDto = ListingAttempt;
-
-/**
- * Base Import Item & Run Detail Types
- */
-
-export type BaseImportItemRecord = {
-  runId: string;
-  itemId: string;
-  baseProductId: string | null;
-  sku: string | null;
-  status: BaseImportItemStatus;
-  attempt: number;
-  idempotencyKey: string;
-  action: BaseImportItemAction | null;
-  errorCode: BaseImportErrorCode | null;
-  errorClass: BaseImportErrorClass | null;
-  errorMessage: string | null;
-  retryable: boolean | null;
-  nextRetryAt: string | null;
-  lastErrorAt: string | null;
-  importedProductId: string | null;
-  payloadSnapshot: unknown;
-  parameterImportSummary: BaseImportParameterImportSummary | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-};
-
 /**
  * Base Import processing
  */
@@ -574,6 +533,30 @@ export type NormalizedMappedProduct = ProductCreateInput & {
   producerIds?: string[];
   tagIds?: string[];
 };
+
+// Backward-compatible aliases for modules that still import *Dto names.
+export type ImageTransformOptionsDto = ImageTransformOptions;
+export type ImageRetryPresetDto = ImageRetryPreset;
+export type TemplateMappingDto = TemplateMapping;
+export type TemplateDto = Template;
+export type BaseInventoryDto = unknown;
+export type FetchMarketplaceCategoriesRequestDto = unknown;
+export type BulkCategoryMappingRequestDto = unknown;
+export type BaseImportItemStatusDto = BaseImportItemStatus;
+export type BaseImportModeDto = unknown;
+export type BaseImportRunRecordDto = BaseImportRunRecord;
+export type BaseImportStartResponseDto = BaseImportStartResponse;
+export type BaseImportRunDetailResponseDto = BaseImportRunDetailResponse;
+export type BaseImportParameterImportSettingsDto = ImportTemplateParameterImport;
+export type SessionCookieDto = SessionCookie;
+export type ImageUrlDiagnosticDto = ImageUrlDiagnostic;
+export type ImageExportDiagnosticsDto = ImageExportDiagnostics;
+export type CapturedLogDto = CapturedLog;
+export type IntegrationConnectionBasicDto = IntegrationConnectionBasic;
+export type IntegrationWithConnectionsDto = IntegrationWithConnections;
+export type ImportParameterCacheResponseDto = ImportParameterCacheResponse;
+export type ProductListingExportEventDto = ProductListingExportEvent;
+export type ListingAttemptDto = ListingAttempt;
 
 export const defaultBaseImportParameterImportSettings: ImportTemplateParameterImport = {
   enabled: false,

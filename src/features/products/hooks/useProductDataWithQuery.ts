@@ -103,9 +103,16 @@ export function useProductDataWithQuery({
     ]
   );
 
-  const { products, total, isLoading, isFetching, error, refetch } = useProductsWithCount(filters, {
-    enabled: preferencesLoaded,
-  });
+  const { products, total, isLoading, isFetching, error, refetch } = useProductsWithCount(
+    {
+      ...filters,
+      advancedFilter: undefined,
+      baseExported: undefined,
+    },
+    {
+      enabled: preferencesLoaded,
+    }
+  );
 
   const totalPages = useMemo((): number => {
     return Math.max(1, Math.ceil(total / pageSize));

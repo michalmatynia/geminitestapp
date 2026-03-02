@@ -7,6 +7,13 @@ import {
   type UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
   type ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
+
+export type {
+  CreateValidationPatternPayload,
+  UpdateValidationPatternPayload,
+  ReorderValidationPatternUpdatePayload,
+};
+
 import {
   type ProductValidatorImportRequest,
   type ProductValidatorImportResult,
@@ -25,6 +32,9 @@ import {
   type ProductCategoryWithChildren,
   type ReorderProductCategoryDto as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
+
+export type { ReorderCategoryPayload };
+
 import { type ProductTag } from '@/shared/contracts/products/tags';
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { api } from '@/shared/lib/api-client';

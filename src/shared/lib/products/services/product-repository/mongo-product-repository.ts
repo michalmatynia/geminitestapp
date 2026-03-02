@@ -100,7 +100,6 @@ const buildListProjectStage = (filters: ProductFilters): Document | null => {
     baseProductId: 1,
     defaultPriceGroupId: 1,
     categoryId: 1,
-    categories: { $slice: ['$categories', 1] },
     catalogId: 1,
     name_en: 1,
     name_pl: 1,
@@ -136,15 +135,6 @@ const buildListProjectStage = (filters: ProductFilters): Document | null => {
           catalog: {
             id: '$$catalog.catalog.id',
           },
-        },
-      },
-    },
-    categories: {
-      $map: {
-        input: { $slice: ['$categories', 1] },
-        as: 'category',
-        in: {
-          categoryId: '$$category.categoryId',
         },
       },
     },

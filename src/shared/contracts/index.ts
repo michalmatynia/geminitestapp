@@ -3,6 +3,7 @@ export * from './agent-runtime';
 export * from './agent-teaching';
 export * from './agents';
 export * from './ai-brain';
+export * from './ai-context-registry';
 export * from './ai-insights';
 export * from './ai-paths-runtime';
 export * from './ai-paths-semantic-grammar';
@@ -29,6 +30,8 @@ export * from './cms-menu';
 export * from './cms-theme';
 export * from './cms';
 export * from './data-import-export';
+// Resolve TS2308: Ambiguity between integrations and data-import-export
+export type { Template, TemplateMapping } from './data-import-export';
 export * from './database';
 export * from './document-editor';
 export * from './documentation';

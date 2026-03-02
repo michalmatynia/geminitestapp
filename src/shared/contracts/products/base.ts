@@ -4,7 +4,7 @@ export const PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY = 'product_studio_defaul
 /**
  * Product AI Job DTOs
  */
-export interface ProductAiJobStatus {
+export interface ProductAiJobStatusInfo {
   status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
   result?: unknown;
   errorMessage?: string;

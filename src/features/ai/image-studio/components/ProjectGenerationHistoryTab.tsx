@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-import { Pagination, Card, Badge, Alert, LoadingState } from '@/shared/ui';
+import { Pagination, Card, Badge, Alert, LoadingState, Button } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
@@ -434,6 +434,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
         const executionMeta = resolveExecutionMeta(run);
         const executionSummary = resolveExecutionSummary(run, executionMeta);
         const durationClass = classifyRunDuration(run);
+        const primaryOutput = run.outputs[0] ?? null;
         const apiResponseSnapshot = {
           runId: run.id,
           status: run.status,
@@ -498,6 +499,44 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 </div>
               ) : null}
             </button>
+
+            <div className='mt-2 flex flex-wrap items-center gap-2'>
+              <Button
+                variant='outline'
+                size='xs'
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (!prompt) return;
+                  void navigator.clipboard.writeText(prompt).catch(() => {});
+                }}
+              >
+                Copy prompt
+              </Button>
+              <Button
+                variant='outline'
+                size='xs'
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void navigator.clipboard.writeText(run.id).catch(() => {});
+                }}
+              >
+                Copy run ID
+              </Button>
+              {primaryOutput ? (
+                <Button
+                  asChild
+                  variant='outline'
+                  size='xs'
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <a href={primaryOutput.filepath} target='_blank' rel='noopener noreferrer'>
+                    Open first output
+                  </a>
+                </Button>
+              ) : null}
+            </div>
 
             {isExpanded ? (
               <div className='mt-3 space-y-3 border-t border-border/50 pt-3'>

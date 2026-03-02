@@ -1,11 +1,12 @@
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { StatusBadge, EmptyState, type StatusVariant } from '@/shared/ui';
+import { StatusBadge, EmptyState, Button, type StatusVariant } from '@/shared/ui';
 
 type RunHistoryEntriesProps = {
   entries: RuntimeHistoryEntry[];
   emptyMessage?: string;
   showNodeLabel?: boolean;
+  onReplayFromEntry?: (entry: RuntimeHistoryEntry) => void;
 };
 
 const formatHistoryValue = (value: unknown): string => {
@@ -85,6 +86,49 @@ export function RunHistoryEntries({
                 {typeof entry.iteration === 'number' && (
                   <span className='text-gray-500'>Iter {entry.iteration + 1}</span>
                 )}
+                {typeof entry.durationMs === 'number' && entry.durationMs > 0 && (
+                  <span className='text-[10px] text-gray-500'>
+                    {formatDurationMs(entry.durationMs)}
+                  </span>
+                )}
+                {typeof entry.delayMs === 'number' &&
+                  entry.delayMs !== null &&
+                  entry.delayMs !== undefined &&
+                  entry.delayMs > 0 && (
+                    <span className='text-[10px] text-amber-300/80'>
+                      +{entry.delayMs}ms delay
+                    </span>
+                  )}
+                {typeof entry.iteration === 'number' && (
+                  <span className='text-gray-500'>Iter {entry.iteration + 1}</span>
+                )}
+                {typeof entry.runId === 'string' && entry.runId && (
+                  <span className='font-mono text-[10px] text-gray-500'>
+                    {entry.runId.slice(0, 8)}…
+                  </span>
+                )}
+                {typeof entry.runStartedAt === 'string' && entry.runStartedAt && (
+                  <span className='text-[10px] text-gray-500'>
+                    run @ {new Date(entry.runStartedAt).toLocaleTimeString()}
+                  </span>
+                )}
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-6 px-2 text-[10px]'
+                  disabled={!onReplayFromEntry}
+                  onClick={(): void => {
+                    onReplayFromEntry?.(entry);
+                  }}
+                  title={
+                    onReplayFromEntry
+                      ? 'Replay this run from the recorded inputs.'
+                      : 'Replay is not available in this context.'
+                  }
+                >
+                  Replay from here
+                </Button>
               </div>
             </div>
             {entry.error && (

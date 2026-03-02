@@ -6,16 +6,16 @@ import {
   type SuggestedAction,
 } from '@/shared/contracts/observability';
 
-const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
-  [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.EXTERNAL],
+const ERROR_PATTERNS = [
+  [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.NETWORK],
   [
     /auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i,
-    ERROR_CATEGORY.USER,
+    ERROR_CATEGORY.AUTH,
   ],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
   [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
   [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
-];
+] satisfies ReadonlyArray<readonly [RegExp, ErrorCategory]>;
 
 /**
  * Classifies an error into a category based on its message or instance type.
@@ -49,7 +49,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
   const message = error instanceof Error ? error.message : String(error);
 
   switch (category) {
-    case ERROR_CATEGORY.EXTERNAL:
+    case ERROR_CATEGORY.NETWORK:
       actions.push({
         label: 'Retry',
         description:
@@ -58,7 +58,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       });
       break;
 
-    case ERROR_CATEGORY.USER:
+    case ERROR_CATEGORY.AUTH:
       if (message.toLowerCase().includes('auth') || message.toLowerCase().includes('session')) {
         actions.push({
           label: 'Login Again',

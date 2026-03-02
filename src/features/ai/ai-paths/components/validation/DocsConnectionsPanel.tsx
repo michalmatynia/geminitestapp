@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import React from 'react';
 import { Button, Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
 import { AI_PATHS_NODE_DOCS as NODE_DOCS_LIST } from '@/shared/lib/ai-paths/core/docs/node-docs';

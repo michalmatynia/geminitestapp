@@ -1,77 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import type {
   AiNode,
   AiPathsValidationCondition,
   AiPathsValidationConfig,
   AiPathsValidationRule,
   Edge,
+  AiPathsValidationFinding,
+  AiPathsValidationRecommendation,
+  AiPathsValidationModuleImpact,
+  AiPathsValidationReport,
+  EvaluateAiPathsValidationInput,
 } from '@/shared/contracts/ai-paths';
 
 import { DB_COLLECTION_OPTIONS } from '../constants';
 import { AI_PATHS_VALIDATION_SCHEMA_VERSION, normalizeAiPathsValidationConfig } from './defaults';
 import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 
-export type AiPathsValidationFinding = {
-  id: string;
-  ruleId: string;
-  ruleTitle: string;
-  severity: 'error' | 'warning' | 'info';
-  module: string;
-  nodeId: string | null;
-  nodeTitle: string | null;
-  message: string;
-  recommendation: string | null;
-  docsBindings: string[];
-  failedConditionIds: string[];
-};
-
-export type AiPathsValidationRecommendation = {
-  id: string;
-  ruleId: string;
-  module: string;
-  severity: 'error' | 'warning' | 'info';
-  message: string;
-  recommendation: string;
-  nodeId: string | null;
-  nodeTitle: string | null;
-};
-
-export type AiPathsValidationModuleImpact = {
-  module: string;
-  rulesEvaluated: number;
-  failedRules: number;
-  scorePenalty: number;
-  severityCounts: Record<'error' | 'warning' | 'info', number>;
-};
-
-export type AiPathsValidationReport = {
-  schemaVersion: number;
-  evaluatedAt: string;
-  enabled: boolean;
-  policy: NonNullable<AiPathsValidationConfig['policy']>;
-  score: number;
-  blocked: boolean;
-  shouldWarn: boolean;
-  warnThreshold: number;
-  blockThreshold: number;
-  rulesEvaluated: number;
-  failedRules: number;
-  findings: AiPathsValidationFinding[];
-  recommendations: AiPathsValidationRecommendation[];
-  severityCounts: Record<'error' | 'warning' | 'info', number>;
-  graphStats: {
-    nodes: number;
-    edges: number;
-    byType: Record<string, number>;
-  };
-  moduleImpact: Record<string, AiPathsValidationModuleImpact>;
-  appliedRuleIds: string[];
-  skippedRuleIds: string[];
-};
-
-export type EvaluateAiPathsValidationInput = {
-  nodes: AiNode[];
-  edges: Edge[];
-  config: AiPathsValidationConfig | null | undefined;
+export type {
+  AiPathsValidationFinding,
+  AiPathsValidationRecommendation,
+  AiPathsValidationModuleImpact,
+  AiPathsValidationReport,
+  EvaluateAiPathsValidationInput,
 };
 
 const DEFAULT_SEVERITY_WEIGHT: Record<'error' | 'warning' | 'info', number> = {

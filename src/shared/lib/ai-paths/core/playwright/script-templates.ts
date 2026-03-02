@@ -1,9 +1,4 @@
-export type PlaywrightScriptTemplate = {
-  id: string;
-  name: string;
-  description: string;
-  script: string;
-};
+import type { PlaywrightScriptTemplate } from '@/shared/contracts/playwright';
 
 export const PLAYWRIGHT_SCRIPT_TEMPLATES: PlaywrightScriptTemplate[] = [
   {

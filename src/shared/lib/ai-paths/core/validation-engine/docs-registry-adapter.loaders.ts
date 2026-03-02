@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';

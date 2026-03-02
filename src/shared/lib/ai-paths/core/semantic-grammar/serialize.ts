@@ -1,4 +1,5 @@
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
   SemanticEdgeDto as SemanticEdge,
@@ -135,8 +136,8 @@ export const serializePathConfigToSemanticCanvas = (
     return {
       id: node.id,
       type: node.type,
-      title: node.title,
-      description: node.description,
+      title: node.title ?? '',
+      description: node.description ?? '',
       position: node.position,
       inputs: node.inputs,
       outputs: node.outputs,

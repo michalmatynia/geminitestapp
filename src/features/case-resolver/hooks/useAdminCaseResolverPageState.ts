@@ -253,7 +253,7 @@ export function useAdminCaseResolverPageState() {
       ...rawNodeMeta,
       textColor: normalizeNodeTextColor(rawNodeMeta.textColor),
       nodeId: editingDocumentNodeContext.nodeId,
-      nodeTitle: canvasNode.title.trim() || editingDocumentNodeContext.nodeId,
+      nodeTitle: (canvasNode.title || '').trim() || editingDocumentNodeContext.nodeId,
       canvasFileId: canvasFile.id,
       canvasFileName: canvasFile.name,
     };

@@ -35,7 +35,7 @@ export const matchesQuery = (item: NavItem, query: string): boolean => {
   const haystack = normalizeText(
     [item.label, item.href ? stripQuery(item.href) : '', ...(item.keywords ?? [])].join(' ')
   );
-  return haystack.includes(query);
+  return haystack.includes(normalizeText(query));
 };
 
 export const filterTree = (items: NavItem[], query: string): NavItem[] => {

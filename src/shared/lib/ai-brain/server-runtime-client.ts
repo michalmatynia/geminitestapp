@@ -12,8 +12,8 @@ import { configurationError, operationFailedError } from '@/shared/errors/app-er
 import {
   inferBrainModelVendor,
   normalizeBrainModelId,
-  type BrainModelVendor,
 } from './model-vendor';
+import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 import { resolveOllamaBaseUrl } from './ollama-config';
 import { readStoredSettingValue } from './server';
 

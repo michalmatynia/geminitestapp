@@ -3,6 +3,7 @@ import type {
   ParamSpecDto,
   ParamIssueDto,
   ParamIssueSeverityDto,
+  ParamLeaf,
 } from '@/shared/contracts/prompt-engine';
 
 import { isObjectRecord } from './object';
@@ -437,11 +438,6 @@ export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
     }
   }
 }
-
-export type ParamLeaf = {
-  path: string;
-  value: unknown;
-};
 
 export function flattenParams(params: Record<string, unknown>): ParamLeaf[] {
   const result: ParamLeaf[] = [];

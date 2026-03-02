@@ -382,7 +382,7 @@ export const buildDebugSnapshot = (args: {
       if (debugPayload === undefined || debugPayload === null) return null;
       return {
         nodeId: node.id,
-        title: node.title,
+        title: node.title ?? undefined,
         debug: debugPayload,
       };
     })

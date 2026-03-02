@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -105,7 +106,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const migratedGraph = migrateTriggerToFetcherGraph(normalizeNodes(nodes), edges as Edge[]);
+  const migratedGraph = migrateTriggerToFetcherGraph(normalizeNodes(nodes), edges);
   const identityRepair = repairPathNodeIdentities(
     {
       id: rest.pathId,

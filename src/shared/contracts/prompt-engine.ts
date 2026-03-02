@@ -414,6 +414,7 @@ export type FormatPromptResultDto = FormatPromptResult;
 export const formatPromptOptionsSchema = z.object({
   precomputedIssuesBefore: z.array(promptValidationIssueSchema).optional(),
   enableIncrementalValidation: z.boolean().optional(),
+  preparedRuntime: promptValidationPreparedRuntimeSchema.optional(),
 });
 
 export type FormatPromptOptions = z.infer<typeof formatPromptOptionsSchema>;
@@ -464,6 +465,11 @@ export const promptValidationCounterNameSchema = z.enum([
 
 export type PromptValidationCounterName = z.infer<typeof promptValidationCounterNameSchema>;
 export type PromptValidationCounterNameDto = PromptValidationCounterName;
+
+export type ParamLeaf = {
+  path: string;
+  value: unknown;
+};
 
 export const promptValidationRuntimeSloTargetsSchema = z.object({
   p95PipelineMs: z.number(),

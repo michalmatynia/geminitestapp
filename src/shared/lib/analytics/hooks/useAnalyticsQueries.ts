@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+
 import { useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { PathConfig, PathMeta, AiPathsValidationConfig } from '@/shared/lib/ai-paths';

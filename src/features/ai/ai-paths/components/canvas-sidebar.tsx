@@ -424,7 +424,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 <Input
                   data-doc-id='inspector_node_title'
                   className='mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white'
-                  value={selectedNode.title}
+                  value={selectedNode.title ?? ''}
                   onChange={(event) => {
                     const patch: Partial<AiNode> = { title: event.target.value };
                     updateSelectedNode(patch, { nodeId: selectedNode.id });
@@ -439,7 +439,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 <Textarea
                   data-doc-id='inspector_node_description'
                   className='mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white'
-                  value={selectedNode.description}
+                  value={selectedNode.description ?? ''}
                   onChange={(event) => {
                     const patch: Partial<AiNode> = { description: event.target.value };
                     updateSelectedNode(patch, { nodeId: selectedNode.id });

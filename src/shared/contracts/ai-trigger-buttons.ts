@@ -195,3 +195,35 @@ export const aiTriggerButtonReorderPayloadSchema = z.object({
 export type AiTriggerButtonCreatePayload = z.infer<typeof aiTriggerButtonCreatePayloadSchema>;
 export type AiTriggerButtonUpdatePayload = z.infer<typeof aiTriggerButtonUpdatePayloadSchema>;
 export type AiTriggerButtonReorderPayload = z.infer<typeof aiTriggerButtonReorderPayloadSchema>;
+
+/**
+ * Trigger Event Arguments
+ */
+export type TriggerEventEntityType = 'product' | 'note' | 'custom';
+
+export type FireAiPathTriggerEventArgs = {
+  triggerEventId: string;
+  triggerLabel?: string | null | undefined;
+  preferredPathId?: string | null | undefined;
+  entityType: TriggerEventEntityType;
+  entityId?: string | null | undefined;
+  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  event?: React.MouseEvent | undefined;
+  source?:
+    | { tab?: string | undefined; location?: string | undefined; page?: string | undefined }
+    | null
+    | undefined;
+  extras?: Record<string, unknown> | null | undefined;
+  onSuccess?: (runId: string) => void;
+  onError?: (error: string) => void;
+  onFinished?: () => void;
+  onProgress?:
+    | ((payload: {
+        status: 'running' | 'success' | 'error';
+        progress: number;
+        completedNodes: number;
+        totalNodes: number;
+        node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
+      }) => void)
+    | undefined;
+};

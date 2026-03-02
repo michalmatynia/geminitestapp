@@ -4,6 +4,24 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
 
 import { activityLogSchema } from './system';
 
+export const ERROR_CATEGORY = {
+  SYSTEM: 'SYSTEM',
+  NETWORK: 'NETWORK',
+  AUTH: 'AUTH',
+  VALIDATION: 'VALIDATION',
+  DATABASE: 'DATABASE',
+  INTEGRATION: 'INTEGRATION',
+  AI: 'AI',
+  UI: 'UI',
+  UNKNOWN: 'UNKNOWN',
+  USER: 'USER',
+  EXTERNAL: 'EXTERNAL',
+} as const;
+
+export type ErrorCategory = (typeof ERROR_CATEGORY)[keyof typeof ERROR_CATEGORY];
+
+export const errorCategorySchema = z.nativeEnum(ERROR_CATEGORY);
+
 /**
  * Metric DTO
  */
@@ -264,26 +282,6 @@ export type UpdateAlert = Partial<CreateAlert>;
 /**
  * Error Diagnostics DTOs
  */
-
-export const errorCategorySchema = z.enum([
-  'SYSTEM',
-  'USER',
-  'VALIDATION',
-  'EXTERNAL',
-  'AI',
-  'DATABASE',
-]);
-
-export type ErrorCategory = z.infer<typeof errorCategorySchema>;
-
-export const ERROR_CATEGORY = {
-  SYSTEM: 'SYSTEM',
-  USER: 'USER',
-  VALIDATION: 'VALIDATION',
-  EXTERNAL: 'EXTERNAL',
-  AI: 'AI',
-  DATABASE: 'DATABASE',
-} as const;
 
 export const suggestedActionSchema = z.object({
   label: z.string(),

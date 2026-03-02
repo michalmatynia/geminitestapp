@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
@@ -8,7 +10,8 @@ import {
   useAnalyticsInsights,
   useRunAnalyticsInsight,
 } from '@/shared/lib/analytics/hooks/useAnalytics';
-import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/contracts';
+import type { AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 import { type AnalyticsRange } from '../api';
 

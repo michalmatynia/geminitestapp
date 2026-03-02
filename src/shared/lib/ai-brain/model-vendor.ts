@@ -1,4 +1,4 @@
-export type BrainModelVendor = 'openai' | 'ollama' | 'anthropic' | 'gemini';
+import type { BrainModelVendor } from '@/shared/contracts/ai-brain';
 
 const normalizeModelPrefix = (
   modelId: string

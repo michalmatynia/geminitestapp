@@ -1,8 +1,22 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema, namedDtoSchema } from './base';
-import { aiEdgeSchema, aiNodeSchema, edgeSchema, type AiNode, type Edge } from './ai-paths-core';
 export * from './ai-paths-core';
+
+import { dtoBaseSchema, namedDtoSchema } from './base';
+import {
+  aiEdgeSchema,
+  aiNodeSchema,
+  edgeSchema,
+  aiPathsValidationConfigSchema,
+  aiPathsValidationRuleSchema,
+  aiPathsValidationDocsSyncStateSchema,
+  type AiNode,
+  type Edge,
+  type RegexTemplate,
+  type NodeType,
+  type AiPathsValidationRule,
+  type AiPathsValidationConfig,
+} from './ai-paths-core';
 
 import {
   aiPathNodeStatusSchema,
@@ -300,109 +314,6 @@ export const pathUiStateSchema = z.object({
 export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
 export type PathUiState = PathUiStateDto;
 
-export const aiPathsValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
-export type AiPathsValidationSeverityDto = z.infer<typeof aiPathsValidationSeveritySchema>;
-export type AiPathsValidationSeverity = AiPathsValidationSeverityDto;
-
-export const aiPathsValidationModuleSchema = z.enum([
-  'graph',
-  'trigger',
-  'simulation',
-  'context',
-  'parser',
-  'database',
-  'model',
-  'poll',
-  'router',
-  'gate',
-  'validation_pattern',
-  'custom',
-]);
-export type AiPathsValidationModuleDto = z.infer<typeof aiPathsValidationModuleSchema>;
-export type AiPathsValidationModule = AiPathsValidationModuleDto;
-
-export const aiPathsValidationOperatorSchema = z.enum([
-  'exists',
-  'non_empty',
-  'equals',
-  'in',
-  'matches_regex',
-  'wired_from',
-  'wired_to',
-  'has_incoming_port',
-  'has_outgoing_port',
-  'jsonpath_exists',
-  'jsonpath_equals',
-  'collection_exists',
-  'entity_collection_resolves',
-  'edge_endpoints_resolve',
-  'edge_ports_declared',
-  'node_types_known',
-  'node_ids_unique',
-  'edge_ids_unique',
-  'node_positions_finite',
-]);
-export type AiPathsValidationOperatorDto = z.infer<typeof aiPathsValidationOperatorSchema>;
-export type AiPathsValidationOperator = AiPathsValidationOperatorDto;
-
-export const aiPathsValidationConditionSchema = z.object({
-  id: z.string(),
-  operator: aiPathsValidationOperatorSchema,
-  field: z.string().optional(),
-  valuePath: z.string().optional(),
-  expected: z.unknown().optional(),
-  list: z.array(z.string()).optional(),
-  flags: z.string().optional(),
-  port: z.string().optional(),
-  fromPort: z.string().optional(),
-  toPort: z.string().optional(),
-  fromNodeType: z.string().optional(),
-  toNodeType: z.string().optional(),
-  sourceNodeId: z.string().optional(),
-  targetNodeId: z.string().optional(),
-  collectionMapKey: z.string().optional(),
-  negate: z.boolean().optional(),
-});
-export type AiPathsValidationConditionDto = z.infer<typeof aiPathsValidationConditionSchema>;
-export type AiPathsValidationCondition = AiPathsValidationConditionDto;
-
-export const aiPathsValidationRuleSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().optional(),
-  enabled: z.boolean(),
-  severity: aiPathsValidationSeveritySchema,
-  module: aiPathsValidationModuleSchema,
-  appliesToNodeTypes: z.array(z.string()).optional(),
-  sequence: z.number().optional(),
-  conditionMode: z.enum(['all', 'any']).optional(),
-  conditions: z.array(aiPathsValidationConditionSchema).min(1),
-  weight: z.number().optional(),
-  forceProbabilityIfFailed: z.number().optional(),
-  recommendation: z.string().optional(),
-  docsBindings: z.array(z.string()).optional(),
-  inference: z
-    .object({
-      sourceType: z.enum(['manual', 'central_docs']).optional(),
-      status: z.enum(['candidate', 'approved', 'rejected', 'deprecated']).optional(),
-      assertionId: z.string().optional(),
-      sourcePath: z.string().optional(),
-      sourceHash: z.string().optional(),
-      docsSnapshotHash: z.string().optional(),
-      confidence: z.number().optional(),
-      compilerVersion: z.string().optional(),
-      inferredAt: z.string().optional(),
-      approvedAt: z.string().optional(),
-      approvedBy: z.string().optional(),
-      reviewNote: z.string().optional(),
-      tags: z.array(z.string()).optional(),
-      deprecates: z.array(z.string()).optional(),
-    })
-    .optional(),
-});
-export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
-export type AiPathsValidationRule = AiPathsValidationRuleDto;
-
 export type CentralDocsSnapshotSource = {
   id: string;
   path: string;
@@ -428,43 +339,63 @@ export type CentralDocsSnapshotResponse = {
 
 export type CandidateChangeKind = 'new' | 'changed' | 'existing';
 
-export const aiPathsValidationDocsSyncStateSchema = z.object({
-  lastSnapshotHash: z.string().optional(),
-  lastSyncedAt: z.string().optional(),
-  lastSyncStatus: z.enum(['idle', 'success', 'warning', 'error']).optional(),
-  lastSyncWarnings: z.array(z.string()).optional(),
-  sourceCount: z.number().optional(),
-  candidateCount: z.number().optional(),
-});
-export type AiPathsValidationDocsSyncStateDto = z.infer<
-  typeof aiPathsValidationDocsSyncStateSchema
->;
-export type AiPathsValidationDocsSyncState = AiPathsValidationDocsSyncStateDto;
+/**
+ * AI Path Local Run Contracts
+ */
+export type AiPathLocalRunStatus = 'success' | 'error';
 
-export const aiPathsValidationPolicySchema = z.enum([
-  'report_only',
-  'warn_below_threshold',
-  'block_below_threshold',
-]);
-export type AiPathsValidationPolicyDto = z.infer<typeof aiPathsValidationPolicySchema>;
-export type AiPathsValidationPolicy = AiPathsValidationPolicyDto;
+export type AiPathLocalRunRecord = {
+  id: string;
+  pathId?: string | null;
+  pathName?: string | null;
+  triggerEvent?: string | null;
+  triggerLabel?: string | null;
+  entityType?: string | null;
+  entityId?: string | null;
+  status: AiPathLocalRunStatus;
+  startedAt: string;
+  finishedAt: string;
+  durationMs?: number | null;
+  nodeCount?: number | null;
+  /** Engine-measured per-node execution durations (ms) for post-run analysis */
+  nodeDurations?: Record<string, number> | null;
+  error?: string | null;
+  source?: string | null;
+};
 
-export const aiPathsValidationConfigSchema = z.object({
-  schemaVersion: z.number().int().positive().optional(),
-  enabled: z.boolean().optional(),
-  policy: aiPathsValidationPolicySchema.optional(),
-  warnThreshold: z.number().optional(),
-  blockThreshold: z.number().optional(),
-  baseScore: z.number().optional(),
-  lastEvaluatedAt: z.string().nullable().optional(),
-  collectionMap: z.record(z.string(), z.string()).optional(),
-  docsSources: z.array(z.string()).optional(),
-  rules: z.array(aiPathsValidationRuleSchema).optional(),
-  inferredCandidates: z.array(aiPathsValidationRuleSchema).optional(),
-  docsSyncState: aiPathsValidationDocsSyncStateSchema.optional(),
-});
-export type AiPathsValidationConfigDto = z.infer<typeof aiPathsValidationConfigSchema>;
-export type AiPathsValidationConfig = AiPathsValidationConfigDto;
+export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
+  'compact_oversized_configs',
+  'repair_path_index',
+  'ensure_parameter_inference_defaults',
+  'ensure_description_inference_defaults',
+  'ensure_base_export_defaults',
+  'upgrade_translation_en_pl',
+  'upgrade_runtime_input_contracts',
+  'upgrade_server_execution_mode',
+] as const;
+
+export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
+
+export type AiPathsMaintenanceActionReport = {
+  id: AiPathsMaintenanceActionId;
+  title: string;
+  description: string;
+  blocking: boolean;
+  status: 'pending' | 'ready';
+  affectedRecords: number;
+};
+
+export type AiPathsMaintenanceReport = {
+  scannedAt: string;
+  pendingActions: number;
+  blockingActions: number;
+  actions: AiPathsMaintenanceActionReport[];
+};
+
+export type AiPathsMaintenanceApplyResult = {
+  appliedActionIds: AiPathsMaintenanceActionId[];
+  report: AiPathsMaintenanceReport;
+};
 
 export const pathBlockedRunPolicySchema = z.enum(['fail_run', 'complete_with_warning']);
 export type PathBlockedRunPolicyDto = z.infer<typeof pathBlockedRunPolicySchema>;

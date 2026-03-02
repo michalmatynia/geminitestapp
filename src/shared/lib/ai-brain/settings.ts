@@ -9,6 +9,10 @@ import {
   type AiBrainSettings,
   type AiBrainProviderCatalog,
   type BrainModelFamily,
+  type BrainAppliedMeta,
+  type BrainExecutionConfig,
+  type BrainModelExecutionConfig,
+  type AiPathsNodeExecutionInput,
   aiBrainSettingsSchema as settingsSchema,
   aiBrainProviderCatalogSchema as providerCatalogSchema,
   AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
@@ -32,6 +36,10 @@ export type {
   AiBrainSettings,
   AiBrainProviderCatalog,
   BrainModelFamily,
+  BrainAppliedMeta,
+  BrainExecutionConfig,
+  BrainModelExecutionConfig,
+  AiPathsNodeExecutionInput,
 };
 
 export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;

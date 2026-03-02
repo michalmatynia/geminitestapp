@@ -119,9 +119,12 @@ export function buildHeuristicControls(
   const next: Record<string, ParamUiControl> = {};
   const leaves = flattenParams(params).filter((leaf) => Boolean(leaf.path));
   leaves.forEach((leaf) => {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const spec = specs?.[leaf.path];
     const recommendation = recommendParamUiControl(leaf.value, spec);
     next[leaf.path] = recommendation.recommended;
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
   });
+
   return next;
 }

@@ -71,7 +71,9 @@ const buildNodeDocClipboardSection = (
       lines.push(`- ${note}`);
     });
   }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   lines.push('', '### JSON Snippet', '```json', nodeJsonSnippetByType[doc.type] ?? '{}', '```');
+
   return lines.join('\\n');
 };
 

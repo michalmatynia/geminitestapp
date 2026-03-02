@@ -88,7 +88,7 @@ const DEFAULT_VALIDATOR_PATTERN_LIST_DEFS: ReadonlyArray<{
   },
 ];
 
-const buildDefaultValidatorPatternLists = (): ValidatorPatternList[] => {
+export const buildDefaultValidatorPatternLists = (): ValidatorPatternList[] => {
   const now = new Date().toISOString();
   return DEFAULT_VALIDATOR_PATTERN_LIST_DEFS.map((entry) => ({
     id: entry.id,
@@ -103,21 +103,122 @@ const buildDefaultValidatorPatternLists = (): ValidatorPatternList[] => {
   }));
 };
 
-export const parseValidatorPatternLists = (value: unknown): ValidatorPatternList[] => {
+export const parseValidatorScope = (value: string | null | undefined): ValidatorScope => {
+  const result = validatorScopeSchema.safeParse(value);
+  if (result.success) return result.data;
+  return 'products';
+};
+
+const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+export const normalizeValidatorListRecord = (
+  value: unknown,
+  fallback: ValidatorPatternList
+): ValidatorPatternList => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return fallback;
+  }
+  const record = value as Record<string, unknown>;
+  const normalizedName = normalizeString(record['name']);
+  const normalizedDescription = normalizeString(record['description']);
+  const normalizedId = normalizeString(record['id']);
+  const normalizedScope = parseValidatorScope(
+    typeof record['scope'] === 'string' ? record['scope'] : null
+  );
+  const createdAt = normalizeString(record['createdAt']) || fallback.createdAt;
+  const updatedAt = normalizeString(record['updatedAt']) || fallback.updatedAt;
+
+  return {
+    id: normalizedId || fallback.id,
+    name: normalizedName || fallback.name,
+    description: normalizedDescription || fallback.description,
+    scope: normalizedScope,
+    deletionLocked:
+      typeof record['deletionLocked'] === 'boolean'
+        ? record['deletionLocked']
+        : fallback.deletionLocked,
+    createdAt,
+    updatedAt,
+    patterns: Array.isArray(record['patterns'])
+      ? record['patterns'].map(String)
+      : fallback.patterns,
+    isActive: typeof record['isActive'] === 'boolean' ? record['isActive'] : fallback.isActive,
+  };
+};
+
+export const ensureUniqueValidatorListIds = (
+  lists: ValidatorPatternList[]
+): ValidatorPatternList[] => {
+  const seen = new Set<string>();
+  const now = new Date().toISOString();
+  return lists.map((list: ValidatorPatternList, index: number) => {
+    const base = normalizeString(list.id) || `validator-list-${index + 1}`;
+    let candidate = base;
+    let counter = 2;
+    while (seen.has(candidate)) {
+      candidate = `${base}-${counter}`;
+      counter += 1;
+    }
+    seen.add(candidate);
+    return {
+      ...list,
+      id: candidate,
+      createdAt: normalizeString(list.createdAt) || now,
+      updatedAt: normalizeString(list.updatedAt) || now,
+    };
+  });
+};
+
+export const normalizeValidatorPatternLists = (
+  value: ValidatorPatternList[]
+): ValidatorPatternList[] => {
   const defaults = buildDefaultValidatorPatternLists();
-  if (!value) return defaults;
+  const fallbackById = new Map<string, ValidatorPatternList>(
+    defaults.map((entry: ValidatorPatternList) => [entry.id, entry])
+  );
+  const normalized = value
+    .filter((entry): entry is ValidatorPatternList => Boolean(entry))
+    .map((entry: ValidatorPatternList, index: number) => {
+      const fallback =
+        fallbackById.get(entry.id) ??
+        ({
+          id: entry.id || `validator-list-${index + 1}`,
+          name: 'Validation Pattern List',
+          description: '',
+          scope: 'products' as const,
+          deletionLocked: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          patterns: [],
+          isActive: true,
+        } satisfies ValidatorPatternList);
+      return normalizeValidatorListRecord(entry, fallback);
+    });
+
+  if (normalized.length === 0) return defaults;
+  return ensureUniqueValidatorListIds(normalized);
+};
+
+export const parseValidatorPatternLists = (value: unknown): ValidatorPatternList[] => {
+  if (!value) return buildDefaultValidatorPatternLists();
   try {
     const raw = typeof value === 'string' ? (JSON.parse(value) as unknown) : value;
-    const candidate = Array.isArray(raw)
+    const defaults = buildDefaultValidatorPatternLists();
+    const rawLists = Array.isArray(raw)
       ? raw
       : raw && typeof raw === 'object' && Array.isArray((raw as { lists?: unknown }).lists)
         ? (raw as { lists: unknown[] }).lists
         : null;
-    if (!candidate) return defaults;
-    const result = z.array(validatorPatternListSchema).safeParse(candidate);
-    if (!result.success || result.data.length === 0) return defaults;
-    return result.data;
-  } catch {
+
+    if (Array.isArray(rawLists)) {
+      return normalizeValidatorPatternLists(
+        rawLists.map((entry: unknown, index: number) =>
+          normalizeValidatorListRecord(entry, defaults[index] ?? defaults[0]!)
+        )
+      );
+    }
     return defaults;
+  } catch {
+    return buildDefaultValidatorPatternLists();
   }
 };

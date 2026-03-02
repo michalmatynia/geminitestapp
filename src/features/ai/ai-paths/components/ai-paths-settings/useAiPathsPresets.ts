@@ -452,7 +452,8 @@ export function useAiPathsPresets({
       return;
     }
 
-    const presetName = templateNode.title.replace(/template/i, '').trim() || 'Cluster Preset';
+    const presetName =
+      (templateNode.title || '').replace(/template/i, '').trim() || 'Cluster Preset';
     setEditingPresetId(null);
     setPresetDraft({
       name: presetName,

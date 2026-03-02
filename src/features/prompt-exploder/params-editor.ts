@@ -341,7 +341,9 @@ export function buildPromptExploderParamEntries(args: {
 }): PromptExploderParamEntriesState {
   const leaves = flattenParams(args.paramsObject)
     .filter((leaf) => Boolean(leaf.path))
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
     .sort((left, right) => left.path.localeCompare(right.path));
+
   const paths = new Set(leaves.map((leaf) => leaf.path));
 
   const parsed = extractParamsFromPrompt(args.paramsText);
@@ -356,6 +358,7 @@ export function buildPromptExploderParamEntries(args: {
   const paramDescriptions: Record<string, string> = {};
 
   const entries = leaves.map((leaf) => {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const path = leaf.path;
     const spec = inferredSpecs[path] ?? null;
     const recommendation = recommendPromptExploderParamUiControl(leaf.value, spec ?? undefined);
@@ -378,7 +381,7 @@ export function buildPromptExploderParamEntries(args: {
     if (description) {
       paramDescriptions[path] = description;
     }
-
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
     return {
       path,
       value: leaf.value,

@@ -6,6 +6,8 @@ import { aiInsightRecordSchema } from './ai-insights';
  * AI Brain DTOs
  */
 
+export type BrainModelVendor = 'openai' | 'ollama' | 'anthropic' | 'gemini';
+
 const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
   z.preprocess((value: unknown) => {
     if (value === '' || value === null || value === undefined) return undefined;
@@ -165,7 +167,10 @@ export const brainModelDescriptorSchema = z.object({
   id: z.string().trim().min(1),
   family: brainModelFamilySchema,
   modality: brainModelModalitySchema,
-  vendor: z.enum(['openai', 'ollama', 'anthropic', 'gemini']),
+  vendor: z.enum(['openai', 'ollama', 'anthropic', 'gemini'] as [
+    BrainModelVendor,
+    ...BrainModelVendor[],
+  ]),
   supportsStreaming: z.boolean().default(false),
   supportsJsonMode: z.boolean().default(false),
 });
@@ -300,3 +305,55 @@ export type InsightsSnapshotDto = InsightsSnapshot;
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';
+
+/**
+ * Brain Execution DTOs
+ */
+
+export type BrainAppliedMeta = {
+  capability: AiBrainCapabilityKey;
+  feature: AiBrainFeature;
+  modelFamily: BrainModelFamily;
+  runtimeKind:
+    | 'chat'
+    | 'stream'
+    | 'embedding'
+    | 'ocr'
+    | 'vision'
+    | 'validation'
+    | 'image_generation';
+  provider: 'model' | 'agent';
+  modelId: string;
+  temperature: number;
+  maxTokens: number;
+  systemPromptApplied: boolean;
+  modelSelectionSource?: 'node' | 'brain_default';
+  defaultModelId?: string;
+  enforced: true;
+};
+
+export type BrainExecutionConfig = {
+  assignment: AiBrainAssignment;
+  capability: AiBrainCapabilityKey;
+  feature: AiBrainFeature;
+  provider: 'model' | 'agent';
+  agentId: string;
+  modelId: string;
+  temperature: number;
+  maxTokens: number;
+  systemPrompt: string;
+  brainApplied: BrainAppliedMeta;
+};
+
+export type BrainModelExecutionConfig = BrainExecutionConfig;
+
+export type AiPathsNodeExecutionInput = {
+  requestedModelId?: string;
+  requestedTemperature?: number;
+  requestedMaxTokens?: number;
+  requestedSystemPrompt?: string;
+  defaultTemperature?: number;
+  defaultMaxTokens?: number;
+  defaultSystemPrompt?: string;
+  runtimeKind?: BrainAppliedMeta['runtimeKind'];
+};

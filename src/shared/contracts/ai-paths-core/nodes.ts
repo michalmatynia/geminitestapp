@@ -1,6 +1,65 @@
 import { z } from 'zod';
 import { playwrightSettingsSchema } from '../playwright';
 
+import {
+  aiNodeTypeSchema,
+  aiPathsValidationRuleSchema,
+} from './base';
+
+export const aiPathsValidationDocsSyncStateSchema = z.object({
+  lastSnapshotHash: z.string().optional(),
+  lastSyncedAt: z.string().optional(),
+  lastSyncStatus: z.enum(['idle', 'success', 'warning', 'error']).optional(),
+  lastSyncWarnings: z.array(z.string()).optional(),
+  sourceCount: z.number().optional(),
+  candidateCount: z.number().optional(),
+});
+export type AiPathsValidationDocsSyncState = z.infer<typeof aiPathsValidationDocsSyncStateSchema>;
+
+export const aiPathsValidationPolicySchema = z.enum([
+  'report_only',
+  'warn_below_threshold',
+  'block_below_threshold',
+]);
+export type AiPathsValidationPolicy = z.infer<typeof aiPathsValidationPolicySchema>;
+
+export const aiPathsValidationConfigSchema = z.object({
+  schemaVersion: z.number().int().positive().optional(),
+  enabled: z.boolean().optional(),
+  policy: aiPathsValidationPolicySchema.optional(),
+  warnThreshold: z.number().optional(),
+  blockThreshold: z.number().optional(),
+  baseScore: z.number().optional(),
+  lastEvaluatedAt: z.string().nullable().optional(),
+  collectionMap: z.record(z.string(), z.string()).optional(),
+  docsSources: z.array(z.string()).optional(),
+  rules: z.array(aiPathsValidationRuleSchema).optional(),
+  inferredCandidates: z.array(aiPathsValidationRuleSchema).optional(),
+  docsSyncState: aiPathsValidationDocsSyncStateSchema.optional(),
+});
+export type AiPathsValidationConfig = z.infer<typeof aiPathsValidationConfigSchema>;
+
+export const aiEdgeSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  to: z.string(),
+  source: z.string().optional(),
+  target: z.string().optional(),
+  fromPort: z.string().nullable().optional(),
+  toPort: z.string().nullable().optional(),
+  sourceHandle: z.string().nullable().optional(),
+  targetHandle: z.string().nullable().optional(),
+  label: z.string().nullable().optional(),
+  type: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
+});
+
+export const edgeSchema = aiEdgeSchema;
+
+export type Edge = z.infer<typeof aiEdgeSchema>;
+
 export const triggerConfigSchema = z.object({
   event: z.string(),
   contextMode: z.enum(['simulation_required', 'simulation_preferred', 'trigger_only']).optional(),
@@ -363,6 +422,11 @@ export const regexTemplateSchema = z.object({
 
 export type RegexTemplateDto = z.infer<typeof regexTemplateSchema>;
 export type RegexTemplate = RegexTemplateDto;
+
+export type RegexTemplatesStore = {
+  version: 1;
+  templates: RegexTemplate[];
+};
 
 export const regexConfigSchema = z.object({
   pattern: z.string(),
@@ -926,3 +990,51 @@ export const nodeConfigSchema = z.object({
 
 export type NodeConfigDto = z.infer<typeof nodeConfigSchema>;
 export type NodeConfig = NodeConfigDto;
+
+export const nodeDefinitionSchema = z.object({
+  type: aiNodeTypeSchema,
+  nodeTypeId: z.string().optional(),
+  title: z.string(),
+  description: z.string(),
+  inputs: z.array(z.string()),
+  outputs: z.array(z.string()),
+  inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  outputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  config: nodeConfigSchema.optional(),
+});
+
+export type NodeDefinition = z.infer<typeof nodeDefinitionSchema>;
+
+export const aiNodeSchema = z.object({
+  id: z.string(),
+  type: aiNodeTypeSchema,
+  nodeTypeId: z.string().optional(),
+  instanceId: z.string().optional(),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  position: z.object({ x: z.number(), y: z.number() }),
+  inputs: z.array(z.string()),
+  outputs: z.array(z.string()),
+  config: nodeConfigSchema.optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  outputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+export type AiNode = z.infer<typeof aiNodeSchema>;
+
+/**
+ * Legacy Type Aliases for compatibility
+ */
+export type AiNodeDto = AiNode;
+export type CreateAiNodeDto = Omit<AiNode, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateAiNodeDto = Partial<CreateAiNodeDto>;
+
+export type AiEdgeDto = Edge;
+export type EdgeDto = Edge;
+export type CreateAiEdgeDto = Omit<Edge, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateAiEdgeDto = Partial<CreateAiEdgeDto>;
+
+export type NodeDefinitionDto = NodeDefinition;

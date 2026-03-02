@@ -6,7 +6,7 @@ import type {
   PromptValidationSimilarDto as PromptValidationSimilarPattern,
   PromptAppliedFixDto as AppliedFix,
   FormatPromptResultDto as FormatPromptResult,
-  FormatPromptOptionsDto,
+  FormatPromptOptionsDto as FormatPromptOptions,
 } from '@/shared/contracts/prompt-engine';
 
 import {
@@ -21,11 +21,7 @@ import {
   type PromptValidationExecutionContext,
 } from './prompt-validator';
 
-export type { FormatPromptResult };
-
-export type FormatPromptOptions = FormatPromptOptionsDto & {
-  preparedRuntime?: ReturnType<typeof preparePromptValidationRuntime> | undefined;
-};
+export type { FormatPromptResult, FormatPromptOptions };
 
 type ScanState = {
   inSingle: boolean;

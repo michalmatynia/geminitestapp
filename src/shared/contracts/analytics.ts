@@ -37,6 +37,13 @@ export type AnalyticsScreen = z.infer<typeof analyticsScreenSchema>;
 export type AnalyticsScreenDto = AnalyticsScreen;
 
 /**
+ * Analytics Range Contract
+ */
+export const analyticsRangeSchema = z.enum(['24h', '7d', '30d']);
+export type AnalyticsRange = z.infer<typeof analyticsRangeSchema>;
+export type AnalyticsRangeDto = AnalyticsRange;
+
+/**
  * Analytics Connection Contract
  */
 export const analyticsConnectionInfoSchema = z.object({

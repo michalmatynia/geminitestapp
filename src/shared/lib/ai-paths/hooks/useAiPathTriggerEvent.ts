@@ -43,9 +43,11 @@ import {
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  type FireAiPathTriggerEventArgs,
+  type TriggerEventEntityType,
+} from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
-
-type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
 const PRODUCT_MODAL_TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
@@ -214,30 +216,6 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
     nodes: graphNodes,
     edges: graphEdges,
   };
-};
-
-export type FireAiPathTriggerEventArgs = {
-  triggerEventId: string;
-  triggerLabel?: string | null | undefined;
-  preferredPathId?: string | null | undefined;
-  entityType: TriggerEventEntityType;
-  entityId?: string | null | undefined;
-  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
-  event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent | undefined;
-  source?:
-    | { tab?: string | undefined; location?: string | undefined; page?: string | undefined }
-    | null
-    | undefined;
-  extras?: Record<string, unknown> | null | undefined;
-  onProgress?:
-    | ((payload: {
-        status: 'running' | 'success' | 'error';
-        progress: number;
-        completedNodes: number;
-        totalNodes: number;
-        node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
-      }) => void)
-    | undefined;
 };
 
 const loadPathConfigsFromSettings = async (
@@ -799,7 +777,7 @@ export function useAiPathTriggerEvent(): {
         entityType: args.entityType,
         entityId: args.entityId ?? null,
         entityJson,
-        ...(args.event ? { event: args.event as React.MouseEvent } : {}),
+        ...(args.event ? { event: args.event } : {}),
         pathInfo: { id: selectedConfig.id, name: selectedConfig.name },
         source: args.source ?? null,
         extras: args.extras ?? null,

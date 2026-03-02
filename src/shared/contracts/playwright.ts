@@ -103,3 +103,10 @@ export type PlaywrightArtifactLink = {
   mimeType: string | null;
   kind: string | null;
 };
+
+export type PlaywrightScriptTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  script: string;
+};

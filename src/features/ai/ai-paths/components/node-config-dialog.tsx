@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';

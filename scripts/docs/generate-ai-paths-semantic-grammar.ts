@@ -70,7 +70,7 @@ for (const doc of AI_PATHS_NODE_DOCS) {
   const filePath = path.join(nodesDir, fileName);
   const defaultConfig = resolveDefaultConfig(doc.type);
 
-  const configFields = doc.config.map((field) => ({
+  const configFields = doc.config.map((field: { path: string; description: string; defaultValue?: unknown }) => ({
     path: field.path,
     description: field.description,
     ...(field.defaultValue !== undefined ? { defaultValue: field.defaultValue } : {}),
@@ -111,10 +111,10 @@ for (const doc of AI_PATHS_NODE_DOCS) {
 
   fs.writeFileSync(filePath, stableJson(payload), 'utf8');
 
-  const runtimeFieldCount = configFields.filter((field) =>
+  const runtimeFieldCount = configFields.filter((field: { path: string }) =>
     field.path.startsWith('runtime.')
   ).length;
-  const criticalFieldCount = configFields.filter((field) =>
+  const criticalFieldCount = configFields.filter((field: { path: string }) =>
     CRITICAL_CONFIG_FIELD_PATTERN.test(field.path)
   ).length;
   const defaultConfigKeyCount = defaultConfig ? Object.keys(defaultConfig).length : 0;

@@ -122,3 +122,7 @@ export const semanticDocumentSchema = z.discriminatedUnion('kind', [
   subgraphSemanticDocumentSchema,
 ]);
 export type SemanticDocumentDto = z.infer<typeof semanticDocumentSchema>;
+
+export type ParseSemanticDocumentResult =
+  | { ok: true; value: SemanticDocumentDto }
+  | { ok: false; error: string };

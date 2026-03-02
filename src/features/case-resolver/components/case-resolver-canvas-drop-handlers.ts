@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
+import { type AiEdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import { type AiNode, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   DEFAULT_CASE_RESOLVER_EDGE_META,

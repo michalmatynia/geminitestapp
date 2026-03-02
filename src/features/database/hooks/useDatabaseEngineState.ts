@@ -194,7 +194,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       ]);
       setIsDirty(false);
       toast('Database engine settings saved', { variant: 'success' });
-    } catch (error) {
+    } catch (_error) {
       toast('Failed to save database engine settings', { variant: 'error' });
     }
   };

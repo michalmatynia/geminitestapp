@@ -22,12 +22,7 @@ export type PromptValidationIssue = PromptValidationIssueDto;
 
 export type PromptValidationExecutionContext = PromptValidationExecutionContextDto;
 
-export type PromptValidationPreparedRuntime = Omit<
-  PromptValidationPreparedRuntimeDto,
-  'sequenceGroupCounts'
-> & {
-  sequenceGroupCounts: Map<string, number>;
-};
+export type PromptValidationPreparedRuntime = PromptValidationPreparedRuntimeDto;
 
 export type PromptValidationRuntimeEvaluateOptions = {
   includeRuleIds?: Set<string> | string[] | null | undefined;
@@ -98,24 +93,25 @@ export const normalizePromptRuleMaxExecutions = (rule: PromptValidationRule): nu
 
 export const buildPromptSequenceGroupCounts = (
   rules: PromptValidationRule[]
-): Map<string, number> => {
-  const counts = new Map<string, number>();
+): Record<string, number> => {
+  const counts: Record<string, number> = {};
   for (const rule of rules) {
     if (!rule.enabled) continue;
     const groupId = rule.sequenceGroupId?.trim();
     if (!groupId) continue;
-    counts.set(groupId, (counts.get(groupId) ?? 0) + 1);
+    counts[groupId] = (counts[groupId] ?? 0) + 1;
   }
   return counts;
 };
 
 export const isPromptRuleInSequenceGroup = (
   rule: PromptValidationRule,
-  counts: Map<string, number>
+  counts: Record<string, number>
 ): boolean => {
   const groupId = rule.sequenceGroupId?.trim();
   if (!groupId) return false;
-  return (counts.get(groupId) ?? 0) > 1;
+  const count = counts[groupId];
+  return (count ?? 0) > 1;
 };
 
 export const sortPromptValidationRules = (

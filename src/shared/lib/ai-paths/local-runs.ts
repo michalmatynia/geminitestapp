@@ -4,29 +4,12 @@ import {
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type {
+  AiPathLocalRunStatus,
+  AiPathLocalRunRecord,
+} from '@/shared/contracts/ai-paths';
 
 import { AI_PATHS_LOCAL_RUNS_KEY } from './core/constants';
-
-export type AiPathLocalRunStatus = 'success' | 'error';
-
-export type AiPathLocalRunRecord = {
-  id: string;
-  pathId?: string | null;
-  pathName?: string | null;
-  triggerEvent?: string | null;
-  triggerLabel?: string | null;
-  entityType?: string | null;
-  entityId?: string | null;
-  status: AiPathLocalRunStatus;
-  startedAt: string;
-  finishedAt: string;
-  durationMs?: number | null;
-  nodeCount?: number | null;
-  /** Engine-measured per-node execution durations (ms) for post-run analysis */
-  nodeDurations?: Record<string, number> | null;
-  error?: string | null;
-  source?: string | null;
-};
 
 const MAX_LOCAL_RUNS = 200;
 

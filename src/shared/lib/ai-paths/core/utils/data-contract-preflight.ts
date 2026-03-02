@@ -3,6 +3,14 @@ import type {
   Edge,
   ParserSampleState,
   UpdaterSampleState,
+  DataContractPreflightMode,
+  DataContractPreflightScopeMode,
+  DataContractIssueSeverity,
+  DataContractIssueCode,
+  DataContractPreflightIssue,
+  DataContractNodeIssueSummary,
+  DataContractPreflightReport,
+  EvaluateDataContractPreflightArgs,
 } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
@@ -17,60 +25,15 @@ import {
 } from './port-types';
 import { parseJsonSafe } from './runtime';
 
-export type DataContractPreflightMode = 'light' | 'full';
-export type DataContractPreflightScopeMode = 'full' | 'reachable_from_roots';
-export type DataContractIssueSeverity = 'warning' | 'error';
-
-export type DataContractIssueCode =
-  | 'connection_type_mismatch'
-  | 'runtime_value_type_mismatch'
-  | 'required_input_unresolved'
-  | 'required_input_nullish'
-  | 'required_input_empty'
-  | 'database_template_token_missing'
-  | 'database_template_token_empty'
-  | 'database_query_input_shape_mismatch'
-  | 'database_scalar_identity_expected';
-
-export type DataContractPreflightIssue = {
-  id: string;
-  nodeId: string;
-  nodeType: string;
-  nodeTitle: string;
-  severity: DataContractIssueSeverity;
-  code: DataContractIssueCode;
-  message: string;
-  recommendation: string;
-  port?: string | undefined;
-  token?: string | undefined;
-  metadata?: Record<string, unknown> | undefined;
-};
-
-export type DataContractNodeIssueSummary = {
-  errors: number;
-  warnings: number;
-  issues: DataContractPreflightIssue[];
-};
-
-export type DataContractPreflightReport = {
-  mode: DataContractPreflightMode;
-  scopeMode: DataContractPreflightScopeMode;
-  scopedNodeIds: string[];
-  issues: DataContractPreflightIssue[];
-  errors: number;
-  warnings: number;
-  byNodeId: Record<string, DataContractNodeIssueSummary>;
-};
-
-export type EvaluateDataContractPreflightArgs = {
-  nodes: AiNode[];
-  edges: Edge[];
-  runtimeState?: RuntimeState | null | undefined;
-  parserSamples?: Record<string, ParserSampleState> | null | undefined;
-  updaterSamples?: Record<string, UpdaterSampleState> | null | undefined;
-  mode?: DataContractPreflightMode | undefined;
-  scopeMode?: DataContractPreflightScopeMode | undefined;
-  scopeRootNodeIds?: string[] | Set<string> | undefined;
+export type {
+  DataContractPreflightMode,
+  DataContractPreflightScopeMode,
+  DataContractIssueSeverity,
+  DataContractIssueCode,
+  DataContractPreflightIssue,
+  DataContractNodeIssueSummary,
+  DataContractPreflightReport,
+  EvaluateDataContractPreflightArgs,
 };
 
 const TEMPLATE_TOKEN_REGEX: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;

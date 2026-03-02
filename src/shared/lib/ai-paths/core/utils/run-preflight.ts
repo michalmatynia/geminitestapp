@@ -1,57 +1,33 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import type {
   AiNode,
   AiPathsValidationConfig,
   Edge,
   ParserSampleState,
   UpdaterSampleState,
+  RunPreflightBlockReason,
+  RunPreflightWarning,
+  RunPreflightReport,
+  EvaluateRunPreflightArgs,
+  DataContractPreflightMode,
+  DataContractPreflightReport,
+  DependencyReport,
+  GraphCompileReport,
+  AiPathsValidationReport,
 } from '@/shared/contracts/ai-paths';
 import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { normalizeAiPathsValidationConfig } from '../validation-engine/defaults';
 import { evaluateAiPathsValidationPreflight } from '../validation-engine/evaluator';
-import {
-  evaluateDataContractPreflight,
-  type DataContractPreflightMode,
-  type DataContractPreflightReport,
-} from './data-contract-preflight';
-import { inspectPathDependencies, type DependencyReport } from './dependency-inspector';
-import { compileGraph, type GraphCompileReport } from './graph';
+import { evaluateDataContractPreflight } from './data-contract-preflight';
+import { inspectPathDependencies } from './dependency-inspector';
+import { compileGraph } from './graph';
 
-export type RunPreflightBlockReason =
-  | 'validation'
-  | 'compile'
-  | 'dependency'
-  | 'data_contract'
-  | null;
-
-export type RunPreflightWarning = {
-  source: 'validation' | 'compile' | 'dependency' | 'data_contract';
-  code: string;
-  message: string;
-};
-
-export type RunPreflightReport = {
-  nodeValidationEnabled: boolean;
-  shouldBlock: boolean;
-  blockReason: RunPreflightBlockReason;
-  blockMessage: string | null;
-  validationReport: ReturnType<typeof evaluateAiPathsValidationPreflight>;
-  compileReport: GraphCompileReport;
-  dependencyReport: DependencyReport | null;
-  dataContractReport: DataContractPreflightReport;
-  warnings: RunPreflightWarning[];
-};
-
-export type EvaluateRunPreflightArgs = {
-  nodes: AiNode[];
-  edges: Edge[];
-  aiPathsValidation?: AiPathsValidationConfig | null | undefined;
-  strictFlowMode?: boolean | undefined;
-  triggerNodeId?: string | null | undefined;
-  runtimeState?: RuntimeState | null | undefined;
-  parserSamples?: Record<string, ParserSampleState> | null | undefined;
-  updaterSamples?: Record<string, UpdaterSampleState> | null | undefined;
-  mode?: DataContractPreflightMode | undefined;
+export type {
+  RunPreflightBlockReason,
+  RunPreflightWarning,
+  RunPreflightReport,
+  EvaluateRunPreflightArgs,
 };
 
 export const evaluateRunPreflight = (args: EvaluateRunPreflightArgs): RunPreflightReport => {

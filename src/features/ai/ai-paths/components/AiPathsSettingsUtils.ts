@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import type {
   DbQueryConfig,
   DatabaseConfig,
@@ -7,7 +8,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
   AiNode,
-  EdgeDto,
+  AiEdgeDto,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import {

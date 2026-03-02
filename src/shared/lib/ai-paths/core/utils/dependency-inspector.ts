@@ -1,30 +1,19 @@
-import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  Edge,
+  DependencyRiskSeverity,
+  DependencyRisk,
+  DependencyReport,
+  DependencyInspectorScopeMode,
+  DependencyInspectorOptions,
+} from '@/shared/contracts/ai-paths';
 
-export type DependencyRiskSeverity = 'warning' | 'error';
-
-export type DependencyRisk = {
-  id: string;
-  nodeId: string;
-  nodeTitle: string;
-  nodeType: string;
-  severity: DependencyRiskSeverity;
-  category: string;
-  message: string;
-  recommendation: string;
-};
-
-export type DependencyReport = {
-  risks: DependencyRisk[];
-  warnings: number;
-  errors: number;
-  strictReady: boolean;
-};
-
-export type DependencyInspectorScopeMode = 'full' | 'reachable_from_roots';
-
-export type DependencyInspectorOptions = {
-  scopeMode?: DependencyInspectorScopeMode;
-  scopeRootNodeIds?: string[] | Set<string>;
+export type {
+  DependencyRiskSeverity,
+  DependencyRisk,
+  DependencyReport,
+  DependencyInspectorScopeMode,
+  DependencyInspectorOptions,
 };
 
 const TEMPLATE_TOKEN_REGEX: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;

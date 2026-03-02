@@ -13,8 +13,7 @@ import {
   recommendParamUiControl,
   type ParamUiControl,
 } from '@/features/ai/image-studio/utils/param-ui';
-import { type ParamLeaf } from '@/features/ai/image-studio/utils/prompt-params';
-import { type ParamSpec } from '@/shared/contracts/prompt-engine';
+import { type ParamLeaf, type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 function safeJsonStringify(value: unknown): string {
   try {

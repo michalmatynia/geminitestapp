@@ -76,11 +76,11 @@ export type {
 import type { ImportTemplateParameterImport } from '../data-import-export';
 
 import {
-  type Template,
-  type TemplateMapping,
+  type Template as IntegrationTemplate,
+  type TemplateMapping as IntegrationTemplateMapping,
 } from './templates';
 
-export type { Template, TemplateMapping };
+export type { IntegrationTemplate, IntegrationTemplateMapping };
 
 /**
  * Session DTOs
@@ -548,8 +548,8 @@ export type NormalizedMappedProduct = ProductCreateInput & {
 // Backward-compatible aliases for modules that still import *Dto names.
 export type ImageTransformOptionsDto = ImageTransformOptions;
 export type ImageRetryPresetDto = ImageRetryPreset;
-export type TemplateMappingDto = TemplateMapping;
-export type TemplateDto = Template;
+export type TemplateMappingDto = IntegrationTemplateMapping;
+export type TemplateDto = IntegrationTemplate;
 export type BaseInventoryDto = unknown;
 export type FetchMarketplaceCategoriesRequestDto = unknown;
 export type BulkCategoryMappingRequestDto = unknown;

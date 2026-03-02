@@ -16,55 +16,11 @@ import {
   type AiBrainCapabilityKey,
   type AiBrainFeature,
   type AiBrainCapabilityPolicy,
-  type BrainModelFamily,
+  type BrainAppliedMeta,
+  type BrainExecutionConfig,
+  type BrainModelExecutionConfig,
+  type AiPathsNodeExecutionInput,
 } from './settings';
-
-export type BrainAppliedMeta = {
-  capability: AiBrainCapabilityKey;
-  feature: AiBrainFeature;
-  modelFamily: BrainModelFamily;
-  runtimeKind:
-    | 'chat'
-    | 'stream'
-    | 'embedding'
-    | 'ocr'
-    | 'vision'
-    | 'validation'
-    | 'image_generation';
-  provider: 'model' | 'agent';
-  modelId: string;
-  temperature: number;
-  maxTokens: number;
-  systemPromptApplied: boolean;
-  modelSelectionSource?: 'node' | 'brain_default';
-  defaultModelId?: string;
-  enforced: true;
-};
-
-export type BrainExecutionConfig = {
-  assignment: AiBrainAssignment;
-  capability: AiBrainCapabilityKey;
-  feature: AiBrainFeature;
-  provider: 'model' | 'agent';
-  agentId: string;
-  modelId: string;
-  temperature: number;
-  maxTokens: number;
-  systemPrompt: string;
-  brainApplied: BrainAppliedMeta;
-};
-export type BrainModelExecutionConfig = BrainExecutionConfig;
-
-export type AiPathsNodeExecutionInput = {
-  requestedModelId?: string;
-  requestedTemperature?: number;
-  requestedMaxTokens?: number;
-  requestedSystemPrompt?: string;
-  defaultTemperature?: number;
-  defaultMaxTokens?: number;
-  defaultSystemPrompt?: string;
-  runtimeKind?: BrainAppliedMeta['runtimeKind'];
-};
 
 type SettingDoc = { key?: string; value?: string; _id?: string };
 

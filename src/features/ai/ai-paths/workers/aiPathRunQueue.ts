@@ -1124,9 +1124,11 @@ const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {
     return { queue: null, owned: false };
   }
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     queue: new Queue(AI_PATH_RUN_QUEUE_NAME, { connection: connection as any }),
     owned: true,
   };
+
 };
 
 export const removePathRunQueueEntries = async (

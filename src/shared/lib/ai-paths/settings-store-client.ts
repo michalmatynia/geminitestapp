@@ -3,39 +3,21 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
+import {
+  AI_PATHS_MAINTENANCE_ACTION_IDS,
+  type AiPathsMaintenanceActionId,
+  type AiPathsMaintenanceActionReport,
+  type AiPathsMaintenanceReport,
+  type AiPathsMaintenanceApplyResult,
+} from '@/shared/contracts/ai-paths';
 
 export type AiPathsSettingRecord = SettingRecordDto;
-export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
-  'compact_oversized_configs',
-  'repair_path_index',
-  'ensure_parameter_inference_defaults',
-  'ensure_description_inference_defaults',
-  'ensure_base_export_defaults',
-  'upgrade_translation_en_pl',
-  'upgrade_runtime_input_contracts',
-  'upgrade_server_execution_mode',
-] as const;
-export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
-
-export type AiPathsMaintenanceActionReport = {
-  id: AiPathsMaintenanceActionId;
-  title: string;
-  description: string;
-  blocking: boolean;
-  status: 'pending' | 'ready';
-  affectedRecords: number;
-};
-
-export type AiPathsMaintenanceReport = {
-  scannedAt: string;
-  pendingActions: number;
-  blockingActions: number;
-  actions: AiPathsMaintenanceActionReport[];
-};
-
-export type AiPathsMaintenanceApplyResult = {
-  appliedActionIds: AiPathsMaintenanceActionId[];
-  report: AiPathsMaintenanceReport;
+export { AI_PATHS_MAINTENANCE_ACTION_IDS };
+export type {
+  AiPathsMaintenanceActionId,
+  AiPathsMaintenanceActionReport,
+  AiPathsMaintenanceReport,
+  AiPathsMaintenanceApplyResult,
 };
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;

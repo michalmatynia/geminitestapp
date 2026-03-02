@@ -1,11 +1,6 @@
-import type { RegexTemplate } from '@/shared/contracts/ai-paths';
+import type { RegexTemplate, RegexTemplatesStore } from '@/shared/contracts/ai-paths';
 
 export const AI_PATHS_REGEX_TEMPLATES_KEY = 'ai_paths_regex_templates';
-
-export type RegexTemplatesStore = {
-  version: 1;
-  templates: RegexTemplate[];
-};
 
 const defaultStore: RegexTemplatesStore = {
   version: 1,

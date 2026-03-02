@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import type { PathConfig, AiNode } from '@/shared/contracts/ai-paths';

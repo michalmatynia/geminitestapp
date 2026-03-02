@@ -3,19 +3,17 @@ import {
   canvasSemanticDocumentSchema,
   semanticDocumentSchema,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
   SemanticDocumentDto as SemanticDocument,
   SemanticEdgeDto as SemanticEdge,
   SemanticNodeDto as SemanticNode,
+  ParseSemanticDocumentResult,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { normalizeAiPathsValidationConfig } from '../validation-engine';
-
-export type ParseSemanticDocumentResult =
-  | { ok: true; value: SemanticDocument }
-  | { ok: false; error: string };
 
 export const parseSemanticDocument = (input: unknown): ParseSemanticDocumentResult => {
   const parsed = semanticDocumentSchema.safeParse(input);

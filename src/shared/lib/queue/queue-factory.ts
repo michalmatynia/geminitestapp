@@ -57,7 +57,8 @@ export function createManagedQueue<TJobData>(
     const connection = getRedisConnection();
     if (!connection) return null;
     queue = new Queue(config.name, {
-      connection,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+      connection: connection as any,
       defaultJobOptions: {
         removeOnComplete: true,
         removeOnFail: 100,
@@ -170,9 +171,9 @@ export function createManagedQueue<TJobData>(
       },
       {
         ...config.workerOptions,
-        connection,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+        connection: connection as any,
         concurrency: config.concurrency,
-
         lockDuration,
         removeOnComplete: { count: 0 },
         removeOnFail: { count: 100 },

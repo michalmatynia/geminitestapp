@@ -206,9 +206,12 @@ const collectAiPathsDomain = async (
   const status = await getAiPathRunQueueStatus();
   const overall = status.slo.overall;
   const state = mapAiPathsState(overall);
+  const runtimeAnalyticsEnabled = status.runtimeAnalytics.enabled;
   const message =
     state === 'healthy'
-      ? 'Queue and SLO are healthy.'
+      ? runtimeAnalyticsEnabled
+        ? 'Queue and SLO are healthy.'
+        : 'Queue is healthy. Runtime analytics telemetry is disabled.'
       : status.slo.breaches[0]?.message ?? 'AI Paths queue reported degraded health.';
   const updatedAt = status.lastPollTime > 0 ? new Date(status.lastPollTime).toISOString() : nowIso();
   const queueLagValue = status.queueLagMs === null ? 'n/a' : status.queueLagMs;
@@ -218,7 +221,7 @@ const collectAiPathsDomain = async (
     label: DOMAIN_CONFIG.ai_paths.label,
     state,
     message,
-    sampleSize: status.brainAnalytics24h.totalReports,
+    sampleSize: runtimeAnalyticsEnabled ? status.brainAnalytics24h.totalReports : 0,
     updatedAt,
     metrics: [
       { key: 'queued_count', label: 'Queued', value: status.queuedCount },
@@ -226,14 +229,19 @@ const collectAiPathsDomain = async (
       { key: 'queue_lag_ms', label: 'Queue lag (ms)', value: queueLagValue },
       { key: 'throughput_per_minute', label: 'Throughput / min', value: status.throughputPerMinute },
       {
+        key: 'runtime_analytics',
+        label: 'Runtime analytics',
+        value: runtimeAnalyticsEnabled ? status.runtimeAnalytics.storage : 'disabled',
+      },
+      {
         key: 'brain_reports_24h',
         label: 'Brain reports (24h)',
-        value: status.brainAnalytics24h.totalReports,
+        value: runtimeAnalyticsEnabled ? status.brainAnalytics24h.totalReports : 'disabled',
       },
       {
         key: 'brain_error_reports_24h',
         label: 'Brain error reports (24h)',
-        value: status.brainAnalytics24h.errorReports,
+        value: runtimeAnalyticsEnabled ? status.brainAnalytics24h.errorReports : 'disabled',
       },
     ],
     trend: {

@@ -48,6 +48,10 @@ describe('brain operations overview handler', () => {
       queueLagMs: 4500,
       throughputPerMinute: 3,
       lastPollTime: Date.now(),
+      runtimeAnalytics: {
+        enabled: true,
+        storage: 'redis',
+      },
       brainAnalytics24h: {
         totalReports: 14,
         errorReports: 2,
@@ -169,6 +173,10 @@ describe('brain operations overview handler', () => {
       queueLagMs: 4500,
       throughputPerMinute: 3,
       lastPollTime: Date.now(),
+      runtimeAnalytics: {
+        enabled: true,
+        storage: 'redis',
+      },
       brainAnalytics24h: {
         totalReports: 14,
         errorReports: 2,
@@ -199,6 +207,10 @@ describe('brain operations overview handler', () => {
       queueLagMs: 4500,
       throughputPerMinute: 3,
       lastPollTime: Date.now(),
+      runtimeAnalytics: {
+        enabled: true,
+        storage: 'redis',
+      },
       brainAnalytics24h: {
         totalReports: 14,
         errorReports: 2,
@@ -222,6 +234,58 @@ describe('brain operations overview handler', () => {
       domains: { ai_paths: { state: string } };
     };
     expect(criticalPayload.domains.ai_paths.state).toBe('critical');
+  });
+
+  it('describes disabled runtime analytics without treating report counts as samples', async () => {
+    getAiPathRunQueueStatusMock.mockResolvedValueOnce({
+      queuedCount: 1,
+      activeRuns: 0,
+      queueLagMs: 0,
+      throughputPerMinute: 2,
+      lastPollTime: Date.now(),
+      runtimeAnalytics: {
+        enabled: false,
+        storage: 'disabled',
+      },
+      brainAnalytics24h: {
+        totalReports: 0,
+        errorReports: 0,
+        analyticsReports: 0,
+        logReports: 0,
+        warningReports: 0,
+      },
+      slo: {
+        overall: 'ok',
+        breaches: [],
+      },
+    });
+
+    const response = await GET_handler(
+      new Request('http://localhost/api/brain/operations/overview') as Parameters<
+        typeof GET_handler
+      >[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      domains: {
+        ai_paths: {
+          message?: string;
+          sampleSize: number;
+          metrics: Array<{ key: string; value: string | number | boolean }>;
+        };
+      };
+    };
+
+    expect(payload.domains.ai_paths.message).toContain('Runtime analytics telemetry is disabled');
+    expect(payload.domains.ai_paths.sampleSize).toBe(0);
+    expect(payload.domains.ai_paths.metrics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'runtime_analytics', value: 'disabled' }),
+        expect.objectContaining({ key: 'brain_reports_24h', value: 'disabled' }),
+      ])
+    );
   });
 
   it('uses requested range to compute trend windows', async () => {

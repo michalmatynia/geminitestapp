@@ -5,8 +5,10 @@ import { Queue } from 'bullmq';
 import { resolveAiPathsStaleRunningCleanupIntervalMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
+  getRuntimeAnalyticsAvailability,
   getRuntimeAnalyticsSummary,
   recordRuntimeRunStarted,
+  type RuntimeAnalyticsAvailability,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import {
   processRun,
@@ -28,6 +30,10 @@ import {
   createDebugQueueLogger,
   parseEnvNumber,
 } from './ai-path-run-queue-utils';
+import {
+  type AiPathRunQueueBaseStatus,
+  type AiPathRunQueueStatus,
+} from '@/shared/contracts/ai-paths-runtime';
 
 export type { AiPathRunQueueSloStatus, SloLevel };
 
@@ -329,40 +335,7 @@ export const startAiPathRunQueue = (): void => {
   });
 };
 
-type AiPathRunQueueStatus = {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeRuns: number;
-  concurrency: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-  queuedCount: number;
-  oldestQueuedAt: number | null;
-  queueLagMs: number | null;
-  completedLastMinute: number;
-  throughputPerMinute: number;
-  avgRuntimeMs: number | null;
-  p50RuntimeMs: number | null;
-  p95RuntimeMs: number | null;
-  brainQueue: {
-    running: boolean;
-    healthy: boolean;
-    processing: boolean;
-    activeJobs: number;
-    waitingJobs: number;
-    failedJobs: number;
-    completedJobs: number;
-  };
-  brainAnalytics24h: {
-    analyticsReports: number;
-    logReports: number;
-    totalReports: number;
-    warningReports: number;
-    errorReports: number;
-  };
-  slo: AiPathRunQueueSloStatus;
-};
+type RuntimeAnalyticsSummarySnapshot = Awaited<ReturnType<typeof getRuntimeAnalyticsSummary>>;
 
 const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber('AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS', 2_000, 250);
 const QUEUE_HOT_STATUS_CACHE_TTL_MS = parseEnvNumber(
@@ -401,6 +374,14 @@ let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
 let aiPathsEnabledCache: { value: boolean; expiresAt: number } | null = null;
 let aiPathsEnabledInFlight: Promise<boolean> | null = null;
 
+const EMPTY_BRAIN_ANALYTICS_24H: AiPathRunQueueStatus['brainAnalytics24h'] = {
+  analyticsReports: 0,
+  logReports: 0,
+  totalReports: 0,
+  warningReports: 0,
+  errorReports: 0,
+};
+
 type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;
 };
@@ -421,43 +402,16 @@ const readQueueHealthSnapshot = async () => {
     };
 };
 
-const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
+const readAiPathRunQueueBaseStatus = async (now: number): Promise<AiPathRunQueueBaseStatus> => {
   const health = await readQueueHealthSnapshot();
   const repo = await getPathRunRepository();
-  const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
+  const [stats, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
     repo.getQueueStats(),
     getAiInsightsQueueStatusSnapshot(),
-    getRuntimeAnalyticsSummary({
-      from: new Date(now - 24 * 60 * 60 * 1000),
-      to: new Date(now),
-      range: '24h',
-    }),
+    getRuntimeAnalyticsAvailability(),
   ]);
   const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
   const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
-  const terminalRuns24h =
-    runtimeAnalyticsSummary.runs.completed +
-    runtimeAnalyticsSummary.runs.failed +
-    runtimeAnalyticsSummary.runs.canceled +
-    runtimeAnalyticsSummary.runs.deadLettered;
-  const brainTotalReports24h = runtimeAnalyticsSummary.brain.totalReports;
-  const brainErrorRate24h =
-    brainTotalReports24h > 0
-      ? Math.max(
-        0,
-        Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
-      )
-      : 0;
-  const slo = computeAiPathRunQueueSlo({
-    queueRunning: health.running ?? false,
-    queueHealthy: health.healthy ?? false,
-    queueLagMs,
-    successRate24h: runtimeAnalyticsSummary.runs.successRate,
-    terminalRuns24h,
-    deadLetterRate24h: runtimeAnalyticsSummary.runs.deadLetterRate,
-    brainErrorRate24h,
-    brainTotalReports24h,
-  });
 
   return {
     running: health.running ?? false,
@@ -472,9 +426,10 @@ const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStat
     queueLagMs,
     completedLastMinute: health.completedCount,
     throughputPerMinute: health.completedCount,
-    avgRuntimeMs: runtimeAnalyticsSummary.runs.avgDurationMs,
+    avgRuntimeMs: null,
     p50RuntimeMs: null,
-    p95RuntimeMs: runtimeAnalyticsSummary.runs.p95DurationMs,
+    p95RuntimeMs: null,
+    runtimeAnalytics,
     brainQueue: {
       running: insightsQueueHealth.running,
       healthy: insightsQueueHealth.healthy,
@@ -484,15 +439,67 @@ const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStat
       failedJobs: insightsQueueHealth.failedJobs,
       completedJobs: insightsQueueHealth.completedJobs,
     },
-    brainAnalytics24h: {
+  };
+};
+
+const finalizeAiPathRunQueueStatus = (
+  baseStatus: AiPathRunQueueBaseStatus,
+  runtimeAnalyticsSummary?: RuntimeAnalyticsSummarySnapshot
+): AiPathRunQueueStatus => {
+  const brainAnalytics24h = runtimeAnalyticsSummary
+    ? {
       analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
       logReports: runtimeAnalyticsSummary.brain.logReports,
       totalReports: runtimeAnalyticsSummary.brain.totalReports,
       warningReports: runtimeAnalyticsSummary.brain.warningReports,
       errorReports: runtimeAnalyticsSummary.brain.errorReports,
-    },
+    }
+    : EMPTY_BRAIN_ANALYTICS_24H;
+  const terminalRuns24h = runtimeAnalyticsSummary
+    ? runtimeAnalyticsSummary.runs.completed +
+      runtimeAnalyticsSummary.runs.failed +
+      runtimeAnalyticsSummary.runs.canceled +
+      runtimeAnalyticsSummary.runs.deadLettered
+    : 0;
+  const brainTotalReports24h = brainAnalytics24h.totalReports;
+  const brainErrorRate24h =
+    brainTotalReports24h > 0
+      ? Math.max(0, Math.min(100, (brainAnalytics24h.errorReports / brainTotalReports24h) * 100))
+      : 0;
+  const slo = computeAiPathRunQueueSlo({
+    queueRunning: baseStatus.running,
+    queueHealthy: baseStatus.healthy,
+    queueLagMs: baseStatus.queueLagMs,
+    successRate24h: runtimeAnalyticsSummary?.runs.successRate ?? 0,
+    terminalRuns24h,
+    deadLetterRate24h: runtimeAnalyticsSummary?.runs.deadLetterRate ?? 0,
+    brainErrorRate24h,
+    brainTotalReports24h,
+  });
+
+  return {
+    ...baseStatus,
+    avgRuntimeMs: runtimeAnalyticsSummary?.runs.avgDurationMs ?? null,
+    p50RuntimeMs: null,
+    p95RuntimeMs: runtimeAnalyticsSummary?.runs.p95DurationMs ?? null,
+    brainAnalytics24h,
     slo,
   };
+};
+
+const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
+  const baseStatus = await readAiPathRunQueueBaseStatus(now);
+  if (!baseStatus.runtimeAnalytics.enabled) {
+    return finalizeAiPathRunQueueStatus(baseStatus);
+  }
+
+  const runtimeAnalyticsSummary = await getRuntimeAnalyticsSummary({
+    from: new Date(now - 24 * 60 * 60 * 1000),
+    to: new Date(now),
+    range: '24h',
+    includeTraces: false,
+  });
+  return finalizeAiPathRunQueueStatus(baseStatus, runtimeAnalyticsSummary);
 };
 
 const readAiPathRunQueueHotStatus = async (): Promise<AiPathRunQueueHotStatus> => {

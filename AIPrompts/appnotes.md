@@ -1,3 +1,73 @@
+*I cannot save cases
+*When I deactive a  file in cases, it doesn’t bring me back to case settings
+nodefile canvas not working, I cannot move or open nodes
+exploder not working
+
+
+AI-Paths is bottlenecking
+
+I can’t scroll the pallete, zoom should only work when I’m in the canvas area
+
+---
+
+
+——
+
+
+ },
+  route: '/admin/ai-paths/queue',
+  query: '',
+  referrer: '',
+  locale: 'en-US',
+  timezone: 'Europe/Warsaw',
+  device: { platform: 'MacIntel', deviceMemory: 8, hardwareConcurrency: 10 },
+  network: { online: true, effectiveType: '4g', downlink: 10, rtt: 50 },
+  viewport: { width: 1661, height: 962 },
+  user: null,
+  source: 'client.error.reporter',
+  lastAction: {
+    type: 'click',
+    target: 'html.dark',
+    timestamp: '2026-03-02T05:57:44.697Z',
+    x: 713,
+    y: 725
+  },
+  url: 'http://localhost:3000/admin/ai-paths/queue',
+  clientTimestamp: '2026-03-02T05:57:46.562Z',
+  clientUserAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
+  service: 'client-error-reporter',
+  category: 'VALIDATION',
+  jobId: undefined,
+  runId: undefined,
+  productId: undefined,
+  error: {
+    message: 'Invalid payload',
+    stack: 'Error: Invalid payload\n' +
+      '    at ToastProvider.useCallback[toast] (http://localhost:3000/_next/static/chunks/src_shared_ui_b7879559._.js:2633:217)\n' +
+      '    at useAiPathTriggerEvent.useCallback[fireAiPathTriggerEvent] (http://localhost:3000/_next/static/chunks/src_shared_lib_5d766ed6._.js:16200:21)\n' +
+      '    at async useTriggerButtons.useCallback[handleTrigger] (http://localhost:3000/_next/static/chunks/src_shared_lib_5d766ed6._.js:16539:17)',
+    name: 'Error'
+  },
+  errorName: 'Error',
+  fingerprint: '0eb7a5d1d7960cda'
+}
+ POST /api/client-errors 200 in 19ms (compile: 4ms, proxy.ts: 2ms, render: 13ms)
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 12,
+  reason: 'idle',
+  address: 'cluster0-shard-00-02.zv9e9.azure.mongodb.net:27017'
+}
+[mongodb] MongoDB connection closed: idle {
+  event: 'connectionClosed',
+  connectionId: 12,
+  reason: 'idle',
+  address: 'cluster0-shard-00-00.zv9e9.azure.mongodb.net:27017'
+}
+
+
+---
+
 Connect job runs to Observability through context registry
 Improve query factories
 Improve foldre tree

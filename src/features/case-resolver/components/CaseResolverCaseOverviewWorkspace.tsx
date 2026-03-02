@@ -13,6 +13,7 @@ import {
   MultiSelect,
   SelectSimple,
 } from '@/shared/ui';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
@@ -29,6 +30,48 @@ const CASE_STATUS_OPTIONS = [
     description: 'Case has been completed.',
   },
 ] as const;
+
+const NONE_OPTION_VALUE = '__none__';
+
+type CaseMetadataDraft = {
+  name: string;
+  parentCaseId: string;
+  caseStatus: 'pending' | 'completed';
+  happeningDate: string;
+  referenceCaseIds: string[];
+  tagId: string;
+  caseIdentifierId: string;
+  categoryId: string;
+};
+
+const buildCaseMetadataDraft = (caseFile: CaseResolverFile | null): CaseMetadataDraft => ({
+  name: caseFile?.name ?? '',
+  parentCaseId: caseFile?.parentCaseId ?? NONE_OPTION_VALUE,
+  caseStatus: caseFile?.caseStatus === 'completed' ? 'completed' : 'pending',
+  happeningDate: caseFile?.happeningDate ?? '',
+  referenceCaseIds: caseFile?.referenceCaseIds ?? [],
+  tagId: caseFile?.tagId ?? NONE_OPTION_VALUE,
+  caseIdentifierId: caseFile?.caseIdentifierId ?? NONE_OPTION_VALUE,
+  categoryId: caseFile?.categoryId ?? NONE_OPTION_VALUE,
+});
+
+const normalizeOptionalSelectValue = (value: string): string | null => {
+  const normalized = value.trim();
+  if (!normalized || normalized === NONE_OPTION_VALUE) return null;
+  return normalized;
+};
+
+const normalizeReferenceCaseIds = (values: string[], activeCaseId: string): string[] =>
+  Array.from(
+    new Set(
+      values
+        .map((value): string => value.trim())
+        .filter((value): boolean => value.length > 0 && value !== activeCaseId)
+    )
+  );
+
+const areStringArraysEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length && left.every((value, index): boolean => value === right[index]);
 
 export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   const {
@@ -52,39 +95,104 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
     );
   }, [activeCaseId, activeFile, workspace.files]);
 
-  const [caseNameDraft, setCaseNameDraft] = React.useState(activeCaseFile?.name ?? '');
-  const [happeningDateDraft, setHappeningDateDraft] = React.useState(
-    activeCaseFile?.happeningDate ?? ''
+  const [draft, setDraft] = React.useState<CaseMetadataDraft>(() =>
+    buildCaseMetadataDraft(activeCaseFile)
   );
   const [isRelationsVisible, setIsRelationsVisible] = React.useState(false);
 
   React.useEffect(() => {
-    setCaseNameDraft(activeCaseFile?.name ?? '');
-  }, [activeCaseFile?.id, activeCaseFile?.name]);
-
-  React.useEffect(() => {
-    setHappeningDateDraft(activeCaseFile?.happeningDate ?? '');
-  }, [activeCaseFile?.happeningDate, activeCaseFile?.id]);
+    setDraft(buildCaseMetadataDraft(activeCaseFile));
+  }, [
+    activeCaseFile?.id,
+    activeCaseFile?.name,
+    activeCaseFile?.parentCaseId,
+    activeCaseFile?.caseStatus,
+    activeCaseFile?.happeningDate,
+    activeCaseFile?.tagId,
+    activeCaseFile?.caseIdentifierId,
+    activeCaseFile?.categoryId,
+    activeCaseFile?.referenceCaseIds,
+  ]);
 
   React.useEffect(() => {
     setIsRelationsVisible(false);
   }, [activeCaseFile?.id]);
 
-  const commitCaseName = React.useCallback((): void => {
-    if (!activeCaseFile || activeCaseFile.isLocked) return;
-    const normalizedName = caseNameDraft.trim();
-    const nextName = normalizedName || activeCaseFile.name || 'Untitled Case';
-    if (nextName === activeCaseFile.name) return;
-    onUpdateActiveCase({ name: nextName });
-  }, [activeCaseFile, caseNameDraft, onUpdateActiveCase]);
+  const normalizedDraft = React.useMemo(() => {
+    if (!activeCaseFile) return null;
+    return {
+      name: draft.name.trim() || activeCaseFile.name || 'Untitled Case',
+      parentCaseId: (() => {
+        const nextParentCaseId = normalizeOptionalSelectValue(draft.parentCaseId);
+        return nextParentCaseId === activeCaseFile.id ? null : nextParentCaseId;
+      })(),
+      caseStatus: draft.caseStatus === 'completed' ? 'completed' : 'pending',
+      happeningDate: draft.happeningDate.trim() || null,
+      referenceCaseIds: normalizeReferenceCaseIds(draft.referenceCaseIds, activeCaseFile.id),
+      tagId: normalizeOptionalSelectValue(draft.tagId),
+      caseIdentifierId: normalizeOptionalSelectValue(draft.caseIdentifierId),
+      categoryId: normalizeOptionalSelectValue(draft.categoryId),
+    };
+  }, [activeCaseFile, draft]);
 
-  const commitHappeningDate = React.useCallback((): void => {
-    if (!activeCaseFile || activeCaseFile.isLocked) return;
-    const nextHappeningDate = happeningDateDraft.trim() || null;
-    const currentHappeningDate = activeCaseFile.happeningDate?.trim() || null;
-    if (nextHappeningDate === currentHappeningDate) return;
-    onUpdateActiveCase({ happeningDate: nextHappeningDate });
-  }, [activeCaseFile, happeningDateDraft, onUpdateActiveCase]);
+  const pendingPatch = React.useMemo(() => {
+    if (!activeCaseFile || !normalizedDraft) return null;
+    const patch: Partial<
+      Pick<
+        CaseResolverFile,
+        | 'name'
+        | 'parentCaseId'
+        | 'referenceCaseIds'
+        | 'tagId'
+        | 'caseIdentifierId'
+        | 'categoryId'
+        | 'caseStatus'
+        | 'happeningDate'
+      >
+    > = {};
+
+    if (normalizedDraft.name !== activeCaseFile.name) {
+      patch.name = normalizedDraft.name;
+    }
+    if (normalizedDraft.parentCaseId !== (activeCaseFile.parentCaseId?.trim() || null)) {
+      patch.parentCaseId = normalizedDraft.parentCaseId;
+    }
+    if (
+      normalizedDraft.caseStatus !==
+      (activeCaseFile.caseStatus === 'completed' ? 'completed' : 'pending')
+    ) {
+      patch.caseStatus = normalizedDraft.caseStatus as 'pending' | 'completed';
+    }
+    if (normalizedDraft.happeningDate !== (activeCaseFile.happeningDate?.trim() || null)) {
+      patch.happeningDate = normalizedDraft.happeningDate;
+    }
+    if (
+      !areStringArraysEqual(
+        normalizedDraft.referenceCaseIds,
+        normalizeReferenceCaseIds(activeCaseFile.referenceCaseIds ?? [], activeCaseFile.id)
+      )
+    ) {
+      patch.referenceCaseIds = normalizedDraft.referenceCaseIds;
+    }
+    if (normalizedDraft.tagId !== (activeCaseFile.tagId?.trim() || null)) {
+      patch.tagId = normalizedDraft.tagId;
+    }
+    if (
+      normalizedDraft.caseIdentifierId !== (activeCaseFile.caseIdentifierId?.trim() || null)
+    ) {
+      patch.caseIdentifierId = normalizedDraft.caseIdentifierId;
+    }
+    if (normalizedDraft.categoryId !== (activeCaseFile.categoryId?.trim() || null)) {
+      patch.categoryId = normalizedDraft.categoryId;
+    }
+
+    return Object.keys(patch).length > 0 ? patch : null;
+  }, [activeCaseFile, normalizedDraft]);
+
+  const handleApplyDraft = React.useCallback((): void => {
+    if (!activeCaseFile || activeCaseFile.isLocked || !pendingPatch) return;
+    onUpdateActiveCase(pendingPatch);
+  }, [activeCaseFile, onUpdateActiveCase, pendingPatch]);
 
   if (!activeCaseFile) {
     return (
@@ -111,9 +219,7 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   const filteredParentOptions = parentCaseOptions.filter(
     (option): boolean => option.value === '__none__' || option.value !== activeCaseFile.id
   );
-  const selectedReferenceCaseIds = (activeCaseFile.referenceCaseIds ?? []).filter(
-    (caseId: string): boolean => caseId !== activeCaseFile.id
-  );
+  const draftHasChanges = pendingPatch !== null;
 
   return (
     <div
@@ -137,6 +243,15 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
                 variant='outline'
                 size='sm'
                 className='h-8'
+                disabled={isCaseLocked || !draftHasChanges}
+                onClick={handleApplyDraft}
+              >
+                Update
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-8'
                 onClick={(): void => {
                   setIsRelationsVisible((current): boolean => !current);
                 }}
@@ -151,18 +266,18 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
 
           <FormField label='Case Name'>
             <Input
-              value={caseNameDraft}
+              value={draft.name}
               disabled={isCaseLocked}
               onChange={(event): void => {
-                setCaseNameDraft(event.target.value);
-              }}
-              onBlur={(): void => {
-                commitCaseName();
+                setDraft((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }));
               }}
               onKeyDown={(event): void => {
                 if (event.key !== 'Enter') return;
                 event.preventDefault();
-                commitCaseName();
+                handleApplyDraft();
               }}
             />
           </FormField>
@@ -170,12 +285,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Parent Case'>
             <SelectSimple
               size='sm'
-              value={activeCaseFile.parentCaseId ?? '__none__'}
+              value={draft.parentCaseId}
               disabled={isCaseLocked}
               onValueChange={(value: string): void => {
-                onUpdateActiveCase({
-                  parentCaseId: value === '__none__' ? null : value,
-                });
+                setDraft((current) => ({
+                  ...current,
+                  parentCaseId: value,
+                }));
               }}
               options={filteredParentOptions}
               placeholder='Parent case'
@@ -186,12 +302,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Case Status'>
             <SelectSimple
               size='sm'
-              value={activeCaseFile.caseStatus === 'completed' ? 'completed' : 'pending'}
+              value={draft.caseStatus}
               disabled={isCaseLocked}
               onValueChange={(value: string): void => {
-                onUpdateActiveCase({
+                setDraft((current) => ({
+                  ...current,
                   caseStatus: value === 'completed' ? 'completed' : 'pending',
-                });
+                }));
               }}
               options={CASE_STATUS_OPTIONS}
               placeholder='Select case status'
@@ -201,19 +318,19 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
 
           <FormField label='Happening Date'>
             <Input
-              value={happeningDateDraft}
+              value={draft.happeningDate}
               disabled={isCaseLocked}
               placeholder='YYYY-MM-DD or custom date'
               onChange={(event): void => {
-                setHappeningDateDraft(event.target.value);
-              }}
-              onBlur={(): void => {
-                commitHappeningDate();
+                setDraft((current) => ({
+                  ...current,
+                  happeningDate: event.target.value,
+                }));
               }}
               onKeyDown={(event): void => {
                 if (event.key !== 'Enter') return;
                 event.preventDefault();
-                commitHappeningDate();
+                handleApplyDraft();
               }}
             />
           </FormField>
@@ -221,14 +338,17 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Reference Cases'>
             <MultiSelect
               options={filteredReferenceOptions}
-              selected={selectedReferenceCaseIds}
+              selected={draft.referenceCaseIds.filter(
+                (caseId: string): boolean => caseId !== activeCaseFile.id
+              )}
               disabled={isCaseLocked}
               onChange={(values: string[]): void => {
-                onUpdateActiveCase({
+                setDraft((current) => ({
+                  ...current,
                   referenceCaseIds: values.filter(
                     (referenceId: string): boolean => referenceId !== activeCaseFile.id
                   ),
-                });
+                }));
               }}
               placeholder='Select reference cases'
               searchPlaceholder='Search cases...'
@@ -240,12 +360,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Tag'>
             <SelectSimple
               size='sm'
-              value={activeCaseFile.tagId ?? '__none__'}
+              value={draft.tagId}
               disabled={isCaseLocked}
               onValueChange={(value: string): void => {
-                onUpdateActiveCase({
-                  tagId: value === '__none__' ? null : value,
-                });
+                setDraft((current) => ({
+                  ...current,
+                  tagId: value,
+                }));
               }}
               options={caseTagOptions}
               placeholder='Select tag'
@@ -256,12 +377,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Case Identifier'>
             <SelectSimple
               size='sm'
-              value={activeCaseFile.caseIdentifierId ?? '__none__'}
+              value={draft.caseIdentifierId}
               disabled={isCaseLocked}
               onValueChange={(value: string): void => {
-                onUpdateActiveCase({
-                  caseIdentifierId: value === '__none__' ? null : value,
-                });
+                setDraft((current) => ({
+                  ...current,
+                  caseIdentifierId: value,
+                }));
               }}
               options={caseIdentifierOptions}
               placeholder='Select case identifier'
@@ -272,12 +394,13 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
           <FormField label='Category'>
             <SelectSimple
               size='sm'
-              value={activeCaseFile.categoryId ?? '__none__'}
+              value={draft.categoryId}
               disabled={isCaseLocked}
               onValueChange={(value: string): void => {
-                onUpdateActiveCase({
-                  categoryId: value === '__none__' ? null : value,
-                });
+                setDraft((current) => ({
+                  ...current,
+                  categoryId: value,
+                }));
               }}
               options={caseCategoryOptions}
               placeholder='Select category'

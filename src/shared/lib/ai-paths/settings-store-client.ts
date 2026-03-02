@@ -26,6 +26,7 @@ const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [500, 1500];
 const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
 const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 25_000;
 const AI_PATHS_SETTINGS_SELECTIVE_REQUEST_TIMEOUT_MS = 8_000;
+const AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS = 90_000;
 const AI_PATHS_SETTINGS_MAX_QUERY_KEYS = 500;
 const AI_PATHS_SETTINGS_MAX_KEY_LENGTH = 200;
 
@@ -441,7 +442,9 @@ export const updateAiPathsSettingsBulk = async (
 
   let data: unknown;
   try {
-    data = await api.post<unknown>('/api/ai-paths/settings', { items: payload });
+    data = await api.post<unknown>('/api/ai-paths/settings', { items: payload }, {
+      timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
+    });
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths settings (${error.status})`, { cause: error });
@@ -468,7 +471,9 @@ export const updateAiPathsSetting = async (
 ): Promise<AiPathsSettingRecord> => {
   let data: unknown;
   try {
-    data = await api.post<unknown>('/api/ai-paths/settings', { key, value });
+    data = await api.post<unknown>('/api/ai-paths/settings', { key, value }, {
+      timeout: AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS,
+    });
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(`Failed to update AI Paths setting (${error.status})`, { cause: error });

@@ -756,7 +756,12 @@ export const generateRuntimeAnalyticsInsight = async (params: {
     (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
   const range = params.range ?? '24h';
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(range);
-  const runtimeSummary = await getRuntimeAnalyticsSummary({ from, to, range });
+  const runtimeSummary = await getRuntimeAnalyticsSummary({
+    from,
+    to,
+    range,
+    includeTraces: false,
+  });
 
   const payload = {
     window: {

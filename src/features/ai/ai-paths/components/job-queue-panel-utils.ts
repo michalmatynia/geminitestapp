@@ -34,6 +34,10 @@ export type QueueStatus = {
   avgRuntimeMs: number | null;
   p50RuntimeMs: number | null;
   p95RuntimeMs: number | null;
+  runtimeAnalytics: {
+    enabled: boolean;
+    storage: 'redis' | 'disabled';
+  };
   brainQueue: {
     running: boolean;
     healthy: boolean;

@@ -115,19 +115,27 @@ describe('CaseResolverPageMainContent routing', () => {
       name: 'Case 2',
       folder: '',
     };
+    const staleDocumentFile = {
+      id: 'doc-2',
+      fileType: 'document',
+      name: 'Doc 2',
+      folder: '',
+      parentCaseId: 'case-2',
+    };
 
     viewContextMock = createContextMock({
       stateOverrides: {
         workspace: {
           id: 'workspace-1',
-          files: [caseFile],
+          files: [caseFile, staleDocumentFile],
           assets: [],
         } as unknown as CaseResolverStateValue['workspace'],
         activeCaseId: 'case-2',
         selectedFileId: null,
-        activeFile: null,
+        activeFile: staleDocumentFile as CaseResolverStateValue['activeFile'],
         selectedAsset: null,
         selectedAssetId: null,
+        selectedFolderPath: null,
         editingDocumentDraft: null,
       },
     });

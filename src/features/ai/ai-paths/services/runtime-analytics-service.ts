@@ -76,6 +76,11 @@ type SummaryCacheEntry = {
   expiresAt: number;
 };
 
+export type RuntimeAnalyticsAvailability = {
+  enabled: boolean;
+  storage: 'redis' | 'disabled';
+};
+
 const summaryCache = new Map<string, SummaryCacheEntry>();
 const summaryInFlight = new Map<string, Promise<AiPathRuntimeAnalyticsSummary>>();
 let runtimeAnalyticsCapabilityCache: { enabled: boolean; expiresAt: number } | null = null;
@@ -179,7 +184,7 @@ const setCachedSummary = (
   pruneSummaryCache(now);
 };
 
-const isRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolean> => {
+const resolveRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolean> => {
   const now = Date.now();
   if (runtimeAnalyticsCapabilityCache && runtimeAnalyticsCapabilityCache.expiresAt > now) {
     return runtimeAnalyticsCapabilityCache.enabled;
@@ -207,6 +212,29 @@ const isRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolean> => {
     };
     return false;
   }
+};
+
+export const getRuntimeAnalyticsAvailability = async (): Promise<RuntimeAnalyticsAvailability> => {
+  const capabilityEnabled = await resolveRuntimeAnalyticsCapabilityEnabled();
+  if (!capabilityEnabled) {
+    return {
+      enabled: false,
+      storage: 'disabled',
+    };
+  }
+
+  const redis = getRedisConnection();
+  if (!redis) {
+    return {
+      enabled: false,
+      storage: 'disabled',
+    };
+  }
+
+  return {
+    enabled: true,
+    storage: 'redis',
+  };
 };
 
 const toPipelineCount = (value: unknown): number => {
@@ -727,12 +755,14 @@ export const getRuntimeAnalyticsSummary = async (input: {
   from: Date;
   to: Date;
   range?: AiPathRuntimeAnalyticsRange | 'custom';
+  includeTraces?: boolean;
 }): Promise<AiPathRuntimeAnalyticsSummary> => {
   const from = input.from;
   const to = input.to;
   const range = input.range ?? 'custom';
-  const analyticsEnabled = await isRuntimeAnalyticsCapabilityEnabled();
-  if (!analyticsEnabled) {
+  const includeTraces = input.includeTraces !== false;
+  const availability = await getRuntimeAnalyticsAvailability();
+  if (!availability.enabled) {
     return emptySummary(from, to, range);
   }
   const redis = getRedisConnection();
@@ -751,7 +781,9 @@ export const getRuntimeAnalyticsSummary = async (input: {
   if (inFlight) return inFlight;
 
   const loadPromise = (async (): Promise<AiPathRuntimeAnalyticsSummary> => {
-    const runtimeTracePromise = loadRuntimeTraceAnalytics({ from, to });
+    const runtimeTracePromise = includeTraces
+      ? loadRuntimeTraceAnalytics({ from, to })
+      : Promise.resolve(emptyTraceAnalytics());
     try {
       const pipeline = redis.pipeline();
       pipeline.zcount(keyRuns('all'), fromMs, toMs);
@@ -872,7 +904,7 @@ export const getRuntimeAnalyticsSummary = async (input: {
       const stale = readStaleSummary(cacheKey);
       if (stale) return stale;
       const fallback = emptySummary(from, to, range);
-      fallback.traces = await runtimeTracePromise;
+      fallback.traces = includeTraces ? await runtimeTracePromise : emptyTraceAnalytics();
       return fallback;
     }
   })();

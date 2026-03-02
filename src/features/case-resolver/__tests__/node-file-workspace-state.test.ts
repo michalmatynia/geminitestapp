@@ -160,6 +160,9 @@ describe('useNodeFileWorkspaceState manual snapshot persistence', () => {
       source: 'node_file_manual_save',
     });
 
+    expect(result.current.canvasHostRef).not.toBe(result.current.viewportRef);
+    expect(result.current.canvasHostRef.current).toBeNull();
+
     rerender();
     expect(result.current.hasPendingSnapshotChanges).toBe(false);
   });

@@ -41,8 +41,13 @@ const formatPercent = (value: number | null | undefined): string => {
 };
 
 export function MetricsTab(): React.JSX.Element {
-  const { analyticsSummaryQuery, logMetricsQuery, insightsQuery, runtimeAnalyticsQuery } =
-    useBrain();
+  const {
+    analyticsSummaryQuery,
+    logMetricsQuery,
+    insightsQuery,
+    runtimeAnalyticsQuery,
+    runtimeAnalyticsLiveEnabled,
+  } = useBrain();
 
   const insightsData = insightsQuery.data;
 
@@ -183,7 +188,13 @@ export function MetricsTab(): React.JSX.Element {
         title='AI Paths Runtime'
         description='Execution performance and node status summary.'
       >
-        {runtimeAnalyticsQuery.isLoading ? (
+        {!runtimeAnalyticsLiveEnabled ? (
+          <EmptyState
+            title='Runtime analytics disabled'
+            description='Enable Runtime Analytics and AI Paths model capabilities in AI Brain to load this telemetry.'
+            variant='compact'
+          />
+        ) : runtimeAnalyticsQuery.isLoading ? (
           <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>
         ) : runtimeAnalyticsQuery.data ? (
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
@@ -223,7 +234,9 @@ export function MetricsTab(): React.JSX.Element {
             void analyticsSummaryQuery.refetch();
             void logMetricsQuery.refetch();
             void insightsQuery.refetch();
-            void runtimeAnalyticsQuery.refetch();
+            if (runtimeAnalyticsLiveEnabled) {
+              void runtimeAnalyticsQuery.refetch();
+            }
           }}
         >
           Refresh All Metrics

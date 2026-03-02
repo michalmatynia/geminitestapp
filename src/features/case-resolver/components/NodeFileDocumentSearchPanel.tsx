@@ -43,7 +43,7 @@ export function NodeFileDocumentSearchPanel({
     setSelectedDrillCaseId,
     visibleCaseRows,
     view,
-    viewportRef,
+    canvasHostRef,
     addNode,
     setNodeFileMeta,
   } = useNodeFileWorkspaceContext();
@@ -94,7 +94,7 @@ export function NodeFileDocumentSearchPanel({
   const currentDocRows = isDrillMode ? visibleDrillRows : visibleDocumentSearchRows;
 
   const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
-    const rect = viewportRef.current?.getBoundingClientRect();
+    const rect = canvasHostRef.current?.getBoundingClientRect();
     const centerX = rect ? rect.width / 2 : 400;
     const centerY = rect ? rect.height / 2 : 300;
     const safeScale = view.scale || 1;
@@ -102,7 +102,7 @@ export function NodeFileDocumentSearchPanel({
       x: (centerX - view.x) / safeScale,
       y: (centerY - view.y) / safeScale,
     };
-  }, [viewportRef, view]);
+  }, [canvasHostRef, view]);
 
   const addDocumentToCanvas = useCallback(
     (file: CaseResolverFile): void => {

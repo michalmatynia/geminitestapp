@@ -1,13 +1,13 @@
 'use client';
 
-import { FileCode2 } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import { FileCode2, Save, Settings2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { AiPathsProvider } from '@/features/ai/ai-paths/context';
 import { type AiNode } from '@/shared/contracts/case-resolver';
 import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
-import { EmptyState, Card } from '@/shared/ui';
+import { Button, EmptyState, Card } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
@@ -34,24 +34,28 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const {
     nodes,
     selectedNodeId,
+    configOpen,
     isNodeInspectorOpen,
     newNodeType,
     setNewNodeType,
     isSidePanelVisible,
     setIsNodeInspectorOpen,
+    setConfigOpen,
     selectedNodeFileMeta,
     selectedFile,
     addNode,
     setNodeFileMeta,
     filesById,
     selectNode,
+    handleManualSave,
+    hasPendingSnapshotChanges = false,
     view,
-    viewportRef,
+    canvasHostRef,
     onSelectFile,
   } = useNodeFileWorkspaceContext();
 
   const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
-    const rect = viewportRef.current?.getBoundingClientRect();
+    const rect = canvasHostRef.current?.getBoundingClientRect();
     const centerX = rect ? rect.width / 2 : 400;
     const centerY = rect ? rect.height / 2 : 300;
     const safeScale = view.scale || 1;
@@ -59,7 +63,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       x: (centerX - view.x) / safeScale,
       y: (centerY - view.y) / safeScale,
     };
-  }, [viewportRef, view]);
+  }, [canvasHostRef, view]);
 
   const onExplanatoryClick = useCallback(() => {
     const node = buildNode(
@@ -112,7 +116,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       const file = filesById.get(fileId);
       if (!file) return;
 
-      const rect = viewportRef.current?.getBoundingClientRect();
+      const rect = canvasHostRef.current?.getBoundingClientRect();
       if (!rect) return;
 
       // Convert screen coords → canvas coords
@@ -139,8 +143,14 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
         fileName: file.name,
       });
     },
-    [filesById, view, viewportRef, addNode, setNodeFileMeta]
+    [canvasHostRef, filesById, view, addNode, setNodeFileMeta]
   );
+
+  useEffect(() => {
+    if (!configOpen) return;
+    setIsNodeInspectorOpen(true);
+    setConfigOpen(false);
+  }, [configOpen, setConfigOpen, setIsNodeInspectorOpen]);
 
   return (
     <div className='flex h-full min-h-0 w-full gap-4'>
@@ -149,6 +159,34 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
         padding='none'
         className='relative flex min-h-[55vh] flex-1 flex-col border-border/60 bg-card/20 md:min-h-[65vh]'
       >
+        <div className='flex items-center justify-between gap-3 border-b border-border/60 bg-card/40 px-3 py-2'>
+          <div className='flex items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleManualSave}
+              disabled={!hasPendingSnapshotChanges}
+            >
+              <Save className='mr-1 size-3.5' />
+              Save Map
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => setIsNodeInspectorOpen(true)}
+              disabled={!selectedNodeId}
+            >
+              <Settings2 className='mr-1 size-3.5' />
+              Open Inspector
+            </Button>
+          </div>
+          <div className='text-xs text-gray-400'>
+            {hasPendingSnapshotChanges ? 'Unsaved changes' : 'All changes saved'}
+          </div>
+        </div>
+
         <NodeFileDocumentSearchPanel
           newNodeType={newNodeType}
           setNewNodeType={setNewNodeType}
@@ -157,7 +195,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
         />
 
         <div
-          ref={viewportRef}
+          ref={canvasHostRef}
           className='relative min-h-[55vh] flex-1 overflow-hidden md:min-h-[65vh]'
           onDragOver={handleDragOver}
           onDrop={handleDrop}

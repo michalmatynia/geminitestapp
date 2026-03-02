@@ -288,6 +288,7 @@ export async function updateImageStudioRun(
     $set: patch,
   };
   if (nextHistoryEvents.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     updateDocument.$push = {
       historyEvents: {
         $each: nextHistoryEvents,
@@ -365,6 +366,7 @@ export async function removeImageStudioRunOutputs(
   if (runId) query['_id'] = runId;
 
   const result = await collection.updateMany(query, {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     $pull: {
       outputs: {
         $or: outputSelectors,

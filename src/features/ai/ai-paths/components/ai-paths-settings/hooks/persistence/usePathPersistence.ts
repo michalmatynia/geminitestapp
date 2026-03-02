@@ -345,7 +345,19 @@ export function usePathPersistence(
           (path: PathMeta): PathMeta =>
             path.id === args.activePathId ? { ...path, updatedAt: finalUpdatedAt } : path
         );
+        const finalNodes = normalizeNodes(finalConfig.nodes);
+        const finalEdges = sanitizeEdges(finalNodes, finalConfig.edges);
+        const preferredSelectedNodeId = args.selectedNodeId;
+        const finalSelectedNodeId =
+          preferredSelectedNodeId &&
+          finalNodes.some((node: AiNode): boolean => node.id === preferredSelectedNodeId)
+            ? preferredSelectedNodeId
+            : (finalNodes[0]?.id ?? null);
+
         args.setPathConfigs({ ...pathConfigsRef.current, [args.activePathId]: finalConfig });
+        args.setNodes(finalNodes);
+        args.setEdges(finalEdges);
+        args.setSelectedNodeId(finalSelectedNodeId);
         args.setPaths(finalPaths);
         args.setLastError(null);
         void core.persistLastError(null);

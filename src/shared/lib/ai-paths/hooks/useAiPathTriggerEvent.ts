@@ -16,9 +16,12 @@ import {
 import { runsApi } from '@/shared/lib/ai-paths/api/client';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
+  backfillPathConfigNodeContracts,
+  migrateLegacyDbQueryProvider,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
 } from '@/shared/lib/ai-paths/core/normalization';
+import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
@@ -127,6 +130,131 @@ const resolvePreferredPathId = (value: string | null | undefined): string | null
   return normalized.length > 0 ? normalized : null;
 };
 
+const normalizeTriggerNodeTimestamps = (
+  nodes: AiNode[],
+  fallbackTimestamp: string
+): AiNode[] => {
+  return nodes.map((node: AiNode): AiNode => {
+    const createdAt =
+      typeof node.createdAt === 'string' && node.createdAt.trim().length > 0
+        ? node.createdAt
+        : fallbackTimestamp;
+    const updatedAt =
+      typeof node.updatedAt === 'string' && node.updatedAt.trim().length > 0 ? node.updatedAt : null;
+    return {
+      ...node,
+      createdAt,
+      updatedAt,
+    };
+  });
+};
+
+const sanitizeTriggerDatabaseNode = (node: AiNode): AiNode => {
+  if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
+    return node;
+  }
+  const configRecord = node.config as Record<string, unknown>;
+  const databaseConfig =
+    configRecord['database'] && typeof configRecord['database'] === 'object'
+      ? (configRecord['database'] as Record<string, unknown>)
+      : null;
+  if (!databaseConfig) {
+    return node;
+  }
+  const queryConfig =
+    databaseConfig['query'] && typeof databaseConfig['query'] === 'object'
+      ? (databaseConfig['query'] as Record<string, unknown>)
+      : null;
+  const nextDatabaseConfig: Record<string, unknown> = { ...databaseConfig };
+  if (queryConfig) {
+    nextDatabaseConfig['query'] = migrateLegacyDbQueryProvider({
+      provider:
+        queryConfig['provider'] === 'auto' ||
+        queryConfig['provider'] === 'mongodb' ||
+        queryConfig['provider'] === 'prisma'
+          ? queryConfig['provider']
+          : 'auto',
+      collection:
+        typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
+      mode:
+        queryConfig['mode'] === 'preset' || queryConfig['mode'] === 'custom'
+          ? queryConfig['mode']
+          : 'custom',
+      preset:
+        queryConfig['preset'] === 'by_id' ||
+        queryConfig['preset'] === 'by_productId' ||
+        queryConfig['preset'] === 'by_entityId' ||
+        queryConfig['preset'] === 'by_field'
+          ? queryConfig['preset']
+          : 'by_id',
+      field: typeof queryConfig['field'] === 'string' ? queryConfig['field'] : '_id',
+      idType:
+        queryConfig['idType'] === 'string' || queryConfig['idType'] === 'objectId'
+          ? queryConfig['idType']
+          : 'string',
+      queryTemplate:
+        typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'] : '',
+      limit:
+        typeof queryConfig['limit'] === 'number' && Number.isFinite(queryConfig['limit'])
+          ? queryConfig['limit']
+          : 20,
+      sort: typeof queryConfig['sort'] === 'string' ? queryConfig['sort'] : '',
+      ...(typeof queryConfig['sortPresetId'] === 'string'
+        ? { sortPresetId: queryConfig['sortPresetId'] }
+        : {}),
+      projection: typeof queryConfig['projection'] === 'string' ? queryConfig['projection'] : '',
+      ...(typeof queryConfig['projectionPresetId'] === 'string'
+        ? { projectionPresetId: queryConfig['projectionPresetId'] }
+        : {}),
+      single: queryConfig['single'] === true,
+    });
+  }
+  delete nextDatabaseConfig['schemaSnapshot'];
+  return {
+    ...node,
+    config: {
+      ...configRecord,
+      database: {
+        ...nextDatabaseConfig,
+        operation: (nextDatabaseConfig as any).operation || 'query',
+      },
+    },
+  };
+};
+
+export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
+  const fallbackTimestamp =
+    typeof config.updatedAt === 'string' && config.updatedAt.trim().length > 0
+      ? config.updatedAt
+      : new Date().toISOString();
+  const migratedConfig = migratePathConfigCollections(config).config;
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
+  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(sanitizeTriggerDatabaseNode);
+  const identityRepair = repairPathNodeIdentities(
+    {
+      ...contractBackfilledConfig,
+      nodes: sanitizedDatabaseNodes,
+    },
+    { palette }
+  );
+  const repaired = identityRepair.config;
+  const normalizedNodes = normalizeTriggerNodeTimestamps(
+    normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []),
+    fallbackTimestamp
+  );
+  const migratedGraph = migrateTriggerToFetcherGraph(
+    normalizedNodes,
+    Array.isArray(repaired.edges) ? repaired.edges : []
+  );
+  const graphNodes = normalizeTriggerNodeTimestamps(normalizeNodes(migratedGraph.nodes), fallbackTimestamp);
+  const graphEdges = sanitizeEdges(graphNodes, migratedGraph.edges);
+  return {
+    ...repaired,
+    nodes: graphNodes,
+    edges: graphEdges,
+  };
+};
+
 const buildSelectiveTriggerSettingsData = async (
   preferredPathId: string
 ): Promise<Array<{ key: string; value: string }>> => {
@@ -201,22 +329,7 @@ const loadTriggerSettingsData = async (args: {
   }
 };
 
-const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
-  const identityRepair = repairPathNodeIdentities(config, { palette });
-  const repaired = identityRepair.config;
-  const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
-  const migrated = migrateTriggerToFetcherGraph(
-    normalized,
-    Array.isArray(repaired.edges) ? repaired.edges : []
-  );
-  const graphNodes = normalizeNodes(migrated.nodes);
-  const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
-  return {
-    ...repaired,
-    nodes: graphNodes,
-    edges: graphEdges,
-  };
-};
+const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => sanitizeTriggerPathConfig(config);
 
 const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
@@ -657,6 +770,7 @@ export function useAiPathTriggerEvent(): {
         uiState = selection.uiState;
       }
 
+      selectedConfig = sanitizeTriggerPathConfig(selectedConfig);
       const nodes: AiNode[] = normalizeNodes(selectedConfig.nodes ?? []);
       const edges: Edge[] = sanitizeEdges(
         nodes,

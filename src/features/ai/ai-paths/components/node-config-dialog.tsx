@@ -164,16 +164,17 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
       toast('This path is locked. Unlock it to save node settings.', { variant: 'info' });
       return;
     }
-    updateSelectedNode(draftNode, { nodeId: draftNode.id });
-    setDraftNode(null);
+    const nextDraftNode = cloneNode(draftNode);
+    updateSelectedNode(nextDraftNode, { nodeId: nextDraftNode.id });
     void (async (): Promise<void> => {
       const savedWithNodeOverride = await savePathConfig({
         silent: true,
         includeNodeConfig: true,
         force: true,
-        nodeOverride: draftNode,
+        nodeOverride: nextDraftNode,
       });
       if (savedWithNodeOverride) {
+        setDraftNode(null);
         toast('Node settings saved.', { variant: 'success' });
         return;
       }
@@ -182,11 +183,14 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
         includeNodeConfig: true,
         force: true,
       });
+      if (savedWithFallback) {
+        setDraftNode(null);
+      }
       toast(savedWithFallback ? 'Node settings saved.' : 'Failed to save node settings.', {
         variant: savedWithFallback ? 'success' : 'error',
       });
     })();
-  }, [draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
+  }, [cloneNode, draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 
   const handleDiscardChanges = useCallback((): void => {
     if (!hasUnsavedChanges) return;

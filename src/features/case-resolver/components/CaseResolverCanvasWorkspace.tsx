@@ -264,6 +264,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       setEdges: () => {},
       setView: () => {},
       view: { x: 0, y: 0, scale: 1 },
+      canvasHostRef: { current: null },
       viewportRef: { current: null },
       canvasRef: { current: null },
       onSelectFile: () => {},

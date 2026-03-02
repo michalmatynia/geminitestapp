@@ -2,15 +2,16 @@ import { z } from 'zod';
 
 export * from './ai-paths-core';
 
-import { dtoBaseSchema, namedDtoSchema } from './base';
 import {
   aiNodeSchema,
   edgeSchema,
   aiPathsValidationConfigSchema,
   type AiNode,
   type Edge,
+  type AiPathsValidationRule,
 } from './ai-paths-core';
-import type { AiPathsValidationRule } from './ai-paths-core/base';
+
+import { dtoBaseSchema, namedDtoSchema } from './base';
 
 import {
   aiPathNodeStatusSchema,
@@ -38,8 +39,8 @@ export {
  * AI Path Contract
  */
 export const aiPathSchema = namedDtoSchema.extend({
-  nodes: z.array(aiNodeSchema),
-  edges: z.array(edgeSchema),
+  nodes: z.array(z.lazy(() => aiNodeSchema)),
+  edges: z.array(z.lazy(() => edgeSchema)),
   config: z.record(z.string(), z.unknown()),
   enabled: z.boolean(),
   version: z.number(),
@@ -68,8 +69,8 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
   checkpointedAt: z.string().nullable().optional(),
   graph: z
     .object({
-      nodes: z.array(aiNodeSchema),
-      edges: z.array(edgeSchema),
+      nodes: z.array(z.lazy(() => aiNodeSchema)),
+      edges: z.array(z.lazy(() => edgeSchema)),
     })
     .nullable()
     .optional(),
@@ -406,8 +407,8 @@ export const pathConfigSchema = z.object({
   runMode: z.string().optional(),
   strictFlowMode: z.boolean().optional(),
   blockedRunPolicy: pathBlockedRunPolicySchema.optional(),
-  nodes: z.array(aiNodeSchema),
-  edges: z.array(edgeSchema),
+  nodes: z.array(z.lazy(() => aiNodeSchema)),
+  edges: z.array(z.lazy(() => edgeSchema)),
   updatedAt: z.string(),
   isLocked: z.boolean().optional(),
   isActive: z.boolean().optional(),

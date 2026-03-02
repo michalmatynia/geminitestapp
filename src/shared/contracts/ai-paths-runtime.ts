@@ -461,6 +461,44 @@ export type QueueSloThresholdsDto = QueueSloThresholds;
 export type AiPathRunQueueSloStatusDto = AiPathRunQueueSloStatus;
 
 /**
+ * AI Path Queue Health & Status DTOs
+ */
+
+export type AiPathRunQueueBaseStatus = {
+  running: boolean;
+  activeCount: number;
+  waitingCount: number;
+  failedCount: number;
+  completedCount: number;
+  delayedCount: number;
+  pausedCount: number;
+  queuedCount: number;
+  oldestQueuedAt: string | null;
+  queueLagMs: number | null;
+  completedLastMinute: number;
+  throughputPerMinute: number;
+  avgRuntimeMs: number | null;
+  p50RuntimeMs: number | null;
+  p95RuntimeMs: number | null;
+  runtimeAnalytics: unknown | null;
+  brainQueue: {
+    running: boolean;
+    healthy: boolean;
+    processing: boolean;
+    activeJobs: number;
+    waitingJobs: number;
+    failedJobs: number;
+    completedJobs: number;
+  };
+};
+
+export type AiPathRunQueueStatus = AiPathRunQueueBaseStatus & {
+  lastCheckedAt: string;
+  isStale: boolean;
+  sloStatus: AiPathRunQueueSloStatus;
+};
+
+/**
  * AI Path Runtime UI and Constants
  */
 

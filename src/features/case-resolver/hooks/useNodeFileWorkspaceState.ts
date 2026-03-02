@@ -52,6 +52,7 @@ export function useNodeFileWorkspaceState({
 }: UseNodeFileWorkspaceStateProps) {
   const { workspace, activeCaseId, caseResolverIdentifiers, onSelectFile } =
     useCaseResolverPageContext();
+  const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { setView } = useCanvasActions();
@@ -355,6 +356,7 @@ export function useNodeFileWorkspaceState({
     setEdges,
     setView,
     view,
+    canvasHostRef,
     viewportRef,
     canvasRef,
     onSelectFile,

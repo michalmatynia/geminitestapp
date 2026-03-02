@@ -35,6 +35,8 @@ export function JobQueueOverview({
   onToggleMetricsPanel,
   onClearHistory,
 }: JobQueueOverviewProps): React.JSX.Element {
+  const runtimeAnalyticsEnabled = queueStatus?.runtimeAnalytics.enabled ?? false;
+
   return (
     <>
       <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
@@ -123,8 +125,14 @@ export function JobQueueOverview({
           </div>
           <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
             <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
-            <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
-            <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+            {runtimeAnalyticsEnabled ? (
+              <>
+                <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
+                <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
+              </>
+            ) : (
+              <span>Runtime analytics disabled</span>
+            )}
           </div>
         </div>
         <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
@@ -142,17 +150,25 @@ export function JobQueueOverview({
               <RunningIndicator label='Busy' />
             ) : null}
           </div>
-          <div className='mt-2 text-[10px] text-gray-400'>
-            Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
-          </div>
-          <div className='mt-1 text-[10px] text-gray-400'>
-            Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
-            {queueStatus?.brainAnalytics24h?.logReports ?? 0}
-          </div>
-          <div className='mt-1 text-[10px] text-amber-200/90'>
-            Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
-            {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
-          </div>
+          {runtimeAnalyticsEnabled ? (
+            <>
+              <div className='mt-2 text-[10px] text-gray-400'>
+                Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
+              </div>
+              <div className='mt-1 text-[10px] text-gray-400'>
+                Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
+                {queueStatus?.brainAnalytics24h?.logReports ?? 0}
+              </div>
+              <div className='mt-1 text-[10px] text-amber-200/90'>
+                Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
+                {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
+              </div>
+            </>
+          ) : (
+            <div className='mt-2 text-[10px] text-gray-400'>
+              Runtime analytics disabled in AI Brain.
+            </div>
+          )}
         </div>
       </div>
 
@@ -249,13 +265,21 @@ export function JobQueueOverview({
               </div>
               <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
                 <div className='text-[10px] uppercase text-gray-500'>Runtime</div>
-                <div className='mt-1 text-sm text-white'>
-                  avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
-                </div>
-                <div className='mt-1 text-[10px] text-gray-400'>
-                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95{' '}
-                  {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
-                </div>
+                {runtimeAnalyticsEnabled ? (
+                  <>
+                    <div className='mt-1 text-sm text-white'>
+                      avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
+                    </div>
+                    <div className='mt-1 text-[10px] text-gray-400'>
+                      p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95{' '}
+                      {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
+                    </div>
+                  </>
+                ) : (
+                  <div className='mt-1 text-[10px] text-gray-400'>
+                    Runtime analytics disabled.
+                  </div>
+                )}
               </div>
             </div>
           </div>

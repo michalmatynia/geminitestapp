@@ -8,10 +8,11 @@ export function useAiPathsNodeConfigActions(args: {
   const { selectedNodeId, setNodes } = args;
 
   const updateSelectedNode = useCallback(
-    (patch: Partial<AiNode>): void => {
-      if (!selectedNodeId) return;
+    (patch: Partial<AiNode>, options?: { nodeId?: string }): void => {
+      const resolvedNodeId = options?.nodeId?.trim() || selectedNodeId;
+      if (!resolvedNodeId) return;
       setNodes((prev) =>
-        prev.map((node) => (node.id === selectedNodeId ? { ...node, ...patch } : node))
+        prev.map((node) => (node.id === resolvedNodeId ? { ...node, ...patch } : node))
       );
     },
     [selectedNodeId, setNodes]

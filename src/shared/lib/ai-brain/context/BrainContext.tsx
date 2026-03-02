@@ -33,6 +33,7 @@ import {
   useUpdateSetting,
   useUpdateSettingsBulk,
 } from '@/shared/hooks/use-settings';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -196,6 +197,7 @@ interface BrainContextType {
   agentQuickPicks: SelectSimpleOption[];
   effectiveAssignments: Record<AiBrainFeature, AiBrainAssignment>;
   effectiveCapabilityAssignments: Record<AiBrainCapabilityKey, AiBrainAssignment>;
+  runtimeAnalyticsLiveEnabled: boolean;
   saving: boolean;
   liveOllamaModels: string[];
 
@@ -381,6 +383,12 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   const ollamaModelsQuery = useBrainModels();
   const operationsOverviewQuery = useBrainOperationsOverview({ range: operationsRange });
+  const runtimeAnalyticsCapability = useBrainAssignment({
+    capability: 'insights.runtime_analytics',
+  });
+  const aiPathsModelCapability = useBrainAssignment({
+    capability: 'ai_paths.model',
+  });
 
   const liveOllamaModels = useMemo((): string[] => {
     const models = Array.isArray(ollamaModelsQuery.data?.sources?.liveOllamaModels)
@@ -440,7 +448,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   const insightsQuery = useBrainInsights();
 
-  const runtimeAnalyticsQuery = useBrainRuntimeAnalytics(runtimeAnalyticsScheduleEnabled);
+  const runtimeAnalyticsLiveEnabled =
+    runtimeAnalyticsCapability.assignment.enabled && aiPathsModelCapability.assignment.enabled;
+  const runtimeAnalyticsQuery = useBrainRuntimeAnalytics(runtimeAnalyticsLiveEnabled);
 
   const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {
     setSettings((prev: AiBrainSettings) => ({
@@ -811,6 +821,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     agentQuickPicks,
     effectiveAssignments,
     effectiveCapabilityAssignments,
+    runtimeAnalyticsLiveEnabled,
     saving,
     liveOllamaModels,
     handleSave,

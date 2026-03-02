@@ -83,6 +83,7 @@ export type NodeFileWorkspaceContextValue = {
   setEdges: (edges: Edge[]) => void;
   setView: (view: { x: number; y: number; scale: number }) => void;
   view: { x: number; y: number; scale: number };
+  canvasHostRef: React.RefObject<HTMLDivElement | null>;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   onSelectFile: (fileId: string) => void;

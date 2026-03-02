@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
@@ -20,11 +21,16 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const state = useAiPathsSettingsOrchestrator();
   const { runtimeRunStatus, runtimeNodeStatuses, activePathId, nodes } = state;
   const { toast } = useToast();
+  const runtimeAnalyticsCapability = useBrainAssignment({
+    capability: 'insights.runtime_analytics',
+  });
+  const aiPathsModelCapability = useBrainAssignment({
+    capability: 'ai_paths.model',
+  });
+  const runtimeAnalyticsEnabled =
+    runtimeAnalyticsCapability.assignment.enabled && aiPathsModelCapability.assignment.enabled;
 
-  const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics(
-    '24h',
-    true // Assuming it's active if rendered
-  );
+  const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics('24h', runtimeAnalyticsEnabled);
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -149,11 +155,16 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
           type='button'
           className='rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => {
+            if (!runtimeAnalyticsEnabled) return;
             runtimeAnalyticsQuery.refetch().catch(() => {});
           }}
-          disabled={runtimeAnalyticsQuery.isFetching}
+          disabled={runtimeAnalyticsQuery.isFetching || !runtimeAnalyticsEnabled}
         >
-          {runtimeAnalyticsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          {!runtimeAnalyticsEnabled
+            ? 'Disabled'
+            : runtimeAnalyticsQuery.isFetching
+              ? 'Refreshing...'
+              : 'Refresh'}
         </Button>
       </div>
 
@@ -169,7 +180,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
           <div className='text-[10px] uppercase text-gray-500'>Storage</div>
           <div className='mt-1 text-sm text-white'>
-            {runtimeAnalyticsQuery.data?.storage ?? '—'}
+            {runtimeAnalyticsEnabled ? (runtimeAnalyticsQuery.data?.storage ?? '—') : 'disabled'}
           </div>
         </Card>
       </div>
@@ -212,94 +223,105 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         <div className='text-xs text-gray-500'>No active runtime node statuses right now.</div>
       )}
 
-      <div className='grid gap-2 sm:grid-cols-2'>
+      {!runtimeAnalyticsEnabled ? (
         <Card
           variant='subtle-compact'
           padding='sm'
-          className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'
+          className='border-border/60 bg-card/60 p-3 text-[11px] text-gray-300'
         >
-          <div className='text-[10px] uppercase text-gray-500'>Runs (24h)</div>
-          <div className='mt-1 text-sm text-white'>
-            {runtimeAnalyticsQuery.data?.runs.total ?? 0}
-          </div>
-          <div className='mt-1 text-gray-400'>
-            Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
-          </div>
+          Runtime analytics is disabled in AI Brain. Live runtime state can still appear above, but
+          24h runtime summaries and trace samples are not queried.
         </Card>
-        <Card
-          variant='subtle-compact'
-          padding='sm'
-          className='border-border/60 bg-card/60 text-[11px] text-gray-300'
-        >
-          <div className='text-[10px] uppercase text-gray-500'>Run Runtime (24h)</div>
-          <div className='mt-1 text-gray-200'>
-            Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
-          </div>
-          <div className='mt-1 text-gray-400'>
-            p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
-          </div>
-          <div className='mt-2 text-[10px] uppercase text-gray-500'>Node spans</div>
-          <div className='mt-1 text-gray-200'>
-            Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} · spans{' '}
-            {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
-          </div>
-          <div className='mt-1 text-gray-400'>
-            Span avg {formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} · p95{' '}
-            {formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}
-          </div>
-          {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
-            <div className='mt-1 text-gray-500'>
-              Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
-              {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
-              {formatDurationMs(runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs)}
+      ) : (
+        <div className='grid gap-2 sm:grid-cols-2'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'
+          >
+            <div className='text-[10px] uppercase text-gray-500'>Runs (24h)</div>
+            <div className='mt-1 text-sm text-white'>
+              {runtimeAnalyticsQuery.data?.runs.total ?? 0}
             </div>
-          ) : null}
-          {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
-            <div className='mt-1 text-gray-500'>
-              <div>Top slow:</div>
-              <div className='mt-1 flex flex-wrap gap-1'>
-                {runtimeAnalyticsQuery.data?.traces.topSlowNodes
-                  .slice(0, 2)
-                  .map((entry: AiPathRuntimeTraceSlowNode) => (
-                    <button
-                      key={`slow-${entry.nodeId}-${entry.nodeType}`}
-                      type='button'
-                      className='rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-100 hover:bg-sky-500/20'
-                      onClick={() => {
-                        void handleInspectTraceNode(entry.nodeId, 'all');
-                      }}
-                      title='Open latest run detail for this node'
-                    >
-                      {entry.nodeId} ({formatDurationMs(entry.avgDurationMs)} avg)
-                    </button>
-                  ))}
+            <div className='mt-1 text-gray-400'>
+              Success: {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate ?? 0)}
+            </div>
+          </Card>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='border-border/60 bg-card/60 text-[11px] text-gray-300'
+          >
+            <div className='text-[10px] uppercase text-gray-500'>Run Runtime (24h)</div>
+            <div className='mt-1 text-gray-200'>
+              Avg {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
+            </div>
+            <div className='mt-1 text-gray-400'>
+              p95 {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
+            </div>
+            <div className='mt-2 text-[10px] uppercase text-gray-500'>Node spans</div>
+            <div className='mt-1 text-gray-200'>
+              Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} · spans{' '}
+              {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
+            </div>
+            <div className='mt-1 text-gray-400'>
+              Span avg {formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} · p95{' '}
+              {formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}
+            </div>
+            {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
+              <div className='mt-1 text-gray-500'>
+                Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
+                {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
+                {formatDurationMs(runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs)}
               </div>
-            </div>
-          ) : null}
-          {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
-            <div className='mt-1 text-gray-500'>
-              <div>Top failed:</div>
-              <div className='mt-1 flex flex-wrap gap-1'>
-                {runtimeAnalyticsQuery.data?.traces.topFailedNodes
-                  .slice(0, 2)
-                  .map((entry: AiPathRuntimeTraceFailedNode) => (
-                    <button
-                      key={`failed-${entry.nodeId}-${entry.nodeType}`}
-                      type='button'
-                      className='rounded border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-100 hover:bg-rose-500/20'
-                      onClick={() => {
-                        void handleInspectTraceNode(entry.nodeId, 'failed');
-                      }}
-                      title='Open latest failed run detail for this node'
-                    >
-                      {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
-                    </button>
-                  ))}
+            ) : null}
+            {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
+              <div className='mt-1 text-gray-500'>
+                <div>Top slow:</div>
+                <div className='mt-1 flex flex-wrap gap-1'>
+                  {runtimeAnalyticsQuery.data?.traces.topSlowNodes
+                    .slice(0, 2)
+                    .map((entry: AiPathRuntimeTraceSlowNode) => (
+                      <button
+                        key={`slow-${entry.nodeId}-${entry.nodeType}`}
+                        type='button'
+                        className='rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-100 hover:bg-sky-500/20'
+                        onClick={() => {
+                          void handleInspectTraceNode(entry.nodeId, 'all');
+                        }}
+                        title='Open latest run detail for this node'
+                      >
+                        {entry.nodeId} ({formatDurationMs(entry.avgDurationMs)} avg)
+                      </button>
+                    ))}
+                </div>
               </div>
-            </div>
-          ) : null}
-        </Card>
-      </div>
+            ) : null}
+            {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
+              <div className='mt-1 text-gray-500'>
+                <div>Top failed:</div>
+                <div className='mt-1 flex flex-wrap gap-1'>
+                  {runtimeAnalyticsQuery.data?.traces.topFailedNodes
+                    .slice(0, 2)
+                    .map((entry: AiPathRuntimeTraceFailedNode) => (
+                      <button
+                        key={`failed-${entry.nodeId}-${entry.nodeType}`}
+                        type='button'
+                        className='rounded border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                        onClick={() => {
+                          void handleInspectTraceNode(entry.nodeId, 'failed');
+                        }}
+                        title='Open latest failed run detail for this node'
+                      >
+                        {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      )}
     </Card>
   );
 }

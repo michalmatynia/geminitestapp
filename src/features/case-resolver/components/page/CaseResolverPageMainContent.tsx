@@ -21,6 +21,7 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
     activeCaseId,
     selectedFileId,
     selectedAssetId,
+    selectedFolderPath,
     editingDocumentDraft,
     activeFile,
     selectedAsset,
@@ -41,10 +42,11 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
   const showCaseOverviewWorkspace = Boolean(
     resolvedCaseContextFile &&
     !selectedAssetId &&
+    !selectedFolderPath &&
     !editingDocumentDraft &&
     (selectedFile?.fileType === 'case' ||
       activeFile?.fileType === 'case' ||
-      (!selectedFile && !activeFile))
+      (!selectedFileId && Boolean(activeCaseId)))
   );
   const isNodeFileMode = selectedAsset?.kind === 'node_file';
 

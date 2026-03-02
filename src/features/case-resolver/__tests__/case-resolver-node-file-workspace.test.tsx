@@ -1,0 +1,235 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { CaseResolverNodeFileWorkspace } from '@/features/case-resolver/components/CaseResolverNodeFileWorkspace';
+import type { CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
+
+const setIsNodeInspectorOpenMock = vi.fn();
+const setConfigOpenMock = vi.fn();
+const handleManualSaveMock = vi.fn();
+const onUpdateSelectedAssetMock = vi.fn();
+
+const snapshot: CaseResolverNodeFileSnapshot = {
+  kind: 'case_resolver_node_file_snapshot_v1',
+  nodes: [],
+  edges: [],
+  nodeMeta: {},
+  edgeMeta: {},
+  nodeFileMeta: {},
+};
+
+let workspaceStateMock: Record<string, unknown>;
+
+vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
+  useCaseResolverPageContext: () => ({
+    selectedAsset: {
+      id: 'asset-node-file',
+      kind: 'node_file',
+      name: 'Node File',
+      textContent: 'snapshot',
+    },
+    onUpdateSelectedAsset: onUpdateSelectedAssetMock,
+  }),
+}));
+
+vi.mock('@/features/case-resolver/settings', () => ({
+  parseNodeFileSnapshot: () => snapshot,
+  serializeNodeFileSnapshot: () => 'serialized-snapshot',
+}));
+
+vi.mock('@/features/ai/ai-paths/context', () => ({
+  AiPathsProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@/features/ai/ai-paths/components/canvas-board', () => ({
+  CanvasBoard: () => <div data-testid='canvas-board'>Canvas</div>,
+}));
+
+vi.mock('@/features/case-resolver/hooks/useNodeFileWorkspaceState', () => ({
+  useNodeFileWorkspaceState: () => workspaceStateMock,
+}));
+
+vi.mock('@/features/case-resolver/components/NodeFileDocumentSearchPanel', () => ({
+  NodeFileDocumentSearchPanel: ({
+    onNodeInspectorClick,
+  }: {
+    onNodeInspectorClick: () => void;
+  }) => (
+    <div data-testid='node-file-document-search-panel'>
+      <button type='button' onClick={onNodeInspectorClick}>
+        Node Inspector
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('@/features/case-resolver/components/NodeFilePanel', () => ({
+  NodeFilePanel: () => <div data-testid='node-file-panel' />,
+}));
+
+vi.mock('@/features/case-resolver/components/CaseResolverNodeInspectorModal', () => ({
+  CaseResolverNodeInspectorModal: () => <div data-testid='node-inspector-modal' />,
+}));
+
+vi.mock('@/shared/ui', () => ({
+  Button: ({
+    children,
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
+  Card: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
+  EmptyState: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
+    <div>
+      <div>{title}</div>
+      {description ? <div>{description}</div> : null}
+    </div>
+  ),
+}));
+
+const createWorkspaceState = (
+  overrides: Partial<Record<string, unknown>> = {}
+): Record<string, unknown> => ({
+  assetId: 'asset-node-file',
+  assetName: 'Node File',
+  nodes: [
+    {
+      id: 'node-1',
+      type: 'prompt',
+      title: 'Prompt Node',
+      description: '',
+      inputs: [],
+      outputs: [],
+      position: { x: 0, y: 0 },
+      config: {},
+    },
+  ],
+  edges: [],
+  selectedNodeId: 'node-1',
+  selectedEdgeId: null,
+  configOpen: false,
+  newNodeType: 'prompt',
+  setNewNodeType: vi.fn(),
+  isSidePanelVisible: false,
+  setIsSidePanelVisible: vi.fn(),
+  isNodeInspectorOpen: false,
+  setIsNodeInspectorOpen: setIsNodeInspectorOpenMock,
+  isLinkedPreviewOpen: false,
+  setIsLinkedPreviewOpen: vi.fn(),
+  showNodeSelectorUnderCanvas: true,
+  setShowNodeSelectorUnderCanvas: vi.fn(),
+  documentSearchScope: 'case_scope',
+  setDocumentSearchScope: vi.fn(),
+  documentSearchQuery: '',
+  setDocumentSearchQuery: vi.fn(),
+  selectedSearchFolderPath: null,
+  setSelectedSearchFolderPath: vi.fn(),
+  expandedSearchFolderPaths: new Set(),
+  setExpandedSearchFolderPaths: vi.fn(),
+  selectedSearchDocumentId: '',
+  setSelectedSearchDocumentId: vi.fn(),
+  isDocumentSearchOpen: false,
+  setIsDocumentSearchOpen: vi.fn(),
+  caseSearchQuery: '',
+  setCaseSearchQuery: vi.fn(),
+  selectedDrillCaseId: null,
+  setSelectedDrillCaseId: vi.fn(),
+  visibleCaseRows: [],
+  nodeMetaByNode: {},
+  edgeMetaByEdge: {},
+  filesById: new Map(),
+  caseIdentifierLabelById: new Map(),
+  documentSearchRows: [],
+  folderScopedDocumentSearchRows: [],
+  visibleDocumentSearchRows: [],
+  folderTree: { nodesByPath: new Map(), childPathsByParent: new Map(), rootFileCount: 0 },
+  compiled: {
+    segments: [],
+    combinedContent: '',
+    prompt: '',
+    outputsByNode: {},
+    warnings: [],
+  },
+  selectedNode: null,
+  selectedNodeMeta: null,
+  selectedNodeFileMeta: null,
+  selectedFile: null,
+  handleManualSave: handleManualSaveMock,
+  selectNode: vi.fn(),
+  setConfigOpen: setConfigOpenMock,
+  addNode: vi.fn(),
+  updateNode: vi.fn(),
+  setNodeFileMeta: vi.fn(),
+  setNodes: vi.fn(),
+  setEdges: vi.fn(),
+  setView: vi.fn(),
+  view: { x: 0, y: 0, scale: 1 },
+  canvasHostRef: { current: null },
+  viewportRef: { current: null },
+  canvasRef: { current: null },
+  onSelectFile: vi.fn(),
+  documentSearchRef: { current: null },
+  hasPendingSnapshotChanges: false,
+  ...overrides,
+});
+
+describe('CaseResolverNodeFileWorkspace', () => {
+  beforeEach(() => {
+    setIsNodeInspectorOpenMock.mockReset();
+    setConfigOpenMock.mockReset();
+    handleManualSaveMock.mockReset();
+    onUpdateSelectedAssetMock.mockReset();
+    workspaceStateMock = createWorkspaceState();
+  });
+
+  it('bridges shared config-open state into the node inspector modal flow', () => {
+    workspaceStateMock = createWorkspaceState({ configOpen: true });
+
+    render(<CaseResolverNodeFileWorkspace />);
+
+    expect(setIsNodeInspectorOpenMock).toHaveBeenCalledWith(true);
+    expect(setConfigOpenMock).toHaveBeenCalledWith(false);
+  });
+
+  it('renders nodefile controls and preserves manual save behavior', () => {
+    workspaceStateMock = createWorkspaceState({ hasPendingSnapshotChanges: true });
+
+    render(<CaseResolverNodeFileWorkspace />);
+
+    const saveButton = screen.getByRole('button', { name: /save map/i });
+    const inspectorButton = screen.getByRole('button', { name: /open inspector/i });
+
+    expect(saveButton).toBeEnabled();
+    expect(inspectorButton).toBeEnabled();
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+
+    fireEvent.click(saveButton);
+    fireEvent.click(inspectorButton);
+
+    expect(handleManualSaveMock).toHaveBeenCalledTimes(1);
+    expect(setIsNodeInspectorOpenMock).toHaveBeenCalledWith(true);
+  });
+
+  it('keeps the canvas visible and shows the empty-state guidance without hiding the board', () => {
+    workspaceStateMock = createWorkspaceState({ nodes: [], selectedNodeId: null });
+
+    render(<CaseResolverNodeFileWorkspace />);
+
+    expect(screen.getByTestId('canvas-board')).toBeInTheDocument();
+    expect(screen.getByText('Empty canvas')).toBeInTheDocument();
+    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+  });
+});

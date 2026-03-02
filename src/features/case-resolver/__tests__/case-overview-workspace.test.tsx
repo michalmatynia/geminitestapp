@@ -100,6 +100,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
     expect(screen.getByText('Case-specific options')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Case Alpha')).toBeInTheDocument();
     expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Show Relations' })).toBeInTheDocument();
   });
 
@@ -115,7 +116,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
     expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();
   });
 
-  it('updates case name when value changes and input blurs', () => {
+  it('updates case name when Update is clicked', () => {
     const caseFile = buildCaseFile();
     const onUpdateActiveCase = vi.fn();
 
@@ -123,7 +124,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     const nameInput = screen.getByDisplayValue('Case Alpha');
     fireEvent.change(nameInput, { target: { value: 'Case Omega' } });
-    fireEvent.blur(nameInput);
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
     expect(onUpdateActiveCase).toHaveBeenCalledTimes(1);
     expect(onUpdateActiveCase).toHaveBeenCalledWith({ name: 'Case Omega' });
@@ -137,7 +138,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     const nameInput = screen.getByDisplayValue('Case Alpha');
     fireEvent.change(nameInput, { target: { value: 'Case Omega' } });
-    fireEvent.blur(nameInput);
+    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
 
     expect(onUpdateActiveCase).not.toHaveBeenCalled();
   });
@@ -150,7 +151,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
     expect(screen.getByText('Pending')).toBeInTheDocument();
   });
 
-  it('updates happening date when value changes and input blurs', () => {
+  it('updates happening date when value changes and Update is clicked', () => {
     const caseFile = buildCaseFile();
     const onUpdateActiveCase = vi.fn();
 
@@ -158,8 +159,29 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     const happeningDateInput = screen.getByPlaceholderText('YYYY-MM-DD or custom date');
     fireEvent.change(happeningDateInput, { target: { value: '2026-03-12' } });
-    fireEvent.blur(happeningDateInput);
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
     expect(onUpdateActiveCase).toHaveBeenCalledWith({ happeningDate: '2026-03-12' });
+  });
+
+  it('batches multiple metadata changes into one update', () => {
+    const caseFile = buildCaseFile();
+    const onUpdateActiveCase = vi.fn();
+
+    renderWorkspace(caseFile, onUpdateActiveCase);
+
+    fireEvent.change(screen.getByDisplayValue('Case Alpha'), {
+      target: { value: 'Case Omega' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('YYYY-MM-DD or custom date'), {
+      target: { value: '2026-03-12' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }));
+
+    expect(onUpdateActiveCase).toHaveBeenCalledWith({
+      name: 'Case Omega',
+      happeningDate: '2026-03-12',
+    });
   });
 });

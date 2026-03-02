@@ -306,6 +306,24 @@ export const templateConfigSchema = z.object({
 export type TemplateConfigDto = z.infer<typeof templateConfigSchema>;
 export type TemplateConfig = TemplateConfigDto;
 
+export const functionConfigSchema = z.object({
+  /**
+   * User-provided script body.
+   * Receives (inputs, context) and should return either:
+   * - a primitive or object (mapped to `value`), or
+   * - an object whose keys are mapped directly to output ports.
+   */
+  script: z.string(),
+  /**
+   * Optional JSON string with additional context injected as the second
+   * argument to the function. This is parsed at runtime.
+   */
+  contextJson: z.string().optional(),
+});
+
+export type FunctionConfigDto = z.infer<typeof functionConfigSchema>;
+export type FunctionConfig = FunctionConfigDto;
+
 export const bundleConfigSchema = z.object({
   keys: z.array(z.string()).optional(),
   includePorts: z.array(z.string()).optional(),
@@ -960,6 +978,7 @@ export const nodeConfigSchema = z.object({
   constant: constantConfigSchema.optional(),
   math: mathConfigSchema.optional(),
   template: templateConfigSchema.optional(),
+  function: functionConfigSchema.optional(),
   bundle: bundleConfigSchema.optional(),
   gate: gateConfigSchema.optional(),
   compare: compareConfigSchema.optional(),

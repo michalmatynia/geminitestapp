@@ -3,9 +3,11 @@ import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryE
 import { Button } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathsSettingsOrchestrator } from '../../ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
 export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
+  const { handleResumeRun } = useAiPathsSettingsOrchestrator();
   if (!selectedNode) return null;
 
   const history = runtimeState.history?.[selectedNode.id] ?? [];
@@ -42,6 +44,10 @@ export function NodeHistoryTab(): React.JSX.Element | null {
       <RunHistoryEntries
         entries={history}
         emptyMessage='No history yet. Run the path to capture inputs/outputs for this node.'
+        onReplayFromEntry={(entry): void => {
+          if (!entry.runId) return;
+          void handleResumeRun(entry.runId, 'replay').catch(() => {});
+        }}
       />
     </div>
   );

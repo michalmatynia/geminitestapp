@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createPaginatedListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -18,21 +18,24 @@ export function useImageStudioRuns() {
   const [statusFilter, setStatusFilter] = useState<'all' | ImageStudioRunStatus>('all');
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
-  const runsQuery = createListQueryV2<RunsResponse, RunsResponse>({
+  const runsQuery = createPaginatedListQueryV2<ImageStudioRunRecord>({
     queryKey: QUERY_KEYS.imageStudio.runs({ status: statusFilter }),
     queryFn: async () => {
-      return await api.get<RunsResponse>('/api/image-studio/runs', {
+      const data = await api.get<RunsResponse>('/api/image-studio/runs', {
         params: {
           ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
           limit: 100,
           offset: 0,
         },
       });
+      return { items: data.runs, total: data.total };
     },
     refetchInterval: autoRefreshEnabled ? 3000 : false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load image studio runs.'),
     meta: {
       source: 'ai.ai-paths.hooks.useImageStudioRuns',
       operation: 'list',
@@ -42,7 +45,7 @@ export function useImageStudioRuns() {
     },
   });
 
-  const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data]);
+  const runs = useMemo(() => runsQuery.data?.items ?? [], [runsQuery.data]);
 
   const stats = useMemo(() => {
     const runningCount = runs.filter((run) => run.status === 'running').length;

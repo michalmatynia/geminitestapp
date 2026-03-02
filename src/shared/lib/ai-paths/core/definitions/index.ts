@@ -435,6 +435,14 @@ const basePalette: NodeDefinition[] = [
     inputContracts: buildOptionalInputContracts(['value', 'delta']),
   },
   {
+    type: 'switch',
+    title: 'Switch',
+    description: 'Branch on a value and label the active route.',
+    inputs: ['value'],
+    outputs: ['value', 'caseId', 'matched'],
+    inputContracts: buildOptionalInputContracts(['value']),
+  },
+  {
     type: 'prompt',
     title: 'Prompt',
     description: 'Formats text with placeholders.',

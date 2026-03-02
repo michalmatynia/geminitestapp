@@ -324,6 +324,23 @@ export const functionConfigSchema = z.object({
 export type FunctionConfigDto = z.infer<typeof functionConfigSchema>;
 export type FunctionConfig = FunctionConfigDto;
 
+export const switchCaseConfigSchema = z.object({
+  id: z.string(),
+  matchValue: z.string(),
+});
+
+export type SwitchCaseConfigDto = z.infer<typeof switchCaseConfigSchema>;
+export type SwitchCaseConfig = SwitchCaseConfigDto;
+
+export const switchConfigSchema = z.object({
+  inputPort: z.string().optional(),
+  cases: z.array(switchCaseConfigSchema).optional(),
+  defaultCaseId: z.string().optional(),
+});
+
+export type SwitchConfigDto = z.infer<typeof switchConfigSchema>;
+export type SwitchConfig = SwitchConfigDto;
+
 export const bundleConfigSchema = z.object({
   keys: z.array(z.string()).optional(),
   includePorts: z.array(z.string()).optional(),
@@ -979,6 +996,14 @@ export const nodeConfigSchema = z.object({
   math: mathConfigSchema.optional(),
   template: templateConfigSchema.optional(),
   function: functionConfigSchema.optional(),
+  state: z
+    .object({
+      key: z.string().optional(),
+      mode: z.enum(['read', 'write', 'increment']).optional(),
+      initialJson: z.string().optional(),
+    })
+    .optional(),
+  switch: switchConfigSchema.optional(),
   bundle: bundleConfigSchema.optional(),
   gate: gateConfigSchema.optional(),
   compare: compareConfigSchema.optional(),

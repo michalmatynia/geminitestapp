@@ -8,8 +8,12 @@ import type {
   PromptExploderCaseResolverPartyBundle,
   PromptExploderCaseResolverPartyCandidate,
   PromptExploderCaseResolverPartyRole,
-} from '../bridge';
-import type { PromptExploderSegment } from '../types';
+  PromptExploderCaseResolverExtractionMode,
+  PromptExploderCaseResolverCaptureRole,
+  CaseResolverCaptureField,
+  CaseResolverSegmentCaptureRule,
+  PromptExploderSegment,
+} from '@/shared/contracts/prompt-exploder';
 
 // --- Constants & Regex ---
 
@@ -56,42 +60,28 @@ export const PERSON_NAME_STOPWORDS = new Set<string>([
 export const BODY_SECTION_HINT_RE =
   /\b(wniosek|dotyczy|uzasadnienie|niniejszym|art\.|§|ust\.|pkt\.?)\b/iu;
 
-// --- Types ---
-
-export type CaseResolverCaptureRole = PromptExploderCaseResolverPartyRole | 'party' | 'place_date';
-export type CaseResolverCaptureField =
-  | 'kind'
-  | 'displayName'
-  | 'organizationName'
-  | 'companyName'
-  | 'firstName'
-  | 'name'
-  | 'middleName'
-  | 'lastName'
-  | 'street'
-  | 'streetNumber'
-  | 'houseNumber'
-  | 'city'
-  | 'postalCode'
-  | 'country'
-  | 'day'
-  | 'month'
-  | 'year';
-
-export type CaseResolverSegmentCaptureRule = {
-  id: string;
-  label: string;
-  role: CaseResolverCaptureRole;
-  field: CaseResolverCaptureField;
-  regex: RegExp;
-  applyTo: 'segment' | 'line';
-  group: number;
-  normalize: 'trim' | 'lower' | 'upper' | 'country' | 'day' | 'month' | 'year';
-  overwrite: boolean;
-  sequence: number;
+type CaseResolverExtractionSegment = PromptExploderSegment & {
+  __caseResolverForcedRole?: PromptExploderCaseResolverPartyRole | null;
+  __caseResolverSourceSegmentId?: string | undefined;
+  __caseResolverSourceSegmentTitle?: string | undefined;
 };
 
-export type PromptExploderCaseResolverExtractionMode = 'rules_only' | 'rules_with_heuristics';
+const CASE_RESOLVER_LABEL_ROLE_CONFIG = {
+  addresser: {
+    pattern:
+      /^(?:from|od|nadawca|sender|addresser|wnioskodawca)\s*:\s*(.*)$/iu,
+    headingPatternId: 'segment.case_resolver.heading.addresser_label',
+    headingPatternLabel: 'Case Resolver Heading: Addresser Label',
+    virtualSplitLabel: 'Case Resolver Virtual Split: Addresser',
+  },
+  addressee: {
+    pattern:
+      /^(?:to|do|adresat|recipient|addressee|odbiorca|organ)\s*:\s*(.*)$/iu,
+    headingPatternId: 'segment.case_resolver.heading.addressee_label',
+    headingPatternLabel: 'Case Resolver Heading: Addressee Label',
+    virtualSplitLabel: 'Case Resolver Virtual Split: Addressee',
+  },
+} as const;
 
 // --- Utilities ---
 
@@ -406,12 +396,17 @@ type CaseResolverRuleExtractionDraft = {
 };
 
 const inferSegmentRoleHint = (
-  segment: PromptExploderSegment
+  segment: CaseResolverExtractionSegment
 ): PromptExploderCaseResolverPartyRole | null => {
+  if (segment.__caseResolverForcedRole) {
+    return segment.__caseResolverForcedRole;
+  }
   const hasAddresserPattern =
+    hasPatternId(segment, 'segment.case_resolver.heading.addresser_label') ||
     hasPatternId(segment, 'segment.case_resolver.heading.addresser_person') ||
     hasPatternPrefix(segment, 'segment.case_resolver.extract.addresser.');
   const hasAddresseePattern =
+    hasPatternId(segment, 'segment.case_resolver.heading.addressee_label') ||
     hasPatternId(segment, 'segment.case_resolver.heading.addressee_organization') ||
     hasPatternPrefix(segment, 'segment.case_resolver.extract.addressee.');
 
@@ -455,20 +450,128 @@ const normalizeCapturedValue = (
 const ensurePartyDraft = (
   draft: CaseResolverRuleExtractionDraft,
   role: PromptExploderCaseResolverPartyRole,
-  segment: PromptExploderSegment
+  segment: CaseResolverExtractionSegment
 ): CaseResolverPartyDraft => {
   const existing = draft.parties[role];
   if (existing) return existing;
   const next: CaseResolverPartyDraft = {
     role,
     rawText: normalizeRawCaptureText(segment.raw || segment.text || '') || '',
-    sourceSegmentId: segment.id,
-    sourceSegmentTitle: resolveSegmentDisplayLabel(segment),
+    sourceSegmentId: segment.__caseResolverSourceSegmentId ?? segment.id,
+    sourceSegmentTitle:
+      segment.__caseResolverSourceSegmentTitle ?? resolveSegmentDisplayLabel(segment),
     sourcePatternLabels: normalizeSegmentLabels(segment.matchedPatternLabels),
     sourceSequenceLabels: normalizeSegmentLabels(segment.matchedSequenceLabels),
   };
   draft.parties[role] = next;
   return next;
+};
+
+const resolveLabeledSegmentRole = (
+  line: string
+): PromptExploderCaseResolverPartyRole | null => {
+  if (CASE_RESOLVER_LABEL_ROLE_CONFIG.addresser.pattern.test(line)) return 'addresser';
+  if (CASE_RESOLVER_LABEL_ROLE_CONFIG.addressee.pattern.test(line)) return 'addressee';
+  return null;
+};
+
+const normalizeLabeledPartySegments = (
+  segments: PromptExploderSegment[]
+): CaseResolverExtractionSegment[] => {
+  const normalizedSegments: CaseResolverExtractionSegment[] = [];
+
+  segments.forEach((segment: PromptExploderSegment): void => {
+    const sourceText = segment.raw || segment.text || '';
+    if (!sourceText.trim()) {
+      normalizedSegments.push(segment);
+      return;
+    }
+
+    const lines = sourceText.replace(/\r\n/g, '\n').split('\n');
+    const labeledBlocks: Array<{
+      role: PromptExploderCaseResolverPartyRole;
+      lines: string[];
+    }> = [];
+    let currentRole: PromptExploderCaseResolverPartyRole | null = null;
+    let currentBlockLines: string[] = [];
+    let sawLabel = false;
+    let sawMeaningfulPrefix = false;
+
+    const flushCurrent = (): void => {
+      if (!currentRole) return;
+      const hasMeaningfulContent = currentBlockLines.some((candidateLine: string): boolean =>
+        normalizeText(candidateLine).length > 0
+      );
+      if (!hasMeaningfulContent) return;
+      labeledBlocks.push({
+        role: currentRole,
+        lines: [...currentBlockLines],
+      });
+    };
+
+    lines.forEach((line: string): void => {
+      const role = resolveLabeledSegmentRole(line);
+      if (role) {
+        const hasCurrentContent = currentBlockLines.some((candidateLine: string): boolean =>
+          normalizeText(candidateLine).length > 0
+        );
+        if (!sawLabel && hasCurrentContent) {
+          sawMeaningfulPrefix = true;
+        }
+        flushCurrent();
+        currentRole = role;
+        currentBlockLines = [line];
+        sawLabel = true;
+        return;
+      }
+
+      if (currentRole) {
+        currentBlockLines.push(line);
+        return;
+      }
+
+      if (normalizeText(line).length > 0) {
+        sawMeaningfulPrefix = true;
+      }
+      currentBlockLines.push(line);
+    });
+
+    flushCurrent();
+
+    if (!sawLabel || sawMeaningfulPrefix || labeledBlocks.length === 0) {
+      normalizedSegments.push(segment);
+      return;
+    }
+
+    labeledBlocks.forEach((block, index): void => {
+      const roleConfig = CASE_RESOLVER_LABEL_ROLE_CONFIG[block.role];
+      const blockText = normalizeRawCaptureText(block.lines.join('\n'));
+      normalizedSegments.push({
+        ...segment,
+        id: `${segment.id}::case_resolver::${block.role}_${index + 1}`,
+        raw: blockText,
+        text: blockText,
+        matchedPatternIds: [
+          ...new Set([...segment.matchedPatternIds, roleConfig.headingPatternId]),
+        ],
+        matchedPatternLabels: [
+          ...new Set([
+            ...(segment.matchedPatternLabels ?? []),
+            roleConfig.headingPatternLabel,
+            roleConfig.virtualSplitLabel,
+          ]),
+        ],
+        matchedSequenceLabels: [
+          ...new Set([...(segment.matchedSequenceLabels ?? []), 'Case Resolver Structure']),
+        ],
+        __caseResolverForcedRole: block.role,
+        __caseResolverSourceSegmentId: segment.id,
+        __caseResolverSourceSegmentTitle: resolveSegmentDisplayLabel(segment),
+      });
+    });
+  });
+
+  return normalizedSegments;
 };
 
 const setPartyField = (
@@ -574,7 +677,9 @@ const applyCaptureRulesToSegments = (args: {
   };
   if (args.captureRules.length === 0) return draft;
 
-  args.segments.forEach((segment: PromptExploderSegment): void => {
+  const normalizedSegments = normalizeLabeledPartySegments(args.segments);
+
+  normalizedSegments.forEach((segment: CaseResolverExtractionSegment): void => {
     const roleHint = inferSegmentRoleHint(segment);
     const sourceText = segment.raw || segment.text || '';
     const sourceLines = splitSegmentLines(segment);
@@ -626,16 +731,24 @@ const toPartyCandidateFromDraft = (
   const firstName = normalizeText(draft.firstName ?? '');
   const middleName = normalizeText(draft.middleName ?? '');
   const lastName = normalizeText(draft.lastName ?? '');
-  const organizationName = normalizeText(draft.organizationName ?? '');
   const explicitDisplayName = normalizeText(draft.displayName ?? '');
-  const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
-  const displayName = explicitDisplayName || organizationName || nameFromParts;
   const rawText = normalizeRawCaptureText(draft.rawText ?? '');
   const rawDisplayLine =
     rawText
       .split('\n')
       .map((line: string): string => line.trim())
       .find((line: string): boolean => line.length > 0) ?? '';
+  const organizationHintLine = explicitDisplayName || rawDisplayLine;
+  const inferredOrganizationName =
+    !firstName &&
+    !lastName &&
+    organizationHintLine &&
+    ORGANIZATION_HINT_RE.test(organizationHintLine)
+      ? organizationHintLine
+      : '';
+  const organizationName = normalizeText(draft.organizationName ?? '') || inferredOrganizationName;
+  const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
+  const displayName = explicitDisplayName || organizationName || nameFromParts;
   if (!displayName && !rawText) return null;
 
   const candidate: PromptExploderCaseResolverPartyCandidate = {
@@ -735,11 +848,8 @@ export const extractCaseResolverBridgePayloadFromSegments = (
   const ruleAddresser = toPartyCandidateFromDraft(ruleDraft.parties.addresser ?? null);
   const ruleAddressee = toPartyCandidateFromDraft(ruleDraft.parties.addressee ?? null);
   const ruleMetadata = ruleDraft.metadata.placeDate ? ruleDraft.metadata : null;
-  const hasAnyRuleCapture = Boolean(ruleAddresser || ruleAddressee || ruleMetadata);
 
-  const shouldUseHeuristics =
-    mode === 'rules_with_heuristics' ||
-    (mode === 'rules_only' && captureRules.length > 0 && hasAnyRuleCapture);
+  const shouldUseHeuristics = mode === 'rules_with_heuristics';
   const heuristicPayload = shouldUseHeuristics
     ? (() => {
       const usedSegmentIds = new Set<string>();

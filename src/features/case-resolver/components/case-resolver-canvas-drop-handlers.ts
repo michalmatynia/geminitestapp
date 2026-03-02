@@ -130,6 +130,8 @@ export const createCaseResolverCanvasDropHandlers = ({
     id: edge.id,
     source: edge.from,
     target: edge.to,
+    from: edge.from,
+    to: edge.to,
     type: 'default',
     data: {},
     createdAt: new Date().toISOString(),

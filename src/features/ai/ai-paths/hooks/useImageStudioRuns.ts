@@ -34,8 +34,6 @@ export function useImageStudioRuns() {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to load image studio runs.'),
     meta: {
       source: 'ai.ai-paths.hooks.useImageStudioRuns',
       operation: 'list',

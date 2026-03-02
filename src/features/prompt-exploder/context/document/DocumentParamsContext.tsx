@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react';
 import type {
   PromptExploderParamEntry,
   PromptExploderParamEntriesState,
-} from '../../params-editor';
+} from '@/shared/contracts/prompt-exploder';
 
 export interface DocumentParamsState {
   selectedParamEntriesState: PromptExploderParamEntriesState | null;

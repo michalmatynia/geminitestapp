@@ -17,6 +17,7 @@ export type CaseResolverWorkspaceHydrationSource = 'store' | 'navigation' | 'hea
 
 export type CaseResolverWorkspaceHydrationSourceReason =
   | CaseResolverWorkspaceHydrationDecisionReason
+  | 'navigation_newer_revision'
   | 'store_only'
   | 'navigation_requested_file_fallback'
   | 'navigation_only'
@@ -35,6 +36,17 @@ const normalizeRequestedFileId = (value: string | null | undefined): string =>
 
 const hasRequestedFile = (workspace: CaseResolverWorkspace, requestedFileId: string): boolean =>
   workspace.files.some((file): boolean => file.id === requestedFileId);
+
+const resolveRequestedFileSatisfied = ({
+  requestedFileId,
+  workspace,
+}: {
+  requestedFileId: string;
+  workspace: CaseResolverWorkspace;
+}): boolean => {
+  if (requestedFileId.length === 0) return true;
+  return hasRequestedFile(workspace, requestedFileId);
+};
 
 const isPlaceholderWorkspace = (workspace: CaseResolverWorkspace): boolean => {
   const hasContent =
@@ -130,6 +142,8 @@ export const resolvePreferredCaseResolverWorkspace = ({
   const storeHasRequestedFile =
     normalizedRequestedFileId.length > 0 &&
     hasRequestedFile(storeWorkspace, normalizedRequestedFileId);
+  const navigationRevision = getCaseResolverWorkspaceRevision(resolvedNavigationWorkspace);
+  const storeRevision = getCaseResolverWorkspaceRevision(storeWorkspace);
 
   if (hasStoreWorkspace) {
     if (
@@ -142,6 +156,20 @@ export const resolvePreferredCaseResolverWorkspace = ({
         workspace: resolvedNavigationWorkspace,
         source: 'navigation',
         reason: 'navigation_requested_file_fallback',
+      };
+    }
+    if (
+      hasNavigationWorkspace &&
+      navigationRevision > storeRevision &&
+      resolveRequestedFileSatisfied({
+        requestedFileId: normalizedRequestedFileId,
+        workspace: resolvedNavigationWorkspace,
+      })
+    ) {
+      return {
+        workspace: resolvedNavigationWorkspace,
+        source: 'navigation',
+        reason: 'navigation_newer_revision',
       };
     }
     return {

@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
@@ -16,7 +14,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { delay } from '@/shared/utils';
 
 import {
-  invalidateProducts,
   invalidateProductsAndCounts,
   invalidateProductsAndDetail,
 } from './productCache';
@@ -34,8 +31,6 @@ const isTransientError = (error: Error): boolean => {
 };
 
 export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: (formData: FormData) => createProduct(formData),
     mutationKey: QUERY_KEYS.products.all,
@@ -47,7 +42,7 @@ export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> 
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'create'],
     },
-    onSuccess: async (): Promise<void> => {
+    invalidate: async (queryClient) => {
       // Small delay to ensure DB consistency before refetch
       await delay(500);
       await invalidateProductsAndCounts(queryClient);
@@ -56,8 +51,6 @@ export function useCreateProduct(): CreateMutation<ProductWithImages, FormData> 
 }
 
 export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProductPayload> {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: UpdateProductPayload) => updateProduct(id, data),
     mutationKey: QUERY_KEYS.products.all,
@@ -71,15 +64,11 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'update'],
     },
-    onSuccess: async (): Promise<void> => {
-      await invalidateProductsAndCounts(queryClient);
-    },
+    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
   });
 }
 
 export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string> {
-  const queryClient = useQueryClient();
-
   return createDeleteMutationV2({
     mutationFn: (id: string) => deleteProduct(id),
     mutationKey: QUERY_KEYS.products.all,
@@ -91,15 +80,11 @@ export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string>
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'delete'],
     },
-    onSuccess: async (): Promise<void> => {
-      await invalidateProductsAndCounts(queryClient);
-    },
+    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
   });
 }
 
 export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
-  const queryClient = useQueryClient();
-
   return createDeleteMutationV2({
     mutationFn: async (ids: string[]): Promise<void> => {
       const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));
@@ -116,15 +101,11 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'bulk-delete'],
     },
-    onSuccess: async (): Promise<void> => {
-      await invalidateProductsAndCounts(queryClient);
-    },
+    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
   });
 }
 
 export function useConvertAllImagesToBase64(): UpdateMutation<{ ok: boolean }, void> {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: async (): Promise<{ ok: boolean }> => {
       await api.post<unknown>('/api/products/images/base64/all');
@@ -139,15 +120,11 @@ export function useConvertAllImagesToBase64(): UpdateMutation<{ ok: boolean }, v
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'base64'],
     },
-    onSuccess: () => {
-      void invalidateProducts(queryClient);
-    },
+    invalidateKeys: [QUERY_KEYS.products.all],
   });
 }
 
 export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, string[]> {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: async (productIds: string[]): Promise<{ ok: boolean }> => {
       await api.post<unknown>('/api/products/images/base64', { productIds });
@@ -162,15 +139,11 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, 
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'base64', 'bulk'],
     },
-    onSuccess: () => {
-      void invalidateProducts(queryClient);
-    },
+    invalidateKeys: [QUERY_KEYS.products.all],
   });
 }
 
 export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: string; sku: string }> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
       await api.post<{ id: string }>(`/api/products/${id}/duplicate`, { sku }),
@@ -183,9 +156,7 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'duplicate'],
     },
-    onSuccess: async (): Promise<void> => {
-      await invalidateProductsAndCounts(queryClient);
-    },
+    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
   });
 }
 
@@ -193,8 +164,6 @@ export function useUpdateProductField(): UpdateMutation<
   void,
   { id: string; field: string; value: unknown }
   > {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: async ({ id, field, value }): Promise<void> => {
       await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
@@ -208,8 +177,6 @@ export function useUpdateProductField(): UpdateMutation<
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'field-update'],
     },
-    onSuccess: async (_, variables): Promise<void> => {
-      await invalidateProductsAndDetail(queryClient, variables.id);
-    },
+    invalidate: (queryClient, _, variables) => invalidateProductsAndDetail(queryClient, variables.id),
   });
 }

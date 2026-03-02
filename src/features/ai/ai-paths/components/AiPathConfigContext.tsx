@@ -46,6 +46,7 @@ export const useAiPathSelection = (): AiPathSelectionData => {
 export interface AiPathGraphData {
   nodes: AiNode[];
   edges: Edge[];
+  activePathId: string | null;
   isPathLocked: boolean;
 }
 const AiPathGraphContext = createContext<AiPathGraphData | null>(null);
@@ -195,9 +196,10 @@ const useAiPathConfigDefaults = () => {
     () => ({
       nodes: graphState.nodes,
       edges: graphState.edges,
+      activePathId: graphState.activePathId,
       isPathLocked: graphState.isPathLocked,
     }),
-    [graphState.nodes, graphState.edges, graphState.isPathLocked]
+    [graphState.nodes, graphState.edges, graphState.activePathId, graphState.isPathLocked]
   );
 
   const runtimeValue = useMemo<AiPathRuntimeData>(

@@ -156,14 +156,6 @@ export const createNoteFileSchema = noteFileSchema.omit({
 export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;
 export type NoteFileCreateInput = CreateNoteFileDto;
 
-export type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote | undefined;
-};
-
-export type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote | undefined;
-};
-
 export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
   notes?: NoteRecord[] | undefined;
   _count?: { notes: number };
@@ -270,6 +262,14 @@ export const relatedNoteSchema = z.object({
 
 export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 export type RelatedNote = RelatedNoteDto;
+
+export type NoteRelationWithTarget = NoteRelationRecord & {
+  targetNote?: RelatedNote | undefined;
+};
+
+export type NoteRelationWithSource = NoteRelationRecord & {
+  sourceNote?: RelatedNote | undefined;
+};
 
 export const noteWithRelationsSchema = noteSchema.extend({
   tags: z
@@ -449,4 +449,50 @@ export interface UseNoteDataProps {
 export interface NoteFormProps {
   note?: NoteWithRelations | null;
   onSuccess: () => void;
+}
+
+export interface NoteRepository {
+  // Notes
+  getAll(filters: NoteFilters): Promise<NoteWithRelations[]>;
+  getById(id: string): Promise<NoteWithRelations | null>;
+  create(data: CreateNoteInput): Promise<NoteWithRelations>;
+  update(id: string, data: UpdateNoteInput): Promise<NoteWithRelations | null>;
+  syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void>;
+  delete(id: string): Promise<boolean>;
+
+  // Tags
+  getAllTags(notebookId?: string | null): Promise<NoteTagDto[]>;
+  getTagById(id: string): Promise<NoteTagDto | null>;
+  createTag(data: CreateNoteTagDto): Promise<NoteTagDto>;
+  updateTag(id: string, data: UpdateNoteTagDto): Promise<NoteTagDto | null>;
+  deleteTag(id: string): Promise<boolean>;
+
+  // Categories
+  getAllCategories(notebookId?: string | null): Promise<NoteCategoryDto[]>;
+  getCategoryById(id: string): Promise<NoteCategoryDto | null>;
+  getCategoryTree(notebookId?: string | null): Promise<NoteCategoryRecordWithChildrenDto[]>;
+  createCategory(data: CreateNoteCategoryDto): Promise<NoteCategoryDto>;
+  updateCategory(id: string, data: UpdateNoteCategoryDto): Promise<NoteCategoryDto | null>;
+  deleteCategory(id: string, recursive?: boolean): Promise<boolean>;
+
+  // Notebooks
+  getAllNotebooks(): Promise<NotebookDto[]>;
+  getNotebookById(id: string): Promise<NotebookDto | null>;
+  createNotebook(data: CreateNotebookDto): Promise<NotebookDto>;
+  updateNotebook(id: string, data: UpdateNotebookDto): Promise<NotebookDto | null>;
+  deleteNotebook(id: string): Promise<boolean>;
+  getOrCreateDefaultNotebook(): Promise<NotebookDto>;
+  invalidateDefaultNotebookCache(): Promise<void>;
+
+  // Themes
+  getAllThemes(notebookId?: string | null): Promise<NoteThemeDto[]>;
+  getThemeById(id: string): Promise<NoteThemeDto | null>;
+  createTheme(data: CreateNoteThemeDto): Promise<NoteThemeDto>;
+  updateTheme(id: string, data: UpdateNoteThemeDto): Promise<NoteThemeDto | null>;
+  deleteTheme(id: string): Promise<boolean>;
+
+  // Files
+  createNoteFile(data: CreateNoteFileDto): Promise<NoteFileDto>;
+  getNoteFiles(noteId: string): Promise<NoteFileDto[]>;
+  deleteNoteFile(noteId: string, slotIndex: number): Promise<boolean>;
 }

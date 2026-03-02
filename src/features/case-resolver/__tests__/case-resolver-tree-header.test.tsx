@@ -15,6 +15,7 @@ const onResetCaseContextMock = vi.fn();
 const onCreateFolderMock = vi.fn();
 const onCreateFileMock = vi.fn();
 const onCreateScanFileMock = vi.fn();
+const onCreateImageAssetMock = vi.fn();
 const onCreateNodeFileMock = vi.fn();
 const setShowChildCaseFoldersMock = vi.fn();
 
@@ -28,6 +29,7 @@ const pageContext = {
   onCreateFolder: onCreateFolderMock,
   onCreateFile: onCreateFileMock,
   onCreateScanFile: onCreateScanFileMock,
+  onCreateImageAsset: onCreateImageAssetMock,
   onCreateNodeFile: onCreateNodeFileMock,
   caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
 } as unknown as CaseResolverPageContextValue;
@@ -75,6 +77,7 @@ describe('CaseResolverTreeHeader', () => {
     onCreateFolderMock.mockReset();
     onCreateFileMock.mockReset();
     onCreateScanFileMock.mockReset();
+    onCreateImageAssetMock.mockReset();
     onCreateNodeFileMock.mockReset();
     setShowChildCaseFoldersMock.mockReset();
     pageContext.requestedCaseStatus = 'ready';
@@ -136,7 +139,7 @@ describe('CaseResolverTreeHeader', () => {
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     const createButtons = screen.getAllByTitle('Case context unavailable.');
-    expect(createButtons).toHaveLength(4);
+    expect(createButtons).toHaveLength(5);
     createButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
@@ -150,9 +153,21 @@ describe('CaseResolverTreeHeader', () => {
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     const createButtons = screen.getAllByTitle('Loading case context...');
-    expect(createButtons).toHaveLength(4);
+    expect(createButtons).toHaveLength(5);
     createButtons.forEach((button) => {
       expect(button).toBeDisabled();
     });
+  });
+
+  it('calls image, scan, and node file creation actions from the toolbar', () => {
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByTitle('Create new image file'));
+    fireEvent.click(screen.getByTitle('Create new image asset'));
+    fireEvent.click(screen.getByTitle('Add node file'));
+
+    expect(onCreateScanFileMock).toHaveBeenCalledWith(null);
+    expect(onCreateImageAssetMock).toHaveBeenCalledWith(null);
+    expect(onCreateNodeFileMock).toHaveBeenCalledWith(null);
   });
 });

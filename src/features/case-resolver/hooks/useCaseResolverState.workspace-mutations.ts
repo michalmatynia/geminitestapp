@@ -6,6 +6,7 @@ import {
   createCaseResolverWorkspaceMutationId,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
+  primeCaseResolverNavigationWorkspace,
   stampCaseResolverWorkspaceMutation,
 } from '../workspace-persistence';
 import { normalizeCaseResolverWorkspace } from '../settings';
@@ -80,6 +81,7 @@ export function useCaseResolverStateWorkspaceMutations({
           expectedRevision: queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current,
           workspaceRevision: getCaseResolverWorkspaceRevision(stampedWorkspace),
         });
+        primeCaseResolverNavigationWorkspace(stampedWorkspace);
         if (options?.persistToast) {
           pendingSaveToastRef.current = options.persistToast;
         }

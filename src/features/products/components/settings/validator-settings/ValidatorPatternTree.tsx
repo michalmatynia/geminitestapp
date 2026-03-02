@@ -15,7 +15,7 @@ import type {
 } from '@/shared/contracts/master-folder-tree';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { Button, FormField, Input } from '@/shared/ui';
+import { Button, FolderTreePanel, FormField, Input } from '@/shared/ui';
 
 import {
   buildValidatorPatternMasterNodes,
@@ -263,14 +263,16 @@ export function ValidatorPatternTree(): React.JSX.Element {
   return (
     <MasterFolderTreeRuntimeProvider>
       <ValidatorPatternTreeContext.Provider value={contextValue}>
-        <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          rootDropUi={rootDropUi}
-          renderNode={renderNode}
-          enableDnd={!isPending}
-          emptyLabel='No patterns — click Add Pattern to create the first one'
-        />
+        <FolderTreePanel masterInstance='validator_pattern_tree'>
+          <FolderTreeViewportV2
+            controller={controller}
+            scrollToNodeRef={scrollToNodeRef}
+            rootDropUi={rootDropUi}
+            renderNode={renderNode}
+            enableDnd={!isPending}
+            emptyLabel='No patterns — click Add Pattern to create the first one'
+          />
+        </FolderTreePanel>
         {selectedGroupId && selectedGroupDraft && (
           <GroupSettingsPanel
             groupId={selectedGroupId}

@@ -47,6 +47,7 @@ export {
   renameOwnedFolderRecordsWithinPath,
   collectCaseScopeIds,
   resolveCaseContainerIdForFileId,
+  resolveCaseContainerIdForFolderPath,
   resolveCaseResolverActiveCaseId,
   resolveCaseScopedFolderTarget,
 } from './useCaseResolverState.helpers.folder-records';

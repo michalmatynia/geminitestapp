@@ -6,21 +6,8 @@ import type {
   CaseResolverGraph,
   CaseResolverNodeMeta,
   Edge,
+  CaseResolverNodeFileRelationIndex,
 } from '@/shared/contracts/case-resolver';
-
-export type CaseResolverNodeFileRelationIndex = {
-  nodeIdsByDocumentFileId: Record<string, string[]>;
-  nodeFileAssetIdsByDocumentFileId: Record<string, string[]>;
-  documentFileIdsByNodeFileAssetId: Record<string, string[]>;
-  nodeIdsByNodeFileAssetId: Record<string, string[]>;
-};
-
-export const EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX: CaseResolverNodeFileRelationIndex = {
-  nodeIdsByDocumentFileId: {},
-  nodeFileAssetIdsByDocumentFileId: {},
-  documentFileIdsByNodeFileAssetId: {},
-  nodeIdsByNodeFileAssetId: {},
-};
 
 type ParsedNodeFileSnapshot = {
   sourceFormat: 'canonical' | 'legacy';

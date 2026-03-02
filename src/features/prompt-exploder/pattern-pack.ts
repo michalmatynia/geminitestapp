@@ -11,15 +11,12 @@ import {
   remapExploderScopesForTarget,
 } from './pattern-pack-rules';
 
-import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+import type {
+  PromptExploderPatternPackResult,
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
 
 export { PROMPT_EXPLODER_PATTERN_PACK };
-
-export type PromptExploderPatternPackResult = {
-  nextSettings: PromptEngineSettings;
-  addedRuleIds: string[];
-  updatedRuleIds: string[];
-};
 
 export const PROMPT_EXPLODER_PATTERN_PACK_IDS = new Set(
   PROMPT_EXPLODER_PATTERN_PACK.map((rule) => rule.id)

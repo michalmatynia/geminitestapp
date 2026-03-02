@@ -333,7 +333,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.metadata).toBeUndefined();
   });
 
-  it('fills missing roles heuristically when rules-only mode has partial rule captures', () => {
+  it('does not fill missing roles heuristically when rules-only mode has only partial rule captures', () => {
     const addresserOnlyRules: CaseResolverSegmentCaptureRule[] = [
       {
         id: 'capture.addresser.display_name',
@@ -372,8 +372,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(result.payload.parties?.addresser?.rawText).toContain('Fioletowa 71/2');
     expect(result.payload.parties?.addresser?.rawText).toContain('\n');
-    expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
-    expect(result.payload.parties?.addressee?.organizationName).toBe('Inspektorat ZUS w Gryficach');
+    expect(result.payload.parties?.addressee).toBeUndefined();
   });
 
   it('reports no transfer captures when both rule and fallback extraction fail', () => {
@@ -395,5 +394,149 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.hasCaptureData).toBe(false);
     expect(result.payload.parties).toBeUndefined();
     expect(result.payload.metadata).toBeUndefined();
+  });
+
+  it('captures labeled sender and recipient blocks in separate segments in rules-only mode', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'sender-labeled',
+        raw: 'From:\nMichał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      }),
+      createSegment({
+        id: 'recipient-labeled',
+        raw: 'To:\nKomisariat Policji Szczecin–Dąbie\nul. Pomorska 15\n70-812 Szczecin',
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload.parties?.addresser?.firstName).toBe('Michał');
+    expect(payload.parties?.addresser?.lastName).toBe('Matynia');
+    expect(payload.parties?.addresser?.street).toBe('Fioletowa');
+    expect(payload.parties?.addresser?.streetNumber).toBe('71');
+    expect(payload.parties?.addresser?.houseNumber).toBe('2');
+    expect(payload.parties?.addresser?.postalCode).toBe('70-781');
+    expect(payload.parties?.addresser?.city).toBe('Szczecin');
+    expect(payload.parties?.addresser?.country).toBe('Poland');
+    expect(payload.parties?.addressee?.displayName).toBe('Komisariat Policji Szczecin–Dąbie');
+    expect(payload.parties?.addressee?.organizationName).toBe(
+      'Komisariat Policji Szczecin–Dąbie'
+    );
+    expect(payload.parties?.addressee?.street).toBe('Pomorska');
+    expect(payload.parties?.addressee?.streetNumber).toBe('15');
+    expect(payload.parties?.addressee?.postalCode).toBe('70-812');
+    expect(payload.parties?.addressee?.city).toBe('Szczecin');
+  });
+
+  it('splits combined labeled sender and recipient content into separate party captures', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'combined-labeled',
+        raw: [
+          'From:',
+          'Michał Matynia',
+          'Fioletowa 71/2',
+          '70-781 Szczecin',
+          'Polska',
+          '',
+          'To:',
+          'Komisariat Policji Szczecin–Dąbie',
+          'ul. Pomorska 15',
+          '70-812 Szczecin',
+        ].join('\n'),
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload.parties?.addresser?.sourceSegmentId).toBe('combined-labeled');
+    expect(payload.parties?.addresser?.sourcePatternLabels).toContain(
+      'Case Resolver Virtual Split: Addresser'
+    );
+    expect(payload.parties?.addressee?.displayName).toBe('Komisariat Policji Szczecin–Dąbie');
+    expect(payload.parties?.addressee?.sourceSegmentId).toBe('combined-labeled');
+    expect(payload.parties?.addressee?.sourcePatternLabels).toContain(
+      'Case Resolver Virtual Split: Addressee'
+    );
+    expect(payload.parties?.addressee?.street).toBe('Pomorska');
+    expect(payload.parties?.addressee?.streetNumber).toBe('15');
+    expect(payload.parties?.addressee?.postalCode).toBe('70-812');
+    expect(payload.parties?.addressee?.city).toBe('Szczecin');
+    expect(payload.parties?.addressee?.country).toBeUndefined();
+  });
+
+  it('captures inline labeled sender and person recipient blocks in rules-only mode', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'inline-labeled',
+        raw: [
+          'From: Michał Matynia',
+          'Fioletowa 71/2',
+          '70-781 Szczecin',
+          'Polska',
+          '',
+          'To: Jan Kowalski',
+          'ul. Jasna 12/4',
+          '00-013 Warszawa',
+        ].join('\n'),
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload.parties?.addresser?.firstName).toBe('Michał');
+    expect(payload.parties?.addresser?.lastName).toBe('Matynia');
+    expect(payload.parties?.addressee?.displayName).toBe('Jan Kowalski');
+    expect(payload.parties?.addressee?.kind).toBe('person');
+    expect(payload.parties?.addressee?.firstName).toBe('Jan');
+    expect(payload.parties?.addressee?.lastName).toBe('Kowalski');
+    expect(payload.parties?.addressee?.street).toBe('Jasna');
+    expect(payload.parties?.addressee?.streetNumber).toBe('12');
+    expect(payload.parties?.addressee?.houseNumber).toBe('4');
+    expect(payload.parties?.addressee?.postalCode).toBe('00-013');
+    expect(payload.parties?.addressee?.city).toBe('Warszawa');
+  });
+
+  it('captures mixed Polish sender and recipient labels in rules-only mode', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'polish-labeled',
+        raw: [
+          'Nadawca:',
+          'Michał Matynia',
+          'Fioletowa 71/2',
+          '70-781 Szczecin',
+          'Polska',
+          '',
+          'Adresat:',
+          'Jan Kowalski',
+          'ul. Jasna 12/4',
+          '00-013 Warszawa',
+        ].join('\n'),
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload.parties?.addressee?.displayName).toBe('Jan Kowalski');
+    expect(payload.parties?.addressee?.kind).toBe('person');
+    expect(payload.parties?.addressee?.firstName).toBe('Jan');
+    expect(payload.parties?.addressee?.lastName).toBe('Kowalski');
   });
 });

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import type { CaseResolverStateValue } from '../types';
+import type { CaseMetadataDraft } from '../case-overview-draft';
 import type {
   CaseResolverGraph,
   CaseResolverRelationGraph,
@@ -140,6 +141,11 @@ export type CaseResolverViewContextValue = {
     >
   ) => void;
   activeCaseFile: CaseResolverFile | null;
+  activeCaseMetadataDraft: CaseMetadataDraft | null;
+  isActiveCaseMetadataDirty: boolean;
+  updateActiveCaseMetadataDraft: (patch: Partial<CaseMetadataDraft>) => void;
+  handleSaveActiveCaseMetadata: () => void;
+  handleDiscardActiveCaseMetadata: () => void;
   handleResetCaseContext: () => void;
 };
 

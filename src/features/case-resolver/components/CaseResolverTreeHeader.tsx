@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { FolderPlus, FilePlus, FileImage, FileCode2 } from 'lucide-react';
+import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
@@ -32,6 +32,7 @@ export function CaseResolverTreeHeader({
     onCreateFolder,
     onCreateFile,
     onCreateScanFile,
+    onCreateImageAsset,
     onCreateNodeFile,
     caseResolverIdentifiers,
   } = useCaseResolverPageContext();
@@ -194,6 +195,19 @@ export function CaseResolverTreeHeader({
           disabled={disableCreateActions}
         >
           <FileImage className='size-4' />
+        </Button>
+        <Button
+          type='button'
+          onClick={(): void => {
+            onCreateImageAsset(selectedFolderForCreate);
+          }}
+          size='sm'
+          variant='outline'
+          className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
+          title={createContextTooltip ?? 'Create new image asset'}
+          disabled={disableCreateActions}
+        >
+          <ImagePlus className='size-4' />
         </Button>
         <Button
           type='button'

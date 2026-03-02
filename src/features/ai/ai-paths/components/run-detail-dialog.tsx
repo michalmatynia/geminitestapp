@@ -435,7 +435,7 @@ export function RunDetailDialog(): React.JSX.Element {
                 <RunHistoryEntries
                   entries={historyEntries}
                   emptyMessage='No history for this node.'
-                  onReplayFromEntry={(entry): void => {
+                  onReplayFromEntry={(): void => {
                     if (!runDetail?.run?.id) return;
                     // For now we replay the whole run that produced this history entry.
                     void handleResumeRun(runDetail.run.id, 'replay').catch(() => {});

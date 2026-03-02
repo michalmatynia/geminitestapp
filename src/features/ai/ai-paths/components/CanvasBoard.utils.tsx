@@ -181,22 +181,6 @@ export const runtimeDurationBadgeClassName = (durationMs: number | null | undefi
   return 'border-emerald-500/60 bg-emerald-500/15 text-emerald-200';
 };
 
-export const runtimeDurationBadgeClassName = (durationMs: number | null | undefined): string => {
-  if (durationMs == null || !Number.isFinite(durationMs)) {
-    return 'border-border bg-card/60 text-gray-300';
-  }
-  if (durationMs >= 1000) {
-    return 'border-rose-500/60 bg-rose-500/15 text-rose-200';
-  }
-  if (durationMs >= 200) {
-    return 'border-amber-500/60 bg-amber-500/15 text-amber-200';
-  }
-  if (durationMs >= 50) {
-    return 'border-sky-500/60 bg-sky-500/15 text-sky-200';
-  }
-  return 'border-emerald-500/60 bg-emerald-500/15 text-emerald-200';
-};
-
 export const resolveNodeDiagnosticsBadgeStyle = (
   summary: DataContractNodeIssueSummary | undefined
 ): { label: string; className: string } | null => {

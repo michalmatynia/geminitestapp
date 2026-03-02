@@ -1,5 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -23,7 +21,6 @@ export function useResource<T extends { id: string }>(
   update: MutationResult<T, { id: string } & Partial<T>>;
   remove: MutationResult<void, string>;
 } {
-  const queryClient = useQueryClient();
   const normalizedResourcePath = resourcePath.replace(/^\/+|\/+$/g, '') || 'resource';
   const resourceTag = normalizedResourcePath.replaceAll('/', '.');
 
@@ -45,9 +42,7 @@ export function useResource<T extends { id: string }>(
   const create = createCreateMutationV2<T, Partial<T>>({
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'create'),
     mutationFn: (data: Partial<T>) => api.post<T>(resourcePath, data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
+    invalidateKeys: [queryKey],
     meta: {
       source: 'shared.hooks.query.useResource.create',
       operation: 'create',
@@ -62,7 +57,7 @@ export function useResource<T extends { id: string }>(
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'update'),
     mutationFn: ({ id, ...data }: { id: string } & Partial<T>) =>
       api.patch<T>(`${resourcePath}/${id}`, data),
-    onSuccess: (updated) => {
+    invalidate: (queryClient, updated) => {
       // Optimistically update the list if it exists in cache
       queryClient.setQueryData(queryKey, (old: T[] | undefined) =>
         old?.map((item) => (item.id === updated.id ? updated : item))
@@ -83,7 +78,7 @@ export function useResource<T extends { id: string }>(
   const remove = createDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'delete'),
     mutationFn: (id: string) => api.delete<void>(`${resourcePath}/${id}`),
-    onSuccess: (_, id) => {
+    invalidate: (queryClient, _, id) => {
       queryClient.setQueryData(queryKey, (old: T[] | undefined) =>
         old?.filter((item) => item.id !== id)
       );

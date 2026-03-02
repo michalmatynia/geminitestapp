@@ -628,4 +628,92 @@ Z poważaniem,`;
     expect(mergedText).toContain('Przez kilka lat nie nastąpiło skuteczne');
     expect(mergedText).toContain('Na zakończenie, na podstawie art. 73 § 1 KPA');
   });
+
+  it('treats explicit From/To labels as clean sender and recipient boundaries', () => {
+    const prompt = [
+      'From:',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Polska',
+      '',
+      'To:',
+      'Komisariat Policji Szczecin–Dąbie',
+      'ul. Pomorska 15',
+      '70-812 Szczecin',
+      '',
+      'WNIOSEK O ZWROT KOSZTÓW PODRÓŻY ŚWIADKA',
+    ].join('\n');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const senderSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text || '').includes('Michał Matynia')
+    );
+    const recipientSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text || '').includes('Komisariat Policji Szczecin–Dąbie')
+    );
+
+    expect(senderSegment).toBeDefined();
+    expect(recipientSegment).toBeDefined();
+    expect(senderSegment?.raw).toContain('From:');
+    expect(senderSegment?.raw).not.toContain('To:');
+    expect(recipientSegment?.raw).toContain('To:');
+    expect(recipientSegment?.raw).not.toContain('Michał Matynia');
+    expect(senderSegment?.title).toBe('');
+    expect(recipientSegment?.title).toBe('');
+    expect(senderSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Addresser Label'
+    );
+    expect(recipientSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Addressee Label'
+    );
+  });
+
+  it('keeps inline From/To labels attached to the correct sender and recipient segments', () => {
+    const prompt = [
+      'From: Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Polska',
+      '',
+      'To: Jan Kowalski',
+      'ul. Jasna 12/4',
+      '00-013 Warszawa',
+      '',
+      'WNIOSEK O ZWROT KOSZTÓW PODRÓŻY ŚWIADKA',
+    ].join('\n');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const senderSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text || '').includes('From: Michał Matynia')
+    );
+    const recipientSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text || '').includes('To: Jan Kowalski')
+    );
+
+    expect(senderSegment).toBeDefined();
+    expect(recipientSegment).toBeDefined();
+    expect(senderSegment?.raw).not.toContain('To: Jan Kowalski');
+    expect(recipientSegment?.raw).not.toContain('Fioletowa 71/2');
+    expect(senderSegment?.title).toBe('');
+    expect(recipientSegment?.title).toBe('');
+  });
 });

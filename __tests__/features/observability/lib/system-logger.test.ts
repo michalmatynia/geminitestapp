@@ -8,6 +8,7 @@ vi.unmock('@/shared/lib/observability/system-logger');
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
+import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import {
   logSystemEvent,
   logSystemError,
@@ -24,12 +25,19 @@ vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
   notifyCriticalError: vi.fn().mockResolvedValue({ delivered: true, throttled: false }),
 }));
 
+vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
+  hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
+}));
+
 describe('system-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(hydrateLogRuntimeContext).mockImplementation(async (context) => context);
+    vi.unstubAllGlobals();
+    delete process.env['CENTRAL_LOG_WEBHOOK_URL'];
   });
 
   describe('normalizeErrorInfo', () => {
@@ -213,6 +221,148 @@ describe('system-logger', () => {
           })
         );
       });
+    });
+
+    it('should enrich persisted context with AI path run static context when runId is present', async () => {
+      vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
+        runId: 'run-1',
+        fingerprint: 'fp-1',
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-1',
+            status: 'failed',
+          },
+        },
+      });
+
+      await logSystemEvent({
+        message: 'Run failed',
+        source: 'ai-paths-worker',
+        level: 'error',
+        context: {
+          runId: 'run-1',
+          fingerprint: 'fp-1',
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(hydrateLogRuntimeContext).toHaveBeenCalledWith(
+          expect.objectContaining({
+            runId: 'run-1',
+            fingerprint: expect.any(String),
+          })
+        );
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            context: expect.objectContaining({
+              runId: 'run-1',
+              fingerprint: expect.any(String),
+              staticContext: {
+                aiPathRun: expect.objectContaining({
+                  kind: 'ai_path_run',
+                  runId: 'run-1',
+                }),
+              },
+            }),
+          })
+        );
+      });
+    });
+
+    it('should continue persisting logs when AI path static context enrichment fails', async () => {
+      vi.mocked(hydrateLogRuntimeContext).mockRejectedValue(new Error('Static context builder failed'));
+
+      await logSystemEvent({
+        message: 'Run failed',
+        source: 'ai-paths-worker',
+        level: 'error',
+        context: {
+          runId: 'run-1',
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            context: expect.objectContaining({
+              runId: 'run-1',
+              fingerprint: expect.any(String),
+            }),
+          })
+        );
+      });
+    });
+
+    it('should forward the hydrated runtime context to centralized logging and persist the same enriched payload', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+      vi.stubGlobal('fetch', fetchMock);
+      process.env['CENTRAL_LOG_WEBHOOK_URL'] = 'https://logs.example.test/webhook';
+
+      vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
+        runId: 'run-1',
+        fingerprint: 'fp-1',
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-1',
+            status: 'failed',
+          },
+        },
+      });
+
+      await logSystemEvent({
+        message: 'Run failed',
+        source: 'ai-paths-worker',
+        level: 'error',
+        context: { runId: 'run-1' },
+      });
+
+      await vi.waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(createSystemLog).toHaveBeenCalledTimes(1);
+      });
+
+      const fetchPayload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body ?? '{}')) as {
+        context?: Record<string, unknown>;
+      };
+      expect(fetchPayload.context).toEqual(
+        expect.objectContaining({
+          runId: 'run-1',
+          fingerprint: expect.any(String),
+          staticContext: {
+            aiPathRun: expect.objectContaining({
+              runId: 'run-1',
+            }),
+          },
+        })
+      );
+      expect(createSystemLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            runId: 'run-1',
+            fingerprint: expect.any(String),
+            staticContext: {
+              aiPathRun: expect.objectContaining({
+                runId: 'run-1',
+              }),
+            },
+          }),
+        })
+      );
+    });
+
+    it('should skip runtime hydration in the browser path', async () => {
+      vi.stubGlobal('window', {} as Window & typeof globalThis);
+
+      await logSystemEvent({
+        message: 'Client-side log',
+        source: 'client',
+        context: { runId: 'run-1' },
+      });
+
+      expect(hydrateLogRuntimeContext).not.toHaveBeenCalled();
+      expect(createSystemLog).not.toHaveBeenCalled();
     });
   });
 });

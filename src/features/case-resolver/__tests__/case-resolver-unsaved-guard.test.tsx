@@ -46,8 +46,10 @@ vi.mock('@/features/case-resolver/components/CaseResolverWorkspaceDebugPanel', (
 
 const createViewContextMock = ({
   isEditorDraftDirty,
+  isActiveCaseMetadataDirty = false,
 }: {
   isEditorDraftDirty: boolean;
+  isActiveCaseMetadataDirty?: boolean;
 }): CaseResolverViewContextValue => {
   const state = {
     workspace: {
@@ -127,6 +129,12 @@ const createViewContextMock = ({
     setWorkspaceView: vi.fn(),
     handleMoveFolder: vi.fn(),
     isEditorDraftDirty,
+    isActiveCaseMetadataDirty,
+    handleSaveActiveCaseMetadata: vi.fn(),
+    handleDiscardActiveCaseMetadata: vi.fn(),
+    updateActiveCaseMetadataDraft: vi.fn(),
+    activeCaseMetadataDraft: null,
+    activeCaseFile: null,
     handleResetCaseContext: vi.fn(),
   } as unknown as CaseResolverViewContextValue;
 };
@@ -172,5 +180,24 @@ describe('CaseResolverPageView unsaved guard', () => {
     expect(
       screen.getByText('You have unsaved changes in this document. What would you like to do?')
     ).toBeInTheDocument();
+  });
+
+  it('opens unsaved prompt when case metadata is dirty before switching files', () => {
+    viewContextMock = createViewContextMock({
+      isEditorDraftDirty: false,
+      isActiveCaseMetadataDirty: true,
+    });
+
+    render(<CaseResolverPageView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Switch File' }));
+
+    expect(handleOpenFileEditorMock).not.toHaveBeenCalled();
+    expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
+    expect(
+      screen.getByText('You have unsaved changes in this case. What would you like to do?')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Discard' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 });

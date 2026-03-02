@@ -9,10 +9,19 @@ const EXTENSIONS = new Set(['.ts', '.tsx']);
 const FACTORY_CALLS = new Set([
   'createListQueryV2',
   'createSingleQueryV2',
+  'createPaginatedListQueryV2',
+  'createInfiniteQueryV2',
+  'createMultiQueryV2',
+  'createSuspenseQueryV2',
+  'createSuspenseInfiniteQueryV2',
+  'createSuspenseMultiQueryV2',
   'createMutationV2',
   'createCreateMutationV2',
   'createUpdateMutationV2',
   'createDeleteMutationV2',
+  'createOptimisticMutationV2',
+  'useEnsureQueryDataV2',
+  'usePrefetchQueryV2',
 ]);
 
 const OPERATION_EXPECTATIONS = {
@@ -107,13 +116,19 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
   }
 
   const metaProperty = findObjectProperty(configArg, 'meta');
-  if (!metaProperty) {
+  if (!metaProperty && callName !== 'createMultiQueryV2') {
     issues.push({
       file: relFilePath,
       line,
       callName,
       message: 'missing `meta` in factory config.',
     });
+    return;
+  }
+
+  if (callName === 'createMultiQueryV2') {
+    // For createMultiQueryV2, we skip top-level meta but could potentially check nested queries.
+    // However, the current script structure is geared towards top-level objects.
     return;
   }
 

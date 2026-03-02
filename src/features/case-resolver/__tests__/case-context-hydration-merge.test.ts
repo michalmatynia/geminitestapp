@@ -276,6 +276,42 @@ describe('case resolver workspace hydration merge', () => {
     expect(selection.workspace.files.some((file) => file.id === requestedCase.id)).toBe(true);
   });
 
+  it('prefers newer navigation workspace when it still contains the requested file', () => {
+    const requestedCase = createCaseResolverFile({
+      id: 'case-requested',
+      fileType: 'case',
+      name: 'Requested Case',
+    });
+    const storeWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-store',
+      files: [requestedCase],
+      activeFileId: requestedCase.id,
+      workspaceRevision: 4,
+    };
+    const navigationWorkspace = {
+      ...storeWorkspace,
+      id: 'workspace-nav',
+      folders: ['new-folder'],
+      folderRecords: [{ path: 'new-folder', ownerCaseId: requestedCase.id }],
+      workspaceRevision: 5,
+    };
+
+    const selection = resolvePreferredCaseResolverWorkspace({
+      storeWorkspace,
+      navigationWorkspace,
+      hasStoreWorkspace: true,
+      hasNavigationWorkspace: true,
+      requestedFileId: requestedCase.id,
+    });
+
+    expect(selection.source).toBe('navigation');
+    expect(selection.reason).toBe('navigation_newer_revision');
+    expect(selection.workspace.folderRecords).toEqual([
+      { path: 'new-folder', ownerCaseId: requestedCase.id },
+    ]);
+  });
+
   it('uses navigation workspace when store is unavailable and requested file is present in navigation cache', () => {
     const requestedCase = createCaseResolverFile({
       id: 'case-requested',

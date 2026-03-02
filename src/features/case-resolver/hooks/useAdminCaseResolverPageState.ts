@@ -27,6 +27,10 @@ import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorU
 import { useAdminCaseResolverDocumentActions } from './useAdminCaseResolverDocumentActions';
 import { useAdminCaseResolverRelationActions } from './useAdminCaseResolverRelationActions';
 import { useAdminCaseResolverMetadataActions } from './useAdminCaseResolverMetadataActions';
+import {
+  buildCaseMetadataDraft,
+  buildCaseMetadataPatch,
+} from '../case-overview-draft';
 
 export function useAdminCaseResolverPageState() {
   const state: CaseResolverStateValue = useCaseResolverState();
@@ -79,6 +83,7 @@ export function useAdminCaseResolverPageState() {
   const openEditorFromQueryHandledRef = useRef<string | null>(null);
   const autoClearRequestKeyHandledRef = useRef<string | null>(null);
   const editorDirtyEvalDurationMsRef = useRef<number | null>(null);
+  const lastActiveCaseMetadataDraftFileIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!shouldOpenEditorFromQuery || !requestedFileId) {
@@ -163,6 +168,41 @@ export function useAdminCaseResolverPageState() {
     [state.activeCaseId, workspace.files]
   );
 
+  const [activeCaseMetadataDraft, setActiveCaseMetadataDraft] = React.useState(() =>
+    buildCaseMetadataDraft(activeCaseFile)
+  );
+
+  const syncedActiveCaseMetadataDraft = useMemo(
+    () => buildCaseMetadataDraft(activeCaseFile),
+    [
+      activeCaseFile?.id,
+      activeCaseFile?.name,
+      activeCaseFile?.parentCaseId,
+      activeCaseFile?.caseStatus,
+      activeCaseFile?.happeningDate,
+      activeCaseFile?.referenceCaseIds,
+      activeCaseFile?.tagId,
+      activeCaseFile?.caseIdentifierId,
+      activeCaseFile?.categoryId,
+    ]
+  );
+
+  useEffect(() => {
+    setActiveCaseMetadataDraft((current) => {
+      const activeCaseId = activeCaseFile?.id ?? null;
+      const caseChanged = lastActiveCaseMetadataDraftFileIdRef.current !== activeCaseId;
+      lastActiveCaseMetadataDraftFileIdRef.current = activeCaseId;
+      if (caseChanged) {
+        return syncedActiveCaseMetadataDraft;
+      }
+      const currentPatch = buildCaseMetadataPatch(activeCaseFile, current);
+      if (currentPatch !== null) return current;
+      return stableStringify(current) === stableStringify(syncedActiveCaseMetadataDraft)
+        ? current
+        : syncedActiveCaseMetadataDraft;
+    });
+  }, [activeCaseFile, syncedActiveCaseMetadataDraft]);
+
   const metadataActions = useAdminCaseResolverMetadataActions({
     workspace,
     updateWorkspace,
@@ -172,6 +212,41 @@ export function useAdminCaseResolverPageState() {
     filemakerDatabase,
     activeCaseFile,
   });
+
+  const activeCaseMetadataPatch = useMemo(
+    () => buildCaseMetadataPatch(activeCaseFile, activeCaseMetadataDraft),
+    [activeCaseFile, activeCaseMetadataDraft]
+  );
+
+  const isActiveCaseMetadataDirty = activeCaseMetadataPatch !== null;
+
+  const updateActiveCaseMetadataDraft = useCallback((patch: {
+    name?: string;
+    parentCaseId?: string;
+    caseStatus?: 'pending' | 'completed';
+    happeningDate?: string;
+    referenceCaseIds?: string[];
+    tagId?: string;
+    caseIdentifierId?: string;
+    categoryId?: string;
+  }): void => {
+    setActiveCaseMetadataDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        ...patch,
+      };
+    });
+  }, []);
+
+  const handleSaveActiveCaseMetadata = useCallback((): void => {
+    if (!activeCaseFile || activeCaseFile.isLocked || !activeCaseMetadataPatch) return;
+    metadataActions.handleUpdateActiveCaseMetadata(activeCaseMetadataPatch);
+  }, [activeCaseFile, activeCaseMetadataPatch, metadataActions]);
+
+  const handleDiscardActiveCaseMetadata = useCallback((): void => {
+    setActiveCaseMetadataDraft(buildCaseMetadataDraft(activeCaseFile));
+  }, [activeCaseFile]);
 
   const isEditorDraftDirty = useMemo(() => {
     const dirtyEvalStartedAtMs =
@@ -731,5 +806,10 @@ export function useAdminCaseResolverPageState() {
     handleEditFileFromSearch,
     handleResetCaseContext,
     activeCaseFile,
+    activeCaseMetadataDraft,
+    isActiveCaseMetadataDirty,
+    updateActiveCaseMetadataDraft,
+    handleSaveActiveCaseMetadata,
+    handleDiscardActiveCaseMetadata,
   };
 }

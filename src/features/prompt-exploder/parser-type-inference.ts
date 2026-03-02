@@ -20,7 +20,9 @@ const SEGMENT_TYPE_VALUES: PromptExploderSegmentType[] = [
 
 const CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS = new Set<string>([
   'segment.case_resolver.heading.place_date',
+  'segment.case_resolver.heading.addresser_label',
   'segment.case_resolver.heading.addresser_person',
+  'segment.case_resolver.heading.addressee_label',
   'segment.case_resolver.heading.addressee_organization',
   'segment.case_resolver.heading.dotyczy',
   'segment.case_resolver.heading.body_statement',

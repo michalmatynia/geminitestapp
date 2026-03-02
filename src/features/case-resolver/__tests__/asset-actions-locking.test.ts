@@ -8,6 +8,7 @@ import {
 import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
+  parseNodeFileSnapshot,
 } from '@/features/case-resolver/settings';
 import type {
   CaseResolverFile,
@@ -57,7 +58,10 @@ const createMutableState = <T>(
 };
 
 const buildHarness = (
-  sourceFile: CaseResolverFile
+  sourceFile: CaseResolverFile,
+  options?: {
+    activeCaseId?: string | null;
+  }
 ): {
   result: { current: UseCaseResolverStateAssetActionsResult };
   getWorkspace: () => CaseResolverWorkspace;
@@ -107,7 +111,7 @@ const buildHarness = (
       defaultTagId: null,
       defaultCaseIdentifierId: null,
       defaultCategoryId: null,
-      activeCaseId: null,
+      activeCaseId: options?.activeCaseId ?? null,
       requestedCaseStatus: 'ready',
       setSelectedFileId: selectedFileState.set,
       setSelectedFolderPath: selectedFolderState.set,
@@ -315,5 +319,89 @@ describe('case resolver asset actions lock races', () => {
     expect(after?.documentContentHtml).toContain('<p>Recognized text from OCR.</p>');
     expect(after?.scanSlots?.[0]?.ocrText).toBe('Recognized text from OCR.');
     expect(harness.toast).toHaveBeenCalledWith('OCR finished.', { variant: 'success' });
+  });
+
+  it('creates a scan file inside the active case scope', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-1',
+      fileType: 'case',
+      name: 'Case 1',
+    });
+    const harness = buildHarness(caseFile, { activeCaseId: caseFile.id });
+    harness.setWorkspace({
+      ...harness.getWorkspace(),
+      folders: ['evidence', 'evidence/photos'],
+      folderRecords: [
+        { path: 'evidence', ownerCaseId: caseFile.id },
+        { path: 'evidence/photos', ownerCaseId: caseFile.id },
+      ],
+    });
+
+    harness.result.current.handleCreateScanFile('evidence/photos');
+
+    const createdScanFile = harness
+      .getWorkspace()
+      .files.find(
+        (file: CaseResolverFile) =>
+          file.fileType === 'scanfile' && file.parentCaseId === caseFile.id
+      );
+
+    expect(createdScanFile).toBeTruthy();
+    expect(createdScanFile?.folder).toBe('evidence/photos');
+  });
+
+  it('creates an image asset inside the active case scope', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-1',
+      fileType: 'case',
+      name: 'Case 1',
+    });
+    const harness = buildHarness(caseFile, { activeCaseId: caseFile.id });
+    harness.setWorkspace({
+      ...harness.getWorkspace(),
+      folders: ['evidence', 'evidence/images'],
+      folderRecords: [
+        { path: 'evidence', ownerCaseId: caseFile.id },
+        { path: 'evidence/images', ownerCaseId: caseFile.id },
+      ],
+    });
+
+    harness.result.current.handleCreateImageAsset('evidence/images');
+
+    const createdAsset = harness
+      .getWorkspace()
+      .assets.find((asset) => asset.kind === 'image' && asset.folder === 'evidence/images');
+
+    expect(createdAsset).toBeTruthy();
+  });
+
+  it('creates a node file inside the active case scope with an empty snapshot', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-1',
+      fileType: 'case',
+      name: 'Case 1',
+    });
+    const harness = buildHarness(caseFile, { activeCaseId: caseFile.id });
+    harness.setWorkspace({
+      ...harness.getWorkspace(),
+      folders: ['analysis', 'analysis/maps'],
+      folderRecords: [
+        { path: 'analysis', ownerCaseId: caseFile.id },
+        { path: 'analysis/maps', ownerCaseId: caseFile.id },
+      ],
+    });
+
+    harness.result.current.handleCreateNodeFile('analysis/maps');
+
+    const createdAsset = harness
+      .getWorkspace()
+      .assets.find((asset) => asset.kind === 'node_file' && asset.folder === 'analysis/maps');
+
+    expect(createdAsset).toBeTruthy();
+    expect(parseNodeFileSnapshot(createdAsset?.textContent ?? '')).toMatchObject({
+      kind: 'case_resolver_node_file_snapshot_v1',
+      nodes: [],
+      edges: [],
+    });
   });
 });

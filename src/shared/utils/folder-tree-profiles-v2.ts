@@ -47,6 +47,7 @@ export const folderTreeInstanceValues = [
   'case_resolver_cases',
   'validator_list_tree',
   'validator_pattern_tree',
+  'prompt_exploder_segments',
   'prompt_exploder_hierarchy',
   'brain_catalog_tree',
   'brain_routing_tree',
@@ -205,6 +206,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: pattern',
     folderHint: 'Example: sequence-group',
   },
+  prompt_exploder_segments: {
+    title: 'Prompt Exploder Segments',
+    description: 'Controls top-level segment ordering in Prompt Exploder.',
+    fileHint: 'Example: prompt_segment',
+    folderHint: 'Not used (segments remain flat at root).',
+  },
   prompt_exploder_hierarchy: {
     title: 'Prompt Exploder Hierarchy',
     description: 'Controls hierarchy nesting and placeholders in Prompt Exploder tree editor.',
@@ -268,6 +275,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Validation patterns reordered.',
+  },
+  prompt_exploder_segments: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Segments reordered.',
   },
   prompt_exploder_hierarchy: {
     notifySuccess: false,
@@ -916,6 +928,42 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
           childKinds: ['sequence-group'],
           targetType: 'root',
           targetKinds: ['*'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  prompt_exploder_segments: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Move to Root',
+      inlineDropLabel: 'Drop segment',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'file',
+          childKinds: ['prompt_segment'],
+          targetType: 'root',
+          targetKinds: ['root'],
           allow: true,
         },
       ],

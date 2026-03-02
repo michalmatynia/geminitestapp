@@ -1,52 +1,52 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type {
-  PromptExploderAiProviderDto,
-  PromptExploderBindingDto,
-  PromptExploderBindingOriginDto,
-  PromptExploderBindingTypeDto,
-  PromptExploderCaseResolverCaptureModeDto,
-  PromptExploderDocumentDto,
-  PromptExploderLearnedTemplateDto,
-  PromptExploderListItemDto,
-  PromptExploderLogicalComparatorDto,
-  PromptExploderLogicalConditionDto,
-  PromptExploderLogicalJoinDto,
-  PromptExploderLogicalOperatorDto,
-  PromptExploderOperationModeDto,
-  PromptExploderParamUiControlDto,
-  PromptExploderPatternRuleMapDto,
-  PromptExploderPatternSnapshotDto,
-  PromptExploderSegmentDto,
-  PromptExploderSegmentTypeDto,
-  PromptExploderSettingsDto,
-  PromptExploderSubsectionDto,
-  PromptExploderBenchmarkSuggestionDto,
-  PromptExploderBenchmarkSuiteDto,
+  PromptExploderAiProvider,
+  PromptExploderBinding,
+  PromptExploderBindingOrigin,
+  PromptExploderBindingType,
+  PromptExploderCaseResolverCaptureMode,
+  PromptExploderDocument,
+  PromptExploderLearnedTemplate,
+  PromptExploderListItem,
+  PromptExploderLogicalComparator,
+  PromptExploderLogicalCondition,
+  PromptExploderLogicalJoin,
+  PromptExploderLogicalOperator,
+  PromptExploderOperationMode,
+  PromptExploderParamUiControl,
+  PromptExploderPatternRuleMap,
+  PromptExploderPatternSnapshot,
+  PromptExploderSegment,
+  PromptExploderSegmentType,
+  PromptExploderSettings,
+  PromptExploderSubsection,
+  PromptExploderBenchmarkSuggestion,
+  PromptExploderBenchmarkSuite,
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 
-export type PromptExploderAiProvider = PromptExploderAiProviderDto;
-export type PromptExploderBinding = PromptExploderBindingDto;
-export type PromptExploderBindingOrigin = PromptExploderBindingOriginDto;
-export type PromptExploderBindingType = PromptExploderBindingTypeDto;
-export type PromptExploderCaseResolverCaptureMode = PromptExploderCaseResolverCaptureModeDto;
-export type PromptExploderDocument = PromptExploderDocumentDto;
-export type PromptExploderLearnedTemplate = PromptExploderLearnedTemplateDto;
-export type PromptExploderListItem = PromptExploderListItemDto;
-export type PromptExploderLogicalComparator = PromptExploderLogicalComparatorDto;
-export type PromptExploderLogicalCondition = PromptExploderLogicalConditionDto;
-export type PromptExploderLogicalJoin = PromptExploderLogicalJoinDto;
-export type PromptExploderLogicalOperator = PromptExploderLogicalOperatorDto;
-export type PromptExploderOperationMode = PromptExploderOperationModeDto;
-export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
-export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
-export type PromptExploderPatternSnapshot = PromptExploderPatternSnapshotDto & {
-  rules?: PromptValidationRule[];
+export type {
+  PromptExploderAiProvider,
+  PromptExploderBinding,
+  PromptExploderBindingOrigin,
+  PromptExploderBindingType,
+  PromptExploderCaseResolverCaptureMode,
+  PromptExploderDocument,
+  PromptExploderLearnedTemplate,
+  PromptExploderListItem,
+  PromptExploderLogicalComparator,
+  PromptExploderLogicalCondition,
+  PromptExploderLogicalJoin,
+  PromptExploderLogicalOperator,
+  PromptExploderOperationMode,
+  PromptExploderParamUiControl,
+  PromptExploderPatternRuleMap,
+  PromptExploderPatternSnapshot,
+  PromptExploderSegment,
+  PromptExploderSegmentType,
+  PromptExploderSettings,
+  PromptExploderSubsection,
+  PromptExploderBenchmarkSuggestion,
+  PromptExploderBenchmarkSuite,
+  PromptExploderValidationRuleStack,
 };
-export type PromptExploderSegment = PromptExploderSegmentDto;
-export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
-export type PromptExploderSettings = PromptExploderSettingsDto;
-export type PromptExploderSubsection = PromptExploderSubsectionDto;
-export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;
-export type PromptExploderBenchmarkSuite = PromptExploderBenchmarkSuiteDto;
-export type { PromptExploderValidationRuleStack };

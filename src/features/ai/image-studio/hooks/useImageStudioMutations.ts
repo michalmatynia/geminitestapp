@@ -172,8 +172,6 @@ export interface ResizeStudioProjectCanvasResult {
 }
 
 export function useCreateStudioProject(): CreateMutation<string, CreateStudioProjectPayload> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: async (payload: CreateStudioProjectPayload): Promise<string> => {
       const projectId = payload.projectId.trim();
@@ -198,9 +196,7 @@ export function useCreateStudioProject(): CreateMutation<string, CreateStudioPro
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'create'],
     },
-    onSuccess: () => {
-      void invalidateImageStudioProjects(queryClient);
-    },
+    invalidate: (queryClient) => invalidateImageStudioProjects(queryClient),
   });
 }
 
@@ -208,8 +204,6 @@ export function useRenameStudioProject(): UpdateMutation<
   RenameStudioProjectResult,
   RenameStudioProjectPayload
   > {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: async ({
       projectId,
@@ -238,7 +232,7 @@ export function useRenameStudioProject(): UpdateMutation<
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'rename'],
     },
-    onSuccess: (result: RenameStudioProjectResult, variables: RenameStudioProjectPayload) => {
+    invalidate: (queryClient, result, variables) => {
       const fromProjectId = variables.projectId.trim();
       const toProjectId = result.projectId.trim() || variables.nextProjectId.trim();
       void invalidateImageStudioProjects(queryClient);
@@ -256,8 +250,6 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
   ResizeStudioProjectCanvasResult,
   ResizeStudioProjectCanvasPayload
   > {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2({
     mutationFn: async (
       payload: ResizeStudioProjectCanvasPayload
@@ -297,10 +289,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'resize-canvas'],
     },
-    onSuccess: (
-      result: ResizeStudioProjectCanvasResult,
-      variables: ResizeStudioProjectCanvasPayload
-    ) => {
+    invalidate: (queryClient, result, variables) => {
       const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
       void invalidateImageStudioProjects(queryClient);
       if (normalizedProjectId) {
@@ -311,8 +300,6 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
 }
 
 export function useDeleteStudioProject(): DeleteMutation<string, string> {
-  const queryClient = useQueryClient();
-
   return createDeleteMutationV2<string, string>({
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
@@ -330,7 +317,7 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
       mutationKey: QUERY_KEYS.imageStudio.all,
       tags: ['image-studio', 'project', 'delete'],
     },
-    onSuccess: (id: string) => {
+    invalidate: (queryClient, id) => {
       void invalidateImageStudioProjects(queryClient);
       void invalidateImageStudioSlots(queryClient, id);
     },
@@ -340,8 +327,6 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
 export function useCreateStudioSlots(
   projectId: string
 ): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) =>
       api.post<StudioSlotsResponse>(
@@ -357,9 +342,7 @@ export function useCreateStudioSlots(
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'create'],
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
-    },
+    invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
 }
 
@@ -469,7 +452,7 @@ export function useUpdateStudioSlot(
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'update'],
     },
-    onSettled: () => {
+    invalidate: () => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
@@ -656,7 +639,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       deleteTimingsByRequestRef.current.delete(normalizedDeletedSlotId);
       timeoutFallbackIdsRef.current.delete(normalizedDeletedSlotId);
       pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);
-      activeDeleteVerifierIdsRef.current.delete(normalizedDeletedSlotId);
+      activeDeleteVerifierIdsRef.current.add(normalizedDeletedSlotId);
       if (typedContext?.previousSlots) {
         queryClient.setQueryData<StudioSlotsResponse | undefined>(
           slotsQueryKey,
@@ -702,12 +685,8 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 
       applyOptimisticDeleteFilter(deletedSlotCandidates);
     },
-    onSettled: (_result: void | undefined, error: Error | null, deletedSlotRawId: string) => {
+    invalidate: (_queryClient, _result, deletedSlotRawId) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
-      if (error) {
-        void invalidateImageStudioSlots(queryClient, projectId);
-        return;
-      }
       if (timeoutFallbackIdsRef.current.has(normalizedDeletedSlotId)) {
         void verifyPendingDelete(normalizedDeletedSlotId);
         return;
@@ -720,8 +699,6 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 export function useUploadStudioAssets(
   projectId: string
 ): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
@@ -743,17 +720,13 @@ export function useUploadStudioAssets(
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'assets', 'upload'],
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
-    },
+    invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
 }
 
 export function useImportStudioAssetsFromDrive(
   projectId: string
 ): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
       api.post<StudioAssetImportResult>(
@@ -769,9 +742,7 @@ export function useImportStudioAssetsFromDrive(
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'assets', 'import'],
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
-    },
+    invalidate: (queryClient) => invalidateImageStudioSlots(queryClient, projectId),
   });
 }
 

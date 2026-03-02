@@ -183,9 +183,9 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
   const titleFontSize = detailLevel === 'skeleton' ? 11 : 12;
   const titleY = detailLevel === 'skeleton' ? 17 : 18;
   const titleText =
-    detailLevel === 'skeleton' && (node.title || '').length > 24
+    (detailLevel === 'skeleton' && (node.title || '').length > 24
       ? `${(node.title || '').slice(0, 23)}...`
-      : node.title;
+      : node.title) || '';
   const selectedModelId =
     node.type === 'model' && typeof node.config?.model?.modelId === 'string'
       ? node.config.model.modelId.trim()

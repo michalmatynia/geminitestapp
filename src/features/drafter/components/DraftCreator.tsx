@@ -1,5 +1,4 @@
 'use client';
-import { useQueries } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
@@ -19,6 +18,7 @@ import type { ProductImageManagerController } from '@/features/products/componen
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
@@ -114,25 +114,58 @@ export function DraftCreator({
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
   // Metadata queries based on selected catalogs
-  const categoryQueries = useQueries({
-    queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.categories(id)),
-      queryFn: () => getCategoriesFlat(id),
-    })),
+  const categoryQueries = createMultiQueryV2({
+    queries: selectedCatalogIds.map((id: string) => {
+      const queryKey = normalizeQueryKey(QUERY_KEYS.products.metadata.categories(id));
+      return {
+        queryKey,
+        queryFn: () => getCategoriesFlat(id),
+        meta: {
+          source: 'drafter.components.DraftCreator.categories',
+          operation: 'list',
+          resource: 'products.metadata.categories',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'categories', 'multi'],
+        },
+      };
+    }),
   });
 
-  const tagQueries = useQueries({
-    queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.tags(id)),
-      queryFn: () => getTags(id),
-    })),
+  const tagQueries = createMultiQueryV2({
+    queries: selectedCatalogIds.map((id: string) => {
+      const queryKey = normalizeQueryKey(QUERY_KEYS.products.metadata.tags(id));
+      return {
+        queryKey,
+        queryFn: () => getTags(id),
+        meta: {
+          source: 'drafter.components.DraftCreator.tags',
+          operation: 'list',
+          resource: 'products.metadata.tags',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'tags', 'multi'],
+        },
+      };
+    }),
   });
 
-  const parameterQueries = useQueries({
-    queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.parameters(id)),
-      queryFn: () => getParameters(id),
-    })),
+  const parameterQueries = createMultiQueryV2({
+    queries: selectedCatalogIds.map((id: string) => {
+      const queryKey = normalizeQueryKey(QUERY_KEYS.products.metadata.parameters(id));
+      return {
+        queryKey,
+        queryFn: () => getParameters(id),
+        meta: {
+          source: 'drafter.components.DraftCreator.parameters',
+          operation: 'list',
+          resource: 'products.metadata.parameters',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'parameters', 'multi'],
+        },
+      };
+    }),
   });
 
   const categories = useMemo(

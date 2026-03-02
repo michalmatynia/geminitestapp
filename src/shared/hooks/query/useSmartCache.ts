@@ -4,7 +4,7 @@ import { useQueryClient, type Query, type UseQueryResult } from '@tanstack/react
 import { useCallback } from 'react';
 
 import { fetchLiteSettingsCached } from '@/shared/api/settings-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // Predefined cache strategies
@@ -128,11 +128,18 @@ export function useSmartCache(): {
       }>
     ): Promise<void> => {
       const promises = criticalQueries.map(({ queryKey, queryFn }) =>
-        queryClient.prefetchQuery({
+        prefetchQueryV2(queryClient, {
           queryKey,
           queryFn,
           staleTime: cacheStrategies.longTerm.staleTime,
-        })
+          meta: {
+            source: 'shared.hooks.query.useSmartCache.preloadCriticalData',
+            operation: 'list',
+            resource: 'critical-data',
+            domain: 'global',
+            tags: ['cache', 'preload'],
+          },
+        })()
       );
 
       await Promise.allSettled(promises);
@@ -162,16 +169,30 @@ export function useCacheWarming(): {
           queryKey: QUERY_KEYS.user.preferences(userId),
           queryFn: async (): Promise<unknown> =>
             await fetch(`/api/user/${userId}/preferences`).then((r: Response) => r.json()),
+          resource: 'user.preferences',
         },
         {
           queryKey: QUERY_KEYS.user.settings(userId),
           queryFn: async (): Promise<unknown> =>
             await fetch(`/api/user/${userId}/settings`).then((r: Response) => r.json()),
+          resource: 'user.settings',
         },
       ];
 
       await Promise.allSettled(
-        userQueries.map(({ queryKey, queryFn }) => queryClient.prefetchQuery({ queryKey, queryFn }))
+        userQueries.map(({ queryKey, queryFn, resource }) =>
+          prefetchQueryV2(queryClient, {
+            queryKey,
+            queryFn,
+            meta: {
+              source: 'shared.hooks.query.useCacheWarming.warmUserSpecificData',
+              operation: 'list',
+              resource,
+              domain: 'global',
+              tags: ['cache', 'warming', 'user'],
+            },
+          })()
+        )
       );
     },
     [queryClient]
@@ -187,11 +208,18 @@ export function useCacheWarming(): {
 
       await Promise.allSettled(
         navigationQueries.map(({ queryKey, queryFn }) =>
-          queryClient.prefetchQuery({
+          prefetchQueryV2(queryClient, {
             queryKey,
             queryFn,
             staleTime: cacheStrategies.standard.staleTime,
-          })
+            meta: {
+              source: 'shared.hooks.query.useCacheWarming.warmNavigationData',
+              operation: 'list',
+              resource: 'navigation',
+              domain: 'global',
+              tags: ['cache', 'warming', 'navigation'],
+            },
+          })()
         )
       );
     },
@@ -209,11 +237,18 @@ export function useCacheWarming(): {
 
     await Promise.allSettled(
       frequentQueries.map(({ queryKey, queryFn }) =>
-        queryClient.prefetchQuery({
+        prefetchQueryV2(queryClient, {
           queryKey,
           queryFn,
           staleTime: cacheStrategies.longTerm.staleTime,
-        })
+          meta: {
+            source: 'shared.hooks.query.useCacheWarming.warmFrequentlyAccessedData',
+            operation: 'list',
+            resource: 'settings.lite',
+            domain: 'global',
+            tags: ['cache', 'warming', 'frequent'],
+          },
+        })()
       )
     );
   }, [queryClient]);

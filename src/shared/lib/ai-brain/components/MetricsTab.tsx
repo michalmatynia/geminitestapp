@@ -147,6 +147,7 @@ export function MetricsTab(): React.JSX.Element {
               </span>
               <StatusBadge
                 status={latestAnalyticsInsight ? latestAnalyticsInsight.status : 'none'}
+                label={latestAnalyticsInsight ? latestAnalyticsInsight.status : 'never'}
               />
             </div>
             <div className='mt-3 space-y-2'>
@@ -167,7 +168,10 @@ export function MetricsTab(): React.JSX.Element {
               <span className='text-[11px] font-medium text-cyan-300 uppercase'>
                 Latest Logs Audit
               </span>
-              <StatusBadge status={latestLogsInsight ? latestLogsInsight.status : 'none'} />
+              <StatusBadge
+                status={latestLogsInsight ? latestLogsInsight.status : 'none'}
+                label={latestLogsInsight ? latestLogsInsight.status : 'never'}
+              />
             </div>
             <div className='mt-3 space-y-2'>
               <MetadataItem

@@ -7,7 +7,7 @@ import type { PromptExploderLearnedTemplate } from '../../types';
 import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationRuleStack,
-} from '../../validation-stack';
+} from '@/shared/contracts/prompt-exploder';
 
 export interface SettingsRuntimeState {
   activeValidationScope: PromptExploderRuntimeValidationScope;

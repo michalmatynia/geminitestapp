@@ -394,3 +394,5 @@ export type ProductFormData = ProductCreateInputDto;
 export type ProductListPreferences = ProductListPreferencesDto;
 
 export type ProductImageSlot = ManagedImageSlot;
+
+export type DraftProvider = 'mongodb' | 'prisma';

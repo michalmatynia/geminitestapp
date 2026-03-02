@@ -41,8 +41,9 @@ export function BrainStateOverview(): React.JSX.Element {
           <div className='mt-2 flex items-center gap-2'>
             <StatusBadge
               status={brainConfigured ? 'ok' : 'none'}
-              size='xs'
+              size='sm'
               className='uppercase tracking-wide text-[10px]'
+              label={brainConfigured ? 'ok' : 'none'}
             />
             <span className='text-[11px] text-gray-300'>
               {hasCustomRouting ? 'Custom routing active' : 'Using global defaults'}

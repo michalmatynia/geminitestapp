@@ -26,7 +26,7 @@ const CAPTURE_COUNTRY_HINTS = [
 const CAPTURE_STREET_HINT_PATTERN =
   /\b(ul\.?|ulica|street|st\.?|avenue|ave\.?|road|rd\.?|al\.?|aleja|plac|pl\.)\b/i;
 const CAPTURE_PARTY_LABEL_LINE_PATTERN =
-  /^(addresser|nadawca|sender|wnioskodawca|addressee|adresat|recipient|odbiorca|organ)\s*[:-]?$/i;
+  /^(addresser|from|od|nadawca|sender|wnioskodawca|addressee|to|do|adresat|recipient|odbiorca|organ)\s*[:-]?$/i;
 const CAPTURE_ORGANIZATION_HINTS = [
   'zus',
   'inspektorat',

@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   Integration,
   IntegrationConnection,
@@ -24,7 +22,6 @@ export function useCreateIntegration(): MutationResult<
   Integration,
   { name: string; slug: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.all;
   return createCreateMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),
@@ -37,9 +34,7 @@ export function useCreateIntegration(): MutationResult<
       mutationKey,
       tags: ['integrations', 'create'],
     },
-    onSuccess: () => {
-      void invalidateIntegrations(queryClient);
-    },
+    invalidate: (queryClient) => invalidateIntegrations(queryClient),
   });
 }
 
@@ -51,7 +46,6 @@ type UpsertConnectionVariables = {
 };
 
 export function useUpsertConnection() {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createMutationV2<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
     mutationFn: async (variables): Promise<IntegrationConnection> => {
@@ -74,7 +68,7 @@ export function useUpsertConnection() {
       mutationKey,
       tags: ['integrations', 'connections', 'upsert'],
     },
-    onSuccess: (_data, variables): void => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });
@@ -88,7 +82,6 @@ type DeleteConnectionVariables = {
 };
 
 export function useDeleteConnection() {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
     mutationFn: ({
@@ -114,7 +107,7 @@ export function useDeleteConnection() {
       mutationKey,
       tags: ['integrations', 'connections', 'delete'],
     },
-    onSuccess: (_data, variables): void => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });
@@ -155,7 +148,6 @@ export function useTestConnection() {
 }
 
 export function useDisconnectAllegro() {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createCreateMutationV2<
     Record<string, unknown>,
@@ -175,7 +167,7 @@ export function useDisconnectAllegro() {
       mutationKey,
       tags: ['integrations', 'connections', 'allegro', 'disconnect'],
     },
-    onSuccess: (_data, variables) => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });

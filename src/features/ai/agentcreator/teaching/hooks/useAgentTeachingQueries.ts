@@ -14,7 +14,6 @@ import {
   createDeleteMutationV2,
   createListQueryV2,
   createPaginatedListQueryV2,
-  createSingleQueryV2,
   createCreateMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
@@ -245,8 +244,6 @@ export function useEmbeddingDocuments(
     queryKey,
     queryFn: () => fetchEmbeddingDocs(collectionId),
     enabled: true,
-    transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to load embedding documents.'),
     meta: {
       source: 'agentTeaching.hooks.useEmbeddingDocuments',
       operation: 'detail',

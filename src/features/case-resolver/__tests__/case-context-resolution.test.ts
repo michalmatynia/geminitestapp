@@ -4,6 +4,7 @@ import {
   isCaseResolverCreateContextReady,
   resolveCaseScopedFolderTarget,
   resolveCaseContainerIdForFileId,
+  resolveCaseContainerIdForFolderPath,
   resolveCaseResolverActiveCaseId,
   serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
@@ -44,6 +45,26 @@ describe('case resolver case context resolution', () => {
 
     expect(resolveCaseContainerIdForFileId(filesById, caseFile.id)).toBe(caseFile.id);
     expect(resolveCaseContainerIdForFileId(filesById, documentFile.id)).toBe(caseFile.id);
+  });
+
+  it('resolves case container id for uniquely owned folder paths', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const filesById = buildFilesById([caseFile]);
+
+    expect(
+      resolveCaseContainerIdForFolderPath({
+        filesById,
+        folderRecords: [
+          { path: 'zus', ownerCaseId: caseFile.id },
+          { path: 'zus/outgoing', ownerCaseId: caseFile.id },
+        ],
+        folderPath: 'zus/outgoing/contracts',
+      })
+    ).toBe(caseFile.id);
   });
 
   it('keeps active case null while requested case is still missing', () => {
@@ -119,6 +140,25 @@ describe('case resolver case context resolution', () => {
         requestedCaseStatus: 'ready',
       })
     ).toBe(false);
+  });
+
+  it('keeps active case anchored to selected folder ownership when file selection is empty', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const files = [caseFile];
+
+    const activeCaseId = resolveCaseResolverActiveCaseId({
+      requestedFileId: null,
+      requestedCaseContainerId: null,
+      selectedCaseContainerId: null,
+      selectedFolderCaseContainerId: caseFile.id,
+      files,
+    });
+
+    expect(activeCaseId).toBe(caseFile.id);
   });
 
   it('detects requested file presence in workspace files', () => {

@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import type { CreateMutation } from '@/shared/contracts/ui';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -11,7 +9,6 @@ export function useCsvImportMutation(): CreateMutation<
   unknown,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.products.all;
   return createCreateMutationV2({
     mutationFn: async ({
@@ -41,9 +38,8 @@ export function useCsvImportMutation(): CreateMutation<
       mutationKey,
       tags: ['products', 'import', 'csv'],
     },
-    onSuccess: () => {
-      // Invalidate products as they might have been added/updated
-      void invalidateProductsAndCounts(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
     },
   });
 }

@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverCaseOverviewWorkspace } from '@/features/case-resolver/components/CaseResolverCaseOverviewWorkspace';
+import {
+  buildCaseMetadataDraft,
+  buildCaseMetadataPatch,
+} from '@/features/case-resolver/case-overview-draft';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({
@@ -56,30 +61,46 @@ import {
 
 const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
-  onUpdateActiveCase = vi.fn()
+  onSaveActiveCase = vi.fn()
 ): ReturnType<typeof render> => {
   const workspaceFiles = activeCaseFile ? [activeCaseFile] : [];
-  const contextValue: Partial<CaseResolverPageContextValue> = {
-    workspace: {
-      id: 'workspace-1',
-      files: workspaceFiles,
-      assets: [],
-    } as unknown as CaseResolverPageContextValue['workspace'],
-    activeCaseId: activeCaseFile?.id ?? null,
-    activeFile: activeCaseFile,
-    caseTagOptions: BASE_OPTIONS,
-    caseIdentifierOptions: BASE_OPTIONS,
-    caseCategoryOptions: BASE_OPTIONS,
-    caseReferenceOptions: BASE_OPTIONS.filter((option): boolean => option.value !== '__none__'),
-    parentCaseOptions: BASE_OPTIONS,
-    onUpdateActiveCase,
+  const TestProvider = (): React.JSX.Element => {
+    const [draft, setDraft] = React.useState(buildCaseMetadataDraft(activeCaseFile));
+    const contextValue: Partial<CaseResolverPageContextValue> = {
+      workspace: {
+        id: 'workspace-1',
+        files: workspaceFiles,
+        assets: [],
+      } as unknown as CaseResolverPageContextValue['workspace'],
+      activeCaseId: activeCaseFile?.id ?? null,
+      activeFile: activeCaseFile,
+      caseTagOptions: BASE_OPTIONS,
+      caseIdentifierOptions: BASE_OPTIONS,
+      caseCategoryOptions: BASE_OPTIONS,
+      caseReferenceOptions: BASE_OPTIONS.filter((option): boolean => option.value !== '__none__'),
+      parentCaseOptions: BASE_OPTIONS,
+      activeCaseFile,
+      activeCaseMetadataDraft: draft,
+      isActiveCaseMetadataDirty: buildCaseMetadataPatch(activeCaseFile, draft) !== null,
+      onUpdateActiveCase: vi.fn(),
+      onUpdateActiveCaseDraft: (patch) => {
+        setDraft((current) => (current ? { ...current, ...patch } : current));
+      },
+      onSaveActiveCase: () => {
+        const patch = buildCaseMetadataPatch(activeCaseFile, draft);
+        if (patch) onSaveActiveCase(patch);
+      },
+      onDiscardActiveCaseChanges: () => setDraft(buildCaseMetadataDraft(activeCaseFile)),
+    };
+
+    return (
+      <CaseResolverPageProvider value={contextValue as CaseResolverPageContextValue}>
+        <CaseResolverCaseOverviewWorkspace />
+      </CaseResolverPageProvider>
+    );
   };
 
-  return render(
-    <CaseResolverPageProvider value={contextValue as CaseResolverPageContextValue}>
-      <CaseResolverCaseOverviewWorkspace />
-    </CaseResolverPageProvider>
-  );
+  return render(<TestProvider />);
 };
 
 describe('CaseResolverCaseOverviewWorkspace', () => {
@@ -97,8 +118,9 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     renderWorkspace(caseFile);
 
-    expect(screen.getByText('Case-specific options')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Case Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Signature ID')).toBeInTheDocument();
+    expect(screen.queryByText('Case-specific options')).not.toBeInTheDocument();
     expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Show Relations' })).toBeInTheDocument();
@@ -118,29 +140,29 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
   it('updates case name when Update is clicked', () => {
     const caseFile = buildCaseFile();
-    const onUpdateActiveCase = vi.fn();
+    const onSaveActiveCase = vi.fn();
 
-    renderWorkspace(caseFile, onUpdateActiveCase);
+    renderWorkspace(caseFile, onSaveActiveCase);
 
     const nameInput = screen.getByDisplayValue('Case Alpha');
     fireEvent.change(nameInput, { target: { value: 'Case Omega' } });
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
-    expect(onUpdateActiveCase).toHaveBeenCalledTimes(1);
-    expect(onUpdateActiveCase).toHaveBeenCalledWith({ name: 'Case Omega' });
+    expect(onSaveActiveCase).toHaveBeenCalledTimes(1);
+    expect(onSaveActiveCase).toHaveBeenCalledWith({ name: 'Case Omega' });
   });
 
   it('does not update case name when case is locked', () => {
     const caseFile = buildCaseFile({ isLocked: true });
-    const onUpdateActiveCase = vi.fn();
+    const onSaveActiveCase = vi.fn();
 
-    renderWorkspace(caseFile, onUpdateActiveCase);
+    renderWorkspace(caseFile, onSaveActiveCase);
 
     const nameInput = screen.getByDisplayValue('Case Alpha');
     fireEvent.change(nameInput, { target: { value: 'Case Omega' } });
     expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled();
 
-    expect(onUpdateActiveCase).not.toHaveBeenCalled();
+    expect(onSaveActiveCase).not.toHaveBeenCalled();
   });
 
   it('renders case status dropdown with pending as default value', () => {
@@ -153,22 +175,22 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
   it('updates happening date when value changes and Update is clicked', () => {
     const caseFile = buildCaseFile();
-    const onUpdateActiveCase = vi.fn();
+    const onSaveActiveCase = vi.fn();
 
-    renderWorkspace(caseFile, onUpdateActiveCase);
+    renderWorkspace(caseFile, onSaveActiveCase);
 
     const happeningDateInput = screen.getByPlaceholderText('YYYY-MM-DD or custom date');
     fireEvent.change(happeningDateInput, { target: { value: '2026-03-12' } });
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
-    expect(onUpdateActiveCase).toHaveBeenCalledWith({ happeningDate: '2026-03-12' });
+    expect(onSaveActiveCase).toHaveBeenCalledWith({ happeningDate: '2026-03-12' });
   });
 
   it('batches multiple metadata changes into one update', () => {
     const caseFile = buildCaseFile();
-    const onUpdateActiveCase = vi.fn();
+    const onSaveActiveCase = vi.fn();
 
-    renderWorkspace(caseFile, onUpdateActiveCase);
+    renderWorkspace(caseFile, onSaveActiveCase);
 
     fireEvent.change(screen.getByDisplayValue('Case Alpha'), {
       target: { value: 'Case Omega' },
@@ -179,7 +201,7 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Update' }));
 
-    expect(onUpdateActiveCase).toHaveBeenCalledWith({
+    expect(onSaveActiveCase).toHaveBeenCalledWith({
       name: 'Case Omega',
       happeningDate: '2026-03-12',
     });

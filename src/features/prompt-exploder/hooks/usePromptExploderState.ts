@@ -35,7 +35,9 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import { type PromptExploderParserTuningRuleDraft } from '../parser-tuning';
+import {
+  type PromptExploderParserTuningRuleDraft,
+} from '@/shared/contracts/prompt-exploder';
 import {
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,

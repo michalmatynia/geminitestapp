@@ -3,15 +3,10 @@
 import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
+import type { AdminLayoutState, AdminLayoutActions } from '@/shared/contracts/admin';
 
-// --- Granular Contexts ---
+export type { AdminLayoutState, AdminLayoutActions };
 
-export interface AdminLayoutState {
-  isMenuCollapsed: boolean;
-  isMenuHidden: boolean;
-  isProgrammaticallyCollapsed: boolean;
-  aiDrawerOpen: boolean;
-}
 const StateContext = createContext<AdminLayoutState | null>(null);
 export const useAdminLayoutState = () => {
   const context = useContext(StateContext);
@@ -19,12 +14,6 @@ export const useAdminLayoutState = () => {
   return context;
 };
 
-export interface AdminLayoutActions {
-  setIsMenuCollapsed: (isCollapsed: boolean) => void;
-  setIsMenuHidden: (isHidden: boolean) => void;
-  setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
-  setAiDrawerOpen: (isOpen: boolean) => void;
-}
 const ActionsContext = createContext<AdminLayoutActions | null>(null);
 export const useAdminLayoutActions = () => {
   const context = useContext(ActionsContext);

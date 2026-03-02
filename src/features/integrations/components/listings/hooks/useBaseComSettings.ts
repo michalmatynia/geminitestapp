@@ -1,4 +1,3 @@
-import { useQueries } from '@tanstack/react-query';
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import {
@@ -12,7 +11,7 @@ import {
   getBaseInventoriesQueryOptions,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Template, BaseInventory } from '@/shared/contracts/integrations';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping
@@ -40,16 +39,13 @@ export function useBaseComSettings(
   const hasInitializedInventory = useRef(false);
 
   // Queries
-  const results = useQueries({
+  const results = createMultiQueryV2<unknown>({
     queries: [
       getExportTemplatesQueryOptions(),
       getActiveExportTemplateQueryOptions(),
       getDefaultExportInventoryQueryOptions(),
       getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
-    ].map((query) => ({
-      ...query,
-      queryKey: normalizeQueryKey(query.queryKey),
-    })),
+    ],
   });
 
   const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;

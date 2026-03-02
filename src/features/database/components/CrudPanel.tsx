@@ -244,19 +244,7 @@ export function CrudPanel(props: {
     </>
   );
 
-  const filters = (
-    <DatabaseTableSelector
-      selectedTable={selectedTable}
-      setSelectedTable={setSelectedTable}
-      tableDetails={tableDetails}
-      onRefresh={fetchRows}
-      onAddRow={() => setShowAddModal(true)}
-      isFetching={rowsQuery.isFetching}
-      setPage={setPage}
-      setMutationError={setMutationError}
-      setSuccessMessage={setSuccessMessage}
-    />
-  );
+  const filters = <DatabaseTableSelector />;
 
   const footer =
     selectedTable && !isLoadingRows && rows.length > 0 ? (

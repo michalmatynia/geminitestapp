@@ -29,7 +29,6 @@ import {
   buildPromptExploderParserTuningDrafts,
   validatePromptExploderParserTuningDrafts,
 } from '../parser-tuning';
-import type { PromptExploderParserTuningRuleDraft } from '../parser-tuning';
 import { ensurePromptExploderPatternPack } from '../pattern-pack';
 import {
   buildPatternSnapshot,
@@ -37,19 +36,23 @@ import {
   prependPatternSnapshot,
   removePatternSnapshotById,
 } from '../pattern-snapshots';
-import type { PromptExploderPatternSnapshot } from '../pattern-snapshots';
 import {
   resolvePromptValidationRuntime,
   type PromptValidationOrchestrationResult,
 } from '../prompt-validation-orchestrator';
 import { getPromptExploderRuntimeGuardrailIssue } from '../runtime-guardrails';
+import type {
+  PromptExploderSettings,
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderPatternSnapshot,
+  PromptExploderLearnedTemplate,
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
 import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
-import type { PromptExploderLearnedTemplate, PromptExploderSettings } from '../types';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource,
-  type PromptExploderRuntimeValidationScope,
 } from '../validation-stack';
 
 import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';

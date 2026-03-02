@@ -10,7 +10,6 @@ import type {
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
 import {
-  createListQueryV2,
   createMutationV2,
   createPaginatedListQueryV2,
 } from '@/shared/lib/query-factories-v2';
@@ -118,8 +117,6 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       const data = response.data as { runs: AiPathRunRecord[]; total: number };
       return { items: data.runs, total: data.total };
     },
-    transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to load dead-letter runs.'),
     meta: {
       source: 'ai.ai-paths.dead-letter.runs',
       operation: 'list',

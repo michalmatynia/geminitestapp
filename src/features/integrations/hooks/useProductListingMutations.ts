@@ -164,12 +164,9 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       }
       removeListingBadgeStatus(queryClient, vars.productId, 'base');
     },
-    onSuccess: (_: ExportResponse, vars: GenericExportToBaseVariables): void => {
+    invalidate: (queryClient, _data, vars) => {
       setListingBadgeStatus(queryClient, vars.productId, 'base', 'active');
-      void invalidateListingsBadgesAndQueues(queryClient, vars.productId);
-    },
-    onSettled: (_data, _error, vars): void => {
-      void invalidateListingsBadgesAndQueues(queryClient, vars.productId);
+      return invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     },
   });
 }
@@ -178,8 +175,6 @@ export function useGenericCreateListingMutation(): CreateMutation<
   Record<string, unknown>,
   { productId: string; integrationId: string; connectionId: string }
   > {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: ({
       productId,
@@ -203,12 +198,7 @@ export function useGenericCreateListingMutation(): CreateMutation<
       mutationKey: integrationJobsQueryKey,
       tags: ['integrations', 'listings', 'create'],
     },
-    onSuccess: (
-      _: Record<string, unknown>,
-      vars: { productId: string; integrationId: string; connectionId: string }
-    ): void => {
-      void invalidateProductListingsAndBadges(queryClient, vars.productId);
-    },
+    invalidate: (queryClient, _data, vars) => invalidateProductListingsAndBadges(queryClient, vars.productId),
   });
 }
 
@@ -284,61 +274,46 @@ export function useDeleteFromBaseMutation(
         queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
       }
     },
-    onSuccess: (): void => {
-      void invalidateListingsBadgesAndQueues(queryClient, productId);
-    },
-    onSettled: (): void => {
-      void invalidateListingsBadgesAndQueues(queryClient, productId);
-    },
+    invalidate: (queryClient) => invalidateListingsBadgesAndQueues(queryClient, productId),
   });
 }
 
 export function usePurgeListingMutation(productId: string): DeleteMutation {
-  const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
-
   return createDeleteMutationV2({
     mutationFn: (listingId: string) =>
       api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.usePurgeListingMutation',
       operation: 'delete',
       resource: 'integrations.listings.purge',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'purge'],
     },
-    onSuccess: (): void => {
-      void invalidateProductListingsAndBadges(queryClient, productId);
-    },
+    invalidate: (queryClient) => invalidateProductListingsAndBadges(queryClient, productId),
   });
 }
 
 export function useUpdateListingInventoryIdMutation(
   productId: string
 ): UpdateMutation<Record<string, unknown>, { listingId: string; inventoryId: string }> {
-  const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
-
   return createUpdateMutationV2({
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) =>
       api.patch<Record<string, unknown>>(
         `/api/integrations/products/${productId}/listings/${listingId}`,
         { inventoryId }
       ),
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useUpdateListingInventoryIdMutation',
       operation: 'update',
       resource: 'integrations.listings.inventory-id',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'inventory-id', 'update'],
     },
-    onSuccess: (): void => {
-      void invalidateProductListingsAndBadges(queryClient, productId);
-    },
+    invalidate: (queryClient) => invalidateProductListingsAndBadges(queryClient, productId),
   });
 }
 
@@ -348,9 +323,6 @@ export function useSyncBaseImagesMutation(
   { status: string; count: number; added: number },
   { listingId: string; inventoryId?: string }
 > {
-  const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
-
   return createUpdateMutationV2({
     mutationFn: async ({
       listingId,
@@ -369,18 +341,18 @@ export function useSyncBaseImagesMutation(
         added: payload.added ?? 0,
       };
     },
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useSyncBaseImagesMutation',
       operation: 'update',
       resource: 'integrations.listings.base-images',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'base-images', 'sync'],
     },
-    onSuccess: (): void => {
+    invalidate: (queryClient) => {
       void invalidateProductListingsAndBadges(queryClient, productId);
-      void invalidateProducts(queryClient);
+      return invalidateProducts(queryClient);
     },
   });
 }
@@ -389,7 +361,6 @@ export function useExportToBaseMutation(
   productId: string
 ): UpdateMutation<ExportResponse, ExportToBaseVariables> {
   const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
 
   return createCreateMutationV2({
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
@@ -412,13 +383,13 @@ export function useExportToBaseMutation(
         throw error;
       }
     },
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useExportToBaseMutation',
       operation: 'create',
       resource: 'integrations.listings.export-to-base',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'export-to-base'],
     },
     onMutate: async (): Promise<ListingBadgeContext> => {
@@ -434,12 +405,9 @@ export function useExportToBaseMutation(
       }
       removeListingBadgeStatus(queryClient, productId, 'base');
     },
-    onSuccess: (): void => {
+    invalidate: (queryClient) => {
       setListingBadgeStatus(queryClient, productId, 'base', 'active');
-      void invalidateListingsBadgesAndQueues(queryClient, productId);
-    },
-    onSettled: (): void => {
-      void invalidateListingsBadgesAndQueues(queryClient, productId);
+      return invalidateListingsBadgesAndQueues(queryClient, productId);
     },
   });
 }
@@ -455,9 +423,6 @@ export function useCreateListingMutation(productId: string): CreateMutation<
     templateId?: string | null;
   }
 > {
-  const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
-
   return createCreateMutationV2({
     mutationFn: ({
       integrationId,
@@ -482,21 +447,21 @@ export function useCreateListingMutation(productId: string): CreateMutation<
         ...(typeof autoRelistLeadMinutes === 'number' ? { autoRelistLeadMinutes } : {}),
         ...(templateId !== undefined ? { templateId } : {}),
       }),
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useCreateListingMutation',
       operation: 'create',
       resource: 'integrations.listings',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'create'],
     },
-    onSuccess: (data): void => {
+    invalidate: (queryClient, data) => {
       const queueName = (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
-      void invalidateProductListingsAndBadges(queryClient, productId);
+      return invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -509,9 +474,6 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
   },
   { listingId: string }
 > {
-  const queryClient = useQueryClient();
-  const mutationKey = getProductListingsQueryKey(productId);
-
   return createCreateMutationV2({
     mutationFn: ({ listingId }: { listingId: string }) =>
       api.post<{
@@ -519,19 +481,19 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
         listingId?: string;
         queue?: { name?: string; jobId?: string; enqueuedAt?: string };
       }>(`/api/integrations/products/${productId}/listings/${listingId}/relist`, {}),
-    mutationKey,
+    mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useRelistTraderaMutation',
       operation: 'create',
       resource: 'integrations.listings.tradera-relist',
       domain: 'integrations',
-      mutationKey,
+      mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'tradera', 'relist'],
     },
-    onSuccess: (): void => {
+    invalidate: (queryClient) => {
       setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       void invalidateProductListingsAndBadges(queryClient, productId);
-      void invalidateProducts(queryClient);
+      return invalidateProducts(queryClient);
     },
   });
 }

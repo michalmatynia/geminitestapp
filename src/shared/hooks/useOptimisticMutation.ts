@@ -1,14 +1,11 @@
 'use client';
 
 import {
-  useQueryClient,
-  type MutationFunctionContext,
-  type QueryKey,
   type UseMutationResult,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createOptimisticMutationV2 } from '@/shared/lib/query-factories-v2';
 
 interface OptimisticUpdateConfig<TData, TVariables> {
   queryKey: readonly unknown[];
@@ -21,50 +18,18 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
   mutationFn: (variables: TVariables) => Promise<TData>,
   config: OptimisticUpdateConfig<TCacheData, TVariables>
 ): UseMutationResult<TData, TError, TVariables, { previousData: TCacheData | undefined }> {
-  const queryClient = useQueryClient();
-  const mutationKey: QueryKey = config.queryKey;
-
-  return createUpdateMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
-    mutationKey,
+  return createOptimisticMutationV2<TData, TVariables, TCacheData>({
+    queryKey: config.queryKey,
+    updateFn: config.updateFn,
+    revertOnError: config.revertOnError,
+    mutationFn,
     meta: {
-      mutationKey,
-      operation: 'update',
       source: 'shared.hooks.useOptimisticMutation',
+      operation: 'update',
       resource: 'optimistic-mutation',
       domain: 'global',
       samplingRate: 0.4,
       tags: ['shared-hook', 'optimistic'],
-    },
-    mutationFn,
-    onMutate: async (variables: TVariables): Promise<{ previousData: TCacheData | undefined }> => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: config.queryKey });
-
-      // Snapshot previous value
-      const previousData = queryClient.getQueryData<TCacheData>(config.queryKey);
-
-      // Optimistically update
-      queryClient.setQueryData<TCacheData>(
-        config.queryKey,
-        (old: TCacheData | undefined): TCacheData => config.updateFn(old, variables)
-      );
-
-      return { previousData };
-    },
-    onError: (
-      _err: Error,
-      _variables: TVariables,
-      onMutateResult: { previousData: TCacheData | undefined } | undefined,
-      _mutationContext: MutationFunctionContext
-    ): void => {
-      // Rollback on error if enabled
-      if (config.revertOnError !== false && onMutateResult?.previousData !== undefined) {
-        queryClient.setQueryData(config.queryKey, onMutateResult.previousData);
-      }
-    },
-    onSettled: (_data, _error, _variables, _onMutateResult, _mutationContext) => {
-      // Always refetch after mutation
-      void queryClient.invalidateQueries({ queryKey: config.queryKey });
     },
   }) as unknown as UseMutationResult<
     TData,

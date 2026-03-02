@@ -7,6 +7,21 @@ import { Textarea, Label, Input, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
+type FunctionExpectedType = NonNullable<FunctionConfig['expectedType']>;
+
+const normalizeFunctionExpectedType = (value: string): FunctionExpectedType | undefined => {
+  switch (value) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+    case 'object':
+    case 'array':
+      return value;
+    default:
+      return undefined;
+  }
+};
+
 export function FunctionNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
@@ -71,7 +86,7 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
     updateSelectedNodeConfig({
       function: {
         ...functionConfig,
-        expectedType: value || undefined,
+        expectedType: normalizeFunctionExpectedType(value),
       },
     });
   };
@@ -196,4 +211,3 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

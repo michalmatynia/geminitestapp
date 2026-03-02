@@ -7,13 +7,13 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
   PromptExploderSegment,
-} from './types';
-import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+  PromptExploderRuntimeRuleProfile,
+  SegmentSelectionStrategy,
+} from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderRuntimeValidationScope } from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
-
-export type PromptExploderRuntimeRuleProfile = 'all' | 'pattern_pack' | 'learned_only';
 
 const normalizeApprovals = (value: unknown): number => {
   if (typeof value === 'number') return value;
@@ -93,16 +93,6 @@ export const reexplodePromptWithRuntime = (args: {
     ...(args.validationScope ? { validationScope: args.validationScope } : {}),
   });
 };
-
-export type SegmentSelectionStrategy =
-  | {
-      kind: 'match_title';
-      title: string;
-    }
-  | {
-      kind: 'preserve_id';
-      previousId: string | null;
-    };
 
 export const resolveSegmentIdAfterReexplode = (args: {
   document: PromptExploderDocument;

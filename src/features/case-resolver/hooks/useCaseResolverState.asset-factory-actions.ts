@@ -2,12 +2,31 @@
 
 import React, { useCallback } from 'react';
 import { CASE_RESOLVER_SETTINGS_KEY, parseCaseResolverSettings } from '../settings';
+import {
+  appendOwnedFolderRecords,
+  createUniqueCaseFileName,
+  resolveCaseScopedFolderTarget,
+} from './useCaseResolverState.helpers';
+import {
+  createCaseResolverAssetFile,
+  createEmptyNodeFileSnapshot,
+  createCaseResolverFile,
+  normalizeFolderPaths,
+  serializeNodeFileSnapshot,
+} from '../settings';
+import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import type { Toast } from '@/shared/contracts/ui';
+import type { CaseResolverAssetFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 export function useCaseResolverAssetFactoryActions({
   settingsStoreRef,
   toast,
+  updateWorkspace,
+  workspace,
+  defaultTagId,
+  defaultCaseIdentifierId,
+  defaultCategoryId,
   activeCaseId,
   requestedCaseStatus,
   setSelectedFileId,
@@ -17,6 +36,20 @@ export function useCaseResolverAssetFactoryActions({
 }: {
   settingsStoreRef: React.MutableRefObject<SettingsStoreValue>;
   toast: Toast;
+  updateWorkspace: (
+    updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
+  ) => void;
+  workspace: CaseResolverWorkspace;
+  defaultTagId: string | null;
+  defaultCaseIdentifierId: string | null;
+  defaultCategoryId: string | null;
   activeCaseId: string | null;
   requestedCaseStatus: 'loading' | 'ready' | 'missing';
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -24,6 +57,36 @@ export function useCaseResolverAssetFactoryActions({
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   treeSaveToast: string;
 }) {
+  const createUniqueAssetName = useCallback(
+    ({
+      folder,
+      baseName,
+    }: {
+      folder: string;
+      baseName: string;
+    }): string => {
+      const normalizedBaseName = baseName.trim() || 'New Asset';
+      const existingNames = new Set(
+        workspace.assets
+          .filter((asset: CaseResolverAssetFile): boolean => asset.folder === folder)
+          .map((asset: CaseResolverAssetFile): string => asset.name.trim().toLowerCase())
+      );
+      if (!existingNames.has(normalizedBaseName.toLowerCase())) {
+        return normalizedBaseName;
+      }
+      let index = 2;
+      while (index < 10000) {
+        const candidate = `${normalizedBaseName} ${index}`;
+        if (!existingNames.has(candidate.toLowerCase())) {
+          return candidate;
+        }
+        index += 1;
+      }
+      return `${normalizedBaseName} ${Date.now()}`;
+    },
+    [workspace.assets]
+  );
+
   const handleCreateScanFile = useCallback(
     (targetFolderPath: string | null): void => {
       const rawSettings = settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY);
@@ -39,39 +102,191 @@ export function useCaseResolverAssetFactoryActions({
         return;
       }
 
-      const name = `New Scan File ${new Date().toLocaleTimeString()}`;
-      const id = `scan-file-${Date.now()}`;
-
-      toast(`${treeSaveToast}: ${name} created.`, { variant: 'success' });
-      setSelectedFileId(id);
-      if (targetFolderPath) {
-        setSelectedFolderPath(targetFolderPath);
+      let createdScanFileId: string | null = null;
+      updateWorkspace(
+        (current: CaseResolverWorkspace) => {
+          const folder = resolveCaseScopedFolderTarget({
+            targetFolderPath,
+            ownerCaseId: activeCaseId,
+            folderRecords: current.folderRecords,
+          });
+          const file = createCaseResolverFile({
+            id: createId('scan-file'),
+            workspaceId: current.id,
+            fileType: 'scanfile',
+            name: createUniqueCaseFileName({
+              files: current.files,
+              folder,
+              baseName: 'New Scan File',
+            }),
+            folder,
+            parentCaseId: activeCaseId,
+            tagId: defaultTagId,
+            caseIdentifierId: defaultCaseIdentifierId,
+            categoryId: defaultCategoryId,
+            scanSlots: [],
+          });
+          createdScanFileId = file.id;
+          return {
+            ...current,
+            files: [...current.files, file],
+            folders: normalizeFolderPaths([...current.folders, folder]),
+            folderRecords: appendOwnedFolderRecords({
+              records: current.folderRecords,
+              folderPath: folder,
+              ownerCaseId: activeCaseId,
+            }),
+          };
+        },
+        { persistToast: treeSaveToast }
+      );
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      if (createdScanFileId) {
+        setSelectedFileId(createdScanFileId);
       }
     },
     [
       activeCaseId,
+      createUniqueCaseFileName,
+      defaultCaseIdentifierId,
+      defaultCategoryId,
+      defaultTagId,
       requestedCaseStatus,
+      setSelectedAssetId,
       setSelectedFileId,
       setSelectedFolderPath,
       settingsStoreRef,
       toast,
       treeSaveToast,
+      updateWorkspace,
     ]
   );
 
-  const handleCreateAsset = useCallback((): void => {
+  const handleCreateImageAsset = useCallback((targetFolderPath: string | null): void => {
     if (!activeCaseId) {
-      toast('Cannot create asset without a selected case.', { variant: 'warning' });
+      toast(
+        requestedCaseStatus === 'loading'
+          ? 'Case context is still loading. Please wait.'
+          : 'Cannot create image asset without a selected case.',
+        { variant: 'warning' }
+      );
       return;
     }
 
-    const id = `asset-${Date.now()}`;
-    setSelectedAssetId(id);
-    toast('New asset created.', { variant: 'success' });
-  }, [activeCaseId, setSelectedAssetId, toast]);
+    let createdAssetId: string | null = null;
+    updateWorkspace(
+      (current: CaseResolverWorkspace) => {
+        const folder = resolveCaseScopedFolderTarget({
+          targetFolderPath,
+          ownerCaseId: activeCaseId,
+          folderRecords: current.folderRecords,
+        });
+        const asset = createCaseResolverAssetFile({
+          id: createId('asset'),
+          workspaceId: current.id,
+          name: createUniqueAssetName({
+            folder,
+            baseName: 'New Image',
+          }),
+          folder,
+          kind: 'image',
+        });
+        createdAssetId = asset.id;
+        return {
+          ...current,
+          assets: [...current.assets, asset],
+          folders: normalizeFolderPaths([...current.folders, folder]),
+          folderRecords: appendOwnedFolderRecords({
+            records: current.folderRecords,
+            folderPath: folder,
+            ownerCaseId: activeCaseId,
+          }),
+        };
+      },
+      { persistToast: treeSaveToast }
+    );
+    setSelectedFileId(null);
+    setSelectedFolderPath(null);
+    if (createdAssetId) {
+      setSelectedAssetId(createdAssetId);
+    }
+  }, [
+    activeCaseId,
+    createUniqueAssetName,
+    requestedCaseStatus,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    toast,
+    treeSaveToast,
+    updateWorkspace,
+  ]);
+
+  const handleCreateNodeFile = useCallback((targetFolderPath: string | null): void => {
+    if (!activeCaseId) {
+      toast(
+        requestedCaseStatus === 'loading'
+          ? 'Case context is still loading. Please wait.'
+          : 'Cannot create node file without a selected case.',
+        { variant: 'warning' }
+      );
+      return;
+    }
+
+    let createdAssetId: string | null = null;
+    updateWorkspace(
+      (current: CaseResolverWorkspace) => {
+        const folder = resolveCaseScopedFolderTarget({
+          targetFolderPath,
+          ownerCaseId: activeCaseId,
+          folderRecords: current.folderRecords,
+        });
+        const asset = createCaseResolverAssetFile({
+          id: createId('asset'),
+          workspaceId: current.id,
+          name: createUniqueAssetName({
+            folder,
+            baseName: 'New Node File',
+          }),
+          folder,
+          kind: 'node_file',
+          textContent: serializeNodeFileSnapshot(createEmptyNodeFileSnapshot()),
+        });
+        createdAssetId = asset.id;
+        return {
+          ...current,
+          assets: [...current.assets, asset],
+          folders: normalizeFolderPaths([...current.folders, folder]),
+          folderRecords: appendOwnedFolderRecords({
+            records: current.folderRecords,
+            folderPath: folder,
+            ownerCaseId: activeCaseId,
+          }),
+        };
+      },
+      { persistToast: treeSaveToast }
+    );
+    setSelectedFileId(null);
+    setSelectedFolderPath(null);
+    if (createdAssetId) {
+      setSelectedAssetId(createdAssetId);
+    }
+  }, [
+    activeCaseId,
+    createUniqueAssetName,
+    requestedCaseStatus,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    toast,
+    treeSaveToast,
+    updateWorkspace,
+  ]);
 
   return {
     handleCreateScanFile,
-    handleCreateAsset,
+    handleCreateImageAsset,
+    handleCreateNodeFile,
   };
 }

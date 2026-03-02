@@ -155,3 +155,21 @@ export const adminNavLeafSchema = z.object({
 });
 
 export type AdminNavLeaf = z.infer<typeof adminNavLeafSchema>;
+
+/**
+ * Admin Layout DTOs
+ */
+
+export interface AdminLayoutState {
+  isMenuCollapsed: boolean;
+  isMenuHidden: boolean;
+  isProgrammaticallyCollapsed: boolean;
+  aiDrawerOpen: boolean;
+}
+
+export interface AdminLayoutActions {
+  setIsMenuCollapsed: (isCollapsed: boolean) => void;
+  setIsMenuHidden: (isHidden: boolean) => void;
+  setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
+  setAiDrawerOpen: (isOpen: boolean) => void;
+}

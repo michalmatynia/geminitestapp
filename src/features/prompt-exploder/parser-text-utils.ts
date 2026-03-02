@@ -1,7 +1,4 @@
-export type ParsedPromptHeading = {
-  code: string | null;
-  title: string;
-};
+import type { ParsedPromptHeading } from '@/shared/contracts/prompt-exploder';
 
 export const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

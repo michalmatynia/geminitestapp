@@ -6,25 +6,12 @@ import type {
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
 
-import type { PromptExploderRuntimeValidationScope } from './validation-stack';
-
-export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
-  'segment.boundary.requirements',
-  'segment.boundary.studio_relighting',
-  'segment.boundary.pipeline',
-  'segment.boundary.final_qa',
-  'segment.not_heading.rule_line',
-  'segment.subsection.alpha_heading',
-  'segment.subsection.reference_named',
-  'segment.subsection.reference_plain',
-  'segment.subsection.qa_code',
-  'segment.subsection.numeric_bracket_heading',
-  'segment.subsection.bracket_heading',
-  'segment.subsection.markdown_heading',
-] as const;
-
-export type PromptExploderParserTuningRuleId =
-  (typeof PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS)[number];
+import type {
+  PromptExploderRuntimeValidationScope,
+  PromptExploderParserTuningRuleId,
+  PromptExploderParserTuningRuleDraft,
+} from '@/shared/contracts/prompt-exploder';
+import { PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS } from '@/shared/contracts/prompt-exploder';
 
 const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string> = {
   'segment.boundary.requirements': 'Boundary · Requirements',
@@ -39,20 +26,6 @@ const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string
   'segment.subsection.numeric_bracket_heading': 'Subsection · Numeric Bracket',
   'segment.subsection.bracket_heading': 'Subsection · Bracket Heading',
   'segment.subsection.markdown_heading': 'Subsection · Markdown Heading',
-};
-
-export type PromptExploderParserTuningRuleDraft = {
-  id: PromptExploderParserTuningRuleId;
-  label: string;
-  title: string;
-  description: string | null;
-  pattern: string;
-  flags: string;
-  enabled: boolean;
-  promptExploderSegmentType: PromptExploderRuleSegmentType | null;
-  promptExploderPriority: number;
-  promptExploderConfidenceBoost: number;
-  promptExploderTreatAsHeading: boolean;
 };
 
 const isRegexRule = (

@@ -101,3 +101,5 @@ export type {
 } from './templates/panels';
 export * from './templates/pickers';
 export * from './templates/modals';
+export * from './AiInsightList';
+export * from './DocumentationList';

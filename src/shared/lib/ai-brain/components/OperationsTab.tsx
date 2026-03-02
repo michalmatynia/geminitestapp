@@ -169,7 +169,12 @@ export function OperationsTab(): React.JSX.Element {
                         Updated {formatFreshness(domain.updatedAt)} · sample {domain.sampleSize}
                       </div>
                     </div>
-                    <StatusBadge status={domain.state} size='sm' className='font-bold' />
+                    <StatusBadge
+                      status={domain.state}
+                      label={domain.state.toUpperCase()}
+                      size='sm'
+                      className='font-bold'
+                    />
                   </div>
 
                   {domain.message ? (

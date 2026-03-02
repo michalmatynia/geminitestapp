@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useImageStudioRuns } from '@/features/ai/ai-paths/hooks/useImageStudioRuns';
-import { Card, Badge, LoadingState, Alert } from '@/shared/ui';
+import { Card, Badge, LoadingState } from '@/shared/ui';
 
 const formatDateTime = (value: string | null | undefined): string => {
   if (!value) return 'n/a';

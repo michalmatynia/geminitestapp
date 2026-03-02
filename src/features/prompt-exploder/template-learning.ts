@@ -1,54 +1,16 @@
-import type { PromptExploderLearnedTemplate, PromptExploderSegmentType } from './types';
+import type {
+  PromptExploderLearnedTemplate,
+  PromptExploderSegmentType,
+  TemplateMergeMode,
+  TemplateUpsertErrorCode,
+  TemplateSimilarityMatch,
+  TemplateUpsertResult,
+  CreateTemplateIdArgs,
+  UpsertLearnedTemplateArgs,
+} from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
-
-export type TemplateMergeMode = 'auto' | 'new' | 'target';
-export type TemplateUpsertErrorCode = 'TARGET_TEMPLATE_NOT_FOUND' | 'TARGET_TEMPLATE_TYPE_MISMATCH';
-
-export type TemplateSimilarityMatch = {
-  template: PromptExploderLearnedTemplate;
-  score: number;
-};
-
-export type TemplateUpsertResult =
-  | {
-      ok: true;
-      nextTemplates: PromptExploderLearnedTemplate[];
-      nextTemplate: PromptExploderLearnedTemplate;
-      existingTemplate: PromptExploderLearnedTemplate | null;
-      exactTemplate: PromptExploderLearnedTemplate | null;
-      targetedTemplate: PromptExploderLearnedTemplate | null;
-      similarTemplateMatch: TemplateSimilarityMatch | null;
-      mergeMessage: string;
-      mergeOutcome: 'forced_new' | 'selected_target' | 'exact' | 'similar' | 'created';
-    }
-  | {
-      ok: false;
-      errorCode: TemplateUpsertErrorCode;
-      errorMessage: string;
-    };
-
-type CreateTemplateIdArgs = {
-  segmentType: PromptExploderSegmentType;
-  title: string;
-  existingTemplateIds: Set<string>;
-};
-
-export type UpsertLearnedTemplateArgs = {
-  templates: PromptExploderLearnedTemplate[];
-  segmentType: PromptExploderSegmentType;
-  title: string;
-  sourceText: string;
-  sampleText: string;
-  similarityThreshold: number;
-  minApprovalsForMatching: number;
-  autoActivateLearnedTemplates: boolean;
-  mergeMode?: TemplateMergeMode;
-  targetTemplateId?: string | null;
-  now?: string;
-  createTemplateId?: (args: CreateTemplateIdArgs) => string;
-};
 
 const ensureUniqueTemplateId = (baseId: string, knownIds: Set<string>): string => {
   let nextId = baseId.trim() || 'template';

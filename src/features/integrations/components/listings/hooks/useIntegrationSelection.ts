@@ -1,4 +1,3 @@
-import { useQueries } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -7,6 +6,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
+import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -57,7 +57,12 @@ export function useIntegrationSelection(
   );
   const initializedRef = useRef(false);
 
-  const results = useQueries({
+  const results = createMultiQueryV2<
+    [
+      { connectionId?: string | null },
+      IntegrationWithConnections[],
+    ]
+  >({
     queries: [
       {
         queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
@@ -67,6 +72,13 @@ export function useIntegrationSelection(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'integrations.hooks.useIntegrationSelection.preferredConnection',
+          operation: 'detail',
+          resource: 'integrations.selection.preferred-connection',
+          domain: 'integrations',
+          tags: ['integrations', 'selection', 'preferred-connection'],
+        },
       },
       {
         queryKey: normalizeQueryKey(integrationSelectionKeys.withConnections),
@@ -76,6 +88,13 @@ export function useIntegrationSelection(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'integrations.hooks.useIntegrationSelection.integrationsWithConnections',
+          operation: 'list',
+          resource: 'integrations.with-connections',
+          domain: 'integrations',
+          tags: ['integrations', 'selection', 'list'],
+        },
       },
     ],
   });

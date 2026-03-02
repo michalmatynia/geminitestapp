@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { CaseMetadataDraft } from '../case-overview-draft';
 
 import type {
   CaseResolverAssetFile,
@@ -101,6 +102,12 @@ export type CaseResolverPageContextValue = {
       >
     >
   ) => void;
+  activeCaseFile: CaseResolverFile | null;
+  activeCaseMetadataDraft: CaseMetadataDraft | null;
+  isActiveCaseMetadataDirty: boolean;
+  onUpdateActiveCaseDraft: (patch: Partial<CaseMetadataDraft>) => void;
+  onSaveActiveCase: () => void;
+  onDiscardActiveCaseChanges: () => void;
   caseTagOptions: Array<{ value: string; label: string; description?: string }>;
   caseIdentifierOptions: Array<{ value: string; label: string; description?: string }>;
   caseCategoryOptions: Array<{ value: string; label: string; description?: string }>;

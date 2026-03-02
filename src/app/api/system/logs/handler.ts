@@ -5,6 +5,7 @@ import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import {
   clearSystemLogs,
   createSystemLog,
@@ -87,11 +88,20 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     from: parsed.from ? new Date(parsed.from) : null,
     to: parsed.to ? new Date(parsed.to) : null,
   });
-  return NextResponse.json(result, {
+  const logs = await Promise.all(
+    result.logs.map((log) => hydrateSystemLogRecordRuntimeContext(log))
+  );
+  return NextResponse.json(
+    {
+      ...result,
+      logs,
+    },
+    {
     headers: {
       'Cache-Control': 'no-store',
     },
-  });
+    }
+  );
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

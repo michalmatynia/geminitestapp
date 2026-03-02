@@ -2,9 +2,11 @@
 
 import { createContext, useContext } from 'react';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import type { PromptExploderParserTuningRuleDraft } from '../../parser-tuning';
-import type { PromptExploderLearnedTemplate } from '../../types';
-import type { PromptExploderValidationRuleStack } from '../../validation-stack';
+import type {
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderLearnedTemplate,
+  PromptExploderValidationRuleStack,
+} from '@/shared/contracts/prompt-exploder';
 
 export interface LearningDraft {
   runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';

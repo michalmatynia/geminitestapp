@@ -66,6 +66,204 @@ const readContextString = (log: SystemLogRecord, key: string): string | null => 
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+
+const readRecordString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const readRecordNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+type AiPathRunDisplayModel = {
+  nodeId: string | null;
+  modelId: string | null;
+  status: string | null;
+  errorMessage: string | null;
+};
+
+type AiPathRunDisplayNode = {
+  nodeId: string | null;
+  status: string | null;
+  errorMessage: string | null;
+};
+
+type AiPathRunDisplayEvent = {
+  createdAt: string | null;
+  level: string | null;
+  message: string | null;
+};
+
+type AiPathRunDisplay = {
+  runId: string | null;
+  pathName: string | null;
+  status: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  triggerEvent: string | null;
+  triggerNodeId: string | null;
+  runtimeFingerprint: string | null;
+  summary: Record<string, number> | null;
+  executedModels: AiPathRunDisplayModel[];
+  failedNodes: AiPathRunDisplayNode[];
+  recentErrorEvents: AiPathRunDisplayEvent[];
+};
+
+type AlertEvidenceSampleDisplay = {
+  logId: string | null;
+  createdAt: string | null;
+  level: string | null;
+  source: string | null;
+  message: string | null;
+  fingerprint: string | null;
+  runId: string | null;
+  jobId: string | null;
+  aiPathRun: {
+    runId: string | null;
+    pathName: string | null;
+    status: string | null;
+    modelIds: string[];
+    failedNodeIds: string[];
+    latestErrorMessage: string | null;
+  } | null;
+};
+
+type AlertEvidenceDisplay = {
+  matchedCount: number | null;
+  sampleSize: number | null;
+  windowStart: string | null;
+  windowEnd: string | null;
+  lastObservedLog: AlertEvidenceSampleDisplay | null;
+  samples: AlertEvidenceSampleDisplay[];
+};
+
+const getStatusVariant = (status: string | null | undefined): StatusVariant => {
+  const normalized = (status ?? '').toLowerCase();
+  if (['completed', 'cached', 'success', 'healthy'].includes(normalized)) return 'success';
+  if (['warn', 'warning', 'blocked', 'skipped'].includes(normalized)) return 'warning';
+  if (['failed', 'error', 'fatal', 'timeout', 'cancelled', 'canceled'].includes(normalized)) {
+    return 'error';
+  }
+  if (['info', 'running'].includes(normalized)) return 'info';
+  return 'neutral';
+};
+
+const readAiPathRunStaticContext = (log: SystemLogRecord): AiPathRunDisplay | null => {
+  const context = asRecord(log.context);
+  const staticContext = asRecord(context?.['staticContext']);
+  const aiPathRun = asRecord(staticContext?.['aiPathRun']);
+  if (!aiPathRun) return null;
+
+  const summaryRecord = asRecord(aiPathRun['summary']);
+  const executedModels = Array.isArray(aiPathRun['executedModels']) ? aiPathRun['executedModels'] : [];
+  const failedNodes = Array.isArray(aiPathRun['failedNodes']) ? aiPathRun['failedNodes'] : [];
+  const recentErrorEvents = Array.isArray(aiPathRun['recentErrorEvents'])
+    ? aiPathRun['recentErrorEvents']
+    : [];
+
+  return {
+    runId: readRecordString(aiPathRun['runId']),
+    pathName: readRecordString(aiPathRun['pathName']),
+    status: readRecordString(aiPathRun['status']),
+    entityType: readRecordString(aiPathRun['entityType']),
+    entityId: readRecordString(aiPathRun['entityId']),
+    triggerEvent: readRecordString(aiPathRun['triggerEvent']),
+    triggerNodeId: readRecordString(aiPathRun['triggerNodeId']),
+    runtimeFingerprint: readRecordString(aiPathRun['runtimeFingerprint']),
+    summary: summaryRecord
+      ? Object.fromEntries(
+          Object.entries(summaryRecord)
+            .map(([key, value]) => [key, readRecordNumber(value)])
+            .filter((entry): entry is [string, number] => entry[1] !== null)
+        )
+      : null,
+    executedModels: executedModels
+      .map((value): AiPathRunDisplayModel => {
+        const record = asRecord(value);
+        return {
+          nodeId: readRecordString(record?.['nodeId']),
+          modelId: readRecordString(record?.['modelId']),
+          status: readRecordString(record?.['status']),
+          errorMessage: readRecordString(record?.['errorMessage']),
+        };
+      })
+      .slice(0, 4),
+    failedNodes: failedNodes
+      .map((value): AiPathRunDisplayNode => {
+        const record = asRecord(value);
+        return {
+          nodeId: readRecordString(record?.['nodeId']),
+          status: readRecordString(record?.['status']),
+          errorMessage: readRecordString(record?.['errorMessage']),
+        };
+      })
+      .slice(0, 4),
+    recentErrorEvents: recentErrorEvents
+      .map((value): AiPathRunDisplayEvent => {
+        const record = asRecord(value);
+        return {
+          createdAt: readRecordString(record?.['createdAt']),
+          level: readRecordString(record?.['level']),
+          message: readRecordString(record?.['message']),
+        };
+      })
+      .slice(0, 4),
+  };
+};
+
+const readAlertEvidenceSample = (value: unknown): AlertEvidenceSampleDisplay | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const aiPathRun = asRecord(record['aiPathRun']);
+  const modelIds = Array.isArray(aiPathRun?.['modelIds']) ? aiPathRun?.['modelIds'] : [];
+  const failedNodeIds = Array.isArray(aiPathRun?.['failedNodeIds']) ? aiPathRun?.['failedNodeIds'] : [];
+
+  return {
+    logId: readRecordString(record['logId']),
+    createdAt: readRecordString(record['createdAt']),
+    level: readRecordString(record['level']),
+    source: readRecordString(record['source']),
+    message: readRecordString(record['message']),
+    fingerprint: readRecordString(record['fingerprint']),
+    runId: readRecordString(record['runId']),
+    jobId: readRecordString(record['jobId']),
+    aiPathRun: aiPathRun
+      ? {
+          runId: readRecordString(aiPathRun['runId']),
+          pathName: readRecordString(aiPathRun['pathName']),
+          status: readRecordString(aiPathRun['status']),
+          modelIds: modelIds
+            .map((item) => readRecordString(item))
+            .filter((item): item is string => Boolean(item)),
+          failedNodeIds: failedNodeIds
+            .map((item) => readRecordString(item))
+            .filter((item): item is string => Boolean(item)),
+          latestErrorMessage: readRecordString(aiPathRun['latestErrorMessage']),
+        }
+      : null,
+  };
+};
+
+const readAlertEvidence = (log: SystemLogRecord): AlertEvidenceDisplay | null => {
+  const context = asRecord(log.context);
+  const alertEvidence = asRecord(context?.['alertEvidence']);
+  if (!alertEvidence) return null;
+
+  const samples = Array.isArray(alertEvidence['samples']) ? alertEvidence['samples'] : [];
+
+  return {
+    matchedCount: readRecordNumber(alertEvidence['matchedCount']),
+    sampleSize: readRecordNumber(alertEvidence['sampleSize']),
+    windowStart: readRecordString(alertEvidence['windowStart']),
+    windowEnd: readRecordString(alertEvidence['windowEnd']),
+    lastObservedLog: readAlertEvidenceSample(alertEvidence['lastObservedLog']),
+    samples: samples
+      .map((sample) => readAlertEvidenceSample(sample))
+      .filter((sample): sample is AlertEvidenceSampleDisplay => Boolean(sample)),
+  };
+};
+
 const getLogCategory = (log: SystemLogRecord): string | null => {
   return typeof log.category === 'string' && log.category.trim().length > 0
     ? log.category
@@ -575,33 +773,64 @@ function LogList(): React.JSX.Element {
       {
         accessorKey: 'message',
         header: 'Event Message',
-        cell: ({ row }) => (
-          <div className='flex flex-col gap-1 max-w-[500px]'>
-            <Tooltip content={row.original.message} className='w-full'>
-              <span className='text-sm text-gray-200 font-medium truncate block'>
-                {row.original.message}
-              </span>
-            </Tooltip>
-            {(row.original.path || row.original.method) && (
-              <div className='flex items-center gap-2'>
-                <span className='text-[10px] text-gray-500 font-mono'>
-                  {row.original.method && (
-                    <span className='text-sky-400 mr-1'>{row.original.method}</span>
-                  )}
-                  {row.original.path}
+        cell: ({ row }) => {
+          const aiPathRun = readAiPathRunStaticContext(row.original);
+          const alertEvidence = readAlertEvidence(row.original);
+
+          return (
+            <div className='flex flex-col gap-1 max-w-[500px]'>
+              <Tooltip content={row.original.message} className='w-full'>
+                <span className='text-sm text-gray-200 font-medium truncate block'>
+                  {row.original.message}
                 </span>
-                {row.original.statusCode && (
-                  <StatusBadge
-                    status={String(row.original.statusCode)}
-                    variant={row.original.statusCode >= 400 ? 'error' : 'success'}
-                    size='sm'
-                    className='font-bold h-4'
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        ),
+              </Tooltip>
+              {(row.original.path || row.original.method) && (
+                <div className='flex items-center gap-2'>
+                  <span className='text-[10px] text-gray-500 font-mono'>
+                    {row.original.method && (
+                      <span className='text-sky-400 mr-1'>{row.original.method}</span>
+                    )}
+                    {row.original.path}
+                  </span>
+                  {row.original.statusCode && (
+                    <StatusBadge
+                      status={String(row.original.statusCode)}
+                      variant={row.original.statusCode >= 400 ? 'error' : 'success'}
+                      size='sm'
+                      className='font-bold h-4'
+                    />
+                  )}
+                </div>
+              )}
+              {(aiPathRun || alertEvidence) && (
+                <div className='flex flex-wrap items-center gap-1.5 pt-1'>
+                  {aiPathRun ? (
+                    <>
+                      <StatusBadge status='AI Path' variant='info' size='sm' className='h-4' />
+                      {aiPathRun.pathName ? (
+                        <span className='text-[10px] text-sky-200/80'>{aiPathRun.pathName}</span>
+                      ) : null}
+                      {aiPathRun.status ? (
+                        <StatusBadge
+                          status={aiPathRun.status}
+                          variant={getStatusVariant(aiPathRun.status)}
+                          size='sm'
+                          className='h-4'
+                        />
+                      ) : null}
+                    </>
+                  ) : null}
+                  {alertEvidence ? (
+                    <span className='text-[10px] text-amber-200/80'>
+                      Alert evidence: {alertEvidence.sampleSize ?? alertEvidence.samples.length} sample
+                      {(alertEvidence.sampleSize ?? alertEvidence.samples.length) === 1 ? '' : 's'}
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'source',
@@ -669,6 +898,8 @@ function LogList(): React.JSX.Element {
         const errorName = readContextString(log, 'errorName') ?? readContextString(log, 'name');
         const errorId = readContextString(log, 'errorId');
         const alertType = readContextString(log, 'alertType');
+        const aiPathRun = readAiPathRunStaticContext(log);
+        const alertEvidence = readAlertEvidence(log);
         const interpretation = logInterpretations[log.id];
         return (
           <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
@@ -761,13 +992,293 @@ function LogList(): React.JSX.Element {
                 )}
               </div>
 
-              <div>
-                <Hint uppercase variant='muted' className='mb-2 font-semibold'>
-                  Payload Context
-                </Hint>
-                <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
-                  {JSON.stringify(log.context || {}, null, 2)}
-                </pre>
+              <div className='space-y-4'>
+                {aiPathRun ? (
+                  <div>
+                    <Hint uppercase variant='muted' className='mb-2 font-semibold'>
+                      Runtime Context
+                    </Hint>
+                    <Card variant='glass' padding='md' className='space-y-4 bg-sky-950/20'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <StatusBadge status='AI Path Run' variant='info' size='sm' />
+                        {aiPathRun.status ? (
+                          <StatusBadge
+                            status={aiPathRun.status}
+                            variant={getStatusVariant(aiPathRun.status)}
+                            size='sm'
+                          />
+                        ) : null}
+                      </div>
+                      <div className='grid grid-cols-2 gap-2'>
+                        <MetadataItem label='Run ID' value={aiPathRun.runId} mono />
+                        <MetadataItem label='Path' value={aiPathRun.pathName} />
+                        <MetadataItem label='Entity Type' value={aiPathRun.entityType} />
+                        <MetadataItem label='Entity ID' value={aiPathRun.entityId} mono />
+                        <MetadataItem label='Trigger Event' value={aiPathRun.triggerEvent} />
+                        <MetadataItem label='Trigger Node' value={aiPathRun.triggerNodeId} mono />
+                        <MetadataItem
+                          label='Runtime Fingerprint'
+                          value={aiPathRun.runtimeFingerprint}
+                          mono
+                        />
+                      </div>
+                      {aiPathRun.summary ? (
+                        <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300'>
+                          {Object.entries(aiPathRun.summary).map(([key, value]) => (
+                            <PropertyRow
+                              key={key}
+                              label={key}
+                              value={value}
+                              mono
+                              variant='subtle'
+                              className='rounded bg-white/5 px-2 py-1'
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                      {aiPathRun.executedModels.length ? (
+                        <div>
+                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                            Executed Models
+                          </Hint>
+                          <div className='space-y-2'>
+                            {aiPathRun.executedModels.map((model, index) => (
+                              <div
+                                key={`${model.nodeId ?? 'node'}-${index}`}
+                                className='rounded border border-white/5 bg-black/20 px-3 py-2'
+                              >
+                                <div className='flex flex-wrap items-center gap-2'>
+                                  {model.modelId ? (
+                                    <StatusBadge
+                                      status={model.modelId}
+                                      variant='neutral'
+                                      size='sm'
+                                      className='font-mono'
+                                    />
+                                  ) : (
+                                    <StatusBadge status='Brain Default' variant='neutral' size='sm' />
+                                  )}
+                                  {model.status ? (
+                                    <StatusBadge
+                                      status={model.status}
+                                      variant={getStatusVariant(model.status)}
+                                      size='sm'
+                                    />
+                                  ) : null}
+                                </div>
+                                {model.errorMessage ? (
+                                  <p className='mt-2 text-[11px] text-rose-200/90'>{model.errorMessage}</p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {aiPathRun.failedNodes.length ? (
+                        <div>
+                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                            Failed Nodes
+                          </Hint>
+                          <div className='space-y-2'>
+                            {aiPathRun.failedNodes.map((node, index) => (
+                              <div
+                                key={`${node.nodeId ?? 'failed'}-${index}`}
+                                className='rounded border border-rose-500/10 bg-rose-950/10 px-3 py-2'
+                              >
+                                <div className='flex flex-wrap items-center gap-2'>
+                                  {node.nodeId ? (
+                                    <StatusBadge
+                                      status={node.nodeId}
+                                      variant='neutral'
+                                      size='sm'
+                                      className='font-mono'
+                                    />
+                                  ) : null}
+                                  {node.status ? (
+                                    <StatusBadge
+                                      status={node.status}
+                                      variant={getStatusVariant(node.status)}
+                                      size='sm'
+                                    />
+                                  ) : null}
+                                </div>
+                                {node.errorMessage ? (
+                                  <p className='mt-2 text-[11px] text-rose-200/90'>{node.errorMessage}</p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {aiPathRun.recentErrorEvents.length ? (
+                        <div>
+                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                            Recent Runtime Errors
+                          </Hint>
+                          <div className='space-y-2'>
+                            {aiPathRun.recentErrorEvents.map((event, index) => (
+                              <div
+                                key={`${event.createdAt ?? 'event'}-${index}`}
+                                className='rounded border border-white/5 bg-black/20 px-3 py-2'
+                              >
+                                <div className='flex flex-wrap items-center gap-2'>
+                                  {event.level ? (
+                                    <StatusBadge
+                                      status={event.level}
+                                      variant={getStatusVariant(event.level)}
+                                      size='sm'
+                                    />
+                                  ) : null}
+                                  {event.createdAt ? (
+                                    <span className='text-[10px] font-mono text-gray-500'>
+                                      {formatTimestamp(event.createdAt)}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {event.message ? (
+                                  <p className='mt-2 text-[11px] text-gray-200/90'>{event.message}</p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </Card>
+                  </div>
+                ) : null}
+
+                {alertEvidence ? (
+                  <div>
+                    <Hint uppercase variant='muted' className='mb-2 font-semibold'>
+                      Alert Evidence
+                    </Hint>
+                    <Card variant='glass' padding='md' className='space-y-4 bg-amber-950/15'>
+                      <div className='grid grid-cols-2 gap-2'>
+                        <MetadataItem label='Matched Count' value={alertEvidence.matchedCount} mono />
+                        <MetadataItem label='Sample Size' value={alertEvidence.sampleSize} mono />
+                        <MetadataItem
+                          label='Window Start'
+                          value={alertEvidence.windowStart ? formatTimestamp(alertEvidence.windowStart) : null}
+                        />
+                        <MetadataItem
+                          label='Window End'
+                          value={alertEvidence.windowEnd ? formatTimestamp(alertEvidence.windowEnd) : null}
+                        />
+                      </div>
+                      {alertEvidence.lastObservedLog ? (
+                        <div>
+                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                            Last Observed Log
+                          </Hint>
+                          <div className='rounded border border-white/5 bg-black/20 px-3 py-2'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              {alertEvidence.lastObservedLog.level ? (
+                                <StatusBadge
+                                  status={alertEvidence.lastObservedLog.level}
+                                  variant={getStatusVariant(alertEvidence.lastObservedLog.level)}
+                                  size='sm'
+                                />
+                              ) : null}
+                              {alertEvidence.lastObservedLog.source ? (
+                                <StatusBadge
+                                  status={alertEvidence.lastObservedLog.source}
+                                  variant='neutral'
+                                  size='sm'
+                                  className='font-mono'
+                                />
+                              ) : null}
+                            </div>
+                            {alertEvidence.lastObservedLog.message ? (
+                              <p className='mt-2 text-[11px] text-gray-200/90'>
+                                {alertEvidence.lastObservedLog.message}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
+                      {alertEvidence.samples.length ? (
+                        <div>
+                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+                            Sampled Logs
+                          </Hint>
+                          <div className='space-y-2'>
+                            {alertEvidence.samples.map((sample, index) => (
+                              <div
+                                key={`${sample.logId ?? 'sample'}-${index}`}
+                                className='rounded border border-white/5 bg-black/20 px-3 py-2'
+                              >
+                                <div className='flex flex-wrap items-center gap-2'>
+                                  {sample.level ? (
+                                    <StatusBadge
+                                      status={sample.level}
+                                      variant={getStatusVariant(sample.level)}
+                                      size='sm'
+                                    />
+                                  ) : null}
+                                  {sample.source ? (
+                                    <StatusBadge
+                                      status={sample.source}
+                                      variant='neutral'
+                                      size='sm'
+                                      className='font-mono'
+                                    />
+                                  ) : null}
+                                  {sample.createdAt ? (
+                                    <span className='text-[10px] font-mono text-gray-500'>
+                                      {formatTimestamp(sample.createdAt)}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                {sample.message ? (
+                                  <p className='mt-2 text-[11px] text-gray-200/90'>{sample.message}</p>
+                                ) : null}
+                                {(sample.fingerprint || sample.runId || sample.jobId) && (
+                                  <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
+                                    {sample.fingerprint ? <span>fp: {sample.fingerprint}</span> : null}
+                                    {sample.runId ? <span>run: {sample.runId}</span> : null}
+                                    {sample.jobId ? <span>job: {sample.jobId}</span> : null}
+                                  </div>
+                                )}
+                                {sample.aiPathRun ? (
+                                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[10px] text-sky-200/80'>
+                                    {sample.aiPathRun.pathName ? <span>{sample.aiPathRun.pathName}</span> : null}
+                                    {sample.aiPathRun.status ? (
+                                      <StatusBadge
+                                        status={sample.aiPathRun.status}
+                                        variant={getStatusVariant(sample.aiPathRun.status)}
+                                        size='sm'
+                                      />
+                                    ) : null}
+                                    {sample.aiPathRun.modelIds.length ? (
+                                      <span>models: {sample.aiPathRun.modelIds.join(', ')}</span>
+                                    ) : null}
+                                    {sample.aiPathRun.failedNodeIds.length ? (
+                                      <span>failed nodes: {sample.aiPathRun.failedNodeIds.join(', ')}</span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                {sample.aiPathRun?.latestErrorMessage ? (
+                                  <p className='mt-2 text-[11px] text-rose-200/90'>
+                                    {sample.aiPathRun.latestErrorMessage}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </Card>
+                  </div>
+                ) : null}
+
+                <div>
+                  <Hint uppercase variant='muted' className='mb-2 font-semibold'>
+                    Payload Context
+                  </Hint>
+                  <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
+                    {JSON.stringify(log.context || {}, null, 2)}
+                  </pre>
+                </div>
               </div>
             </div>
           </div>

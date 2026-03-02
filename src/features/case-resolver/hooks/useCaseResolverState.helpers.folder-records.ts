@@ -158,19 +158,59 @@ export const resolveCaseContainerIdForFileId = (
   return parentFile?.fileType === 'case' ? parentFile.id : null;
 };
 
+export const resolveCaseContainerIdForFolderPath = ({
+  filesById,
+  folderRecords,
+  folderPath,
+}: {
+  filesById: Map<string, CaseResolverFile>;
+  folderRecords: CaseResolverFolderRecord[] | null | undefined;
+  folderPath: string | null;
+}): string | null => {
+  const normalizedFolderPath = normalizeFolderPath(folderPath ?? '');
+  if (!normalizedFolderPath) return null;
+
+  const ownerCaseIdsByPath = new Map<string, Set<string>>();
+  normalizeFolderRecords(folderRecords).forEach((record: CaseResolverFolderRecord): void => {
+    const ownerCaseId = record.ownerCaseId?.trim() ?? '';
+    if (!ownerCaseId) return;
+    const ownerCase = filesById.get(ownerCaseId) ?? null;
+    if (ownerCase?.fileType !== 'case') return;
+    const currentOwners = ownerCaseIdsByPath.get(record.path) ?? new Set<string>();
+    currentOwners.add(ownerCaseId);
+    ownerCaseIdsByPath.set(record.path, currentOwners);
+  });
+
+  const segments = normalizedFolderPath.split('/').filter(Boolean);
+  for (let index = segments.length; index >= 1; index -= 1) {
+    const ancestorPath = segments.slice(0, index).join('/');
+    const ownerCaseIds = ownerCaseIdsByPath.get(ancestorPath);
+    if (!ownerCaseIds || ownerCaseIds.size !== 1) continue;
+    const ownerCaseId = Array.from(ownerCaseIds)[0] ?? null;
+    if (!ownerCaseId) continue;
+    if (filesById.get(ownerCaseId)?.fileType !== 'case') continue;
+    return ownerCaseId;
+  }
+
+  return null;
+};
+
 export const resolveCaseResolverActiveCaseId = ({
   requestedFileId,
   requestedCaseContainerId,
   selectedCaseContainerId,
+  selectedFolderCaseContainerId,
   files: _files,
 }: {
   requestedFileId: string | null;
   requestedCaseContainerId: string | null;
   selectedCaseContainerId: string | null;
+  selectedFolderCaseContainerId?: string | null;
   files: CaseResolverFile[];
 }): string | null => {
   if (requestedFileId) return requestedCaseContainerId;
   if (selectedCaseContainerId) return selectedCaseContainerId;
+  if (selectedFolderCaseContainerId) return selectedFolderCaseContainerId;
   return null;
 };
 

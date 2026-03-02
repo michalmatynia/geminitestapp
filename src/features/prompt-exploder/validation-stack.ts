@@ -3,27 +3,12 @@ import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/e
 import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import type {
-  PromptExploderRuntimeValidationScopeDto,
-  PromptExploderValidationStackResolutionReasonDto,
-  PromptExploderValidationStackResolutionDto,
+  PromptExploderRuntimeValidationScope,
+  PromptExploderValidationStackResolutionReason,
+  PromptExploderValidationStackResolution,
   PromptExploderValidationRuleStack,
+  PromptExploderValidationRuleStackOption,
 } from '@/shared/contracts/prompt-exploder';
-
-export type { PromptExploderValidationRuleStack };
-
-export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeDto;
-
-export type PromptExploderValidationRuleStackOption = {
-  value: PromptExploderValidationRuleStack;
-  label: string;
-  description: string;
-  scope: ValidatorScope;
-};
-
-export type PromptExploderValidationStackResolutionReason =
-  PromptExploderValidationStackResolutionReasonDto;
-
-export type PromptExploderValidationStackResolution = PromptExploderValidationStackResolutionDto;
 
 const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
 const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =

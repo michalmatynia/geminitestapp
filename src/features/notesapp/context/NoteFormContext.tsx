@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import React, {
   createContext,
   useContext,
@@ -23,7 +23,7 @@ import type {
 import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -261,12 +261,23 @@ export function NoteFormProvider({
   const [selectedRelatedNotes, setSelectedRelatedNotes] =
     useState<RelatedNoteItem[]>(initialCombinedRelations);
 
-  const relatedNotesQueries = useQueries({
-    queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.notes.detail(rel.id)),
-      queryFn: () => api.get<NoteWithRelations>(`/api/notes/${rel.id}`),
-      staleTime: 1000 * 60 * 5,
-    })),
+  const relatedNotesQueries = createMultiQueryV2({
+    queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => {
+      const queryKey = normalizeQueryKey(QUERY_KEYS.notes.detail(rel.id));
+      return {
+        queryKey,
+        queryFn: () => api.get<NoteWithRelations>(`/api/notes/${rel.id}`),
+        staleTime: 1000 * 60 * 5,
+        meta: {
+          source: 'notes.context.NoteFormContext.relatedNotes',
+          operation: 'detail',
+          resource: 'notes',
+          domain: 'global',
+          queryKey,
+          tags: ['notes', 'detail', 'related'],
+        },
+      };
+    }),
   });
 
   useEffect(() => {

@@ -26,20 +26,13 @@ import type {
   UpdateNoteThemeDto as ThemeUpdateInput,
   NoteFileDto as NoteFileRecord,
   CreateNoteFileDto as NoteFileCreateInput,
-  NoteRelationDto,
+  NoteRelationWithSource,
+  NoteRelationWithTarget,
 } from '@/shared/contracts/notes';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 import { cleanupNoteFile } from './file-cleanup';
-
-type NoteRelationWithSource = NoteRelationDto & {
-  sourceNote?: RelatedNote | undefined;
-};
-
-type NoteRelationWithTarget = NoteRelationDto & {
-  targetNote?: RelatedNote | undefined;
-};
 
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;

@@ -16,6 +16,21 @@ import {
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
+type StateExpectedType = NonNullable<StateConfig['expectedType']>;
+
+const normalizeStateExpectedType = (value: string): StateExpectedType | undefined => {
+  switch (value) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+    case 'object':
+    case 'array':
+      return value;
+    default:
+      return undefined;
+  }
+};
+
 export function StateNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
@@ -69,7 +84,7 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
     updateSelectedNodeConfig({
       state: {
         ...stateConfig,
-        expectedType: value || undefined,
+        expectedType: normalizeStateExpectedType(value),
       },
     });
   };
@@ -166,4 +181,3 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
     </div>
   );
 }
-

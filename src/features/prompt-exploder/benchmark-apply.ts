@@ -5,7 +5,11 @@ import { buildBenchmarkLearnedRegexRuleDraft } from './rule-drafts';
 import { mergeRegexLearnedRule } from './rule-learning';
 import { upsertLearnedTemplate } from './template-learning';
 
-import type { PromptExploderBenchmarkSuggestion, PromptExploderLearnedTemplate } from './types';
+import type {
+  PromptExploderBenchmarkSuggestion,
+  PromptExploderLearnedTemplate,
+  ApplyBenchmarkSuggestionsResult,
+} from '@/shared/contracts/prompt-exploder';
 
 const toSlug = (value: string): string =>
   value
@@ -13,16 +17,6 @@ const toSlug = (value: string): string =>
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     .slice(0, 48) || 'case';
-
-export type ApplyBenchmarkSuggestionsResult = {
-  nextLearnedRules: PromptValidationRule[];
-  appliedRules: PromptValidationRule[];
-  addedCount: number;
-  updatedCount: number;
-  nextTemplates: PromptExploderLearnedTemplate[];
-  touchedTemplateIds: string[];
-  invalidSegmentTitles: string[];
-};
 
 export const applyBenchmarkSuggestions = (args: {
   suggestions: PromptExploderBenchmarkSuggestion[];

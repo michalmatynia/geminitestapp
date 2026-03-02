@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { api } from '@/shared/lib/api-client';
 import { createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -15,7 +13,6 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useFetchExternalCategoriesMutation() {
-  const queryClient = useQueryClient();
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
     mutationFn: (payload: { connectionId: string }) =>
@@ -27,14 +24,12 @@ export function useFetchExternalCategoriesMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'categories'],
     },
-    onSuccess: async (_data, { connectionId }) => {
-      await invalidateMarketplaceCategories(queryClient, connectionId);
-    },
+    invalidate: (queryClient, _data, { connectionId }) =>
+      invalidateMarketplaceCategories(queryClient, connectionId),
   });
 }
 
 export function useSaveMappingsMutation() {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-mappings'),
     mutationFn: (payload: {
@@ -50,14 +45,12 @@ export function useSaveMappingsMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'mappings'],
     },
-    onSuccess: async (_data, { connectionId, catalogId }) => {
-      await invalidateMarketplaceMappings(queryClient, connectionId, catalogId);
-    },
+    invalidate: (queryClient, _data, { connectionId, catalogId }) =>
+      invalidateMarketplaceMappings(queryClient, connectionId, catalogId),
   });
 }
 
 export function useFetchExternalProducersMutation() {
-  const queryClient = useQueryClient();
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-producers'),
     mutationFn: (payload: { connectionId: string }) =>
@@ -69,14 +62,12 @@ export function useFetchExternalProducersMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'producers'],
     },
-    onSuccess: async (_data, { connectionId }) => {
-      await invalidateMarketplaceProducers(queryClient, connectionId);
-    },
+    invalidate: (queryClient, _data, { connectionId }) =>
+      invalidateMarketplaceProducers(queryClient, connectionId),
   });
 }
 
 export function useSaveProducerMappingsMutation() {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-producer-mappings'),
     mutationFn: (payload: {
@@ -94,14 +85,12 @@ export function useSaveProducerMappingsMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'producer-mappings'],
     },
-    onSuccess: async (_data, { connectionId }) => {
-      await invalidateMarketplaceProducerMappings(queryClient, connectionId);
-    },
+    invalidate: (queryClient, _data, { connectionId }) =>
+      invalidateMarketplaceProducerMappings(queryClient, connectionId),
   });
 }
 
 export function useFetchExternalTagsMutation() {
-  const queryClient = useQueryClient();
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-tags'),
     mutationFn: (payload: { connectionId: string }) =>
@@ -113,14 +102,12 @@ export function useFetchExternalTagsMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'tags'],
     },
-    onSuccess: async (_data, { connectionId }) => {
-      await invalidateMarketplaceTags(queryClient, connectionId);
-    },
+    invalidate: (queryClient, _data, { connectionId }) =>
+      invalidateMarketplaceTags(queryClient, connectionId),
   });
 }
 
 export function useSaveTagMappingsMutation() {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-tag-mappings'),
     mutationFn: (payload: {
@@ -138,8 +125,7 @@ export function useSaveTagMappingsMutation() {
       domain: 'integrations',
       tags: ['integrations', 'marketplace', 'tag-mappings'],
     },
-    onSuccess: async (_data, { connectionId }) => {
-      await invalidateMarketplaceTagMappings(queryClient, connectionId);
-    },
+    invalidate: (queryClient, _data, { connectionId }) =>
+      invalidateMarketplaceTagMappings(queryClient, connectionId),
   });
 }

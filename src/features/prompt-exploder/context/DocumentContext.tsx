@@ -27,11 +27,10 @@ import {
   resolvePromptExploderOrchestratorRollout,
 } from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
-import {
-  buildPromptExploderParamEntries,
-  type PromptExploderParamEntriesState,
-  type PromptExploderParamEntry,
-} from '../params-editor';
+import type {
+  PromptExploderParamEntry,
+  PromptExploderParamEntriesState,
+} from '@/shared/contracts/prompt-exploder';
 import {
   explodePromptText,
   reassemblePromptSegments,

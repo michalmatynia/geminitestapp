@@ -26,14 +26,15 @@ type CentralLogPayload = {
   createdAt: string;
 };
 
-const CENTRAL_LOG_WEBHOOK_URL = process.env['CENTRAL_LOG_WEBHOOK_URL'];
+const getCentralLogWebhookUrl = (): string | null => process.env['CENTRAL_LOG_WEBHOOK_URL'] ?? null;
 
 const forwardToCentralizedLogging = async (payload: CentralLogPayload): Promise<void> => {
   if (typeof window !== 'undefined') return;
-  if (!CENTRAL_LOG_WEBHOOK_URL) return;
+  const webhookUrl = getCentralLogWebhookUrl();
+  if (!webhookUrl) return;
 
   try {
-    await fetch(CENTRAL_LOG_WEBHOOK_URL, {
+    await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -451,32 +452,44 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       console.log(consoleMsg, context);
     }
 
-    void forwardToCentralizedLogging({
-      level: input.level ?? 'info',
-      message: input.message,
-      source: input.source ?? null,
-      category: category ?? null,
-      context,
-      stack: errorInfo?.stack ?? null,
-      path: input.request?.url ? requestInfo.path ?? null : null,
-      method: requestInfo.method ?? null,
-      statusCode: input.statusCode ?? null,
-      requestId: input.requestId ?? requestInfo.requestId ?? null,
-      userId: input.userId ?? null,
-      fingerprint: fingerprint ?? null,
-      createdAt: new Date().toISOString(),
-    });
-
     if (typeof window !== 'undefined') {
       return;
     }
 
-    // Fire-and-forget background task for DB persistence
-    // This ensures request handling is not blocked by DB writes
+    // Fire-and-forget background task for server-side enrichment, forwarding, and DB persistence.
+    // This keeps request handling latency low while using one canonical hydrated context.
     void (async () => {
       try {
+        let hydratedContext = context;
+        try {
+          const { hydrateLogRuntimeContext } = await import(
+            './runtime-context/hydrate-system-log-runtime-context'
+          );
+          hydratedContext = (await hydrateLogRuntimeContext(context)) ?? context;
+        } catch (enrichmentError) {
+          console.error(
+            '[system-logger] Failed to enrich log with runtime static context',
+            enrichmentError
+          );
+        }
+        const forwardPromise = forwardToCentralizedLogging({
+          level: input.level ?? 'info',
+          message: input.message,
+          source: input.source ?? null,
+          category: category ?? null,
+          context: hydratedContext,
+          stack: errorInfo?.stack ?? null,
+          path: input.request?.url ? requestInfo.path ?? null : null,
+          method: requestInfo.method ?? null,
+          statusCode: input.statusCode ?? null,
+          requestId: input.requestId ?? requestInfo.requestId ?? null,
+          userId: input.userId ?? null,
+          fingerprint: fingerprint ?? null,
+          createdAt: new Date().toISOString(),
+        });
         const createSystemLog = await loadCreateSystemLog();
         if (!createSystemLog) {
+          await forwardPromise;
           return;
         }
         const created: SystemLogRecord = await createSystemLog({
@@ -484,7 +497,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           message: input.message,
           category: category ?? null,
           source: input.source ?? null,
-          context: sanitizeValue(context),
+          context: sanitizeValue(hydratedContext),
           stack: errorInfo?.stack ?? null,
           path: input.request?.url ? requestInfo.path : undefined,
           method: requestInfo.method,
@@ -492,6 +505,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           requestId: input.requestId ?? requestInfo.requestId ?? null,
           userId: input.userId ?? null,
         });
+        await forwardPromise;
 
         if (critical) {
           const notifyFn = await loadNotifyCriticalError();

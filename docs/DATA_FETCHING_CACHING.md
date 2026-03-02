@@ -58,6 +58,25 @@ These routes handle data that rarely, if ever, changes.
 
 While the API routes provide the server-side caching semantics, the client-side uses TanStack Query with its own `staleTime` and `gcTime` settings.
 
+### Query Factories v2
+
+We use a set of standardized factories in `src/shared/lib/query-factories-v2.ts` to wrap TanStack Query hooks. These factories provide:
+- **Telemetry**: Automatic logging of start, success, retry, and error stages.
+- **Observability**: Required `meta` object for every call to track source, operation, and resource.
+- **Safety**: Runtime guards for `refetchInterval` and standard `staleTime`.
+- **Convenience**: Declarative invalidation and standardized optimistic updates.
+
+#### Available Factories
+
+- `createListQueryV2`: For standard collection fetching.
+- `createSingleQueryV2`: For fetching individual resources by ID.
+- `createInfiniteQueryV2`: For paginated data with "Load More" patterns.
+- `createMultiQueryV2`: Telemetrized wrapper for `useQueries` (parallel fetching).
+- `createMutationV2`: Standardized mutations with `invalidateKeys` support.
+- `createOptimisticMutationV2`: Pattern for optimistic updates with automatic rollback.
+- `createSuspenseQueryV2` / `createSuspenseInfiniteQueryV2`: Support for React Suspense.
+- `useEnsureQueryDataV2` / `usePrefetchQueryV2`: Standardized pre-fetching logic.
+
 - **Standard fresh data**: `staleTime: 5 * 60 * 1000` (5 minutes).
 - **Real-time data**: `staleTime: 0`.
 - **Long-term data**: `staleTime: 60 * 60 * 1000` (1 hour).

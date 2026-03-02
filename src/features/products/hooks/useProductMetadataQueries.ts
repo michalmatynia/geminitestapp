@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import { getLanguages } from '@/features/internationalization/api';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -18,6 +18,7 @@ import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
+  createMultiQueryV2,
   createMutationV2,
   createDeleteMutationV2,
 } from '@/shared/lib/query-factories-v2';
@@ -86,14 +87,25 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
 }
 
 export function useMultiCategories(catalogIds: string[]): UseQueryResult<ProductCategory[]>[] {
-  return useQueries({
-    queries: catalogIds.map((catalogId) => ({
-      queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
-      queryFn: async (): Promise<ProductCategory[]> =>
-        await api.get<ProductCategory[]>(
-          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
-        ),
-    })),
+  return createMultiQueryV2({
+    queries: catalogIds.map((catalogId) => {
+      const queryKey = normalizeQueryKey(productMetadataKeys.categories(catalogId));
+      return {
+        queryKey,
+        queryFn: async (): Promise<ProductCategory[]> =>
+          await api.get<ProductCategory[]>(
+            `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+          ),
+        meta: {
+          source: 'products.hooks.useMultiCategories',
+          operation: 'list',
+          resource: 'products.metadata.categories',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'categories', 'multi'],
+        },
+      };
+    }),
   });
 }
 
@@ -120,14 +132,25 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
 }
 
 export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>[] {
-  return useQueries({
-    queries: catalogIds.map((catalogId) => ({
-      queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
-      queryFn: async (): Promise<ProductTag[]> =>
-        await api.get<ProductTag[]>(
-          `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
-        ),
-    })),
+  return createMultiQueryV2({
+    queries: catalogIds.map((catalogId) => {
+      const queryKey = normalizeQueryKey(productMetadataKeys.tags(catalogId));
+      return {
+        queryKey,
+        queryFn: async (): Promise<ProductTag[]> =>
+          await api.get<ProductTag[]>(
+            `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+          ),
+        meta: {
+          source: 'products.hooks.useMultiTags',
+          operation: 'list',
+          resource: 'products.metadata.tags',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'tags', 'multi'],
+        },
+      };
+    }),
   });
 }
 
@@ -242,18 +265,29 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
 }
 
 export function useMultiParameters(catalogIds: string[]): UseQueryResult<ProductParameter[]>[] {
-  return useQueries({
-    queries: catalogIds.map((catalogId) => ({
-      queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
-      queryFn: async (): Promise<ProductParameter[]> =>
-        await api.get<ProductParameter[]>('/api/products/parameters', {
-          params: {
-            catalogId,
-            fresh: 1,
-          },
-          cache: 'no-store',
-        }),
-    })),
+  return createMultiQueryV2({
+    queries: catalogIds.map((catalogId) => {
+      const queryKey = normalizeQueryKey(productMetadataKeys.parameters(catalogId));
+      return {
+        queryKey,
+        queryFn: async (): Promise<ProductParameter[]> =>
+          await api.get<ProductParameter[]>('/api/products/parameters', {
+            params: {
+              catalogId,
+              fresh: 1,
+            },
+            cache: 'no-store',
+          }),
+        meta: {
+          source: 'products.hooks.useMultiParameters',
+          operation: 'list',
+          resource: 'products.metadata.parameters',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'metadata', 'parameters', 'multi'],
+        },
+      };
+    }),
   });
 }
 

@@ -25,6 +25,7 @@ import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/o
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
 
 import { appendAiInsight, appendAiInsightNotification, setAiInsightsMeta } from './repository';
 import {
@@ -158,21 +159,6 @@ const sanitizeEvents = (
     country: event.country ?? null,
     language: event.language ?? null,
     meta: event.meta ?? null,
-  }));
-
-const sanitizeLogs = (logs: SystemLogRecord[]): Record<string, unknown>[] =>
-  logs.map((log: SystemLogRecord) => ({
-    id: log.id,
-    level: log.level,
-    message: log.message,
-    source: log.source,
-    createdAt: log.createdAt,
-    path: log.path ?? null,
-    method: log.method ?? null,
-    statusCode: log.statusCode ?? null,
-    context: log.context
-      ? { fingerprint: (log.context as { fingerprint?: unknown }).fingerprint }
-      : null,
   }));
 
 const getClient = (
@@ -669,11 +655,14 @@ export const generateLogsInsight = async (params: {
     listSystemLogs({ level: 'error', page: 1, pageSize: 40, from, to }),
     getSystemLogMetrics({ level: 'error', from, to }),
   ]);
+  const recentErrors = await Promise.all(
+    logsResult.logs.map((log: SystemLogRecord) => sanitizeSystemLogForAi(log))
+  );
 
   const payload = {
     window: { from: from.toISOString(), to: to.toISOString() },
     metrics: metricsResult,
-    recentErrors: sanitizeLogs(logsResult.logs),
+    recentErrors,
   };
 
   const messages = await buildInsightMessages({ type: 'logs', payload });

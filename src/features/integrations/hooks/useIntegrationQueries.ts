@@ -258,41 +258,85 @@ export function useBaseInventories(
 
 // --- Query Options (Needed for useQueries compositions) ---
 
-export const getExportTemplatesQueryOptions = () => ({
-  queryKey: integrationKeys.exportTemplates(),
-  queryFn: async (): Promise<ImportExportTemplate[]> => {
-    const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
-    return z.array(importExportTemplateSchema).parse(data);
-  },
-  staleTime: 5 * 60 * 1000,
-});
+export const getExportTemplatesQueryOptions = () => {
+  const queryKey = integrationKeys.exportTemplates();
+  return {
+    queryKey,
+    queryFn: async (): Promise<ImportExportTemplate[]> => {
+      const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
+      return z.array(importExportTemplateSchema).parse(data);
+    },
+    staleTime: 5 * 60 * 1000,
+    meta: {
+      source: 'integrations.queries.getExportTemplatesOptions',
+      operation: 'list' as const,
+      resource: 'integrations.export-templates',
+      domain: 'integrations' as const,
+      queryKey,
+      tags: ['integrations', 'export-templates', 'options'],
+    },
+  };
+};
 
-export const getActiveExportTemplateQueryOptions = () => ({
-  queryKey: integrationKeys.activeExportTemplate(),
-  queryFn: () =>
-    api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
-  staleTime: 5 * 60 * 1000,
-});
+export const getActiveExportTemplateQueryOptions = () => {
+  const queryKey = integrationKeys.activeExportTemplate();
+  return {
+    queryKey,
+    queryFn: () =>
+      api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+    staleTime: 5 * 60 * 1000,
+    meta: {
+      source: 'integrations.queries.getActiveExportTemplateOptions',
+      operation: 'detail' as const,
+      resource: 'integrations.active-export-template',
+      domain: 'integrations' as const,
+      queryKey,
+      tags: ['integrations', 'export-template', 'options'],
+    },
+  };
+};
 
-export const getDefaultExportInventoryQueryOptions = () => ({
-  queryKey: integrationKeys.defaultExportInventory(),
-  queryFn: () =>
-    api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
-  staleTime: 5 * 60 * 1000,
-});
+export const getDefaultExportInventoryQueryOptions = () => {
+  const queryKey = integrationKeys.defaultExportInventory();
+  return {
+    queryKey,
+    queryFn: () =>
+      api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+    staleTime: 5 * 60 * 1000,
+    meta: {
+      source: 'integrations.queries.getDefaultExportInventoryOptions',
+      operation: 'detail' as const,
+      resource: 'integrations.default-export-inventory',
+      domain: 'integrations' as const,
+      queryKey,
+      tags: ['integrations', 'inventory', 'options'],
+    },
+  };
+};
 
-export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => ({
-  queryKey: integrationKeys.baseInventories(connectionId),
-  queryFn: async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
-      '/api/integrations/imports/base',
-      {
-        action: 'inventories',
-        connectionId,
-      }
-    );
-    if (data.error) throw new ApiError(data.error, 400);
-    return Array.isArray(data.inventories) ? data.inventories : [];
-  },
-  enabled: enabled && !!connectionId,
-});
+export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => {
+  const queryKey = integrationKeys.baseInventories(connectionId);
+  return {
+    queryKey,
+    queryFn: async (): Promise<BaseInventory[]> => {
+      const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
+        '/api/integrations/imports/base',
+        {
+          action: 'inventories',
+          connectionId,
+        }
+      );
+      if (data.error) throw new ApiError(data.error, 400);
+      return Array.isArray(data.inventories) ? data.inventories : [];
+    },
+    enabled: enabled && !!connectionId,
+    meta: {
+      source: 'integrations.queries.getBaseInventoriesOptions',
+      operation: 'list' as const,
+      resource: 'integrations.base-inventories',
+      domain: 'integrations' as const,
+      queryKey,
+      tags: ['integrations', 'inventories', 'options'],
+    },
+  };
+};

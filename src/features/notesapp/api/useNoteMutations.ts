@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   CreateNoteDto as NoteCreateInput,
@@ -30,7 +28,6 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInput> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createCreateMutationV2({
     mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
@@ -43,9 +40,7 @@ export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInp
       mutationKey,
       tags: ['notes', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
@@ -53,7 +48,6 @@ export function useUpdateNote(): UpdateMutation<
   NoteWithRelations,
   NoteUpdateInput & { id: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
@@ -67,17 +61,14 @@ export function useUpdateNote(): UpdateMutation<
       mutationKey,
       tags: ['notes', 'update'],
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.detail(variables.id),
-      });
-    },
+    invalidateKeys: (_data, variables) => [
+      QUERY_KEYS.notes.all,
+      QUERY_KEYS.notes.detail(variables.id),
+    ],
   });
 }
 
 export function useDeleteNote(): DeleteMutation<DeleteResponse> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
@@ -90,14 +81,11 @@ export function useDeleteNote(): DeleteMutation<DeleteResponse> {
       mutationKey,
       tags: ['notes', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
 export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCreateInput> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createCreateMutationV2({
     mutationFn: (payload: CategoryCreateInput) =>
@@ -111,9 +99,7 @@ export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCr
       mutationKey,
       tags: ['notes', 'folders', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
@@ -121,7 +107,6 @@ export function useUpdateNoteFolder(): UpdateMutation<
   CategoryRecord,
   CategoryUpdateInput & { id: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
@@ -135,14 +120,11 @@ export function useUpdateNoteFolder(): UpdateMutation<
       mutationKey,
       tags: ['notes', 'folders', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
 export function useDeleteNoteFolder(): DeleteMutation<DeleteResponse> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createDeleteMutationV2({
     mutationFn: (folderId: string) =>
@@ -156,14 +138,11 @@ export function useDeleteNoteFolder(): DeleteMutation<DeleteResponse> {
       mutationKey,
       tags: ['notes', 'folders', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
 export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCreateInput> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createCreateMutationV2({
     mutationFn: (payload: NotebookCreateInput) =>
@@ -177,11 +156,7 @@ export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCrea
       mutationKey,
       tags: ['notes', 'notebooks', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.notebooks(),
-      });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.notebooks()],
   });
 }
 
@@ -189,7 +164,6 @@ export function useUpdateNotebook(): UpdateMutation<
   NotebookRecord,
   NotebookUpdateInput & { id: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
@@ -203,19 +177,14 @@ export function useUpdateNotebook(): UpdateMutation<
       mutationKey,
       tags: ['notes', 'notebooks', 'update'],
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.notebooks(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.detail(variables.id),
-      });
-    },
+    invalidateKeys: (_data, variables) => [
+      QUERY_KEYS.notes.notebooks(),
+      QUERY_KEYS.notes.detail(variables.id),
+    ],
   });
 }
 
 export function useDeleteNotebook(): DeleteMutation<DeleteResponse> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
@@ -228,14 +197,11 @@ export function useDeleteNotebook(): DeleteMutation<DeleteResponse> {
       mutationKey,
       tags: ['notes', 'notebooks', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.all],
   });
 }
 
 export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createCreateMutationV2({
     mutationFn: (payload: TagCreateInput) => api.post<TagRecord>('/api/notes/tags', payload),
@@ -248,17 +214,14 @@ export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
       mutationKey,
       tags: ['notes', 'tags', 'create'],
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
-      });
-    },
+    invalidateKeys: (_data, variables) => [
+      QUERY_KEYS.notes.tags(),
+      QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
+    ],
   });
 }
 
 export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
@@ -272,14 +235,11 @@ export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & {
       mutationKey,
       tags: ['notes', 'tags', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.tags()],
   });
 }
 
 export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
@@ -292,14 +252,11 @@ export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
       mutationKey,
       tags: ['notes', 'tags', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.tags()],
   });
 }
 
 export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInput> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createCreateMutationV2({
     mutationFn: (payload: ThemeCreateInput) => api.post<ThemeRecord>('/api/notes/themes', payload),
@@ -312,14 +269,10 @@ export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInp
       mutationKey,
       tags: ['notes', 'themes', 'create'],
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.themes(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
-      });
-    },
+    invalidateKeys: (_data, variables) => [
+      QUERY_KEYS.notes.themes(),
+      QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
+    ],
   });
 }
 
@@ -327,7 +280,6 @@ export function useUpdateNoteTheme(): UpdateMutation<
   ThemeRecord,
   ThemeUpdateInput & { id: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createUpdateMutationV2({
     mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
@@ -341,16 +293,11 @@ export function useUpdateNoteTheme(): UpdateMutation<
       mutationKey,
       tags: ['notes', 'themes', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.themes(),
-      });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.themes()],
   });
 }
 
 export function useDeleteNoteTheme(): DeleteMutation<DeleteResponse> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
@@ -363,10 +310,6 @@ export function useDeleteNoteTheme(): DeleteMutation<DeleteResponse> {
       mutationKey,
       tags: ['notes', 'themes', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.themes(),
-      });
-    },
+    invalidateKeys: [QUERY_KEYS.notes.themes()],
   });
 }

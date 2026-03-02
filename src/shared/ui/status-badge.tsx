@@ -18,6 +18,7 @@ export type StatusVariant =
 
 interface StatusBadgeProps {
   status: string;
+  label?: string;
   variant?: StatusVariant;
   size?: 'sm' | 'md';
   icon?: ReactNode;
@@ -62,6 +63,7 @@ const statusToVariant = (status: string): StatusVariant => {
 
 export function StatusBadge({
   status,
+  label,
   variant,
   size = 'md',
   icon,
@@ -71,7 +73,7 @@ export function StatusBadge({
   onClick,
 }: StatusBadgeProps): React.JSX.Element {
   const resolvedVariant = variant || statusToVariant(status);
-  const label = status.trim();
+  const displayLabel = (label || status).trim();
 
   return (
     <Badge
@@ -88,7 +90,7 @@ export function StatusBadge({
       {icon && (
         <span className={cn('flex-shrink-0', size === 'sm' ? 'size-2.5' : 'size-3')}>{icon}</span>
       )}
-      {!hideLabel && label ? <span>{label}</span> : null}
+      {!hideLabel && displayLabel ? <span>{displayLabel}</span> : null}
     </Badge>
   );
 }

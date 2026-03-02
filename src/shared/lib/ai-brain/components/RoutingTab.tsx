@@ -50,11 +50,10 @@ export function RoutingTab(): React.JSX.Element {
                 <span className='text-gray-200'>{label}</span>
                 <StatusBadge
                   status={isOverridden ? 'ok' : 'none'}
-                  size='xs'
+                  size='sm'
                   className='ml-1'
-                >
-                  {isOverridden ? 'override' : 'default'}
-                </StatusBadge>
+                  label={isOverridden ? 'override' : 'default'}
+                />
               </div>
             );
           })}

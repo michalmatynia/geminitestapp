@@ -1,9 +1,9 @@
 'use client';
 
-import { useQueries, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 // Hook for dependent queries - execute queries in sequence
@@ -92,11 +92,18 @@ export function useParallelQueries<T extends Record<string, unknown>>(queries: {
   refetch: () => Promise<unknown[]>;
 } {
   const keys = Object.keys(queries) as Array<keyof T>;
-  const queryResults = useQueries({
+  const queryResults = createMultiQueryV2({
     queries: keys.map((key) => ({
       queryKey: normalizeQueryKey(queries[key].queryKey),
       queryFn: queries[key].queryFn,
       enabled: queries[key].enabled !== false,
+      meta: {
+        source: `shared.hooks.query.useParallelQueries.${String(key)}`,
+        operation: 'list',
+        resource: 'parallel-query',
+        domain: 'global',
+        tags: ['parallel', String(key)],
+      },
     })),
   });
 

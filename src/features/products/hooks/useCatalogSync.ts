@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -10,6 +10,7 @@ import type {
   CurrencyRecord,
 } from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
+import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -78,7 +79,14 @@ export function useCatalogSync(
   const queriesEnabled = enabled && runtimeReady;
 
   // Parallel queries for all data sources
-  const results = useQueries({
+  const results = createMultiQueryV2<
+    [
+      Catalog[],
+      PriceGroupWithDetails[],
+      LanguageRecord[],
+      CurrencyRecord[],
+    ]
+  >({
     queries: [
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
@@ -88,6 +96,13 @@ export function useCatalogSync(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'products.hooks.useCatalogSync.fetchCatalogs',
+          operation: 'list',
+          resource: 'products.metadata.catalogs',
+          domain: 'products',
+          tags: ['products', 'metadata', 'catalogs', 'sync'],
+        },
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
@@ -97,6 +112,13 @@ export function useCatalogSync(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'products.hooks.useCatalogSync.fetchPriceGroups',
+          operation: 'list',
+          resource: 'products.metadata.price-groups',
+          domain: 'products',
+          tags: ['products', 'metadata', 'price-groups', 'sync'],
+        },
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
@@ -106,6 +128,13 @@ export function useCatalogSync(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'products.hooks.useCatalogSync.fetchLanguages',
+          operation: 'list',
+          resource: 'products.metadata.languages',
+          domain: 'products',
+          tags: ['products', 'metadata', 'languages', 'sync'],
+        },
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
@@ -115,6 +144,13 @@ export function useCatalogSync(
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        meta: {
+          source: 'products.hooks.useCatalogSync.fetchCurrencies',
+          operation: 'list',
+          resource: 'internationalization.currencies',
+          domain: 'global',
+          tags: ['internationalization', 'currencies', 'sync'],
+        },
       },
     ],
   });

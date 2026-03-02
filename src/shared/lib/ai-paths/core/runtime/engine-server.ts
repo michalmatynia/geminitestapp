@@ -140,7 +140,7 @@ export async function evaluateGraphServer(
 
   if (mongoDurationMs > 0) {
     void logSystemEvent({
-      level: 'debug',
+      level: 'info',
       source: 'runtime-engine',
       message: '[engine-server] Mongo client acquisition completed',
       context: {
@@ -171,7 +171,7 @@ export async function evaluateGraphServer(
 
   const runtimeCallDurationMs = Date.now() - runtimeCallStartedAt;
   void logSystemEvent({
-    level: 'debug',
+    level: 'info',
     source: 'runtime-engine',
     message: '[engine-server] evaluateGraphServer completed',
     context: {

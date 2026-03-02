@@ -5,6 +5,10 @@ import type {
   PersistCaseResolverWorkspaceSuccess as _PersistCaseResolverWorkspaceSuccess,
   PersistCaseResolverWorkspaceConflict as _PersistCaseResolverWorkspaceConflict,
   PersistCaseResolverWorkspaceFailure as _PersistCaseResolverWorkspaceFailure,
+  CaseResolverWorkspaceFetchAttemptProfile,
+  CaseResolverWorkspaceRecordFetchResult,
+  CaseResolverWorkspaceDebugEvent,
+  CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
 } from '@/shared/contracts/case-resolver';
 
 import {
@@ -43,43 +47,6 @@ const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS = readPositiveIntegerEnv(
   'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS',
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT
 );
-
-export type CaseResolverWorkspaceFetchAttemptProfile = 'default' | 'context_fast';
-
-export type CaseResolverWorkspaceRecordFetchResult =
-  | {
-      status: 'resolved';
-      workspace: CaseResolverWorkspace;
-      attemptKey: string;
-      scope: 'light' | 'heavy';
-      durationMs: number;
-    }
-  | {
-      status: 'missing_required_file';
-      attemptKey: string | null;
-      durationMs: number;
-      message: string;
-    }
-  | {
-      status: 'unavailable';
-      reason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted';
-      durationMs: number;
-      message: string;
-    };
-
-export type CaseResolverWorkspaceDebugEvent = {
-  id: string;
-  timestamp: string;
-  source: string;
-  action: string;
-  message?: string | undefined;
-  mutationId?: string | null | undefined;
-  expectedRevision?: number | null | undefined;
-  currentRevision?: number | null | undefined;
-  workspaceRevision?: number | null | undefined;
-  durationMs?: number | undefined;
-  payloadBytes?: number | undefined;
-};
 
 type SettingsRecordLike = {
   key?: unknown;
@@ -669,10 +636,6 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
 ): Promise<CaseResolverWorkspace | null> => {
   return await fetchCaseResolverWorkspaceRecord(source, { fresh: true });
 };
-
-type FetchIfStaleResult =
-  | { updated: false; revision: number }
-  | { updated: true; workspace: CaseResolverWorkspace };
 
 /**
  * Single conditional HTTP request that replaces the old two-step waterfall

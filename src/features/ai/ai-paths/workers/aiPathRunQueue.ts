@@ -396,6 +396,8 @@ const readQueueHealthSnapshot = async () => {
       waitingCount: 0,
       failedCount: 0,
       completedCount: 0,
+      delayedCount: 0,
+      pausedCount: 0,
       lastPollTime: 0,
       timeSinceLastPoll: 0,
     };
@@ -430,7 +432,7 @@ const readAiPathRunQueueBaseStatus = async (now: number): Promise<AiPathRunQueue
     failedCount: health.failedCount,
     completedCount: health.completedCount,
     delayedCount: health.delayedCount,
-    pausedCount: health.pausedCount,
+    pausedCount: (health as any).pausedCount ?? 0,
     avgRuntimeMs: null,
     p50RuntimeMs: null,
     p95RuntimeMs: null,

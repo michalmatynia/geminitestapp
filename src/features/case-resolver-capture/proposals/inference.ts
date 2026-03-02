@@ -26,8 +26,23 @@ import type {
   CaseResolverCaptureProposalMatchKind,
 } from './types';
 
-const CAPTURE_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];
-const CAPTURE_ADDRESSEE_LABEL_HINTS = ['addressee', 'adresat', 'recipient', 'odbiorca', 'organ'];
+const CAPTURE_ADDRESSER_LABEL_HINTS = [
+  'addresser',
+  'from',
+  'od',
+  'nadawca',
+  'sender',
+  'wnioskodawca',
+];
+const CAPTURE_ADDRESSEE_LABEL_HINTS = [
+  'addressee',
+  'to',
+  'do',
+  'adresat',
+  'recipient',
+  'odbiorca',
+  'organ',
+];
 
 const inferCandidateRoleFromLabels = (
   candidate: PromptExploderCaseResolverPartyCandidate

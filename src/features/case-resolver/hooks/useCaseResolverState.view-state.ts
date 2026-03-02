@@ -3,6 +3,7 @@ import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts
 import { type CaseResolverRequestedCaseStatus } from '../types';
 import {
   resolveCaseContainerIdForFileId,
+  resolveCaseContainerIdForFolderPath,
   resolveCaseResolverActiveCaseId,
   isCaseResolverCreateContextReady,
 } from './useCaseResolverState.helpers';
@@ -59,6 +60,52 @@ export function useCaseResolverStateViewState({
   const [isPreviewPageVisible, setIsPreviewPageVisible] = useState(false);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
 
+  const filesById = useMemo(
+    () =>
+      new Map<string, CaseResolverFile>(
+        workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      ),
+    [workspace.files]
+  );
+
+  const requestedCaseContainerId = useMemo(
+    (): string | null => resolveCaseContainerIdForFileId(filesById, requestedFileId),
+    [filesById, requestedFileId]
+  );
+
+  const selectedCaseContainerId = useMemo((): string | null => {
+    const contextFileId = selectedFileId ?? workspace.activeFileId;
+    return resolveCaseContainerIdForFileId(filesById, contextFileId);
+  }, [filesById, selectedFileId, workspace.activeFileId]);
+
+  const selectedFolderCaseContainerId = useMemo(
+    (): string | null =>
+      resolveCaseContainerIdForFolderPath({
+        filesById,
+        folderRecords: workspace.folderRecords,
+        folderPath: selectedFolderPath,
+      }),
+    [filesById, selectedFolderPath, workspace.folderRecords]
+  );
+
+  const activeCaseId = useMemo(
+    (): string | null =>
+      resolveCaseResolverActiveCaseId({
+        requestedFileId,
+        requestedCaseContainerId,
+        selectedCaseContainerId,
+        selectedFolderCaseContainerId,
+        files: workspace.files,
+      }),
+    [
+      requestedCaseContainerId,
+      requestedFileId,
+      selectedCaseContainerId,
+      selectedFolderCaseContainerId,
+      workspace.files,
+    ]
+  );
+
   const handleSelectFile = useCallback(
     (fileId: string): void => {
       if (selectedFileId === fileId) {
@@ -91,46 +138,53 @@ export function useCaseResolverStateViewState({
 
   const handleSelectFolder = useCallback(
     (folderPath: string | null): void => {
+      const preservedCaseId = selectedFolderCaseContainerId ?? activeCaseId;
       if (folderPath !== null && selectedFolderPath === folderPath) {
         setSelectedFileId(null);
         setSelectedFolderPath(null);
         setSelectedAssetId(null);
+        if (preservedCaseId) {
+          setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
+            current.activeFileId === preservedCaseId
+              ? current
+              : {
+                ...current,
+                activeFileId: preservedCaseId,
+              }
+          );
+        }
         return;
       }
+
+      const nextFolderCaseContainerId = resolveCaseContainerIdForFolderPath({
+        filesById,
+        folderRecords: workspace.folderRecords,
+        folderPath,
+      });
+
       setSelectedFileId(null);
       setSelectedFolderPath(folderPath);
       setSelectedAssetId(null);
+      const nextActiveCaseId = nextFolderCaseContainerId ?? activeCaseId;
+      if (nextActiveCaseId) {
+        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
+          current.activeFileId === nextActiveCaseId
+            ? current
+            : {
+              ...current,
+              activeFileId: nextActiveCaseId,
+            }
+        );
+      }
     },
-    [selectedFolderPath]
-  );
-
-  const filesById = useMemo(
-    () =>
-      new Map<string, CaseResolverFile>(
-        workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-      ),
-    [workspace.files]
-  );
-
-  const requestedCaseContainerId = useMemo(
-    (): string | null => resolveCaseContainerIdForFileId(filesById, requestedFileId),
-    [filesById, requestedFileId]
-  );
-
-  const selectedCaseContainerId = useMemo((): string | null => {
-    const contextFileId = selectedFileId ?? workspace.activeFileId;
-    return resolveCaseContainerIdForFileId(filesById, contextFileId);
-  }, [filesById, selectedFileId, workspace.activeFileId]);
-
-  const activeCaseId = useMemo(
-    (): string | null =>
-      resolveCaseResolverActiveCaseId({
-        requestedFileId,
-        requestedCaseContainerId,
-        selectedCaseContainerId,
-        files: workspace.files,
-      }),
-    [requestedCaseContainerId, requestedFileId, selectedCaseContainerId, workspace.files]
+    [
+      activeCaseId,
+      filesById,
+      selectedFolderCaseContainerId,
+      selectedFolderPath,
+      setWorkspace,
+      workspace.folderRecords,
+    ]
   );
 
   const canCreateInActiveCase = useMemo(

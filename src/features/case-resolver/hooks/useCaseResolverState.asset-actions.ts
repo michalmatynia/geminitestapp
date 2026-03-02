@@ -95,6 +95,11 @@ export const useCaseResolverStateAssetActions = (
   const factoryActions = useCaseResolverAssetFactoryActions({
     settingsStoreRef,
     toast: input.toast,
+    updateWorkspace: input.updateWorkspace,
+    workspace: input.workspace,
+    defaultTagId: input.defaultTagId,
+    defaultCaseIdentifierId: input.defaultCaseIdentifierId,
+    defaultCategoryId: input.defaultCategoryId,
     activeCaseId: input.activeCaseId,
     requestedCaseStatus: input.requestedCaseStatus,
     setSelectedFileId: input.setSelectedFileId,
@@ -107,14 +112,10 @@ export const useCaseResolverStateAssetActions = (
     ...factoryActions,
     ...uploadActions,
     ...ocrActions,
-    handleCreateNodeFile: (_targetFolderPath: string | null) => {
-      // Placeholder for missing method
-    },
+    handleCreateNodeFile: factoryActions.handleCreateNodeFile,
     handleCreateDocumentFromText: (_scanFileId: string) => {
       // Placeholder for missing method
     },
-    handleCreateImageAsset: (_targetFolderPath: string | null) => {
-      // Placeholder for missing method
-    },
+    handleCreateImageAsset: factoryActions.handleCreateImageAsset,
   };
 };

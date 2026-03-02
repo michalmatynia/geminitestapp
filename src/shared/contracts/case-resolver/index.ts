@@ -357,6 +357,20 @@ export interface CaseResolverNodeFileMeta {
   assignedAt: string;
 }
 
+export type CaseResolverNodeFileRelationIndex = {
+  nodeIdsByDocumentFileId: Record<string, string[]>;
+  nodeFileAssetIdsByDocumentFileId: Record<string, string[]>;
+  documentFileIdsByNodeFileAssetId: Record<string, string[]>;
+  nodeIdsByNodeFileAssetId: Record<string, string[]>;
+};
+
+export const EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX: CaseResolverNodeFileRelationIndex = {
+  nodeIdsByDocumentFileId: {},
+  nodeFileAssetIdsByDocumentFileId: {},
+  documentFileIdsByNodeFileAssetId: {},
+  nodeIdsByNodeFileAssetId: {},
+};
+
 export interface CaseResolverSnapshotNodeMeta {
   fileId: string;
   fileType: CaseResolverFileType;
@@ -709,6 +723,47 @@ export type CaseResolverWorkspaceMetadata = {
   lastMutationId: string | null;
   exists: boolean;
 };
+
+export type CaseResolverWorkspaceFetchAttemptProfile = 'default' | 'context_fast';
+
+export type CaseResolverWorkspaceRecordFetchResult =
+  | {
+      status: 'resolved';
+      workspace: CaseResolverWorkspace;
+      attemptKey: string;
+      scope: 'light' | 'heavy';
+      durationMs: number;
+    }
+  | {
+      status: 'missing_required_file';
+      attemptKey: string | null;
+      durationMs: number;
+      message: string;
+    }
+  | {
+      status: 'unavailable';
+      reason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted';
+      durationMs: number;
+      message: string;
+    };
+
+export type CaseResolverWorkspaceDebugEvent = {
+  id: string;
+  timestamp: string;
+  source: string;
+  action: string;
+  message?: string | undefined;
+  mutationId?: string | null | undefined;
+  expectedRevision?: number | null | undefined;
+  currentRevision?: number | null | undefined;
+  workspaceRevision?: number | null | undefined;
+  durationMs?: number | undefined;
+  payloadBytes?: number | undefined;
+};
+
+export type CaseResolverWorkspaceFetchIfStaleResult =
+  | { updated: false; revision: number }
+  | { updated: true; workspace: CaseResolverWorkspace };
 
 export type PersistCaseResolverWorkspaceSuccess = {
   ok: true;

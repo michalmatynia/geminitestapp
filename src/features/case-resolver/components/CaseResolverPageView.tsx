@@ -22,6 +22,11 @@ import { CaseResolverCaptureMappingModal } from './page/CaseResolverCaptureMappi
 import { CaseResolverWorkspaceDebugPanel } from './CaseResolverWorkspaceDebugPanel';
 import { CaseResolverRuntimeProvider } from '../runtime';
 
+type PendingNavigation = {
+  kind: 'document' | 'case';
+  action: () => void;
+};
+
 export function CaseResolverPageView(): React.JSX.Element {
   const searchParams = useSearchParams();
   const contextValue = useCaseResolverViewContext();
@@ -89,6 +94,12 @@ export function CaseResolverPageView(): React.JSX.Element {
     setWorkspaceView,
     handleMoveFolder,
     isEditorDraftDirty,
+    isActiveCaseMetadataDirty,
+    handleSaveActiveCaseMetadata,
+    handleDiscardActiveCaseMetadata,
+    updateActiveCaseMetadataDraft,
+    activeCaseFile,
+    activeCaseMetadataDraft,
     handleResetCaseContext,
   } = contextValue;
 
@@ -98,7 +109,7 @@ export function CaseResolverPageView(): React.JSX.Element {
   }, []);
 
   // Pending navigation stored as a callback so we can execute it after user confirms
-  const [pendingNavigation, setPendingNavigation] = React.useState<(() => void) | null>(null);
+  const [pendingNavigation, setPendingNavigation] = React.useState<PendingNavigation | null>(null);
 
   // Only guard document files — scan files don't have a text editor worth guarding
   const isDirtyDocumentDraft =
@@ -109,13 +120,16 @@ export function CaseResolverPageView(): React.JSX.Element {
   const guardNavigation = React.useCallback(
     (action: () => void): void => {
       if (isDirtyDocumentDraft) {
-        // Wrap in an extra arrow so React doesn't treat `action` as a state-updater function
-        setPendingNavigation(() => action);
+        setPendingNavigation({ kind: 'document', action });
+        return;
+      }
+      if (isActiveCaseMetadataDirty) {
+        setPendingNavigation({ kind: 'case', action });
         return;
       }
       action();
     },
-    [isDirtyDocumentDraft]
+    [isActiveCaseMetadataDirty, isDirtyDocumentDraft]
   );
 
   const menuToggleButton =
@@ -155,18 +169,19 @@ export function CaseResolverPageView(): React.JSX.Element {
           requestedCaseIssue,
           canCreateInActiveCase,
           onRetryCaseContext: handleRetryCaseContext,
-          onResetCaseContext: handleResetCaseContext as () => void,
+          onResetCaseContext: () => guardNavigation(handleResetCaseContext as () => void),
           selectedFileId,
           selectedAssetId,
           selectedFolderPath,
           activeFile,
           selectedAsset,
+          activeCaseFile,
           panelCollapsed: folderPanelCollapsed,
           onPanelCollapsedChange: setFolderPanelCollapsed,
-          onDeactivateActiveFile: handleDeactivateActiveFile,
+          onDeactivateActiveFile: () => guardNavigation(handleDeactivateActiveFile),
           onSelectFile: (fileId) => guardNavigation(() => handleSelectFile(fileId)),
-          onSelectAsset: handleSelectAsset,
-          onSelectFolder: handleSelectFolder,
+          onSelectAsset: (assetId) => guardNavigation(() => handleSelectAsset(assetId)),
+          onSelectFolder: (folderPath) => guardNavigation(() => handleSelectFolder(folderPath)),
           onCreateFile: handleCreateFile,
           onCreateFolder: handleCreateFolder,
           onDeleteFolder: handleDeleteFolder,
@@ -204,6 +219,11 @@ export function CaseResolverPageView(): React.JSX.Element {
           onLinkRelatedFiles: state.handleLinkRelatedFiles,
           onUnlinkRelatedFile: state.handleUnlinkRelatedFile,
           onUpdateActiveCase: handleUpdateActiveCaseMetadata,
+          activeCaseMetadataDraft,
+          isActiveCaseMetadataDirty,
+          onUpdateActiveCaseDraft: updateActiveCaseMetadataDraft,
+          onSaveActiveCase: handleSaveActiveCaseMetadata,
+          onDiscardActiveCaseChanges: handleDiscardActiveCaseMetadata,
           caseTagOptions,
           caseIdentifierOptions,
           caseCategoryOptions,
@@ -245,31 +265,26 @@ export function CaseResolverPageView(): React.JSX.Element {
               <DialogHeader>
                 <DialogTitle>Unsaved Changes</DialogTitle>
                 <DialogDescription>
-                  You have unsaved changes in this document. What would you like to do?
+                  {pendingNavigation?.kind === 'case'
+                    ? 'You have unsaved changes in this case. What would you like to do?'
+                    : 'You have unsaved changes in this document. What would you like to do?'}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className='flex-col gap-2 sm:flex-col'>
                 <Button
                   onClick={() => {
-                    handleSaveFileEditor();
-                    pendingNavigation?.();
+                    if (pendingNavigation?.kind === 'case') {
+                      handleSaveActiveCaseMetadata();
+                    } else {
+                      handleSaveFileEditor();
+                    }
+                    pendingNavigation?.action();
                     setPendingNavigation(null);
                   }}
                   className='w-full border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
                   variant='outline'
                 >
-                  Save &amp; Continue
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleDiscardFileEditorDraft();
-                    pendingNavigation?.();
-                    setPendingNavigation(null);
-                  }}
-                  variant='outline'
-                  className='w-full border-red-500/40 text-red-400 hover:bg-red-500/10'
-                >
-                  Discard Changes
+                  Save
                 </Button>
                 <Button
                   variant='ghost'
@@ -277,6 +292,21 @@ export function CaseResolverPageView(): React.JSX.Element {
                   onClick={() => setPendingNavigation(null)}
                 >
                   Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (pendingNavigation?.kind === 'case') {
+                      handleDiscardActiveCaseMetadata();
+                    } else {
+                      handleDiscardFileEditorDraft();
+                    }
+                    pendingNavigation?.action();
+                    setPendingNavigation(null);
+                  }}
+                  variant='outline'
+                  className='w-full border-red-500/40 text-red-400 hover:bg-red-500/10'
+                >
+                  Discard
                 </Button>
               </DialogFooter>
             </DialogContent>

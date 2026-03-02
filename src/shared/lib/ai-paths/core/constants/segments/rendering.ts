@@ -113,6 +113,10 @@ export const allowedConnections: Record<NodeType, NodeType[]> = {
     'prompt',
   ],
   canvas_output: [],
+  function: [],
+  state: [],
+  switch: [],
+  subgraph: [],
 };
 
 export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
@@ -157,6 +161,10 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   description_updater: { border: 'border-rose-400/40', glow: 'shadow-rose-400/20' },
   bounds_normalizer: { border: 'border-teal-400/40', glow: 'shadow-teal-500/20' },
   canvas_output: { border: 'border-sky-400/40', glow: 'shadow-sky-500/20' },
+  function: { border: 'border-blue-400/40', glow: 'shadow-blue-500/20' },
+  state: { border: 'border-emerald-400/40', glow: 'shadow-emerald-500/20' },
+  switch: { border: 'border-pink-400/40', glow: 'shadow-pink-500/20' },
+  subgraph: { border: 'border-violet-400/40', glow: 'shadow-violet-500/20' },
 };
 
 export const triggers = [

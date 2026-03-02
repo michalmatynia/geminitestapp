@@ -208,7 +208,7 @@ const classifyRunDuration = (run: HistoryRunRecord): 'unknown' | 'fast' | 'moder
 };
 
 const resolveExecutionSummary = (
-  run: HistoryRunRecord,
+  _run: HistoryRunRecord,
   executionMeta: Record<string, unknown> | null
 ): {
   operationLabel: string;

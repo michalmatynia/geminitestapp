@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import { validatorScopeSchema, validatorPatternListSchema } from './validator';
+import {
+  validatorScopeSchema,
+  validatorPatternListSchema,
+} from './validator';
+import {
+  type PromptValidationRule,
+  type PromptEngineSettings,
+} from './prompt-engine';
 
 /**
  * Prompt Exploder Basic DTOs
@@ -308,7 +315,9 @@ export const promptExploderPatternSnapshotSchema = z.object({
   createdAt: z.string().optional(),
 });
 
-export type PromptExploderPatternSnapshot = z.infer<typeof promptExploderPatternSnapshotSchema>;
+export type PromptExploderPatternSnapshot = z.infer<typeof promptExploderPatternSnapshotSchema> & {
+  rules?: PromptValidationRule[];
+};
 
 /**
  * Prompt Exploder Benchmark DTOs
@@ -362,6 +371,39 @@ export type PromptExploderBenchmarkSuggestion = z.infer<
  * Prompt Exploder Runtime & Settings DTOs
  */
 
+import type {
+  ParamSpec,
+  ParamSpecKind,
+} from './prompt-engine';
+
+export type PromptExploderParamUiRecommendation = {
+  baseKind: ParamSpecKind;
+  recommended: Exclude<PromptExploderParamUiControl, 'auto'>;
+  options: PromptExploderParamUiControl[];
+  confidence: number;
+  reason: string | null;
+  canSlider: boolean;
+};
+
+export type PromptExploderParamEntry = {
+  path: string;
+  value: unknown;
+  spec: ParamSpec | null;
+  selector: PromptExploderParamUiControl;
+  resolvedSelector: Exclude<PromptExploderParamUiControl, 'auto'>;
+  selectorOptions: PromptExploderParamUiControl[];
+  recommendation: PromptExploderParamUiRecommendation;
+  comment: string;
+  description: string;
+};
+
+export type PromptExploderParamEntriesState = {
+  entries: PromptExploderParamEntry[];
+  paramUiControls: Record<string, PromptExploderParamUiControl>;
+  paramComments: Record<string, string>;
+  paramDescriptions: Record<string, string>;
+};
+
 export const promptExploderOperationModeSchema = z.enum([
   'rules_only',
   'hybrid',
@@ -400,6 +442,15 @@ export const promptExploderValidationRuleStackSchema = z.object({
 export type PromptExploderValidationRuleStack =
   | string
   | z.infer<typeof promptExploderValidationRuleStackSchema>;
+
+import { type ValidatorScope } from './validator';
+
+export type PromptExploderValidationRuleStackOption = {
+  value: PromptExploderValidationRuleStack;
+  label: string;
+  description: string;
+  scope: ValidatorScope;
+};
 
 export const promptExploderRuntimeValidationScopeSchema = z.enum([
   'segment',
@@ -637,6 +688,42 @@ export interface PromptExploderCaseResolverMetadata {
  * Prompt Exploder Bridge DTOs
  */
 
+export type PromptExploderCaseResolverCaptureRole =
+  | PromptExploderCaseResolverPartyRole
+  | 'party'
+  | 'place_date';
+export type CaseResolverCaptureField =
+  | 'kind'
+  | 'displayName'
+  | 'organizationName'
+  | 'companyName'
+  | 'firstName'
+  | 'name'
+  | 'middleName'
+  | 'lastName'
+  | 'street'
+  | 'streetNumber'
+  | 'houseNumber'
+  | 'city'
+  | 'postalCode'
+  | 'country'
+  | 'day'
+  | 'month'
+  | 'year';
+
+export type CaseResolverSegmentCaptureRule = {
+  id: string;
+  label: string;
+  role: PromptExploderCaseResolverCaptureRole;
+  field: CaseResolverCaptureField;
+  regex: RegExp;
+  applyTo: 'segment' | 'line';
+  group: number;
+  normalize: 'trim' | 'lower' | 'upper' | 'country' | 'day' | 'month' | 'year';
+  overwrite: boolean;
+  sequence: number;
+};
+
 export const promptExploderBridgePayloadStatusSchema = z.enum([
   'pending',
   'applied',
@@ -803,15 +890,125 @@ export type PromptExploderOrchestratorRollout = {
   canaryPercent: number;
 };
 
+export type SegmentSelectionStrategy =
+  | {
+      kind: 'match_title';
+      title: string;
+    }
+  | {
+      kind: 'preserve_id';
+      previousId: string | null;
+    };
+
 export type BenchmarkSuggestionPreparation = {
   uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
   validSuggestions: PromptExploderBenchmarkSuggestion[];
   invalidSegmentTitles: string[];
 };
 
+export type ParsedPromptHeading = {
+  code: string | null;
+  title: string;
+};
+
+export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
+  'segment.boundary.requirements',
+  'segment.boundary.studio_relighting',
+  'segment.boundary.pipeline',
+  'segment.boundary.final_qa',
+  'segment.not_heading.rule_line',
+  'segment.subsection.alpha_heading',
+  'segment.subsection.reference_named',
+  'segment.subsection.reference_plain',
+  'segment.subsection.qa_code',
+  'segment.subsection.numeric_bracket_heading',
+  'segment.subsection.bracket_heading',
+  'segment.subsection.markdown_heading',
+] as const;
+
+export type PromptExploderParserTuningRuleId =
+  (typeof PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS)[number];
+
+export type PromptExploderParserTuningRuleDraft = {
+  id: PromptExploderParserTuningRuleId;
+  label: string;
+  title: string;
+  description: string | null;
+  pattern: string;
+  flags: string;
+  enabled: boolean;
+  promptExploderSegmentType: PromptExploderSegmentType | null;
+  promptExploderPriority: number;
+  promptExploderConfidenceBoost: number;
+  promptExploderTreatAsHeading: boolean;
+};
+
 export type ParseCustomBenchmarkCasesResult =
   | { ok: true; cases: PromptExploderBenchmarkCase[] }
   | { ok: false; error: string };
+
+export type TemplateMergeMode = 'auto' | 'new' | 'target';
+export type TemplateUpsertErrorCode = 'TARGET_TEMPLATE_NOT_FOUND' | 'TARGET_TEMPLATE_TYPE_MISMATCH';
+
+export type TemplateSimilarityMatch = {
+  template: PromptExploderLearnedTemplate;
+  score: number;
+};
+
+export type TemplateUpsertResult =
+  | {
+      ok: true;
+      nextTemplates: PromptExploderLearnedTemplate[];
+      nextTemplate: PromptExploderLearnedTemplate;
+      existingTemplate: PromptExploderLearnedTemplate | null;
+      exactTemplate: PromptExploderLearnedTemplate | null;
+      targetedTemplate: PromptExploderLearnedTemplate | null;
+      similarTemplateMatch: TemplateSimilarityMatch | null;
+      mergeMessage: string;
+      mergeOutcome: 'forced_new' | 'selected_target' | 'exact' | 'similar' | 'created';
+    }
+  | {
+      ok: false;
+      errorCode: TemplateUpsertErrorCode;
+      errorMessage: string;
+    };
+
+export type CreateTemplateIdArgs = {
+  segmentType: PromptExploderSegmentType;
+  title: string;
+  existingTemplateIds: Set<string>;
+};
+
+export type UpsertLearnedTemplateArgs = {
+  templates: PromptExploderLearnedTemplate[];
+  segmentType: PromptExploderSegmentType;
+  title: string;
+  sourceText: string;
+  sampleText: string;
+  similarityThreshold: number;
+  minApprovalsForMatching: number;
+  autoActivateLearnedTemplates: boolean;
+  mergeMode?: TemplateMergeMode;
+  targetTemplateId?: string | null;
+  now?: string;
+  createTemplateId?: (args: CreateTemplateIdArgs) => string;
+};
+
+export type ApplyBenchmarkSuggestionsResult = {
+  nextLearnedRules: PromptValidationRule[];
+  appliedRules: PromptValidationRule[];
+  addedCount: number;
+  updatedCount: number;
+  nextTemplates: PromptExploderLearnedTemplate[];
+  touchedTemplateIds: string[];
+  invalidSegmentTitles: string[];
+};
+
+export type PromptExploderPatternPackResult = {
+  nextSettings: PromptEngineSettings;
+  addedRuleIds: string[];
+  updatedRuleIds: string[];
+};
 
 /**
  * DTO Aliases for compatibility

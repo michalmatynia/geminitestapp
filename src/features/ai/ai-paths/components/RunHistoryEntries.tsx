@@ -32,11 +32,8 @@ const formatPortData = (value: unknown): string => {
 const formatSkipReason = (value: string): string =>
   value.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-export function RunHistoryEntries({
-  entries,
-  emptyMessage,
-  showNodeLabel,
-}: RunHistoryEntriesProps): React.JSX.Element {
+export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Element {
+  const { entries, emptyMessage, showNodeLabel, onReplayFromEntry } = props;
   const sortedEntries = [...entries].sort(
     (a: RuntimeHistoryEntry, b: RuntimeHistoryEntry) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()

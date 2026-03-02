@@ -1,7 +1,5 @@
-import {
-  readCaseResolverWorkspaceDebugEvents,
-  type CaseResolverWorkspaceDebugEvent,
-} from './workspace-persistence';
+import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver';
+import { readCaseResolverWorkspaceDebugEvents } from './workspace-persistence';
 
 type PercentileSnapshot = {
   count: number;

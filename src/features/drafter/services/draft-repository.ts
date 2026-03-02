@@ -11,12 +11,11 @@ import {
   type CreateProductDraftDto,
   type UpdateProductDraftDto,
   type ProductDraftOpenFormTab,
+  type DraftProvider,
+  type ProductParameterValue,
 } from '@/shared/contracts/products';
-import type { ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-type DraftProvider = 'mongodb' | 'prisma';
 
 type MongoDraftDoc = {
   _id: string;

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input, FormSection, DocumentationSection, Card, Hint } from '@/shared/ui';
+import { CopyButton, Input, FormSection, DocumentationList, Card, Hint } from '@/shared/ui';
 
 import { useGenerationState } from '../context/GenerationContext';
 import { useMaskingState } from '../context/MaskingContext';
@@ -751,25 +751,19 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       ) : null}
 
       {includeByQuery(['docs coverage', 'what is included']) ? (
-        <DocumentationSection title='Docs Coverage'>
-          <ul className='mt-2 list-disc space-y-1 pl-5 text-sm'>
-            <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
-            <li>
+        <DocumentationList
+          title='Docs Coverage'
+          items={[
+            'Live runtime state for projects, slots, prompt, masks, and generation.',
+            <>
               All Image Studio settings from <code>image_studio_settings</code>.
-            </li>
-            <li>
-              Crop, object layout, sequencer, and version graph tooltip copy sourced from the Image
-              Studio docs index.
-            </li>
-            <li>
-              API key status, UI preset state, prompt validation rule summary, and folder-tree
-              persistence.
-            </li>
-            <li>
-              Raw JSON snapshots so you can audit exactly what the application is currently using.
-            </li>
-          </ul>
-        </DocumentationSection>
+            </>,
+            'Crop, object layout, sequencer, and version graph tooltip copy sourced from the Image Studio docs index.',
+            'API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.',
+            'Raw JSON snapshots so you can audit exactly what the application is currently using.',
+          ]}
+          listClassName='mt-2 text-sm'
+        />
       ) : null}
 
       {slotsQuery.isLoading || projectsQuery.isLoading || heavySettings.isLoading ? (

@@ -1,11 +1,16 @@
 import 'server-only';
 
+import { Prisma } from '@prisma/client';
+
+import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { createManagedQueue } from '@/shared/lib/queue';
+import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { Alert } from '@/shared/contracts/observability';
 
@@ -64,6 +69,67 @@ const SYSTEM_LOG_SILENCE_COOLDOWN_SECONDS = parseNumberFromEnv(
 const ALERT_QUEUE_NAME = 'system-log-alerts';
 const ALERT_REPEAT_JOB_ID = 'system-log-alerts-tick';
 const ALERT_STARTUP_JOB_ID = 'system-log-alerts-startup-tick';
+const ALERT_EVIDENCE_SAMPLE_LIMIT = 5;
+const ALERT_EVIDENCE_MODEL_LIMIT = 3;
+const ALERT_EVIDENCE_FAILED_NODE_LIMIT = 3;
+
+type MongoSystemLogDoc = {
+  _id?: string;
+  id?: string;
+  level?: string;
+  message?: string;
+  category?: string | null;
+  source?: string | null;
+  context?: Record<string, unknown> | null;
+  stack?: string | null;
+  path?: string | null;
+  method?: string | null;
+  statusCode?: number | null;
+  requestId?: string | null;
+  userId?: string | null;
+  createdAt?: Date;
+};
+
+type AlertEvidenceAiPathRunSummary = {
+  runId: string | null;
+  pathName: string | null;
+  status: string | null;
+  failedNodeIds: string[];
+  modelIds: string[];
+  latestErrorMessage: string | null;
+};
+
+type AlertEvidenceSample = {
+  logId: string;
+  createdAt: string;
+  level: string;
+  source: string | null;
+  message: string;
+  fingerprint: string | null;
+  runId: string | null;
+  jobId: string | null;
+  aiPathRun: AlertEvidenceAiPathRunSummary | null;
+};
+
+type AlertEvidenceContext = {
+  windowStart: string | null;
+  windowEnd: string;
+  matchedCount: number;
+  sampleSize: number;
+  samples: AlertEvidenceSample[];
+  lastObservedLog?: AlertEvidenceSample | null;
+};
+
+type AlertEvidenceQuery = {
+  level?: 'info' | 'warn' | 'error';
+  sourceContains?: string;
+  pathPrefix?: string;
+  statusCodeMin?: number;
+  statusCodeMax?: number;
+  from?: Date | null;
+  to?: Date | null;
+  limit?: number;
+};
 
 type SystemLogAlertsQueueState = {
   workerStarted: boolean;
@@ -94,6 +160,217 @@ const queueState =
 const shouldCheckAlerts = (): boolean => {
   if (process.env['SYSTEM_LOG_ALERTS_ENABLED'] === 'false') return false;
   return true;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  isObjectRecord(value) ? value : null;
+
+const readTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
+  id: String(doc.id ?? doc._id ?? ''),
+  level: doc.level === 'warn' || doc.level === 'info' || doc.level === 'error' ? doc.level : 'error',
+  message: doc.message ?? '',
+  category: doc.category ?? null,
+  source: doc.source ?? null,
+  context: doc.context ?? null,
+  stack: doc.stack ?? null,
+  path: doc.path ?? null,
+  method: doc.method ?? null,
+  statusCode: doc.statusCode ?? null,
+  requestId: doc.requestId ?? null,
+  userId: doc.userId ?? null,
+  createdAt: (doc.createdAt ?? new Date()).toISOString(),
+  updatedAt: null,
+});
+
+const toPrismaWhere = (query: AlertEvidenceQuery): Prisma.SystemLogWhereInput => {
+  const where: Prisma.SystemLogWhereInput = {};
+
+  if (query.level) where.level = query.level;
+  if (query.sourceContains) {
+    where.source = { contains: query.sourceContains, mode: 'insensitive' };
+  }
+  if (query.pathPrefix) {
+    where.path = { startsWith: query.pathPrefix, mode: 'insensitive' };
+  }
+  if (query.statusCodeMin !== undefined || query.statusCodeMax !== undefined) {
+    where.statusCode = {
+      ...(query.statusCodeMin !== undefined ? { gte: query.statusCodeMin } : {}),
+      ...(query.statusCodeMax !== undefined ? { lte: query.statusCodeMax } : {}),
+    };
+  }
+  if (query.from || query.to) {
+    where.createdAt = {
+      ...(query.from ? { gte: query.from } : {}),
+      ...(query.to ? { lte: query.to } : {}),
+    };
+  }
+
+  return where;
+};
+
+const toMongoWhere = (query: AlertEvidenceQuery): Record<string, unknown> => {
+  const where: Record<string, unknown> = {};
+
+  if (query.level) where['level'] = query.level;
+  if (query.sourceContains) {
+    where['source'] = { $regex: escapeRegex(query.sourceContains), $options: 'i' };
+  }
+  if (query.pathPrefix) {
+    where['path'] = { $regex: `^${escapeRegex(query.pathPrefix)}`, $options: 'i' };
+  }
+  if (query.statusCodeMin !== undefined || query.statusCodeMax !== undefined) {
+    where['statusCode'] = {
+      ...(query.statusCodeMin !== undefined ? { $gte: query.statusCodeMin } : {}),
+      ...(query.statusCodeMax !== undefined ? { $lte: query.statusCodeMax } : {}),
+    };
+  }
+  if (query.from || query.to) {
+    where['createdAt'] = {
+      ...(query.from ? { $gte: query.from } : {}),
+      ...(query.to ? { $lte: query.to } : {}),
+    };
+  }
+
+  return where;
+};
+
+const summarizeAiPathRun = (value: unknown): AlertEvidenceAiPathRunSummary | null => {
+  const aiPathRun = asRecord(value);
+  if (!aiPathRun) return null;
+
+  const failedNodes = Array.isArray(aiPathRun['failedNodes']) ? aiPathRun['failedNodes'] : [];
+  const executedModels = Array.isArray(aiPathRun['executedModels']) ? aiPathRun['executedModels'] : [];
+  const recentErrorEvents = Array.isArray(aiPathRun['recentErrorEvents'])
+    ? aiPathRun['recentErrorEvents']
+    : [];
+
+  const failedNodeIds = failedNodes
+    .map((node) => readTrimmedString(asRecord(node)?.['nodeId']))
+    .filter((value): value is string => Boolean(value))
+    .slice(0, ALERT_EVIDENCE_FAILED_NODE_LIMIT);
+
+  const modelIds = executedModels
+    .map((node) => readTrimmedString(asRecord(node)?.['modelId']))
+    .filter((value): value is string => Boolean(value))
+    .slice(0, ALERT_EVIDENCE_MODEL_LIMIT);
+
+  const latestErrorMessage =
+    readTrimmedString(asRecord(recentErrorEvents[0])?.['message']) ??
+    readTrimmedString(asRecord(failedNodes[0])?.['errorMessage']);
+
+  return {
+    runId: readTrimmedString(aiPathRun['runId']),
+    pathName: readTrimmedString(aiPathRun['pathName']),
+    status: readTrimmedString(aiPathRun['status']),
+    failedNodeIds,
+    modelIds,
+    latestErrorMessage,
+  };
+};
+
+const summarizeLogForAlertEvidence = async (log: SystemLogRecord): Promise<AlertEvidenceSample> => {
+  const hydrated = await hydrateSystemLogRecordRuntimeContext(log);
+  const context = asRecord(hydrated.context);
+  const staticContext = asRecord(context?.['staticContext']);
+  const aiPathRun = summarizeAiPathRun(staticContext?.['aiPathRun']);
+
+  return {
+    logId: hydrated.id,
+    createdAt: hydrated.createdAt,
+    level: hydrated.level,
+    source: hydrated.source ?? null,
+    message: hydrated.message,
+    fingerprint: readTrimmedString(context?.['fingerprint']),
+    runId: readTrimmedString(context?.['runId']) ?? aiPathRun?.runId ?? null,
+    jobId: readTrimmedString(context?.['jobId']),
+    aiPathRun,
+  };
+};
+
+const listAlertEvidenceLogs = async (
+  provider: 'mongodb' | 'prisma',
+  query: AlertEvidenceQuery
+): Promise<SystemLogRecord[]> => {
+  const limit = Math.max(1, query.limit ?? ALERT_EVIDENCE_SAMPLE_LIMIT);
+
+  if (provider === 'mongodb') {
+    const mongo = await getMongoDb();
+    const docs = await mongo
+      .collection<MongoSystemLogDoc>('system_logs')
+      .find(toMongoWhere(query))
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    return docs.map(toSystemLogRecord);
+  }
+
+  const rows = await prisma.systemLog.findMany({
+    where: toPrismaWhere(query),
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    level: row.level,
+    message: row.message,
+    category: row.category ?? null,
+    source: row.source ?? null,
+    context: (row.context as Record<string, unknown> | null) ?? null,
+    stack: row.stack ?? null,
+    path: row.path ?? null,
+    method: row.method ?? null,
+    statusCode: row.statusCode ?? null,
+    requestId: row.requestId ?? null,
+    userId: row.userId ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt ? row.updatedAt.toISOString() : null,
+  }));
+};
+
+const buildAlertEvidenceContext = async (input: {
+  provider: 'mongodb' | 'prisma';
+  query: AlertEvidenceQuery;
+  matchedCount: number;
+  windowStart?: Date | null;
+}): Promise<AlertEvidenceContext> => {
+  const logs = await listAlertEvidenceLogs(input.provider, {
+    ...input.query,
+    limit: ALERT_EVIDENCE_SAMPLE_LIMIT,
+  });
+  const samples = await Promise.all(logs.map((log) => summarizeLogForAlertEvidence(log)));
+
+  return {
+    windowStart: input.windowStart ? input.windowStart.toISOString() : null,
+    windowEnd: new Date().toISOString(),
+    matchedCount: input.matchedCount,
+    sampleSize: samples.length,
+    samples,
+  };
+};
+
+const buildLogSilenceEvidenceContext = async (provider: 'mongodb' | 'prisma'): Promise<AlertEvidenceContext> => {
+  const latest = await listAlertEvidenceLogs(provider, {
+    limit: 1,
+  });
+  const lastObservedLog = latest[0] ? await summarizeLogForAlertEvidence(latest[0]) : null;
+
+  return {
+    windowStart: null,
+    windowEnd: new Date().toISOString(),
+    matchedCount: 0,
+    sampleSize: 0,
+    samples: [],
+    lastObservedLog,
+  };
 };
 
 const isInCooldown = (now: number): boolean => {
@@ -159,6 +436,16 @@ const evaluateErrorSpike = async (): Promise<void> => {
   }
 
   queueState.lastAlertAt = nowMs;
+  const alertEvidence = await buildAlertEvidenceContext({
+    provider,
+    query: {
+      level: 'error',
+      from: windowStart,
+      to: now,
+    },
+    matchedCount: recentErrorCount,
+    windowStart,
+  });
 
   void logSystemEvent({
     level: 'error',
@@ -170,6 +457,7 @@ const evaluateErrorSpike = async (): Promise<void> => {
       windowSeconds: SYSTEM_LOG_ALERT_WINDOW_SECONDS,
       recentErrorCount,
       minErrors: SYSTEM_LOG_ALERT_MIN_ERRORS,
+      alertEvidence,
     },
   });
 };
@@ -206,6 +494,17 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
       if (count < SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS) continue;
       if (isPerSourceInCooldown(source, nowMs)) continue;
       queueState.perSourceLastAlertAt[source] = nowMs;
+      const alertEvidence = await buildAlertEvidenceContext({
+        provider,
+        query: {
+          level: 'error',
+          sourceContains: source,
+          from: windowStart,
+          to: now,
+        },
+        matchedCount: count,
+        windowStart,
+      });
 
       void logSystemEvent({
         level: 'error',
@@ -218,6 +517,7 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
           recentErrorCount: count,
           minErrors: SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS,
           source,
+          alertEvidence,
         },
       });
     }
@@ -243,6 +543,17 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
     if (count < SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS) continue;
     if (isPerSourceInCooldown(source, nowMs)) continue;
     queueState.perSourceLastAlertAt[source] = nowMs;
+    const alertEvidence = await buildAlertEvidenceContext({
+      provider,
+      query: {
+        level: 'error',
+        sourceContains: source,
+        from: windowStart,
+        to: now,
+      },
+      matchedCount: count,
+      windowStart,
+    });
 
     void logSystemEvent({
       level: 'error',
@@ -255,6 +566,7 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
         recentErrorCount: count,
         minErrors: SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS,
         source,
+        alertEvidence,
       },
     });
   }
@@ -355,7 +667,7 @@ const evaluateUserDefinedAlerts = async (): Promise<void> => {
       const col = mongo.collection('system_logs');
       count = await col.countDocuments(filter);
     } else {
-      const where: Parameters<typeof prisma.systemLog.count>[0]['where'] = {
+      const where: any = {
         createdAt: {
           gte: windowStart,
         },
@@ -386,6 +698,20 @@ const evaluateUserDefinedAlerts = async (): Promise<void> => {
     }
 
     queueState.perAlertLastFiredAt[alert.id] = nowMs;
+    const alertEvidence = await buildAlertEvidenceContext({
+      provider,
+      query: {
+        level: cond.level,
+        sourceContains: cond.source,
+        pathPrefix: cond.pathPrefix,
+        statusCodeMin: cond.statusCodeMin,
+        statusCodeMax: cond.statusCodeMax,
+        from: windowStart,
+        to: new Date(nowMs),
+      },
+      matchedCount: count,
+      windowStart,
+    });
 
     void logSystemEvent({
       level: 'error',
@@ -401,6 +727,7 @@ const evaluateUserDefinedAlerts = async (): Promise<void> => {
         windowSeconds,
         threshold,
         matchedCount: count,
+        alertEvidence,
       },
     });
   }
@@ -442,6 +769,7 @@ const evaluateLogSilence = async (): Promise<void> => {
   }
 
   queueState.lastSilenceAlertAt = nowMs;
+  const alertEvidence = await buildLogSilenceEvidenceContext(provider);
 
   void logSystemEvent({
     level: 'error',
@@ -452,6 +780,7 @@ const evaluateLogSilence = async (): Promise<void> => {
       alertType: 'log_silence',
       windowSeconds: SYSTEM_LOG_SILENCE_WINDOW_SECONDS,
       totalCount: recentTotalCount,
+      alertEvidence,
     },
   });
 };
@@ -515,4 +844,3 @@ export const startSystemLogAlertsQueue = (): void => {
 
   syncRepeatSchedulerRegistration();
 };
-

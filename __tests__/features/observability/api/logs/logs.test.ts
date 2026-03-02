@@ -5,6 +5,7 @@ import { SystemLog, Prisma } from '@prisma/client';
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
+import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -23,10 +24,15 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
   getAppDbProvider: vi.fn(),
 }));
 
+vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
+  hydrateSystemLogRecordRuntimeContext: vi.fn().mockImplementation(async (log) => log),
+}));
+
 describe('System Logs API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+    vi.mocked(hydrateSystemLogRecordRuntimeContext).mockImplementation(async (log) => log);
   });
 
   it('GET /api/system/logs should list logs with pagination', async () => {
@@ -77,6 +83,64 @@ describe('System Logs API', () => {
           ],
         },
       ])
+    );
+  });
+
+  it('GET /api/system/logs should hydrate runtime context for listed logs', async () => {
+    vi.mocked(prisma.systemLog.count).mockResolvedValue(1);
+    vi.mocked(prisma.systemLog.findMany).mockResolvedValue([
+      {
+        id: '1',
+        level: 'error',
+        message: 'Err 1',
+        source: 'ai-paths-worker',
+        context: { runId: 'run-1' },
+        createdAt: new Date('2026-03-02T10:00:00.000Z'),
+      } as unknown as SystemLog,
+    ]);
+    vi.mocked(hydrateSystemLogRecordRuntimeContext).mockResolvedValue({
+      id: '1',
+      level: 'error',
+      message: 'Err 1',
+      source: 'ai-paths-worker',
+      context: {
+        runId: 'run-1',
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-1',
+          },
+        },
+      },
+      stack: null,
+      path: null,
+      method: null,
+      statusCode: null,
+      requestId: null,
+      userId: null,
+      createdAt: '2026-03-02T10:00:00.000Z',
+      updatedAt: null,
+    });
+
+    const req = new NextRequest('http://localhost/api/system/logs?page=1&pageSize=10');
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(hydrateSystemLogRecordRuntimeContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '1',
+      })
+    );
+    expect(data.logs[0].context).toEqual(
+      expect.objectContaining({
+        runId: 'run-1',
+        staticContext: {
+          aiPathRun: expect.objectContaining({
+            runId: 'run-1',
+          }),
+        },
+      })
     );
   });
 

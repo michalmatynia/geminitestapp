@@ -853,4 +853,50 @@ describe('case-resolver-capture proposals', () => {
     expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(4);
     expect(result.report.removedAddressLineCount).toBeGreaterThanOrEqual(4);
   });
+
+  it('strips From/To wrapper labels together with accepted sender and recipient blocks', () => {
+    const sourceText = [
+      'From:',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'To:',
+      'Inspektorat ZUS w Gryficach',
+      'Dąbskiego 5',
+      '72-300 Gryfice',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: {
+        ...createAddresserCandidate(),
+        rawText: ['From:', 'Michał Matynia', 'Fioletowa 71/2', '70-781 Szczecin', 'Poland'].join(
+          '\n'
+        ),
+      },
+      addressee: {
+        ...createAddresseeCandidate(),
+        rawText: ['To:', 'Inspektorat ZUS w Gryficach', 'Dąbskiego 5', '72-300 Gryfice'].join(
+          '\n'
+        ),
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    const result = stripAcceptedCaptureContentFromTextWithReport(sourceText, state);
+    expect(result.text).toBe('Wniosek o ponowne rozpatrzenie sprawy');
+    expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(5);
+    expect(result.report.removedAddresseeLineCount).toBeGreaterThanOrEqual(3);
+  });
 });

@@ -474,8 +474,8 @@ export type AiPathRunQueueBaseStatus = {
   waitingCount: number;
   failedCount: number;
   completedCount: number;
-  delayedCount: number;
-  pausedCount: number;
+  delayedCount?: number;
+  pausedCount?: number;
   queuedCount: number;
   oldestQueuedAt: string | number | null;
   queueLagMs: number | null;

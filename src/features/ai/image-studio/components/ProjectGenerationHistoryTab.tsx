@@ -253,6 +253,9 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<'all' | HistoryRunRecord['status']>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSlowOnly, setShowSlowOnly] = useState(false);
 
   useEffect(() => {
     setPage(1);
@@ -295,10 +298,29 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     () => (Array.isArray(runsQuery.data?.runs) ? runsQuery.data?.runs : []),
     [runsQuery.data?.runs]
   );
+  const filteredRuns = useMemo(() => {
+    const needle = searchTerm.trim().toLowerCase();
+    return runs.filter((run) => {
+      if (statusFilter !== 'all' && run.status !== statusFilter) return false;
+      if (showSlowOnly && classifyRunDuration(run) !== 'slow') return false;
+      if (!needle) return true;
+      const prompt = run.request?.prompt?.toLowerCase() ?? '';
+      const error = run.errorMessage?.toLowerCase() ?? '';
+      const modelRaw = resolveExecutionSummary(run, resolveExecutionMeta(run)).model ?? '';
+      const model = modelRaw.toLowerCase();
+      return prompt.includes(needle) || error.includes(needle) || model.includes(needle);
+    });
+  }, [runs, statusFilter, searchTerm, showSlowOnly]);
   const total = useMemo(() => {
     const value = runsQuery.data?.total;
-    return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : runs.length;
-  }, [runs.length, runsQuery.data?.total]);
+    const fallback = runs.length;
+    const baseTotal =
+      typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : fallback;
+    // When filters are applied, show the count of filtered runs on the current page.
+    return filteredRuns.length > 0 || (statusFilter === 'all' && !searchTerm && !showSlowOnly)
+      ? (statusFilter === 'all' && !searchTerm && !showSlowOnly ? baseTotal : filteredRuns.length)
+      : baseTotal;
+  }, [runs.length, runsQuery.data?.total, filteredRuns.length, statusFilter, searchTerm, showSlowOnly]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const pageStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const pageEnd = Math.min(total, page * PAGE_SIZE);
@@ -352,20 +374,58 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       <Card
         variant='subtle-compact'
         padding='sm'
-        className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40 text-xs text-muted-foreground'
+        className='flex flex-wrap items-center justify-between gap-3 border-border/60 bg-card/40 text-xs text-muted-foreground'
       >
-        <span>
-          Showing {pageStart}-{pageEnd} of {total} runs
-        </span>
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          variant='compact'
-          showLabels={false}
-        />
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='whitespace-nowrap'>
+            Showing {pageStart}-{pageEnd} of {total} runs
+          </span>
+          <div className='flex flex-wrap items-center gap-2'>
+            <label className='flex items-center gap-1'>
+              <span className='text-[11px]'>Status</span>
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as 'all' | HistoryRunRecord['status'])
+                }
+                className='h-7 rounded border border-border/60 bg-background px-1 text-[11px] text-foreground'
+              >
+                <option value='all'>All</option>
+                <option value='queued'>Queued</option>
+                <option value='running'>Running</option>
+                <option value='completed'>Completed</option>
+                <option value='failed'>Failed</option>
+              </select>
+            </label>
+            <label className='flex items-center gap-1'>
+              <input
+                type='checkbox'
+                className='h-3.5 w-3.5 rounded border-border/60'
+                checked={showSlowOnly}
+                onChange={(event) => setShowSlowOnly(event.target.checked)}
+              />
+              <span className='text-[11px]'>Slow only</span>
+            </label>
+          </div>
+        </div>
+        <div className='flex flex-wrap items-center gap-2'>
+          <input
+            type='search'
+            placeholder='Search prompt / model / error'
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className='h-7 w-44 rounded border border-border/60 bg-background px-2 text-[11px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-ring/60'
+          />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            variant='compact'
+            showLabels={false}
+          />
+        </div>
       </Card>
-      {runs.map((run) => {
+      {filteredRuns.map((run) => {
         const prompt = run.request?.prompt?.trim() ?? '';
         const promptSummary =
           prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';

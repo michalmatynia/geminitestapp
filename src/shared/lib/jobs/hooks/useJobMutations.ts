@@ -24,6 +24,10 @@ export function useProductAiJobMutation(): UpdateMutation<
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => performProductAiJobAction(jobId, action),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to perform product AI job action. Please try again.'),
     meta: {
       source: 'jobs.hooks.useProductAiJobMutation',
       operation: 'create',
@@ -42,6 +46,8 @@ export function useDeleteProductAiJobMutation(): VoidMutation<string> {
   return createDeleteMutationV2({
     mutationFn: (jobId) => deleteProductAiJob(jobId).then(() => {}),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to delete product AI job. Please try again.'),
     meta: {
       source: 'jobs.hooks.useDeleteProductAiJobMutation',
       operation: 'delete',
@@ -60,6 +66,8 @@ export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }>
   return createDeleteMutationV2({
     mutationFn: ({ scope }) => clearProductAiJobs(scope).then(() => {}),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to clear product AI jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useClearProductAiJobsMutation',
       operation: 'delete',
@@ -81,6 +89,10 @@ export function useChatbotJobMutation(): UpdateMutation<
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to perform chatbot job action. Please try again.'),
     meta: {
       source: 'jobs.hooks.useChatbotJobMutation',
       operation: 'create',
@@ -99,6 +111,8 @@ export function useDeleteChatbotJobMutation(): VoidMutation<{ jobId: string; for
   return createDeleteMutationV2({
     mutationFn: ({ jobId, force }) => deleteChatbotJob(jobId, force),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to delete chatbot job. Please try again.'),
     meta: {
       source: 'jobs.hooks.useDeleteChatbotJobMutation',
       operation: 'delete',
@@ -117,6 +131,8 @@ export function useClearChatbotJobsMutation(): VoidMutation<{ scope: string }> {
   return createDeleteMutationV2({
     mutationFn: ({ scope }) => clearChatbotJobs(scope).then(() => {}),
     mutationKey: jobKeys.all,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to clear chatbot jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useClearChatbotJobsMutation',
       operation: 'delete',
@@ -135,6 +151,8 @@ export function useCancelListingMutation(): VoidMutation<{ productId: string; li
   return createDeleteMutationV2({
     mutationFn: ({ productId, listingId }) => cancelListing(productId, listingId),
     mutationKey: jobKeys.integrations(),
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to cancel listing. Please try again.'),
     meta: {
       source: 'jobs.hooks.useCancelListingMutation',
       operation: 'delete',

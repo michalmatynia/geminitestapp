@@ -5,6 +5,9 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { createManagedQueue } from '@/shared/lib/queue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
+
+import type { Alert } from '@/shared/contracts/observability';
 
 type SystemLogAlertsJobData = {
   type: 'alert-tick';
@@ -69,6 +72,7 @@ type SystemLogAlertsQueueState = {
   lastAlertAt: number;
   lastSilenceAlertAt: number;
   perSourceLastAlertAt: Record<string, number>;
+  perAlertLastFiredAt: Record<string, number>;
 };
 
 const globalWithState = globalThis as typeof globalThis & {
@@ -84,6 +88,7 @@ const queueState =
     lastAlertAt: 0,
     lastSilenceAlertAt: 0,
     perSourceLastAlertAt: {},
+    perAlertLastFiredAt: {},
   });
 
 const shouldCheckAlerts = (): boolean => {
@@ -108,6 +113,13 @@ const isPerSourceInCooldown = (source: string, now: number): boolean => {
   if (!last) return false;
   const elapsedSeconds = (now - last) / 1000;
   return elapsedSeconds < SYSTEM_LOG_ALERT_COOLDOWN_SECONDS;
+};
+
+const isAlertInCooldown = (alertId: string, now: number, cooldownSeconds: number): boolean => {
+  const last = queueState.perAlertLastFiredAt[alertId] ?? 0;
+  if (!last) return false;
+  const elapsedSeconds = (now - last) / 1000;
+  return elapsedSeconds < cooldownSeconds;
 };
 
 const evaluateErrorSpike = async (): Promise<void> => {
@@ -248,6 +260,152 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
   }
 };
 
+type SupportedAlertCondition = {
+  type?: 'error_count';
+  level?: 'info' | 'warn' | 'error';
+  source?: string;
+  pathPrefix?: string;
+  statusCodeMin?: number;
+  statusCodeMax?: number;
+  windowSeconds?: number;
+  threshold?: number;
+  cooldownSeconds?: number;
+};
+
+const parseAlertCondition = (alert: Alert): SupportedAlertCondition | null => {
+  const raw = alert.condition ?? {};
+  if (typeof raw !== 'object' || raw === null) return null;
+  const c = raw as Record<string, unknown>;
+  const toNumber = (value: unknown): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim()) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : undefined;
+    }
+    return undefined;
+  };
+  const level =
+    typeof c['level'] === 'string' && ['info', 'warn', 'error'].includes(c['level'])
+      ? (c['level'] as 'info' | 'warn' | 'error')
+      : undefined;
+  const source = typeof c['source'] === 'string' ? c['source'] : undefined;
+  const pathPrefix = typeof c['pathPrefix'] === 'string' ? c['pathPrefix'] : undefined;
+  const statusCodeMin = toNumber(c['statusCodeMin']);
+  const statusCodeMax = toNumber(c['statusCodeMax']);
+  const windowSeconds = toNumber(c['windowSeconds']);
+  const threshold = toNumber(c['threshold']);
+  const cooldownSeconds = toNumber(c['cooldownSeconds']);
+  return {
+    type: 'error_count',
+    level,
+    source,
+    pathPrefix,
+    statusCodeMin,
+    statusCodeMax,
+    windowSeconds,
+    threshold,
+    cooldownSeconds,
+  };
+};
+
+const evaluateUserDefinedAlerts = async (): Promise<void> => {
+  if (!shouldCheckAlerts()) return;
+  const alerts = await getSystemAlerts();
+  if (!alerts.length) return;
+
+  const provider = await getAppDbProvider();
+  const nowMs = Date.now();
+
+  for (const alert of alerts) {
+    if (!alert.enabled) continue;
+    const cond = parseAlertCondition(alert);
+    if (!cond) continue;
+
+    const windowSeconds = cond.windowSeconds ?? SYSTEM_LOG_ALERT_WINDOW_SECONDS;
+    const threshold = cond.threshold ?? SYSTEM_LOG_ALERT_MIN_ERRORS;
+    const cooldownSeconds = cond.cooldownSeconds ?? SYSTEM_LOG_ALERT_COOLDOWN_SECONDS;
+
+    if (isAlertInCooldown(alert.id, nowMs, cooldownSeconds)) {
+      continue;
+    }
+
+    const windowStart = new Date(nowMs - windowSeconds * 1000);
+    let count = 0;
+
+    if (provider === 'mongodb') {
+      const mongo = await getMongoDb();
+      const filter: Record<string, unknown> = {
+        createdAt: { $gte: windowStart },
+      };
+      if (cond.level) {
+        filter['level'] = cond.level;
+      }
+      if (cond.source) {
+        filter['source'] = { $regex: cond.source, $options: 'i' };
+      }
+      if (cond.pathPrefix) {
+        filter['path'] = { $regex: `^${cond.pathPrefix}`, $options: 'i' };
+      }
+      if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
+        const statusFilter: Record<string, unknown> = {};
+        if (cond.statusCodeMin !== undefined) statusFilter['$gte'] = cond.statusCodeMin;
+        if (cond.statusCodeMax !== undefined) statusFilter['$lte'] = cond.statusCodeMax;
+        filter['statusCode'] = statusFilter;
+      }
+      const col = mongo.collection('system_logs');
+      count = await col.countDocuments(filter);
+    } else {
+      const where: Parameters<typeof prisma.systemLog.count>[0]['where'] = {
+        createdAt: {
+          gte: windowStart,
+        },
+      };
+      if (cond.level) {
+        where.level = cond.level;
+      }
+      if (cond.source) {
+        where.source = { contains: cond.source, mode: 'insensitive' };
+      }
+      if (cond.pathPrefix) {
+        where.path = { startsWith: cond.pathPrefix, mode: 'insensitive' };
+      }
+      if (cond.statusCodeMin !== undefined || cond.statusCodeMax !== undefined) {
+        where.statusCode = {};
+        if (cond.statusCodeMin !== undefined) {
+          where.statusCode.gte = cond.statusCodeMin;
+        }
+        if (cond.statusCodeMax !== undefined) {
+          where.statusCode.lte = cond.statusCodeMax;
+        }
+      }
+      count = await prisma.systemLog.count({ where });
+    }
+
+    if (count < threshold) {
+      continue;
+    }
+
+    queueState.perAlertLastFiredAt[alert.id] = nowMs;
+
+    void logSystemEvent({
+      level: 'error',
+      source: 'system-log-alerts',
+      message: `User-defined alert "${alert.name}" fired (severity: ${alert.severity})`,
+      critical: alert.severity === 'critical' || alert.severity === 'high',
+      context: {
+        alertType: 'user_defined_alert',
+        alertId: alert.id,
+        alertName: alert.name,
+        severity: alert.severity,
+        condition: alert.condition,
+        windowSeconds,
+        threshold,
+        matchedCount: count,
+      },
+    });
+  }
+};
+
 const evaluateLogSilence = async (): Promise<void> => {
   if (!shouldCheckAlerts()) return;
   if (process.env['SYSTEM_LOG_SILENCE_ALERTS_ENABLED'] === 'false') return;
@@ -309,6 +467,7 @@ const queue = createManagedQueue<SystemLogAlertsJobData>({
     await evaluateErrorSpike();
     await evaluateLogSilence();
     await evaluatePerSourceErrorSpikes();
+    await evaluateUserDefinedAlerts();
   },
 });
 

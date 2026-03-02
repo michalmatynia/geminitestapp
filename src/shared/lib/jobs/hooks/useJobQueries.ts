@@ -41,6 +41,10 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
       );
       return hasActiveListings ? 2500 : false;
     },
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to load integration jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useIntegrationJobs',
       operation: 'list',
@@ -57,6 +61,10 @@ export function useProductAiJobs(scope: string = 'all'): SingleQuery<{ jobs: Pro
     id: scope,
     queryKey,
     queryFn: () => getProductAiJobs(scope),
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to load product AI jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useProductAiJobs',
       operation: 'detail',
@@ -75,6 +83,10 @@ export function useChatbotJobs(scope: string = 'all'): SingleQuery<{ jobs: unkno
     id: scope,
     queryKey,
     queryFn: () => getChatbotJobs(scope),
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to load chatbot jobs. Please try again.'),
     meta: {
       source: 'jobs.hooks.useChatbotJobs',
       operation: 'detail',
@@ -93,6 +105,10 @@ export function useTraderaQueueHealth(): SingleQuery<TraderaQueueHealthResponse>
     queryFn: getTraderaQueueHealth,
     refetchInterval: 5000,
     staleTime: 0,
+    transformError: (error: unknown): Error =>
+      error instanceof Error
+        ? error
+        : new Error('Failed to load Tradera queue health. Please try again.'),
     meta: {
       source: 'jobs.hooks.useTraderaQueueHealth',
       operation: 'detail',

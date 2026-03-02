@@ -32,6 +32,9 @@ export function RunHistoryPanel(): React.JSX.Element {
   } = useRunHistoryActions();
   const resolvedRuns = orchestrator.runList;
   const resolvedIsRefreshing = orchestrator.runsQuery.isFetching;
+  const [compareMode, setCompareMode] = React.useState(false);
+  const [primaryRunId, setPrimaryRunId] = React.useState<string | null>(null);
+  const [secondaryRunId, setSecondaryRunId] = React.useState<string | null>(null);
   const handleRefresh = (): void => {
     void orchestrator.runsQuery.refetch().catch(() => {});
   };
@@ -81,20 +84,84 @@ export function RunHistoryPanel(): React.JSX.Element {
     return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
   }, [runFilter, resolvedRuns]);
 
+  const primaryRun = React.useMemo(
+    () => filteredRunList.find((run: AiPathRunRecord) => run.id === primaryRunId) ?? null,
+    [filteredRunList, primaryRunId]
+  );
+
+  const secondaryRun = React.useMemo(
+    () => filteredRunList.find((run: AiPathRunRecord) => run.id === secondaryRunId) ?? null,
+    [filteredRunList, secondaryRunId]
+  );
+
+  type RuntimeTraceMeta = {
+    profile?: {
+      summary?: {
+        durationMs?: number | null;
+        iterationCount?: number | null;
+      } | null;
+    } | null;
+  };
+
+  const getRuntimeSummary = (run: AiPathRunRecord | null) => {
+    if (!run?.meta || typeof run.meta !== 'object') {
+      return { durationMs: null as number | null, iterations: null as number | null };
+    }
+    const rawTrace = (run.meta as Record<string, unknown>)['runtimeTrace'] as
+      | RuntimeTraceMeta
+      | undefined;
+    const duration =
+      typeof rawTrace?.profile?.summary?.durationMs === 'number'
+        ? rawTrace.profile.summary.durationMs
+        : null;
+    const iterations =
+      typeof rawTrace?.profile?.summary?.iterationCount === 'number'
+        ? rawTrace.profile.summary.iterationCount
+        : null;
+    return { durationMs: duration, iterations };
+  };
+
+  const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
+    if (!run?.meta || typeof run.meta !== 'object') return null;
+    const raw = (run.meta as Record<string, unknown>)['runtimeFingerprint'];
+    if (typeof raw !== 'string') return null;
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+
   return (
     <Card variant='subtle' padding='md' className='bg-card/60'>
-      <div className='mb-3 flex items-center justify-between'>
-        <Hint size='xs' uppercase={false} className='font-semibold text-white'>
-          Run History
-        </Hint>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-          onClick={handleRefresh}
-          disabled={resolvedIsRefreshing}
-        >
-          {resolvedIsRefreshing ? 'Refreshing...' : 'Refresh'}
-        </Button>
+      <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
+        <div className='flex items-center gap-3'>
+          <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+            Run History
+          </Hint>
+          <Button
+            type='button'
+            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+            onClick={handleRefresh}
+            disabled={resolvedIsRefreshing}
+          >
+            {resolvedIsRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
+        <div className='flex items-center gap-2 text-[10px]'>
+          <Button
+            type='button'
+            className={`rounded-md border px-2 py-1 ${
+              compareMode
+                ? 'border-sky-500/60 bg-sky-500/10 text-sky-100'
+                : 'text-gray-300 hover:bg-muted/60'
+            }`}
+            onClick={(): void => {
+              setCompareMode((prev) => !prev);
+              setPrimaryRunId(null);
+              setSecondaryRunId(null);
+            }}
+          >
+            {compareMode ? 'Exit compare' : 'Compare runs'}
+          </Button>
+        </div>
       </div>
       <div className='mb-3 flex flex-wrap gap-2'>
         {[
@@ -147,9 +214,11 @@ export function RunHistoryPanel(): React.JSX.Element {
             const historyOpen = Boolean(expandedRunHistory[run.id]);
             const historyEntries =
               selectedHistoryNodeId && runHistory ? (runHistory[selectedHistoryNodeId] ?? []) : [];
+            const isPrimary = compareMode && primaryRunId === run.id;
+            const isSecondary = compareMode && secondaryRunId === run.id;
             return (
               <Card key={run.id} variant='subtle-compact' padding='sm' className='bg-card/70'>
-                <div className='flex items-center justify-between'>
+                <div className='flex items-center justify-between gap-2'>
                   <div>
                     <StatusBadge status={run.status} size='sm' className='font-bold' />
                     {isScheduledRun ? (
@@ -181,6 +250,39 @@ export function RunHistoryPanel(): React.JSX.Element {
                     )}
                   </div>
                   <div className='flex items-center gap-2'>
+                    {compareMode && (
+                      <div className='mr-2 flex flex-col items-end gap-1 text-[9px] text-gray-400'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className={`h-6 px-2 ${
+                            isPrimary
+                              ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
+                              : 'border-border text-gray-300 hover:bg-muted/60'
+                          }`}
+                          onClick={(): void =>
+                            setPrimaryRunId((prev) => (prev === run.id ? null : run.id))
+                          }
+                        >
+                          {isPrimary ? 'Primary (A)' : 'Set A'}
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className={`h-6 px-2 ${
+                            isSecondary
+                              ? 'border-amber-500/60 bg-amber-500/10 text-amber-100'
+                              : 'border-border text-gray-300 hover:bg-muted/60'
+                          }`}
+                          onClick={(): void =>
+                            setSecondaryRunId((prev) => (prev === run.id ? null : run.id))
+                          }
+                          disabled={isPrimary}
+                        >
+                          {isSecondary ? 'Secondary (B)' : 'Set B'}
+                        </Button>
+                      </div>
+                    )}
                     <Button
                       type='button'
                       className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
@@ -300,6 +402,73 @@ export function RunHistoryPanel(): React.JSX.Element {
             );
           })}
         </div>
+      )}
+      {compareMode && primaryRun && secondaryRun && (
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='mt-4 border-border/70 bg-black/30 text-[11px] text-gray-200'
+        >
+          <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              Compare runs (A vs B)
+            </Label>
+            <div className='text-[10px] text-gray-500'>
+              A: <span className='font-mono'>{primaryRun.id}</span> · B:{' '}
+              <span className='font-mono'>{secondaryRun.id}</span>
+            </div>
+          </div>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            {[primaryRun, secondaryRun].map(
+              (run: AiPathRunRecord, index: number): React.JSX.Element => {
+                const { durationMs, iterations } = getRuntimeSummary(run);
+                const fingerprint = getRuntimeFingerprint(run);
+                const label = index === 0 ? 'Run A' : 'Run B';
+                return (
+                  <div
+                    key={run.id}
+                    className='rounded-md border border-border/60 bg-card/40 p-3 space-y-1'
+                  >
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='font-semibold text-white'>{label}</span>
+                      <span className='rounded-full border border-border/70 px-2 py-px text-[9px] uppercase text-gray-300'>
+                        {run.status}
+                      </span>
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Created:{' '}
+                      {run.createdAt ? new Date(run.createdAt).toLocaleString() : '–'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Finished:{' '}
+                      {run.finishedAt ? new Date(run.finishedAt).toLocaleString() : '–'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Runtime:{' '}
+                      {typeof durationMs === 'number' ? `${durationMs.toFixed(0)}ms` : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Iterations:{' '}
+                      {typeof iterations === 'number' ? iterations : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Retries:{' '}
+                      {typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number'
+                        ? `${run.retryCount}/${run.maxAttempts}`
+                        : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Fingerprint:{' '}
+                      <span className='font-mono'>
+                        {fingerprint ? fingerprint : 'n/a'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </Card>
       )}
     </Card>
   );

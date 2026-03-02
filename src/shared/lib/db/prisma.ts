@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 
 const databaseUrl = process.env['DATABASE_URL'];
+const isTestEnv = process.env['NODE_ENV'] === 'test';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -11,6 +12,11 @@ const globalForPrisma = globalThis as unknown as {
 
 const createPrismaClient = () => {
   if (!databaseUrl) {
+    // In tests we rely on Vitest mocks for Prisma, so avoid throwing here.
+    if (isTestEnv) {
+      return {} as PrismaClient;
+    }
+
     return new Proxy(
       {},
       {

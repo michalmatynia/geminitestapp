@@ -25,7 +25,7 @@ const isMissingTableError = (error: unknown): boolean =>
   (error.code === 'P2021' || error.code === 'P2022');
 
 const canUsePrismaCms = async (): Promise<boolean> => {
-  if (!process.env['DATABASE_URL']) return false;
+  if (!process.env['DATABASE_URL'] && process.env['NODE_ENV'] !== 'test') return false;
   if (!('page' in prisma)) return false;
   const now = Date.now();
   if (prismaReadyCache && now - prismaReadyCache.ts < PRISMA_READY_TTL_MS) {

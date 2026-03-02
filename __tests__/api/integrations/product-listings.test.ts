@@ -8,10 +8,12 @@ const listAllListingsMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/features/integrations/server', () => ({
-  listProductListingsByProductIdsAcrossProviders: listByProductIdsMock,
-  listAllProductListingsAcrossProviders: listAllListingsMock,
   getIntegrationRepository: () => ({
     listIntegrations: listIntegrationsMock,
+  }),
+  getProductListingRepository: () => ({
+    getListingsByProductIds: listByProductIdsMock,
+    listAllListings: listAllListingsMock,
   }),
 }));
 

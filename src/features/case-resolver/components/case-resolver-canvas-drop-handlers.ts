@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+ 
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { type AiEdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import { type AiNode, type NodeDefinition } from '@/shared/contracts/case-resolver';

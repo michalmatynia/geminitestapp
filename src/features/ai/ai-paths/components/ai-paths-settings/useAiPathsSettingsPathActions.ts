@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import React, { useCallback } from 'react';
 
 import type {

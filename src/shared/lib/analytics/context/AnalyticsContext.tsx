@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+ 
 
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { createContext, useContext, useMemo, useState, ReactNode } from 'react';

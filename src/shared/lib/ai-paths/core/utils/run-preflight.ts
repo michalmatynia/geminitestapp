@@ -1,21 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+ 
 import type {
-  AiNode,
-  AiPathsValidationConfig,
-  Edge,
-  ParserSampleState,
-  UpdaterSampleState,
   RunPreflightBlockReason,
   RunPreflightWarning,
   RunPreflightReport,
   EvaluateRunPreflightArgs,
-  DataContractPreflightMode,
-  DataContractPreflightReport,
-  DependencyReport,
-  GraphCompileReport,
-  AiPathsValidationReport,
 } from '@/shared/contracts/ai-paths';
-import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 import { normalizeAiPathsValidationConfig } from '../validation-engine/defaults';
 import { evaluateAiPathsValidationPreflight } from '../validation-engine/evaluator';

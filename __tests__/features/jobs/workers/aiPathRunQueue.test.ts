@@ -9,6 +9,7 @@ import {
   enqueuePathRunJob,
   getAiPathRunQueueStatus,
   removePathRunQueueEntries,
+  __testOnly,
   type QueueSloThresholds,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 
@@ -61,6 +62,7 @@ describe('AI Path Run Queue Worker', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    __testOnly.clearAiPathsEnabledCache();
     getBrainAssignmentForFeatureMock.mockResolvedValue({ enabled: true });
     recordRuntimeRunStartedMock.mockResolvedValue(undefined);
     recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
@@ -201,7 +203,7 @@ describe('AI Path Run Queue Worker', () => {
 
       await processRun(run);
 
-      expect(executePathRun).toHaveBeenCalledWith(run);
+      expect(executePathRun).toHaveBeenCalledWith(run, undefined);
       expect(mockRepo.updateRun).not.toHaveBeenCalled(); // No status update on success here (handled by executor usually)
       expect(mockRepo.updateRunIfStatus).not.toHaveBeenCalled();
     });

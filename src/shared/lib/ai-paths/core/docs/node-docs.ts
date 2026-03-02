@@ -88,7 +88,7 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
 export const buildAiPathsNodeDocJsonSnippet = (doc: AiPathsNodeDoc): string =>
   `${JSON.stringify(
     {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       type: doc.type,
       title: doc.title,
       description: doc.purpose,

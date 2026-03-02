@@ -112,7 +112,7 @@ describe('product-sync-run-starter', () => {
         profileId: 'profile-1',
         trigger: 'manual',
       });
-      expect(queue.enqueueProductSyncRunJob).toHaveBeenCalledWith({ runId: 'run-1' });
+      expect(queue.enqueueProductSyncRunJob).toHaveBeenCalledWith({ runId: 'run-1', profileId: 'profile-1', trigger: 'manual' });
     });
   });
 });

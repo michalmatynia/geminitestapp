@@ -7,9 +7,9 @@ import {
   generateLogsInsight,
   generateRuntimeAnalyticsInsight,
   getScheduleSettings,
-} from '@/shared/lib/ai/insights/generator';
-import { getAiInsightsMeta, setAiInsightsMeta } from '@/shared/lib/ai/insights/repository';
-import { tick } from '@/shared/lib/ai/insights/workers/ai-insights-processor';
+} from '@/features/ai/insights/generator';
+import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
+import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { listSystemLogs } from '@/shared/lib/observability/system-logger';
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
@@ -20,14 +20,14 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   getBrainAssignmentForFeature: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai/insights/generator', () => ({
+vi.mock('@/features/ai/insights/generator', () => ({
   generateAnalyticsInsight: vi.fn(),
   generateLogsInsight: vi.fn(),
   generateRuntimeAnalyticsInsight: vi.fn(),
   getScheduleSettings: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai/insights/repository', () => ({
+vi.mock('@/features/ai/insights/repository', () => ({
   getAiInsightsMeta: vi.fn(),
   setAiInsightsMeta: vi.fn(),
 }));

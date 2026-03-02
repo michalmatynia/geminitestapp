@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 import { useCallback } from 'react';
 import type { AiNode, RuntimeState, RuntimePortValues } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateRunPreflight, stableStringify } from '@/shared/lib/ai-paths';

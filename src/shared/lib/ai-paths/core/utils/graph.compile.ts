@@ -180,7 +180,7 @@ export const compileGraph = (
           if (allWait) {
             const anyExternalRequired = loopNodes.some((n) => {
               const incomingFromOutside = (edgeMap.get(n.id) ?? []).filter(
-                (e) => !cycleNodes.includes(e.from)
+                (e) => !cycleNodes.includes(e.from || '')
               );
               const ports = new Set(
                 incomingFromOutside.map((e) => e.toPort).filter(Boolean) as string[]
@@ -306,7 +306,7 @@ export const compileGraph = (
       let hasTriggerFetcherSimulationMode = false;
 
       incomingEdges.forEach((e) => {
-        const source = nodeMap.get(e.from);
+        const source = nodeMap.get(e.from || '');
         if (source?.type === 'simulation') {
           if (source.config?.simulation?.runBehavior !== 'manual_only') {
             hasSimulationSource = true;
@@ -325,7 +325,7 @@ export const compileGraph = (
 
       outgoingEdges.forEach((e) => {
         if (e.fromPort !== 'trigger' || e.toPort !== 'trigger') return;
-        const target = nodeMap.get(e.to);
+        const target = nodeMap.get(e.to || '');
         if (target?.type !== 'fetcher') return;
         hasTriggerFetcherPath = true;
         if (target.config?.fetcher?.sourceMode === 'simulation_id') {
@@ -361,7 +361,7 @@ export const compileGraph = (
         const incoming = (edgeMap.get(node.id) ?? []).find((e) => e.toPort === 'prompt');
         if (incoming) {
           // Simple check: if fromPort is 'result' and fromNode is 'prompt' node which depends on us
-          const source = nodeMap.get(incoming.from);
+          const source = nodeMap.get(incoming.from || '');
           if (source?.type === 'prompt') {
             const sourceIncoming = (edgeMap.get(source.id) ?? []).some((e) => e.from === node.id);
             if (sourceIncoming) {

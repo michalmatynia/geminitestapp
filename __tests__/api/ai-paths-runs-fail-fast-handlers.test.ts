@@ -26,6 +26,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 vi.mock('@/features/jobs/server', () => ({
   assertAiPathRunQueueReady: assertAiPathRunQueueReadyMock,
+  assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyMock,
 }));
 
 vi.mock('@/features/products/server', () => ({

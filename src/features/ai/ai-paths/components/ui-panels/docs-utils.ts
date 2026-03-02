@@ -59,7 +59,7 @@ const buildNodeDocClipboardSection = (
   if (doc.config.length === 0) {
     lines.push('- None documented.');
   } else {
-    doc.config.forEach((field) => {
+    doc.config.forEach((field: { path: string; description: string; defaultValue?: string }) => {
       lines.push(
         `- ${field.path}: ${field.description}${field.defaultValue !== undefined ? ` (default: ${field.defaultValue})` : ''}`
       );
@@ -67,11 +67,11 @@ const buildNodeDocClipboardSection = (
   }
   if (doc.notes?.length) {
     lines.push('', '### Notes');
-    doc.notes.forEach((note) => {
+    doc.notes.forEach((note: string) => {
       lines.push(`- ${note}`);
     });
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+   
   lines.push('', '### JSON Snippet', '```json', nodeJsonSnippetByType[doc.type] ?? '{}', '```');
 
   return lines.join('\\n');

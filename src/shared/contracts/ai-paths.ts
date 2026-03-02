@@ -4,19 +4,13 @@ export * from './ai-paths-core';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import {
-  aiEdgeSchema,
   aiNodeSchema,
   edgeSchema,
   aiPathsValidationConfigSchema,
-  aiPathsValidationRuleSchema,
-  aiPathsValidationDocsSyncStateSchema,
   type AiNode,
   type Edge,
-  type RegexTemplate,
-  type NodeType,
-  type AiPathsValidationRule,
-  type AiPathsValidationConfig,
 } from './ai-paths-core';
+import type { AiPathsValidationRule } from './ai-paths-core/base';
 
 import {
   aiPathNodeStatusSchema,
@@ -45,7 +39,7 @@ export {
  */
 export const aiPathSchema = namedDtoSchema.extend({
   nodes: z.array(aiNodeSchema),
-  edges: z.array(aiEdgeSchema),
+  edges: z.array(edgeSchema),
   config: z.record(z.string(), z.unknown()),
   enabled: z.boolean(),
   version: z.number(),
@@ -75,7 +69,7 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
   graph: z
     .object({
       nodes: z.array(aiNodeSchema),
-      edges: z.array(aiEdgeSchema),
+      edges: z.array(edgeSchema),
     })
     .nullable()
     .optional(),

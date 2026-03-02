@@ -1199,3 +1199,10 @@ export const removePathRunQueueEntries = async (
 
   return { removed, requested: uniqueRunIds.length };
 };
+
+export const __testOnly = {
+  clearAiPathsEnabledCache(): void {
+    aiPathsEnabledCache = null;
+    aiPathsEnabledInFlight = null;
+  },
+};

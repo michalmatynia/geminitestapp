@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
@@ -193,7 +193,7 @@ export const buildNodeDocsCatalogAssertions = (): AiPathsDocAssertion[] => {
   };
 
   AI_PATHS_NODE_DOCS.forEach((doc) => {
-    doc.config.forEach((field) => {
+    doc.config.forEach((field: { path: string; description: string; defaultValue?: string }) => {
       const normalizedPath = field.path.replace(/[^a-z0-9]+/gi, '_').toLowerCase();
       const conditionField = `config.${field.path}`;
       const isCritical = CRITICAL_CONFIG_FIELD_PATTERN.test(field.path);
@@ -827,7 +827,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
       }
 
       const runtimeWaitField = nodeDoc.config.find(
-        (field) => field.path === 'runtime.waitForInputs'
+        (field: { path: string }) => field.path === 'runtime.waitForInputs'
       );
       if ((runtimeState === 'yes' || runtimeState === 'partial') && runtimeWaitField) {
         pushAssertion({
@@ -856,7 +856,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
       }
 
       if (asyncState === 'yes' || asyncState === 'partial') {
-        const asyncField = nodeDoc.config.find((field) =>
+        const asyncField = nodeDoc.config.find((field: { path: string }) =>
           /(interval|maxattempts|maxsteps|timeout|waitforinputs)/i.test(field.path)
         );
         if (asyncField) {
@@ -888,11 +888,11 @@ export const buildCoverageMatrixSourcePayload = async (args: {
 
       if (persistenceState === 'yes' || persistenceState === 'partial') {
         const persistenceFields = nodeDoc.config
-          .filter((field) =>
+          .filter((field: { path: string }) =>
             /(dryrun|skipempty|trimstrings|updatetemplate|writesource)/i.test(field.path)
           )
           .slice(0, 2);
-        persistenceFields.forEach((field, index) => {
+        persistenceFields.forEach((field: { path: string }, index: number) => {
           pushAssertion({
             id: `coverage.${nodeType}.${sanitizeFieldPathForId(field.path)}.persistence_exists`,
             title: `${nodeDoc.title}: persistence safety field is explicit`,

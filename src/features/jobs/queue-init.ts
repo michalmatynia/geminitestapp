@@ -178,3 +178,9 @@ export const initializeQueues = (): void => {
     startAiInsightsQueue?.();
   })();
 };
+
+export const __testOnly = {
+  resetInitialized(): void {
+    initialized = false;
+  },
+};

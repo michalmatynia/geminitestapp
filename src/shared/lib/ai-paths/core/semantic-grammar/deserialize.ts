@@ -3,10 +3,9 @@ import {
   canvasSemanticDocumentSchema,
   semanticDocumentSchema,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
-  SemanticDocumentDto as SemanticDocument,
   SemanticEdgeDto as SemanticEdge,
   SemanticNodeDto as SemanticNode,
   ParseSemanticDocumentResult,

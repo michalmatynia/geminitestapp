@@ -288,7 +288,7 @@ export const createPromptExtractionHandlers = (
           params: flattened.map((leaf) => ({
             path: leaf.path,
             value: leaf.value,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+             
             spec: deps.previewSpecs?.[leaf.path] ?? null,
           })),
 

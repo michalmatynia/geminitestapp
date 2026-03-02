@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import type {
- AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-paths';
+  AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import { getNodeInputPortContract, coerceInput, normalizePortName } from '../../utils';
 

@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import React from 'react';
 import { Button, Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';

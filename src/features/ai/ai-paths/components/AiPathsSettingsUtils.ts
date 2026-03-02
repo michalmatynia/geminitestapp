@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import type {
   DbQueryConfig,
   DatabaseConfig,
@@ -8,7 +8,6 @@ import type {
   RuntimePortValues,
   RuntimeState,
   AiNode,
-  AiEdgeDto,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import {
@@ -272,7 +271,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const normalizedNodes = normalizeNodes(repairedConfig.nodes);
   const migratedTriggerGraph = migrateTriggerToFetcherGraph(
     normalizedNodes,
-    Array.isArray(repairedConfig.edges) ? (repairedConfig.edges as EdgeDto[]) : []
+    Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
   );
   const graphNodes = normalizeNodes(migratedTriggerGraph.nodes);
   const normalizedEdges = sanitizeEdges(graphNodes, migratedTriggerGraph.edges);

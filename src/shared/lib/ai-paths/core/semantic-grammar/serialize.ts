@@ -1,5 +1,5 @@
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+ 
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
   SemanticEdgeDto as SemanticEdge,

@@ -1,4 +1,3 @@
-import { type NodeType } from './base';
 import {
   type AiNode,
   type Edge,

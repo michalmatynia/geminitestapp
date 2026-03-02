@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -17,7 +17,6 @@ import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
-import type { Edge } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

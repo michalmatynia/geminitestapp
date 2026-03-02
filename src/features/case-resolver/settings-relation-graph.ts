@@ -539,14 +539,14 @@ export const buildCaseResolverRelationGraph = ({
     const existingMeta = rawNodeMeta[node.id];
     if (existingMeta?.isStructural) return;
     const entityType = existingMeta ? existingMeta.entityType : 'custom';
-    const label = existingMeta?.label?.trim() ? existingMeta.label.trim() : node.title;
+    const label = (existingMeta?.label?.trim() ? existingMeta.label.trim() : node.title) || '';
     const entityId = existingMeta?.entityId?.trim() ? existingMeta.entityId.trim() : node.id;
     const seed: CaseResolverRelationNodeSeed = {
       id: node.id,
       entityType,
       entityId,
       label,
-      title: node.title,
+      title: node.title || '',
       description: node.description ?? '',
       group:
         entityType === 'case' || entityType === 'folder' || entityType === 'file'

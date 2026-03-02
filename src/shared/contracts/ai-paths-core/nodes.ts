@@ -41,8 +41,8 @@ export type AiPathsValidationConfig = z.infer<typeof aiPathsValidationConfigSche
 
 export const aiEdgeSchema = z.object({
   id: z.string(),
-  from: z.string(),
-  to: z.string(),
+  from: z.string().optional(),
+  to: z.string().optional(),
   source: z.string().optional(),
   target: z.string().optional(),
   fromPort: z.string().nullable().optional(),

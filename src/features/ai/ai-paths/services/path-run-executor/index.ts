@@ -128,6 +128,7 @@ export const executePathRun = async (
   let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
 
   const nodes = normalizeNodes(run.graph?.nodes ?? []);
+   
   const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;

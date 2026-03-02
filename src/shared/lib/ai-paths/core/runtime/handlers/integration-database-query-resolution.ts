@@ -1,5 +1,6 @@
 import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { coerceInput, parseJsonSafe, renderJsonTemplate } from '../../utils';
@@ -29,9 +30,6 @@ export type ResolveDatabaseQueryInput = {
 type QueryTemplateParseResult =
   | { ok: true; query: Record<string, unknown> }
   | { ok: false; error: string };
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const buildResolutionErrorOutput = (args: {
   aiPrompt: string;
@@ -75,7 +73,7 @@ const parseRenderedQueryTemplate = (args: {
     renderJsonTemplate(args.template, args.templateContext, args.inputValue)
   );
 
-  if (!isPlainRecord(parsed)) {
+  if (!isObjectRecord(parsed)) {
     return {
       ok: false,
       error: `${args.label} must render to a valid JSON object.`,
@@ -101,7 +99,7 @@ const parseQueryInputValue = (args: {
     };
   }
 
-  if (isPlainRecord(args.value)) {
+  if (isObjectRecord(args.value)) {
     const template = JSON.stringify(args.value);
     return parseRenderedQueryTemplate({
       template,
@@ -170,7 +168,7 @@ export function resolveDatabaseQuery({
       });
     }
 
-    if (isPlainRecord(parsedAiQuery.query['query'])) {
+    if (isObjectRecord(parsedAiQuery.query['query'])) {
       query = parsedAiQuery.query['query'];
       if (typeof parsedAiQuery.query['collection'] === 'string') {
         nextQueryConfig = {

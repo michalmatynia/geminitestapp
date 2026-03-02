@@ -9,6 +9,7 @@ import { pruneProductStudioSourceSlotsForProject } from '@/shared/lib/products/s
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {
@@ -425,10 +426,16 @@ export async function listImageStudioSlots(projectId: string): Promise<ImageStud
     .limit(SLOT_LIST_HARD_LIMIT + 1) // fetch one extra to detect overflow
     .toArray();
   if (docs.length > SLOT_LIST_HARD_LIMIT) {
-    console.warn(
-      `[image-studio] listImageStudioSlots: project "${projectId}" has more than ${SLOT_LIST_HARD_LIMIT} slots. ` +
-        `Results are truncated to the ${SLOT_LIST_HARD_LIMIT} most recent slots.`
-    );
+    void logSystemEvent({
+      level: 'warn',
+      message: `[image-studio] listImageStudioSlots: project "${projectId}" has too many slots`,
+      source: 'image-studio-slot-repository',
+      context: {
+        projectId,
+        slotCount: docs.length,
+        limit: SLOT_LIST_HARD_LIMIT,
+      },
+    });
     docs.splice(SLOT_LIST_HARD_LIMIT); // truncate in-place before enrichment
   }
   const { imageFileMap, screenshotMap } = await resolveImageFiles(docs);

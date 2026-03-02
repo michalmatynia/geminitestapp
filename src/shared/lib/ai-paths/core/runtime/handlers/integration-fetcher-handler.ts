@@ -3,15 +3,13 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { coerceInput } from '../../utils';
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
 const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const readString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -47,7 +45,7 @@ const readEntityObjectFromContext = (
 ): Record<string, unknown> | null => {
   if (!context) return null;
   const candidate = context['entity'] ?? context['entityJson'] ?? context['product'] ?? null;
-  return isPlainRecord(candidate) ? candidate : null;
+  return isObjectRecord(candidate) ? candidate : null;
 };
 
 const readFetcherSourceMode = (node: NodeHandlerContext['node']): FetcherSourceMode => {
@@ -111,11 +109,11 @@ export const handleFetcher: NodeHandler = async ({
   }
 
   const sourceMode = readFetcherSourceMode(node);
-  const triggerContextRecord = isPlainRecord(triggerContext) ? triggerContext : null;
+  const triggerContextRecord = isObjectRecord(triggerContext) ? triggerContext : null;
   const incomingContext = coerceInput(nodeInputs['context']);
-  const incomingContextRecord = isPlainRecord(incomingContext) ? incomingContext : null;
+  const incomingContextRecord = isObjectRecord(incomingContext) ? incomingContext : null;
   const incomingMeta = coerceInput(nodeInputs['meta']);
-  const incomingMetaRecord = isPlainRecord(incomingMeta) ? incomingMeta : {};
+  const incomingMetaRecord = isObjectRecord(incomingMeta) ? incomingMeta : {};
 
   const inputEntityId = readString(coerceInput(nodeInputs['entityId']));
   const inputEntityType = normalizeEntityType(coerceInput(nodeInputs['entityType']));

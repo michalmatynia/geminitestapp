@@ -4,6 +4,7 @@ import {
   type RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 export const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
@@ -108,13 +109,10 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
   return EMPTY_RUNTIME_STATE;
 };
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 export const extractNodeErrorOutputs = (error: unknown): RuntimePortValues | null => {
-  if (!isRecord(error)) return null;
+  if (!isObjectRecord(error)) return null;
   const maybeNodeOutput = error['nodeOutput'];
-  if (!isRecord(maybeNodeOutput)) return null;
+  if (!isObjectRecord(maybeNodeOutput)) return null;
   return cloneJsonSafe(maybeNodeOutput) as RuntimePortValues;
 };
 

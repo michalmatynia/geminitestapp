@@ -7,6 +7,7 @@ import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-pub
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
@@ -15,9 +16,6 @@ const DEFAULT_BACKOFF_MAX_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MAX_MS']
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const LOG_SOURCE = 'ai-path-run-processor';
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
@@ -79,10 +77,10 @@ const isNonRetryableRunError = (error: unknown): boolean => {
   // so we exclude it here.
   if (error !== null && typeof error === 'object') {
     const nodeOutput = (error as { nodeOutput?: unknown }).nodeOutput;
-    if (isPlainRecord(nodeOutput)) {
+    if (isObjectRecord(nodeOutput)) {
       const writeOutcome = nodeOutput['writeOutcome'];
       if (
-        isPlainRecord(writeOutcome) &&
+        isObjectRecord(writeOutcome) &&
         writeOutcome['status'] === 'failed' &&
         writeOutcome['code'] === 'write_template_values'
       ) {
@@ -90,14 +88,14 @@ const isNonRetryableRunError = (error: unknown): boolean => {
       }
       const guardrailMeta = nodeOutput['guardrailMeta'];
       if (
-        isPlainRecord(guardrailMeta) &&
+        isObjectRecord(guardrailMeta) &&
         guardrailMeta['code'] === 'write-template-values' &&
         guardrailMeta['severity'] === 'error'
       ) {
         return true;
       }
       const bundle = nodeOutput['bundle'];
-      if (isPlainRecord(bundle) && bundle['guardrail'] === 'write-template-values') {
+      if (isObjectRecord(bundle) && bundle['guardrail'] === 'write-template-values') {
         return true;
       }
     }

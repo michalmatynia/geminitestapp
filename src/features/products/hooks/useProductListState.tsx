@@ -1,86 +1,41 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useDraftQueries, draftKeys } from '@/features/drafter/hooks/useDraftQueries';
-import {
-  fetchIntegrationsWithConnections,
-  fetchPreferredBaseConnection,
-  integrationSelectionQueryKeys,
-} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
-import {
-  fetchProductListings,
-  productListingsQueryKey,
-} from '@/features/integrations/hooks/useListingQueries';
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-  normalizeProductPageSize,
 } from '@/features/products/constants';
-import {
-  EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
-  LISTING_COMPLETED_STATUSES,
-  LISTING_IN_FLIGHT_STATUSES,
-  PRODUCT_ROW_HIGHLIGHT_TOTAL_MS,
-  isIncomingProductDetailNewer,
-  normalizeListingStatus,
-  resolveCategoryLabelByLocale,
-  resolveProductCatalogId,
-  resolveProductCategoryId,
-} from '@/features/products/hooks/product-list-state-utils';
-import {
-  isEditingProductHydrated,
-  markEditingProductHydrated,
-} from '@/features/products/hooks/editingProductHydration';
-import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import { useProductData } from '@/features/products/hooks/useProductData';
 import { useProductSync } from '@/features/products/hooks/useProductEnhancements';
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
-import type {
-  ProductCategory,
-  ProductWithImages,
-  ProductDraftDto,
-} from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
-import { ApiError, api } from '@/shared/lib/api-client';
-import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ProductListContextType } from '../context/ProductListContext';
 import type { Row } from '@tanstack/react-table';
 
 import { useProductListSelection } from './product-list/useProductListSelection';
 import { useProductListModals } from './product-list/useProductListModals';
+import { useProductListIntegrations } from './product-list/useProductListIntegrations';
 import { useProductListUrlSync } from './product-list/useProductListUrlSync';
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';
-
-const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
-const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
-const DRAFT_DETAIL_TIMEOUT_MS = 30_000;
-
-export const shouldAdoptIncomingEditProductDetail = (input: {
-  currentProduct: ProductWithImages;
-  incomingProduct: ProductWithImages;
-  isEditHydrating: boolean;
-}): boolean => {
-  const { currentProduct, incomingProduct, isEditHydrating } = input;
-  if (incomingProduct.id !== currentProduct.id) return false;
-  const hydrated = isEditingProductHydrated(currentProduct);
-  if (!hydrated && !isEditHydrating) return false;
-  if (hydrated && !isIncomingProductDetailNewer(incomingProduct, currentProduct)) return false;
-  return true;
-};
+import { useProductListHighlights } from './product-list/useProductListHighlights';
+import { useProductEditHydration } from './product-list/useProductEditHydration';
+import { useProductListListingStatuses } from './product-list/useProductListListingStatuses';
+import { useProductListQueueStatus } from './product-list/useProductListQueueStatus';
+import { useProductListCategories } from './product-list/useProductListCategories';
+import { useProductListFilters } from './product-list/useProductListFilters';
+import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -94,69 +49,16 @@ export function useProductListState(): ProductListContextType & {
   bulkDeletePending: boolean;
   } {
   const searchParams = useSearchParams();
-  const openProductIdFromQuery = searchParams.get('openProductId')?.trim() ?? '';
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isEditHydrating, setIsEditHydrating] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const settingsStore = useSettingsStore();
+
   const productImageBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-  const [jobCompletionHighlights, setJobCompletionHighlights] = useState<Record<string, number>>(
-    {}
-  );
-  const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
-  const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
-  const openingProductFromQueryRef = useRef<string | null>(null);
-  const editOpenRequestTokenRef = useRef(0);
-  const jobHighlightTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const queryClient = useQueryClient();
-
-  const prefetchIntegrationSelectionData = useCallback((): void => {
-    void import('@/features/integrations/components/listings/SelectIntegrationModal');
-    void queryClient.prefetchQuery({
-      queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
-      queryFn: fetchIntegrationsWithConnections,
-      staleTime: 5 * 60 * 1000,
-    });
-    void queryClient.prefetchQuery({
-      queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
-      queryFn: fetchPreferredBaseConnection,
-      staleTime: 5 * 60 * 1000,
-    });
-  }, [queryClient]);
-
-  const prefetchProductListingsData = useCallback(
-    (productId: string): void => {
-      if (!productId) return;
-      void queryClient.prefetchQuery({
-        queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
-        queryFn: () => fetchProductListings(productId),
-        staleTime: 30 * 1000,
-      });
-    },
-    [queryClient]
-  );
-
-  const refreshProductListingsData = useCallback(
-    (productId: string): void => {
-      if (!productId) return;
-      void queryClient.fetchQuery({
-        queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
-        queryFn: () => fetchProductListings(productId),
-        staleTime: 0,
-      });
-    },
-    [queryClient]
-  );
-
-  const { data: allDrafts = [] } = useDraftQueries();
-  const activeDrafts = useMemo(
-    () => allDrafts.filter((d: ProductDraftDto) => d.active !== false),
-    [allDrafts]
-  );
 
   const queuedProductIds = useQueuedProductIds();
 
@@ -178,13 +80,22 @@ export function useProductListState(): ProductListContextType & {
       enabled: !preferencesLoading,
     });
 
+  const filters = useProductListFilters({
+    initialCatalogFilter: preferences.catalogFilter,
+    initialPageSize: preferences.pageSize,
+    initialAppliedAdvancedFilter: preferences.appliedAdvancedFilter,
+    initialAppliedAdvancedFilterPresetId: preferences.appliedAdvancedFilterPresetId,
+    preferencesLoaded: !preferencesLoading,
+    updatePageSize,
+    persistAppliedAdvancedFilterState,
+  });
+
   const {
     data,
     totalPages,
     page,
     setPage,
     pageSize,
-    setPageSize,
     search,
     setSearch,
     productId,
@@ -211,7 +122,6 @@ export function useProductListState(): ProductListContextType & {
     setEndDate,
     advancedFilter,
     activeAdvancedFilterPresetId,
-    setAdvancedFilterState,
     catalogFilter,
     setCatalogFilter,
     baseExported,
@@ -236,63 +146,12 @@ export function useProductListState(): ProductListContextType & {
     () => new Set(data.map((product: ProductWithImages) => product.id)),
     [data]
   );
-  const visibleProductIds = useMemo(
-    () => Array.from(visibleProductIdSet),
-    [visibleProductIdSet]
-  );
-  const categoryLookupCatalogIds = useMemo((): string[] => {
-    const ids = new Set<string>();
-    data.forEach((product: ProductWithImages) => {
-      const categoryId = resolveProductCategoryId(product);
-      const catalogId = resolveProductCatalogId(product);
-      if (!categoryId || !catalogId) return;
-      ids.add(catalogId);
-    });
-    return Array.from(ids).sort();
-  }, [data]);
+  const visibleProductIds = useMemo(() => Array.from(visibleProductIdSet), [visibleProductIdSet]);
 
-  const batchCategoryQueryKey = useMemo(
-    () =>
-      normalizeQueryKey([
-        ...QUERY_KEYS.products.metadata.all,
-        'categories-batch',
-        categoryLookupCatalogIds,
-      ]),
-    [categoryLookupCatalogIds]
-  );
-  const { data: categoryBatchData } = useQuery<Record<string, ProductCategory[]>>({
-    queryKey: batchCategoryQueryKey,
-    queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
-      if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
-      return api.get<Record<string, ProductCategory[]>>(
-        `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
-        {
-          signal,
-          timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,
-        }
-      );
-    },
-    staleTime: 5 * 60 * 1_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    enabled: categoryLookupCatalogIds.length > 0,
+  const { categoryNameById } = useProductListCategories({
+    data,
+    nameLocale: preferences.nameLocale,
   });
-
-  const categoryNameById = useMemo((): Map<string, string> => {
-    const map = new Map<string, string>();
-    const locale = preferences.nameLocale ?? 'name_en';
-    const grouped = categoryBatchData ?? {};
-    for (const categories of Object.values(grouped)) {
-      for (const category of categories) {
-        if (!category.id || map.has(category.id)) continue;
-        const label = resolveCategoryLabelByLocale(category, locale);
-        if (!label) continue;
-        map.set(category.id, label);
-      }
-    }
-    return map;
-  }, [categoryBatchData, preferences.nameLocale]);
 
   useProductListSync(
     {
@@ -353,6 +212,13 @@ export function useProductListState(): ProductListContextType & {
     bulkDeletePending,
   } = selection;
 
+  const integrations = useProductListIntegrations();
+  const {
+    prefetchIntegrationSelectionData,
+    prefetchProductListingsData,
+    refreshProductListingsData,
+  } = integrations;
+
   const modals = useProductListModals({
     handleOpenCreateModal,
     prefetchIntegrationSelectionData,
@@ -396,44 +262,37 @@ export function useProductListState(): ProductListContextType & {
   const urlSync = useProductListUrlSync();
   const { clearProductEditorQueryParams } = urlSync;
 
-  const editingProductDetailQuery = createSingleQueryV2<ProductWithImages>({
-    id: editingProduct?.id,
-    queryKey: (id) =>
-      id !== 'none'
-        ? QUERY_KEYS.products.detail(id)
-        : [...QUERY_KEYS.products.details(), 'inactive'],
-    queryFn: () =>
-      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, {
-        timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-      }),
-    staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
-    refetchOnMount: false,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    meta: {
-      source: 'products.hooks.useProductListState.editingProductDetail',
-      operation: 'detail',
-      resource: 'products.detail',
-      domain: 'products',
-      tags: ['products', 'detail', 'editing'],
-    },
+  const hydration = useProductEditHydration({
+    editingProduct,
+    setEditingProduct,
+    setActionError,
+    setRefreshTrigger,
+    clearProductEditorQueryParams,
   });
 
-  const visibleListingBadgeStatuses = useMemo(() => {
-    const statuses = new Map<string, string>();
-    for (const product of data) {
-      const baseStatus = normalizeListingStatus(integrationBadgeStatuses.get(product.id));
-      if (baseStatus) {
-        statuses.set(`${product.id}:base`, baseStatus);
-      }
-      const traderaStatus = normalizeListingStatus(traderaBadgeStatuses.get(product.id));
-      if (traderaStatus) {
-        statuses.set(`${product.id}:tradera`, traderaStatus);
-      }
-    }
-    return statuses;
-  }, [data, integrationBadgeStatuses, traderaBadgeStatuses]);
+  const {
+    isEditHydrating,
+    handleOpenEditModal,
+    handleCloseEdit,
+    prefetchProductDetail,
+  } = hydration;
+
+  const highlights = useProductListHighlights();
+  const { jobCompletionHighlights, triggerJobCompletionHighlight } = highlights;
+
+  useProductListListingStatuses({
+    data,
+    integrationBadgeStatuses,
+    traderaBadgeStatuses,
+    visibleProductIdSet,
+    triggerJobCompletionHighlight,
+  });
+
+  useProductListQueueStatus({
+    queuedProductIds,
+    visibleProductIdSet,
+    triggerJobCompletionHighlight,
+  });
 
   useEffect(() => {
     if (!preferencesLoading && preferences.currencyCode) {
@@ -442,302 +301,11 @@ export function useProductListState(): ProductListContextType & {
   }, [preferencesLoading, preferences.currencyCode, setCurrencyCode]);
 
   useEffect(() => {
-    if (!editingProduct?.id) return;
-    const fresh = editingProductDetailQuery.data;
-    if (!fresh) return;
-    if (
-      !shouldAdoptIncomingEditProductDetail({
-        currentProduct: editingProduct,
-        incomingProduct: fresh,
-        isEditHydrating,
-      })
-    ) {
-      return;
-    }
-    setEditingProduct(markEditingProductHydrated(fresh));
-  }, [editingProduct, editingProductDetailQuery.data, isEditHydrating, setEditingProduct]);
-
-  useEffect(() => {
-    if (editingProduct?.id) return;
-    editOpenRequestTokenRef.current += 1;
-    setIsEditHydrating(false);
-  }, [editingProduct?.id]);
-
-  const prefetchProductDetail = useCallback(
-    (productId: string) => {
-      void queryClient.prefetchQuery({
-        queryKey: normalizeQueryKey(getProductDetailQueryKey(productId)),
-        queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(productId)}?fresh=1`, {
-            signal,
-            cache: 'no-store',
-            logError: false,
-            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-          }),
-        staleTime: 20_000,
-      });
-    },
-    [queryClient]
-  );
-
-  const handleOpenEditModal = useCallback(
-    (product: ProductWithImages) => {
-      setActionError(null);
-      editOpenRequestTokenRef.current += 1;
-      const requestToken = editOpenRequestTokenRef.current;
-
-      // Always open with skeleton so the modal mounts once and stays open
-      // while fresh data loads. The form replaces the skeleton in-place with
-      // no second open animation.
-      setEditingProduct(product);
-      setIsEditHydrating(true);
-
-      void queryClient
-        .fetchQuery({
-          queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
-          queryFn: ({ signal }) =>
-            api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
-              signal,
-              cache: 'no-store',
-              logError: false,
-              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-            }),
-          staleTime: 0,
-        })
-        .then((freshProduct: ProductWithImages) => {
-          if (editOpenRequestTokenRef.current !== requestToken) return;
-          setEditingProduct(markEditingProductHydrated(freshProduct));
-          setIsEditHydrating(false);
-        })
-        .catch((error: unknown) => {
-          if (editOpenRequestTokenRef.current !== requestToken) return;
-          setIsEditHydrating(false);
-          if (error instanceof ApiError && error.status === 404) {
-            toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-            setRefreshTrigger((prev: number) => prev + 1);
-            return;
-          }
-          toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
-            variant: 'error',
-          });
-        });
-    },
-    [queryClient, setActionError, setEditingProduct, toast]
-  );
-
-  useEffect(() => {
-    if (!openProductIdFromQuery) {
-      // Only reset when this effect was the one that opened the product (via URL
-      // navigation). Skip when the product was opened via a click — in that case
-      // openingProductFromQueryRef is null and the token is owned by handleOpenEditModal.
-      if (openingProductFromQueryRef.current !== null) {
-        openingProductFromQueryRef.current = null;
-        editOpenRequestTokenRef.current += 1;
-        setIsEditHydrating(false);
-      }
-      return;
-    }
-    if (editingProduct?.id === openProductIdFromQuery) return;
-    if (openingProductFromQueryRef.current === openProductIdFromQuery) return;
-    openingProductFromQueryRef.current = openProductIdFromQuery;
-    editOpenRequestTokenRef.current += 1;
-    const requestToken = editOpenRequestTokenRef.current;
-
-    setActionError(null);
-    setEditingProduct(null);
-    setIsEditHydrating(true);
-    void queryClient
-      .fetchQuery({
-        queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
-        queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(
-            `/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
-            {
-              signal,
-              cache: 'no-store',
-              logError: false,
-              timeout: PRODUCT_DETAIL_TIMEOUT_MS,
-            }
-          ),
-        staleTime: 0,
-      })
-      .then((freshProduct: ProductWithImages) => {
-        if (editOpenRequestTokenRef.current !== requestToken) return;
-        setEditingProduct(markEditingProductHydrated(freshProduct));
-        setIsEditHydrating(false);
-      })
-      .catch((error: unknown) => {
-        if (editOpenRequestTokenRef.current !== requestToken) return;
-        setIsEditHydrating(false);
-        if (error instanceof ApiError && error.status === 404) {
-          toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
-          setRefreshTrigger((prev: number) => prev + 1);
-          return;
-        }
-        toast(error instanceof Error ? error.message : 'Failed to open product editor.', {
-          variant: 'error',
-        });
-      });
-  }, [
-    editingProduct?.id,
-    openProductIdFromQuery,
-    queryClient,
-    setActionError,
-    setEditingProduct,
-    toast,
-  ]);
-
-  useEffect(() => {
-    if (!editingProduct?.id) return;
-    if (!editingProductDetailQuery.error) return;
-    const error = editingProductDetailQuery.error;
-    if (!(error instanceof ApiError) || error.status !== 404) return;
-
-    setEditingProduct(null);
-    setIsEditHydrating(false);
-    toast('This product was deleted or is unavailable.', { variant: 'warning' });
-    setRefreshTrigger((prev: number) => prev + 1);
-  }, [editingProduct?.id, editingProductDetailQuery.error, setEditingProduct, toast]);
-
-  const handleSetPageSize = useCallback(
-    (size: number) => {
-      const normalizedPageSize = normalizeProductPageSize(size, 12);
-      setPageSize(normalizedPageSize);
-      void updatePageSize(normalizedPageSize);
-    },
-    [setPageSize, updatePageSize]
-  );
-
-  const handleSetAdvancedFilterState = useCallback(
-    (value: string, presetId: string | null) => {
-      const normalizedValue = value.trim();
-      const normalizedPresetId = normalizedValue.length > 0 ? presetId : null;
-      setAdvancedFilterState(normalizedValue, normalizedPresetId);
-      void persistAppliedAdvancedFilterState({
-        advancedFilter: normalizedValue,
-        presetId: normalizedPresetId,
-      });
-    },
-    [persistAppliedAdvancedFilterState, setAdvancedFilterState]
-  );
-
-  const handleSetAdvancedFilter = useCallback(
-    (value: string) => {
-      handleSetAdvancedFilterState(value, null);
-    },
-    [handleSetAdvancedFilterState]
-  );
-
-  const triggerJobCompletionHighlight = useCallback((productId: string): void => {
-    if (!productId) return;
-
-    setJobCompletionHighlights((prev: Record<string, number>) => ({
-      ...prev,
-      [productId]: (prev[productId] ?? 0) + 1,
-    }));
-
-    const existingTimeout = jobHighlightTimeoutsRef.current.get(productId);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-
-    const timeoutId = setTimeout(() => {
-      setJobCompletionHighlights((prev: Record<string, number>) => {
-        if (!(productId in prev)) return prev;
-        const next = { ...prev };
-        delete next[productId];
-        return next;
-      });
-      jobHighlightTimeoutsRef.current.delete(productId);
-    }, PRODUCT_ROW_HIGHLIGHT_TOTAL_MS);
-
-    jobHighlightTimeoutsRef.current.set(productId, timeoutId);
-  }, []);
-
-  const handleCreateFromDraft = useCallback(
-    (draftId: string): void => {
-      const run = async (): Promise<void> => {
-        try {
-          const draft = await queryClient.fetchQuery({
-            queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
-            queryFn: () =>
-              api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
-                timeout: DRAFT_DETAIL_TIMEOUT_MS,
-              }),
-          });
-          setCreateDraft(draft);
-          handleOpenCreateFromDraft(draft);
-          toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
-        } catch (error) {
-          logClientError(error, {
-            context: { source: 'useProductListState', action: 'createFromDraft', draftId },
-          });
-          toast('Failed to load draft template', { variant: 'error' });
-        }
-      };
-      void run();
-    },
-    [handleOpenCreateFromDraft, toast, queryClient, setCreateDraft]
-  );
-
-  const handleCloseEdit = useCallback(() => {
-    editOpenRequestTokenRef.current += 1;
-    setEditingProduct(null);
-    setIsEditHydrating(false);
-    clearProductEditorQueryParams();
-  }, [clearProductEditorQueryParams, setEditingProduct]);
-
-  useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const previousQueuedProductIds = previousQueuedProductIdsRef.current;
-    if (previousQueuedProductIds) {
-      previousQueuedProductIds.forEach((productId: string) => {
-        if (!queuedProductIds.has(productId) && visibleProductIdSet.has(productId)) {
-          triggerJobCompletionHighlight(productId);
-        }
-      });
-    }
-    previousQueuedProductIdsRef.current = new Set(queuedProductIds);
-  }, [queuedProductIds, triggerJobCompletionHighlight, visibleProductIdSet]);
-
-  useEffect(() => {
-    const previousStatuses = previousListingBadgeStatusesRef.current;
-    if (previousStatuses) {
-      const completedProductIds = new Set<string>();
-
-      previousStatuses.forEach((previousStatus: string, key: string) => {
-        if (!LISTING_IN_FLIGHT_STATUSES.has(previousStatus)) return;
-
-        const currentStatus = visibleListingBadgeStatuses.get(key);
-        if (!currentStatus || !LISTING_COMPLETED_STATUSES.has(currentStatus)) return;
-
-        const productId = key.split(':')[0];
-        if (!productId || !visibleProductIdSet.has(productId)) return;
-        completedProductIds.add(productId);
-      });
-
-      completedProductIds.forEach((productId: string) => {
-        triggerJobCompletionHighlight(productId);
-      });
-    }
-
-    previousListingBadgeStatusesRef.current = new Map(visibleListingBadgeStatuses);
-  }, [triggerJobCompletionHighlight, visibleListingBadgeStatuses, visibleProductIdSet]);
-
-  useEffect(() => {
-    return (): void => {
-      jobHighlightTimeoutsRef.current.forEach((timeoutId: ReturnType<typeof setTimeout>) => {
-        clearTimeout(timeoutId);
-      });
-      jobHighlightTimeoutsRef.current.clear();
-    };
   }, []);
 
   const getRowClassName = useCallback(
@@ -778,10 +346,45 @@ export function useProductListState(): ProductListContextType & {
 
   const columns = useMemo(() => getProductColumns(), []);
 
+  const { data: allDrafts = [] } = useDraftQueries();
+  const activeDrafts = useMemo(
+    () => allDrafts.filter((d: ProductDraftDto) => d.active !== false),
+    [allDrafts]
+  );
+
+  const { handleSetPageSize, handleSetAdvancedFilter, handleSetAdvancedFilterState } = filters;
+
   return useMemo(
     () => ({
       onCreateProduct: handleOpenCreate,
-      onCreateFromDraft: handleCreateFromDraft,
+      onCreateFromDraft: (draftId: string) => {
+        const run = async (): Promise<void> => {
+          try {
+            const { draftKeys } = await import('@/features/drafter/hooks/useDraftQueries');
+            const { normalizeQueryKey } = await import('@/shared/lib/query-key-utils');
+            const { api } = await import('@/shared/lib/api-client');
+            const draft = await queryClient.fetchQuery({
+              queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
+              queryFn: () =>
+                api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
+                  timeout: 30_000,
+                }),
+            });
+            setCreateDraft(draft);
+            handleOpenCreateFromDraft(draft);
+            toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
+          } catch (error) {
+            const { logClientError } = await import(
+              '@/shared/utils/observability/client-error-logger'
+            );
+            logClientError(error, {
+              context: { source: 'useProductListState', action: 'createFromDraft', draftId },
+            });
+            toast('Failed to load draft template', { variant: 'error' });
+          }
+        };
+        void run();
+      },
       activeDrafts,
       page,
       totalPages,
@@ -962,7 +565,6 @@ export function useProductListState(): ProductListContextType & {
       handleCloseListProduct,
       handleCloseMassList,
       handleConfirmSingleDelete,
-      handleCreateFromDraft,
       handleCreateSuccess,
       handleEditSave,
       handleEditSuccess,
@@ -1037,6 +639,19 @@ export function useProductListState(): ProductListContextType & {
       totalPages,
       traderaBadgeIds,
       traderaBadgeStatuses,
+      handleOpenCreateFromDraft,
+      setCreateDraft,
+      handleOpenCreateModal,
+      setEditingProduct,
+      refreshListingBadges,
+      updateNameLocale,
+      updateCatalogFilter,
+      updateCurrencyCode,
+      updatePageSize,
+      persistAppliedAdvancedFilterState,
+      handleSetPageSize,
+      handleSetAdvancedFilter,
+      handleSetAdvancedFilterState,
     ]
   );
 }

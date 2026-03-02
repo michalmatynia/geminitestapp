@@ -15,87 +15,47 @@ import {
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { configurationError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import type {
-  AiPathRunQueueSloStatusDto,
-  QueueSloThresholdsDto,
-  SloLevelDto,
-} from '@/shared/contracts/ai-paths-runtime';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-export type AiPathRunQueueSloStatus = AiPathRunQueueSloStatusDto;
-export type QueueSloThresholds = QueueSloThresholdsDto;
-export type SloLevel = SloLevelDto;
+import {
+  computeAiPathRunQueueSlo,
+  type AiPathRunQueueSloStatus,
+  type SloLevel,
+} from './ai-path-run-queue-slo';
+import {
+  isQueueTransportError,
+  createDebugQueueLogger,
+  parseEnvNumber,
+} from './ai-path-run-queue-utils';
+
+export type { AiPathRunQueueSloStatus, SloLevel };
+
+const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
+const LOG_SOURCE = 'ai-path-run-queue';
+const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
+
+const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
+  LOG_SOURCE,
+  DEBUG_AI_PATH_QUEUE
+);
 
 // Default concurrency raised from 1 → 3: one slow job no longer blocks the whole queue.
 // claimRunForProcessing uses an atomic findOneAndUpdate so concurrent workers never
 // double-process the same run.  Override with AI_PATHS_RUN_CONCURRENCY env var.
-const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '3');
+const DEFAULT_CONCURRENCY = parseEnvNumber('AI_PATHS_RUN_CONCURRENCY', 3);
 // Per-job wall-clock timeout.  After this many ms the run's AbortController is fired,
 // the engine stops iteration, and the run is marked canceled.  Set to 0 to disable.
 // Default: 10 minutes.  Override with AI_PATHS_JOB_TIMEOUT_MS env var.
-const JOB_EXECUTION_TIMEOUT_MS = (() => {
-  const raw = process.env['AI_PATHS_JOB_TIMEOUT_MS'];
-  if (!raw) return 10 * 60 * 1000;
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 10 * 60 * 1000;
-})();
-const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
-const LOG_SOURCE = 'ai-path-run-queue';
+const JOB_EXECUTION_TIMEOUT_MS = parseEnvNumber('AI_PATHS_JOB_TIMEOUT_MS', 10 * 60 * 1000);
+
 const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
 const buildRetryJobId = (runId: string): string => `${runId}:retry`;
-const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const localFallbackTimers = new Map<string, NodeJS.Timeout>();
 const REQUIRE_DURABLE_QUEUE =
   process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] === 'true' ||
   (process.env.NODE_ENV === 'production' &&
     process.env['AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK'] !== 'true');
-
-const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
-  if (!DEBUG_AI_PATH_QUEUE) return;
-  void logSystemEvent({
-    level: 'info',
-    source: LOG_SOURCE,
-    message,
-    context: context ?? null,
-  });
-};
-
-const debugQueueWarn = (message: string, context?: Record<string, unknown>): void => {
-  if (!DEBUG_AI_PATH_QUEUE) return;
-  void logSystemEvent({
-    level: 'warn',
-    source: LOG_SOURCE,
-    message,
-    context: context ?? null,
-  });
-};
-
-const isQueueTransportError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  const code = (error as NodeJS.ErrnoException).code;
-  if (typeof code === 'string') {
-    const normalized = code.toUpperCase();
-    if (
-      normalized === 'ECONNREFUSED' ||
-      normalized === 'ECONNRESET' ||
-      normalized === 'ETIMEDOUT' ||
-      normalized === 'EPIPE'
-    ) {
-      return true;
-    }
-  }
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('econnrefused') ||
-    message.includes('econnreset') ||
-    message.includes('timeout') ||
-    message.includes('socket') ||
-    message.includes('connection is closed') ||
-    message.includes('read only') ||
-    message.includes('not connected')
-  );
-};
 
 type AiPathRunJobData = {
   runId: string;
@@ -137,228 +97,6 @@ const getAiInsightsQueueStatusSnapshot = async (): Promise<AiInsightsQueueStatus
 
 type EnqueuePathRunJobOptions = {
   delayMs?: number;
-};
-
-type ComputeQueueSloInput = {
-  queueRunning: boolean;
-  queueHealthy: boolean;
-  queueLagMs: number | null;
-  successRate24h: number;
-  terminalRuns24h: number;
-  deadLetterRate24h: number;
-  brainErrorRate24h: number;
-  brainTotalReports24h: number;
-};
-
-const parseEnvNumber = (name: string, fallback: number, min: number = 0): number => {
-  const raw = process.env[name];
-  if (!raw) return fallback;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(min, parsed);
-};
-
-const parseEnvFloat = (
-  name: string,
-  fallback: number,
-  min: number = 0,
-  max: number = 100
-): number => {
-  const raw = process.env[name];
-  if (!raw) return fallback;
-  const parsed = Number.parseFloat(raw);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(max, Math.max(min, parsed));
-};
-
-const resolveQueueSloThresholds = (): QueueSloThresholds => ({
-  queueLagWarningMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_WARNING_MS', 60_000, 1_000),
-  queueLagCriticalMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_CRITICAL_MS', 180_000, 1_000),
-  successRateWarningPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_WARNING_PCT', 95, 0, 100),
-  successRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_CRITICAL_PCT', 90, 0, 100),
-  deadLetterRateWarningPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_WARNING_PCT', 1, 0, 100),
-  deadLetterRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_CRITICAL_PCT', 3, 0, 100),
-  brainErrorRateWarningPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_WARNING_PCT', 5, 0, 100),
-  brainErrorRateCriticalPct: parseEnvFloat(
-    'AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT',
-    15,
-    0,
-    100
-  ),
-  minTerminalSamples: parseEnvNumber('AI_PATHS_SLO_MIN_TERMINAL_SAMPLES', 10, 1),
-  minBrainSamples: parseEnvNumber('AI_PATHS_SLO_MIN_BRAIN_SAMPLES', 20, 1),
-});
-
-const severityRank: Record<SloLevel, number> = {
-  ok: 0,
-  warning: 1,
-  critical: 2,
-};
-
-const maxLevel = (levels: SloLevel[]): SloLevel => {
-  return levels.reduce((max, current) => {
-    if (severityRank[current] > severityRank[max]) return current;
-    return max;
-  }, 'ok' as SloLevel);
-};
-
-const classifyGreaterIsWorse = (value: number, warning: number, critical: number): SloLevel => {
-  if (value >= Math.max(warning, critical)) return 'critical';
-  if (value >= Math.min(warning, critical)) return 'warning';
-  return 'ok';
-};
-
-const classifyLowerIsWorse = (value: number, warning: number, critical: number): SloLevel => {
-  if (value <= Math.min(warning, critical)) return 'critical';
-  if (value <= Math.max(warning, critical)) return 'warning';
-  return 'ok';
-};
-
-export const computeAiPathRunQueueSlo = (
-  input: ComputeQueueSloInput,
-  thresholds: QueueSloThresholds = resolveQueueSloThresholds()
-): AiPathRunQueueSloStatus => {
-  const breaches: AiPathRunQueueSloStatus['breaches'] = [];
-
-  const workerHealthLevel: SloLevel = !input.queueRunning
-    ? 'critical'
-    : input.queueHealthy
-      ? 'ok'
-      : 'warning';
-  const workerHealthMessage = !input.queueRunning
-    ? 'Worker is stopped.'
-    : input.queueHealthy
-      ? 'Worker is healthy.'
-      : 'Worker is running but not healthy.';
-  if (workerHealthLevel !== 'ok') {
-    breaches.push({
-      indicator: 'workerHealth',
-      level: workerHealthLevel,
-      message: workerHealthMessage,
-    });
-  }
-
-  const lagValue = input.queueLagMs ?? 0;
-  const queueLagLevel =
-    input.queueLagMs === null
-      ? 'ok'
-      : classifyGreaterIsWorse(
-        lagValue,
-        thresholds.queueLagWarningMs,
-        thresholds.queueLagCriticalMs
-      );
-  const queueLagMessage =
-    input.queueLagMs === null
-      ? 'No queued runs.'
-      : `Lag ${lagValue}ms (warn ${thresholds.queueLagWarningMs}ms / critical ${thresholds.queueLagCriticalMs}ms).`;
-  if (queueLagLevel !== 'ok') {
-    breaches.push({
-      indicator: 'queueLag',
-      level: queueLagLevel,
-      message: queueLagMessage,
-    });
-  }
-
-  const hasTerminalSample = input.terminalRuns24h >= thresholds.minTerminalSamples;
-  const successRateLevel = hasTerminalSample
-    ? classifyLowerIsWorse(
-      input.successRate24h,
-      thresholds.successRateWarningPct,
-      thresholds.successRateCriticalPct
-    )
-    : 'ok';
-  const successRateMessage = hasTerminalSample
-    ? `Success ${input.successRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
-    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for success-rate SLO.`;
-  if (successRateLevel !== 'ok') {
-    breaches.push({
-      indicator: 'successRate24h',
-      level: successRateLevel,
-      message: successRateMessage,
-    });
-  }
-
-  const deadLetterLevel = hasTerminalSample
-    ? classifyGreaterIsWorse(
-      input.deadLetterRate24h,
-      thresholds.deadLetterRateWarningPct,
-      thresholds.deadLetterRateCriticalPct
-    )
-    : 'ok';
-  const deadLetterMessage = hasTerminalSample
-    ? `Dead-letter rate ${input.deadLetterRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
-    : `Insufficient sample (${input.terminalRuns24h}/${thresholds.minTerminalSamples}) for dead-letter SLO.`;
-  if (deadLetterLevel !== 'ok') {
-    breaches.push({
-      indicator: 'deadLetterRate24h',
-      level: deadLetterLevel,
-      message: deadLetterMessage,
-    });
-  }
-
-  const hasBrainSample = input.brainTotalReports24h >= thresholds.minBrainSamples;
-  const brainErrorLevel = hasBrainSample
-    ? classifyGreaterIsWorse(
-      input.brainErrorRate24h,
-      thresholds.brainErrorRateWarningPct,
-      thresholds.brainErrorRateCriticalPct
-    )
-    : 'ok';
-  const brainErrorMessage = hasBrainSample
-    ? `Brain error rate ${input.brainErrorRate24h.toFixed(2)}% over ${input.brainTotalReports24h} reports.`
-    : `Insufficient sample (${input.brainTotalReports24h}/${thresholds.minBrainSamples}) for brain error-rate SLO.`;
-  if (brainErrorLevel !== 'ok') {
-    breaches.push({
-      indicator: 'brainErrorRate24h',
-      level: brainErrorLevel,
-      message: brainErrorMessage,
-    });
-  }
-
-  return {
-    overall: maxLevel([
-      workerHealthLevel,
-      queueLagLevel,
-      successRateLevel,
-      deadLetterLevel,
-      brainErrorLevel,
-    ]),
-    evaluatedAt: new Date().toISOString(),
-    thresholds,
-    indicators: {
-      workerHealth: {
-        level: workerHealthLevel,
-        running: input.queueRunning,
-        healthy: input.queueHealthy,
-        message: workerHealthMessage,
-      },
-      queueLag: {
-        level: queueLagLevel,
-        valueMs: input.queueLagMs,
-        message: queueLagMessage,
-      },
-      successRate24h: {
-        level: successRateLevel,
-        valuePct: input.successRate24h,
-        sampleSize: input.terminalRuns24h,
-        message: successRateMessage,
-      },
-      deadLetterRate24h: {
-        level: deadLetterLevel,
-        valuePct: input.deadLetterRate24h,
-        sampleSize: input.terminalRuns24h,
-        message: deadLetterMessage,
-      },
-      brainErrorRate24h: {
-        level: brainErrorLevel,
-        valuePct: input.brainErrorRate24h,
-        sampleSize: input.brainTotalReports24h,
-        message: brainErrorMessage,
-      },
-    },
-    breachCount: breaches.length,
-    breaches,
-  };
 };
 
 const queue = createManagedQueue<AiPathRunJobData>({

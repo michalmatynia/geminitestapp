@@ -107,17 +107,14 @@ export const useCaseResolverStateAssetActions = (
     ...factoryActions,
     ...uploadActions,
     ...ocrActions,
-    handleCreateNodeFile: (targetFolderPath: string | null) => {
+    handleCreateNodeFile: (_targetFolderPath: string | null) => {
       // Placeholder for missing method
-      console.log('handleCreateNodeFile placeholder', targetFolderPath);
     },
-    handleCreateDocumentFromText: (scanFileId: string) => {
+    handleCreateDocumentFromText: (_scanFileId: string) => {
       // Placeholder for missing method
-      console.log('handleCreateDocumentFromText placeholder', scanFileId);
     },
-    handleCreateImageAsset: (targetFolderPath: string | null) => {
+    handleCreateImageAsset: (_targetFolderPath: string | null) => {
       // Placeholder for missing method
-      console.log('handleCreateImageAsset placeholder', targetFolderPath);
     },
   };
 };

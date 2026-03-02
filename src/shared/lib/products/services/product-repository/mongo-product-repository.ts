@@ -17,6 +17,7 @@ import {
   CreateProductInput,
   type ProductCreateInputDto,
   type ProductImageRecord,
+  type ProductCatalogRecord,
   ProductFilters,
   type ProductWithImages,
   ProductRepository,
@@ -634,8 +635,15 @@ export const mongoProductRepository: ProductRepository = {
         : [],
       createdAt: now,
       updatedAt: now,
-      images: [],
-      catalogs: [],
+      images: Array.isArray(existing.images)
+        ? existing.images.map((img: ProductImageRecord) => ({ ...img, productId: duplicatedId }))
+        : [],
+      catalogs: Array.isArray(existing.catalogs)
+        ? existing.catalogs.map((cat: ProductCatalogRecord) => ({
+          ...cat,
+          productId: duplicatedId,
+        }))
+        : [],
     };
 
     await db.collection<ProductDocument>(productCollectionName).insertOne(document);

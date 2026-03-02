@@ -11,6 +11,7 @@ import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,
 } from './integration-database-write-guardrails';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 interface DbActionResult {
   items?: unknown[];
@@ -45,12 +46,9 @@ const resolveCollectionUpdateContext = ({
   entityType,
 }: ResolveCollectionUpdateContextInput): ResolveCollectionUpdateContextResult => {
   const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
-  const queryFromPayload =
-    queryPayload['query'] &&
-    typeof queryPayload['query'] === 'object' &&
-    !Array.isArray(queryPayload['query'])
-      ? queryPayload['query']
-      : {};
+  const queryFromPayload = isObjectRecord(queryPayload['query'])
+    ? queryPayload['query']
+    : {};
   const query = queryFromPayload;
   const collection =
     (queryPayload['collection'] as string | undefined)?.trim() ||
@@ -92,11 +90,8 @@ export type ExecuteDatabaseUpdateResult =
       writeOutcome: DatabaseWriteOutcome;
     };
 
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => {
-  if (!isPlainRecord(responseData)) return {};
+  if (!isObjectRecord(responseData)) return {};
   const requestedProvider =
     responseData['requestedProvider'] === 'auto' ||
     responseData['requestedProvider'] === 'mongodb' ||
@@ -109,7 +104,7 @@ const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => 
       : responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'
         ? responseData['provider']
         : undefined;
-  const fallback = isPlainRecord(responseData['fallback']) ? responseData['fallback'] : undefined;
+  const fallback = isObjectRecord(responseData['fallback']) ? responseData['fallback'] : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),
@@ -183,12 +178,9 @@ export async function executeDatabaseUpdate({
 
   if (updateStrategy === 'many') {
     const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
-    const queryFromPayload =
-      queryPayload['query'] &&
-      typeof queryPayload['query'] === 'object' &&
-      !Array.isArray(queryPayload['query'])
-        ? queryPayload['query']
-        : {};
+    const queryFromPayload = isObjectRecord(queryPayload['query'])
+      ? queryPayload['query']
+      : {};
     const query = isCustomPayloadMode && customFilter ? customFilter : queryFromPayload;
     const hasQuery = query && typeof query === 'object' && Object.keys(query).length > 0;
 

@@ -2,6 +2,8 @@ import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-th
 
 import type React from 'react';
 
+import { isObjectRecord } from '@/shared/utils/object-utils';
+
 export type { ColorSchemeColors };
 
 // ---------------------------------------------------------------------------
@@ -330,8 +332,6 @@ export function getBlockShadowStyles(settings: Record<string, unknown>): React.C
 
 export function getBlockBackgroundStyles(settings: Record<string, unknown>): React.CSSProperties {
   const styles: React.CSSProperties = {};
-  const isRecord = (value: unknown): value is Record<string, unknown> =>
-    Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
   const resolveColorWithOpacity = (color: unknown, opacityPercent: unknown): string => {
     if (typeof color !== 'string') return '';
@@ -349,7 +349,7 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
 
   const background = settings['background'];
   let appliedBackground = false;
-  if (isRecord(background)) {
+  if (isObjectRecord(background)) {
     const type = background['type'];
     if (typeof type === 'string') {
       if (type === 'none') {

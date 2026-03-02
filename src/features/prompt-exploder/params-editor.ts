@@ -52,7 +52,7 @@ const PROMPT_EXPLODER_PARAM_UI_CONTROLS: PromptExploderParamUiControl[] = [
   'tuple2',
 ];
 
-import { isObjectRecord } from '@/shared/utils/object';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type ScanState = {
   inSingle: boolean;

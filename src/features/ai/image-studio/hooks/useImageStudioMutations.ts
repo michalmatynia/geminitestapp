@@ -25,6 +25,7 @@ import {
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 const DELETE_SLOT_TIMEOUT_MS = 120_000;
@@ -571,13 +572,17 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
     } catch (error) {
       cleanup();
       void invalidateImageStudioSlots(queryClient, normalizedProjectId);
-      console.error('[image-studio] delete verification failed', {
-        projectId: normalizedProjectId,
-        slotId: normalizedDeletedSlotId,
-        error,
+      logClientError(error, {
+        context: {
+          source: 'useDeleteStudioSlot',
+          action: 'deleteVerification',
+          projectId: normalizedProjectId,
+          slotId: normalizedDeletedSlotId,
+        },
       });
     }
   };
+
 
   return createDeleteMutationV2<void, string>({
     mutationFn: async (id: string) => {

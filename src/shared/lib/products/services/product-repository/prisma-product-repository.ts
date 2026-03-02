@@ -381,7 +381,13 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     }
 
     if (categories) {
-      // Logic for categories relation if needed
+      await tx.productCategoryAssignment.create({
+        data: {
+          productId: product.id,
+          categoryId: categories.categoryId,
+          assignedAt: categories.assignedAt,
+        },
+      });
     }
 
     if (tags && tags.length > 0) {

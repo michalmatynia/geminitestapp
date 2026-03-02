@@ -5,6 +5,7 @@ import { dbApi, ApiResponse } from '../../../api';
 import { parseJsonSafe } from '../../utils';
 
 import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 interface DbQueryResult {
   items?: unknown[];
@@ -13,9 +14,6 @@ interface DbQueryResult {
   provider?: 'mongodb' | 'prisma';
   fallback?: Record<string, unknown>;
 }
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 export type ExecuteDatabaseQueryInput = {
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
@@ -104,7 +102,7 @@ export async function executeDatabaseQuery({
     };
   }
 
-  const queryResultData = isPlainRecord(queryResult.data)
+  const queryResultData = isObjectRecord(queryResult.data)
     ? queryResult.data
     : ({} as Record<string, unknown>);
   const requestedProvider =
@@ -116,7 +114,7 @@ export async function executeDatabaseQuery({
       : requestedProvider === 'auto'
         ? null
         : requestedProvider;
-  const providerFallback = isPlainRecord(queryResultData['fallback'])
+  const providerFallback = isObjectRecord(queryResultData['fallback'])
     ? queryResultData['fallback']
     : null;
 

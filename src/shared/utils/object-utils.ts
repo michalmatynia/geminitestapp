@@ -1,4 +1,21 @@
 /**
+ * Checks if a value is a plain object.
+ */
+export function isObject(item: unknown): item is Record<string, unknown> {
+  return Boolean(item && typeof item === 'object' && !Array.isArray(item));
+}
+
+/**
+ * Checks if a value is a plain object (alias for isObject).
+ */
+export const isObjectRecord = isObject;
+
+/**
+ * Checks if a value is a plain object (alias for isObject).
+ */
+export const isPlainRecord = isObject;
+
+/**
  * Removes undefined properties from an object (shallow).
  */
 export function removeUndefined<T extends object>(obj: T): T {
@@ -9,13 +26,6 @@ export function removeUndefined<T extends object>(obj: T): T {
     }
   }
   return result;
-}
-
-/**
- * Checks if a value is a plain object.
- */
-export function isObject(item: unknown): item is Record<string, unknown> {
-  return Boolean(item && typeof item === 'object' && !Array.isArray(item));
 }
 
 /**

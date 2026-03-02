@@ -53,7 +53,7 @@ type CaseResolverRelationsWorkspaceProps = {
   focusCaseId?: string | null;
 };
 
-import { isObjectRecord } from '@/shared/utils/object';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const isCaseResolverFile = (value: unknown): value is CaseResolverFile =>
   isObjectRecord(value) &&

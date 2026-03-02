@@ -5,12 +5,11 @@ import { Input, SelectSimple } from '@/shared/ui';
 import { useCompositeFieldContext } from '../CompositeFieldContext';
 import { BG_TYPE_OPTIONS, GRADIENT_DIRECTION_OPTIONS } from '../settings-field-constants';
 import type { SettingsFieldOption } from '@/shared/contracts/cms';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export function BackgroundField(): React.ReactNode {
   const { value, onChange } = useCompositeFieldContext();
-  const isRecord = (input: unknown): input is Record<string, unknown> =>
-    Boolean(input) && typeof input === 'object' && !Array.isArray(input);
-  const bg: Record<string, unknown> = isRecord(value) ? value : { type: 'none' };
+  const bg: Record<string, unknown> = isObjectRecord(value) ? value : { type: 'none' };
   const bgType = typeof bg['type'] === 'string' ? bg['type'] : 'none';
   const update = (key: string, v: unknown): void => {
     onChange({ ...bg, [key]: v });

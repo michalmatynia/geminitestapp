@@ -1,7 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
-import { gunzipSync, gzipSync } from 'zlib';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
@@ -48,6 +47,26 @@ import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
 import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import {
+  decodeSettingValue,
+  encodeSettingValue,
+} from '@/shared/lib/settings/settings-compression';
+import {
+  AI_PATHS_CONFIG_PREFIX,
+  AI_PATHS_KEY_PREFIX,
+  AI_PATHS_PREFIX_REGEX,
+  CASE_RESOLVER_WORKSPACE_KEY,
+  HEAVY_PREFIX_REGEX,
+  applyScopeFilter,
+  isAiPathsSettingKey,
+  isRuntimeOnlyPathConfigPayload,
+  isSettingsTimeoutError,
+  mergeRuntimeOnlyPathConfigWrite,
+  parseCaseResolverWorkspaceMetadata,
+  parseUpdatedAtMsFromPathConfig,
+  withSettingsScopeTimeout,
+} from '@/shared/lib/settings/settings-logic';
+
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 
 type SettingDocument = {
@@ -58,65 +77,13 @@ type SettingDocument = {
 };
 
 const SETTINGS_COLLECTION = 'settings';
-const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
-const AI_PATHS_KEY_PREFIX = 'ai_paths_';
-const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
-const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
-const COMPRESSIBLE_SETTING_KEYS = new Set<string>([CASE_RESOLVER_WORKSPACE_KEY]);
-const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
-const HEAVY_KEYS = new Set<string>([
-  'agent_personas',
-  CASE_RESOLVER_WORKSPACE_KEY,
-  'product_validator_decision_log',
-  'ai_insights_analytics_history',
-  'ai_insights_runtime_analytics_history',
-  'ai_insights_logs_history',
-]);
-const HEAVY_PREFIX_REGEX = new RegExp(
-  `^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`
-);
-const AI_PATHS_PREFIX_REGEX = new RegExp(
-  `^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`
-);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
-const parsePositiveInt = (value: string | undefined, fallback: number): number => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
-};
-const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
-  process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
-  3_000
-);
 const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
   TRADERA_SETTINGS_KEYS.schedulerEnabled,
   TRADERA_SETTINGS_KEYS.schedulerIntervalMs,
 ]);
-const isSlowSettingsScope = (scope: SettingsScope): boolean => scope === 'all' || scope === 'heavy';
-const isSettingsTimeoutError = (error: unknown): error is Error =>
-  error instanceof Error &&
-  error.message.includes('[settings]') &&
-  error.message.includes('timed out');
-
-const withSettingsScopeTimeout = async <T>(
-  scope: SettingsScope,
-  label: string,
-  promise: Promise<T>
-): Promise<T> => {
-  if (!isSlowSettingsScope(scope)) return await promise;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error(`[settings] ${label} timed out after ${SETTINGS_SLOW_SCOPE_TIMEOUT_MS}ms`));
-    }, SETTINGS_SLOW_SCOPE_TIMEOUT_MS);
-  });
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-};
 
 const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
   if (!TRADERA_RELIST_SCHEDULER_SETTING_KEYS.has(key)) return;
@@ -153,46 +120,6 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   }
   await settingsIndexesEnsured;
 };
-const isHeavySettingKey = (key: string): boolean =>
-  HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
-const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
-const shouldCompressSettingValue = (key: string): boolean => COMPRESSIBLE_SETTING_KEYS.has(key);
-const decodeSettingValue = (key: string, value: string): string => {
-  if (!shouldCompressSettingValue(key)) return value;
-  if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;
-  try {
-    const encoded = value.slice(COMPRESSED_SETTING_PREFIX.length);
-    const decompressedUnknown: unknown = gunzipSync(Buffer.from(encoded, 'base64'));
-    if (!Buffer.isBuffer(decompressedUnknown)) return value;
-    return decompressedUnknown.toString('utf8');
-  } catch (error) {
-    void ErrorSystem.logWarning('[settings] Failed to decompress setting value.', {
-      service: 'api/settings',
-      key,
-      error,
-    });
-    return value;
-  }
-};
-const encodeSettingValue = (key: string, value: string): string => {
-  if (!shouldCompressSettingValue(key)) return value;
-  if (value.startsWith(COMPRESSED_SETTING_PREFIX) && decodeSettingValue(key, value) !== value) {
-    return value;
-  }
-  try {
-    const compressedUnknown: unknown = gzipSync(Buffer.from(value, 'utf8'));
-    if (!Buffer.isBuffer(compressedUnknown)) return value;
-    const encoded = `${COMPRESSED_SETTING_PREFIX}${compressedUnknown.toString('base64')}`;
-    return encoded.length < value.length ? encoded : value;
-  } catch (error) {
-    void ErrorSystem.logWarning('[settings] Failed to compress setting value.', {
-      service: 'api/settings',
-      key,
-      error,
-    });
-    return value;
-  }
-};
 
 const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
   provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
@@ -219,64 +146,6 @@ const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<Setting
     if (isPrismaMissingTableError(error)) return [];
     throw error;
   }
-};
-
-const parseUpdatedAtMsFromPathConfig = (raw: string): number | null => {
-  try {
-    const parsed = JSON.parse(raw) as { updatedAt?: unknown };
-    if (typeof parsed?.updatedAt !== 'string') return null;
-    const ms = Date.parse(parsed.updatedAt);
-    return Number.isFinite(ms) ? ms : null;
-  } catch {
-    return null;
-  }
-};
-
-const parsePathConfigObject = (raw: string): Record<string, unknown> | null => {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const mergeRuntimeOnlyPathConfigWrite = (
-  currentRaw: string,
-  incomingRaw: string
-): string | null => {
-  const current = parsePathConfigObject(currentRaw);
-  const incoming = parsePathConfigObject(incomingRaw);
-  if (!current || !incoming) return null;
-
-  const merged: Record<string, unknown> = {
-    ...current,
-    ...(Object.prototype.hasOwnProperty.call(incoming, 'runtimeState')
-      ? { runtimeState: incoming['runtimeState'] }
-      : {}),
-    ...(Object.prototype.hasOwnProperty.call(incoming, 'lastRunAt')
-      ? { lastRunAt: incoming['lastRunAt'] }
-      : {}),
-    ...(Object.prototype.hasOwnProperty.call(incoming, 'updatedAt')
-      ? { updatedAt: incoming['updatedAt'] }
-      : {}),
-  };
-  return JSON.stringify(merged);
-};
-
-const isRuntimeOnlyPathConfigPayload = (raw: string): boolean => {
-  const parsed = parsePathConfigObject(raw);
-  if (!parsed) return false;
-  const hasRuntimeFields =
-    Object.prototype.hasOwnProperty.call(parsed, 'runtimeState') ||
-    Object.prototype.hasOwnProperty.call(parsed, 'lastRunAt') ||
-    Object.prototype.hasOwnProperty.call(parsed, 'updatedAt');
-  if (!hasRuntimeFields) return false;
-  const hasGraphFields =
-    Object.prototype.hasOwnProperty.call(parsed, 'nodes') ||
-    Object.prototype.hasOwnProperty.call(parsed, 'edges');
-  return !hasGraphFields;
 };
 
 const readCurrentSettingValue = async (
@@ -312,96 +181,30 @@ const readCurrentSettingValue = async (
   return provider === 'mongodb' ? readMongo() : readPrisma();
 };
 
-const WORKSPACE_REVISION_PATTERN = /"workspaceRevision"\s*:\s*(\d+)/;
-const WORKSPACE_LAST_MUTATION_PATTERN = /"lastMutationId"\s*:\s*(null|"([^"\\]|\\.)*")/;
-
-const parseJsonStringLiteral = (raw: string): string | null => {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    return typeof parsed === 'string' ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const parseCaseResolverWorkspaceMetadata = (
-  raw: string | null
-): {
-  revision: number;
-  lastMutationId: string | null;
-} => {
-  if (!raw) {
-    return {
-      revision: 0,
-      lastMutationId: null,
-    };
-  }
-  const revisionMatch = WORKSPACE_REVISION_PATTERN.exec(raw);
-  const mutationMatch = WORKSPACE_LAST_MUTATION_PATTERN.exec(raw);
-  if (revisionMatch || mutationMatch) {
-    const revisionCandidate = revisionMatch?.[1] ? Number.parseInt(revisionMatch[1], 10) : 0;
-    const revision =
-      Number.isFinite(revisionCandidate) && revisionCandidate > 0
-        ? Math.floor(revisionCandidate)
-        : 0;
-    const mutationLiteral = mutationMatch?.[1] ?? 'null';
-    const lastMutationId =
-      mutationLiteral === 'null' ? null : parseJsonStringLiteral(mutationLiteral)?.trim() || null;
-    return {
-      revision,
-      lastMutationId,
-    };
-  }
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {
-        revision: 0,
-        lastMutationId: null,
-      };
-    }
-    const revisionRaw = parsed['workspaceRevision'];
-    const revision =
-      typeof revisionRaw === 'number' && Number.isFinite(revisionRaw) && revisionRaw > 0
-        ? Math.floor(revisionRaw)
-        : 0;
-    const mutationRaw = parsed['lastMutationId'];
-    const lastMutationId =
-      typeof mutationRaw === 'string' && mutationRaw.trim().length > 0 ? mutationRaw.trim() : null;
-    return {
-      revision,
-      lastMutationId,
-    };
-  } catch {
-    return {
-      revision: 0,
-      lastMutationId: null,
-    };
-  }
-};
-
 const normalizeScope = (scope?: string | null): SettingsScope => {
   if (scope === 'heavy' || scope === 'light' || scope === 'all') return scope;
   return DEFAULT_SCOPE;
-};
-
-const applyScopeFilter = (settings: SettingRecord[], scope: SettingsScope): SettingRecord[] => {
-  const withoutAiPaths = settings.filter(
-    (setting: SettingRecord) => !isAiPathsSettingKey(setting.key)
-  );
-  if (scope === 'all') return withoutAiPaths;
-  if (scope === 'heavy') {
-    return withoutAiPaths.filter((setting: SettingRecord) => isHeavySettingKey(setting.key));
-  }
-  return withoutAiPaths.filter((setting: SettingRecord) => !isHeavySettingKey(setting.key));
 };
 
 const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> => {
   const aiPathsExclusion = { key: { startsWith: AI_PATHS_KEY_PREFIX } };
   if (scope === 'all') return { NOT: aiPathsExclusion };
   const heavyOr = [
-    ...HEAVY_PREFIXES.map((prefix) => ({ key: { startsWith: prefix } })),
-    { key: { in: Array.from(HEAVY_KEYS) } },
+    { key: { startsWith: 'image_studio_' } },
+    { key: { startsWith: 'base_import_' } },
+    { key: { startsWith: 'base_export_' } },
+    {
+      key: {
+        in: [
+          'agent_personas',
+          'case_resolver_workspace_v1',
+          'product_validator_decision_log',
+          'ai_insights_analytics_history',
+          'ai_insights_runtime_analytics_history',
+          'ai_insights_logs_history',
+        ],
+      },
+    },
   ];
   if (scope === 'heavy') {
     return { AND: [{ OR: heavyOr }, { NOT: aiPathsExclusion }] };
@@ -421,8 +224,30 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
   if (scope === 'all') return aiPathsFilter;
   const heavyOr = [
     { key: { $regex: HEAVY_PREFIX_REGEX } },
-    { key: { $in: Array.from(HEAVY_KEYS) } },
-    { _id: { $in: Array.from(HEAVY_KEYS) } },
+    {
+      key: {
+        $in: [
+          'agent_personas',
+          'case_resolver_workspace_v1',
+          'product_validator_decision_log',
+          'ai_insights_analytics_history',
+          'ai_insights_runtime_analytics_history',
+          'ai_insights_logs_history',
+        ],
+      },
+    },
+    {
+      _id: {
+        $in: [
+          'agent_personas',
+          'case_resolver_workspace_v1',
+          'product_validator_decision_log',
+          'ai_insights_analytics_history',
+          'ai_insights_runtime_analytics_history',
+          'ai_insights_logs_history',
+        ],
+      },
+    },
     { _id: { $type: 'string', $regex: HEAVY_PREFIX_REGEX } },
   ];
   if (scope === 'heavy') {
@@ -717,36 +542,41 @@ export async function GET_handler(
   };
   if (forceFresh) {
     const timings: Record<string, number | null | undefined> = {};
-    let data: SettingRecord[];
     try {
-      data = await withSettingsScopeTimeout(
+      const data = await withSettingsScopeTimeout(
         scope,
         'fresh fetch',
         fetchAndCacheSettings(scope, timings)
       );
+      if (shouldLogTiming()) {
+        await ErrorSystem.logInfo('[settings] cache bypass', {
+          service: 'api/settings',
+          scope,
+          status: 'fresh',
+        });
+      }
+      const response = NextResponse.json(data, {
+        headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'fresh' },
+      });
+      await attachProviderHeader(response);
+      attachTimingHeaders(response, {
+        total: performance.now() - requestStart,
+        cache: 0,
+        ...timings,
+      });
+      return response;
     } catch (error) {
       if (isSettingsTimeoutError(error)) {
         return await buildTimeoutFallbackResponse(error.message);
       }
+      void ErrorSystem.captureException(error, {
+        service: 'api/settings',
+        action: 'GET_handler',
+        scope,
+        forceFresh: true,
+      });
       throw error;
     }
-    if (shouldLogTiming()) {
-      await ErrorSystem.logInfo('[settings] cache bypass', {
-        service: 'api/settings',
-        scope,
-        status: 'fresh',
-      });
-    }
-    const response = NextResponse.json(data, {
-      headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'fresh' },
-    });
-    await attachProviderHeader(response);
-    attachTimingHeaders(response, {
-      total: performance.now() - requestStart,
-      cache: 0,
-      ...timings,
-    });
-    return response;
   }
   const cached = getCachedSettings(scope);
   if (cached) {
@@ -832,6 +662,12 @@ export async function GET_handler(
     if (isSettingsTimeoutError(error)) {
       return await buildTimeoutFallbackResponse(error.message);
     }
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings',
+      action: 'GET_handler',
+      scope,
+      status: 'miss',
+    });
     throw error;
   }
   if (shouldLogTiming()) {

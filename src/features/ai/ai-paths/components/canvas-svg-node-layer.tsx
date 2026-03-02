@@ -13,7 +13,8 @@ export function CanvasSvgNodeLayer({
 }: {
   cullPadding?: number;
 }): React.JSX.Element {
-  const { nodes, view, viewportSize, selectedNodeIdSet } = useCanvasBoardUI();
+  const ui = useCanvasBoardUI();
+  const { nodes, view, viewportSize, selectedNodeIdSet } = ui;
 
   const worldViewport = React.useMemo(() => {
     if (!viewportSize) return null;
@@ -57,7 +58,7 @@ export function CanvasSvgNodeLayer({
     <>
       {renderNodes.map(
         (node: AiNode): React.JSX.Element => (
-          <CanvasSvgNode key={node.id} node={node} />
+          <CanvasSvgNode key={node.id} node={node} ui={ui} />
         )
       )}
     </>

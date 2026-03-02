@@ -9,6 +9,7 @@ import {
 } from './integration-database-write-guardrails';
 import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type HandleDatabaseUpdateOperationInput = {
   node: NodeHandlerContext['node'];
@@ -29,15 +30,12 @@ export type HandleDatabaseUpdateOperationInput = {
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
 };
 
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const resolveCustomContentEnValue = (customUpdateDoc: unknown): string | undefined => {
-  if (!isPlainRecord(customUpdateDoc)) return undefined;
+  if (!isObjectRecord(customUpdateDoc)) return undefined;
   const directValue = customUpdateDoc['content_en'];
   if (typeof directValue === 'string') return directValue;
   const setDoc = customUpdateDoc['$set'];
-  if (!isPlainRecord(setDoc)) return undefined;
+  if (!isObjectRecord(setDoc)) return undefined;
   const setValue = setDoc['content_en'];
   return typeof setValue === 'string' ? setValue : undefined;
 };
@@ -81,9 +79,6 @@ export async function handleDatabaseUpdateOperation({
   );
 
   if (updatePayloadMode === 'mapping') {
-    if (process.env['NODE_ENV'] === 'test') {
-      console.log(`[db-update] Entering mapping block for ${node.id}`);
-    }
     const parameterTargetPath = dbConfig.parameterInferenceGuard?.targetPath ?? 'parameters';
     const mappingResult = resolveDatabaseUpdateMappings({
       dbConfig,
@@ -122,9 +117,6 @@ export async function handleDatabaseUpdateOperation({
     });
 
     if (executionResult.skipped) {
-      if (process.env['NODE_ENV'] === 'test') {
-        console.log(`[db-update] Mapping update skipped for ${node.id}`);
-      }
       return {
         ...prevOutputs,
         result: null,
@@ -135,10 +127,6 @@ export async function handleDatabaseUpdateOperation({
         debugPayload,
         aiPrompt,
       };
-    }
-
-    if (process.env['NODE_ENV'] === 'test') {
-      console.log(`[db-update] Mapping update success for ${node.id}`);
     }
 
     return {
@@ -160,9 +148,6 @@ export async function handleDatabaseUpdateOperation({
 
   const updateTemplate = dbConfig.updateTemplate?.trim() ?? '';
   if (!updateTemplate) {
-    if (process.env['NODE_ENV'] === 'test') {
-      console.log(`[db-update] No explicit update document provided for ${node.id}`);
-    }
     const error = 'No explicit update document provided.';
     reportAiPathsError(
       new Error(error),
@@ -248,7 +233,7 @@ export async function handleDatabaseUpdateOperation({
   }
 
   const renderedFilterPayload = buildDbQueryPayload(templateInputs, queryConfig);
-  const customFilter = isPlainRecord(renderedFilterPayload.query)
+  const customFilter = isObjectRecord(renderedFilterPayload.query)
     ? renderedFilterPayload.query
     : {};
   if (Object.keys(customFilter).length === 0) {

@@ -20,9 +20,7 @@ import {
 } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 import type { SchemaResponse } from '../../../api/client';
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const WRITE_ACTION_CATEGORIES = new Set<string>(['create', 'update', 'delete']);
 const WRITE_ACTIONS = new Set<string>([
@@ -73,7 +71,7 @@ const isWriteResultOperation = (config: DatabaseConfig, result: RuntimePortValue
   if (isWriteDatabaseOperation(config)) return true;
 
   const debugPayload = result['debugPayload'];
-  if (isPlainRecord(debugPayload)) {
+  if (isObjectRecord(debugPayload)) {
     const actionCategory = debugPayload['actionCategory'];
     if (
       typeof actionCategory === 'string' &&
@@ -88,7 +86,7 @@ const isWriteResultOperation = (config: DatabaseConfig, result: RuntimePortValue
   }
 
   const bundle = result['bundle'];
-  if (isPlainRecord(bundle)) {
+  if (isObjectRecord(bundle)) {
     const action = bundle['action'];
     if (typeof action === 'string' && WRITE_ACTIONS.has(action.toLowerCase())) {
       return true;
@@ -113,14 +111,14 @@ const extractDatabaseError = (result: RuntimePortValues): string | null => {
     return directError.trim();
   }
   const bundle = result['bundle'];
-  if (isPlainRecord(bundle)) {
+  if (isObjectRecord(bundle)) {
     const bundleError = bundle['error'];
     if (typeof bundleError === 'string' && bundleError.trim().length > 0) {
       return bundleError.trim();
     }
   }
   const resultPayload = result['result'];
-  if (isPlainRecord(resultPayload)) {
+  if (isObjectRecord(resultPayload)) {
     const payloadError = resultPayload['error'];
     if (typeof payloadError === 'string' && payloadError.trim().length > 0) {
       return payloadError.trim();
@@ -131,11 +129,11 @@ const extractDatabaseError = (result: RuntimePortValues): string | null => {
 
 const extractWriteOutcome = (result: RuntimePortValues): DatabaseWriteOutcome | null => {
   const direct = result['writeOutcome'];
-  if (isPlainRecord(direct)) {
+  if (isObjectRecord(direct)) {
     return direct as DatabaseWriteOutcome;
   }
   const bundle = result['bundle'];
-  if (isPlainRecord(bundle) && isPlainRecord(bundle['writeOutcome'])) {
+  if (isObjectRecord(bundle) && isObjectRecord(bundle['writeOutcome'])) {
     return bundle['writeOutcome'] as DatabaseWriteOutcome;
   }
   return null;
@@ -143,14 +141,14 @@ const extractWriteOutcome = (result: RuntimePortValues): DatabaseWriteOutcome | 
 
 const extractGuardrailSeverity = (result: RuntimePortValues): 'warning' | 'error' | null => {
   const directMeta = result['guardrailMeta'];
-  if (isPlainRecord(directMeta)) {
+  if (isObjectRecord(directMeta)) {
     const severity = directMeta['severity'];
     if (severity === 'warning' || severity === 'error') {
       return severity;
     }
   }
   const bundle = result['bundle'];
-  if (isPlainRecord(bundle) && isPlainRecord(bundle['guardrailMeta'])) {
+  if (isObjectRecord(bundle) && isObjectRecord(bundle['guardrailMeta'])) {
     const severity = bundle['guardrailMeta']['severity'];
     if (severity === 'warning' || severity === 'error') {
       return severity;

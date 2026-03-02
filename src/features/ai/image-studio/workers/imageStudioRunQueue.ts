@@ -3,8 +3,12 @@ import 'server-only';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
   executeImageStudioRun,
-  type ImageStudioRunExecutionMeta,
 } from '@/features/ai/image-studio/server/run-executor';
+import {
+  type ImageStudioRunExecutionMeta,
+  type ImageStudioRunDispatchMode,
+  type ImageStudioCenterExecutionMeta,
+} from '@/shared/contracts/image-studio';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
   getImageStudioRunById,
@@ -27,8 +31,8 @@ import {
 } from '@/features/ai/image-studio/generation-cost';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 export type { ImageStudioRunDispatchMode };
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
@@ -45,9 +49,6 @@ type GenerationSourceContext = {
   primarySourceSlotName: string;
   primarySourceSlotFolderPath: string;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const trimString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -135,8 +136,8 @@ const collectGenerationSourceContext = async (
 
   const baseAssetPath = normalizeAssetPath(run.request.asset?.filepath) ?? '';
   const referenceAssetPaths = (run.request.referenceAssets ?? [])
-    .map((asset) => normalizeAssetPath(asset.filepath))
-    .filter((value): value is string => Boolean(value));
+    .map((asset: { filepath: string }) => normalizeAssetPath(asset.filepath))
+    .filter((value: string | null): value is string => Boolean(value));
 
   const needsPathFallback =
     sourceSlotIds.length === 0 || (baseSourceId !== null && !sourceSlotsById.has(baseSourceId));
@@ -162,7 +163,7 @@ const collectGenerationSourceContext = async (
       }
     }
 
-    referenceAssetPaths.forEach((referencePath) => {
+    referenceAssetPaths.forEach((referencePath: string) => {
       const sourceId = slotIdByPath.get(referencePath) ?? null;
       if (!sourceId) return;
       pushSourceId(sourceId);
@@ -174,7 +175,6 @@ const collectGenerationSourceContext = async (
       }
     });
   }
-
   const primarySourceSlotId =
     (baseSourceId && sourceSlotIds.includes(baseSourceId) ? baseSourceId : null) ??
     (baseAssetPath
@@ -212,7 +212,7 @@ const collectGenerationSourceContext = async (
 };
 
 const resolveGenerationModel = (run: ImageStudioRunRecord): string | null => {
-  if (!isRecord(run.request.studioSettings)) return null;
+  if (!isObjectRecord(run.request.studioSettings)) return null;
   const parsed = parseImageStudioSettings(JSON.stringify(run.request.studioSettings));
   const model = parsed.targetAi.openai.model?.trim();
   return model ? model : null;
@@ -238,7 +238,7 @@ const createRunOutputSlotMetadata = (params: {
     )
     : params.sourceContext.sourceSlotIds;
   const centerMeta =
-    isCenterOperation && isRecord(params.executionMeta) ? params.executionMeta : null;
+    isCenterOperation && isObjectRecord(params.executionMeta) ? params.executionMeta : null;
 
   return {
     role: 'generation',
@@ -265,7 +265,7 @@ const createRunOutputSlotMetadata = (params: {
       tags: params.output.tags,
     },
     generationRequest: toJsonSafe(params.run.request),
-    ...(isRecord(params.run.request.studioSettings)
+    ...(isObjectRecord(params.run.request.studioSettings)
       ? { generationSettings: toJsonSafe(params.run.request.studioSettings) }
       : {}),
     ...(!isCenterOperation && params.generationCost

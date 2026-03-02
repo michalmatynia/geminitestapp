@@ -18,6 +18,7 @@ import {
 } from '@/shared/contracts/playwright';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type {
   Browser,
@@ -36,9 +37,6 @@ const getPlaywright = (): typeof import('playwright') => {
   const pkgName = 'play' + 'wright';
   return requireFn(pkgName) as typeof import('playwright');
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const safeStringify = (value: unknown): string => {
   if (typeof value === 'string') return value;
@@ -211,10 +209,10 @@ const resolvePersonaSettings = async (
   const parsed = parseJsonSetting<unknown>(raw, null);
   if (!Array.isArray(parsed)) return { ...defaultPlaywrightSettings };
   const persona = parsed.find((entry: unknown): entry is PlaywrightPersonaDto => {
-    if (!isRecord(entry)) return false;
+    if (!isObjectRecord(entry)) return false;
     return entry['id'] === personaId;
   });
-  if (!persona || !isRecord(persona.settings)) {
+  if (!persona || !isObjectRecord(persona.settings)) {
     return { ...defaultPlaywrightSettings };
   }
   return {
@@ -682,7 +680,7 @@ export const readPlaywrightNodeRun = async (
   try {
     const raw = await fs.readFile(statePath, 'utf8');
     const parsed = JSON.parse(raw) as unknown;
-    if (!isRecord(parsed)) return null;
+    if (!isObjectRecord(parsed)) return null;
     if (parsed['runId'] !== runId) return null;
     return {
       ...(parsed as PlaywrightNodeRunRecord),

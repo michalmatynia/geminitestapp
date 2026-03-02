@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import {
+  getBrainAssignmentForFeature,
+  getBrainAssignmentForCapability,
+} from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -18,6 +21,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
   getBrainAssignmentForFeature: vi.fn(),
+  getBrainAssignmentForCapability: vi.fn(),
 }));
 
 vi.mock('@/features/ai/insights/generator', () => ({
@@ -71,6 +75,7 @@ describe('ai-insights-processor tick', () => {
     vi.mocked(getAiInsightsMeta).mockResolvedValue(null);
     vi.mocked(listSystemLogs).mockResolvedValue({ logs: [] } as any);
     vi.mocked(getBrainAssignmentForFeature).mockResolvedValue(enabledAssignment as any);
+    vi.mocked(getBrainAssignmentForCapability).mockResolvedValue(enabledAssignment as any);
   });
 
   it('does not create a run when all schedules are disabled', async () => {

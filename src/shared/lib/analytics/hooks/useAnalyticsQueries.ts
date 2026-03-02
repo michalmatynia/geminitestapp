@@ -1,7 +1,5 @@
 'use client';
 
- 
-
 import { useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';

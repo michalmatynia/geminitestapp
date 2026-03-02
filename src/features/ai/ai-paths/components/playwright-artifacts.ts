@@ -1,8 +1,6 @@
 import type { AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
 import type { PlaywrightArtifactLink } from '@/shared/contracts/playwright';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const normalizeArtifactUrlFromPath = (relativePath: string): string | null => {
   const normalized = relativePath.trim().replace(/^\/+/, '');
@@ -17,12 +15,12 @@ const normalizeArtifactUrlFromPath = (relativePath: string): string | null => {
 };
 
 const readArtifactsArray = (value: unknown): Array<Record<string, unknown>> =>
-  Array.isArray(value) ? value.filter(isRecord) : [];
+  Array.isArray(value) ? value.filter(isObjectRecord) : [];
 
 const getArtifactCandidates = (
   outputs: Record<string, unknown>
 ): Array<Record<string, unknown>> => {
-  const fromBundle = isRecord(outputs['bundle'])
+  const fromBundle = isObjectRecord(outputs['bundle'])
     ? readArtifactsArray(outputs['bundle']['artifacts'])
     : [];
   const fromTopLevel = readArtifactsArray(outputs['artifacts']);
@@ -32,7 +30,7 @@ const getArtifactCandidates = (
 export const extractPlaywrightArtifactsFromNode = (
   node: AiPathRunNodeRecord
 ): PlaywrightArtifactLink[] => {
-  if (!isRecord(node.outputs)) return [];
+  if (!isObjectRecord(node.outputs)) return [];
   const outputs = node.outputs;
   const candidates = getArtifactCandidates(outputs);
   return candidates.flatMap((artifact, index) => {

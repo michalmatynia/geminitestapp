@@ -5,6 +5,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type PortBucket = 'inputs' | 'outputs' | 'nodeOutputs';
 
@@ -22,17 +23,14 @@ export type RuntimePortRepairResult = {
   nodesTouched: string[];
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const isSerializablePortValue = (value: unknown): boolean =>
   value !== undefined && typeof value !== 'function' && typeof value !== 'symbol';
 
 const toPortMap = (value: unknown): Record<string, RuntimePortValues> =>
-  isRecord(value) ? ({ ...value } as Record<string, RuntimePortValues>) : {};
+  isObjectRecord(value) ? ({ ...value } as Record<string, RuntimePortValues>) : {};
 
 const toRuntimeState = (value: unknown): RuntimeState => {
-  if (!isRecord(value)) {
+  if (!isObjectRecord(value)) {
     return { inputs: {}, outputs: {}, nodeOutputs: {} } as RuntimeState;
   }
   const parsed = value as RuntimeState;
@@ -48,12 +46,12 @@ const readLatestHistoryEntry = (value: unknown): RuntimeHistoryEntry | null => {
   if (!Array.isArray(value) || value.length === 0) return null;
   const entries = value as unknown[];
   const latest = entries[entries.length - 1];
-  if (!isRecord(latest)) return null;
+  if (!isObjectRecord(latest)) return null;
   return latest as RuntimeHistoryEntry;
 };
 
 const readPortRecord = (value: unknown): Record<string, unknown> | null =>
-  isRecord(value) ? value : null;
+  isObjectRecord(value) ? value : null;
 
 const clonePortValue = (value: unknown): unknown => {
   if (value === null) return null;
@@ -82,7 +80,7 @@ export const repairRuntimeStatePorts = (args: {
     const byNode = nextState[bucket] ?? {};
     nextState[bucket] = byNode;
     const currentPorts = byNode[nodeId];
-    if (isRecord(currentPorts)) return currentPorts;
+    if (isObjectRecord(currentPorts)) return currentPorts;
     const initialized: Record<string, unknown> = {};
     byNode[nodeId] = initialized;
     return initialized;
@@ -120,7 +118,7 @@ export const repairRuntimeStatePorts = (args: {
     counts.nodeOutputs += addMissingPorts('nodeOutputs', nodeId, nodeOutputs);
   });
 
-  if (isRecord(current.history)) {
+  if (isObjectRecord(current.history)) {
     Object.entries(current.history).forEach(([nodeId, historyEntries]) => {
       const latest = readLatestHistoryEntry(historyEntries);
       if (!latest) return;

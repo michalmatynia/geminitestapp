@@ -189,6 +189,11 @@ export const GET_handler = async (
       });
       return response;
     }
+    const { ErrorSystem } = await import('@/shared/utils/observability/error-system');
+    void ErrorSystem.captureException(error, {
+      service: 'api/settings/lite',
+      action: 'GET_handler',
+    });
     throw error;
   }
 };

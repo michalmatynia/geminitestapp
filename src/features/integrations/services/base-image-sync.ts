@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
 import 'server-only';
 
 import { getProductListingRepository } from '@/features/integrations/server';
@@ -8,12 +7,19 @@ import { extractBaseImageUrls } from '@/features/integrations/services/imports/b
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
+import type {
+  ProductListingExportEvent,
+  ProductListingRepository,
+  ProductListing,
+} from '@/shared/contracts/integrations';
+import type { ProductRepository, ProductRecord } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import {
+  BASE_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'];
 const LISTINGS_COLLECTION = 'product_listings';
 
 type BaseListingSyncInfo = {
@@ -45,7 +51,7 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
     const db = await getMongoDb();
     const integrations = await db
       .collection<{ _id: string; slug: string }>('integrations')
-      .find({ slug: { $in: BASE_INTEGRATION_SLUGS } }, { projection: { _id: 1 } })
+      .find({ slug: { $in: Array.from(BASE_INTEGRATION_SLUGS) } }, { projection: { _id: 1 } })
       .toArray();
     const integrationIds = integrations.map((entry: { _id: string }) => entry._id);
     if (!integrationIds.length) return [];
@@ -64,7 +70,7 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
   }
 
   const listings = await prisma.productListing.findMany({
-    where: { integration: { slug: { in: BASE_INTEGRATION_SLUGS } } },
+    where: { integration: { slug: { in: Array.from(BASE_INTEGRATION_SLUGS) } } },
     select: {
       id: true,
       productId: true,
@@ -91,14 +97,14 @@ export const syncBaseImagesForListing = async (
   inventoryIdOverride?: string | null
 ): Promise<{ productId: string; listingId: string; count: number; added: number }> => {
   try {
-    const productRepo: any = await getProductRepository();
-    const product: any = await productRepo.getProductById(productId);
+    const productRepo: ProductRepository = await getProductRepository();
+    const product: ProductRecord | null = await productRepo.getProductById(productId);
     if (!product) {
       throw notFoundError('Product not found', { productId });
     }
 
-    const listingRepo: any = await getProductListingRepository();
-    const listing: any = await listingRepo.getListingById(listingId);
+    const listingRepo: ProductListingRepository = await getProductListingRepository();
+    const listing: ProductListing | null = await listingRepo.getListingById(listingId);
 
     if (listing?.productId !== productId) {
       throw notFoundError('Listing not found', { listingId, productId });
@@ -163,7 +169,7 @@ export const syncBaseImagesForListing = async (
       throw badRequestError('No image URLs found in Base.com product data.');
     }
 
-    const existingLinks = Array.isArray(product.imageLinks) ? (product.imageLinks as string[]) : [];
+    const existingLinks = Array.isArray(product.imageLinks) ? (product.imageLinks) : [];
     const nextLinks = mergeImageLinks(existingLinks, urls);
     await productRepo.updateProduct(productId, { imageLinks: nextLinks });
 

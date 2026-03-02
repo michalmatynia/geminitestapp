@@ -288,11 +288,11 @@ export async function updateImageStudioRun(
     $set: patch,
   };
   if (nextHistoryEvents.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     updateDocument.$push = {
       historyEvents: {
         $each: nextHistoryEvents,
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   }
 
@@ -365,11 +365,11 @@ export async function removeImageStudioRunOutputs(
   if (runId) query['_id'] = runId;
 
   const result = await collection.updateMany(query, {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     $pull: {
       outputs: {
         $or: outputSelectors,
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     $set: {
       updatedAt: now,

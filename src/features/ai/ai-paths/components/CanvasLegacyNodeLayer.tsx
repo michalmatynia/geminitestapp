@@ -13,6 +13,7 @@ import {
   BLOCKER_PROCESSING_STATUSES,
   formatRuntimeStatusLabel,
   runtimeStatusBadgeClassName,
+  runtimeDurationBadgeClassName,
   resolveNodeDiagnosticsBadgeStyle,
   renderNodeDiagnosticsTooltipContent,
   type CanvasNode,
@@ -181,9 +182,12 @@ export function CanvasLegacyNodeLayer({
                       {runtimeNodeStatusLabel}
                     </Badge>
                     {nodeDurations[node.id] != null && (
-                      <span className='text-[9px] text-gray-400'>
+                      <Badge
+                        variant='outline'
+                        className={`h-auto border px-2 py-0.5 text-[9px] font-mono ${runtimeDurationBadgeClassName(nodeDurations[node.id] ?? null)}`}
+                      >
                         {formatDurationMs(nodeDurations[node.id] ?? null)}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 )}
@@ -268,7 +272,7 @@ export function CanvasLegacyNodeLayer({
                 className='mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
                 style={{ backgroundColor: noteColor }}
               >
-                <div className='whitespace-pre-wrap break-words'>{noteText}</div>
+                <div className='whitespace-pre-wrap wrap-break-word'>{noteText}</div>
               </div>
             ) : null}
           </div>

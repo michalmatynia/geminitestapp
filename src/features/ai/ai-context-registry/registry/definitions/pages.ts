@@ -1,5 +1,8 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
+const SOURCE_REF =
+  'src/features/ai/ai-context-registry/registry/definitions/pages.ts';
+
 export const pageNodes: ContextNode[] = [
   {
     id: 'page:products',
@@ -9,12 +12,19 @@ export const pageNodes: ContextNode[] = [
       'Displays the full product catalog with filtering, search, and pagination. ' +
       'Allows bulk operations and export.',
     tags: ['products', 'catalog', 'listing', 'admin'],
-    relatedIds: [
-      'collection:products',
-      'component:product-filters',
-      'action:export-products',
+    relationships: [
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'component:product-filters' },
+      { type: 'uses', targetId: 'action:export-products' },
     ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'public',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'page:database-engine',
@@ -24,8 +34,19 @@ export const pageNodes: ContextNode[] = [
       'Admin interface for querying MongoDB and relational DBs, running ad-hoc queries, ' +
       'previewing collection schemas, and managing indexes.',
     tags: ['database', 'admin', 'mongo', 'sql', 'developer'],
-    relatedIds: ['collection:orders', 'collection:products', 'action:run-db-query'],
+    relationships: [
+      { type: 'reads', targetId: 'collection:orders' },
+      { type: 'reads', targetId: 'collection:products' },
+      { type: 'uses', targetId: 'action:run-db-query' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'page:ai-paths',
@@ -35,7 +56,17 @@ export const pageNodes: ContextNode[] = [
       'Visual drag-and-drop canvas for composing AI automation graphs. ' +
       'Supports node/edge management, run history, and path configuration.',
     tags: ['ai', 'automation', 'canvas', 'paths', 'admin'],
-    relatedIds: ['action:run-ai-path', 'collection:ai-path-runs'],
+    relationships: [
+      { type: 'uses', targetId: 'action:run-ai-path' },
+      { type: 'reads', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'none',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
 ];

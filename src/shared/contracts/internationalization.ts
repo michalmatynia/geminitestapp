@@ -6,6 +6,14 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  * Internationalization DTOs
  */
 
+export const countryCodes = ['PL', 'DE', 'GB', 'SE'] as const;
+export const currencyCodes = ['USD', 'EUR', 'PLN', 'GBP', 'SEK'] as const;
+export const languageCodes = ['EN', 'PL', 'DE', 'SV'] as const;
+
+export type CountryCode = (typeof countryCodes)[number];
+export type CurrencyCode = (typeof currencyCodes)[number];
+export type LanguageCode = (typeof languageCodes)[number];
+
 export const languageSchema = namedDtoSchema.extend({
   code: z.string(),
   nativeName: z.string(),

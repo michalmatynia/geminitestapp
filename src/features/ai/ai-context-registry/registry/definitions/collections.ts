@@ -1,5 +1,8 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
+const SOURCE_REF =
+  'src/features/ai/ai-context-registry/registry/definitions/collections.ts';
+
 export const collectionNodes: ContextNode[] = [
   {
     id: 'collection:products',
@@ -9,7 +12,11 @@ export const collectionNodes: ContextNode[] = [
       'MongoDB collection storing product records. Each product has a SKU, ' +
       'name, description, price, status, images, and taxonomy tags.',
     tags: ['products', 'mongo', 'database', 'catalog'],
-    schema: {
+    relationships: [
+      { type: 'related_to', targetId: 'collection:orders' },
+    ],
+    jsonSchema2020: {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
       properties: {
         _id: { type: 'string' },
@@ -19,11 +26,17 @@ export const collectionNodes: ContextNode[] = [
         status: { type: 'string', enum: ['active', 'draft', 'archived'] },
         tags: { type: 'array', items: { type: 'string' } },
         createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time', nullable: true },
+        updatedAt: { type: 'string', format: 'date-time' },
       },
     },
-    relatedIds: ['page:products', 'collection:orders'],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'collection:orders',
@@ -33,7 +46,11 @@ export const collectionNodes: ContextNode[] = [
       'Collection of customer orders. Contains line items, shipping details, ' +
       'payment status, and fulfillment timestamps.',
     tags: ['orders', 'commerce', 'database'],
-    schema: {
+    relationships: [
+      { type: 'related_to', targetId: 'collection:products' },
+    ],
+    jsonSchema2020: {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
       type: 'object',
       properties: {
         _id: { type: 'string' },
@@ -47,8 +64,14 @@ export const collectionNodes: ContextNode[] = [
         createdAt: { type: 'string', format: 'date-time' },
       },
     },
-    relatedIds: ['collection:products'],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'collection:ai-path-runs',
@@ -58,7 +81,16 @@ export const collectionNodes: ContextNode[] = [
       'Stores historical AI path execution records including status, node-level outputs, ' +
       'events, and runtime state snapshots.',
     tags: ['ai', 'paths', 'runs', 'database', 'automation'],
-    relatedIds: ['page:ai-paths', 'action:run-ai-path'],
+    relationships: [
+      { type: 'related_to', targetId: 'action:run-ai-path' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
 ];

@@ -52,3 +52,20 @@ export const createIntegrationSchema = integrationSchema.omit({
 
 export type CreateIntegration = z.infer<typeof createIntegrationSchema>;
 export type UpdateIntegration = Partial<CreateIntegration>;
+
+export type ImageExportLogger = {
+  log: (message: string, data?: Record<string, unknown>) => void;
+};
+
+/**
+ * Operation Logging DTOs
+ */
+
+export const capturedLogSchema = z.object({
+  timestamp: z.string(),
+  level: z.enum(['info', 'warn', 'error', 'debug']),
+  message: z.string(),
+  context: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type CapturedLog = z.infer<typeof capturedLogSchema>;

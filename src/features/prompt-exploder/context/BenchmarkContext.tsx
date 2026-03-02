@@ -15,6 +15,7 @@ import {
   runPromptExploderBenchmark,
   type PromptExploderBenchmarkCase,
   type PromptExploderBenchmarkReport,
+  type PromptExploderBenchmarkCaseReport,
 } from '../benchmark';
 import { applyBenchmarkSuggestions } from '../benchmark-apply';
 import { prepareBenchmarkSuggestionsForApply } from '../benchmark-suggestions';
@@ -131,17 +132,20 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     [customBenchmarkCasesDraft]
   );
 
-  const benchmarkSuggestions = useMemo(() => {
-    if (!benchmarkReport) return [] as PromptExploderBenchmarkSuggestion[];
-    return benchmarkReport.cases.flatMap((caseReport) => caseReport.lowConfidenceSuggestions);
+  const benchmarkSuggestions = useMemo((): PromptExploderBenchmarkSuggestion[] => {
+    if (!benchmarkReport) return [];
+    return benchmarkReport.cases.flatMap(
+      (caseReport: PromptExploderBenchmarkCaseReport) => caseReport.lowConfidenceSuggestions
+    );
   }, [benchmarkReport]);
 
-  const visibleBenchmarkSuggestions = useMemo(() => {
-    if (benchmarkSuggestions.length === 0) return [] as PromptExploderBenchmarkSuggestion[];
+  const visibleBenchmarkSuggestions = useMemo((): PromptExploderBenchmarkSuggestion[] => {
+    if (benchmarkSuggestions.length === 0) return [];
     const hiddenIds = new Set(dismissedBenchmarkSuggestionIds);
-    return benchmarkSuggestions.filter((suggestion) => !hiddenIds.has(suggestion.id || ''));
+    return benchmarkSuggestions.filter(
+      (suggestion: PromptExploderBenchmarkSuggestion) => !hiddenIds.has(suggestion.id || '')
+    );
   }, [benchmarkSuggestions, dismissedBenchmarkSuggestionIds]);
-
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const handleRunBenchmark = useCallback(() => {
@@ -467,7 +471,9 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     setDismissedBenchmarkSuggestionIds((previous) => [
       ...new Set([
         ...previous,
-        ...visibleBenchmarkSuggestions.map((s) => s.id).filter((id): id is string => Boolean(id)),
+        ...visibleBenchmarkSuggestions
+          .map((s: PromptExploderBenchmarkSuggestion) => s.id)
+          .filter((id: string | undefined): id is string => Boolean(id)),
       ]),
     ]);
   }, [visibleBenchmarkSuggestions]);

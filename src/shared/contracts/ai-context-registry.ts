@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// ─── ContextNode Kind ──────────────────────────────────────────────────────────
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const contextNodeKindSchema = z.enum([
   'page',
@@ -8,16 +8,71 @@ export const contextNodeKindSchema = z.enum([
   'collection',
   'action',
   'policy',
+  'event',
+  'workflow',
 ]);
 export type ContextNodeKind = z.infer<typeof contextNodeKindSchema>;
+
+export const riskTierSchema = z.enum(['none', 'low', 'medium', 'high', 'critical']);
+export type RiskTier = z.infer<typeof riskTierSchema>;
+
+export const dataClassificationSchema = z.enum([
+  'public',
+  'internal',
+  'restricted',
+  'secret',
+]);
+export type DataClassification = z.infer<typeof dataClassificationSchema>;
+
+export const contextRelationshipTypeSchema = z.enum([
+  'uses',
+  'reads',
+  'writes',
+  'governed_by',
+  'depends_on',
+  'emits',
+  'related_to',
+]);
+export type ContextRelationshipType = z.infer<typeof contextRelationshipTypeSchema>;
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 
 export const contextNodePermissionsSchema = z.object({
-  readableBy: z.array(z.string()),
-  actionableBy: z.array(z.string()),
+  readScopes: z.array(z.string()),
+  proposeScopes: z.array(z.string()).optional(),
+  executeScopes: z.array(z.string()).optional(),
+  requiresApproval: z.boolean().optional(),
+  riskTier: riskTierSchema,
+  classification: dataClassificationSchema,
 });
 export type ContextNodePermissions = z.infer<typeof contextNodePermissionsSchema>;
+
+// ─── Relationship ─────────────────────────────────────────────────────────────
+
+export const contextRelationshipSchema = z.object({
+  type: contextRelationshipTypeSchema,
+  targetId: z.string().min(1),
+  cardinality: z.enum(['1:1', '1:n', 'n:m']).optional(),
+  notes: z.string().optional(),
+});
+export type ContextRelationship = z.infer<typeof contextRelationshipSchema>;
+
+// ─── Example ──────────────────────────────────────────────────────────────────
+
+export const contextExampleSchema = z.object({
+  title: z.string(),
+  input: z.unknown().optional(),
+  output: z.unknown().optional(),
+});
+export type ContextExample = z.infer<typeof contextExampleSchema>;
+
+// ─── Source ───────────────────────────────────────────────────────────────────
+
+export const contextNodeSourceSchema = z.object({
+  type: z.enum(['code', 'db']),
+  ref: z.string(),
+});
+export type ContextNodeSource = z.infer<typeof contextNodeSourceSchema>;
 
 // ─── ContextNode ──────────────────────────────────────────────────────────────
 
@@ -28,11 +83,13 @@ export const contextNodeSchema = z.object({
   description: z.string(),
   tags: z.array(z.string()),
   owner: z.string().optional(),
-  relatedIds: z.array(z.string()).optional(),
-  schema: z.record(z.string(), z.unknown()).optional(),
-  examples: z.array(z.string()).optional(),
-  permissions: contextNodePermissionsSchema.optional(),
+  relationships: z.array(contextRelationshipSchema).optional(),
+  jsonSchema2020: z.record(z.string(), z.unknown()).optional(),
+  examples: z.array(contextExampleSchema).optional(),
+  permissions: contextNodePermissionsSchema,
   version: z.string(),
+  updatedAtISO: z.string(),
+  source: contextNodeSourceSchema,
 });
 export type ContextNode = z.infer<typeof contextNodeSchema>;
 
@@ -40,28 +97,35 @@ export type ContextNode = z.infer<typeof contextNodeSchema>;
 
 export const contextSearchRequestSchema = z.object({
   query: z.string().optional(),
+  kinds: z.array(contextNodeKindSchema).optional(),
   tags: z.array(z.string()).optional(),
-  kind: contextNodeKindSchema.optional(),
-  limit: z.number().int().min(1).max(100).optional(),
+  limit: z.number().int().min(1).max(50).optional(),
 });
 export type ContextSearchRequest = z.infer<typeof contextSearchRequestSchema>;
 
 export const contextSearchResponseSchema = z.object({
   nodes: z.array(contextNodeSchema),
   total: z.number(),
+  registryVersion: z.string(),
 });
 export type ContextSearchResponse = z.infer<typeof contextSearchResponseSchema>;
 
 // ─── Resolve ──────────────────────────────────────────────────────────────────
 
 export const contextResolveRequestSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1).max(50),
+  ids: z.array(z.string().min(1)).min(1).max(100),
+  depth: z.number().int().min(0).max(3).optional(),
+  includeSchemas: z.boolean().optional(),
+  includeExamples: z.boolean().optional(),
+  maxNodes: z.number().int().min(1).max(300).optional(),
 });
 export type ContextResolveRequest = z.infer<typeof contextResolveRequestSchema>;
 
 export const contextResolveResponseSchema = z.object({
   nodes: z.array(contextNodeSchema),
-  missing: z.array(z.string()),
+  truncated: z.boolean(),
+  visitedIds: z.array(z.string()),
+  registryVersion: z.string(),
 });
 export type ContextResolveResponse = z.infer<typeof contextResolveResponseSchema>;
 
@@ -81,14 +145,75 @@ export const contextSchemaResponseSchema = z.object({
 });
 export type ContextSchemaResponse = z.infer<typeof contextSchemaResponseSchema>;
 
-// ─── Context Pack (Phase 3 stub) ──────────────────────────────────────────────
+// ─── Actions — Workflow ───────────────────────────────────────────────────────
 
-export const contextPackSchema = z.object({
-  id: z.string().min(1),
-  name: z.string(),
-  description: z.string(),
-  nodeIds: z.array(z.string()),
-  tags: z.array(z.string()).optional(),
-  kinds: z.array(contextNodeKindSchema).optional(),
+export const contextWorkflowSchema = z.enum([
+  'ui_analysis',
+  'data_analysis',
+  'content_edit',
+  'admin_automation',
+]);
+export type ContextWorkflow = z.infer<typeof contextWorkflowSchema>;
+
+// ─── Actions — Propose ────────────────────────────────────────────────────────
+
+export const proposeActionRequestSchema = z.object({
+  workflow: contextWorkflowSchema,
+  intent: z.string().min(1).max(4000),
+  rootIds: z.array(z.string().min(1)).min(1).max(25),
 });
-export type ContextPack = z.infer<typeof contextPackSchema>;
+export type ProposeActionRequest = z.infer<typeof proposeActionRequestSchema>;
+
+// ─── Actions — Execute ────────────────────────────────────────────────────────
+
+export const executeActionRequestSchema = z.object({
+  proposalId: z.string().uuid(),
+  approval: z.object({
+    approvedBy: z.string().min(1),
+    approvedAtISO: z.string().datetime(),
+    reason: z.string().max(2000).optional(),
+  }),
+});
+export type ExecuteActionRequest = z.infer<typeof executeActionRequestSchema>;
+
+// ─── Proposal ─────────────────────────────────────────────────────────────────
+
+export const proposalStatusSchema = z.enum([
+  'pending',
+  'approved',
+  'rejected',
+  'executed',
+  'failed',
+]);
+export type ProposalStatus = z.infer<typeof proposalStatusSchema>;
+
+export const contextProposalSchema = z.object({
+  id: z.string().uuid(),
+  workflow: contextWorkflowSchema,
+  intent: z.string(),
+  rootIds: z.array(z.string()),
+  status: proposalStatusSchema,
+  approvalsNeeded: z.boolean(),
+  preview: z.object({
+    summary: z.string(),
+    impactedNodeIds: z.array(z.string()),
+  }),
+  createdAt: z.string(),
+  executedAt: z.string().optional(),
+  approvedBy: z.string().optional(),
+});
+export type ContextProposal = z.infer<typeof contextProposalSchema>;
+
+// ─── Context Pack ─────────────────────────────────────────────────────────────
+// TypeScript interface only — has a function member (buildSeedContext), not Zod-serializable.
+
+export interface ContextPack {
+  id: string;
+  description: string;
+  maxSteps: number;
+  maxNodes: number;
+  maxBytes: number;
+  allowedKinds: ContextNodeKind[];
+  systemPrompt: string;
+  buildSeedContext(rootIds: string[]): string;
+}

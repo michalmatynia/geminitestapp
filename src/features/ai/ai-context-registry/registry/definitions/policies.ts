@@ -1,5 +1,8 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
+const SOURCE_REF =
+  'src/features/ai/ai-context-registry/registry/definitions/policies.ts';
+
 export const policyNodes: ContextNode[] = [
   {
     id: 'policy:product-publish',
@@ -9,8 +12,18 @@ export const policyNodes: ContextNode[] = [
       'A product can only be published if it has a non-empty SKU, at least one image, ' +
       'and a positive price. Draft products are exempt from price validation.',
     tags: ['products', 'validation', 'publishing', 'policy'],
-    relatedIds: ['collection:products', 'action:export-products'],
+    relationships: [
+      { type: 'governed_by', targetId: 'collection:products' },
+      { type: 'governed_by', targetId: 'action:export-products' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'policy:ai-path-rate-limit',
@@ -20,7 +33,17 @@ export const policyNodes: ContextNode[] = [
       'Each user may enqueue at most 20 AI path runs per 60-second window. ' +
       'A maximum of 5 concurrent active runs per user is enforced.',
     tags: ['ai', 'rate-limit', 'policy', 'safety'],
-    relatedIds: ['action:run-ai-path', 'collection:ai-path-runs'],
+    relationships: [
+      { type: 'governed_by', targetId: 'action:run-ai-path' },
+      { type: 'governed_by', targetId: 'collection:ai-path-runs' },
+    ],
+    permissions: {
+      readScopes: ['ctx:read'],
+      riskTier: 'low',
+      classification: 'internal',
+    },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
 ];

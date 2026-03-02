@@ -3,12 +3,12 @@ import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { gunzipSync, gzipSync } from 'zlib';
 
-
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/features/files/constants/storage-settings';
+import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
@@ -89,6 +89,10 @@ const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
   process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
   3_000
 );
+const TRADERA_RELIST_SCHEDULER_SETTING_KEYS = new Set<string>([
+  TRADERA_SETTINGS_KEYS.schedulerEnabled,
+  TRADERA_SETTINGS_KEYS.schedulerIntervalMs,
+]);
 const isSlowSettingsScope = (scope: SettingsScope): boolean => scope === 'all' || scope === 'heavy';
 const isSettingsTimeoutError = (error: unknown): error is Error =>
   error instanceof Error &&
@@ -111,6 +115,22 @@ const withSettingsScopeTimeout = async <T>(
     return await Promise.race([promise, timeoutPromise]);
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+const syncTraderaRelistSchedulerWorker = async (key: string): Promise<void> => {
+  if (!TRADERA_RELIST_SCHEDULER_SETTING_KEYS.has(key)) return;
+  try {
+    const { startTraderaRelistSchedulerQueue } = await import(
+      '@/features/integrations/workers/traderaRelistSchedulerQueue'
+    );
+    startTraderaRelistSchedulerQueue();
+  } catch (error) {
+    await ErrorSystem.logWarning('[settings] Failed to sync Tradera relist scheduler worker.', {
+      service: 'api/settings',
+      key,
+      error,
+    });
   }
 };
 
@@ -961,6 +981,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     invalidateDatabaseEnginePolicyCache();
     invalidateCollectionProviderMapCache();
   }
+  await syncTraderaRelistSchedulerWorker(setting.key);
   return NextResponse.json(normalizedSetting);
 }
 

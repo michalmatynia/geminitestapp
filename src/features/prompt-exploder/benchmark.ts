@@ -1,14 +1,16 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-
-import { explodePromptText } from './parser';
-
 import type {
+  PromptExploderBenchmarkCase,
+  PromptExploderBenchmarkCaseReport,
+  PromptExploderBenchmarkReport,
   PromptExploderLearnedTemplate,
   PromptExploderSegmentType,
   PromptExploderSegment,
   PromptExploderBenchmarkSuggestion,
-} from './types';
-import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
+
+import { explodePromptText } from './parser';
 
 export const PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET = 0.95;
 export const PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.55;
@@ -16,52 +18,10 @@ export const PROMPT_EXPLODER_DEFAULT_SUGGESTION_LIMIT = 4;
 
 export type PromptExploderBenchmarkSuite = 'default' | 'extended';
 
-export type PromptExploderBenchmarkCase = {
-  id: string;
-  prompt: string;
-  expectedTypes: PromptExploderSegmentType[];
-  minSegments: number;
-};
-
-export type PromptExploderBenchmarkCaseReport = {
-  id: string;
-  expectedTypes: PromptExploderSegmentType[];
-  predictedTypes: PromptExploderSegmentType[];
-  matchedTypes: PromptExploderSegmentType[];
-  missingTypes: PromptExploderSegmentType[];
-  unexpectedTypes: PromptExploderSegmentType[];
-  segmentCount: number;
-  minSegments: number;
-  meetsMinSegments: boolean;
-  avgSegmentConfidence: number;
-  lowConfidenceSegments: number;
-  precision: number;
-  recall: number;
-  f1: number;
-  lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[];
-};
-
-export type PromptExploderBenchmarkAggregate = {
-  caseCount: number;
-  expectedTypeRecall: number;
-  macroPrecision: number;
-  macroRecall: number;
-  macroF1: number;
-  minSegmentPassRate: number;
-  avgSegmentConfidence: number;
-  totalLowConfidenceSegments: number;
-  totalLowConfidenceSuggestions: number;
-};
-
-export type PromptExploderBenchmarkReport = {
-  generatedAt: string;
-  suite: PromptExploderBenchmarkSuite | 'custom';
-  config: {
-    lowConfidenceThreshold: number;
-    suggestionLimit: number;
-  };
-  cases: PromptExploderBenchmarkCaseReport[];
-  aggregate: PromptExploderBenchmarkAggregate;
+export type {
+  PromptExploderBenchmarkCase,
+  PromptExploderBenchmarkReport,
+  PromptExploderBenchmarkCaseReport,
 };
 
 export const EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES: PromptExploderBenchmarkCase[] = [

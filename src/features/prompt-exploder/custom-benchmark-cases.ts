@@ -1,5 +1,8 @@
-import type { PromptExploderBenchmarkCase } from './benchmark';
-import type { PromptExploderSegmentType } from './types';
+import type {
+  PromptExploderBenchmarkCase,
+  PromptExploderSegmentType,
+  ParseCustomBenchmarkCasesResult,
+} from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -15,10 +18,6 @@ const PROMPT_EXPLODER_SEGMENT_TYPES: PromptExploderSegmentType[] = [
   'conditional_list',
   'qa_matrix',
 ];
-
-export type ParseCustomBenchmarkCasesResult =
-  | { ok: true; cases: PromptExploderBenchmarkCase[] }
-  | { ok: false; error: string };
 
 export const toCustomCaseSlug = (value: string): string =>
   value

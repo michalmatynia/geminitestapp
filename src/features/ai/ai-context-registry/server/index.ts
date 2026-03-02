@@ -1,7 +1,11 @@
 import 'server-only';
 
-// Side-effect: auto-registers all ContextNodes into the in-memory store.
-import '../registry/index';
+import { registryBackend } from '../registry/index';
+import { ContextRetrievalService } from '../services/retrieval';
 
-export * from '../services/context-registry';
+export { registryBackend } from '../registry/index';
+
+export const retrievalService = new ContextRetrievalService(registryBackend);
+
+export * from '../services/proposal-store';
 export * from '../registry/context-packs';

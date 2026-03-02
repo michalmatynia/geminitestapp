@@ -1,3 +1,5 @@
+import type { PromptExploderOrchestratorRollout } from '@/shared/contracts/prompt-exploder';
+
 const normalizeEnvFlag = (value: string | undefined): boolean | null => {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
@@ -23,13 +25,6 @@ const hashSeed = (seed: string): number => {
     hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
   }
   return hash;
-};
-
-export type PromptExploderOrchestratorRollout = {
-  enabled: boolean;
-  reason: 'settings' | 'env_override' | 'canary';
-  bucket: number;
-  canaryPercent: number;
 };
 
 export const resolvePromptExploderOrchestratorRollout = (args: {

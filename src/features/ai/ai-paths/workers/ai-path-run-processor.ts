@@ -16,6 +16,9 @@ const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const LOG_SOURCE = 'ai-path-run-processor';
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
   void logSystemEvent({
@@ -41,6 +44,8 @@ const NON_RETRYABLE_PATTERNS = [
   'invalid configuration',
   'schema validation',
   'missing required',
+  'database write blocked',
+  'template inputs must be connected and non-empty',
   // Auth / permissions — retrying won't fix auth state
   'unauthorized',
   'forbidden',
@@ -73,6 +78,30 @@ const isNonRetryableRunError = (error: unknown): boolean => {
   // recoverable by retrying the same payload.  HTTP 429 (rate-limit) is retryable
   // so we exclude it here.
   if (error !== null && typeof error === 'object') {
+    const nodeOutput = (error as { nodeOutput?: unknown }).nodeOutput;
+    if (isPlainRecord(nodeOutput)) {
+      const writeOutcome = nodeOutput['writeOutcome'];
+      if (
+        isPlainRecord(writeOutcome) &&
+        writeOutcome['status'] === 'failed' &&
+        writeOutcome['code'] === 'write_template_values'
+      ) {
+        return true;
+      }
+      const guardrailMeta = nodeOutput['guardrailMeta'];
+      if (
+        isPlainRecord(guardrailMeta) &&
+        guardrailMeta['code'] === 'write-template-values' &&
+        guardrailMeta['severity'] === 'error'
+      ) {
+        return true;
+      }
+      const bundle = nodeOutput['bundle'];
+      if (isPlainRecord(bundle) && bundle['guardrail'] === 'write-template-values') {
+        return true;
+      }
+    }
+
     const httpStatus =
       (error as { status?: unknown }).status ??
       (error as { httpStatus?: unknown }).httpStatus;

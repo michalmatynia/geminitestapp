@@ -61,6 +61,7 @@ import {
   type UseCanvasTouchHandlersValue,
 } from './canvas/useCanvasTouchHandlers';
 
+import type { Toast } from '@/shared/contracts/ui';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
 /**
@@ -97,7 +98,7 @@ export function useCanvasInteractions(args?: {
   useRuntimeState();
 
   // Context: Selection
-  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode, selectionScopeMode } =
+  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode } =
     useSelectionState();
   const { setNodeSelection, selectNode, selectEdge, toggleNodeSelection } = useSelectionActions();
 
@@ -116,17 +117,18 @@ export function useCanvasInteractions(args?: {
 
   const stateHandlers: UseCanvasStateHandlersValue = useCanvasStateHandlers({
     isPathLocked,
-    toast: toast,
+    toast: toast as unknown as Toast,
     viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
     nodes,
     edges,
     setNodes,
     setRuntimeState,
-    selectionToolMode: selectionToolMode as MarqueeMode,
-    selectionScopeMode: selectionScopeMode as 'replace' | 'add' | 'toggle',
+    selectionToolMode: (selectionToolMode === 'select' ? 'replace' : 'replace') as MarqueeMode,
+    selectionScopeMode: 'replace',
     setNodeSelection,
     toggleNodeSelection,
     startPan,
+
     endPan,
     setIsPanning,
     updateView: (next) => updateView(next),

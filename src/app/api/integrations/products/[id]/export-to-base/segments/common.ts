@@ -4,7 +4,7 @@ import {
   type BaseExportProductLike,
   type BaseExportRequestData,
   baseExportRequestSchema as exportSchema,
-} from '@/shared/contracts/integrations';
+} from '@/shared/contracts/integrations/base-com';
 
 export type { BaseFieldMapping, BaseExportProductLike, BaseExportRequestData };
 export { exportSchema };

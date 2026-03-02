@@ -10,6 +10,8 @@ import type {
   PromptExploderCaseResolverPartyKind,
   PromptExploderCaseResolverPartyRole,
   PromptExploderCaseResolverPlaceDate,
+  PromptExploderBridgePayloadSnapshot,
+  PromptExploderBridgeSaveOptions,
 } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
@@ -28,12 +30,8 @@ export type {
   PromptExploderCaseResolverPartyKind,
   PromptExploderCaseResolverPartyRole,
   PromptExploderCaseResolverPlaceDate,
-};
-
-export type PromptExploderBridgePayloadSnapshot = {
-  payload: PromptExploderBridgePayload | null;
-  isExpired: boolean;
-  expiresAt: string | null;
+  PromptExploderBridgePayloadSnapshot,
+  PromptExploderBridgeSaveOptions,
 };
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
@@ -99,16 +97,6 @@ export const computePromptExploderBridgeChecksum = (
   const partA = hashString32(source, 0x811c9dc5);
   const partB = hashString32(source.split('').reverse().join(''), 0x9e3779b1);
   return `pe-${partA.toString(16).padStart(8, '0')}${partB.toString(16).padStart(8, '0')}`;
-};
-
-type PromptExploderBridgeSaveOptions = {
-  transferId?: string | null | undefined;
-  createdAt?: string | null | undefined;
-  expiresAt?: string | null | undefined;
-  payloadVersion?: number | null | undefined;
-  checksum?: string | null | undefined;
-  status?: PromptExploderBridgePayloadStatus | null | undefined;
-  appliedAt?: string | null | undefined;
 };
 
 const resolvePayloadCreatedAt = (options?: PromptExploderBridgeSaveOptions): string => {

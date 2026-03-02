@@ -3,24 +3,15 @@ import {
   type PromptAutofixOperation,
   type PromptValidationRule,
   type PromptValidationScope,
-} from '../settings';
+  type RuleDraft,
+  type RulePatch,
+  DEFAULT_SEQUENCE_STEP,
+  IMAGE_STUDIO_SCOPE_VALUES,
+  IMAGE_STUDIO_SCOPE_SET,
+} from '@/shared/contracts/prompt-engine';
 
-export type RuleDraft = {
-  uid: string;
-  text: string;
-  parsed: PromptValidationRule | null;
-  error: string | null;
-};
-
-export type RulePatch = Partial<PromptValidationRule>;
-
-export const DEFAULT_SEQUENCE_STEP = 10;
-const IMAGE_STUDIO_SCOPE_VALUES: PromptValidationScope[] = [
-  'image_studio_prompt',
-  'image_studio_extraction',
-  'image_studio_generation',
-];
-const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>(IMAGE_STUDIO_SCOPE_VALUES);
+export type { RuleDraft, RulePatch };
+export { DEFAULT_SEQUENCE_STEP };
 
 export const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): RuleDraft => ({
   uid,

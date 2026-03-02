@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import type {
   AiNode,
+  Edge,
   NodeDefinition,
   RuntimeState,
   PathMeta,
@@ -21,7 +22,7 @@ import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-button
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast } from '@/shared/ui';
+import { useToast, type Toast } from '@/shared/ui';
 import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 
 import { useAiPathsCanvasInteractions } from './useAiPathsCanvasInteractions';
@@ -146,7 +147,7 @@ export function useAiPathsSettingsState({
   const validation = useAiPathsValidationActions({
     setAiPathsValidation: setAiPathsValidationState,
     setLastError: setLastErrorString,
-    toast: toast,
+    toast: toast as unknown as Toast,
   });
 
   const reportAiPathsError = useCallback(
@@ -512,7 +513,7 @@ export function useAiPathsSettingsState({
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
     pruneRuntimeInputs: (_state, removed, remaining) => {
-      return pruneRuntimeInputsState(_state, removed, remaining);
+      return pruneRuntimeInputsState(_state, removed as unknown as Edge[], remaining as unknown as Edge[]);
     },
   });
 

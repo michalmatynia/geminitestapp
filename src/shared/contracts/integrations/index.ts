@@ -16,8 +16,21 @@ import {
   type ProductListingWithDetails,
   type ListingAttempt,
 } from './listings';
-import { type Integration, type ImageTransformOptions, type ImageRetryPreset } from './base';
-import { type IntegrationConnection } from './connections';
+import {
+  type Integration,
+  type ImageTransformOptions,
+  type ImageRetryPreset,
+  type ImageExportLogger,
+  type CapturedLog,
+} from './base';
+import {
+  type IntegrationConnection,
+  type ConnectionDeleteOptions,
+  type ConnectionDependencyCounts,
+  type ConnectionFormState,
+  type StepWithResult,
+  type SaveConnectionOptions,
+} from './connections';
 import {
   baseImportPreflightIssueSchema,
   type BaseImportItemStatus,
@@ -32,6 +45,8 @@ import {
   type BaseImportRunDetailResponse,
   type BaseImportItemRecord,
   type ImportParameterCacheResponse,
+  type ExportToBaseVariables,
+  type ExportResponse,
 } from './base-com';
 
 export type {
@@ -47,6 +62,15 @@ export type {
   BaseImportRunDetailResponse,
   BaseImportItemRecord,
   ImportParameterCacheResponse,
+  ExportToBaseVariables,
+  ExportResponse,
+  ImageExportLogger,
+  ConnectionDeleteOptions,
+  ConnectionDependencyCounts,
+  CapturedLog,
+  ConnectionFormState,
+  StepWithResult,
+  SaveConnectionOptions,
 };
 
 import type { ImportTemplateParameterImport } from '../data-import-export';
@@ -104,19 +128,6 @@ export const imageExportDiagnosticsSchema = z.object({
 });
 
 export type ImageExportDiagnostics = z.infer<typeof imageExportDiagnosticsSchema>;
-
-/**
- * Operation Logging DTOs
- */
-
-export const capturedLogSchema = z.object({
-  timestamp: z.string(),
-  level: z.enum(['info', 'warn', 'error', 'debug']),
-  message: z.string(),
-  context: z.record(z.string(), z.unknown()).nullable().optional(),
-});
-
-export type CapturedLog = z.infer<typeof capturedLogSchema>;
 
 /**
  * Connection Testing DTOs

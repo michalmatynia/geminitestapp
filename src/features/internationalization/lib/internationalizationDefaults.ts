@@ -1,10 +1,14 @@
-export const countryCodes = ['PL', 'DE', 'GB', 'SE'] as const;
-export const currencyCodes = ['USD', 'EUR', 'PLN', 'GBP', 'SEK'] as const;
-export const languageCodes = ['EN', 'PL', 'DE', 'SV'] as const;
+import {
+  countryCodes,
+  currencyCodes,
+  languageCodes,
+  type CountryCode,
+  type CurrencyCode,
+  type LanguageCode,
+} from '@/shared/contracts/internationalization';
 
-export type CountryCode = (typeof countryCodes)[number];
-export type CurrencyCode = (typeof currencyCodes)[number];
-export type LanguageCode = (typeof languageCodes)[number];
+export { countryCodes, currencyCodes, languageCodes };
+export type { CountryCode, CurrencyCode, LanguageCode };
 
 export const defaultCountries: Array<{ code: CountryCode; name: string }> = [
   { code: 'PL', name: 'Poland' },

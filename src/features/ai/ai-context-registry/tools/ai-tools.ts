@@ -41,10 +41,13 @@ export function buildContextRegistryTools(
               description:
                 'Free-text search query matched against name, description, and tags.',
             },
-            kind: {
-              type: 'string',
-              enum: ['page', 'component', 'collection', 'action', 'policy'],
-              description: 'Filter by node kind.',
+            kinds: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['page', 'component', 'collection', 'action', 'policy', 'event', 'workflow'],
+              },
+              description: 'Filter by one or more node kinds (OR-combined).',
             },
             tags: {
               type: 'array',
@@ -74,7 +77,23 @@ export function buildContextRegistryTools(
             ids: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Array of context node IDs to resolve (max 50).',
+              description: 'Array of context node IDs to resolve (max 100).',
+            },
+            depth: {
+              type: 'number',
+              description: 'BFS expansion depth (0–3). Default: 1.',
+            },
+            maxNodes: {
+              type: 'number',
+              description: 'Maximum nodes to return (1–300). Default: 80.',
+            },
+            includeSchemas: {
+              type: 'boolean',
+              description: 'Include jsonSchema2020 fields in results. Default: false.',
+            },
+            includeExamples: {
+              type: 'boolean',
+              description: 'Include examples fields in results. Default: false.',
             },
           },
           additionalProperties: false,

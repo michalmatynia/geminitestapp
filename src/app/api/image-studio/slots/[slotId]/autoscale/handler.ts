@@ -342,7 +342,7 @@ export async function postAutoScaleSlotHandler(
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     const err = error as Record<string, unknown> & { meta?: Record<string, unknown> };
-    if (err?.['autoScaleErrorCode']) {
+    if (err.meta?.['autoScaleErrorCode'] || err['autoScaleErrorCode']) {
       throw error;
     }
     const message = error instanceof Error ? error.message : String(error);

@@ -178,6 +178,7 @@ const buildContextValue = (
   stickyHeader: false,
   productNameKey: 'name_en',
   priceGroups: [],
+  onPrefetchProductDetail: vi.fn(),
   onProductNameClick: vi.fn(),
   onProductEditClick: vi.fn(),
   onProductDeleteClick: vi.fn(),
@@ -436,7 +437,7 @@ describe('Admin Products List UI', () => {
         exportPayload = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json({ success: true });
       }),
-      http.post('/api/integrations/products/:id/base/sku-check', () => {
+      http.post('http://localhost/api/integrations/products/:id/base/sku-check', () => {
         return HttpResponse.json({ exists: false });
       }),
       http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([]))

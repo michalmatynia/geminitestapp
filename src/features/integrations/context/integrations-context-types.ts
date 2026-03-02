@@ -1,12 +1,15 @@
 import type { Dispatch, SetStateAction } from 'react';
 
-import { integrationDefinitions } from '@/shared/contracts/integrations';
-import type {
-  Integration,
-  IntegrationConnection,
+import {
+  integrationDefinitions,
+  type Integration,
+  type IntegrationConnection,
   SessionCookie,
   TestLogEntry,
   SessionPayload,
+  ConnectionFormState,
+  StepWithResult,
+  SaveConnectionOptions,
 } from '@/shared/contracts/integrations';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 
@@ -18,22 +21,9 @@ export type {
   SessionPayload,
   PlaywrightPersona,
   PlaywrightSettings,
-};
-
-export type ConnectionFormState = {
-  name: string;
-  username: string;
-  password: string;
-  traderaDefaultTemplateId: string;
-  traderaDefaultDurationHours: number;
-  traderaAutoRelistEnabled: boolean;
-  traderaAutoRelistLeadMinutes: number;
-  traderaApiAppId: string;
-  traderaApiAppKey: string;
-  traderaApiPublicKey: string;
-  traderaApiUserId: string;
-  traderaApiToken: string;
-  traderaApiSandbox: boolean;
+  ConnectionFormState,
+  StepWithResult,
+  SaveConnectionOptions,
 };
 
 export const createEmptyConnectionForm = (): ConnectionFormState => ({
@@ -53,14 +43,6 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
 });
 
 export type IntegrationDefinition = (typeof integrationDefinitions)[number];
-
-export type StepWithResult = TestLogEntry & { status: 'ok' | 'failed' };
-
-export type SaveConnectionOptions = {
-  mode?: 'create' | 'update';
-  connectionId?: string | null;
-  formData?: ConnectionFormState;
-};
 
 export interface IntegrationsContextType {
   integrations: Integration[];

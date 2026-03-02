@@ -1,5 +1,12 @@
 import { ObjectId } from 'mongodb';
-import { IntegrationRecord, IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import {
+  IntegrationRecord,
+  IntegrationConnectionRecord,
+  ConnectionDeleteOptions,
+  ConnectionDependencyCounts,
+} from '@/shared/contracts/integrations';
+
+export type { ConnectionDeleteOptions, ConnectionDependencyCounts };
 
 export const INTEGRATION_COLLECTION = 'integrations';
 export const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
@@ -104,21 +111,6 @@ export const stripActiveTemplateScopesForConnection = (
     ...record,
     byScope: nextByScope,
   });
-};
-
-export type ConnectionDeleteOptions = {
-  replacementConnectionId?: string | null | undefined;
-};
-
-export type ConnectionDependencyCounts = {
-  productListings: number;
-  categoryMappings: number;
-  externalCategories: number;
-  producerMappings: number;
-  externalProducers: number;
-  tagMappings: number;
-  externalTags: number;
-  total: number;
 };
 
 export const withDependencyTotal = (

@@ -720,6 +720,22 @@ export interface PromptExploderBridgePayload {
   caseResolverMetadata?: PromptExploderCaseResolverMetadata | undefined;
 }
 
+export type PromptExploderBridgePayloadSnapshot = {
+  payload: PromptExploderBridgePayload | null;
+  isExpired: boolean;
+  expiresAt: string | null;
+};
+
+export type PromptExploderBridgeSaveOptions = {
+  transferId?: string | null | undefined;
+  createdAt?: string | null | undefined;
+  expiresAt?: string | null | undefined;
+  payloadVersion?: number | null | undefined;
+  checksum?: string | null | undefined;
+  status?: PromptExploderBridgePayloadStatus | null | undefined;
+  appliedAt?: string | null | undefined;
+};
+
 export type PromptExploderCaseResolverPartyKind = 'person' | 'organization';
 export type PromptExploderCaseResolverPartyRole =
   | 'addresser'
@@ -727,6 +743,75 @@ export type PromptExploderCaseResolverPartyRole =
   | 'subject'
   | 'reference'
   | 'other';
+
+/**
+ * Prompt Exploder UI & Orchestration DTOs
+ */
+
+export type PromptExploderBenchmarkCase = {
+  id: string;
+  prompt: string;
+  expectedTypes: PromptExploderSegmentType[];
+  minSegments: number;
+};
+
+export type PromptExploderBenchmarkCaseReport = {
+  id: string;
+  expectedTypes: PromptExploderSegmentType[];
+  predictedTypes: PromptExploderSegmentType[];
+  matchedTypes: PromptExploderSegmentType[];
+  missingTypes: PromptExploderSegmentType[];
+  unexpectedTypes: PromptExploderSegmentType[];
+  segmentCount: number;
+  minSegments: number;
+  meetsMinSegments: boolean;
+  avgSegmentConfidence: number;
+  lowConfidenceSegments: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[];
+};
+
+export type PromptExploderBenchmarkAggregate = {
+  caseCount: number;
+  expectedTypeRecall: number;
+  macroPrecision: number;
+  macroRecall: number;
+  macroF1: number;
+  minSegmentPassRate: number;
+  avgSegmentConfidence: number;
+  totalLowConfidenceSegments: number;
+  totalLowConfidenceSuggestions: number;
+};
+
+export type PromptExploderBenchmarkReport = {
+  generatedAt: string;
+  suite: 'default' | 'extended' | 'custom';
+  config: {
+    lowConfidenceThreshold: number;
+    suggestionLimit: number;
+  };
+  cases: PromptExploderBenchmarkCaseReport[];
+  aggregate: PromptExploderBenchmarkAggregate;
+};
+
+export type PromptExploderOrchestratorRollout = {
+  enabled: boolean;
+  reason: 'settings' | 'env_override' | 'canary';
+  bucket: number;
+  canaryPercent: number;
+};
+
+export type BenchmarkSuggestionPreparation = {
+  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
+  validSuggestions: PromptExploderBenchmarkSuggestion[];
+  invalidSegmentTitles: string[];
+};
+
+export type ParseCustomBenchmarkCasesResult =
+  | { ok: true; cases: PromptExploderBenchmarkCase[] }
+  | { ok: false; error: string };
 
 /**
  * DTO Aliases for compatibility

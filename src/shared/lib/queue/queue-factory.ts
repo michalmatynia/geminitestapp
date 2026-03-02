@@ -57,7 +57,7 @@ export function createManagedQueue<TJobData>(
     const connection = getRedisConnection();
     if (!connection) return null;
     queue = new Queue(config.name, {
-      connection: connection as any,
+      connection,
       defaultJobOptions: {
         removeOnComplete: true,
         removeOnFail: 100,
@@ -170,8 +170,9 @@ export function createManagedQueue<TJobData>(
       },
       {
         ...config.workerOptions,
-        connection: connection as any,
+        connection,
         concurrency: config.concurrency,
+
         lockDuration,
         removeOnComplete: { count: 0 },
         removeOnFail: { count: 100 },

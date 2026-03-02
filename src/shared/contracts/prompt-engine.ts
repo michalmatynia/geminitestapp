@@ -45,6 +45,27 @@ export const promptValidationScopeSchema = z.enum([
 export type PromptValidationScope = z.infer<typeof promptValidationScopeSchema>;
 export type PromptValidationScopeDto = PromptValidationScope;
 
+export const DEFAULT_SEQUENCE_STEP = 10;
+
+export const IMAGE_STUDIO_SCOPE_VALUES: PromptValidationScope[] = [
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+];
+
+export const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>(IMAGE_STUDIO_SCOPE_VALUES);
+
+export const DEFAULT_PROMPT_VALIDATION_SCOPES: PromptValidationScope[] = [
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+  'prompt_exploder',
+  'case_resolver_prompt_exploder',
+  'case_resolver_plain_text',
+  'ai_paths',
+  'global',
+];
+
 export const promptValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'bypass']);
 export type PromptValidationLaunchScopeBehavior = z.infer<
   typeof promptValidationLaunchScopeBehaviorSchema
@@ -168,6 +189,15 @@ export const promptValidationRuleSchema = z.discriminatedUnion('kind', [
 
 export type PromptValidationRule = z.infer<typeof promptValidationRuleSchema>;
 export type PromptValidationRuleDto = PromptValidationRule;
+
+export type RuleDraft = {
+  uid: string;
+  text: string;
+  parsed: PromptValidationRule | null;
+  error: string | null;
+};
+
+export type RulePatch = Partial<PromptValidationRule>;
 
 export const promptValidationSettingsSchema = z.object({
   enabled: z.boolean(),

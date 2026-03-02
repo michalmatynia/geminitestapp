@@ -2,12 +2,16 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { invalidateProducts } from '@/features/products/hooks/productCache';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import type { ImageTransformOptions } from '@/shared/contracts/integrations';
-import type { ProductJob } from '@/shared/contracts/integrations';
+import type {
+  ProductListingWithDetails,
+  ProductJob,
+  ExportToBaseVariables,
+  ExportResponse,
+} from '@/shared/contracts/integrations';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
+
+export type { ExportToBaseVariables };
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -23,28 +27,6 @@ import {
   invalidateProductListingsAndBadges,
   listingBadgesQueryKey,
 } from '@/features/integrations/hooks/listingCache';
-
-export type ExportToBaseVariables = {
-  connectionId: string;
-  inventoryId: string;
-  templateId?: string;
-  imageBase64Mode?: 'base-only' | 'full-data-uri';
-  imageTransform?: ImageTransformOptions | null;
-  // For images only export
-  imagesOnly?: boolean;
-  listingId?: string;
-  externalListingId?: string;
-  exportImagesAsBase64?: boolean;
-  allowDuplicateSku?: boolean;
-  requestId?: string;
-};
-
-type ExportResponse = {
-  logs?: CapturedLog[];
-  error?: string;
-  skuExists?: boolean;
-  runId?: string | null;
-};
 
 type MarketplaceBadgeEntry = {
   base?: string;

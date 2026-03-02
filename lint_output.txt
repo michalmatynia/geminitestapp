@@ -1,0 +1,41 @@
+
+> libapp2@0.1.0 lint
+> eslint src --max-warnings 0 --quiet
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-context-registry/registry/context-packs.ts
+  48:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-context-registry/services/context-registry.ts
+   92:40  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+   97:26  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
+   97:43  error  Unsafe member access .includes on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+  123:7   error  Unsafe return of a value of type error                                        @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/hooks/database-node/useDatabaseActionConfig.ts
+  60:22  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  90:22  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/workers/aiPathRunQueue.ts
+  1127:48  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  1127:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/context/BenchmarkContext.tsx
+  136:5   error  Unsafe return of a value of type `any[]`                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-return
+  137:58  error  Unsafe return of a value of type error                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-return
+  137:69  error  Unsafe member access .lowConfidenceSuggestions on a type that cannot be resolved                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
+  144:5   error  Unsafe return of a value of type `any[]`                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-return
+  474:51  error  Unsafe return of a value of type error                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-return
+  474:53  error  Unsafe member access .id on a type that cannot be resolved                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+  494:7   error  Unsafe assignment of type `any[]` to a variable of type `{ caseId: string; suggestedSegmentType: "metadata" | "list" | "static" | "sequence" | "prompt_exploder" | "dynamic" | "conditional" | "parameter_block" | "qa_matrix" | "hierarchical_list" | "referential_list" | "conditional_list" | "assigned_text"; ... 15 more ...; matchedSequenceLabels?: string[] | undefined; }[]`  @typescript-eslint/no-unsafe-assignment
+  495:7   error  Unsafe assignment of type `any[]` to a variable of type `{ caseId: string; suggestedSegmentType: "metadata" | "list" | "static" | "sequence" | "prompt_exploder" | "dynamic" | "conditional" | "parameter_block" | "qa_matrix" | "hierarchical_list" | "referential_list" | "conditional_list" | "assigned_text"; ... 15 more ...; matchedSequenceLabels?: string[] | undefined; }[]`  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/queue/queue-factory.ts
+   60:7   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+   60:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  173:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 21 problems (21 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

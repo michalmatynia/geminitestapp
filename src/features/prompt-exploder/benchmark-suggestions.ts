@@ -1,10 +1,7 @@
-import type { PromptExploderBenchmarkSuggestion } from './types';
-
-export type BenchmarkSuggestionPreparation = {
-  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
-  validSuggestions: PromptExploderBenchmarkSuggestion[];
-  invalidSegmentTitles: string[];
-};
+import type {
+  PromptExploderBenchmarkSuggestion,
+  BenchmarkSuggestionPreparation,
+} from '@/shared/contracts/prompt-exploder';
 
 export const benchmarkSuggestionRuleId = (
   suggestion: PromptExploderBenchmarkSuggestion

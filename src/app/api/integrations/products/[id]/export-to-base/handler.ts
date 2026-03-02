@@ -22,7 +22,7 @@ import {
   getProductRepository,
   type ProductWithImagesDto as ProductWithImages,
 } from '@/features/products/server';
-import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
+import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,

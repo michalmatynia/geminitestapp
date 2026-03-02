@@ -10,6 +10,7 @@ import {
   type ImageStudioCenterDetectionMode,
   type UploadedClientAutoScaleImage,
   type ImageStudioAutoScaleMetadata,
+  IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
 } from '@/shared/contracts/image-studio';
 
 export type { ImageStudioAutoScaleMetadata };
@@ -179,7 +180,7 @@ export function parseAutoScaleResponsePayload(
     validationError.code = 'BAD_REQUEST';
     validationError.httpStatus = 400;
     validationError.meta = {
-      autoScaleErrorCode: 'IMAGE_STUDIO_AUTOSCALER_OUTPUT_INVALID',
+      autoScaleErrorCode: IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
       responseStage: context?.responseStage || 'unknown',
       errors: typeof err?.format === 'function' ? err.format() : error,
     };

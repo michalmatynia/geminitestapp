@@ -1,5 +1,8 @@
 import type { ContextNode } from '@/shared/contracts/ai-context-registry';
 
+const SOURCE_REF =
+  'src/features/ai/ai-context-registry/registry/definitions/actions.ts';
+
 export const actionNodes: ContextNode[] = [
   {
     id: 'action:export-products',
@@ -9,12 +12,20 @@ export const actionNodes: ContextNode[] = [
       'Triggers a bulk export of the product catalog to CSV or JSON. ' +
       'Supports field selection and filter scoping.',
     tags: ['products', 'export', 'bulk', 'admin'],
-    relatedIds: ['page:products', 'collection:products'],
+    relationships: [
+      { type: 'uses', targetId: 'page:products' },
+      { type: 'reads', targetId: 'collection:products' },
+    ],
     permissions: {
-      readableBy: ['admin', 'manager'],
-      actionableBy: ['admin'],
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
     },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'action:run-ai-path',
@@ -24,12 +35,21 @@ export const actionNodes: ContextNode[] = [
       'Queues an AI path execution with optional runtime input overrides. ' +
       'Returns a run ID for polling status and streaming events.',
     tags: ['ai', 'automation', 'paths', 'execution'],
-    relatedIds: ['page:ai-paths', 'collection:ai-path-runs'],
+    relationships: [
+      { type: 'uses', targetId: 'page:ai-paths' },
+      { type: 'writes', targetId: 'collection:ai-path-runs' },
+    ],
     permissions: {
-      readableBy: ['admin'],
-      actionableBy: ['admin'],
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      requiresApproval: true,
+      riskTier: 'medium',
+      classification: 'internal',
     },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
   {
     id: 'action:run-db-query',
@@ -39,11 +59,18 @@ export const actionNodes: ContextNode[] = [
       'Executes a read-only query against a registered database provider. ' +
       'Supports MongoDB aggregations and SQL SELECT statements.',
     tags: ['database', 'query', 'admin', 'developer'],
-    relatedIds: ['page:database-engine'],
+    relationships: [
+      { type: 'uses', targetId: 'page:database-engine' },
+    ],
     permissions: {
-      readableBy: ['admin'],
-      actionableBy: ['admin'],
+      readScopes: ['ctx:read'],
+      proposeScopes: ['ctx:propose'],
+      executeScopes: ['ctx:execute'],
+      riskTier: 'low',
+      classification: 'internal',
     },
     version: '1.0.0',
+    updatedAtISO: '2026-01-01T00:00:00.000Z',
+    source: { type: 'code', ref: SOURCE_REF },
   },
 ];

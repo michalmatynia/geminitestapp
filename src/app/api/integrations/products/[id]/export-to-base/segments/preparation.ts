@@ -16,7 +16,7 @@ import {
 } from '@/features/products/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { badRequestError } from '@/shared/errors/app-error';
-import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations';
+import { type CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
 import {
   type BaseExportRequestData,
   type BaseFieldMapping,

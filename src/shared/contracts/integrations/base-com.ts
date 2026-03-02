@@ -190,6 +190,30 @@ export const baseImportRunParamsSchema = z.object({
 });
 export type BaseImportRunParams = z.infer<typeof baseImportRunParamsSchema>;
 
+import type { ImageTransformOptions, ImageBase64Mode, CapturedLog } from './base';
+
+export type ExportToBaseVariables = {
+  connectionId: string;
+  inventoryId: string;
+  templateId?: string;
+  imageBase64Mode?: ImageBase64Mode;
+  imageTransform?: ImageTransformOptions | null;
+  // For images only export
+  imagesOnly?: boolean;
+  listingId?: string;
+  externalListingId?: string;
+  exportImagesAsBase64?: boolean;
+  allowDuplicateSku?: boolean;
+  requestId?: string;
+};
+
+export type ExportResponse = {
+  logs?: CapturedLog[];
+  error?: string;
+  skuExists?: boolean;
+  runId?: string | null;
+};
+
 export const baseImportPreflightIssueSchema = z.object({
   code: baseImportErrorCodeSchema,
   message: z.string(),

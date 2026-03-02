@@ -64,3 +64,48 @@ export const createIntegrationConnectionSchema = integrationConnectionSchema.omi
 
 export type CreateIntegrationConnection = z.infer<typeof createIntegrationConnectionSchema>;
 export type UpdateIntegrationConnection = Partial<CreateIntegrationConnection>;
+
+export type ConnectionDeleteOptions = {
+  replacementConnectionId?: string | null | undefined;
+};
+
+export type ConnectionDependencyCounts = {
+  productListings: number;
+  categoryMappings: number;
+  externalCategories: number;
+  producerMappings: number;
+  externalProducers: number;
+  tagMappings: number;
+  externalTags: number;
+  total: number;
+};
+
+/**
+ * Integration Connection UI DTOs
+ */
+
+export type ConnectionFormState = {
+  name: string;
+  username: string;
+  password: string;
+  traderaDefaultTemplateId: string;
+  traderaDefaultDurationHours: number;
+  traderaAutoRelistEnabled: boolean;
+  traderaAutoRelistLeadMinutes: number;
+  traderaApiAppId: string;
+  traderaApiAppKey: string;
+  traderaApiPublicKey: string;
+  traderaApiUserId: string;
+  traderaApiToken: string;
+  traderaApiSandbox: boolean;
+};
+
+import { type TestLogEntry } from './index';
+
+export type StepWithResult = TestLogEntry & { status: 'ok' | 'failed' };
+
+export type SaveConnectionOptions = {
+  mode?: 'create' | 'update';
+  connectionId?: string | null;
+  formData?: ConnectionFormState;
+};

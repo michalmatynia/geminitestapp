@@ -18,6 +18,7 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { type Toast } from '@/shared/ui';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 
@@ -163,10 +164,10 @@ export function useDatabaseNodeConfigState() {
     queryTemplateValue,
     isUpdateAction,
     updateSelectedNodeConfig,
-    toast: toast,
+    toast: toast as unknown as Toast,
     setTestQueryResult,
     setTestQueryLoading,
-  } as any);
+  });
   const { handleProviderChange, handleActionCategoryChange, applyActionConfig } =
     useDatabaseActionConfig({
       databaseConfig,

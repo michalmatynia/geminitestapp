@@ -6,7 +6,13 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
-import type { ImageUrlDiagnostic } from '@/shared/contracts/integrations';
+import {
+  type ImageExportLogger,
+  type ImageBase64Mode,
+  type ImageTransformOptions,
+} from '@/shared/contracts/integrations';
+
+export type { ImageExportLogger, ImageBase64Mode, ImageTransformOptions };
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =
@@ -32,20 +38,6 @@ export const resolveImageUrl = (
   const path = trimmed.replace(/^\/+/, '');
   return `${base}/${path}`;
 };
-
-export type ImageExportLogger = {
-  log: (message: string, data?: Record<string, unknown>) => void;
-};
-
-export type ImageBase64Mode = 'base-only' | 'full-data-uri';
-
-export type ImageTransformOptions = {
-  forceJpeg?: boolean;
-  maxDimension?: number;
-  jpegQuality?: number;
-};
-
-export type { ImageUrlDiagnostic };
 
 type ProductImageDiagnostic = {
   sourceType: 'slot' | 'link';

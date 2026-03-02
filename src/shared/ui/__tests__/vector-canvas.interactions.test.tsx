@@ -1,9 +1,29 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeAll, afterAll } from 'vitest';
 
 import { VectorCanvas } from '@/shared/ui/vector-canvas';
 
 describe('VectorCanvas interactions', () => {
+  const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+
+  beforeAll(() => {
+    Element.prototype.getBoundingClientRect = vi.fn(() => ({
+      width: 800,
+      height: 600,
+      top: 0,
+      left: 0,
+      bottom: 600,
+      right: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    }));
+  });
+
+  afterAll(() => {
+    Element.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+  });
+
   it('starts panning on left drag when select tool is active and selection is disabled', async () => {
     const { container } = render(
       <div style={{ width: 800, height: 600 }}>

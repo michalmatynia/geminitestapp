@@ -16,6 +16,7 @@ import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,
   EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES,
   PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET,
+  type PromptExploderBenchmarkCaseReport,
 } from '../benchmark';
 import { useBenchmarkState, useBenchmarkActions } from '../context/hooks/useBenchmark';
 import { useSettingsState } from '../context/hooks/useSettings';
@@ -242,7 +243,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               </span>
             </div>
             <div className='max-h-[240px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
-              {benchmarkReport.cases.map((caseReport) => (
+              {benchmarkReport.cases.map((caseReport: PromptExploderBenchmarkCaseReport) => (
                 <div key={caseReport.id} className='rounded border border-border/50 bg-card/30 p-2'>
                   <div className='flex items-center justify-between gap-2'>
                     <span className='font-medium text-gray-200'>{caseReport.id}</span>

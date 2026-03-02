@@ -97,6 +97,62 @@ export const asset3dViewModeSchema = z.enum(['grid', 'list']);
 export type Asset3dViewMode = z.infer<typeof asset3dViewModeSchema>;
 
 /**
+ * 3D Viewer State Contracts
+ */
+
+export const viewer3DStateSchema = z.object({
+  // View settings
+  autoRotate: z.boolean(),
+  autoRotateSpeed: z.number(),
+
+  // Environment & Lighting
+  environment: asset3dEnvironmentPresetSchema,
+  lighting: asset3dLightingPresetSchema,
+  lightIntensity: z.number(),
+
+  // Rendering
+  enableShadows: z.boolean(),
+  enableContactShadows: z.boolean(),
+  showGround: z.boolean(),
+
+  // Post-processing
+  enableBloom: z.boolean(),
+  bloomIntensity: z.number(),
+  enableVignette: z.boolean(),
+  enableToneMapping: z.boolean(),
+  exposure: z.number(),
+
+  // Dithering (special effect)
+  enableDithering: z.boolean(),
+  ditheringIntensity: z.number(),
+
+  // Pixelation (pixel art effect)
+  enablePixelation: z.boolean(),
+  pixelSize: z.number(),
+
+  // Ordered dithering shader
+  enableOrderedDithering: z.boolean(),
+  orderedDitheringGridSize: z.number(),
+  orderedDitheringPixelSizeRatio: z.number(),
+  orderedDitheringGrayscaleOnly: z.boolean(),
+  orderedDitheringInvertColor: z.boolean(),
+  orderedDitheringLuminanceMethod: z.number(),
+  orderedDitheringPreset: asset3dOrderedDitheringPresetKeySchema,
+
+  // Background
+  backgroundColor: z.string(),
+});
+
+export type Viewer3DStateDto = z.infer<typeof viewer3DStateSchema>;
+export type Viewer3DState = Viewer3DStateDto;
+
+export type Viewer3DSettings = Partial<Viewer3DState> & {
+  enableAntiAliasing?: boolean;
+};
+
+export type Supported3DExtension = '.glb' | '.gltf';
+
+/**
  * 3D Viewer Repository Interface
  */
 

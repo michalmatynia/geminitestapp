@@ -6,11 +6,6 @@ import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import {
-  reorderListItemsForDrop,
-  reorderSegmentsForDrop,
-  resolveDropPosition,
-} from '../helpers/drag-reorder';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import {
   promptExploderBuildSegmentSampleText,
@@ -44,17 +39,6 @@ import type { PromptExploderLearnedTemplate, PromptExploderSegment } from '../ty
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-// --- Granular State Interfaces ---
-
-export interface SegmentEditorReorderState {
-  draggingSegmentId: string | null;
-  segmentDropTargetId: string | null;
-  segmentDropPosition: 'before' | 'after' | null;
-  draggingListItemIndex: number | null;
-  listItemDropTargetIndex: number | null;
-  listItemDropPosition: 'before' | 'after' | null;
-}
-
 export interface SegmentEditorPatternsState {
   approvalDraft: ApprovalDraft;
   matchedRuleDetails: Array<{
@@ -78,24 +62,10 @@ export interface SegmentEditorPatternsState {
   templateTargetOptions: Array<{ value: string; label: string }>;
 }
 
-export interface SegmentEditorState extends SegmentEditorReorderState, SegmentEditorPatternsState {}
+export interface SegmentEditorState extends SegmentEditorPatternsState {}
 
 export interface SegmentEditorActions {
-  setDraggingSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
-  setSegmentDropTargetId: React.Dispatch<React.SetStateAction<string | null>>;
-  setSegmentDropPosition: React.Dispatch<React.SetStateAction<'before' | 'after' | null>>;
-  setDraggingListItemIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  setListItemDropTargetIndex: React.Dispatch<React.SetStateAction<number | null>>;
-  setListItemDropPosition: React.Dispatch<React.SetStateAction<'before' | 'after' | null>>;
   setApprovalDraft: React.Dispatch<React.SetStateAction<ApprovalDraft>>;
-  handleSegmentDragStart: (segmentId: string) => void;
-  handleSegmentDragEnd: () => void;
-  handleSegmentDragOver: (event: React.DragEvent, targetSegmentId: string) => void;
-  handleSegmentDrop: (event: React.DragEvent, targetSegmentId: string) => void;
-  handleListItemDragStart: (index: number) => void;
-  handleListItemDragEnd: () => void;
-  handleListItemDragOver: (event: React.DragEvent, targetIndex: number) => void;
-  handleListItemDrop: (event: React.DragEvent, targetIndex: number) => void;
   addSegmentRelative: (segmentId: string, position: 'before' | 'after') => void;
   removeSegment: (segmentId: string) => void;
   splitSegment: (segmentId: string, selectionStart: number, selectionEnd: number) => void;
@@ -106,7 +76,6 @@ export interface SegmentEditorActions {
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
-const ReorderContext = createContext<SegmentEditorReorderState | null>(null);
 const PatternsContext = createContext<SegmentEditorPatternsState | null>(null);
 
 const SegmentEditorStateContext = createContext<SegmentEditorState | null>(null);
@@ -138,18 +107,11 @@ export function SegmentEditorProvider({
   const { documentState, selectedSegment, promptText } = useDocumentState();
   const {
     replaceSegments,
-    updateSegment,
     setDocumentState,
     setManualBindings,
     setSelectedSegmentId,
   } = useDocumentActions();
 
-  const [draggingSegmentId, setDraggingSegmentId] = useState<string | null>(null);
-  const [segmentDropTargetId, setSegmentDropTargetId] = useState<string | null>(null);
-  const [segmentDropPosition, setSegmentDropPosition] = useState<'before' | 'after' | null>(null);
-  const [draggingListItemIndex, setDraggingListItemIndex] = useState<number | null>(null);
-  const [listItemDropTargetIndex, setListItemDropTargetIndex] = useState<number | null>(null);
-  const [listItemDropPosition, setListItemDropPosition] = useState<'before' | 'after' | null>(null);
   const [approvalDraft, setApprovalDraft] = useState(
     promptExploderCreateApprovalDraftFromSegment(null)
   );
@@ -159,33 +121,6 @@ export function SegmentEditorProvider({
   useEffect(() => {
     setApprovalDraft(promptExploderCreateApprovalDraftFromSegment(selectedSegment));
   }, [selectedSegment?.id]);
-
-  // ── Sync drag state ────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!draggingSegmentId) return;
-    const segmentIds = new Set(
-      (documentState?.segments ?? []).map((s: PromptExploderSegment) => s.id)
-    );
-    if (segmentIds.has(draggingSegmentId)) return;
-    setDraggingSegmentId(null);
-    setSegmentDropTargetId(null);
-    setSegmentDropPosition(null);
-  }, [documentState?.segments, draggingSegmentId]);
-
-  useEffect(() => {
-    if (!selectedSegment) {
-      setDraggingListItemIndex(null);
-      setListItemDropTargetIndex(null);
-      setListItemDropPosition(null);
-      return;
-    }
-    if (draggingListItemIndex === null) return;
-    if (draggingListItemIndex < selectedSegment.listItems.length) return;
-    setDraggingListItemIndex(null);
-    setListItemDropTargetIndex(null);
-    setListItemDropPosition(null);
-  }, [selectedSegment, draggingListItemIndex]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -285,93 +220,6 @@ export function SegmentEditorProvider({
   }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
-
-  const handleSegmentDragStart = useCallback((segmentId: string) => {
-    setDraggingSegmentId(segmentId);
-    setSegmentDropTargetId(null);
-    setSegmentDropPosition(null);
-  }, []);
-
-  const handleSegmentDragEnd = useCallback(() => {
-    setDraggingSegmentId(null);
-    setSegmentDropTargetId(null);
-    setSegmentDropPosition(null);
-  }, []);
-
-  const handleSegmentDragOver = useCallback((event: React.DragEvent, targetSegmentId: string) => {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-    setSegmentDropTargetId(targetSegmentId);
-    setSegmentDropPosition(pos);
-  }, []);
-
-  const handleSegmentDrop = useCallback(
-    (event: React.DragEvent, targetSegmentId: string) => {
-      event.preventDefault();
-      if (!draggingSegmentId || !documentState) return;
-      const target = event.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-      const reordered = reorderSegmentsForDrop(
-        documentState.segments,
-        draggingSegmentId,
-        targetSegmentId,
-        pos
-      );
-      replaceSegments(reordered);
-      setDraggingSegmentId(null);
-      setSegmentDropTargetId(null);
-      setSegmentDropPosition(null);
-    },
-    [documentState, draggingSegmentId, replaceSegments]
-  );
-
-  const handleListItemDragStart = useCallback((index: number) => {
-    setDraggingListItemIndex(index);
-    setListItemDropTargetIndex(null);
-    setListItemDropPosition(null);
-  }, []);
-
-  const handleListItemDragEnd = useCallback(() => {
-    setDraggingListItemIndex(null);
-    setListItemDropTargetIndex(null);
-    setListItemDropPosition(null);
-  }, []);
-
-  const handleListItemDragOver = useCallback((event: React.DragEvent, targetIndex: number) => {
-    event.preventDefault();
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-    setListItemDropTargetIndex(targetIndex);
-    setListItemDropPosition(pos);
-  }, []);
-
-  const handleListItemDrop = useCallback(
-    (event: React.DragEvent, targetIndex: number) => {
-      event.preventDefault();
-      if (draggingListItemIndex === null || !selectedSegment) return;
-      const target = event.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-      const reordered = reorderListItemsForDrop(
-        selectedSegment.listItems,
-        draggingListItemIndex,
-        targetIndex,
-        pos
-      );
-      updateSegment(selectedSegment.id, (current) => ({
-        ...current,
-        listItems: reordered,
-      }));
-      setDraggingListItemIndex(null);
-      setListItemDropTargetIndex(null);
-      setListItemDropPosition(null);
-    },
-    [draggingListItemIndex, selectedSegment, updateSegment]
-  );
 
   const applySegmentEditResult = useCallback(
     (result: { segments: PromptExploderSegment[]; selectedSegmentId: string | null }) => {
@@ -652,25 +500,6 @@ export function SegmentEditorProvider({
 
   // ── Memoized context values ────────────────────────────────────────────────
 
-  const reorderValue = useMemo<SegmentEditorReorderState>(
-    () => ({
-      draggingSegmentId,
-      segmentDropTargetId,
-      segmentDropPosition,
-      draggingListItemIndex,
-      listItemDropTargetIndex,
-      listItemDropPosition,
-    }),
-    [
-      draggingSegmentId,
-      segmentDropTargetId,
-      segmentDropPosition,
-      draggingListItemIndex,
-      listItemDropTargetIndex,
-      listItemDropPosition,
-    ]
-  );
-
   const patternsValue = useMemo<SegmentEditorPatternsState>(
     () => ({
       approvalDraft,
@@ -683,29 +512,14 @@ export function SegmentEditorProvider({
 
   const stateValue = useMemo<SegmentEditorState>(
     () => ({
-      ...reorderValue,
       ...patternsValue,
     }),
-    [reorderValue, patternsValue]
+    [patternsValue]
   );
 
   const actionsValue = useMemo<SegmentEditorActions>(
     () => ({
-      setDraggingSegmentId,
-      setSegmentDropTargetId,
-      setSegmentDropPosition,
-      setDraggingListItemIndex,
-      setListItemDropTargetIndex,
-      setListItemDropPosition,
       setApprovalDraft,
-      handleSegmentDragStart,
-      handleSegmentDragEnd,
-      handleSegmentDragOver,
-      handleSegmentDrop,
-      handleListItemDragStart,
-      handleListItemDragEnd,
-      handleListItemDragOver,
-      handleListItemDrop,
       addSegmentRelative,
       removeSegment,
       splitSegment,
@@ -714,14 +528,6 @@ export function SegmentEditorProvider({
       handleApproveSelectedSegmentPattern,
     }),
     [
-      handleSegmentDragStart,
-      handleSegmentDragEnd,
-      handleSegmentDragOver,
-      handleSegmentDrop,
-      handleListItemDragStart,
-      handleListItemDragEnd,
-      handleListItemDragOver,
-      handleListItemDrop,
       addSegmentRelative,
       removeSegment,
       splitSegment,
@@ -732,23 +538,14 @@ export function SegmentEditorProvider({
   );
 
   return (
-    <ReorderContext.Provider value={reorderValue}>
-      <PatternsContext.Provider value={patternsValue}>
-        <SegmentEditorStateContext.Provider value={stateValue}>
-          <SegmentEditorActionsContext.Provider value={actionsValue}>
-            {children}
-          </SegmentEditorActionsContext.Provider>
-        </SegmentEditorStateContext.Provider>
-      </PatternsContext.Provider>
-    </ReorderContext.Provider>
+    <PatternsContext.Provider value={patternsValue}>
+      <SegmentEditorStateContext.Provider value={stateValue}>
+        <SegmentEditorActionsContext.Provider value={actionsValue}>
+          {children}
+        </SegmentEditorActionsContext.Provider>
+      </SegmentEditorStateContext.Provider>
+    </PatternsContext.Provider>
   );
-}
-
-export function useSegmentEditorReorder(): SegmentEditorReorderState {
-  const context = useContext(ReorderContext);
-  if (!context)
-    throw new Error('useSegmentEditorReorder must be used within SegmentEditorProvider');
-  return context;
 }
 
 export function useSegmentEditorPatterns(): SegmentEditorPatternsState {

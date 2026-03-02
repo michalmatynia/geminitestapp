@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
@@ -12,21 +12,15 @@ import {
   useUpdateSlugDomains,
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
-import type { CmsDomain, Slug } from '@/shared/contracts/cms';
+import type { Slug } from '@/shared/contracts/cms';
 import {
-  Input,
-  ToggleRow,
   SectionHeader,
-  Checkbox,
-  FormSection,
-  FormField,
-  Badge,
   useToast,
-  FormActions,
   LoadingState,
-  Hint,
+  Alert,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
+import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
   const params = useParams();
@@ -52,39 +46,25 @@ function EditSlugForm({
   domainId?: string;
 }): React.JSX.Element {
   const { toast } = useToast();
-  const [slug, setSlug] = useState<Slug>(initialSlug);
   const { zoningEnabled } = useCmsDomainSelection();
   const domainsQuery = useCmsDomains();
   const slugDomainsQuery = useCmsSlugDomains(id);
   const updateSlugDomains = useUpdateSlugDomains();
-  const [domainSelection, setDomainSelection] = useState<string[] | null>(null);
-  const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
-  const selectedDomainIds = domainSelection ?? slugDomainsQuery.data?.domainIds ?? [];
   const router = useRouter();
   const updateSlug = useUpdateSlug();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!zoningEnabled) return;
-    if (!slugDomainsQuery.data) return;
-    if (domainSelection !== null) return;
+  const domains = useMemo(() => domainsQuery.data ?? [], [domainsQuery.data]);
+  const initialDomainIds = useMemo(() => slugDomainsQuery.data?.domainIds ?? [], [slugDomainsQuery.data]);
 
-    const timer = setTimeout(() => {
-      setDomainSelection(slugDomainsQuery.data.domainIds);
-    }, 0);
-
-    return (): void => clearTimeout(timer);
-  }, [slugDomainsQuery.data, domainSelection, zoningEnabled]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    if (!slug) return;
+  const handleSubmit = async (data: SlugFormSubmitData): Promise<void> => {
+    setError(null);
 
     const slugValidation = validateFormData(
       cmsSlugUpdateSchema,
       {
-        slug: slug.slug,
-        isDefault: Boolean(slug.isDefault),
+        slug: data.slug,
+        isDefault: data.isDefault,
       },
       'Slug form is invalid.'
     );
@@ -96,7 +76,7 @@ function EditSlugForm({
     if (zoningEnabled) {
       const domainsValidation = validateFormData(
         cmsSlugDomainsUpdateSchema,
-        { domainIds: selectedDomainIds },
+        { domainIds: data.domainIds },
         'Assign this slug to at least one zone.'
       );
       if (!domainsValidation.success) {
@@ -105,23 +85,16 @@ function EditSlugForm({
       }
     }
 
-    setError(null);
-    const slugInput: Partial<Slug> = {
-      slug: slugValidation.data.slug,
-      ...(typeof slugValidation.data.isDefault === 'boolean'
-        ? { isDefault: slugValidation.data.isDefault }
-        : {}),
-    };
     const updateData: { id: string; input: Partial<Slug>; domainId?: string | null } = {
       id,
-      input: slugInput,
+      input: slugValidation.data as Partial<Slug>,
     };
     if (domainId) updateData.domainId = domainId;
 
     try {
       await updateSlug.mutateAsync(updateData);
       if (zoningEnabled) {
-        await updateSlugDomains.mutateAsync({ id, domainIds: selectedDomainIds });
+        await updateSlugDomains.mutateAsync({ id, domainIds: data.domainIds });
       }
       toast('Route path updated successfully.', { variant: 'success' });
       const next = domainId
@@ -141,103 +114,24 @@ function EditSlugForm({
         eyebrow='CMS · Routing'
       />
 
-      <form
-        onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
-          void handleSubmit(e);
+      {error && (
+        <Alert variant='error' className='mb-6'>
+          {error}
+        </Alert>
+      )}
+
+      <SlugForm
+        initialData={{
+          slug: initialSlug.slug,
+          isDefault: Boolean(initialSlug.isDefault),
+          domainIds: initialDomainIds,
         }}
-      >
-        <div className='space-y-6'>
-          <FormSection title='Path Configuration' className='p-6'>
-            <div className='space-y-4'>
-              <FormField
-                label='Slug'
-                error={error}
-                description='URL segment for this route.'
-                required
-              >
-                <Input
-                  id='slug'
-                  value={slug.slug}
-                  onChange={(e) => setSlug({ ...slug, slug: e.target.value })}
-                  className='h-9'
-                />
-              </FormField>
-
-              <ToggleRow
-                label='Set as Default'
-                description='Use this route if no path matches exactly'
-                checked={Boolean(slug.isDefault)}
-                onCheckedChange={(checked) => setSlug({ ...slug, isDefault: checked })}
-                className='bg-white/5 border-white/5'
-              />
-            </div>
-          </FormSection>
-
-          {zoningEnabled && (
-            <FormSection
-              title='Zone Availability'
-              description='Assign this route to specific hostnames.'
-              className='p-6'
-            >
-              <div className='space-y-3'>
-                <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>
-                    Assigned Domains
-                  </Hint>
-                  <Badge variant='secondary' className='text-[9px]'>
-                    {selectedDomainIds.length} selected
-                  </Badge>
-                </div>
-
-                <div className='max-h-48 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
-                  {domains.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>
-                      No domains available for assignment.
-                    </div>
-                  ) : (
-                    domains.map((domain) => {
-                      const checked = selectedDomainIds.includes(domain.id);
-                      return (
-                        <label
-                          key={domain.id}
-                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => {
-                              setDomainSelection((prev) => {
-                                const current = prev ?? selectedDomainIds;
-                                return checked
-                                  ? current.filter((id) => id !== domain.id)
-                                  : [...current, domain.id];
-                              });
-                            }}
-                          />
-                          <div className='flex flex-col'>
-                            <span className='text-sm text-gray-300'>{domain.domain}</span>
-                            {domain.aliasOf && (
-                              <span className='text-[10px] text-gray-500 italic'>
-                                Alias of {domains.find((d) => d.id === domain.aliasOf)?.domain}
-                              </span>
-                            )}
-                          </div>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </FormSection>
-          )}
-
-          <FormActions
-            onCancel={() => router.back()}
-            saveText='Save Changes'
-            isSaving={updateSlug.isPending || updateSlugDomains.isPending}
-            className='pt-4'
-          />
-        </div>
-      </form>
+        onSubmit={handleSubmit}
+        isSaving={updateSlug.isPending || updateSlugDomains.isPending}
+        onCancel={() => router.back()}
+        submitText='Save Changes'
+        domains={domains}
+      />
     </div>
   );
 }

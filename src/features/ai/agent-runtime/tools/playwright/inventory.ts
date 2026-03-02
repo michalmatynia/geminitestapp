@@ -1,45 +1,9 @@
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Page } from 'playwright';
+import type { UiElement, UiInventory } from '@/shared/contracts/agent-runtime';
 
-export type UiElement = {
-  tag: string;
-  id: string | null;
-  name: string | null;
-  type: string | null;
-  text: string | null;
-  placeholder: string | null;
-  ariaLabel: string | null;
-  role: string | null;
-  selector: string | null;
-  href?: string; // For links
-  action?: string | null; // For forms
-  method?: string | null; // For forms
-};
-
-export type UiInventory = {
-  url: string;
-  title: string;
-  counts: {
-    inputs: number;
-    buttons: number;
-    links: number;
-    headings: number;
-    forms: number;
-  };
-  inputs: UiElement[];
-  buttons: UiElement[];
-  links: UiElement[];
-  headings: UiElement[];
-  forms: UiElement[];
-  truncated: {
-    inputs: boolean;
-    buttons: boolean;
-    links: boolean;
-    headings: boolean;
-    forms: boolean;
-  };
-};
+export type { UiElement, UiInventory };
 
 export const collectUiInventory = async (
   page: Page,

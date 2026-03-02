@@ -6,8 +6,8 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
-  Template,
-  TemplateMapping,
+  IntegrationTemplate as Template,
+  IntegrationTemplateMapping as TemplateMapping,
 } from '@/shared/contracts/integrations';
 import {
   normalizeBaseImportParameterImportSettings,

@@ -544,6 +544,7 @@ const normalizeLabeledPartySegments = (
     }
 
     labeledBlocks.forEach((block, index): void => {
+      if (block.role !== 'addresser' && block.role !== 'addressee') return;
       const roleConfig = CASE_RESOLVER_LABEL_ROLE_CONFIG[block.role];
       const blockText = normalizeRawCaptureText(block.lines.join('\n'));
       normalizedSegments.push({
@@ -953,10 +954,13 @@ export const buildCaseResolverSegmentCaptureRules = (
     return null;
   };
 
-  const normalizeRole = (value: string): CaseResolverCaptureRole | null => {
+  const normalizeRole = (value: string): PromptExploderCaseResolverCaptureRole | null => {
     const normalized = value.trim();
     if (normalized === 'addresser') return 'addresser';
     if (normalized === 'addressee') return 'addressee';
+    if (normalized === 'subject') return 'subject';
+    if (normalized === 'reference') return 'reference';
+    if (normalized === 'other') return 'other';
     if (normalized === 'party') return 'party';
     if (normalized === 'place_date') return 'place_date';
     return null;

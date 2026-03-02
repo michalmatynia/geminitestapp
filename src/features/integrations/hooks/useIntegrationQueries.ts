@@ -19,7 +19,11 @@ import type {
 import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createListQueryV2,
+  createSingleQueryV2,
+  type QueryDescriptorV2,
+} from '@/shared/lib/query-factories-v2';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -258,7 +262,7 @@ export function useBaseInventories(
 
 // --- Query Options (Needed for useQueries compositions) ---
 
-export const getExportTemplatesQueryOptions = () => {
+export const getExportTemplatesQueryOptions = (): QueryDescriptorV2<ImportExportTemplate[]> => {
   const queryKey = integrationKeys.exportTemplates();
   return {
     queryKey,
@@ -278,7 +282,9 @@ export const getExportTemplatesQueryOptions = () => {
   };
 };
 
-export const getActiveExportTemplateQueryOptions = () => {
+export const getActiveExportTemplateQueryOptions = (): QueryDescriptorV2<{
+  templateId?: string | null;
+}> => {
   const queryKey = integrationKeys.activeExportTemplate();
   return {
     queryKey,
@@ -296,7 +302,9 @@ export const getActiveExportTemplateQueryOptions = () => {
   };
 };
 
-export const getDefaultExportInventoryQueryOptions = () => {
+export const getDefaultExportInventoryQueryOptions = (): QueryDescriptorV2<{
+  inventoryId?: string | null;
+}> => {
   const queryKey = integrationKeys.defaultExportInventory();
   return {
     queryKey,
@@ -314,7 +322,10 @@ export const getDefaultExportInventoryQueryOptions = () => {
   };
 };
 
-export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => {
+export const getBaseInventoriesQueryOptions = (
+  connectionId: string,
+  enabled: boolean = true
+): QueryDescriptorV2<BaseInventory[]> => {
   const queryKey = integrationKeys.baseInventories(connectionId);
   return {
     queryKey,

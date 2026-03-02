@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { AiInsightRecord } from '@/shared/contracts';
 import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
 import type { UpdateMutation } from '@/shared/contracts/ui';
@@ -11,7 +9,6 @@ import { invalidateSystemDiagnostics, invalidateSystemLogs } from '@/shared/lib/
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: () => api.delete<ClearLogsResponse>('/api/system/logs'),
     mutationKey: logsKeys.all,
@@ -19,17 +16,15 @@ export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> 
       source: 'observability.hooks.useClearLogsMutation',
       operation: 'delete',
       resource: 'system.logs',
+      domain: 'observability',
       mutationKey: logsKeys.all,
       tags: ['observability', 'logs', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateSystemLogs(queryClient);
-    },
+    invalidate: (queryClient) => invalidateSystemLogs(queryClient),
   });
 }
 
 export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: () => api.post<unknown>('/api/system/diagnostics/mongo-indexes'),
     mutationKey: diagnosticsKeys.mongo(),
@@ -37,18 +32,15 @@ export function useRebuildIndexesMutation(): UpdateMutation<unknown, void> {
       source: 'observability.hooks.useRebuildIndexesMutation',
       operation: 'create',
       resource: 'system.diagnostics.mongo-indexes',
+      domain: 'observability',
       mutationKey: diagnosticsKeys.mongo(),
       tags: ['observability', 'diagnostics', 'mongo'],
     },
-    onSuccess: () => {
-      void invalidateSystemDiagnostics(queryClient);
-    },
+    invalidate: (queryClient) => invalidateSystemDiagnostics(queryClient),
   });
 }
 
 export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord }, void> {
-  const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/system/logs/insights'),
     mutationKey: logsKeys.all,
@@ -56,12 +48,11 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
       source: 'observability.hooks.useRunLogInsight',
       operation: 'create',
       resource: 'system.logs.insights',
+      domain: 'observability',
       mutationKey: logsKeys.all,
       tags: ['observability', 'logs', 'insights'],
     },
-    onSuccess: () => {
-      void invalidateSystemLogs(queryClient);
-    },
+    invalidate: (queryClient) => invalidateSystemLogs(queryClient),
   });
 }
 

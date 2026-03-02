@@ -110,7 +110,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(queries: {
   const results = useMemo(() => {
     const data = {} as T;
 
-    queryResults.forEach((result, index) => {
+    queryResults.forEach((result: UseQueryResult<unknown, Error>, index: number) => {
       const key = keys[index];
       if (key) {
         data[key] = result.data as T[keyof T];
@@ -119,11 +119,14 @@ export function useParallelQueries<T extends Record<string, unknown>>(queries: {
 
     return {
       data,
-      isLoading: queryResults.some((q) => q.isLoading),
-      isError: queryResults.some((q) => q.isError),
-      errors: queryResults.filter((q) => q.isError).map((q) => q.error),
-      isSuccess: queryResults.every((q) => q.isSuccess),
-      refetch: async () => await Promise.all(queryResults.map((q) => q.refetch())),
+      isLoading: queryResults.some((q: UseQueryResult<unknown, Error>) => q.isLoading),
+      isError: queryResults.some((q: UseQueryResult<unknown, Error>) => q.isError),
+      errors: queryResults
+        .filter((q: UseQueryResult<unknown, Error>) => q.isError)
+        .map((q: UseQueryResult<unknown, Error>) => q.error as Error),
+      isSuccess: queryResults.every((q: UseQueryResult<unknown, Error>) => q.isSuccess),
+      refetch: async () =>
+        await Promise.all(queryResults.map((q: UseQueryResult<unknown, Error>) => q.refetch())),
     };
   }, [queryResults, keys]);
 

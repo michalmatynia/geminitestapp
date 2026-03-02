@@ -455,8 +455,8 @@ export interface NoteRepository {
   // Notes
   getAll(filters: NoteFilters): Promise<NoteWithRelations[]>;
   getById(id: string): Promise<NoteWithRelations | null>;
-  create(data: CreateNoteInput): Promise<NoteWithRelations>;
-  update(id: string, data: UpdateNoteInput): Promise<NoteWithRelations | null>;
+  create(data: CreateNoteDto): Promise<NoteWithRelations>;
+  update(id: string, data: UpdateNoteDto): Promise<NoteWithRelations | null>;
   syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void>;
   delete(id: string): Promise<boolean>;
 

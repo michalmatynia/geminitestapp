@@ -25,6 +25,8 @@ export * from './app-embeds';
 export * from './auth';
 export * from './base';
 export * from './case-resolver';
+// Resolve TS2308: Ambiguity between case-resolver and prompt-exploder
+export type { CaseResolverCaptureRole } from './case-resolver';
 export * from './chatbot';
 export * from './cms-menu';
 export * from './cms-theme';

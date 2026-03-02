@@ -54,6 +54,10 @@ describe('folder-tree-ui-state-v1', () => {
       expandedNodeIds: [],
       panelCollapsed: false,
     });
+    expect(parsed.prompt_exploder_segments).toEqual({
+      expandedNodeIds: [],
+      panelCollapsed: false,
+    });
     expect(parsed.prompt_exploder_hierarchy).toEqual({
       expandedNodeIds: [],
       panelCollapsed: false,

@@ -19,17 +19,30 @@ export type TanstackLifecycleStage = 'start' | 'success' | 'error' | 'retry' | '
 
 export type TanstackCriticality = 'low' | 'normal' | 'high' | 'critical';
 
-export type TanstackFactoryDomain = 'global' | 'products' | 'image_studio' | 'integrations' | 'cms';
+export type TanstackFactoryDomain =
+  | 'global'
+  | 'products'
+  | 'image_studio'
+  | 'integrations'
+  | 'cms'
+  | 'ai_paths'
+  | 'auth'
+  | 'database'
+  | 'notes'
+  | 'playwright'
+  | 'jobs'
+  | 'observability'
+  | 'chatbot';
 
 export type TanstackFactoryMeta = {
   source: string;
   operation: TanstackRequestOperation;
   resource: string;
+  domain: TanstackFactoryDomain;
   queryKey?: QueryKey | undefined;
   mutationKey?: QueryKey | undefined;
   criticality?: TanstackCriticality | undefined;
   samplingRate?: number | undefined;
-  domain?: TanstackFactoryDomain | undefined;
   tags?: string[] | undefined;
 };
 

@@ -57,12 +57,7 @@ export function useIntegrationSelection(
   );
   const initializedRef = useRef(false);
 
-  const results = createMultiQueryV2<
-    [
-      { connectionId?: string | null },
-      IntegrationWithConnections[],
-    ]
-  >({
+  const results = createMultiQueryV2({
     queries: [
       {
         queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
@@ -96,7 +91,7 @@ export function useIntegrationSelection(
           tags: ['integrations', 'selection', 'list'],
         },
       },
-    ],
+    ] as const,
   });
 
   const [preferredConnectionQuery, integrationsQuery] = results;

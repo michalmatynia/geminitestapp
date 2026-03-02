@@ -1,35 +1,44 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { useCreateSlug } from '@/features/cms/hooks/useCmsQueries';
-import { SLUG_REGEX } from '@/features/cms/validations/slug';
+import {
+  useCmsDomains,
+  useCreateSlug,
+  useUpdateSlugDomains,
+} from '@/features/cms/hooks/useCmsQueries';
+import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { Input, SectionHeader, FormSection, FormField, useToast, FormActions } from '@/shared/ui';
+import { SectionHeader, useToast, Alert } from '@/shared/ui';
+import { SlugForm, type SlugFormSubmitData } from '@/features/cms/components/SlugForm';
 
 export default function CreateSlugPage(): React.JSX.Element {
   const { toast } = useToast();
-  const [slug, setSlug] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainId = searchParams.get('domainId') ?? undefined;
   const createSlug = useCreateSlug();
+  const updateSlugDomains = useUpdateSlugDomains();
+  const domainsQuery = useCmsDomains();
+  const { zoningEnabled } = useCmsDomainSelection();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    setError('');
+  const domains = useMemo(() => domainsQuery.data ?? [], [domainsQuery.data]);
 
-    if (!SLUG_REGEX.test(slug)) {
-      setError('Invalid slug format. Use only lowercase letters, numbers, and hyphens.');
-      return;
-    }
+  const handleSubmit = async (data: SlugFormSubmitData): Promise<void> => {
+    setError(null);
 
     try {
-      const createData: { slug: string; domainId?: string | null } = { slug };
+      const createData: { slug: string; domainId?: string | null } = { slug: data.slug };
       if (domainId) createData.domainId = domainId;
-      await createSlug.mutateAsync(createData);
+
+      const newSlug = await createSlug.mutateAsync(createData);
+
+      if (zoningEnabled && data.domainIds.length > 0) {
+        await updateSlugDomains.mutateAsync({ id: newSlug.id, domainIds: data.domainIds });
+      }
+
       toast('Route path created successfully.', { variant: 'success' });
       const next = domainId
         ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}`
@@ -37,7 +46,7 @@ export default function CreateSlugPage(): React.JSX.Element {
       router.push(next);
     } catch (err: unknown) {
       logClientError(err, {
-        context: { source: 'CreateSlugPage', action: 'createSlug', slug, domainId },
+        context: { source: 'CreateSlugPage', action: 'createSlug', slug: data.slug, domainId },
       });
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     }
@@ -51,36 +60,20 @@ export default function CreateSlugPage(): React.JSX.Element {
         eyebrow='CMS · Routing'
       />
 
-      <form
-        onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
-          void handleSubmit(e);
-        }}
-      >
-        <FormSection title='Path Details' className='p-6'>
-          <FormField
-            label='Slug'
-            error={error}
-            description='This will be the URL segment (e.g. "about-us" becomes /about-us)'
-            required
-          >
-            <Input
-              id='slug'
-              value={slug}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSlug(e.target.value)}
-              placeholder='e.g. my-awesome-page'
-              className='h-9'
-              autoFocus
-            />
-          </FormField>
+      {error && (
+        <Alert variant='error' className='mb-6'>
+          {error}
+        </Alert>
+      )}
 
-          <FormActions
-            onCancel={() => router.back()}
-            saveText='Create Path'
-            isSaving={createSlug.isPending}
-            className='pt-4'
-          />
-        </FormSection>
-      </form>
+      <SlugForm
+        onSubmit={handleSubmit}
+        isSaving={createSlug.isPending || updateSlugDomains.isPending}
+        onCancel={() => router.back()}
+        submitText='Create Path'
+        domains={domains}
+        initialData={domainId ? { slug: '', isDefault: false, domainIds: [domainId] } : undefined}
+      />
     </div>
   );
 }

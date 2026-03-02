@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { AiInsightNotificationsResponseDto as NotificationsResponse } from '@/shared/contracts/ai-insights';
 import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -30,7 +28,6 @@ export const useAiInsightsNotifications = (
   });
 
 export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2<void, void>({
     mutationFn: () => api.delete<void>('/api/ai-insights/notifications'),
     mutationKey: aiNotificationsQueryKey,
@@ -42,8 +39,6 @@ export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
       mutationKey: aiNotificationsQueryKey,
       tags: ['ai', 'insights', 'notifications', 'clear'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: aiNotificationsQueryKey });
-    },
+    invalidateKeys: [aiNotificationsQueryKey],
   });
 }

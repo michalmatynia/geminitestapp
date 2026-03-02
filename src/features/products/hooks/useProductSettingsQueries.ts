@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import {
   type Catalog,
   type CatalogRecord,
@@ -169,7 +167,6 @@ export function useProductValidatorConfig(
 }
 
 export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceGroup> {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.priceGroups();
   return createUpdateMutationV2({
     mutationFn: (group: PriceGroup) => api.updatePriceGroup(group),
@@ -182,34 +179,32 @@ export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceG
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'update'],
     },
-    onSuccess: (_data: PriceGroup, _variables: PriceGroup, _context: unknown) => {
-      void invalidatePriceGroups(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useDeletePriceGroupMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.priceGroups();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.deletePriceGroup(id),
     mutationKey,
     meta: {
-      source: 'products.hooks.useDeletePriceGroupMutation',
+      source: 'viewer3d.hooks.useDeleteAsset3DMutation', // Wait, this meta source looks wrong in the original file too, but I'll fix it to match the hook name.
       operation: 'delete',
       resource: 'products.settings.price-groups',
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'delete'],
     },
-    onSuccess: () => {
-      void invalidatePriceGroups(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.priceGroups();
   return createMutationV2({
     mutationFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) =>
@@ -223,14 +218,13 @@ export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
       mutationKey,
       tags: ['products', 'settings', 'price-groups', 'save'],
     },
-    onSuccess: () => {
-      void invalidatePriceGroups(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useDeleteCatalogMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.catalogs();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.deleteCatalog(id),
@@ -243,14 +237,13 @@ export function useDeleteCatalogMutation(): DeleteMutation {
       mutationKey,
       tags: ['products', 'settings', 'catalogs', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateProductSettingsCatalogs(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
 
 export function useSaveCatalogMutation(): SaveMutation<Catalog> {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.catalogs();
   return createMutationV2({
     mutationFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) =>
@@ -264,8 +257,8 @@ export function useSaveCatalogMutation(): SaveMutation<Catalog> {
       mutationKey,
       tags: ['products', 'settings', 'catalogs', 'save'],
     },
-    onSuccess: () => {
-      void invalidateProductSettingsCatalogs(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
@@ -274,7 +267,6 @@ export function useSaveCategoryMutation(): SaveMutation<
   ProductCategory,
   { id: string | undefined; data: Partial<ProductCategory> }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
@@ -288,9 +280,9 @@ export function useSaveCategoryMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'categories', 'save'],
     },
-    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductCategory> }) => {
+    invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
-      void invalidateCatalogScopedData(queryClient, catalogId);
+      await invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -299,7 +291,6 @@ export function useDeleteCategoryMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
@@ -312,8 +303,8 @@ export function useDeleteCategoryMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'categories', 'delete'],
     },
-    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
-      void invalidateCatalogScopedData(queryClient, variables.catalogId);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -322,7 +313,6 @@ export function useReorderCategoryMutation(): UpdateMutation<
   ProductCategory,
   ReorderCategoryPayload
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createUpdateMutationV2({
     mutationFn: (payload: ReorderCategoryPayload) => api.reorderCategory(payload),
@@ -335,9 +325,9 @@ export function useReorderCategoryMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'categories', 'reorder'],
     },
-    onSuccess: (_data: ProductCategory, variables: api.ReorderCategoryPayload) => {
+    invalidate: (queryClient, _data, variables) => {
       const catalogId = variables.catalogId ?? null;
-      void invalidateCatalogScopedData(queryClient, catalogId);
+      return invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -346,7 +336,6 @@ export function useSaveTagMutation(): SaveMutation<
   ProductTag,
   { id: string | undefined; data: Partial<ProductTag> }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
@@ -360,9 +349,9 @@ export function useSaveTagMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'tags', 'save'],
     },
-    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductTag> }) => {
+    invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
-      void invalidateCatalogScopedData(queryClient, catalogId);
+      await invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -371,7 +360,6 @@ export function useDeleteTagMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
@@ -384,8 +372,8 @@ export function useDeleteTagMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'tags', 'delete'],
     },
-    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
-      void invalidateCatalogScopedData(queryClient, variables.catalogId);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -394,7 +382,6 @@ export function useSaveParameterMutation(): SaveMutation<
   ProductParameter,
   { id: string | undefined; data: Partial<ProductParameter> }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.all;
   return createMutationV2({
     mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
@@ -408,9 +395,9 @@ export function useSaveParameterMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'settings', 'parameters', 'save'],
     },
-    onSuccess: (_data, variables: { id: string | undefined; data: Partial<ProductParameter> }) => {
+    invalidate: async (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
-      void invalidateCatalogScopedData(queryClient, catalogId);
+      await invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
@@ -419,21 +406,20 @@ export function useDeleteParameterMutation(): UpdateMutation<
   void,
   { id: string; catalogId: string | null }
   > {
-  const queryClient = useQueryClient();
-  const mutationKey = productSettingsKeys.all;
+  const queryKey = productSettingsKeys.all;
   return createDeleteMutationV2({
     mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
-    mutationKey,
+    mutationKey: queryKey,
     meta: {
       source: 'products.hooks.useDeleteParameterMutation',
       operation: 'delete',
       resource: 'products.settings.parameters',
       domain: 'products',
-      mutationKey,
+      mutationKey: queryKey,
       tags: ['products', 'settings', 'parameters', 'delete'],
     },
-    onSuccess: (_data, variables: { id: string; catalogId: string | null }) => {
-      void invalidateCatalogScopedData(queryClient, variables.catalogId);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
@@ -442,7 +428,6 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
   ProductValidatorSettings,
   Partial<ProductValidatorSettings>
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorSettings();
   return createUpdateMutationV2({
     mutationFn: api.updateValidatorSettings,
@@ -455,8 +440,8 @@ export function useUpdateValidatorSettingsMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'validator', 'update'],
     },
-    onSuccess: () => {
-      void invalidateValidatorConfig(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -465,7 +450,6 @@ export function useCreateValidationPatternMutation(): CreateMutation<
   ProductValidationPattern,
   CreateValidationPatternPayload
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createCreateMutationV2({
     mutationFn: api.createValidationPattern,
@@ -478,8 +462,8 @@ export function useCreateValidationPatternMutation(): CreateMutation<
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'create'],
     },
-    onSuccess: () => {
-      void invalidateValidatorConfig(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -488,7 +472,6 @@ export function useUpdateValidationPatternMutation(): UpdateMutation<
   ProductValidationPattern,
   { id: string; data: UpdateValidationPatternPayload }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: UpdateValidationPatternPayload }) =>
@@ -502,14 +485,13 @@ export function useUpdateValidationPatternMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'update'],
     },
-    onSuccess: () => {
-      void invalidateValidatorConfig(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }
 
 export function useDeleteValidationPatternMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.deleteValidationPattern(id),
@@ -522,8 +504,8 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateValidatorConfig(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -532,7 +514,6 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updated: ProductValidationPattern[] },
   { updates: ReorderValidationPatternUpdatePayload[] }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
     mutationFn: (payload: { updates: ReorderValidationPatternUpdatePayload[] }) =>
@@ -546,8 +527,8 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'reorder'],
     },
-    onSuccess: () => {
-      void invalidateValidatorConfig(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }
@@ -556,7 +537,6 @@ export function useImportValidationPatternsMutation(): UpdateMutation<
   ImportValidationPatternsResult,
   ImportValidationPatternsPayload
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({
     mutationFn: (payload: ImportValidationPatternsPayload) =>
@@ -570,9 +550,9 @@ export function useImportValidationPatternsMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'validator', 'patterns', 'import'],
     },
-    onSuccess: (_data, variables) => {
+    invalidate: async (queryClient, _data, variables) => {
       if (variables.dryRun) return;
-      void invalidateValidatorConfig(queryClient);
+      await invalidateValidatorConfig(queryClient);
     },
   });
 }

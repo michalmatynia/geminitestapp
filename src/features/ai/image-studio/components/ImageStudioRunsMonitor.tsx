@@ -1,9 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useImageStudioRuns } from '@/features/ai/ai-paths/hooks/useImageStudioRuns';
-import { Card, Badge, LoadingState } from '@/shared/ui';
+import {
+  Card,
+  Badge,
+  LoadingState,
+  SelectSimple,
+  StandardDataTablePanel,
+  Checkbox,
+} from '@/shared/ui';
+import type { ColumnDef } from '@tanstack/react-table';
 
 const formatDateTime = (value: string | null | undefined): string => {
   if (!value) return 'n/a';
@@ -26,11 +34,96 @@ const formatDuration = (startedAt: string | null, finishedAt: string | null): st
   return `${minutes}m ${remainder}s`;
 };
 
-export function ImageStudioRunsMonitor(): React.JSX.Element {
-  const { runs, stats, statusFilter, setStatusFilter, autoRefreshEnabled, setAutoRefreshEnabled, isLoading } =
-    useImageStudioRuns();
+type ImageStudioRun = ReturnType<typeof useImageStudioRuns>['runs'][0];
 
-  if (isLoading) {
+export function ImageStudioRunsMonitor(): React.JSX.Element {
+  const {
+    runs,
+    stats,
+    statusFilter,
+    setStatusFilter,
+    autoRefreshEnabled,
+    setAutoRefreshEnabled,
+    isLoading,
+  } = useImageStudioRuns();
+
+  const columns = useMemo<ColumnDef<ImageStudioRun>[]>(
+    () => [
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.status === 'completed'
+                ? 'success'
+                : row.original.status === 'failed'
+                  ? 'error'
+                  : row.original.status === 'running'
+                    ? 'info'
+                    : 'warning'
+            }
+            className='text-[10px] uppercase'
+          >
+            {row.original.status}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: 'id',
+        header: 'Run ID',
+        cell: ({ row }) => (
+          <span className='font-mono text-[11px] text-foreground'>{row.original.id}</span>
+        ),
+      },
+      {
+        accessorKey: 'projectId',
+        header: 'Project',
+        cell: ({ row }) => <span className='font-mono text-[11px]'>{row.original.projectId}</span>,
+      },
+      {
+        accessorKey: 'dispatchMode',
+        header: 'Dispatch',
+        cell: ({ row }) => <span>{row.original.dispatchMode ?? 'n/a'}</span>,
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Created',
+        cell: ({ row }) => <span>{formatDateTime(row.original.createdAt)}</span>,
+      },
+      {
+        id: 'duration',
+        header: 'Duration',
+        cell: ({ row }) => (
+          <span>{formatDuration(row.original.startedAt, row.original.finishedAt)}</span>
+        ),
+      },
+      {
+        id: 'outputs',
+        header: 'Outputs',
+        cell: ({ row }) => (
+          <span>
+            {row.original.outputs.length}/{row.original.expectedOutputs}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: 'Error',
+        cell: ({ row }) =>
+          row.original.errorMessage ? (
+            <span className='line-clamp-2 text-red-400 max-w-xs' title={row.original.errorMessage}>
+              {row.original.errorMessage}
+            </span>
+          ) : (
+            <span className='text-muted-foreground/70'>—</span>
+          ),
+      },
+    ],
+    []
+  );
+
+  if (isLoading && !runs.length) {
     return (
       <Card
         variant='subtle-compact'
@@ -38,18 +131,6 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
         className='flex items-center gap-2 border-border/60 bg-card/40 text-sm text-muted-foreground'
       >
         <LoadingState message='Loading Image Studio runs...' />
-      </Card>
-    );
-  }
-
-  if (!runs.length) {
-    return (
-      <Card
-        variant='subtle-compact'
-        padding='md'
-        className='border-border/60 bg-card/40 text-sm text-muted-foreground'
-      >
-        No Image Studio runs found for the current filter.
       </Card>
     );
   }
@@ -65,102 +146,50 @@ export function ImageStudioRunsMonitor(): React.JSX.Element {
           <span className='whitespace-nowrap'>
             Runs: {stats.total} (Queued {stats.queuedCount}, Running {stats.runningCount})
           </span>
-          <label className='flex items-center gap-1'>
+          <div className='flex items-center gap-2'>
             <span className='text-[11px]'>Status</span>
-            <select
+            <SelectSimple
+              size='xs'
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as typeof statusFilter)
-              }
-              className='h-7 rounded border border-border/60 bg-background px-1 text-[11px] text-foreground'
-            >
-              <option value='all'>All</option>
-              <option value='queued'>Queued</option>
-              <option value='running'>Running</option>
-              <option value='completed'>Completed</option>
-              <option value='failed'>Failed</option>
-            </select>
+              onValueChange={(val) => setStatusFilter(val as typeof statusFilter)}
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'queued', label: 'Queued' },
+                { value: 'running', label: 'Running' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'failed', label: 'Failed' },
+              ]}
+              className='h-7 w-24'
+            />
+          </div>
+        </div>
+        <div className='flex items-center gap-2'>
+          <Checkbox
+            id='auto-refresh'
+            checked={autoRefreshEnabled}
+            onCheckedChange={(checked) => setAutoRefreshEnabled(Boolean(checked))}
+          />
+          <label htmlFor='auto-refresh' className='text-[11px] cursor-pointer'>
+            Auto-refresh
           </label>
         </div>
-        <label className='flex items-center gap-1'>
-          <input
-            type='checkbox'
-            className='h-3.5 w-3.5 rounded border-border/60'
-            checked={autoRefreshEnabled}
-            onChange={(event) => setAutoRefreshEnabled(event.target.checked)}
-          />
-          <span className='text-[11px]'>Auto-refresh</span>
-        </label>
       </Card>
 
-      <Card variant='subtle' padding='sm' className='border-border/60 bg-card/40'>
-        <div className='max-h-[480px] overflow-auto'>
-          <table className='w-full text-left text-xs'>
-            <thead className='border-b border-border/60 text-[11px] uppercase text-muted-foreground'>
-              <tr>
-                <th className='py-1 pr-2'>Status</th>
-                <th className='py-1 pr-2'>Run ID</th>
-                <th className='py-1 pr-2'>Project</th>
-                <th className='py-1 pr-2'>Dispatch</th>
-                <th className='py-1 pr-2'>Created</th>
-                <th className='py-1 pr-2'>Duration</th>
-                <th className='py-1 pr-2'>Outputs</th>
-                <th className='py-1 pr-2'>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => (
-                <tr key={run.id} className='border-b border-border/40 last:border-b-0'>
-                  <td className='py-1 pr-2 align-top'>
-                    <Badge
-                      variant={
-                        run.status === 'completed'
-                          ? 'success'
-                          : run.status === 'failed'
-                            ? 'error'
-                            : run.status === 'running'
-                              ? 'info'
-                              : 'warning'
-                      }
-                      className='text-[10px] uppercase'
-                    >
-                      {run.status}
-                    </Badge>
-                  </td>
-                  <td className='py-1 pr-2 align-top font-mono text-[11px] text-foreground'>
-                    {run.id}
-                  </td>
-                  <td className='py-1 pr-2 align-top font-mono text-[11px]'>
-                    {run.projectId}
-                  </td>
-                  <td className='py-1 pr-2 align-top text-[11px]'>
-                    {run.dispatchMode ?? 'n/a'}
-                  </td>
-                  <td className='py-1 pr-2 align-top text-[11px]'>
-                    {formatDateTime(run.createdAt)}
-                  </td>
-                  <td className='py-1 pr-2 align-top text-[11px]'>
-                    {formatDuration(run.startedAt, run.finishedAt)}
-                  </td>
-                  <td className='py-1 pr-2 align-top text-[11px]'>
-                    {run.outputs.length}/{run.expectedOutputs}
-                  </td>
-                  <td className='py-1 pr-2 align-top text-[11px] text-red-400 max-w-xs'>
-                    {run.errorMessage ? (
-                      <span className='line-clamp-2'>{run.errorMessage}</span>
-                    ) : (
-                      <span className='text-muted-foreground/70'>—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <StandardDataTablePanel
+        columns={columns}
+        data={runs}
+        variant='flat'
+        maxHeight='480px'
+        isLoading={isLoading}
+        loadingVariant='table'
+        emptyState={
+          <div className='py-8 text-center text-sm text-muted-foreground'>
+            No Image Studio runs found for the current filter.
+          </div>
+        }
+      />
     </div>
   );
 }
 
 export default ImageStudioRunsMonitor;
-

@@ -8,7 +8,7 @@ import { ParameterBlockEditor } from './ParameterBlockEditor';
 import { ListItemsEditor } from './ListItemsEditor';
 import { PromptExploderHierarchyTreeProvider } from '../PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '../PromptExploderHierarchyTreeEditor';
-import { SegmentEditorSubsectionsPanel } from '../SegmentEditorSubsectionsPanel';
+import { PromptExploderSubsectionsTreeEditor } from '../tree/PromptExploderSubsectionsTreeEditor';
 import { SegmentEditorInsightsPanel } from '../SegmentEditorInsightsPanel';
 import { SegmentEditorListItemLogicalEditor } from '../SegmentEditorListItemLogicalEditor';
 import type { PromptExploderSegment, PromptExploderSegmentType } from '../../types';
@@ -155,7 +155,7 @@ export function SegmentDetailEditor(): React.JSX.Element {
       )}
 
       {(segment.type === 'sequence' || segment.type === 'qa_matrix') && (
-        <SegmentEditorSubsectionsPanel />
+        <PromptExploderSubsectionsTreeEditor />
       )}
 
       {segment.type === 'assigned_text' && (

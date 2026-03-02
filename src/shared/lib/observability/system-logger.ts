@@ -468,7 +468,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           hydratedContext = (await hydrateLogRuntimeContext(context)) ?? context;
         } catch (enrichmentError) {
           console.error(
-            '[system-logger] Failed to enrich log with runtime static context',
+            '[system-logger] Failed to attach registry runtime context',
             enrichmentError
           );
         }

@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
@@ -134,7 +132,6 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
   AgentTeachingAgentRecord,
   Partial<AgentTeachingAgentRecord> & { name: string }
   > {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
   return createUpdateMutationV2<
     AgentTeachingAgentRecord,
@@ -150,14 +147,11 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
       mutationKey,
       tags: ['agent-teaching', 'agents', 'upsert'],
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
-    },
+    invalidateKeys: [agentTeachingKeys.agents()],
   });
 }
 
 export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: string }> {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
   return createDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteTeachingAgent(id),
@@ -170,9 +164,7 @@ export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: str
       mutationKey,
       tags: ['agent-teaching', 'agents', 'delete'],
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
-    },
+    invalidateKeys: [agentTeachingKeys.agents()],
   });
 }
 
@@ -180,7 +172,6 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   AgentTeachingEmbeddingCollectionRecord,
   Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
   > {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createUpdateMutationV2<
     AgentTeachingEmbeddingCollectionRecord,
@@ -196,14 +187,11 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
       mutationKey,
       tags: ['agent-teaching', 'collections', 'upsert'],
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.collections() });
-    },
+    invalidateKeys: [agentTeachingKeys.collections()],
   });
 }
 
 export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { id: string }> {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteEmbeddingCollection(id),
@@ -216,10 +204,7 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { i
       mutationKey,
       tags: ['agent-teaching', 'collections', 'delete'],
     },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.collections() });
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.agents() });
-    },
+    invalidateKeys: [agentTeachingKeys.collections(), agentTeachingKeys.agents()],
   });
 }
 
@@ -265,7 +250,6 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
     tags?: string[];
   }
   > {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createCreateMutationV2<
     AgentTeachingEmbeddingDocumentListItem,
@@ -305,9 +289,9 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
       mutationKey,
       tags: ['agent-teaching', 'documents', 'create'],
     },
-    onSuccess: (_item, vars: { collectionId: string }) => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
-    },
+    invalidateKeys: (_item, vars: { collectionId: string }) => [
+      agentTeachingKeys.documents(vars.collectionId),
+    ],
   });
 }
 
@@ -315,7 +299,6 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
   void,
   { collectionId: string; documentId: string }
   > {
-  const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createDeleteMutationV2<void, { collectionId: string; documentId: string }>({
     mutationFn: ({ collectionId, documentId }: { collectionId: string; documentId: string }) =>
@@ -329,8 +312,8 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
       mutationKey,
       tags: ['agent-teaching', 'documents', 'delete'],
     },
-    onSuccess: (_item, vars: { collectionId: string }) => {
-      void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
-    },
+    invalidateKeys: (_item, vars: { collectionId: string }) => [
+      agentTeachingKeys.documents(vars.collectionId),
+    ],
   });
 }

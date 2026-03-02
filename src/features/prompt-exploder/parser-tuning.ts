@@ -1,7 +1,6 @@
 import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import type {
   PromptEngineSettings,
-  PromptExploderRuleSegmentType,
   PromptValidationRule,
   PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
@@ -11,6 +10,8 @@ import type {
   PromptExploderParserTuningRuleId,
   PromptExploderParserTuningRuleDraft,
 } from '@/shared/contracts/prompt-exploder';
+
+export type { PromptExploderParserTuningRuleId, PromptExploderParserTuningRuleDraft };
 import { PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS } from '@/shared/contracts/prompt-exploder';
 
 const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string> = {

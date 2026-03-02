@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   CatalogOption as CatalogRecord,
   ImportListItem,
@@ -17,7 +15,7 @@ import type {
   IntegrationWithConnections,
   ImageRetryPreset,
   BaseImportStartResponse as ImportResponse,
-  Template,
+  IntegrationTemplate as Template,
 } from '@/shared/contracts/integrations';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -133,7 +131,6 @@ export function useSavePreferenceMutation(): MutationResult<
   unknown,
   { endpoint: string; data: unknown }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
@@ -148,11 +145,11 @@ export function useSavePreferenceMutation(): MutationResult<
       mutationKey,
       tags: ['import-export', 'preferences', 'save'],
     },
-    onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
+    invalidate: async (queryClient, _data, { endpoint }) => {
       void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
       const key = endpoint.split('/').pop();
       if (key) {
-        void queryClient.invalidateQueries({ queryKey: importExportKeys.pref(key) });
+        await queryClient.invalidateQueries({ queryKey: importExportKeys.pref(key) });
       }
     },
   });
@@ -162,7 +159,6 @@ export function useTemplateMutation(
   scope: 'import' | 'export',
   id?: string
 ): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
-  const queryClient = useQueryClient();
   const endpoint =
     scope === 'import'
       ? '/api/integrations/import-templates'
@@ -190,7 +186,7 @@ export function useTemplateMutation(
       mutationKey,
       tags: ['import-export', 'templates', scope, 'save'],
     },
-    onSuccess: (result: unknown, variables: { data?: unknown; isDelete?: boolean }) => {
+    invalidate: async (queryClient, result, variables) => {
       queryClient.setQueryData<Template[]>(
         importExportKeys.templates(scope),
         (previous: Template[] | undefined): Template[] => {
@@ -214,7 +210,7 @@ export function useTemplateMutation(
           );
         }
       );
-      void queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
+      await queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
     },
   });
 }
@@ -333,7 +329,6 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
   { keys?: string[]; values?: Record<string, string> },
   { inventoryId: string; connectionId?: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.lists();
 
   return createMutationV2({
@@ -368,14 +363,10 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
       mutationKey,
       tags: ['import-export', 'parameters', 'refresh'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.pref('sample-product'),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.pref('parameter-cache'),
-      });
-    },
+    invalidateKeys: [
+      importExportKeys.pref('sample-product'),
+      importExportKeys.pref('parameter-cache'),
+    ],
   });
 }
 
@@ -610,7 +601,6 @@ export function useSaveExportSettingsMutation(): MutationResult<
     exportWarehouseId?: string | null;
   }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
@@ -663,18 +653,12 @@ export function useSaveExportSettingsMutation(): MutationResult<
       mutationKey,
       tags: ['import-export', 'export-settings', 'save'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
-      void queryClient.invalidateQueries({
-        queryKey: integrationKeys.selection.defaultConnection(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: integrationKeys.defaultExportInventory(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: integrationKeys.activeExportTemplate(),
-      });
-    },
+    invalidateKeys: [
+      importExportKeys.preferences(),
+      integrationKeys.selection.defaultConnection(),
+      integrationKeys.defaultExportInventory(),
+      integrationKeys.activeExportTemplate(),
+    ],
   });
 }
 
@@ -682,7 +666,6 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
   { connectionId: string | null },
   { connectionId?: string | null }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
@@ -706,22 +689,15 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
       mutationKey,
       tags: ['import-export', 'default-connection', 'save'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: integrationKeys.selection.defaultConnection(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.preferences(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.pref('default-connection'),
-      });
-    },
+    invalidateKeys: [
+      integrationKeys.selection.defaultConnection(),
+      importExportKeys.preferences(),
+      importExportKeys.pref('default-connection'),
+    ],
   });
 }
 
 export function useClearInventoryMutation(): MutationResult<void, void> {
-  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.inventories(undefined);
   return createDeleteMutationV2({
     mutationFn: async () => {
@@ -746,13 +722,6 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
       mutationKey,
       tags: ['import-export', 'inventory', 'clear'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.pref('sample-product'),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: importExportKeys.pref('parameter-cache'),
-      });
-    },
+    invalidateKeys: [importExportKeys.pref('sample-product'), importExportKeys.pref('parameter-cache')],
   });
 }

@@ -148,7 +148,10 @@ export const aiPathRunEventLevelSchema = z.enum(['debug', 'info', 'warn', 'error
 export type AiPathRunEventLevelDto = z.infer<typeof aiPathRunEventLevelSchema>;
 export type AiPathRunEventLevel = AiPathRunEventLevelDto;
 
-export const aiPathRunEventSchema = dtoBaseSchema.extend({
+export const aiPathRunEventSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
   runId: z.string(),
   nodeId: z.string().nullable().optional(),
   nodeType: z.string().nullable().optional(),

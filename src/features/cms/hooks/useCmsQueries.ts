@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { createDomain, deleteDomain, fetchDomains, updateDomain } from '@/features/cms/api/domains';
 import {
   createPage,
@@ -90,7 +88,6 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
 }
 
 export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: string[] }> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: (input: { name: string; slugIds: string[] }) =>
       createPage(input).then(({ ok, payload }) => {
@@ -105,8 +102,8 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
       mutationKey: cmsKeys.pages.lists(),
       tags: ['cms', 'pages', 'create'],
     },
-    onSuccess: () => {
-      void invalidateCmsPages(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsPages(queryClient);
     },
   });
 }
@@ -115,7 +112,6 @@ export function useUpdatePage(): UpdateMutation<
   Page,
   { id: string; input: Page & { slugIds?: string[] } }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
       updatePage(id, input).then(({ ok, payload }) => {
@@ -134,15 +130,14 @@ export function useUpdatePage(): UpdateMutation<
       mutationKey: cmsKeys.pages.lists(),
       tags: ['cms', 'pages', 'update'],
     },
-    onSuccess: (_data: Page, variables: { id: string; input: Page & { slugIds?: string[] } }) => {
-      void invalidateCmsPages(queryClient);
-      void invalidateCmsPageDetail(queryClient, variables.id);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCmsPages(queryClient);
+      await invalidateCmsPageDetail(queryClient, variables.id);
     },
   });
 }
 
 export function useDeletePage(): UpdateMutation<string, string> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: (id: string) =>
       deletePage(id).then(({ ok }) => {
@@ -157,8 +152,8 @@ export function useDeletePage(): UpdateMutation<string, string> {
       mutationKey: cmsKeys.pages.lists(),
       tags: ['cms', 'pages', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateCmsPages(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsPages(queryClient);
     },
   });
 }
@@ -229,7 +224,6 @@ export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[
 }
 
 export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?: string | null }> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: (input: { slug: string; domainId?: string | null }) =>
       createSlug(input).then(({ ok, payload }) => {
@@ -244,8 +238,8 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
       mutationKey: cmsKeys.slugs.lists(),
       tags: ['cms', 'slugs', 'create'],
     },
-    onSuccess: () => {
-      void invalidateCmsSlugs(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsSlugs(queryClient);
     },
   });
 }
@@ -254,7 +248,6 @@ export function useUpdateSlug(): UpdateMutation<
   Slug,
   { id: string; input: Partial<Slug>; domainId?: string | null }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({
       id,
@@ -277,12 +270,9 @@ export function useUpdateSlug(): UpdateMutation<
       mutationKey: cmsKeys.slugs.lists(),
       tags: ['cms', 'slugs', 'update'],
     },
-    onSuccess: (
-      _data: Slug,
-      variables: { id: string; input: Partial<Slug>; domainId?: string | null }
-    ) => {
-      void invalidateCmsSlugs(queryClient);
-      void invalidateCmsSlugDetail(queryClient, variables.id);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCmsSlugs(queryClient);
+      await invalidateCmsSlugDetail(queryClient, variables.id);
     },
   });
 }
@@ -291,7 +281,6 @@ export function useUpdateSlugDomains(): UpdateMutation<
   { domainIds: string[] },
   { id: string; domainIds: string[] }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) =>
       updateSlugDomains(id, domainIds),
@@ -303,15 +292,14 @@ export function useUpdateSlugDomains(): UpdateMutation<
       mutationKey: cmsKeys.slugs.lists(),
       tags: ['cms', 'slugs', 'domains', 'update'],
     },
-    onSuccess: (_data: { domainIds: string[] }, variables: { id: string; domainIds: string[] }) => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateCmsSlugDetail(queryClient, variables.id);
-      void invalidateCmsSlugs(queryClient);
+      return invalidateCmsSlugs(queryClient);
     },
   });
 }
 
 export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?: string | null }> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: ({ id, domainId }: { id: string; domainId?: string | null }) =>
       deleteSlug(id, domainId).then(({ ok }) => {
@@ -326,8 +314,8 @@ export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?:
       mutationKey: cmsKeys.slugs.lists(),
       tags: ['cms', 'slugs', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateCmsSlugs(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsSlugs(queryClient);
     },
   });
 }
@@ -352,7 +340,6 @@ export function useCmsDomains(): ListQuery<CmsDomain> {
 }
 
 export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string }> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: (input: { domain: string }) =>
       createDomain(input).then(({ ok, payload }) => {
@@ -367,14 +354,13 @@ export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string
       mutationKey: cmsKeys.domains.lists(),
       tags: ['cms', 'domains', 'create'],
     },
-    onSuccess: () => {
-      void invalidateCmsDomains(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsDomains(queryClient);
     },
   });
 }
 
 export function useDeleteCmsDomain(): UpdateMutation<string, string> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: (id: string) =>
       deleteDomain(id).then(({ ok }) => {
@@ -389,8 +375,8 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
       mutationKey: cmsKeys.domains.lists(),
       tags: ['cms', 'domains', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateCmsDomains(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsDomains(queryClient);
     },
   });
 }
@@ -399,7 +385,6 @@ export function useUpdateCmsDomain(): UpdateMutation<
   CmsDomain,
   { id: string; input: { aliasOf?: string | null } }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) =>
       updateDomain(id, input).then(({ ok, payload }) => {
@@ -414,8 +399,8 @@ export function useUpdateCmsDomain(): UpdateMutation<
       mutationKey: cmsKeys.domains.lists(),
       tags: ['cms', 'domains', 'update'],
     },
-    onSuccess: () => {
-      void invalidateCmsDomains(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsDomains(queryClient);
     },
   });
 }
@@ -457,7 +442,6 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
 }
 
 export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: (input: CmsThemeCreateInput) =>
       createTheme(input).then(({ ok, payload }) => {
@@ -472,8 +456,8 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
       mutationKey: cmsKeys.themes.lists(),
       tags: ['cms', 'themes', 'create'],
     },
-    onSuccess: () => {
-      void invalidateCmsThemes(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsThemes(queryClient);
     },
   });
 }
@@ -482,7 +466,6 @@ export function useUpdateTheme(): UpdateMutation<
   CmsTheme,
   { id: string; input: CmsThemeUpdateInput }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
       updateTheme(id, input).then(({ ok, payload }) => {
@@ -497,15 +480,14 @@ export function useUpdateTheme(): UpdateMutation<
       mutationKey: cmsKeys.themes.lists(),
       tags: ['cms', 'themes', 'update'],
     },
-    onSuccess: (_data: CmsTheme, variables: { id: string; input: CmsThemeUpdateInput }) => {
-      void invalidateCmsThemes(queryClient);
-      void invalidateCmsThemeDetail(queryClient, variables.id);
+    invalidate: async (queryClient, _data, variables) => {
+      await invalidateCmsThemes(queryClient);
+      await invalidateCmsThemeDetail(queryClient, variables.id);
     },
   });
 }
 
 export function useDeleteTheme(): UpdateMutation<string, string> {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: (id: string) =>
       deleteTheme(id).then(({ ok }) => {
@@ -520,8 +502,8 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
       mutationKey: cmsKeys.themes.lists(),
       tags: ['cms', 'themes', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateCmsThemes(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateCmsThemes(queryClient);
     },
   });
 }
@@ -530,7 +512,6 @@ export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: async ({
       file,
@@ -560,8 +541,8 @@ export function useUploadCmsMedia(): CreateMutation<
       mutationKey: cmsKeys.mutation('upload-media'),
       tags: ['cms', 'media', 'upload'],
     },
-    onSuccess: () => {
-      void invalidateFiles(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateFiles(queryClient);
     },
   });
 }

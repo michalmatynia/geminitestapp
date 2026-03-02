@@ -64,7 +64,9 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'update'],
     },
-    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
+    },
   });
 }
 
@@ -80,7 +82,9 @@ export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string>
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'delete'],
     },
-    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
+    },
   });
 }
 
@@ -101,7 +105,9 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'bulk-delete'],
     },
-    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
+    },
   });
 }
 
@@ -156,7 +162,9 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'duplicate'],
     },
-    invalidate: (queryClient) => invalidateProductsAndCounts(queryClient),
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
+    },
   });
 }
 
@@ -177,6 +185,8 @@ export function useUpdateProductField(): UpdateMutation<
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'field-update'],
     },
-    invalidate: (queryClient, _, variables) => invalidateProductsAndDetail(queryClient, variables.id),
+    invalidate: async (queryClient, _, variables) => {
+      await invalidateProductsAndDetail(queryClient, variables.id);
+    },
   });
 }

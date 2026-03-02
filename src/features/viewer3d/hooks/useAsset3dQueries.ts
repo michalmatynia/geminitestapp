@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import {
@@ -139,7 +138,6 @@ export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
 }
 
 export function useDeleteAsset3DMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<void>(`/api/assets3d/${id}`),
     mutationKey: asset3dKeys.all,
@@ -150,9 +148,7 @@ export function useDeleteAsset3DMutation(): DeleteMutation {
       mutationKey: asset3dKeys.all,
       tags: ['viewer3d', 'asset', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateAsset3d(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAsset3d(queryClient),
   });
 }
 
@@ -160,7 +156,6 @@ export function useUpdateAsset3DMutation(): UpdateMutation<
   Asset3DRecord,
   { id: string; data: Partial<Asset3DRecord> }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) =>
       api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
@@ -172,9 +167,9 @@ export function useUpdateAsset3DMutation(): UpdateMutation<
       mutationKey: asset3dKeys.all,
       tags: ['viewer3d', 'asset', 'update'],
     },
-    onSuccess: (data: Asset3DRecord) => {
+    invalidate: (queryClient, data: Asset3DRecord) => {
       void invalidateAsset3d(queryClient);
-      void invalidateAsset3dDetail(queryClient, data.id);
+      return invalidateAsset3dDetail(queryClient, data.id);
     },
   });
 }
@@ -190,7 +185,6 @@ export function useReindexAssets3DMutation(): UpdateMutation<
   },
   void
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: () => reindexAssets3DFromDisk(),
     mutationKey: asset3dKeys.all,
@@ -201,8 +195,6 @@ export function useReindexAssets3DMutation(): UpdateMutation<
       mutationKey: asset3dKeys.all,
       tags: ['viewer3d', 'assets', 'reindex'],
     },
-    onSuccess: () => {
-      void invalidateAsset3d(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAsset3d(queryClient),
   });
 }

@@ -223,16 +223,20 @@ describe('system-logger', () => {
       });
     });
 
-    it('should enrich persisted context with AI path run static context when runId is present', async () => {
+    it('should enrich persisted context with canonical context-registry refs when runId is present', async () => {
       vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
         runId: 'run-1',
         fingerprint: 'fp-1',
-        staticContext: {
-          aiPathRun: {
-            kind: 'ai_path_run',
-            runId: 'run-1',
-            status: 'failed',
-          },
+        contextRegistry: {
+          refs: [
+            {
+              id: 'runtime:ai-path-run:run-1',
+              kind: 'runtime_document',
+              providerId: 'ai-path-run',
+              entityType: 'ai_path_run',
+            },
+          ],
+          engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
         },
       });
 
@@ -258,12 +262,13 @@ describe('system-logger', () => {
             context: expect.objectContaining({
               runId: 'run-1',
               fingerprint: expect.any(String),
-              staticContext: {
-                aiPathRun: expect.objectContaining({
-                  kind: 'ai_path_run',
-                  runId: 'run-1',
-                }),
-              },
+              contextRegistry: expect.objectContaining({
+                refs: [
+                  expect.objectContaining({
+                    id: 'runtime:ai-path-run:run-1',
+                  }),
+                ],
+              }),
             }),
           })
         );
@@ -302,12 +307,16 @@ describe('system-logger', () => {
       vi.mocked(hydrateLogRuntimeContext).mockResolvedValue({
         runId: 'run-1',
         fingerprint: 'fp-1',
-        staticContext: {
-          aiPathRun: {
-            kind: 'ai_path_run',
-            runId: 'run-1',
-            status: 'failed',
-          },
+        contextRegistry: {
+          refs: [
+            {
+              id: 'runtime:ai-path-run:run-1',
+              kind: 'runtime_document',
+              providerId: 'ai-path-run',
+              entityType: 'ai_path_run',
+            },
+          ],
+          engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
         },
       });
 
@@ -330,11 +339,9 @@ describe('system-logger', () => {
         expect.objectContaining({
           runId: 'run-1',
           fingerprint: expect.any(String),
-          staticContext: {
-            aiPathRun: expect.objectContaining({
-              runId: 'run-1',
-            }),
-          },
+          contextRegistry: expect.objectContaining({
+            refs: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+          }),
         })
       );
       expect(createSystemLog).toHaveBeenCalledWith(
@@ -342,11 +349,9 @@ describe('system-logger', () => {
           context: expect.objectContaining({
             runId: 'run-1',
             fingerprint: expect.any(String),
-            staticContext: {
-              aiPathRun: expect.objectContaining({
-                runId: 'run-1',
-              }),
-            },
+            contextRegistry: expect.objectContaining({
+              refs: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+            }),
           }),
         })
       );

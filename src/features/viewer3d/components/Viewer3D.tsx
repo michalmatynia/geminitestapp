@@ -17,11 +17,16 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
 import * as THREE from 'three';
 
-import type { Asset3dLightingPreset, Asset3dEnvironmentPreset } from '@/shared/contracts/viewer3d';
+import type {
+  Asset3dLightingPreset,
+  Asset3dEnvironmentPreset,
+  Viewer3DState,
+  Viewer3DSettings,
+} from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
-import { useOptionalViewer3D, type Viewer3DState } from '../context/Viewer3DContext';
+import { useOptionalViewer3D } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
@@ -291,14 +296,6 @@ function SceneLighting(): React.JSX.Element {
 // Camera auto-framing
 export type LightingPreset = Asset3dLightingPreset;
 export type EnvironmentPreset = Asset3dEnvironmentPreset;
-
-/**
- * Grouped settings for the 3D viewer.
- * All these can be provided via context or as a single 'settings' prop.
- */
-export type Viewer3DSettings = Partial<Viewer3DState> & {
-  enableAntiAliasing?: boolean;
-};
 
 export interface Viewer3DProps {
   /** URL to the 3D model file (.glb or .gltf) */

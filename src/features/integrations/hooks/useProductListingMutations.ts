@@ -164,9 +164,9 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       }
       removeListingBadgeStatus(queryClient, vars.productId, 'base');
     },
-    invalidate: (queryClient, _data, vars) => {
+    invalidate: async (queryClient, _data, vars) => {
       setListingBadgeStatus(queryClient, vars.productId, 'base', 'active');
-      return invalidateListingsBadgesAndQueues(queryClient, vars.productId);
+      await invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     },
   });
 }
@@ -198,7 +198,9 @@ export function useGenericCreateListingMutation(): CreateMutation<
       mutationKey: integrationJobsQueryKey,
       tags: ['integrations', 'listings', 'create'],
     },
-    invalidate: (queryClient, _data, vars) => invalidateProductListingsAndBadges(queryClient, vars.productId),
+    invalidate: async (queryClient, _data, vars) => {
+      await invalidateProductListingsAndBadges(queryClient, vars.productId);
+    },
   });
 }
 
@@ -274,7 +276,9 @@ export function useDeleteFromBaseMutation(
         queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
       }
     },
-    invalidate: (queryClient) => invalidateListingsBadgesAndQueues(queryClient, productId),
+    invalidate: async (queryClient) => {
+      await invalidateListingsBadgesAndQueues(queryClient, productId);
+    },
   });
 }
 
@@ -291,7 +295,9 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'purge'],
     },
-    invalidate: (queryClient) => invalidateProductListingsAndBadges(queryClient, productId),
+    invalidate: async (queryClient) => {
+      await invalidateProductListingsAndBadges(queryClient, productId);
+    },
   });
 }
 
@@ -313,7 +319,9 @@ export function useUpdateListingInventoryIdMutation(
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'inventory-id', 'update'],
     },
-    invalidate: (queryClient) => invalidateProductListingsAndBadges(queryClient, productId),
+    invalidate: async (queryClient) => {
+      await invalidateProductListingsAndBadges(queryClient, productId);
+    },
   });
 }
 
@@ -350,9 +358,9 @@ export function useSyncBaseImagesMutation(
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'base-images', 'sync'],
     },
-    invalidate: (queryClient) => {
-      void invalidateProductListingsAndBadges(queryClient, productId);
-      return invalidateProducts(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
     },
   });
 }
@@ -405,9 +413,9 @@ export function useExportToBaseMutation(
       }
       removeListingBadgeStatus(queryClient, productId, 'base');
     },
-    invalidate: (queryClient) => {
+    invalidate: async (queryClient) => {
       setListingBadgeStatus(queryClient, productId, 'base', 'active');
-      return invalidateListingsBadgesAndQueues(queryClient, productId);
+      await invalidateListingsBadgesAndQueues(queryClient, productId);
     },
   });
 }
@@ -456,12 +464,12 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'create'],
     },
-    invalidate: (queryClient, data) => {
+    invalidate: async (queryClient, data) => {
       const queueName = (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
-      return invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProductListingsAndBadges(queryClient, productId);
     },
   });
 }
@@ -490,10 +498,10 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'tradera', 'relist'],
     },
-    invalidate: (queryClient) => {
+    invalidate: async (queryClient) => {
       setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
-      void invalidateProductListingsAndBadges(queryClient, productId);
-      return invalidateProducts(queryClient);
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
     },
   });
 }

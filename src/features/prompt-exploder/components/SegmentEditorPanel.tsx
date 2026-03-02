@@ -3,7 +3,7 @@
 import React from 'react';
 import { FormSection, EmptyState } from '@/shared/ui';
 import { useDocumentState } from '../context/hooks/useDocument';
-import { SegmentListSidebar } from './segment-editor/SegmentListSidebar';
+import { PromptExploderSegmentsTreeEditor } from './tree/PromptExploderSegmentsTreeEditor';
 import { SegmentDetailEditor } from './segment-editor/SegmentDetailEditor';
 
 export function SegmentEditorPanel(): React.JSX.Element {
@@ -22,8 +22,8 @@ export function SegmentEditorPanel(): React.JSX.Element {
           description='Run Prompt Exploder to generate editable segments.'
         />
       ) : (
-        <div className='mt-3 grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]'>
-          <SegmentListSidebar />
+        <div className='mt-3 grid gap-3 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)]'>
+          <PromptExploderSegmentsTreeEditor />
           <SegmentDetailEditor />
         </div>
       )}

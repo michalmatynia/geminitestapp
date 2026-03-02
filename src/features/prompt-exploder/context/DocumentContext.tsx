@@ -31,6 +31,7 @@ import type {
   PromptExploderParamEntry,
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
+import { buildPromptExploderParamEntries } from '../params-editor';
 import {
   explodePromptText,
   reassemblePromptSegments,

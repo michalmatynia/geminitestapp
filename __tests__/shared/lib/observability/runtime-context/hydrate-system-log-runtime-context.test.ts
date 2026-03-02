@@ -1,138 +1,92 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getPathRunRepositoryMock, resolveWithExpansionMock, getVersionMock, getByIdsMock } =
-  vi.hoisted(() => ({
-    getPathRunRepositoryMock: vi.fn(),
-    resolveWithExpansionMock: vi.fn(),
-    getVersionMock: vi.fn(),
-    getByIdsMock: vi.fn(),
-  }));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
+const { inferRefsMock, resolveRefsMock, getVersionMock } = vi.hoisted(() => ({
+  inferRefsMock: vi.fn(),
+  resolveRefsMock: vi.fn(),
+  getVersionMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-context-registry/server', () => ({
-  retrievalService: {
-    resolveWithExpansion: resolveWithExpansionMock,
-  },
-  registryBackend: {
+  contextRegistryEngine: {
+    inferRefs: inferRefsMock,
+    resolveRefs: resolveRefsMock,
     getVersion: getVersionMock,
-    getByIds: getByIdsMock,
   },
 }));
 
-const buildRun = () =>
-  ({
-    id: 'run-1',
-    pathId: 'path-1',
-    pathName: 'Primary Path',
-    status: 'failed',
-    entityId: 'product-1',
-    entityType: 'product',
-    triggerEvent: 'manual_run',
-    triggerNodeId: 'trigger-1',
-    createdAt: '2026-03-02T10:00:00.000Z',
-    startedAt: '2026-03-02T10:00:05.000Z',
-    finishedAt: '2026-03-02T10:00:20.000Z',
-    deadLetteredAt: null,
-    meta: {
-      runtimeFingerprint: 'runtime-fp-1',
+const buildRef = (runId: string) => ({
+  id: `runtime:ai-path-run:${runId}`,
+  kind: 'runtime_document' as const,
+  providerId: 'ai-path-run',
+  entityType: 'ai_path_run',
+});
+
+const buildResolvedBundle = (runId: string) => ({
+  refs: [buildRef(runId)],
+  nodes: [
+    {
+      id: 'page:ai-paths',
+      kind: 'page',
+      name: 'AI Paths',
+      description: 'AI paths runtime page.',
+      tags: ['ai', 'paths'],
+      permissions: {
+        readScopes: [],
+        riskTier: 'low',
+        classification: 'internal',
+      },
+      version: 'codefirst:1',
+      updatedAtISO: '2026-03-02T10:00:00.000Z',
+      source: { type: 'code', ref: 'registry/pages.ts' },
+      relationships: [],
     },
-    graph: {
-      nodes: [
+  ],
+  documents: [
+    {
+      id: `runtime:ai-path-run:${runId}`,
+      kind: 'runtime_document' as const,
+      entityType: 'ai_path_run',
+      title: 'Primary Path',
+      summary: 'failed AI Path run',
+      status: 'failed',
+      tags: ['ai-paths', 'runtime', 'failed'],
+      relatedNodeIds: ['page:ai-paths'],
+      timestamps: {
+        createdAt: '2026-03-02T10:00:00.000Z',
+      },
+      facts: {
+        runId,
+        pathName: 'Primary Path',
+      },
+      sections: [
         {
-          id: 'model-a',
-          type: 'model',
-          title: 'Primary Model',
-          config: { model: { modelId: 'gpt-4o-mini' } },
+          id: 'failed-nodes',
+          kind: 'items' as const,
+          title: 'Failed Nodes',
+          items: [{ nodeId: 'model-b', status: 'failed' }],
         },
       ],
-      edges: [],
+      provenance: {
+        providerId: 'ai-path-run',
+      },
     },
-  }) as any;
-
-const buildNodes = () =>
-  [
-    {
-      id: 'node-1',
-      runId: 'run-1',
-      nodeId: 'model-a',
-      nodeType: 'model',
-      nodeTitle: 'Primary Model',
-      status: 'completed',
-      attempt: 1,
-      errorMessage: null,
-      createdAt: '2026-03-02T10:00:05.000Z',
-      updatedAt: '2026-03-02T10:00:07.000Z',
-      startedAt: '2026-03-02T10:00:05.000Z',
-      finishedAt: '2026-03-02T10:00:07.000Z',
-    },
-  ] as any[];
-
-const buildEvents = () =>
-  [
-    {
-      id: 'event-1',
-      runId: 'run-1',
-      level: 'error',
-      message: 'Fallback model crashed.',
-      nodeId: 'model-a',
-      nodeType: 'model',
-      nodeTitle: 'Primary Model',
-      createdAt: '2026-03-02T10:00:12.500Z',
-    },
-  ] as any[];
-
-const buildRegistryNodes = () => [
-  {
-    id: 'page:ai-paths',
-    kind: 'page',
-    name: 'AI Paths Canvas',
-    description: 'Visual editor for AI path graphs.',
-    tags: ['ai', 'paths', 'canvas'],
-    relationships: [{ type: 'uses', targetId: 'action:run-ai-path' }],
-  },
-  {
-    id: 'action:run-ai-path',
-    kind: 'action',
-    name: 'Run AI Path',
-    description: 'Queues an AI path run.',
-    tags: ['ai', 'paths', 'execution'],
-    relationships: [{ type: 'writes', targetId: 'collection:ai-path-runs' }],
-  },
-  {
-    id: 'collection:ai-path-runs',
-    kind: 'collection',
-    name: 'ai_path_runs',
-    description: 'AI path runtime records.',
-    tags: ['ai', 'paths', 'runs'],
-    relationships: [],
-  },
-] as any[];
+  ],
+  truncated: false,
+  engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
+});
 
 describe('hydrate-system-log-runtime-context', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-
-    const repo = {
-      findRunById: vi.fn().mockResolvedValue(buildRun()),
-      listRunNodes: vi.fn().mockResolvedValue(buildNodes()),
-      listRunEvents: vi.fn().mockResolvedValue(buildEvents()),
-    };
-
-    getPathRunRepositoryMock.mockResolvedValue(repo);
-    resolveWithExpansionMock.mockReturnValue({
-      nodes: buildRegistryNodes(),
-      truncated: false,
-      visitedIds: ['page:ai-paths', 'action:run-ai-path', 'collection:ai-path-runs'],
-    });
-    getVersionMock.mockReturnValue('codefirst:3');
-    getByIdsMock.mockReturnValue(buildRegistryNodes());
+    getVersionMock.mockReturnValue('registry:codefirst:7|providers:ai-path-run@1');
+    inferRefsMock.mockReturnValue([buildRef('run-1')]);
+    resolveRefsMock.mockResolvedValue(buildResolvedBundle('run-1'));
   });
 
-  it('returns the original context when no adapter matches', async () => {
+  it('returns the original context when no runtime refs can be inferred', async () => {
+    inferRefsMock.mockReturnValue([]);
+
     const { hydrateLogRuntimeContext } = await import(
       '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
     );
@@ -147,7 +101,7 @@ describe('hydrate-system-log-runtime-context', () => {
     expect(result).toBe(context);
   });
 
-  it('preserves top-level keys while merging static context from the adapter', async () => {
+  it('preserves top-level keys while attaching canonical context registry refs', async () => {
     const { hydrateLogRuntimeContext } = await import(
       '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
     );
@@ -167,21 +121,20 @@ describe('hydrate-system-log-runtime-context', () => {
         category: 'runtime',
         error: { message: 'boom' },
         service: 'ai-paths-worker',
-        staticContext: {
-          aiPathRun: expect.objectContaining({
-            runId: 'run-1',
-          }),
+        contextRegistry: {
+          refs: [buildRef('run-1')],
+          engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
         },
       })
     );
   });
 
-  it('skips rehydration when adapter-owned static context already exists', async () => {
+  it('strips legacy AI-path snapshots from new write-time context while keeping canonical refs', async () => {
     const { hydrateLogRuntimeContext } = await import(
       '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
     );
 
-    const context = {
+    const result = await hydrateLogRuntimeContext({
       runId: 'run-1',
       staticContext: {
         aiPathRun: {
@@ -189,15 +142,116 @@ describe('hydrate-system-log-runtime-context', () => {
           runId: 'run-1',
         },
       },
-    };
+    });
 
-    const result = await hydrateLogRuntimeContext(context);
-
-    expect(result).toBe(context);
-    expect(getPathRunRepositoryMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      runId: 'run-1',
+      contextRegistry: {
+        refs: [buildRef('run-1')],
+        engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
+      },
+    });
   });
 
-  it('keeps only fingerprint plus adapter-backed static context in AI sanitization', async () => {
+  it('hydrates canonical refs into resolved runtime documents for read-time consumers', async () => {
+    const { hydrateSystemLogRecordRuntimeContext } = await import(
+      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+    );
+
+    const result = await hydrateSystemLogRecordRuntimeContext({
+      id: 'log-1',
+      level: 'error',
+      message: 'Run failed',
+      source: 'ai-paths-worker',
+      context: {
+        contextRegistry: {
+          refs: [buildRef('run-1')],
+          engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
+        },
+      },
+      stack: null,
+      path: '/api/ai-paths/runs',
+      method: 'POST',
+      statusCode: 500,
+      requestId: null,
+      userId: null,
+      createdAt: '2026-03-02T10:01:00.000Z',
+      updatedAt: null,
+    });
+
+    expect(resolveRefsMock).toHaveBeenCalledWith({
+      refs: [buildRef('run-1')],
+      maxNodes: 16,
+      depth: 1,
+    });
+    expect(result.context).toEqual(
+      expect.objectContaining({
+        contextRegistry: expect.objectContaining({
+          refs: [buildRef('run-1')],
+          resolved: expect.objectContaining({
+            documents: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+            nodes: [expect.objectContaining({ id: 'page:ai-paths' })],
+          }),
+        }),
+      })
+    );
+  });
+
+  it('normalizes legacy aiPathRun snapshots into resolved registry documents without removing the legacy payload', async () => {
+    inferRefsMock.mockReturnValue([buildRef('run-legacy')]);
+    resolveRefsMock.mockResolvedValue(buildResolvedBundle('run-legacy'));
+
+    const { hydrateSystemLogRecordRuntimeContext } = await import(
+      '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
+    );
+
+    const result = await hydrateSystemLogRecordRuntimeContext({
+      id: 'log-legacy',
+      level: 'error',
+      message: 'Legacy run failed',
+      source: 'ai-paths-worker',
+      context: {
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-legacy',
+          },
+        },
+      },
+      stack: null,
+      path: null,
+      method: null,
+      statusCode: 500,
+      requestId: null,
+      userId: null,
+      createdAt: '2026-03-02T10:01:00.000Z',
+      updatedAt: null,
+    });
+
+    expect(inferRefsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: 'run-legacy',
+      })
+    );
+    expect(result.context).toEqual(
+      expect.objectContaining({
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-legacy',
+          },
+        },
+        contextRegistry: expect.objectContaining({
+          refs: [buildRef('run-legacy')],
+          resolved: expect.objectContaining({
+            documents: [expect.objectContaining({ entityType: 'ai_path_run' })],
+          }),
+        }),
+      })
+    );
+  });
+
+  it('keeps only fingerprint plus registry context in AI sanitization', async () => {
     const { sanitizeSystemLogForAi } = await import(
       '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai'
     );
@@ -227,11 +281,12 @@ describe('hydrate-system-log-runtime-context', () => {
         id: 'log-1',
         context: {
           fingerprint: 'fp-1',
-          staticContext: {
-            aiPathRun: expect.objectContaining({
-              runId: 'run-1',
+          contextRegistry: expect.objectContaining({
+            refs: [buildRef('run-1')],
+            resolved: expect.objectContaining({
+              documents: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
             }),
-          },
+          }),
         },
       })
     );

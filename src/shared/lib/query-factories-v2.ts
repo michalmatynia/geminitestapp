@@ -10,9 +10,11 @@ import {
   useSuspenseQuery,
   useSuspenseQueries,
   type InfiniteData,
+  type QueriesResults,
   type QueryClient,
   type QueryFunctionContext,
   type QueryKey,
+  type SuspenseQueriesResults,
   type UseInfiniteQueryOptions,
   type UseInfiniteQueryResult,
   type UseMutationOptions,
@@ -45,7 +47,7 @@ type QueryFactoryFn<TQueryFnData, TQueryKey extends QueryKey> =
   | (() => Promise<TQueryFnData>)
   | ((context: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>);
 
-type BaseQueryFactoryV2Config<
+type QueryOptionsWithoutCore<
   TQueryFnData,
   TError = Error,
   TData = TQueryFnData,
@@ -53,15 +55,9 @@ type BaseQueryFactoryV2Config<
 > = Omit<
   UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
   'queryKey' | 'queryFn' | 'meta'
-> & {
-  queryKey: TQueryKey;
-  queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>;
-  meta: TanstackFactoryMeta;
-  telemetryContext?: Record<string, unknown> | undefined;
-  transformError?: (error: unknown) => TError;
-};
+>;
 
-type SuspenseQueryFactoryV2Config<
+type SuspenseQueryOptionsWithoutCore<
   TQueryFnData,
   TError = Error,
   TData = TQueryFnData,
@@ -69,7 +65,36 @@ type SuspenseQueryFactoryV2Config<
 > = Omit<
   UseSuspenseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
   'queryKey' | 'queryFn' | 'meta'
-> & {
+>;
+
+type InfiniteQueryOptionsWithoutCore<
+  TQueryFnData,
+  TError = Error,
+  TData = InfiniteData<TQueryFnData>,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = Omit<
+  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
+  'queryKey' | 'queryFn' | 'meta'
+>;
+
+type SuspenseInfiniteQueryOptionsWithoutCore<
+  TQueryFnData,
+  TError = Error,
+  TData = InfiniteData<TQueryFnData>,
+  TQueryKey extends QueryKey = QueryKey,
+  TPageParam = unknown,
+> = Omit<
+  UseSuspenseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
+  'queryKey' | 'queryFn' | 'meta'
+>;
+
+type BaseQueryFactoryV2Config<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> & {
   queryKey: TQueryKey;
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>;
   meta: TanstackFactoryMeta;
@@ -77,16 +102,40 @@ type SuspenseQueryFactoryV2Config<
   transformError?: (error: unknown) => TError;
 };
 
+export type QueryDescriptorV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = BaseQueryFactoryV2Config<TQueryFnData, TError, TData, TQueryKey>;
+
+type SuspenseQueryFactoryV2Config<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> & {
+  queryKey: TQueryKey;
+  queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>;
+  meta: TanstackFactoryMeta;
+  telemetryContext?: Record<string, unknown> | undefined;
+  transformError?: (error: unknown) => TError;
+};
+
+export type SuspenseQueryDescriptorV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+> = SuspenseQueryFactoryV2Config<TQueryFnData, TError, TData, TQueryKey>;
+
 type InfiniteQueryFactoryV2Config<
   TQueryFnData,
   TError = Error,
   TData = InfiniteData<TQueryFnData>,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = Omit<
-  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey, TPageParam>,
-  'queryKey' | 'queryFn' | 'meta'
-> & {
+> = InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> & {
   queryKey: TQueryKey;
   queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
   meta: TanstackFactoryMeta;
@@ -100,9 +149,12 @@ type SuspenseInfiniteQueryFactoryV2Config<
   TData = InfiniteData<TQueryFnData>,
   TQueryKey extends QueryKey = QueryKey,
   TPageParam = unknown,
-> = Omit<
-  UseSuspenseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryFnData, TQueryKey, TPageParam>,
-  'queryKey' | 'queryFn' | 'meta'
+> = SuspenseInfiniteQueryOptionsWithoutCore<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey,
+  TPageParam
 > & {
   queryKey: TQueryKey;
   queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
@@ -123,8 +175,12 @@ export type MutationFactoryV2Config<TData, TVariables, TError = Error, TContext 
    * Declarative invalidation after successful mutation.
    */
   invalidateKeys?:
-    | QueryKey[]
-    | ((data: TData, variables: TVariables, context: TContext | undefined) => QueryKey[]);
+    | readonly QueryKey[]
+    | ((
+        data: TData,
+        variables: TVariables,
+        context: TContext | undefined
+      ) => readonly QueryKey[]);
   /**
    * Custom invalidation logic after successful mutation.
    */
@@ -180,6 +236,16 @@ export type PaginatedResult<TItem> = {
   items: TItem[];
   total: number;
 };
+
+type MutableTuple<TItems extends readonly unknown[]> = [...TItems];
+
+export type MultiQueryResultsV2<
+  TQueries extends readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+> = QueriesResults<MutableTuple<TQueries>>;
+
+export type SuspenseMultiQueryResultsV2<
+  TQueries extends readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+> = SuspenseQueriesResults<MutableTuple<TQueries>>;
 
 type AnyRefetchIntervalOption = number | false | ((query: unknown) => number | false | undefined);
 
@@ -250,21 +316,12 @@ const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | undefin
 };
 
 const applyQueryRuntimeGuards = <TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
-  options: Omit<
-    UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-    'queryKey' | 'queryFn' | 'meta'
-  >
-): Omit<
-  UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-  'queryKey' | 'queryFn' | 'meta'
-> => {
+  options: QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey>
+): QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> => {
   const { refetchInterval, ...rest } = options;
   const guardedRefetchInterval = guardRefetchInterval(
     refetchInterval as unknown as AnyRefetchIntervalOption | undefined
-  ) as Omit<
-    UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
-    'queryKey' | 'queryFn' | 'meta'
-  >['refetchInterval'];
+  ) as QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey>['refetchInterval'];
   const isStaticallyDisabled = options.enabled === false;
 
   const base = {
@@ -300,20 +357,17 @@ const applyInfiniteQueryRuntimeGuards = <
   TQueryKey extends QueryKey,
   TPageParam,
 >(
-    options: Omit<
-    UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
-    'queryKey' | 'queryFn' | 'meta'
-  >
-  ): Omit<
-  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
-  'queryKey' | 'queryFn' | 'meta'
-> => {
+    options: InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam>
+  ): InfiniteQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey, TPageParam> => {
   const { refetchInterval, ...rest } = options;
   const guardedRefetchInterval = guardRefetchInterval(
     refetchInterval as unknown as AnyRefetchIntervalOption | undefined
-  ) as Omit<
-    UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
-    'queryKey' | 'queryFn' | 'meta'
+  ) as InfiniteQueryOptionsWithoutCore<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryKey,
+    TPageParam
   >['refetchInterval'];
   const isStaticallyDisabled = options.enabled === false;
 
@@ -471,6 +525,76 @@ function useTelemetrizedQueryFn<TQueryFnData, TError, TQueryKey extends QueryKey
   };
 }
 
+function useTelemetrizedMultiQueryOptionsV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  config: QueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+): QueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> & {
+  queryKey: TQueryKey;
+  queryFn: (context: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>;
+  meta: ReturnType<typeof attachTanstackFactoryMeta>;
+} {
+  const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = config;
+  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
+  const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
+  const guardedOptions = applyQueryRuntimeGuards(options);
+  const telemetrizedQueryFn = useTelemetrizedQueryFn(
+    {
+      meta,
+      queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
+      telemetryContext,
+      transformError,
+      entity: 'query-batch',
+    },
+    normalizedQueryKey
+  );
+
+  return {
+    ...guardedOptions,
+    queryKey: normalizedQueryKey,
+    meta: attachTanstackFactoryMeta(resolvedMeta),
+    queryFn: telemetrizedQueryFn,
+  };
+}
+
+function useTelemetrizedSuspenseMultiQueryOptionsV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  config: SuspenseQueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+): SuspenseQueryOptionsWithoutCore<TQueryFnData, TError, TData, TQueryKey> & {
+  queryKey: TQueryKey;
+  queryFn: (context: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>;
+  meta: ReturnType<typeof attachTanstackFactoryMeta>;
+} {
+  const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = config;
+  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
+  const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
+  const guardedOptions = applyQueryRuntimeGuards(options);
+  const telemetrizedQueryFn = useTelemetrizedQueryFn(
+    {
+      meta,
+      queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
+      telemetryContext,
+      transformError,
+      entity: 'query-batch',
+    },
+    normalizedQueryKey
+  );
+
+  return {
+    ...guardedOptions,
+    queryKey: normalizedQueryKey,
+    meta: attachTanstackFactoryMeta(resolvedMeta),
+    queryFn: telemetrizedQueryFn,
+  };
+}
+
 function useQueryFactoryV2<
   TQueryFnData,
   TError = Error,
@@ -568,7 +692,7 @@ export function createInfiniteQueryV2<
   );
 
   return useInfiniteQuery({
-    ...(guardedOptions as any),
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: telemetrizedQueryFn,
@@ -576,47 +700,37 @@ export function createInfiniteQueryV2<
 }
 
 export type MultiQueryConfigV2<
-  TQueries extends any[] = any[],
-  TCombine = any,
+  TQueries extends readonly QueryDescriptorV2<
+    unknown,
+    unknown,
+    unknown,
+    QueryKey
+  >[] = readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TCombine = MultiQueryResultsV2<TQueries>,
 > = {
-  queries: TQueries;
-  combine?: (results: any[]) => TCombine;
+  queries: [...TQueries];
+  combine?: (results: MultiQueryResultsV2<TQueries>) => TCombine;
 };
 
 export function createMultiQueryV2<
-  TQueries extends any[],
-  TCombine = any,
+  TQueries extends readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TCombine = MultiQueryResultsV2<TQueries>,
 >(config: MultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
+  const queryOptions = queries.map((queryConfig) =>
+    useTelemetrizedMultiQueryOptionsV2(queryConfig)
+  ) as MutableTuple<TQueries>;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return useQueries({
-    queries: (queries as Array<BaseQueryFactoryV2Config<any, Error, any, QueryKey>>).map((queryConfig) => {
-      const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = queryConfig;
-      const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
-      const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
-      const guardedOptions = applyQueryRuntimeGuards(options);
-
-      // We use 'query-batch' entity for telemetry within useQueries
-      const telemetrizedQueryFn = useTelemetrizedQueryFn(
-        {
-          meta,
-          queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
-          telemetryContext,
-          transformError,
-          entity: 'query-batch',
-        },
-        normalizedQueryKey
-      );
-
-      return {
-        ...guardedOptions,
-        queryKey: normalizedQueryKey,
-        meta: attachTanstackFactoryMeta(resolvedMeta),
-        queryFn: telemetrizedQueryFn,
-      };
-    }),
-    combine,
-  });
+    queries: queryOptions as any,
+    ...(combine
+      ? {
+        combine: (results: any): TCombine =>
+          combine(results as MultiQueryResultsV2<TQueries>),
+      }
+      : {}),
+  }) as TCombine;
 }
 
 export function createSuspenseQueryV2<
@@ -675,7 +789,7 @@ export function createSuspenseInfiniteQueryV2<
   );
 
   return useSuspenseInfiniteQuery({
-    ...(guardedOptions as any),
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: telemetrizedQueryFn,
@@ -683,46 +797,37 @@ export function createSuspenseInfiniteQueryV2<
 }
 
 export type SuspenseMultiQueryConfigV2<
-  TQueries extends any[] = any[],
-  TCombine = any,
+  TQueries extends readonly SuspenseQueryDescriptorV2<
+    unknown,
+    unknown,
+    unknown,
+    QueryKey
+  >[] = readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 > = {
-  queries: TQueries;
-  combine?: (results: any[]) => TCombine;
+  queries: [...TQueries];
+  combine?: (results: SuspenseMultiQueryResultsV2<TQueries>) => TCombine;
 };
 
 export function createSuspenseMultiQueryV2<
-  TQueries extends any[],
-  TCombine = any,
+  TQueries extends readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 >(config: SuspenseMultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
+  const queryOptions = queries.map((queryConfig) =>
+    useTelemetrizedSuspenseMultiQueryOptionsV2(queryConfig)
+  ) as MutableTuple<TQueries>;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return useSuspenseQueries({
-    queries: (queries as Array<SuspenseQueryFactoryV2Config<any, Error, any, QueryKey>>).map((queryConfig) => {
-      const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = queryConfig;
-      const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
-      const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
-      const guardedOptions = applyQueryRuntimeGuards(options);
-
-      const telemetrizedQueryFn = useTelemetrizedQueryFn(
-        {
-          meta,
-          queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
-          telemetryContext,
-          transformError,
-          entity: 'query-batch',
-        },
-        normalizedQueryKey
-      );
-
-      return {
-        ...guardedOptions,
-        queryKey: normalizedQueryKey,
-        meta: attachTanstackFactoryMeta(resolvedMeta),
-        queryFn: telemetrizedQueryFn,
-      };
-    }),
-    combine,
-  });
+    queries: queryOptions as any,
+    ...(combine
+      ? {
+        combine: (results: any): TCombine =>
+          combine(results as SuspenseMultiQueryResultsV2<TQueries>),
+      }
+      : {}),
+  }) as TCombine;
 }
 
 export function createMutationV2<TData, TVariables, TContext = unknown>(
@@ -763,6 +868,7 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
       }
 
       if (onSuccess) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (onSuccess as any)(data, variables, context, mutationContext);
       }
     },
@@ -836,6 +942,7 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
 
       queryClient.setQueryData<TCacheData>(queryKey, (old) => updateFn(old, variables));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customContext = onMutate ? await (onMutate as any)(variables, context) : {};
       return { ...customContext, previousData };
     },
@@ -844,12 +951,14 @@ export function createOptimisticMutationV2<TData, TVariables, TCacheData = TData
         queryClient.setQueryData(queryKey, context.previousData);
       }
       if (onError) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (onError as any)(err, variables, context, mutationContext);
       }
     },
     onSettled: (data, error, variables, context, mutationContext) => {
       void queryClient.invalidateQueries({ queryKey });
       if (onSettled) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (onSettled as any)(data, error, variables, context, mutationContext);
       }
     },

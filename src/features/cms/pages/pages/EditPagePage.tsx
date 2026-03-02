@@ -15,18 +15,15 @@ import {
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
 import {
-  Checkbox,
-  Input,
   SectionHeader,
   ToggleRow,
   FormSection,
-  Badge,
   Alert,
   StatusBadge,
   LoadingState,
   FormActions,
   Breadcrumbs,
-  Hint,
+  SearchableList,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -52,7 +49,6 @@ function EditPageContent({
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(true);
-  const [search, setSearch] = useState('');
   const [includeAllZones, setIncludeAllZones] = useState(false);
   const [manualSelectedSlugIds, setManualSelectedSlugIds] = useState<string[] | null>(null);
   const router = useRouter();
@@ -97,12 +93,7 @@ function EditPageContent({
     [selectedSlugs, domainSlugIds]
   );
 
-  const filteredDomainSlugs = useMemo((): Slug[] => {
-    const term = search.trim().toLowerCase();
-    const base = includeAllZones ? allSlugs : domainSlugs;
-    if (!term) return base;
-    return base.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
-  }, [domainSlugs, allSlugs, search, includeAllZones]);
+  const visibleSlugs = includeAllZones ? allSlugs : domainSlugs;
 
   const handleSave = async (): Promise<void> => {
     if (!page) return;
@@ -195,67 +186,32 @@ function EditPageContent({
             }
             className='p-6'
           >
-            <div className='space-y-4'>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder='Filter routes...'
-                className='h-8 text-xs'
-              />
-
-              <div className='space-y-2'>
-                <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>
-                    Available Slugs
-                  </Hint>
-                  <Badge variant='secondary' className='text-[9px]'>
-                    {selectedSlugIds.length} selected
-                  </Badge>
-                </div>
-
-                <div className='max-h-64 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
-                  {filteredDomainSlugs.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>
-                      No routes found matching your criteria.
-                    </div>
-                  ) : (
-                    filteredDomainSlugs.map((slug) => {
-                      const checked = selectedSlugIds.includes(slug.id);
-                      const isCrossZone = !domainSlugIds.has(slug.id);
-                      return (
-                        <label
-                          key={slug.id}
-                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => {
-                              setManualSelectedSlugIds((prev) => {
-                                const current = prev ?? selectedSlugIds;
-                                return checked
-                                  ? current.filter((id) => id !== slug.id)
-                                  : [...current, slug.id];
-                              });
-                            }}
-                          />
-                          <div className='flex flex-1 items-center justify-between'>
-                            <span className='text-sm text-gray-300'>/{slug.slug}</span>
-                            {isCrossZone && (
-                              <StatusBadge
-                                status='Cross-Zone'
-                                variant='warning'
-                                size='sm'
-                                className='font-bold'
-                              />
-                            )}
-                          </div>
-                        </label>
-                      );
-                    })
+            <SearchableList
+              items={visibleSlugs}
+              selectedIds={selectedSlugIds}
+              onToggle={(id) => {
+                setManualSelectedSlugIds((prev) => {
+                  const current = prev ?? selectedSlugIds;
+                  return current.includes(id) ? current.filter((i) => i !== id) : [...current, id];
+                });
+              }}
+              getId={(s: Slug) => s.id}
+              getLabel={(s: Slug) => s.slug}
+              searchPlaceholder='Filter routes...'
+              renderItem={(slug: Slug) => (
+                <div className='flex flex-1 items-center justify-between'>
+                  <span className='text-sm text-gray-300'>/{slug.slug}</span>
+                  {!domainSlugIds.has(slug.id) && (
+                    <StatusBadge
+                      status='Cross-Zone'
+                      variant='warning'
+                      size='sm'
+                      className='font-bold'
+                    />
                   )}
                 </div>
-              </div>
-            </div>
+              )}
+            />
           </FormSection>
 
           {crossZoneSlugs.length > 0 && (

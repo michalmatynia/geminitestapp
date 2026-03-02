@@ -10,6 +10,14 @@ import type {
   PromptExploderValidationRuleStackOption,
 } from '@/shared/contracts/prompt-exploder';
 
+export type {
+  PromptExploderRuntimeValidationScope,
+  PromptExploderValidationStackResolutionReason,
+  PromptExploderValidationStackResolution,
+  PromptExploderValidationRuleStack,
+  PromptExploderValidationRuleStackOption,
+};
+
 const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
 const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =
   'case-resolver-prompt-exploder';

@@ -1,44 +1,15 @@
 'use client';
 
+import type {
+  FileUploadEventRecord,
+  FileUploadEventsResponse,
+  FileUploadEventsFilters,
+} from '@/shared/contracts/files';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export type FileUploadEventRecord = {
-  id: string;
-  status: 'success' | 'error';
-  category: string | null;
-  projectId: string | null;
-  folder: string | null;
-  filename: string | null;
-  filepath: string | null;
-  mimetype: string | null;
-  size: number | null;
-  source: string | null;
-  errorMessage: string | null;
-  requestId: string | null;
-  userId: string | null;
-  meta: Record<string, unknown> | null;
-  createdAt: string | Date;
-};
-
-export type FileUploadEventsResponse = {
-  events?: FileUploadEventRecord[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-};
-
-export type FileUploadEventsFilters = {
-  page?: number;
-  pageSize?: number;
-  status?: 'success' | 'error' | 'all';
-  category?: string;
-  projectId?: string;
-  query?: string;
-  from?: string | null;
-  to?: string | null;
-};
+export type { FileUploadEventRecord, FileUploadEventsResponse, FileUploadEventsFilters };
 
 const buildQueryParams = (filters: FileUploadEventsFilters): string => {
   const params = new URLSearchParams();

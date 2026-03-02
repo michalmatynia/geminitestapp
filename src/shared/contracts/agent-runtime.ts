@@ -250,6 +250,32 @@ export const agentToolResultSchema = z.object({
 
 export type AgentToolResult = z.infer<typeof agentToolResultSchema>;
 
+export const toolOutputSchema = z.object({
+  url: z.string().optional(),
+  domText: z.string().optional(),
+  snapshotId: z.string().nullable().optional(),
+  logCount: z.number().nullable().optional(),
+  extractedNames: z.array(z.string()).optional(),
+  extractedTotal: z.number().optional(),
+  extractedItems: z.array(z.string()).optional(),
+  extractionType: z.enum(['product_names', 'emails']).optional(),
+  extractionPlan: extractionPlanSchema.nullable().optional(),
+  recoveryPlan: failureRecoveryPlanSchema.nullable().optional(),
+  cloudflareDetected: z.boolean().optional(),
+});
+
+export type ToolOutputDto = z.infer<typeof toolOutputSchema>;
+export type ToolOutput = ToolOutputDto;
+
+export const agentControlActionSchema = z.enum(['goto', 'reload', 'snapshot']);
+export type AgentControlAction = z.infer<typeof agentControlActionSchema>;
+
+export type AgentToolLog = (
+  level: string,
+  message: string,
+  metadata?: Record<string, unknown>
+) => Promise<void>;
+
 export const agentRunStatusTypeSchema = z.enum([
   'queued',
   'running',
@@ -280,6 +306,51 @@ export interface AgentAuditLogRecordDtoBase {
 export type AgentAuditLogRecord = Omit<AgentAuditLogRecordDtoBase, 'createdAt'> & {
   createdAt: Date;
 };
+
+export const uiElementSchema = z.object({
+  tag: z.string(),
+  id: z.string().nullable(),
+  name: z.string().nullable(),
+  type: z.string().nullable(),
+  text: z.string().nullable(),
+  placeholder: z.string().nullable(),
+  ariaLabel: z.string().nullable(),
+  role: z.string().nullable(),
+  selector: z.string().nullable(),
+  href: z.string().optional(),
+  action: z.string().nullable().optional(),
+  method: z.string().nullable().optional(),
+});
+
+export type UiElementDto = z.infer<typeof uiElementSchema>;
+export type UiElement = UiElementDto;
+
+export const uiInventorySchema = z.object({
+  url: z.string(),
+  title: z.string(),
+  counts: z.object({
+    inputs: z.number(),
+    buttons: z.number(),
+    links: z.number(),
+    headings: z.number(),
+    forms: z.number(),
+  }),
+  inputs: z.array(uiElementSchema),
+  buttons: z.array(uiElementSchema),
+  links: z.array(uiElementSchema),
+  headings: z.array(uiElementSchema),
+  forms: z.array(uiElementSchema),
+  truncated: z.object({
+    inputs: z.boolean(),
+    buttons: z.boolean(),
+    links: z.boolean(),
+    headings: z.boolean(),
+    forms: z.boolean(),
+  }),
+});
+
+export type UiInventoryDto = z.infer<typeof uiInventorySchema>;
+export type UiInventory = UiInventoryDto;
 
 export const agentExecutionContextSchema = z.object({
   run: z.object({

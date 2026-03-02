@@ -1,242 +1,221 @@
 # AGENTS.md - AI Agent Operating Guide
 
-This is the authoritative, up-to-date guide for AI agents working in this repo.
-Keep this file accurate and lean. Other agent docs should defer to it.
+This is the authoritative agent guide for this repository. Keep it accurate,
+code-backed, and shorter than `GEMINI.md`. Other overlay docs should defer to it.
 
-## Project Snapshot (Reality, not marketing)
+## Read Order
 
-- **Product**: AI-forward, multi-app platform with admin + public frontends.
-- **Framework**: Next.js 16.1.1 (App Router) + React 19.2.3
-- **Language**: TypeScript 5.9.3 (strict true)
-- **DB**: Prisma 7.3.0 with optional MongoDB provider
-- **Auth**: NextAuth/Auth.js 5.0.0-beta.30 (MongoDB adapter)
-- **UI**: Tailwind CSS 4.1 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
-- **Data**: TanStack Query + TanStack Table
-- **AI**: OpenAI SDK (chat completions) with optional Ollama local models
-- **Runtime**: Custom server (`server.cjs`) for dev/prod start
+1. `docs/AGENTS.md` for agent rules and repo working conventions
+2. `GEMINI.md` for the deeper scanned architecture reference
+3. feature docs such as `docs/AI_PATHS.md`, `docs/case-resolver/index.md`,
+   or `docs/validator/README.md` when working in those areas
 
-## Multi-App Structure (Current)
+## Repo Snapshot
 
-- **Admin app**: `src/app/(admin)/admin/*` (products, drafts, notes, settings, integrations)
-- **Public app**: `src/app/(frontend)/*` (product listings, detail pages)
-- **Shared API**: `src/app/api/*` (REST-style routes for admin + frontend)
+- Product: AI-forward multi-app platform with admin, CMS/public frontend, and a
+  large shared API surface
+- Framework: Next.js 16 App Router + React 19 + TypeScript strict mode
+- Runtime: custom Node server via `server.cjs`
+- Data: Prisma/Postgres, MongoDB, and optional Redis-backed queue/cache/routing
+- UI/data stack: Tailwind 4, local shared UI, TanStack Query, TanStack Table
+- AI stack: AI Paths, chatbot, agent runtime, AI Brain routing, image studio,
+  AI insights, product AI flows
 
-## Core Directories (Actual)
+## Current Source Layout
 
-```
-src/
-  app/
-    (admin)/admin/      # Admin UI
-    (frontend)/         # Public UI
-    api/                # Server routes (Next.js route handlers)
+Use current `src/` paths, not older root-level conventions.
 
-  features/             # Domain feature modules (UI + state + hooks + api)
-    admin/              # Admin shell, navigation, admin-only pages
-    ai-paths/           # AI path runtime + UI
-    drafter/            # Product draft templates + editor
-    products/           # Product domain UI + services
-  shared/               # Cross-feature UI primitives, components, utils, hooks, types
-    lib/                # Shared runtime helpers (api, db, query-client, transient-recovery)
-    types/              # Shared TS types (cross-feature)
-    ui/                 # ShadCN/ui components
-prisma/                 # Prisma schema + migrations
-public/uploads/         # File storage (images, notes)
-```
+### App routes
 
-## Data Layer Reality
+- Admin UI: `src/app/(admin)/admin/`
+- Public/CMS frontend: `src/app/(frontend)/`
+- Auth UI: `src/app/auth/`
+- API routes: `src/app/api/`
 
-The platform can run on **Prisma** or **MongoDB**, selected by:
+### Feature modules
 
-- `app_db_provider` setting (db)
-- `APP_DB_PROVIDER` env var
-- Fallback: prefer Mongo when `MONGODB_URI` is set, else Prisma when `DATABASE_URL` exists
+Top-level features live under `src/features/`, including:
 
-See: `src/shared/lib/db/app-db-provider.ts` plus feature providers in
-`src/features/*/services/*-provider.ts` (products, cms, integrations, notes, internationalization).
+- `admin`
+- `ai`
+- `app-embeds`
+- `auth`
+- `case-resolver`
+- `case-resolver-capture`
+- `cms`
+- `data-import-export`
+- `database`
+- `document-editor`
+- `drafter`
+- `filemaker`
+- `files`
+- `foldertree`
+- `integrations`
+- `notesapp`
+- `observability`
+- `product-sync`
+- `products`
+- `prompt-engine`
+- `prompt-exploder`
+- `viewer3d`
 
-## CMS Domains & Slugs (Mongo)
+AI subsystems are primarily under `src/features/ai/`.
 
-- CMS slugs are scoped per **domain** via Mongo collections `cms_domains` and `cms_domain_slugs`.
-- Slugs can be shared across domains; default slug is **domain-specific**.
-- Slug APIs and pickers resolve the active domain from the request host.
+### Shared platform code
 
-**AI Paths storage** uses Prisma when `DATABASE_URL` is set, otherwise MongoDB
-(collections: `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`).
-Ensure `MONGODB_URI` is set if Prisma is not configured.
+Shared platform/runtime code lives under `src/shared/`, especially:
 
-**Auth + user storage is MongoDB-only** (`users`, `sessions`, `accounts`, `auth_security_profiles`).
-Auth settings (roles, permissions, policies) are stored in the Mongo `settings` collection.
+- `src/shared/contracts/`
+- `src/shared/lib/ai-brain/`
+- `src/shared/lib/ai-paths/`
+- `src/shared/lib/db/`
+- `src/shared/lib/files/`
+- `src/shared/lib/observability/`
+- `src/shared/lib/queue/`
+- `src/shared/lib/security/`
+- `src/shared/providers/`
+- `src/shared/ui/`
 
-## AI & Agent Runtime
+## Runtime Reality
 
-- **AI services** live in `src/features/products/services/aiDescriptionService.ts` and
-  `src/features/products/services/aiTranslationService.ts`. Product AI job processing lives in
-  `src/features/jobs/workers/productAiQueue.ts` (orchestrated by
-  `src/features/jobs/services/productAiService.ts`).
-- **AI Paths persistent runtime** runs are stored in Mongo only:
-  `ai_path_runs`, `ai_path_run_nodes`, `ai_path_run_events`.
-  Queue worker: `src/features/jobs/workers/aiPathRunQueue.ts`.
-  API access is per-user scoped with `ai_paths.manage` permission and rate limits.
-- **Job workers** for chatbot/agent queues live in `src/features/jobs/workers/`
-  (e.g. `chatbotJobQueue.ts`, `agentQueue.ts`).
-- **Agent runtime** lives in `src/features/agent-runtime/` with planning, execution, memory,
-  and tool orchestration. Model routing is resolved via AI Brain capabilities.
-- **Chatbot API** is implemented in `src/app/api/chatbot/route.ts`.
-- **Chatbot feature UI + state** live in `src/features/chatbot/`.
-- **Agent creator UI + settings** live in `src/features/agentcreator/`.
-- **Agent run monitoring API** routes are under `src/app/api/agentcreator/agent/*`
-  with handlers in `src/features/agentcreator/api/agent/*`.
-- **AI models** are configured via settings and env; OpenAI or Ollama is picked
-  dynamically by model name.
+- Dev and prod start through `server.cjs`.
+- `src/instrumentation.ts` and `src/instrumentation-node.ts` register startup
+  logging, database validation, process error hooks, and queue initialization.
+- `src/proxy.ts` handles `/admin/*` and `/api/*`, ensuring CSRF cookie setup and
+  auth wrapping for admin flows.
+- `src/app/layout.tsx` bootstraps query, settings, session, background sync,
+  CSRF, URL guard, analytics, and client error reporting providers.
 
-## Notes & Folder Tree
+## Data Layer Rules
 
-The Master Folder Tree is a shared, production-grade tree engine used by **11 independent instances**:
-`notes`, `image_studio`, `product_categories`, `cms_page_builder`, `case_resolver`,
-`case_resolver_cases`, `validator_list_tree`, `validator_pattern_tree`,
-`prompt_exploder_hierarchy`, `brain_catalog_tree`, `brain_routing_tree`.
+- Do not assume Prisma-only persistence.
+- Do not assume Mongo-only persistence.
+- App, auth, CMS, products, integrations, and other services can resolve
+  providers through Database Engine routing and settings.
 
-**Key directories:**
-- `src/features/foldertree/v2/` — engine root (barrel: `index.ts`)
-  - `hooks/useFolderTreeInstanceV2.ts` — main React hook; returns `MasterFolderTreeController`
-  - `hooks/useFolderTreeKeyboardNav.ts` — opt-in keyboard navigation hook
-  - `components/FolderTreeViewportV2.tsx` — virtualized tree viewport (TanStack Virtual)
-  - `components/FolderTreeContextMenu.tsx` — right-click context menu wrapper
-  - `runtime/MasterFolderTreeRuntimeProvider.tsx` — cross-instance runtime bus (undo, keyboard dispatch)
-  - `operations/` — pure-function utilities: `expansion`, `keyboard`, `selection`, `search`, `clipboard`, `bulk`, `node-status`
-  - `search/` — search bar components + `FolderTreeSearchViewport` composite
-  - `adapter/createMasterFolderTreeAdapterV3.ts` — adapter factory (prepare/apply/commit/rollback)
-- `src/shared/contracts/master-folder-tree.ts` — `MasterFolderTreeController`, `FolderTreeProfileV2`, `MasterTreeNodeStatus`
-- `src/shared/utils/folder-tree-profiles-v2.ts` — Zod schemas, `parseFolderTreeProfilesV2`, `defaultFolderTreeProfilesV2`
+Key files:
 
-**Controller capabilities (all optional, backward-compatible):**
-- `expandToNode(nodeId)` — expands all ancestors to reveal a deep node
-- `scrollToNode(nodeId)` — programmatically scrolls viewport (requires `scrollToNodeRef` on viewport)
-- `selectedNodeIds` (Set) + `toggleSelectNode`, `selectNodeRange`, `selectAllNodes`, `clearMultiSelection`, `setSelectedNodeIds` — multi-selection
-- `expandNode/collapseNode/expandAll/collapseAll`, `startRename/commitRename/cancelRename`, `moveNode/reorderNode/dropNodeToRoot`, `undo`, `replaceNodes`, `refreshFromAdapter`
+- `src/shared/lib/db/app-db-provider.ts`
+- `src/shared/lib/db/database-engine-policy.ts`
+- `src/shared/lib/auth/services/auth-provider.ts`
 
-**Profile-driven capabilities** (`FolderTreeProfileV2` optional sections):
-- `keyboard` — arrow nav, Enter-to-rename, Delete key
-- `multiSelect` — Ctrl+click, Shift+click, Ctrl+A
-- `search` — built-in search bar, debounce, filter modes (`highlight` | `filter_tree`)
-- `badges` — children count or custom metadata badge
-- `statusIcons` — per-status icon IDs; read from `node.metadata['_status']` (`loading|error|locked|warning|success`)
+Important current behavior:
 
-**Viewport props** (all optional, zero overhead when absent):
-- `renderNode` — custom row renderer (receives `FolderTreeViewportRenderNodeInput` incl. `nodeStatus`)
-- `contextMenuItems(node, controller)` — right-click menu factory per row
-- `estimateRowHeight` — number or per-row function for dynamic virtualization
-- `autoExpandOnHoverMs` — auto-expand collapsed folders on drag hover (default 600ms)
-- `scrollToNodeRef` — wires `scrollToNode` into the controller
-- `onNodeDrop`, `canDrop`, `resolveDropPosition`, `canStartDrag`, `onNodeDragStart` — drop customization
+- app provider can resolve from env, settings, or Database Engine routes
+- if both `DATABASE_URL` and `MONGODB_URI` exist and no explicit app route is
+  set, app data currently defaults to MongoDB
+- auth can be routed independently from app data
+- Redis is a supported Database Engine target for selected routing/caching cases,
+  but not for every service
 
-**Node status convention:** set `node.metadata['_status']` to one of the `MasterTreeNodeStatus` values;
-the default row renderer shows a colored status glyph automatically. Use `getMasterTreeNodeStatus(node)` to read it.
+## Queue and Async Work Rules
 
-**Operations (pure functions, no React):** `getAncestorIds`, `resolveKeyboardAction`,
-`resolveNextSelectedNodeIds`, `isNodeInSelection`, `getSelectionBoundary`,
-`searchMasterTreeNodes`, `filterMasterTreeToMatches`, `captureMasterTreeClipboard`,
-`applyMasterTreePaste`, `bulkMoveNodes`, `bulkDeleteNodes`, `getMasterTreeNodeStatus`
+- Queue infrastructure lives in `src/shared/lib/queue/`.
+- Worker startup lives in `src/features/jobs/queue-init.ts`.
+- BullMQ is used when Redis is available.
+- Several workflows fall back to inline processing when Redis is absent.
 
-## Integrations
+Do not assume durable queue behavior in local/dev unless the relevant env is set.
 
-- Base.com/Baselinker import/export is first-class:
-  - `src/features/integrations/services/imports/` and `src/features/integrations/services/exports/`
-  - `src/app/api/integrations/imports/base/*`
-  - `src/app/api/integrations/products/[id]/export-to-base/route.ts`
+High-signal worker areas:
 
-## Playwright Personas
+- `src/features/ai/ai-paths/workers/`
+- `src/features/ai/chatbot/workers/`
+- `src/features/ai/agent-runtime/workers/`
+- `src/features/ai/image-studio/workers/`
+- `src/features/integrations/workers/`
+- `src/features/product-sync/workers/`
+- `src/features/case-resolver/workers/`
+- `src/shared/lib/observability/workers/`
 
-- Shared Playwright persona settings live in `src/features/playwright/`.
-- Personas are stored via `/api/settings` under the `playwright_personas` key.
+## Feature Boundary Rules
 
-## Data Import/Export
+- Prefer feature `public.ts` / `server.ts` entrypoints from app-layer code.
+- Avoid deep cross-feature imports when a public/server entrypoint already exists.
+- Treat `docs/ARCHITECTURE_GUARDRAILS.md` as an active constraint, not optional reading.
 
-- Product import/export UI and shared helpers live in `src/features/data-import-export/`.
-- CSV product import uses `/admin/import` with the handler in `src/features/data-import-export/api/import/route.ts`.
+Related checks:
 
-## File Storage
+- `npm run metrics:guardrails`
+- `npm run metrics:all`
+- `npm run check:factory-meta`
+- `npm run check:factory-meta:strict`
 
-- Files are stored under `public/uploads/*`.
-- Metadata lives in `ImageFile` records (Prisma or Mongo).
-- See `src/features/files/utils/fileUploader.ts` and `src/app/api/files/*`.
+## Query and State Conventions
 
-## Error Handling & Logging
+- The preferred data-fetching layer is the shared TanStack Query factory system,
+  not ad hoc direct query usage everywhere.
+- See `src/shared/lib/query-factories-v2.ts`.
+- Query persistence, offline support, and advanced runtime hooks are wired into
+  the root query provider.
 
-- **Error helpers** live in `src/shared/errors/*`.
-- **System logging** services live in `src/features/observability/services/*`
-  (system logger, log repository, critical notifier, ErrorSystem).
-- **Client error logging** lives in `src/features/observability/utils/client-error-logger.ts`.
-- **System logs UI** lives in `src/features/observability/pages/SystemLogsPage.tsx`
-  with the route wrapper in `src/app/(admin)/admin/system/logs/page.tsx`.
+When editing feature hooks, verify they still align with shared query keys,
+telemetry metadata, and invalidation conventions.
 
-## Conventions That Actually Match the Code
+## Files, Media, and Storage
 
-- **Routes**: thin handlers, Zod-validated inputs, call services/repositories.
-- **Services**: `src/features/*/services` or `src/shared/lib/services` modules, not always classes.
-- **Repositories**: live under feature services folders (e.g. `src/features/*/services/*-repository`).
-- **Types**: shared definitions live in `src/shared/types/`, with feature-specific types under `src/features/*/types/`.
-- **UI**: ShadCN components are copy-pasted; do not assume external UI packages.
+- Local uploads live under `public/uploads/`.
+- Storage can switch between local and FastComet-backed remote storage.
+- File storage behavior is resolved from settings and env, not only from code defaults.
 
-## Environment Variables (Common)
+Key files:
 
-```
-DATABASE_URL=postgresql://...
-MONGODB_URI=mongodb://...
-NEXTAUTH_SECRET=...
-NEXTAUTH_URL=http://localhost:3000
-OPENAI_API_KEY=...
-OLLAMA_BASE_URL=http://localhost:11434
-BASE_API_URL=https://api.baselinker.com/connector.php
-INTEGRATION_ENCRYPTION_KEY=...
-ALLEGRO_AUTH_URL=https://allegro.pl/auth/oauth/authorize
-ALLEGRO_TOKEN_URL=https://allegro.pl/auth/oauth/token
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-IMAGEKIT_ID=...
-APP_DB_PROVIDER=prisma|mongodb
-AI_PATHS_RUN_CONCURRENCY=1
-AI_PATHS_RUN_MAX_ATTEMPTS=3
-AI_PATHS_RUN_BACKOFF_MS=5000
-AI_PATHS_RUN_BACKOFF_MAX_MS=60000
-AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS=60
-AI_PATHS_RUN_RATE_LIMIT_MAX=20
-AI_PATHS_RUN_ACTIVE_LIMIT=5
-AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS=60
-AI_PATHS_ACTION_RATE_LIMIT_MAX=120
+- `src/shared/lib/files/file-uploader.ts`
+- `src/shared/lib/files/services/storage/file-storage-service.ts`
+- `src/features/files/pages/AdminFileStorageSettingsPage.tsx`
+
+## Testing Layout
+
+Tests are split across:
+
+- top-level `__tests__/`
+- colocated `src/**/__tests__/`
+- Playwright specs in `e2e/features/`
+
+Do not assume a feature’s tests live in only one place.
+
+Core commands:
+
+```bash
+npm run test
+npm run test:coverage
+npm run test:e2e
 ```
 
-## Commands (package.json)
+## Sensitive and Non-Authoritative Areas
 
-```
+- Avoid scanning `AIPrompts/` unless the task explicitly requires it.
+- Avoid other agents' reasoning/result folders unless the user explicitly asks.
+- Do not treat `tmp/`, ad hoc debug scripts, or one-off output files as
+  authoritative architecture documentation.
+
+## Common Commands
+
+```bash
 npm run dev
 npm run build
 npm run start
 npm run lint
 npm run test
-npm run test:ui
-npm run test:coverage
 npm run test:e2e
 npm run seed
 npm run seed:admin
+npm run auth:indexes
 npm run cleanup:db-providers
 npm run cleanup:cms-blocks
-npm run check:api-error-sources
-npm run auth:indexes
-npm run debug
+npm run cleanup:category-mapping-duplicates
+npm run metrics:guardrails
+npm run check:factory-meta
 ```
 
-## Agent Hygiene & Restrictions
+## Documentation Maintenance Rule
 
-- **Do NOT read** `AIPrompts/` (admin-only sensitive).
-- **Do NOT read or write** other agents' AIReasoning folders.
-- **Do NOT commit** reasoning/results files.
-- Use your own `AIReasoning/<Agent>/` folder if needed.
+- Update `docs/AGENTS.md` when repo-wide working conventions, architecture
+  boundaries, or agent rules change.
+- Update `GEMINI.md` when the deeper architecture reference has drifted from the
+  codebase.
+- Keep `docs/CLAUDE.md` and other overlays shorter than this file.
 
-## Update Expectations
+## Last Updated
 
-If you change architecture, data providers, or AI flows, update this file.
-Only update `GEMINI.md` when a user explicitly requests it (it gets reverted otherwise).
-
----
-
-**Last Updated**: February 1, 2026
+Aligned to the scanned repo structure on `2026-03-02`.

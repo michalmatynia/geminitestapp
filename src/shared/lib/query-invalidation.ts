@@ -18,30 +18,36 @@ export const invalidateProducts = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all });
 };
 
-export const invalidateProductsAndCounts = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateProductsAndCounts = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
   ]);
 };
 
-export const invalidateProductsAndDetail = (queryClient: QueryClient, productId: string) => {
-  return Promise.all([
+export const invalidateProductsAndDetail = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
   ]);
 };
 
-export const invalidateProductsCountsAndDetail = (queryClient: QueryClient, productId: string) => {
-  return Promise.all([
+export const invalidateProductsCountsAndDetail = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) }),
   ]);
 };
 
-export const refetchProductsAndCounts = (queryClient: QueryClient) => {
-  return Promise.all([
+export const refetchProductsAndCounts = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.lists() }),
     queryClient.refetchQueries({ queryKey: QUERY_KEYS.products.counts() }),
   ]);
@@ -51,8 +57,11 @@ export const invalidateCatalogs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs() });
 };
 
-export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId: string | null) => {
-  return Promise.all([
+export const invalidateCatalogScopedData = async (
+  queryClient: QueryClient,
+  catalogId: string | null
+): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
@@ -71,22 +80,22 @@ export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId:
   ]);
 };
 
-export const invalidatePriceGroups = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidatePriceGroups = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.priceGroups() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.priceGroups() }),
   ]);
 };
 
-export const invalidateProductSettingsCatalogs = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateProductSettingsCatalogs = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.catalogs() }),
   ]);
 };
 
-export const invalidateValidatorConfig = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateValidatorConfig = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorSettings() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorPatterns() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorConfig(true) }),
@@ -110,8 +119,11 @@ export const invalidateCmsSlugs = (queryClient: QueryClient) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.lists() });
 };
 
-export const invalidateCmsSlugDetail = (queryClient: QueryClient, slugId: string) => {
-  return Promise.all([
+export const invalidateCmsSlugDetail = async (
+  queryClient: QueryClient,
+  slugId: string
+): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.detail(slugId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.domains(slugId) }),
   ]);
@@ -147,20 +159,24 @@ export const invalidateNoteTags = (queryClient: QueryClient, notebookId?: string
   if (!notebookId) {
     return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all, exact: false });
   }
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(notebookId) }),
-  ]);
+  return (async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(notebookId) }),
+    ]);
+  })();
 };
 
 export const invalidateNoteThemes = (queryClient: QueryClient, notebookId?: string) => {
   if (!notebookId) {
     return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all, exact: false });
   }
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes(notebookId) }),
-  ]);
+  return (async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes(notebookId) }),
+    ]);
+  })();
 };
 
 // --- Integrations ---
@@ -177,12 +193,14 @@ export const invalidateIntegrationConnections = (
     return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() });
   }
 
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.integrations.connections(integrationId),
-    }),
-  ]);
+  return (async (): Promise<void> => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.connections() }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.integrations.connections(integrationId),
+      }),
+    ]);
+  })();
 };
 
 export const invalidateProductListings = (queryClient: QueryClient, productId: string) => {
@@ -195,23 +213,29 @@ export const invalidateListingBadges = (queryClient: QueryClient) => {
   });
 };
 
-export const invalidateProductListingsAndBadges = (queryClient: QueryClient, productId: string) => {
-  return Promise.all([
+export const invalidateProductListingsAndBadges = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
     invalidateProductListings(queryClient, productId),
     invalidateListingBadges(queryClient),
   ]);
 };
 
-export const invalidateListingRuntimeQueues = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateListingRuntimeQueues = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.integrations() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({}) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.queueStatus() }),
   ]);
 };
 
-export const invalidateListingsBadgesAndQueues = (queryClient: QueryClient, productId: string) => {
-  return Promise.all([
+export const invalidateListingsBadgesAndQueues = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await Promise.all([
     invalidateProductListingsAndBadges(queryClient, productId),
     invalidateListingRuntimeQueues(queryClient),
   ]);
@@ -299,8 +323,8 @@ export const invalidateAuthSecurity = (queryClient: QueryClient, userId: string)
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.users.security(userId) });
 };
 
-export const invalidateUserPreferences = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateUserPreferences = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.preferences.all }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userPreferences.all }),
   ]);
@@ -546,8 +570,8 @@ export const invalidateAiPathRunDetail = (queryClient: QueryClient, runId: strin
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.run(runId) });
 };
 
-export const invalidateAiPathQueue = (queryClient: QueryClient) => {
-  return Promise.all([
+export const invalidateAiPathQueue = async (queryClient: QueryClient): Promise<void> => {
+  await Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({}) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.queueStatus() }),
   ]);

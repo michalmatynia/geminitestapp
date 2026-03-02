@@ -15,6 +15,13 @@ import type {
   PromptExploderParamEntriesState,
 } from '@/shared/contracts/prompt-exploder';
 
+export type {
+  PromptExploderParamUiControl,
+  PromptExploderParamUiRecommendation,
+  PromptExploderParamEntry,
+  PromptExploderParamEntriesState,
+};
+
 const PROMPT_EXPLODER_PARAM_UI_CONTROLS: PromptExploderParamUiControl[] = [
   'auto',
   'checkbox',

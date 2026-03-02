@@ -1,6 +1,7 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
-import { learningTokens, type TemplateMergeMode } from '../template-learning';
+import type { TemplateMergeMode } from '@/shared/contracts/prompt-exploder';
+import { learningTokens } from '../template-learning';
 
 import type {
   PromptExploderListItem,

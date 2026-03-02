@@ -154,6 +154,57 @@ export type OptimizedImageResult = {
   metadata?: Record<string, unknown>;
 };
 
+/**
+ * File Upload Event Contracts
+ */
+export const fileUploadEventStatusSchema = z.enum(['success', 'error']);
+export type FileUploadEventStatus = z.infer<typeof fileUploadEventStatusSchema>;
+
+export const fileUploadEventSchema = z.object({
+  id: z.string(),
+  status: fileUploadEventStatusSchema,
+  category: z.string().nullable(),
+  projectId: z.string().nullable(),
+  folder: z.string().nullable(),
+  filename: z.string().nullable(),
+  filepath: z.string().nullable(),
+  mimetype: z.string().nullable(),
+  size: z.number().nullable(),
+  source: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  requestId: z.string().nullable(),
+  userId: z.string().nullable(),
+  meta: z.record(z.string(), z.unknown()).nullable(),
+  createdAt: z.union([z.string(), z.date()]),
+});
+
+export type FileUploadEventDto = z.infer<typeof fileUploadEventSchema>;
+export type FileUploadEventRecord = FileUploadEventDto;
+
+export const fileUploadEventsResponseSchema = z.object({
+  events: z.array(fileUploadEventSchema).optional(),
+  total: z.number().optional(),
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+});
+
+export type FileUploadEventsResponseDto = z.infer<typeof fileUploadEventsResponseSchema>;
+export type FileUploadEventsResponse = FileUploadEventsResponseDto;
+
+export const fileUploadEventsFiltersSchema = z.object({
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+  status: z.enum(['success', 'error', 'all']).optional(),
+  category: z.string().optional(),
+  projectId: z.string().optional(),
+  query: z.string().optional(),
+  from: z.string().nullable().optional(),
+  to: z.string().nullable().optional(),
+});
+
+export type FileUploadEventsFiltersDto = z.infer<typeof fileUploadEventsFiltersSchema>;
+export type FileUploadEventsFilters = FileUploadEventsFiltersDto;
+
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
   getImageFileById(id: string): Promise<ImageFileRecord | null>;

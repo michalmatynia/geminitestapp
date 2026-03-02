@@ -2,7 +2,15 @@ export * from './base';
 export * from './connections';
 export * from './listings';
 export * from './producers';
-export * from './templates';
+export {
+  integrationTemplateMappingSchema,
+  type IntegrationTemplateMapping,
+  integrationTemplateSchema,
+  type IntegrationTemplate,
+  createIntegrationTemplateSchema,
+  type CreateIntegrationTemplate,
+  type UpdateIntegrationTemplate,
+} from './templates';
 export * from './base-com';
 export type { ImportTemplateParameterImport as BaseImportParameterImportSettings } from '../data-import-export';
 
@@ -74,13 +82,6 @@ export type {
 };
 
 import type { ImportTemplateParameterImport } from '../data-import-export';
-
-import {
-  type Template as IntegrationTemplate,
-  type TemplateMapping as IntegrationTemplateMapping,
-} from './templates';
-
-export type { IntegrationTemplate, IntegrationTemplateMapping };
 
 /**
  * Session DTOs
@@ -544,6 +545,11 @@ export type NormalizedMappedProduct = ProductCreateInput & {
   producerIds?: string[];
   tagIds?: string[];
 };
+
+import {
+  type IntegrationTemplate,
+  type IntegrationTemplateMapping,
+} from './templates';
 
 // Backward-compatible aliases for modules that still import *Dto names.
 export type ImageTransformOptionsDto = ImageTransformOptions;

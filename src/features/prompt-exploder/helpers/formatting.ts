@@ -1,4 +1,4 @@
-import type { PromptExploderParamEntry } from '../params-editor';
+import type { PromptExploderParamEntry } from '@/shared/contracts/prompt-exploder';
 
 export const promptExploderClampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

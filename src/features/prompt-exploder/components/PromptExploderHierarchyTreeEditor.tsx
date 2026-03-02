@@ -11,6 +11,7 @@ import type {
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
+import { PromptExploderTreeNode } from './tree/PromptExploderTreeNode';
 import {
   buildPromptExploderMasterNodes,
   fromPromptExploderMasterNodeId,
@@ -18,6 +19,10 @@ import {
   removePromptExploderListItemById,
   updatePromptExploderListItemById,
 } from '../hierarchy-master-tree';
+import {
+  buildPromptExploderTreeRevision,
+  usePromptExploderHandleOnlyDrag,
+} from '../tree/shared';
 
 import type { PromptExploderListItem } from '../types';
 
@@ -77,13 +82,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
   }, [onChange]);
 
   const masterNodes = useMemo(() => buildPromptExploderMasterNodes(items), [items]);
-  const treeRevision = useMemo(
-    () =>
-      masterNodes
-        .map((node) => `${node.id}:${node.parentId ?? 'root'}:${node.sortOrder}:${node.name}`)
-        .join('|'),
-    [masterNodes]
-  );
+  const treeRevision = useMemo(() => buildPromptExploderTreeRevision(masterNodes), [masterNodes]);
   const expandedNodeIds = useMemo(() => masterNodes.map((node) => node.id), [masterNodes]);
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
@@ -114,6 +113,8 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
     externalRevision: treeRevision,
     adapter,
   });
+  const { armDragHandle, releaseDragHandle, canStartHandleOnlyDrag } =
+    usePromptExploderHandleOnlyDrag();
 
   const selectedItemId = controller.selectedNodeId
     ? fromPromptExploderMasterNodeId(controller.selectedNodeId)
@@ -217,6 +218,14 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           className='space-y-0.5'
           emptyLabel={emptyLabel}
           rootDropUi={rootDropUi}
+          canStartDrag={canStartHandleOnlyDrag}
+          renderNode={(input) => (
+            <PromptExploderTreeNode
+              {...input}
+              armDragHandle={armDragHandle}
+              releaseDragHandle={releaseDragHandle}
+            />
+          )}
         />
       </div>
 

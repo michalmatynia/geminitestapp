@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
@@ -28,7 +26,7 @@ export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: strin
       source: 'aiPaths.hooks.useAiPathsSettingsQuery',
       operation: 'list',
       resource: 'ai-paths.settings',
-      domain: 'global',
+      domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'settings'],
     },
@@ -36,7 +34,6 @@ export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: strin
 }
 
 export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; value: string }> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.aiPaths.mutation('update-setting');
   return createUpdateMutationV2({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
@@ -48,13 +45,11 @@ export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; v
       source: 'aiPaths.hooks.useUpdateAiPathsSettingMutation',
       operation: 'update',
       resource: 'ai-paths.settings',
-      domain: 'global',
+      domain: 'ai_paths',
       mutationKey,
       tags: ['ai-paths', 'settings', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.settings() });
-    },
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.settings()],
   });
 }
 
@@ -72,7 +67,7 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
       source: 'aiPaths.hooks.useAiPathsTriggerButtonsQuery',
       operation: 'detail',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'trigger-buttons'],
     },
@@ -102,7 +97,7 @@ export function useAiPathRuntimeAnalytics(
       source: 'aiPaths.hooks.useAiPathRuntimeAnalytics',
       operation: 'detail',
       resource: 'ai-paths.runtime-analytics',
-      domain: 'global',
+      domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'runtime-analytics'],
     },
@@ -127,7 +122,7 @@ export function useAiPathsQueueStatusQuery(): SingleQuery<{
       source: 'aiPaths.hooks.useAiPathsQueueStatusQuery',
       operation: 'detail',
       resource: 'ai-paths.queue-status',
-      domain: 'global',
+      domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'queue-status'],
     },

@@ -7,7 +7,7 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { createManagedQueue } from '@/shared/lib/queue';
-import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getSystemAlerts } from '@/shared/lib/observability/system-alerts-repository';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -70,9 +70,6 @@ const ALERT_QUEUE_NAME = 'system-log-alerts';
 const ALERT_REPEAT_JOB_ID = 'system-log-alerts-tick';
 const ALERT_STARTUP_JOB_ID = 'system-log-alerts-startup-tick';
 const ALERT_EVIDENCE_SAMPLE_LIMIT = 5;
-const ALERT_EVIDENCE_MODEL_LIMIT = 3;
-const ALERT_EVIDENCE_FAILED_NODE_LIMIT = 3;
-
 type MongoSystemLogDoc = {
   _id?: string;
   id?: string;
@@ -90,13 +87,14 @@ type MongoSystemLogDoc = {
   createdAt?: Date;
 };
 
-type AlertEvidenceAiPathRunSummary = {
-  runId: string | null;
-  pathName: string | null;
-  status: string | null;
-  failedNodeIds: string[];
-  modelIds: string[];
-  latestErrorMessage: string | null;
+type AlertEvidenceContextRegistry = {
+  refs: Array<{
+    id: string;
+    kind: string;
+    providerId?: string;
+    entityType?: string;
+  }>;
+  engineVersion: string | null;
 };
 
 type AlertEvidenceSample = {
@@ -106,9 +104,7 @@ type AlertEvidenceSample = {
   source: string | null;
   message: string;
   fingerprint: string | null;
-  runId: string | null;
-  jobId: string | null;
-  aiPathRun: AlertEvidenceAiPathRunSummary | null;
+  contextRegistry: AlertEvidenceContextRegistry | null;
 };
 
 type AlertEvidenceContext = {
@@ -242,56 +238,53 @@ const toMongoWhere = (query: AlertEvidenceQuery): Record<string, unknown> => {
   return where;
 };
 
-const summarizeAiPathRun = (value: unknown): AlertEvidenceAiPathRunSummary | null => {
-  const aiPathRun = asRecord(value);
-  if (!aiPathRun) return null;
+const readContextRegistryEvidence = (value: unknown): AlertEvidenceContextRegistry | null => {
+  const contextRegistry = asRecord(value);
+  if (!contextRegistry) return null;
 
-  const failedNodes = Array.isArray(aiPathRun['failedNodes']) ? aiPathRun['failedNodes'] : [];
-  const executedModels = Array.isArray(aiPathRun['executedModels']) ? aiPathRun['executedModels'] : [];
-  const recentErrorEvents = Array.isArray(aiPathRun['recentErrorEvents'])
-    ? aiPathRun['recentErrorEvents']
+  const refs = Array.isArray(contextRegistry['refs'])
+    ? contextRegistry['refs']
+        .map((ref) => {
+          const record = asRecord(ref);
+          const id = readTrimmedString(record?.['id']);
+          const kind = readTrimmedString(record?.['kind']);
+          if (!id || !kind) return null;
+
+          return {
+            id,
+            kind,
+            ...(readTrimmedString(record?.['providerId'])
+              ? { providerId: readTrimmedString(record?.['providerId'])! }
+              : {}),
+            ...(readTrimmedString(record?.['entityType'])
+              ? { entityType: readTrimmedString(record?.['entityType'])! }
+              : {}),
+          };
+        })
+        .filter((ref): ref is AlertEvidenceContextRegistry['refs'][number] => Boolean(ref))
     : [];
 
-  const failedNodeIds = failedNodes
-    .map((node) => readTrimmedString(asRecord(node)?.['nodeId']))
-    .filter((value): value is string => Boolean(value))
-    .slice(0, ALERT_EVIDENCE_FAILED_NODE_LIMIT);
-
-  const modelIds = executedModels
-    .map((node) => readTrimmedString(asRecord(node)?.['modelId']))
-    .filter((value): value is string => Boolean(value))
-    .slice(0, ALERT_EVIDENCE_MODEL_LIMIT);
-
-  const latestErrorMessage =
-    readTrimmedString(asRecord(recentErrorEvents[0])?.['message']) ??
-    readTrimmedString(asRecord(failedNodes[0])?.['errorMessage']);
+  if (refs.length === 0) return null;
 
   return {
-    runId: readTrimmedString(aiPathRun['runId']),
-    pathName: readTrimmedString(aiPathRun['pathName']),
-    status: readTrimmedString(aiPathRun['status']),
-    failedNodeIds,
-    modelIds,
-    latestErrorMessage,
+    refs,
+    engineVersion: readTrimmedString(contextRegistry['engineVersion']),
   };
 };
 
 const summarizeLogForAlertEvidence = async (log: SystemLogRecord): Promise<AlertEvidenceSample> => {
-  const hydrated = await hydrateSystemLogRecordRuntimeContext(log);
-  const context = asRecord(hydrated.context);
-  const staticContext = asRecord(context?.['staticContext']);
-  const aiPathRun = summarizeAiPathRun(staticContext?.['aiPathRun']);
+  const context = await hydrateLogRuntimeContext(log.context ?? null);
+  const contextRecord = asRecord(context);
+  const contextRegistry = readContextRegistryEvidence(contextRecord?.['contextRegistry']);
 
   return {
-    logId: hydrated.id,
-    createdAt: hydrated.createdAt,
-    level: hydrated.level,
-    source: hydrated.source ?? null,
-    message: hydrated.message,
-    fingerprint: readTrimmedString(context?.['fingerprint']),
-    runId: readTrimmedString(context?.['runId']) ?? aiPathRun?.runId ?? null,
-    jobId: readTrimmedString(context?.['jobId']),
-    aiPathRun,
+    logId: log.id,
+    createdAt: log.createdAt || '',
+    level: log.level,
+    source: log.source ?? null,
+    message: log.message,
+    fingerprint: readTrimmedString(contextRecord?.['fingerprint']),
+    contextRegistry,
   };
 };
 
@@ -320,7 +313,9 @@ const listAlertEvidenceLogs = async (
 
   return rows.map((row) => ({
     id: row.id,
-    level: row.level,
+    level: (row.level === 'warn' || row.level === 'info' || row.level === 'error'
+      ? row.level
+      : 'error') as 'error' | 'info' | 'warn',
     message: row.message,
     category: row.category ?? null,
     source: row.source ?? null,
@@ -332,7 +327,7 @@ const listAlertEvidenceLogs = async (
     requestId: row.requestId ?? null,
     userId: row.userId ?? null,
     createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt ? row.updatedAt.toISOString() : null,
+    updatedAt: null,
   }));
 };
 

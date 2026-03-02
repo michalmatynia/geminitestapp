@@ -138,3 +138,5 @@ export type Language = LanguageWithCountriesDto;
 export type SaveCurrencyInput = Partial<CurrencyOption>;
 export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
 export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };
+
+export type InternationalizationProvider = 'prisma' | 'mongodb';

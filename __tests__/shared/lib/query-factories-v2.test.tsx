@@ -5,8 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as telemetry from '@/shared/lib/observability/tanstack-telemetry';
 import {
   createCreateMutationV2,
+  createMultiQueryV2,
+  createMutationV2,
+  createOptimisticMutationV2,
   createListQueryV2,
+  prefetchQueryV2,
   queryFactoriesV2TestUtils,
+  useEnsureQueryDataV2,
 } from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
@@ -101,6 +106,194 @@ describe('query-factories-v2', () => {
         stage: 'success',
       })
     );
+  });
+
+  it('emits query-batch telemetry for multi query factories', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+
+    const { result } = renderHook(
+      () =>
+        createMultiQueryV2({
+          queries: [
+            {
+              queryKey: ['products', 'batch', 'one'],
+              queryFn: async () => ['a'],
+              meta: {
+                source: 'tests.shared.query-factories-v2.multi.one',
+                operation: 'list',
+                resource: 'products.batch-one',
+              },
+            },
+            {
+              queryKey: ['products', 'batch', 'two'],
+              queryFn: async () => ({ id: '2' }),
+              meta: {
+                source: 'tests.shared.query-factories-v2.multi.two',
+                operation: 'detail',
+                resource: 'products.batch-two',
+              },
+            },
+          ] as const,
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.every((query) => query.isSuccess)).toBe(true));
+
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query-batch',
+        stage: 'start',
+      })
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query-batch',
+        stage: 'success',
+      })
+    );
+  });
+
+  it('invalidates keys declared via invalidateKeys', async () => {
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(
+      () =>
+        createMutationV2<{ ok: boolean }, { id: string }>({
+          mutationFn: async () => ({ ok: true }),
+          mutationKey: ['products', 'mutation', 'invalidate-keys'],
+          invalidateKeys: [['products'], ['products', 'detail']],
+          meta: {
+            source: 'tests.shared.query-factories-v2.invalidate-keys',
+            operation: 'update',
+            resource: 'products',
+          },
+        }),
+      { wrapper }
+    );
+
+    await result.current.mutateAsync({ id: '1' });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['products'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['products', 'detail'] });
+  });
+
+  it('awaits invalidate before onSuccess', async () => {
+    const executionOrder: string[] = [];
+
+    const { result } = renderHook(
+      () =>
+        createMutationV2<{ ok: boolean }, void>({
+          mutationFn: async () => ({ ok: true }),
+          mutationKey: ['products', 'mutation', 'invalidate-order'],
+          invalidate: async () => {
+            await Promise.resolve();
+            executionOrder.push('invalidate');
+          },
+          onSuccess: async () => {
+            executionOrder.push('onSuccess');
+          },
+          meta: {
+            source: 'tests.shared.query-factories-v2.invalidate-order',
+            operation: 'update',
+            resource: 'products',
+          },
+        }),
+      { wrapper }
+    );
+
+    await result.current.mutateAsync();
+
+    expect(executionOrder).toEqual(['invalidate', 'onSuccess']);
+  });
+
+  it('emits telemetry for prefetchQueryV2', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+
+    const prefetch = prefetchQueryV2(queryClient, {
+      queryKey: ['products', 'prefetch'],
+      queryFn: async () => ['cached'],
+      staleTime: 60_000,
+      meta: {
+        source: 'tests.shared.query-factories-v2.prefetch',
+        operation: 'list',
+        resource: 'products.prefetch',
+      },
+    });
+
+    await prefetch();
+
+    expect(queryClient.getQueryData(['products', 'prefetch'])).toEqual(['cached']);
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'start',
+      })
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'success',
+      })
+    );
+  });
+
+  it('ensures query data and reuses cached data', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const fetcher = vi.fn(async () => ({ id: 'ensured' }));
+
+    const { result } = renderHook(
+      () =>
+        useEnsureQueryDataV2({
+          queryKey: ['products', 'ensure'],
+          queryFn: fetcher,
+          staleTime: 60_000,
+          meta: {
+            source: 'tests.shared.query-factories-v2.ensure',
+            operation: 'detail',
+            resource: 'products.ensure',
+          },
+        }),
+      { wrapper }
+    );
+
+    await expect(result.current()).resolves.toEqual({ id: 'ensured' });
+    await expect(result.current()).resolves.toEqual({ id: 'ensured' });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(['products', 'ensure'])).toEqual({ id: 'ensured' });
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'success',
+      })
+    );
+  });
+
+  it('rolls back optimistic updates on mutation error', async () => {
+    queryClient.setQueryData(['products', 'optimistic'], { count: 1 });
+
+    const { result } = renderHook(
+      () =>
+        createOptimisticMutationV2<{ ok: boolean }, { delta: number }, { count: number }>({
+          queryKey: ['products', 'optimistic'],
+          updateFn: (oldData, variables) => ({
+            count: (oldData?.count ?? 0) + variables.delta,
+          }),
+          mutationFn: async () => {
+            throw new Error('boom');
+          },
+          meta: {
+            source: 'tests.shared.query-factories-v2.optimistic',
+            operation: 'update',
+            resource: 'products.optimistic',
+          },
+        }),
+      { wrapper }
+    );
+
+    await expect(result.current.mutateAsync({ delta: 2 })).rejects.toThrow('boom');
+    expect(queryClient.getQueryData(['products', 'optimistic'])).toEqual({ count: 1 });
   });
 
   it('throws when required metadata is missing', () => {

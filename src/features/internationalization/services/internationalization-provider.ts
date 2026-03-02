@@ -2,7 +2,7 @@ import 'server-only';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
-export type InternationalizationProvider = 'prisma' | 'mongodb';
+import type { InternationalizationProvider } from '@/shared/contracts/internationalization';
 
 const normalizeProvider = (value?: string | null): InternationalizationProvider | null => {
   if (!value) return null;

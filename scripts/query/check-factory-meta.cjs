@@ -127,19 +127,27 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
   }
 
   if (callName === 'createMultiQueryV2') {
-    // For createMultiQueryV2, we skip top-level meta but could potentially check nested queries.
-    // However, the current script structure is geared towards top-level objects.
     return;
+  }
+
+  const metaObject = extractMetaObject(metaProperty);
+  if (!metaObject) {
+    return;
+  }
+
+  const domainProperty = findObjectProperty(metaObject, 'domain');
+  if (!domainProperty) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'missing `domain` in `meta`.',
+    });
   }
 
   const expectedOperations = OPERATION_EXPECTATIONS[callName];
   if (!expectedOperations || !STRICT_ALIAS_OPERATION) {
     if (callName !== 'createMutationV2' || !STRICT_GENERIC_ACTION) {
-      return;
-    }
-
-    const metaObject = extractMetaObject(metaProperty);
-    if (!metaObject) {
       return;
     }
 
@@ -179,14 +187,39 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
     return;
   }
 
-  const metaObject = extractMetaObject(metaProperty);
-  if (!metaObject) {
-    return;
-  }
-
   const operationProperty = findObjectProperty(metaObject, 'operation');
   if (!operationProperty || !ts.isPropertyAssignment(operationProperty)) {
     issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'meta.operation is required for operation-specific mutation aliases.',
+    });
+    return;
+  }
+
+  const operationValue = readStringLiteralValue(operationProperty.initializer);
+  if (operationValue && expectedOperations.has(operationValue)) {
+    return;
+  }
+
+  if (operationValue === null) {
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: 'meta.operation should be a string literal for operation-specific mutation aliases.',
+    });
+    return;
+  }
+
+  issues.push({
+    file: relFilePath,
+    line,
+    callName,
+    message: `meta.operation should be one of: ${Array.from(expectedOperations).join(', ')}.`,
+  });
+};
       file: relFilePath,
       line,
       callName,

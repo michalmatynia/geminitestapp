@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import {
@@ -24,7 +23,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
  * This provides standardized list, create, update, and remove mutations with explicit meta.
  */
 export function useNotebookResource() {
-  const queryClient = useQueryClient();
   const queryKey = QUERY_KEYS.notes.notebooks();
 
   const listQuery = createListQueryV2<NotebookDto>({
@@ -37,7 +35,7 @@ export function useNotebookResource() {
       source: 'notes.hooks.useNotebookResource.list',
       operation: 'list',
       resource: 'notes.notebooks',
-      domain: 'global',
+      domain: 'notes',
       queryKey,
       tags: ['notes', 'notebooks'],
     },
@@ -50,13 +48,11 @@ export function useNotebookResource() {
       source: 'notes.hooks.useNotebookResource.create',
       operation: 'create',
       resource: 'notes.notebooks',
-      domain: 'global',
+      domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
+    invalidateKeys: [queryKey],
   });
 
   const updateMutation = createUpdateMutationV2<NotebookDto, UpdateNotebookDto & { id: string }>({
@@ -67,13 +63,11 @@ export function useNotebookResource() {
       source: 'notes.hooks.useNotebookResource.update',
       operation: 'update',
       resource: 'notes.notebooks',
-      domain: 'global',
+      domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
+    invalidateKeys: [queryKey],
   });
 
   const deleteMutation = createDeleteMutationV2<DeleteResponse, string>({
@@ -83,13 +77,11 @@ export function useNotebookResource() {
       source: 'notes.hooks.useNotebookResource.delete',
       operation: 'delete',
       resource: 'notes.notebooks',
-      domain: 'global',
+      domain: 'notes',
       mutationKey: queryKey,
       tags: ['notes', 'notebooks', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-    },
+    invalidateKeys: [queryKey],
   });
 
   return {

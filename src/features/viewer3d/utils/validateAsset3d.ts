@@ -1,9 +1,11 @@
+import type { Supported3DExtension } from '@/shared/contracts/viewer3d';
+
 export const SUPPORTED_3D_FORMATS = {
   '.glb': { mimetype: 'model/gltf-binary', description: 'GL Transmission Format Binary' },
   '.gltf': { mimetype: 'model/gltf+json', description: 'GL Transmission Format' },
 } as const;
 
-export type Supported3DExtension = keyof typeof SUPPORTED_3D_FORMATS;
+export type { Supported3DExtension };
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 

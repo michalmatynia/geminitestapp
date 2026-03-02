@@ -1,6 +1,5 @@
 'use client';
 
-import { type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -79,18 +78,12 @@ export function useCatalogSync(
   const queriesEnabled = enabled && runtimeReady;
 
   // Parallel queries for all data sources
-  const results = createMultiQueryV2<
-    [
-      Catalog[],
-      PriceGroupWithDetails[],
-      LanguageRecord[],
-      CurrencyRecord[],
-    ]
-  >({
+  const results = createMultiQueryV2({
     queries: [
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
-        queryFn: ({ signal }): Promise<Catalog[]> => fetchCatalogs(signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<Catalog[]> =>
+          fetchCatalogs(signal),
         enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnMount: false,
@@ -106,7 +99,8 @@ export function useCatalogSync(
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
-        queryFn: ({ signal }): Promise<PriceGroupWithDetails[]> => fetchPriceGroups(signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<PriceGroupWithDetails[]> =>
+          fetchPriceGroups(signal),
         enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
@@ -122,7 +116,8 @@ export function useCatalogSync(
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
-        queryFn: ({ signal }): Promise<LanguageRecord[]> => fetchLanguages(signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<LanguageRecord[]> =>
+          fetchLanguages(signal),
         enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
@@ -138,7 +133,8 @@ export function useCatalogSync(
       },
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
-        queryFn: ({ signal }): Promise<CurrencyRecord[]> => fetchCurrencies(signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<CurrencyRecord[]> =>
+          fetchCurrencies(signal),
         enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
@@ -152,7 +148,7 @@ export function useCatalogSync(
           tags: ['internationalization', 'currencies', 'sync'],
         },
       },
-    ],
+    ] as const,
   });
 
   const catalogsQuery = results[0];

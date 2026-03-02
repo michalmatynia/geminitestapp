@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/features/ai/agentcreator/constants/personas';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
@@ -37,8 +37,6 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   Error,
   { personas: AgentPersona[] }
   > {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2<void, { personas: AgentPersona[] }>({
     mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
@@ -55,8 +53,6 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
       domain: 'global',
       tags: ['ai', 'agentcreator', 'personas'],
     },
-    onSuccess: async () => {
-      await invalidateAgentPersonas(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAgentPersonas(queryClient),
   });
 }

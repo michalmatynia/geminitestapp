@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
@@ -21,6 +19,7 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
       source: 'playwright.hooks.usePlaywrightPersonas',
       operation: 'list',
       resource: 'playwright.personas',
+      domain: 'playwright',
       queryKey,
       tags: ['playwright', 'personas'],
     },
@@ -30,7 +29,6 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
 export function useSavePlaywrightPersonasMutation(): VoidMutation<{
   personas: PlaywrightPersona[];
 }> {
-  const queryClient = useQueryClient();
   const mutationKey = playwrightKeys.personas();
   return createUpdateMutationV2({
     mutationFn: async ({ personas }: { personas: PlaywrightPersona[] }): Promise<void> => {
@@ -45,11 +43,10 @@ export function useSavePlaywrightPersonasMutation(): VoidMutation<{
       source: 'playwright.hooks.useSavePlaywrightPersonasMutation',
       operation: 'update',
       resource: 'playwright.personas',
+      domain: 'playwright',
       mutationKey,
       tags: ['playwright', 'personas', 'save'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: playwrightKeys.personas() });
-    },
+    invalidateKeys: [playwrightKeys.personas()],
   });
 }

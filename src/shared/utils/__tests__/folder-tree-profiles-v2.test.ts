@@ -18,6 +18,7 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.case_resolver_cases.version).toBe(2);
     expect(parsed.validator_list_tree.version).toBe(2);
     expect(parsed.validator_pattern_tree.version).toBe(2);
+    expect(parsed.prompt_exploder_segments.version).toBe(2);
     expect(parsed.prompt_exploder_hierarchy.version).toBe(2);
     expect(parsed.brain_catalog_tree.version).toBe(2);
     expect(parsed.brain_routing_tree.version).toBe(2);
@@ -187,6 +188,30 @@ describe('folder-tree-profiles-v2', () => {
         nodeKind: 'validator-list',
         targetType: 'folder',
         targetFolderKind: 'sequence-group',
+      })
+    ).toBe(false);
+  });
+
+  it('keeps prompt exploder segments flat at root', () => {
+    const profile = defaultFolderTreeProfilesV2.prompt_exploder_segments;
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'prompt_segment',
+        targetType: 'root',
+        targetFolderKind: 'root',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'prompt_segment',
+        targetType: 'folder',
+        targetFolderKind: 'prompt_segment',
       })
     ).toBe(false);
   });

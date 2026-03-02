@@ -1,4 +1,5 @@
 'use client';
+import { UseQueryResult } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
@@ -169,19 +170,31 @@ export function DraftCreator({
   });
 
   const categories = useMemo(
-    () => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []),
+    () =>
+      (categoryQueries as UseQueryResult<ProductCategoryDto[], Error>[]).flatMap(
+        (query: UseQueryResult<ProductCategoryDto[], Error>): ProductCategoryDto[] => query.data || []
+      ),
     [categoryQueries]
   );
   const tags = useMemo(
-    () => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []),
+    () =>
+      (tagQueries as UseQueryResult<ProductTag[], Error>[]).flatMap(
+        (query: UseQueryResult<ProductTag[], Error>): ProductTag[] => query.data || []
+      ),
     [tagQueries]
   );
   const parameters = useMemo(
-    () => parameterQueries.flatMap((q) => (q.data as ProductParameter[]) || []),
+    () =>
+      (parameterQueries as UseQueryResult<ProductParameter[], Error>[]).flatMap(
+        (query: UseQueryResult<ProductParameter[], Error>): ProductParameter[] => query.data || []
+      ),
     [parameterQueries]
   );
   const parametersLoading = useMemo(
-    () => parameterQueries.some((q) => q.isLoading),
+    () =>
+      (parameterQueries as UseQueryResult<ProductParameter[], Error>[]).some(
+        (query: UseQueryResult<ProductParameter[], Error>): boolean => query.isLoading
+      ),
     [parameterQueries]
   );
   const active = propActive ?? activeState;
@@ -569,11 +582,15 @@ export function DraftCreator({
       selectedCatalogIds,
       setSelectedCatalogIds,
       categories,
-      categoryLoading: categoryQueries.some((query) => query.isLoading),
+      categoryLoading: (categoryQueries as UseQueryResult<ProductCategoryDto[], Error>[]).some(
+        (query: UseQueryResult<ProductCategoryDto[], Error>): boolean => query.isLoading
+      ),
       selectedCategoryId,
       setSelectedCategoryId,
       tags,
-      tagLoading: tagQueries.some((query) => query.isLoading),
+      tagLoading: (tagQueries as UseQueryResult<ProductTag[], Error>[]).some(
+        (query) => query.isLoading
+      ),
       selectedTagIds,
       setSelectedTagIds,
       producers,

@@ -76,37 +76,40 @@ const readRecordNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 type AiPathRunDisplayModel = {
-  nodeId: string | null;
-  modelId: string | null;
-  status: string | null;
-  errorMessage: string | null;
+  label: string;
+  value: string;
 };
 
-type AiPathRunDisplayNode = {
-  nodeId: string | null;
-  status: string | null;
-  errorMessage: string | null;
+type ContextDocumentSectionDisplay = {
+  id: string | null;
+  kind: string | null;
+  title: string;
+  summary: string | null;
+  text: string | null;
+  items: Array<Record<string, string>>;
 };
 
-type AiPathRunDisplayEvent = {
-  createdAt: string | null;
-  level: string | null;
-  message: string | null;
-};
-
-type AiPathRunDisplay = {
-  runId: string | null;
-  pathName: string | null;
-  status: string | null;
+type ContextDocumentDisplay = {
+  id: string;
   entityType: string | null;
-  entityId: string | null;
-  triggerEvent: string | null;
-  triggerNodeId: string | null;
-  runtimeFingerprint: string | null;
-  summary: Record<string, number> | null;
-  executedModels: AiPathRunDisplayModel[];
-  failedNodes: AiPathRunDisplayNode[];
-  recentErrorEvents: AiPathRunDisplayEvent[];
+  title: string;
+  summary: string | null;
+  status: string | null;
+  tags: string[];
+  facts: AiPathRunDisplayModel[];
+  sections: ContextDocumentSectionDisplay[];
+};
+
+type ContextRegistryNodeDisplay = {
+  id: string;
+  kind: string | null;
+  name: string;
+};
+
+type ContextRegistryDisplay = {
+  refs: string[];
+  documents: ContextDocumentDisplay[];
+  nodes: ContextRegistryNodeDisplay[];
 };
 
 type AlertEvidenceSampleDisplay = {
@@ -116,16 +119,7 @@ type AlertEvidenceSampleDisplay = {
   source: string | null;
   message: string | null;
   fingerprint: string | null;
-  runId: string | null;
-  jobId: string | null;
-  aiPathRun: {
-    runId: string | null;
-    pathName: string | null;
-    status: string | null;
-    modelIds: string[];
-    failedNodeIds: string[];
-    latestErrorMessage: string | null;
-  } | null;
+  contextRegistry: ContextRegistryDisplay | null;
 };
 
 type AlertEvidenceDisplay = {
@@ -148,76 +142,131 @@ const getStatusVariant = (status: string | null | undefined): StatusVariant => {
   return 'neutral';
 };
 
-const readAiPathRunStaticContext = (log: SystemLogRecord): AiPathRunDisplay | null => {
-  const context = asRecord(log.context);
-  const staticContext = asRecord(context?.['staticContext']);
-  const aiPathRun = asRecord(staticContext?.['aiPathRun']);
-  if (!aiPathRun) return null;
+const toDisplayValue = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (Array.isArray(value)) {
+    const formatted = value.map((item) => toDisplayValue(item)).filter((item): item is string => Boolean(item));
+    return formatted.length > 0 ? formatted.join(', ') : null;
+  }
+  if (value && typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
 
-  const summaryRecord = asRecord(aiPathRun['summary']);
-  const executedModels = Array.isArray(aiPathRun['executedModels']) ? aiPathRun['executedModels'] : [];
-  const failedNodes = Array.isArray(aiPathRun['failedNodes']) ? aiPathRun['failedNodes'] : [];
-  const recentErrorEvents = Array.isArray(aiPathRun['recentErrorEvents'])
-    ? aiPathRun['recentErrorEvents']
-    : [];
+const readContextDocument = (value: unknown): ContextDocumentDisplay | null => {
+  const record = asRecord(value);
+  const id = readRecordString(record?.['id']);
+  const title = readRecordString(record?.['title']);
+  if (!id || !title) return null;
+
+  const factsRecord = asRecord(record?.['facts']);
+  const sections = Array.isArray(record?.['sections']) ? record?.['sections'] : [];
 
   return {
-    runId: readRecordString(aiPathRun['runId']),
-    pathName: readRecordString(aiPathRun['pathName']),
-    status: readRecordString(aiPathRun['status']),
-    entityType: readRecordString(aiPathRun['entityType']),
-    entityId: readRecordString(aiPathRun['entityId']),
-    triggerEvent: readRecordString(aiPathRun['triggerEvent']),
-    triggerNodeId: readRecordString(aiPathRun['triggerNodeId']),
-    runtimeFingerprint: readRecordString(aiPathRun['runtimeFingerprint']),
-    summary: summaryRecord
-      ? Object.fromEntries(
-          Object.entries(summaryRecord)
-            .map(([key, value]) => [key, readRecordNumber(value)])
-            .filter((entry): entry is [string, number] => entry[1] !== null)
-        )
-      : null,
-    executedModels: executedModels
-      .map((value): AiPathRunDisplayModel => {
-        const record = asRecord(value);
+    id,
+    entityType: readRecordString(record?.['entityType']),
+    title,
+    summary: readRecordString(record?.['summary']),
+    status: readRecordString(record?.['status']),
+    tags: Array.isArray(record?.['tags'])
+      ? record['tags']
+          .map((tag) => readRecordString(tag))
+          .filter((tag): tag is string => Boolean(tag))
+          .slice(0, 6)
+      : [],
+    facts: factsRecord
+      ? Object.entries(factsRecord)
+          .map(([key, rawValue]) => {
+            const value = toDisplayValue(rawValue);
+            return value ? { label: key, value } : null;
+          })
+          .filter((entry): entry is AiPathRunDisplayModel => Boolean(entry))
+      : [],
+    sections: sections
+      .map((section): ContextDocumentSectionDisplay | null => {
+        const sectionRecord = asRecord(section);
+        const sectionTitle = readRecordString(sectionRecord?.['title']);
+        if (!sectionTitle) return null;
+        const items = Array.isArray(sectionRecord?.['items']) ? sectionRecord?.['items'] : [];
+
         return {
-          nodeId: readRecordString(record?.['nodeId']),
-          modelId: readRecordString(record?.['modelId']),
-          status: readRecordString(record?.['status']),
-          errorMessage: readRecordString(record?.['errorMessage']),
+          id: readRecordString(sectionRecord?.['id']),
+          kind: readRecordString(sectionRecord?.['kind']),
+          title: sectionTitle,
+          summary: readRecordString(sectionRecord?.['summary']),
+          text: readRecordString(sectionRecord?.['text']),
+          items: items
+            .map((item) => {
+              const itemRecord = asRecord(item);
+              if (!itemRecord) return null;
+              const normalized = Object.fromEntries(
+                Object.entries(itemRecord)
+                  .map(([key, rawValue]) => [key, toDisplayValue(rawValue)])
+                  .filter((entry): entry is [string, string] => Boolean(entry[1]))
+              );
+              return Object.keys(normalized).length > 0 ? normalized : null;
+            })
+            .filter((item): item is Record<string, string> => Boolean(item))
+            .slice(0, 6),
         };
       })
-      .slice(0, 4),
-    failedNodes: failedNodes
-      .map((value): AiPathRunDisplayNode => {
-        const record = asRecord(value);
-        return {
-          nodeId: readRecordString(record?.['nodeId']),
-          status: readRecordString(record?.['status']),
-          errorMessage: readRecordString(record?.['errorMessage']),
-        };
-      })
-      .slice(0, 4),
-    recentErrorEvents: recentErrorEvents
-      .map((value): AiPathRunDisplayEvent => {
-        const record = asRecord(value);
-        return {
-          createdAt: readRecordString(record?.['createdAt']),
-          level: readRecordString(record?.['level']),
-          message: readRecordString(record?.['message']),
-        };
-      })
-      .slice(0, 4),
+      .filter((section): section is ContextDocumentSectionDisplay => Boolean(section)),
   };
+};
+
+const readContextRegistryNode = (value: unknown): ContextRegistryNodeDisplay | null => {
+  const record = asRecord(value);
+  const id = readRecordString(record?.['id']);
+  const name = readRecordString(record?.['name']);
+  if (!id || !name) return null;
+
+  return {
+    id,
+    kind: readRecordString(record?.['kind']),
+    name,
+  };
+};
+
+const readContextRegistryDisplay = (value: unknown): ContextRegistryDisplay | null => {
+  const contextRegistry = asRecord(value);
+  if (!contextRegistry) return null;
+
+  const refs = Array.isArray(contextRegistry['refs']) ? contextRegistry['refs'] : [];
+  const resolved = asRecord(contextRegistry['resolved']);
+  const documents = Array.isArray(resolved?.['documents']) ? resolved?.['documents'] : [];
+  const nodes = Array.isArray(resolved?.['nodes']) ? resolved?.['nodes'] : [];
+
+  return {
+    refs: refs
+      .map((ref) => readRecordString(asRecord(ref)?.['id']))
+      .filter((ref): ref is string => Boolean(ref)),
+    documents: documents
+      .map((document) => readContextDocument(document))
+      .filter((document): document is ContextDocumentDisplay => Boolean(document)),
+    nodes: nodes
+      .map((node) => readContextRegistryNode(node))
+      .filter((node): node is ContextRegistryNodeDisplay => Boolean(node)),
+  };
+};
+
+const readLogContextRegistry = (log: SystemLogRecord): ContextRegistryDisplay | null => {
+  const context = asRecord(log.context);
+  return readContextRegistryDisplay(context?.['contextRegistry']);
 };
 
 const readAlertEvidenceSample = (value: unknown): AlertEvidenceSampleDisplay | null => {
   const record = asRecord(value);
   if (!record) return null;
-
-  const aiPathRun = asRecord(record['aiPathRun']);
-  const modelIds = Array.isArray(aiPathRun?.['modelIds']) ? aiPathRun?.['modelIds'] : [];
-  const failedNodeIds = Array.isArray(aiPathRun?.['failedNodeIds']) ? aiPathRun?.['failedNodeIds'] : [];
 
   return {
     logId: readRecordString(record['logId']),
@@ -226,22 +275,7 @@ const readAlertEvidenceSample = (value: unknown): AlertEvidenceSampleDisplay | n
     source: readRecordString(record['source']),
     message: readRecordString(record['message']),
     fingerprint: readRecordString(record['fingerprint']),
-    runId: readRecordString(record['runId']),
-    jobId: readRecordString(record['jobId']),
-    aiPathRun: aiPathRun
-      ? {
-          runId: readRecordString(aiPathRun['runId']),
-          pathName: readRecordString(aiPathRun['pathName']),
-          status: readRecordString(aiPathRun['status']),
-          modelIds: modelIds
-            .map((item) => readRecordString(item))
-            .filter((item): item is string => Boolean(item)),
-          failedNodeIds: failedNodeIds
-            .map((item) => readRecordString(item))
-            .filter((item): item is string => Boolean(item)),
-          latestErrorMessage: readRecordString(aiPathRun['latestErrorMessage']),
-        }
-      : null,
+    contextRegistry: readContextRegistryDisplay(record['contextRegistry']),
   };
 };
 
@@ -263,6 +297,115 @@ const readAlertEvidence = (log: SystemLogRecord): AlertEvidenceDisplay | null =>
       .filter((sample): sample is AlertEvidenceSampleDisplay => Boolean(sample)),
   };
 };
+
+const getPrimaryContextDocument = (
+  contextRegistry: ContextRegistryDisplay | null
+): ContextDocumentDisplay | null => contextRegistry?.documents[0] ?? null;
+
+function ContextDocumentCard({
+  document,
+  accentClassName = 'bg-sky-950/20',
+}: {
+  document: ContextDocumentDisplay;
+  accentClassName?: string;
+}): React.JSX.Element {
+  return (
+    <Card variant='glass' padding='md' className={cn('space-y-4', accentClassName)}>
+      <div className='flex flex-wrap items-center gap-2'>
+        <StatusBadge
+          status={document.entityType ?? 'runtime_document'}
+          variant='info'
+          size='sm'
+          className='font-mono'
+        />
+        {document.status ? (
+          <StatusBadge
+            status={document.status}
+            variant={getStatusVariant(document.status)}
+            size='sm'
+          />
+        ) : null}
+        {document.tags.map((tag) => (
+          <StatusBadge key={`${document.id}-${tag}`} status={tag} variant='neutral' size='sm' />
+        ))}
+      </div>
+      <div className='space-y-1'>
+        <p className='text-sm font-semibold text-gray-100'>{document.title}</p>
+        {document.summary ? <p className='text-[11px] text-gray-300/90'>{document.summary}</p> : null}
+      </div>
+      {document.facts.length ? (
+        <div className='grid grid-cols-2 gap-2'>
+          {document.facts.map((fact) => (
+            <MetadataItem key={`${document.id}-${fact.label}`} label={fact.label} value={fact.value} mono />
+          ))}
+        </div>
+      ) : null}
+      {document.sections.map((section) => (
+        <div key={`${document.id}-${section.id ?? section.title}`}>
+          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
+            {section.title}
+          </Hint>
+          {section.summary ? <p className='mb-2 text-[11px] text-gray-300/80'>{section.summary}</p> : null}
+          {section.text ? (
+            <p className='mb-2 rounded border border-white/5 bg-black/20 px-3 py-2 text-[11px] text-gray-200/90'>
+              {section.text}
+            </p>
+          ) : null}
+          {section.items.length ? (
+            <div className='space-y-2'>
+              {section.items.map((item, index) => (
+                <div
+                  key={`${document.id}-${section.id ?? section.title}-${index}`}
+                  className='rounded border border-white/5 bg-black/20 px-3 py-2'
+                >
+                  <div className='flex flex-wrap gap-2 text-[11px] text-gray-200/90'>
+                    {Object.entries(item).map(([key, value]) => (
+                      <PropertyRow
+                        key={`${document.id}-${section.id ?? section.title}-${index}-${key}`}
+                        label={key}
+                        value={value}
+                        mono
+                        variant='subtle'
+                        className='rounded bg-white/5 px-2 py-1'
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+function ContextRegistryNodesCard({
+  nodes,
+}: {
+  nodes: ContextRegistryNodeDisplay[];
+}): React.JSX.Element | null {
+  if (!nodes.length) return null;
+
+  return (
+    <Card variant='glass' padding='md' className='space-y-3 bg-white/5'>
+      <Hint uppercase variant='muted' className='font-semibold'>
+        Related Registry Nodes
+      </Hint>
+      <div className='flex flex-wrap gap-2'>
+        {nodes.map((node) => (
+          <StatusBadge
+            key={node.id}
+            status={`${node.kind ?? 'node'}: ${node.name}`}
+            variant='neutral'
+            size='sm'
+            className='max-w-full'
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 const getLogCategory = (log: SystemLogRecord): string | null => {
   return typeof log.category === 'string' && log.category.trim().length > 0
@@ -774,7 +917,8 @@ function LogList(): React.JSX.Element {
         accessorKey: 'message',
         header: 'Event Message',
         cell: ({ row }) => {
-          const aiPathRun = readAiPathRunStaticContext(row.original);
+          const contextRegistry = readLogContextRegistry(row.original);
+          const primaryContextDocument = getPrimaryContextDocument(contextRegistry);
           const alertEvidence = readAlertEvidence(row.original);
 
           return (
@@ -802,18 +946,16 @@ function LogList(): React.JSX.Element {
                   )}
                 </div>
               )}
-              {(aiPathRun || alertEvidence) && (
+              {(primaryContextDocument || alertEvidence) && (
                 <div className='flex flex-wrap items-center gap-1.5 pt-1'>
-                  {aiPathRun ? (
+                  {primaryContextDocument ? (
                     <>
-                      <StatusBadge status='AI Path' variant='info' size='sm' className='h-4' />
-                      {aiPathRun.pathName ? (
-                        <span className='text-[10px] text-sky-200/80'>{aiPathRun.pathName}</span>
-                      ) : null}
-                      {aiPathRun.status ? (
+                      <StatusBadge status='Context' variant='info' size='sm' className='h-4' />
+                      <span className='text-[10px] text-sky-200/80'>{primaryContextDocument.title}</span>
+                      {primaryContextDocument.status ? (
                         <StatusBadge
-                          status={aiPathRun.status}
-                          variant={getStatusVariant(aiPathRun.status)}
+                          status={primaryContextDocument.status}
+                          variant={getStatusVariant(primaryContextDocument.status)}
                           size='sm'
                           className='h-4'
                         />
@@ -898,7 +1040,7 @@ function LogList(): React.JSX.Element {
         const errorName = readContextString(log, 'errorName') ?? readContextString(log, 'name');
         const errorId = readContextString(log, 'errorId');
         const alertType = readContextString(log, 'alertType');
-        const aiPathRun = readAiPathRunStaticContext(log);
+        const contextRegistry = readLogContextRegistry(log);
         const alertEvidence = readAlertEvidence(log);
         const interpretation = logInterpretations[log.id];
         return (
@@ -993,157 +1135,35 @@ function LogList(): React.JSX.Element {
               </div>
 
               <div className='space-y-4'>
-                {aiPathRun ? (
+                {contextRegistry?.documents.length || contextRegistry?.nodes.length ? (
                   <div>
                     <Hint uppercase variant='muted' className='mb-2 font-semibold'>
-                      Runtime Context
+                      Context Registry
                     </Hint>
-                    <Card variant='glass' padding='md' className='space-y-4 bg-sky-950/20'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <StatusBadge status='AI Path Run' variant='info' size='sm' />
-                        {aiPathRun.status ? (
-                          <StatusBadge
-                            status={aiPathRun.status}
-                            variant={getStatusVariant(aiPathRun.status)}
-                            size='sm'
-                          />
-                        ) : null}
-                      </div>
-                      <div className='grid grid-cols-2 gap-2'>
-                        <MetadataItem label='Run ID' value={aiPathRun.runId} mono />
-                        <MetadataItem label='Path' value={aiPathRun.pathName} />
-                        <MetadataItem label='Entity Type' value={aiPathRun.entityType} />
-                        <MetadataItem label='Entity ID' value={aiPathRun.entityId} mono />
-                        <MetadataItem label='Trigger Event' value={aiPathRun.triggerEvent} />
-                        <MetadataItem label='Trigger Node' value={aiPathRun.triggerNodeId} mono />
-                        <MetadataItem
-                          label='Runtime Fingerprint'
-                          value={aiPathRun.runtimeFingerprint}
-                          mono
-                        />
-                      </div>
-                      {aiPathRun.summary ? (
-                        <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300'>
-                          {Object.entries(aiPathRun.summary).map(([key, value]) => (
-                            <PropertyRow
-                              key={key}
-                              label={key}
-                              value={value}
-                              mono
-                              variant='subtle'
-                              className='rounded bg-white/5 px-2 py-1'
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                      {aiPathRun.executedModels.length ? (
-                        <div>
-                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
-                            Executed Models
+                    <div className='space-y-3'>
+                      {contextRegistry?.refs.length ? (
+                        <Card variant='glass' padding='md' className='space-y-3 bg-white/5'>
+                          <Hint uppercase variant='muted' className='font-semibold'>
+                            Registry Refs
                           </Hint>
-                          <div className='space-y-2'>
-                            {aiPathRun.executedModels.map((model, index) => (
-                              <div
-                                key={`${model.nodeId ?? 'node'}-${index}`}
-                                className='rounded border border-white/5 bg-black/20 px-3 py-2'
-                              >
-                                <div className='flex flex-wrap items-center gap-2'>
-                                  {model.modelId ? (
-                                    <StatusBadge
-                                      status={model.modelId}
-                                      variant='neutral'
-                                      size='sm'
-                                      className='font-mono'
-                                    />
-                                  ) : (
-                                    <StatusBadge status='Brain Default' variant='neutral' size='sm' />
-                                  )}
-                                  {model.status ? (
-                                    <StatusBadge
-                                      status={model.status}
-                                      variant={getStatusVariant(model.status)}
-                                      size='sm'
-                                    />
-                                  ) : null}
-                                </div>
-                                {model.errorMessage ? (
-                                  <p className='mt-2 text-[11px] text-rose-200/90'>{model.errorMessage}</p>
-                                ) : null}
-                              </div>
+                          <div className='flex flex-wrap gap-2'>
+                            {contextRegistry.refs.map((ref) => (
+                              <StatusBadge
+                                key={ref}
+                                status={ref}
+                                variant='neutral'
+                                size='sm'
+                                className='font-mono'
+                              />
                             ))}
                           </div>
-                        </div>
+                        </Card>
                       ) : null}
-                      {aiPathRun.failedNodes.length ? (
-                        <div>
-                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
-                            Failed Nodes
-                          </Hint>
-                          <div className='space-y-2'>
-                            {aiPathRun.failedNodes.map((node, index) => (
-                              <div
-                                key={`${node.nodeId ?? 'failed'}-${index}`}
-                                className='rounded border border-rose-500/10 bg-rose-950/10 px-3 py-2'
-                              >
-                                <div className='flex flex-wrap items-center gap-2'>
-                                  {node.nodeId ? (
-                                    <StatusBadge
-                                      status={node.nodeId}
-                                      variant='neutral'
-                                      size='sm'
-                                      className='font-mono'
-                                    />
-                                  ) : null}
-                                  {node.status ? (
-                                    <StatusBadge
-                                      status={node.status}
-                                      variant={getStatusVariant(node.status)}
-                                      size='sm'
-                                    />
-                                  ) : null}
-                                </div>
-                                {node.errorMessage ? (
-                                  <p className='mt-2 text-[11px] text-rose-200/90'>{node.errorMessage}</p>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                      {aiPathRun.recentErrorEvents.length ? (
-                        <div>
-                          <Hint uppercase variant='muted' className='mb-2 text-[10px] font-semibold'>
-                            Recent Runtime Errors
-                          </Hint>
-                          <div className='space-y-2'>
-                            {aiPathRun.recentErrorEvents.map((event, index) => (
-                              <div
-                                key={`${event.createdAt ?? 'event'}-${index}`}
-                                className='rounded border border-white/5 bg-black/20 px-3 py-2'
-                              >
-                                <div className='flex flex-wrap items-center gap-2'>
-                                  {event.level ? (
-                                    <StatusBadge
-                                      status={event.level}
-                                      variant={getStatusVariant(event.level)}
-                                      size='sm'
-                                    />
-                                  ) : null}
-                                  {event.createdAt ? (
-                                    <span className='text-[10px] font-mono text-gray-500'>
-                                      {formatTimestamp(event.createdAt)}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                {event.message ? (
-                                  <p className='mt-2 text-[11px] text-gray-200/90'>{event.message}</p>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </Card>
+                      {contextRegistry?.documents.map((document) => (
+                        <ContextDocumentCard key={document.id} document={document} />
+                      ))}
+                      <ContextRegistryNodesCard nodes={contextRegistry?.nodes ?? []} />
+                    </div>
                   </div>
                 ) : null}
 
@@ -1232,36 +1252,40 @@ function LogList(): React.JSX.Element {
                                 {sample.message ? (
                                   <p className='mt-2 text-[11px] text-gray-200/90'>{sample.message}</p>
                                 ) : null}
-                                {(sample.fingerprint || sample.runId || sample.jobId) && (
+                                {sample.fingerprint ? (
                                   <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
-                                    {sample.fingerprint ? <span>fp: {sample.fingerprint}</span> : null}
-                                    {sample.runId ? <span>run: {sample.runId}</span> : null}
-                                    {sample.jobId ? <span>job: {sample.jobId}</span> : null}
+                                    <span>fp: {sample.fingerprint}</span>
                                   </div>
-                                )}
-                                {sample.aiPathRun ? (
-                                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[10px] text-sky-200/80'>
-                                    {sample.aiPathRun.pathName ? <span>{sample.aiPathRun.pathName}</span> : null}
-                                    {sample.aiPathRun.status ? (
+                                ) : null}
+                                {sample.contextRegistry?.refs.length ? (
+                                  <div className='mt-2 flex flex-wrap gap-2'>
+                                    {sample.contextRegistry.refs.map((ref) => (
                                       <StatusBadge
-                                        status={sample.aiPathRun.status}
-                                        variant={getStatusVariant(sample.aiPathRun.status)}
+                                        key={`${sample.logId ?? 'sample'}-${ref}`}
+                                        status={ref}
+                                        variant='neutral'
                                         size='sm'
+                                        className='font-mono'
                                       />
-                                    ) : null}
-                                    {sample.aiPathRun.modelIds.length ? (
-                                      <span>models: {sample.aiPathRun.modelIds.join(', ')}</span>
-                                    ) : null}
-                                    {sample.aiPathRun.failedNodeIds.length ? (
-                                      <span>failed nodes: {sample.aiPathRun.failedNodeIds.join(', ')}</span>
-                                    ) : null}
+                                    ))}
                                   </div>
                                 ) : null}
-                                {sample.aiPathRun?.latestErrorMessage ? (
-                                  <p className='mt-2 text-[11px] text-rose-200/90'>
-                                    {sample.aiPathRun.latestErrorMessage}
-                                  </p>
+                                {sample.contextRegistry?.documents.length ? (
+                                  <div className='mt-3 space-y-2'>
+                                    {sample.contextRegistry.documents.map((document) => (
+                                      <ContextDocumentCard
+                                        key={`${sample.logId ?? 'sample'}-${document.id}`}
+                                        document={document}
+                                        accentClassName='bg-sky-950/10'
+                                      />
+                                    ))}
+                                  </div>
                                 ) : null}
+                                <div className='mt-3'>
+                                  <ContextRegistryNodesCard
+                                    nodes={sample.contextRegistry?.nodes ?? []}
+                                  />
+                                </div>
                               </div>
                             ))}
                           </div>

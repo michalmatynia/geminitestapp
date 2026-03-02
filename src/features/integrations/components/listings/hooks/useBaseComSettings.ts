@@ -10,7 +10,7 @@ import {
   getDefaultExportInventoryQueryOptions,
   getBaseInventoriesQueryOptions,
 } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { Template, BaseInventory } from '@/shared/contracts/integrations';
+import type { IntegrationTemplate as Template, BaseInventory } from '@/shared/contracts/integrations';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 
 // Why: Base.com has complex, interconnected setup:
@@ -39,13 +39,13 @@ export function useBaseComSettings(
   const hasInitializedInventory = useRef(false);
 
   // Queries
-  const results = createMultiQueryV2<unknown>({
+  const results = createMultiQueryV2({
     queries: [
       getExportTemplatesQueryOptions(),
       getActiveExportTemplateQueryOptions(),
       getDefaultExportInventoryQueryOptions(),
       getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
-    ],
+    ] as any[],
   });
 
   const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;

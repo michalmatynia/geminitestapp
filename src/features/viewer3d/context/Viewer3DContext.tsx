@@ -2,12 +2,17 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
-import type { Asset3dOrderedDitheringPresetKey } from '@/shared/contracts/viewer3d';
+import type {
+  Asset3dOrderedDitheringPresetKey,
+  Viewer3DState,
+} from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { LightingPreset, EnvironmentPreset } from '../components/Viewer3D';
 
 export type OrderedDitheringPresetKey = Asset3dOrderedDitheringPresetKey;
+
+export type { Viewer3DState };
 
 export const orderedDitheringPresets = {
   balanced: {
@@ -43,49 +48,6 @@ export const orderedDitheringPresets = {
     luminanceMethod: 1,
   },
 } as const;
-
-export interface Viewer3DState {
-  // View settings
-  autoRotate: boolean;
-  autoRotateSpeed: number;
-
-  // Environment & Lighting
-  environment: EnvironmentPreset;
-  lighting: LightingPreset;
-  lightIntensity: number;
-
-  // Rendering
-  enableShadows: boolean;
-  enableContactShadows: boolean;
-  showGround: boolean;
-
-  // Post-processing
-  enableBloom: boolean;
-  bloomIntensity: number;
-  enableVignette: boolean;
-  enableToneMapping: boolean;
-  exposure: number;
-
-  // Dithering (special effect)
-  enableDithering: boolean;
-  ditheringIntensity: number;
-
-  // Pixelation (pixel art effect)
-  enablePixelation: boolean;
-  pixelSize: number;
-
-  // Ordered dithering shader
-  enableOrderedDithering: boolean;
-  orderedDitheringGridSize: number;
-  orderedDitheringPixelSizeRatio: number;
-  orderedDitheringGrayscaleOnly: boolean;
-  orderedDitheringInvertColor: boolean;
-  orderedDitheringLuminanceMethod: number;
-  orderedDitheringPreset: OrderedDitheringPresetKey;
-
-  // Background
-  backgroundColor: string;
-}
 
 interface Viewer3DContextType extends Viewer3DState {
   // Setters

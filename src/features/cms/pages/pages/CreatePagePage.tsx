@@ -12,16 +12,14 @@ import type { Slug } from '@/shared/contracts/cms';
 import {
   Input,
   SectionHeader,
-  Checkbox,
   ToggleRow,
   FormSection,
   FormField,
-  Badge,
   Alert,
   StatusBadge,
   FormActions,
-  Hint,
   Breadcrumbs,
+  SearchableList,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -34,7 +32,6 @@ export default function CreatePagePage(): React.JSX.Element {
   const [includeAllZones, setIncludeAllZones] = useState(false);
   const allSlugsQuery = useCmsAllSlugs(includeAllZones);
   const createPage = useCreatePage();
-  const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
@@ -44,9 +41,6 @@ export default function CreatePagePage(): React.JSX.Element {
     [domainSlugs]
   );
   const visibleSlugs = includeAllZones ? allSlugs : domainSlugs;
-  const filteredSlugs = visibleSlugs.filter((slug: Slug): boolean =>
-    slug.slug.toLowerCase().includes(search.trim().toLowerCase())
-  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -132,64 +126,31 @@ export default function CreatePagePage(): React.JSX.Element {
             }
             className='p-6'
           >
-            <div className='space-y-4'>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder='Filter available routes...'
-                className='h-8 text-xs'
-              />
-
-              <div className='space-y-2'>
-                <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>
-                    Available Slugs
-                  </Hint>
-                  <Badge variant='secondary' className='text-[9px]'>
-                    {slugIds.length} selected
-                  </Badge>
-                </div>
-
-                <div className='max-h-56 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
-                  {filteredSlugs.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>
-                      No routes found matching your criteria.
-                    </div>
-                  ) : (
-                    filteredSlugs.map((slug) => {
-                      const checked = slugIds.includes(slug.id);
-                      const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
-                      return (
-                        <label
-                          key={slug.id}
-                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => {
-                              setSlugIds((prev) =>
-                                checked ? prev.filter((id) => id !== slug.id) : [...prev, slug.id]
-                              );
-                            }}
-                          />
-                          <div className='flex flex-1 items-center justify-between'>
-                            <span className='text-sm text-gray-300'>/{slug.slug}</span>
-                            {isCrossZone && (
-                              <StatusBadge
-                                status='Cross-Zone'
-                                variant='warning'
-                                size='sm'
-                                className='font-bold'
-                              />
-                            )}
-                          </div>
-                        </label>
-                      );
-                    })
+            <SearchableList
+              items={visibleSlugs}
+              selectedIds={slugIds}
+              onToggle={(id) => {
+                setSlugIds((prev) =>
+                  prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+                );
+              }}
+              getId={(s: Slug) => s.id}
+              getLabel={(s: Slug) => s.slug}
+              searchPlaceholder='Filter available routes...'
+              renderItem={(slug: Slug) => (
+                <div className='flex flex-1 items-center justify-between'>
+                  <span className='text-sm text-gray-300'>/{slug.slug}</span>
+                  {includeAllZones && !domainSlugIds.has(slug.id) && (
+                    <StatusBadge
+                      status='Cross-Zone'
+                      variant='warning'
+                      size='sm'
+                      className='font-bold'
+                    />
                   )}
                 </div>
-              </div>
-            </div>
+              )}
+            />
           </FormSection>
 
           <FormActions

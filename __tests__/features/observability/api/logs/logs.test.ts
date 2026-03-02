@@ -5,7 +5,10 @@ import { SystemLog, Prisma } from '@prisma/client';
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
-import { hydrateSystemLogRecordRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
+import {
+  hydrateLogRuntimeContext,
+  hydrateSystemLogRecordRuntimeContext,
+} from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -25,6 +28,7 @@ vi.mock('@/shared/lib/db/app-db-provider', () => ({
 }));
 
 vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
+  hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
   hydrateSystemLogRecordRuntimeContext: vi.fn().mockImplementation(async (log) => log),
 }));
 
@@ -32,6 +36,7 @@ describe('System Logs API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+    vi.mocked(hydrateLogRuntimeContext).mockImplementation(async (context) => context);
     vi.mocked(hydrateSystemLogRecordRuntimeContext).mockImplementation(async (log) => log);
   });
 
@@ -104,11 +109,39 @@ describe('System Logs API', () => {
       message: 'Err 1',
       source: 'ai-paths-worker',
       context: {
-        runId: 'run-1',
-        staticContext: {
-          aiPathRun: {
-            kind: 'ai_path_run',
-            runId: 'run-1',
+        contextRegistry: {
+          refs: [
+            {
+              id: 'runtime:ai-path-run:run-1',
+              kind: 'runtime_document',
+              providerId: 'ai-path-run',
+              entityType: 'ai_path_run',
+            },
+          ],
+          resolved: {
+            refs: [
+              {
+                id: 'runtime:ai-path-run:run-1',
+                kind: 'runtime_document',
+                providerId: 'ai-path-run',
+                entityType: 'ai_path_run',
+              },
+            ],
+            documents: [
+              {
+                id: 'runtime:ai-path-run:run-1',
+                kind: 'runtime_document',
+                entityType: 'ai_path_run',
+                title: 'Primary Path',
+                summary: 'failed run',
+                status: 'failed',
+                tags: ['ai-paths'],
+                relatedNodeIds: ['page:ai-paths'],
+              },
+            ],
+            nodes: [],
+            truncated: false,
+            engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
           },
         },
       },
@@ -134,12 +167,12 @@ describe('System Logs API', () => {
     );
     expect(data.logs[0].context).toEqual(
       expect.objectContaining({
-        runId: 'run-1',
-        staticContext: {
-          aiPathRun: expect.objectContaining({
-            runId: 'run-1',
+        contextRegistry: expect.objectContaining({
+          refs: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+          resolved: expect.objectContaining({
+            documents: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
           }),
-        },
+        }),
       })
     );
   });

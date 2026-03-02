@@ -1,30 +1,52 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getPathRunRepositoryMock, resolveWithExpansionMock, getVersionMock, getByIdsMock } =
-  vi.hoisted(() => ({
-    getPathRunRepositoryMock: vi.fn(),
-    resolveWithExpansionMock: vi.fn(),
-    getVersionMock: vi.fn(),
-    getByIdsMock: vi.fn(),
-  }));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
-  getPathRunRepository: getPathRunRepositoryMock,
+const {
+  resolveRefsMock,
+  getVersionMock,
+  hydrateLogRuntimeContextMock,
+  hydrateSystemLogRecordRuntimeContextMock,
+  sanitizeSystemLogForAiMock,
+} = vi.hoisted(() => ({
+  resolveRefsMock: vi.fn(),
+  getVersionMock: vi.fn(),
+  hydrateLogRuntimeContextMock: vi.fn(),
+  hydrateSystemLogRecordRuntimeContextMock: vi.fn(),
+  sanitizeSystemLogForAiMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-context-registry/server', () => ({
-  retrievalService: {
-    resolveWithExpansion: resolveWithExpansionMock,
-  },
-  registryBackend: {
+  contextRegistryEngine: {
+    resolveRefs: resolveRefsMock,
     getVersion: getVersionMock,
-    getByIds: getByIdsMock,
   },
 }));
 
-const buildRun = () =>
-  ({
-    id: 'run-1',
+vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
+  hydrateLogRuntimeContext: hydrateLogRuntimeContextMock,
+  hydrateSystemLogRecordRuntimeContext: hydrateSystemLogRecordRuntimeContextMock,
+}));
+
+vi.mock('@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai', () => ({
+  sanitizeSystemLogForAi: sanitizeSystemLogForAiMock,
+}));
+
+const buildRuntimeDocument = () => ({
+  id: 'runtime:ai-path-run:run-1',
+  kind: 'runtime_document' as const,
+  entityType: 'ai_path_run',
+  title: 'Primary Path',
+  summary: 'failed AI Path run',
+  status: 'failed',
+  tags: ['ai-paths', 'runtime', 'failed'],
+  relatedNodeIds: ['page:ai-paths', 'action:run-ai-path', 'collection:ai-path-runs'],
+  timestamps: {
+    createdAt: '2026-03-02T10:00:00.000Z',
+    startedAt: '2026-03-02T10:00:05.000Z',
+    finishedAt: '2026-03-02T10:00:20.000Z',
+    deadLetteredAt: null,
+  },
+  facts: {
+    runId: 'run-1',
     pathId: 'path-1',
     pathName: 'Primary Path',
     status: 'failed',
@@ -32,192 +54,163 @@ const buildRun = () =>
     entityType: 'product',
     triggerEvent: 'manual_run',
     triggerNodeId: 'trigger-1',
-    createdAt: '2026-03-02T10:00:00.000Z',
-    startedAt: '2026-03-02T10:00:05.000Z',
-    finishedAt: '2026-03-02T10:00:20.000Z',
-    deadLetteredAt: null,
-    meta: {
-      runtimeFingerprint: 'runtime-fp-1',
-      graphCompile: {
-        errors: ['Compile exploded'],
-        warnings: ['Compile warning'],
-        findings: [{ nodeId: 'validator-1', issue: 'missing edge' }],
-      },
-      runPreflight: {
-        validation: {
-          errors: ['Validation exploded'],
-          warnings: ['Validation warning'],
-        },
-        dependency: {
-          errors: ['Dependency exploded'],
-          warnings: ['Dependency warning'],
-          strictReady: false,
-        },
-        dataContract: {
-          errors: ['Data contract exploded'],
-          warnings: ['Data contract warning'],
-          issues: [{ nodeId: 'validator-1', message: 'Missing field title' }],
-        },
-        warnings: ['General preflight warning'],
-      },
-    },
-    graph: {
-      nodes: [
+    runtimeFingerprint: 'runtime-fp-1',
+    totalNodes: 3,
+    completedNodes: 1,
+    failedNodes: 1,
+    warningNodes: 1,
+    totalEvents: 3,
+    errorEvents: 1,
+    warnEvents: 1,
+  },
+  sections: [
+    {
+      id: 'executed-models',
+      kind: 'items' as const,
+      title: 'Executed Models',
+      items: [
         {
-          id: 'model-a',
-          type: 'model',
-          title: 'Primary Model',
-          config: { model: { modelId: 'gpt-4o-mini' } },
+          nodeId: 'model-a',
+          modelId: 'gpt-4o-mini',
+          usesBrainDefault: false,
+          status: 'completed',
+          attempt: 1,
         },
         {
-          id: 'model-b',
-          type: 'model',
-          title: 'Fallback Model',
-          config: { model: { modelId: '' } },
-        },
-        {
-          id: 'validator-1',
-          type: 'validator',
-          title: 'Validator',
-          config: {},
+          nodeId: 'model-b',
+          modelId: null,
+          usesBrainDefault: true,
+          status: 'failed',
+          attempt: 2,
+          errorMessage: 'Fallback model failed',
         },
       ],
-      edges: [],
-    },
-  }) as any;
-
-const buildNodes = () =>
-  [
-    {
-      id: 'node-1',
-      runId: 'run-1',
-      nodeId: 'model-a',
-      nodeType: 'model',
-      nodeTitle: 'Primary Model',
-      status: 'completed',
-      attempt: 1,
-      errorMessage: null,
-      createdAt: '2026-03-02T10:00:05.000Z',
-      updatedAt: '2026-03-02T10:00:07.000Z',
-      startedAt: '2026-03-02T10:00:05.000Z',
-      finishedAt: '2026-03-02T10:00:07.000Z',
     },
     {
-      id: 'node-2',
-      runId: 'run-1',
-      nodeId: 'model-b',
-      nodeType: 'model',
-      nodeTitle: 'Fallback Model',
-      status: 'failed',
-      attempt: 2,
-      errorMessage: 'Fallback model failed',
-      createdAt: '2026-03-02T10:00:08.000Z',
-      updatedAt: '2026-03-02T10:00:12.000Z',
-      startedAt: '2026-03-02T10:00:08.000Z',
-      finishedAt: '2026-03-02T10:00:12.000Z',
+      id: 'failed-nodes',
+      kind: 'items' as const,
+      title: 'Failed Nodes',
+      items: [
+        {
+          nodeId: 'model-b',
+          nodeType: 'model',
+          status: 'failed',
+          attempt: 2,
+          errorMessage: 'Fallback model failed',
+        },
+      ],
     },
     {
-      id: 'node-3',
-      runId: 'run-1',
-      nodeId: 'validator-1',
-      nodeType: 'validator',
-      nodeTitle: 'Validator',
-      status: 'blocked',
-      attempt: 1,
-      errorMessage: 'Missing title',
-      createdAt: '2026-03-02T10:00:12.000Z',
-      updatedAt: '2026-03-02T10:00:13.000Z',
-      startedAt: '2026-03-02T10:00:12.000Z',
-      finishedAt: '2026-03-02T10:00:13.000Z',
-    },
-  ] as any[];
-
-const buildEvents = () =>
-  [
-    {
-      id: 'event-1',
-      runId: 'run-1',
-      level: 'info',
-      message: 'Run queued.',
-      nodeId: null,
-      nodeType: null,
-      nodeTitle: null,
-      createdAt: '2026-03-02T10:00:04.000Z',
+      id: 'recent-runtime-errors',
+      kind: 'events' as const,
+      title: 'Recent Runtime Errors',
+      items: [
+        {
+          createdAt: '2026-03-02T10:00:12.500Z',
+          level: 'warn',
+          message: 'Validator warning.',
+          nodeId: 'validator-1',
+        },
+      ],
     },
     {
-      id: 'event-2',
-      runId: 'run-1',
-      level: 'warn',
-      message: 'Validator warning.',
-      nodeId: 'validator-1',
-      nodeType: 'validator',
-      nodeTitle: 'Validator',
-      createdAt: '2026-03-02T10:00:13.000Z',
+      id: 'preflight',
+      kind: 'facts' as const,
+      title: 'Preflight',
+      items: [
+        { label: 'compileErrorCount', value: 1 },
+        { label: 'validationErrorCount', value: 1 },
+        { label: 'dependencyStrictReady', value: false },
+        { label: 'dataContractErrorCount', value: 1 },
+        { label: 'samples', value: ['Compile exploded'] },
+      ],
     },
-    {
-      id: 'event-3',
-      runId: 'run-1',
-      level: 'error',
-      message: 'Fallback model crashed.',
-      nodeId: 'model-b',
-      nodeType: 'model',
-      nodeTitle: 'Fallback Model',
-      createdAt: '2026-03-02T10:00:12.500Z',
-    },
-  ] as any[];
-
-const buildRegistryNodes = () => [
-  {
-    id: 'page:ai-paths',
-    kind: 'page',
-    name: 'AI Paths Canvas',
-    description: 'Visual editor for AI path graphs.',
-    tags: ['ai', 'paths', 'canvas'],
-    relationships: [{ type: 'uses', targetId: 'action:run-ai-path' }],
+  ],
+  provenance: {
+    providerId: 'ai-path-run',
   },
-  {
-    id: 'action:run-ai-path',
-    kind: 'action',
-    name: 'Run AI Path',
-    description: 'Queues an AI path run.',
-    tags: ['ai', 'paths', 'execution'],
-    relationships: [{ type: 'writes', targetId: 'collection:ai-path-runs' }],
-  },
-  {
-    id: 'collection:ai-path-runs',
-    kind: 'collection',
-    name: 'ai_path_runs',
-    description: 'AI path runtime records.',
-    tags: ['ai', 'paths', 'runs'],
-    relationships: [],
-  },
-] as any[];
+});
+
+const buildResolvedBundle = () => ({
+  refs: [
+    {
+      id: 'runtime:ai-path-run:run-1',
+      kind: 'runtime_document' as const,
+      providerId: 'ai-path-run',
+      entityType: 'ai_path_run',
+    },
+  ],
+  nodes: [
+    {
+      id: 'page:ai-paths',
+      kind: 'page' as const,
+      name: 'AI Paths Canvas',
+      description: 'Visual editor for AI path graphs.',
+      tags: ['ai', 'paths', 'canvas'],
+      permissions: {
+        readScopes: [],
+        riskTier: 'low' as const,
+        classification: 'internal' as const,
+      },
+      version: 'codefirst:3',
+      updatedAtISO: '2026-03-02T10:00:00.000Z',
+      source: { type: 'code' as const, ref: 'registry/pages.ts' },
+      relationships: [{ type: 'uses' as const, targetId: 'action:run-ai-path' }],
+    },
+    {
+      id: 'action:run-ai-path',
+      kind: 'action' as const,
+      name: 'Run AI Path',
+      description: 'Queues an AI path run.',
+      tags: ['ai', 'paths', 'execution'],
+      permissions: {
+        readScopes: [],
+        riskTier: 'low' as const,
+        classification: 'internal' as const,
+      },
+      version: 'codefirst:3',
+      updatedAtISO: '2026-03-02T10:00:00.000Z',
+      source: { type: 'code' as const, ref: 'registry/actions.ts' },
+      relationships: [{ type: 'writes' as const, targetId: 'collection:ai-path-runs' }],
+    },
+    {
+      id: 'collection:ai-path-runs',
+      kind: 'collection' as const,
+      name: 'ai_path_runs',
+      description: 'AI path runtime records.',
+      tags: ['ai', 'paths', 'runs'],
+      permissions: {
+        readScopes: [],
+        riskTier: 'low' as const,
+        classification: 'internal' as const,
+      },
+      version: 'codefirst:3',
+      updatedAtISO: '2026-03-02T10:00:00.000Z',
+      source: { type: 'code' as const, ref: 'registry/collections.ts' },
+      relationships: [],
+    },
+  ],
+  documents: [buildRuntimeDocument()],
+  truncated: false,
+  engineVersion: 'registry:codefirst:3|providers:ai-path-run@1',
+});
 
 const loadModule = async () =>
   await import('@/shared/lib/observability/ai-path-run-static-context');
 
-describe('ai-path-run static context', () => {
+describe('ai-path-run static context compatibility shim', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
 
-    const repo = {
-      findRunById: vi.fn().mockResolvedValue(buildRun()),
-      listRunNodes: vi.fn().mockResolvedValue(buildNodes()),
-      listRunEvents: vi.fn().mockResolvedValue(buildEvents()),
-    };
-
-    getPathRunRepositoryMock.mockResolvedValue(repo);
-    resolveWithExpansionMock.mockReturnValue({
-      nodes: buildRegistryNodes(),
-      truncated: false,
-      visitedIds: ['page:ai-paths', 'action:run-ai-path', 'collection:ai-path-runs'],
-    });
-    getVersionMock.mockReturnValue('codefirst:3');
-    getByIdsMock.mockReturnValue(buildRegistryNodes());
+    resolveRefsMock.mockResolvedValue(buildResolvedBundle());
+    getVersionMock.mockReturnValue('registry:codefirst:3|providers:ai-path-run@1');
+    hydrateLogRuntimeContextMock.mockImplementation(async (context) => context);
+    hydrateSystemLogRecordRuntimeContextMock.mockImplementation(async (log) => log);
+    sanitizeSystemLogForAiMock.mockImplementation(async (log) => ({ id: log.id }));
   });
 
-  it('builds a bounded AI path run snapshot with executed models, failures, and registry context', async () => {
+  it('builds the legacy bounded AI-path snapshot from the registry-owned runtime document', async () => {
     const { buildAiPathRunStaticContext } = await loadModule();
 
     const result = await buildAiPathRunStaticContext('run-1');
@@ -272,78 +265,34 @@ describe('ai-path-run static context', () => {
     );
     expect(result?.registry).toEqual(
       expect.objectContaining({
-        version: 'codefirst:3',
+        version: 'registry:codefirst:3|providers:ai-path-run@1',
         refs: ['page:ai-paths', 'action:run-ai-path', 'collection:ai-path-runs'],
       })
     );
-    expect(result?.registry.nodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'page:ai-paths' }),
-        expect.objectContaining({ id: 'action:run-ai-path' }),
-        expect.objectContaining({ id: 'collection:ai-path-runs' }),
-      ])
-    );
   });
 
-  it('hydrates log context and keeps only fingerprint plus static AI-path context for AI insights', async () => {
+  it('keeps the old helper exports delegating to the new runtime-context wrappers', async () => {
     const {
       hydrateLogContextWithAiPathRunStaticContext,
+      hydrateSystemLogWithAiPathRunStaticContext,
       sanitizeSystemLogForAiInsight,
     } = await loadModule();
 
-    const hydratedContext = await hydrateLogContextWithAiPathRunStaticContext({
-      runId: 'run-1',
-      fingerprint: 'fp-log-1',
-      service: 'ai-paths-worker',
-    });
-
-    expect(hydratedContext).toEqual(
-      expect.objectContaining({
-        runId: 'run-1',
-        fingerprint: 'fp-log-1',
-        staticContext: expect.objectContaining({
-          aiPathRun: expect.objectContaining({
-            runId: 'run-1',
-            runtimeFingerprint: 'runtime-fp-1',
-          }),
-        }),
-      })
-    );
-
-    const sanitized = await sanitizeSystemLogForAiInsight({
+    const context = { runId: 'run-1' };
+    const log = {
       id: 'log-1',
       level: 'error',
       message: 'Run failed',
-      source: 'ai-paths-worker',
-      context: {
-        runId: 'run-1',
-        fingerprint: 'fp-log-1',
-        service: 'ai-paths-worker',
-      },
-      stack: null,
-      path: '/api/ai-paths/runs',
-      method: 'POST',
-      statusCode: 500,
-      requestId: null,
-      userId: null,
+      context,
       createdAt: '2026-03-02T10:01:00.000Z',
-      updatedAt: null,
-    });
+    } as any;
 
-    expect(sanitized).toEqual(
-      expect.objectContaining({
-        id: 'log-1',
-        context: {
-          fingerprint: 'fp-log-1',
-          staticContext: {
-            aiPathRun: expect.objectContaining({
-              runId: 'run-1',
-              executedModels: expect.any(Array),
-            }),
-          },
-        },
-      })
-    );
-    expect((sanitized.context as Record<string, unknown>)['service']).toBeUndefined();
+    await hydrateLogContextWithAiPathRunStaticContext(context);
+    await hydrateSystemLogWithAiPathRunStaticContext(log);
+    await sanitizeSystemLogForAiInsight(log);
+
+    expect(hydrateLogRuntimeContextMock).toHaveBeenCalledWith(context);
+    expect(hydrateSystemLogRecordRuntimeContextMock).toHaveBeenCalledWith(log);
+    expect(sanitizeSystemLogForAiMock).toHaveBeenCalledWith(log);
   });
 });

@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import type {
   ProductSyncProfile,
   ProductSyncRunDetail,
@@ -122,7 +120,6 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
   ProductSyncProfile,
   Partial<ProductSyncProfile>
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncProfiles();
   return createCreateMutationV2({
     mutationFn: (input: Partial<ProductSyncProfile>) =>
@@ -136,9 +133,7 @@ export function useCreateProductSyncProfileMutation(): CreateMutation<
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncProfiles() });
-    },
+    invalidateKeys: [productSettingsKeys.syncProfiles()],
   });
 }
 
@@ -146,7 +141,6 @@ export function useUpdateProductSyncProfileMutation(): UpdateMutation<
   ProductSyncProfile,
   { id: string; data: Partial<ProductSyncProfile> }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncProfiles();
   return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: Partial<ProductSyncProfile> }) =>
@@ -160,15 +154,11 @@ export function useUpdateProductSyncProfileMutation(): UpdateMutation<
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'update'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncProfiles() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncRuns(null) });
-    },
+    invalidateKeys: [productSettingsKeys.syncProfiles(), productSettingsKeys.syncRuns(null)],
   });
 }
 
 export function useDeleteProductSyncProfileMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncProfiles();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete(`/api/products/sync/profiles/${encodeURIComponent(id)}`),
@@ -181,10 +171,7 @@ export function useDeleteProductSyncProfileMutation(): DeleteMutation {
       mutationKey,
       tags: ['products', 'settings', 'sync', 'profiles', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncProfiles() });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncRuns(null) });
-    },
+    invalidateKeys: [productSettingsKeys.syncProfiles(), productSettingsKeys.syncRuns(null)],
   });
 }
 
@@ -192,7 +179,6 @@ export function useRunProductSyncProfileMutation(): MutationResult<
   ProductSyncRunRecord,
   { profileId: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.syncRuns(null);
   return createMutationV2({
     mutationFn: ({ profileId }: { profileId: string }) =>
@@ -209,13 +195,11 @@ export function useRunProductSyncProfileMutation(): MutationResult<
       mutationKey,
       tags: ['products', 'settings', 'sync', 'runs', 'run-now'],
     },
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncRuns(null) });
-      void queryClient.invalidateQueries({
-        queryKey: productSettingsKeys.syncRuns(variables.profileId),
-      });
-      void queryClient.invalidateQueries({ queryKey: productSettingsKeys.syncProfiles() });
-    },
+    invalidateKeys: (_data, variables) => [
+      productSettingsKeys.syncRuns(null),
+      productSettingsKeys.syncRuns(variables.profileId),
+      productSettingsKeys.syncProfiles(),
+    ],
   });
 }
 

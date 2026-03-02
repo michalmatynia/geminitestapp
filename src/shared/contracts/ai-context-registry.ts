@@ -93,6 +93,88 @@ export const contextNodeSchema = z.object({
 });
 export type ContextNode = z.infer<typeof contextNodeSchema>;
 
+// ─── Runtime Refs & Documents ────────────────────────────────────────────────
+
+export const contextRegistryRefKindSchema = z.enum(['static_node', 'runtime_document']);
+export type ContextRegistryRefKind = z.infer<typeof contextRegistryRefKindSchema>;
+
+export const contextRegistryRefSchema = z.object({
+  id: z.string().min(1),
+  kind: contextRegistryRefKindSchema,
+  providerId: z.string().min(1).optional(),
+  entityType: z.string().min(1).optional(),
+});
+export type ContextRegistryRef = z.infer<typeof contextRegistryRefSchema>;
+
+export const contextRuntimeDocumentSectionKindSchema = z.enum([
+  'facts',
+  'items',
+  'events',
+  'text',
+]);
+export type ContextRuntimeDocumentSectionKind = z.infer<
+  typeof contextRuntimeDocumentSectionKindSchema
+>;
+
+export const contextRuntimeDocumentSectionSchema = z.object({
+  id: z.string().min(1).optional(),
+  kind: contextRuntimeDocumentSectionKindSchema,
+  title: z.string().min(1),
+  summary: z.string().optional(),
+  text: z.string().optional(),
+  items: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+export type ContextRuntimeDocumentSection = z.infer<typeof contextRuntimeDocumentSectionSchema>;
+
+export const contextRuntimeDocumentTimestampsSchema = z
+  .object({
+    createdAt: z.string().nullable().optional(),
+    startedAt: z.string().nullable().optional(),
+    finishedAt: z.string().nullable().optional(),
+    deadLetteredAt: z.string().nullable().optional(),
+    updatedAt: z.string().nullable().optional(),
+  })
+  .optional();
+export type ContextRuntimeDocumentTimestamps = z.infer<
+  typeof contextRuntimeDocumentTimestampsSchema
+>;
+
+export const contextRuntimeDocumentSchema = z.object({
+  id: z.string().min(1),
+  kind: z.literal('runtime_document'),
+  entityType: z.string().min(1),
+  title: z.string().min(1),
+  summary: z.string(),
+  status: z.string().nullable().optional(),
+  tags: z.array(z.string()),
+  relatedNodeIds: z.array(z.string().min(1)),
+  timestamps: contextRuntimeDocumentTimestampsSchema,
+  facts: z.record(z.string(), z.unknown()).optional(),
+  sections: z.array(contextRuntimeDocumentSectionSchema).optional(),
+  provenance: z.record(z.string(), z.unknown()).optional(),
+});
+export type ContextRuntimeDocument = z.infer<typeof contextRuntimeDocumentSchema>;
+
+export const contextRegistryResolutionBundleSchema = z.object({
+  refs: z.array(contextRegistryRefSchema),
+  nodes: z.array(contextNodeSchema),
+  documents: z.array(contextRuntimeDocumentSchema),
+  truncated: z.boolean(),
+  engineVersion: z.string(),
+});
+export type ContextRegistryResolutionBundle = z.infer<
+  typeof contextRegistryResolutionBundleSchema
+>;
+
+export const contextRegistryConsumerEnvelopeSchema = z.object({
+  refs: z.array(contextRegistryRefSchema),
+  engineVersion: z.string(),
+  resolved: contextRegistryResolutionBundleSchema.optional(),
+});
+export type ContextRegistryConsumerEnvelope = z.infer<
+  typeof contextRegistryConsumerEnvelopeSchema
+>;
+
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 export const contextSearchRequestSchema = z.object({

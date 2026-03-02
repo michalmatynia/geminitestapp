@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { type QueryClient } from '@tanstack/react-query';
 
 import type {
   DatabaseBackupFile as DatabaseInfoResponse,
@@ -85,7 +85,7 @@ export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfo
       source: 'database.hooks.useDatabaseBackups',
       operation: 'list',
       resource: 'system.databases.backups',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'backups'],
     },
@@ -96,7 +96,6 @@ export function useCreateBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   DatabaseType
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
@@ -105,13 +104,11 @@ export function useCreateBackupMutation(): MutationResult<
       source: 'database.hooks.useCreateBackupMutation',
       operation: 'create',
       resource: 'system.databases.backups',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'create'],
     },
-    onSuccess: (_result, dbType) => {
-      invalidateBackups(queryClient, dbType);
-    },
+    invalidate: (queryClient, _result, dbType) => invalidateBackups(queryClient, dbType),
   });
 }
 
@@ -135,7 +132,7 @@ export function useRestoreBackupMutation(): MutationResult<
       source: 'database.hooks.useRestoreBackupMutation',
       operation: 'update',
       resource: 'system.databases.backups.restore',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'restore'],
     },
@@ -146,7 +143,6 @@ export function useUploadBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: (variables: {
@@ -159,13 +155,11 @@ export function useUploadBackupMutation(): MutationResult<
       source: 'database.hooks.useUploadBackupMutation',
       operation: 'upload',
       resource: 'system.databases.backups',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'upload'],
     },
-    onSuccess: (_result, variables) => {
-      invalidateBackups(queryClient, variables.dbType);
-    },
+    invalidate: (queryClient, _result, variables) => invalidateBackups(queryClient, variables.dbType),
   });
 }
 
@@ -173,7 +167,6 @@ export function useDeleteBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; backupName: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createDeleteMutationV2({
     mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
@@ -183,13 +176,11 @@ export function useDeleteBackupMutation(): MutationResult<
       source: 'database.hooks.useDeleteBackupMutation',
       operation: 'delete',
       resource: 'system.databases.backups',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'backups', 'delete'],
     },
-    onSuccess: (_result, variables) => {
-      invalidateBackups(queryClient, variables.dbType);
-    },
+    invalidate: (queryClient, _result, variables) => invalidateBackups(queryClient, variables.dbType),
   });
 }
 
@@ -235,7 +226,7 @@ export function useDatabasePreview(input: {
       source: 'database.hooks.useDatabasePreview',
       operation: 'detail',
       resource: 'system.databases.preview',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'preview'],
     },
@@ -263,7 +254,7 @@ export function useSqlQueryMutation(): MutationResult<
       source: 'database.hooks.useSqlQueryMutation',
       operation: 'action',
       resource: 'system.databases.sql-query',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'sql', 'query'],
     },
@@ -279,7 +270,7 @@ export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
       source: 'database.hooks.useCrudMutation',
       operation: 'action',
       resource: 'system.databases.crud',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'crud'],
     },
@@ -299,7 +290,7 @@ export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
       source: 'database.hooks.useAllCollectionsSchema',
       operation: 'detail',
       resource: 'system.databases.schema',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'schema'],
     },
@@ -317,7 +308,7 @@ export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse
       source: 'database.hooks.useRedisOverview',
       operation: 'detail',
       resource: 'system.databases.redis-overview',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'redis', 'overview'],
     },
@@ -336,7 +327,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
       source: 'database.hooks.useDatabaseEngineStatus',
       operation: 'polling',
       resource: 'system.databases.engine-status',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'engine', 'status'],
     },
@@ -355,7 +346,7 @@ export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBa
       source: 'database.hooks.useDatabaseBackupSchedulerStatus',
       operation: 'polling',
       resource: 'system.databases.backup-scheduler-status',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'engine', 'backup-scheduler'],
     },
@@ -376,7 +367,7 @@ export function useDatabaseEngineOperationsJobs(
       source: 'database.hooks.useDatabaseEngineOperationsJobs',
       operation: 'polling',
       resource: 'system.databases.engine-operations-jobs',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'engine', 'operations-jobs'],
     },
@@ -387,7 +378,6 @@ export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
   DatabaseEngineBackupSchedulerTickResponse,
   void
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
     mutationFn: runDatabaseEngineBackupSchedulerTick,
@@ -396,13 +386,11 @@ export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
       source: 'database.hooks.useDatabaseBackupSchedulerTickMutation',
       operation: 'update',
       resource: 'system.databases.backup-scheduler-tick',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'engine', 'backup-scheduler', 'tick'],
     },
-    onSuccess: () => {
-      invalidateEngineSchedulerStatus(queryClient);
-    },
+    invalidate: (queryClient) => invalidateEngineSchedulerStatus(queryClient),
   });
 }
 
@@ -410,7 +398,6 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
   DatabaseEngineBackupRunNowResponse,
   { dbType: 'mongodb' | 'postgresql' | 'all' }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: (variables) => runDatabaseEngineBackupNow(variables.dbType),
@@ -419,11 +406,11 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
       source: 'database.hooks.useDatabaseBackupRunNowMutation',
       operation: 'create',
       resource: 'system.databases.backup-run-now',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'engine', 'backup', 'run-now'],
     },
-    onSuccess: (payload) => {
+    invalidate: (queryClient, payload) => {
       invalidateEngineSchedulerStatus(queryClient);
       payload.queued.forEach((item) => {
         invalidateBackups(queryClient, item.dbType);
@@ -436,7 +423,6 @@ export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
   { success: boolean; job: unknown },
   { jobId: string }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
     mutationFn: (variables: { jobId: string }) => cancelDatabaseEngineOperationJob(variables.jobId),
@@ -445,15 +431,11 @@ export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
       source: 'database.hooks.useCancelDatabaseEngineOperationJobMutation',
       operation: 'update',
       resource: 'system.databases.engine-operation-job',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'engine', 'operations-jobs', 'cancel'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: dbKeys.engineOperationsJobs({ limit: 30 }),
-      });
-    },
+    invalidateKeys: [dbKeys.engineOperationsJobs({ limit: 30 })],
   });
 }
 
@@ -473,7 +455,7 @@ export function useDatabaseEngineProviderPreview(
       source: 'database.hooks.useDatabaseEngineProviderPreview',
       operation: 'polling',
       resource: 'system.databases.engine-provider-preview',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'engine', 'provider-preview'],
     },
@@ -484,7 +466,6 @@ export function useCopyCollectionMutation(): MutationResult<
   CollectionCopyResult,
   { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: async (variables: {
@@ -502,18 +483,15 @@ export function useCopyCollectionMutation(): MutationResult<
       source: 'database.hooks.useCopyCollectionMutation',
       operation: 'create',
       resource: 'system.databases.copy-collection',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'copy-collection'],
     },
-    onSuccess: () => {
-      invalidateSchemaAll(queryClient);
-    },
+    invalidate: (queryClient) => invalidateSchemaAll(queryClient),
   });
 }
 
 export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResponse, void> {
-  const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: async (): Promise<DatabaseBackupResponse> => {
@@ -525,13 +503,11 @@ export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResp
       source: 'database.hooks.useCreateJsonBackupMutation',
       operation: 'create',
       resource: 'system.databases.json-backups',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'json-backups', 'create'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: dbKeys.jsonBackups() });
-    },
+    invalidateKeys: [dbKeys.jsonBackups()],
   });
 }
 
@@ -547,7 +523,7 @@ export function useRestoreJsonBackupMutation(): UpdateMutation<DatabaseRestoreRe
       source: 'database.hooks.useRestoreJsonBackupMutation',
       operation: 'update',
       resource: 'system.databases.json-backups.restore',
-      domain: 'global',
+      domain: 'database',
       mutationKey,
       tags: ['database', 'json-backups', 'restore'],
     },
@@ -564,7 +540,7 @@ export function useJsonBackups(): SingleQuery<{ backups: string[] }> {
       source: 'database.hooks.useJsonBackups',
       operation: 'detail',
       resource: 'system.databases.json-backups',
-      domain: 'global',
+      domain: 'database',
       queryKey,
       tags: ['database', 'json-backups'],
     },

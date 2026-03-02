@@ -1,7 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { verifyCredentials, type VerifyCredentialsResponse } from '@/features/auth/api/credentials';
 import { registerUser, type RegisterResponse } from '@/features/auth/api/register';
 import {
@@ -49,6 +47,7 @@ export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResp
       source: 'auth.hooks.useAuthUsers',
       operation: 'detail',
       resource: 'auth.users',
+      domain: 'auth',
       queryKey,
       tags: ['auth', 'users'],
     },
@@ -67,6 +66,7 @@ export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUse
       source: 'auth.hooks.useAuthUserSecurity',
       operation: 'detail',
       resource: 'auth.user-security',
+      domain: 'auth',
       queryKey,
       tags: ['auth', 'security'],
     },
@@ -80,7 +80,6 @@ export function useUpdateAuthUser(): UpdateMutation<
     input: { name?: string | null; email?: string | null; emailVerified?: boolean | null };
   }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: async ({
       userId,
@@ -102,12 +101,11 @@ export function useUpdateAuthUser(): UpdateMutation<
       source: 'auth.hooks.useUpdateAuthUser',
       operation: 'update',
       resource: 'auth.users',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'users', 'update'],
     },
-    onSuccess: (): void => {
-      void invalidateUsers(queryClient);
-    },
+    invalidate: (queryClient) => invalidateUsers(queryClient),
   });
 }
 
@@ -118,7 +116,6 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
     input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean };
   }
   > {
-  const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: async ({
       userId,
@@ -141,23 +138,13 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
       source: 'auth.hooks.useUpdateAuthUserSecurity',
       operation: 'update',
       resource: 'auth.user-security',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'security', 'update'],
     },
-    onSuccess: (
-      _data: AuthUserSecurityProfile,
-      variables: {
-        userId: string;
-        input: {
-          disabled?: boolean;
-          banned?: boolean;
-          allowedIps?: string[];
-          disableMfa?: boolean;
-        };
-      }
-    ): void => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateUsers(queryClient);
-      void invalidateAuthSecurity(queryClient, variables.userId);
+      return invalidateAuthSecurity(queryClient, variables.userId);
     },
   });
 }
@@ -166,7 +153,6 @@ export function useDeleteAuthUser(): UpdateMutation<
   { id: string; deleted: boolean },
   { userId: string }
   > {
-  const queryClient = useQueryClient();
   return createDeleteMutationV2({
     mutationFn: async ({
       userId,
@@ -180,12 +166,13 @@ export function useDeleteAuthUser(): UpdateMutation<
       source: 'auth.hooks.useDeleteAuthUser',
       operation: 'delete',
       resource: 'auth.users',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'users', 'delete'],
     },
-    onSuccess: (_data: { id: string; deleted: boolean }, variables: { userId: string }): void => {
+    invalidate: (queryClient, _data, variables) => {
       void invalidateUsers(queryClient);
-      void invalidateAuthSecurity(queryClient, variables.userId);
+      return invalidateAuthSecurity(queryClient, variables.userId);
     },
   });
 }
@@ -201,6 +188,7 @@ export function useMockSignIn(): MutationResult<
       source: 'auth.hooks.useMockSignIn',
       operation: 'create',
       resource: 'auth.mock-signin',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'signin'],
     },
@@ -216,7 +204,6 @@ export function useRegisterUser(): CreateMutation<
     emailVerified?: boolean | undefined;
   }
   > {
-  const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: registerUser,
     mutationKey: authKeys.users.all,
@@ -224,12 +211,11 @@ export function useRegisterUser(): CreateMutation<
       source: 'auth.hooks.useRegisterUser',
       operation: 'create',
       resource: 'auth.register',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'register'],
     },
-    onSuccess: (): void => {
-      void invalidateUsers(queryClient);
-    },
+    invalidate: (queryClient) => invalidateUsers(queryClient),
   });
 }
 
@@ -244,6 +230,7 @@ export function useVerifyCredentials(): MutationResult<
       source: 'auth.hooks.useVerifyCredentials',
       operation: 'create',
       resource: 'auth.verify-credentials',
+      domain: 'auth',
       mutationKey: authKeys.users.all,
       tags: ['auth', 'credentials'],
     },

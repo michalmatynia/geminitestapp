@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { BaseInventory, Template } from '@/shared/contracts/integrations';
+import type { BaseInventory, IntegrationTemplate as Template } from '@/shared/contracts/integrations';
 import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {

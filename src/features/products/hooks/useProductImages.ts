@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import {
@@ -84,7 +83,6 @@ export function useProductImages(
   product?: ProductWithImages,
   initialImageLinks?: string[] | null
 ): ProductImagesHookResult {
-  const queryClient = useQueryClient();
   const [imageSlots, setImageSlots] = useState<ProductImageSlot[]>(() =>
     buildImageSlotsFromProduct(product)
   );
@@ -114,9 +112,7 @@ export function useProductImages(
       mutationKey: QUERY_KEYS.products.all,
       tags: ['products', 'images', 'disconnect'],
     },
-    onSuccess: () => {
-      void invalidateProducts(queryClient);
-    },
+    invalidate: (queryClient) => invalidateProducts(queryClient),
   });
 
   // Effect to clean up object URLs when imageSlots change

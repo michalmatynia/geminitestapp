@@ -34,7 +34,7 @@ describe('system logs interpret handler', () => {
     vi.clearAllMocks();
   });
 
-  it('hydrates AI-path run static context before generating the log interpretation', async () => {
+  it('hydrates registry runtime context before generating the log interpretation', async () => {
     const { POST_handler } = await import('./handler');
 
     getSystemLogByIdMock.mockResolvedValue({
@@ -59,11 +59,39 @@ describe('system logs interpret handler', () => {
       source: 'ai-paths-worker',
       context: {
         runId: 'run-1',
-        staticContext: {
-          aiPathRun: {
-            kind: 'ai_path_run',
-            runId: 'run-1',
-            status: 'failed',
+        contextRegistry: {
+          refs: [
+            {
+              id: 'runtime:ai-path-run:run-1',
+              kind: 'runtime_document',
+              providerId: 'ai-path-run',
+              entityType: 'ai_path_run',
+            },
+          ],
+          resolved: {
+            refs: [
+              {
+                id: 'runtime:ai-path-run:run-1',
+                kind: 'runtime_document',
+                providerId: 'ai-path-run',
+                entityType: 'ai_path_run',
+              },
+            ],
+            documents: [
+              {
+                id: 'runtime:ai-path-run:run-1',
+                kind: 'runtime_document',
+                entityType: 'ai_path_run',
+                title: 'Primary Path',
+                summary: 'failed run',
+                status: 'failed',
+                tags: ['ai-paths'],
+                relatedNodeIds: ['page:ai-paths'],
+              },
+            ],
+            nodes: [],
+            truncated: false,
+            engineVersion: 'registry:codefirst:7|providers:ai-path-run@1',
           },
         },
       },
@@ -97,12 +125,12 @@ describe('system logs interpret handler', () => {
         id: 'log-1',
         context: expect.objectContaining({
           runId: 'run-1',
-          staticContext: {
-            aiPathRun: expect.objectContaining({
-              kind: 'ai_path_run',
-              runId: 'run-1',
+          contextRegistry: expect.objectContaining({
+            refs: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
+            resolved: expect.objectContaining({
+              documents: [expect.objectContaining({ id: 'runtime:ai-path-run:run-1' })],
             }),
-          },
+          }),
         }),
       }),
     });

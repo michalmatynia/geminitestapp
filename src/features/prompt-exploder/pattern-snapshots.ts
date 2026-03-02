@@ -1,7 +1,9 @@
 import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
 
-import type { PromptExploderPatternSnapshot } from './types';
-import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+import type {
+  PromptExploderPatternSnapshot,
+  PromptExploderRuntimeValidationScope,
+} from '@/shared/contracts/prompt-exploder';
 
 export type { PromptExploderPatternSnapshot };
 

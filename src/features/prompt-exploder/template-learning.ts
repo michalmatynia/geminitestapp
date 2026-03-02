@@ -1,6 +1,5 @@
 import type {
   PromptExploderLearnedTemplate,
-  PromptExploderSegmentType,
   TemplateMergeMode,
   TemplateUpsertErrorCode,
   TemplateSimilarityMatch,
@@ -8,6 +7,15 @@ import type {
   CreateTemplateIdArgs,
   UpsertLearnedTemplateArgs,
 } from '@/shared/contracts/prompt-exploder';
+
+export type {
+  TemplateMergeMode,
+  TemplateUpsertErrorCode,
+  TemplateSimilarityMatch,
+  TemplateUpsertResult,
+  CreateTemplateIdArgs,
+  UpsertLearnedTemplateArgs,
+};
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));

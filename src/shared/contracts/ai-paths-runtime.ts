@@ -467,8 +467,10 @@ export type AiPathRunQueueSloStatusDto = AiPathRunQueueSloStatus;
 export type AiPathRunQueueBaseStatus = {
   running: boolean;
   healthy: boolean;
+  processing: boolean;
   activeCount: number;
   activeRuns: number;
+  concurrency: number;
   waitingCount: number;
   failedCount: number;
   completedCount: number;
@@ -482,6 +484,8 @@ export type AiPathRunQueueBaseStatus = {
   avgRuntimeMs: number | null;
   p50RuntimeMs: number | null;
   p95RuntimeMs: number | null;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
   runtimeAnalytics: {
     enabled: boolean;
     storage: string;
@@ -499,9 +503,8 @@ export type AiPathRunQueueBaseStatus = {
 
 export type AiPathRunQueueStatus = AiPathRunQueueBaseStatus & {
   lastCheckedAt: string;
-  lastPollTime: number;
   isStale: boolean;
-  sloStatus: AiPathRunQueueSloStatus;
+  slo: AiPathRunQueueSloStatus;
   brainAnalytics24h: {
     analyticsReports: number;
     logReports: number;

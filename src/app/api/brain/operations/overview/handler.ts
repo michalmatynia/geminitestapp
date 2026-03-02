@@ -206,7 +206,7 @@ const collectAiPathsDomain = async (
   const status = await getAiPathRunQueueStatus();
   const overall = status.slo.overall;
   const state = mapAiPathsState(overall);
-  const runtimeAnalyticsEnabled = status.runtimeAnalytics.enabled;
+  const runtimeAnalyticsEnabled = status.runtimeAnalytics?.enabled ?? false;
   const message =
     state === 'healthy'
       ? runtimeAnalyticsEnabled
@@ -231,7 +231,7 @@ const collectAiPathsDomain = async (
       {
         key: 'runtime_analytics',
         label: 'Runtime analytics',
-        value: runtimeAnalyticsEnabled ? status.runtimeAnalytics.storage : 'disabled',
+        value: runtimeAnalyticsEnabled ? status.runtimeAnalytics?.storage ?? 'disabled' : 'disabled',
       },
       {
         key: 'brain_reports_24h',

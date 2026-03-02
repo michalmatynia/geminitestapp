@@ -8,7 +8,6 @@ import {
   getRuntimeAnalyticsAvailability,
   getRuntimeAnalyticsSummary,
   recordRuntimeRunStarted,
-  type RuntimeAnalyticsAvailability,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import {
   processRun,
@@ -19,6 +18,10 @@ import { configurationError, serviceUnavailableError } from '@/shared/errors/app
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  type AiPathRunQueueBaseStatus,
+  type AiPathRunQueueStatus,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import {
   computeAiPathRunQueueSlo,
@@ -30,10 +33,6 @@ import {
   createDebugQueueLogger,
   parseEnvNumber,
 } from './ai-path-run-queue-utils';
-import {
-  type AiPathRunQueueBaseStatus,
-  type AiPathRunQueueStatus,
-} from '@/shared/contracts/ai-paths-runtime';
 
 export type { AiPathRunQueueSloStatus, SloLevel };
 
@@ -417,6 +416,7 @@ const readAiPathRunQueueBaseStatus = async (now: number): Promise<AiPathRunQueue
     running: health.running ?? false,
     healthy: health.healthy ?? false,
     processing: health.processing ?? false,
+    activeCount: health.activeCount,
     activeRuns: health.activeCount,
     concurrency: Math.max(1, DEFAULT_CONCURRENCY),
     lastPollTime: health.lastPollTime ?? 0,
@@ -426,6 +426,11 @@ const readAiPathRunQueueBaseStatus = async (now: number): Promise<AiPathRunQueue
     queueLagMs,
     completedLastMinute: health.completedCount,
     throughputPerMinute: health.completedCount,
+    waitingCount: health.waitingCount,
+    failedCount: health.failedCount,
+    completedCount: health.completedCount,
+    delayedCount: health.delayedCount,
+    pausedCount: health.pausedCount,
     avgRuntimeMs: null,
     p50RuntimeMs: null,
     p95RuntimeMs: null,
@@ -482,6 +487,8 @@ const finalizeAiPathRunQueueStatus = (
     avgRuntimeMs: runtimeAnalyticsSummary?.runs.avgDurationMs ?? null,
     p50RuntimeMs: null,
     p95RuntimeMs: runtimeAnalyticsSummary?.runs.p95DurationMs ?? null,
+    lastCheckedAt: new Date().toISOString(),
+    isStale: false,
     brainAnalytics24h,
     slo,
   };
@@ -489,7 +496,7 @@ const finalizeAiPathRunQueueStatus = (
 
 const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
   const baseStatus = await readAiPathRunQueueBaseStatus(now);
-  if (!baseStatus.runtimeAnalytics.enabled) {
+  if (!baseStatus.runtimeAnalytics?.enabled) {
     return finalizeAiPathRunQueueStatus(baseStatus);
   }
 

@@ -192,6 +192,7 @@ export const logTriagePresetSchema = z.object({
     'http-500-last7d',
     'client-errors-last7d',
     'auth-anomalies-last3d',
+    'system-alerts-last24h',
   ]),
   label: z.string(),
   description: z.string(),

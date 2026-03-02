@@ -80,6 +80,7 @@ const triagePresetIcons: Record<
   'http-500-last7d': Server,
   'client-errors-last7d': Monitor,
   'auth-anomalies-last3d': Shield,
+  'system-alerts-last24h': AlertTriangle,
 };
 
 function LogTriagePresets(): React.JSX.Element {
@@ -605,14 +606,21 @@ function LogList(): React.JSX.Element {
       {
         accessorKey: 'source',
         header: 'Source',
-        cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.source || 'system'}
-            variant='neutral'
-            size='sm'
-            className='font-mono uppercase'
-          />
-        ),
+        cell: ({ row }) => {
+          const source = row.original.source || 'system';
+          const isAlert = source === 'system-log-alerts';
+          return (
+            <div className='flex items-center gap-1'>
+              {isAlert && <AlertTriangle className='size-3 text-amber-400' />}
+              <StatusBadge
+                status={source}
+                variant={isAlert ? 'warning' : 'neutral'}
+                size='sm'
+                className='font-mono uppercase'
+              />
+            </div>
+          );
+        },
       },
       {
         id: 'actions',
@@ -660,6 +668,7 @@ function LogList(): React.JSX.Element {
         const errorCode = readContextString(log, 'errorCode') ?? readContextString(log, 'code');
         const errorName = readContextString(log, 'errorName') ?? readContextString(log, 'name');
         const errorId = readContextString(log, 'errorId');
+        const alertType = readContextString(log, 'alertType');
         const interpretation = logInterpretations[log.id];
         return (
           <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
@@ -696,6 +705,7 @@ function LogList(): React.JSX.Element {
                     <MetadataItem label='Error Code' value={errorCode} mono />
                     <MetadataItem label='Error Name' value={errorName} />
                     <MetadataItem label='Fingerprint' value={fingerprint} mono />
+                    <MetadataItem label='Alert Type' value={alertType} />
                   </div>
                   {(log.requestId || log.userId || fingerprint) && (
                     <div className='mt-3 flex flex-wrap gap-2 text-[11px]'>

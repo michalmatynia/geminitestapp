@@ -11,7 +11,11 @@ import { type ProductFilterDto as UseProductsFilters } from '@/shared/contracts/
 export type { UseProductsFilters };
 
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createListQueryV2,
+  createPaginatedListQueryV2,
+  createSingleQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { refetchProductsAndCounts } from './productCache';
@@ -20,7 +24,10 @@ export interface UseProductsOptions {
   enabled?: boolean;
 }
 
-const PRODUCTS_STALE_MS = 10_000;
+// Trade-off between API load and freshness for product list queries.
+// 60s keeps the UI feeling responsive while significantly reducing repeated fetches
+// when users navigate in and out of the products pages.
+const PRODUCTS_STALE_MS = 60_000;
 
 const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
   [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
@@ -39,8 +46,10 @@ export function useProducts(
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: 'always',
+    refetchOnMount: 'data',
     enabled: options?.enabled ?? true,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load products.'),
     meta: {
       source: 'products.hooks.useProducts',
       operation: 'list',
@@ -65,8 +74,10 @@ export function useProductsCount(
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: 'always',
+    refetchOnMount: 'data',
     enabled: options?.enabled ?? true,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load products count.'),
     meta: {
       source: 'products.hooks.useProductsCount',
       operation: 'detail',
@@ -97,15 +108,18 @@ export function useProductsWithCount(
   // The query key starts with QUERY_KEYS.products.lists() so refetchProductsAndCounts()
   // invalidates it automatically on mutations.
   const queryKey = useMemo(() => getProductsPagedQueryKey(filters), [filters]);
-  const query = createSingleQueryV2({
+  const query = createPaginatedListQueryV2<ProductWithImages>({
     id: JSON.stringify(filters) + ':paged',
     queryKey,
-    queryFn: async (): Promise<{ products: ProductWithImages[]; total: number }> =>
-      getProductsWithCount(filters),
-    placeholderData: (previous) => previous,
+    queryFn: async () => {
+      const { products, total } = await getProductsWithCount(filters);
+      return { items: products, total };
+    },
     staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: 'always',
+    refetchOnMount: 'data',
     enabled,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load products.'),
     meta: {
       source: 'products.hooks.useProductsWithCount',
       operation: 'detail',
@@ -140,7 +154,10 @@ export function useProductsWithCount(
 
     void queryClient.prefetchQuery({
       queryKey: nextQueryKey,
-      queryFn: () => getProductsWithCount(nextFilters),
+      queryFn: async () => {
+        const { products, total } = await getProductsWithCount(nextFilters);
+        return { items: products, total };
+      },
       staleTime: PRODUCTS_STALE_MS,
     });
   }, [enabled, filters, query.data, queryClient]);
@@ -150,7 +167,7 @@ export function useProductsWithCount(
   }, [queryClient]);
 
   return {
-    products: query.data?.products ?? [],
+    products: query.data?.items ?? [],
     total: query.data?.total ?? 0,
     isLoading: query.isPending,
     isFetching: query.isFetching,

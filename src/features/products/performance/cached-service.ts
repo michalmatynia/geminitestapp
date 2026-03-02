@@ -62,6 +62,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const id = toOptionalString(filters['id']);
   const idMatchModeRaw = toOptionalString(filters['idMatchMode']);
   const sku = toOptionalString(filters['sku']);
+  const categoryId = toOptionalString(filters['categoryId']);
   const minPrice = toOptionalNumber(filters['minPrice']);
   const maxPrice = toOptionalNumber(filters['maxPrice']);
   const stockValue = toOptionalNumber(filters['stockValue']);
@@ -79,6 +80,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
     normalized.idMatchMode = idMatchModeRaw;
   }
   if (sku !== undefined) normalized.sku = sku;
+  if (categoryId !== undefined) normalized.categoryId = categoryId;
   if (minPrice !== undefined) normalized.minPrice = minPrice;
   if (maxPrice !== undefined) normalized.maxPrice = maxPrice;
   if (stockValue !== undefined) normalized.stockValue = stockValue;
@@ -162,16 +164,16 @@ export class CachedProductService {
     limit?: number
   ) => Promise<ProductWithImages[]> = withQueryCache(
       async (categoryId: string, limit?: number) => {
-        const categoryFilters: ProductFilters = {};
+        const categoryFilters: ProductFilters = {
+          categoryId,
+        };
+
         if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
           categoryFilters.pageSize = limit;
         }
+
         const products = await productService.getProducts(categoryFilters);
-        const filtered = products.filter(
-          (product: ProductWithImages) =>
-            typeof product.categoryId === 'string' && product.categoryId === categoryId
-        );
-        return typeof limit === 'number' && limit > 0 ? filtered.slice(0, limit) : filtered;
+        return products;
       },
       {
         keyGenerator: (categoryId: string, limit?: number) =>

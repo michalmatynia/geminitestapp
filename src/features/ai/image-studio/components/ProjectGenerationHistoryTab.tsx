@@ -100,6 +100,11 @@ const toPrettyJson = (value: unknown): string => {
   }
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
 const buildFallbackRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
   const events: RunTimelineEvent[] = [
     {
@@ -187,6 +192,59 @@ const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | 
     }
   }
   return null;
+};
+
+const classifyRunDuration = (run: HistoryRunRecord): 'unknown' | 'fast' | 'moderate' | 'slow' => {
+  if (!run.startedAt || !run.finishedAt) return 'unknown';
+  const started = new Date(run.startedAt).getTime();
+  const finished = new Date(run.finishedAt).getTime();
+  if (!Number.isFinite(started) || !Number.isFinite(finished) || finished <= started) {
+    return 'unknown';
+  }
+  const ms = finished - started;
+  if (ms <= 10_000) return 'fast';
+  if (ms <= 60_000) return 'moderate';
+  return 'slow';
+};
+
+const resolveExecutionSummary = (
+  run: HistoryRunRecord,
+  executionMeta: Record<string, unknown> | null
+): {
+  operationLabel: string;
+  model: string | null;
+  costPerOutputUsd: number | null;
+} => {
+  const record = asRecord(executionMeta);
+  const operationRaw = record?.['operation'];
+  const operation =
+    operationRaw === 'center_object' || operationRaw === 'generate'
+      ? (operationRaw as 'center_object' | 'generate')
+      : 'generate';
+  const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';
+
+  const modelUsedRaw = record?.['modelUsed'];
+  const model =
+    typeof modelUsedRaw === 'string' && modelUsedRaw.trim().length > 0
+      ? modelUsedRaw.trim()
+      : null;
+
+  const generationCosts = asRecord(record?.['generationCosts']);
+  let costPerOutputUsd: number | null = null;
+  if (generationCosts) {
+    const value = generationCosts['totalCostUsdPerOutput'];
+    const parsed =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'string'
+          ? Number.parseFloat(value)
+          : Number.NaN;
+    if (Number.isFinite(parsed) && parsed > 0) {
+      costPerOutputUsd = parsed;
+    }
+  }
+
+  return { operationLabel, model, costPerOutputUsd };
 };
 
 const PAGE_SIZE = 50;
@@ -314,6 +372,8 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
         const isExpanded = expandedRunId === run.id;
         const timeline = resolveRunTimeline(run);
         const executionMeta = resolveExecutionMeta(run);
+        const executionSummary = resolveExecutionSummary(run, executionMeta);
+        const durationClass = classifyRunDuration(run);
         const apiResponseSnapshot = {
           runId: run.id,
           status: run.status,
@@ -358,8 +418,25 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 <span className='text-xs text-muted-foreground'>
                   Dispatch {run.dispatchMode ?? 'n/a'}
                 </span>
+                <span className='text-xs text-muted-foreground'>
+                  {executionSummary.operationLabel}
+                  {executionSummary.model ? ` • ${executionSummary.model}` : ''}
+                  {typeof executionSummary.costPerOutputUsd === 'number'
+                    ? ` • ~$${executionSummary.costPerOutputUsd.toFixed(4)}/img`
+                    : ''}
+                </span>
+                {durationClass === 'slow' ? (
+                  <Badge variant='warning' className='text-[10px] uppercase'>
+                    Slow
+                  </Badge>
+                ) : null}
               </div>
               <div className='mt-1 text-sm text-foreground'>{promptSummary}</div>
+              {run.status === 'failed' && run.errorMessage ? (
+                <div className='mt-1 text-xs text-red-400 line-clamp-1'>
+                  Error: {run.errorMessage}
+                </div>
+              ) : null}
             </button>
 
             {isExpanded ? (

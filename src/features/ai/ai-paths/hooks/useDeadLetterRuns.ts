@@ -9,7 +9,11 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createListQueryV2,
+  createMutationV2,
+  createPaginatedListQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
@@ -92,10 +96,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
   const normalizedQuery = debouncedSearchQuery.trim();
   const offset = (page - 1) * pageSize;
 
-  const runsQuery = createListQueryV2<
-    { runs: AiPathRunRecord[]; total: number },
-    { runs: AiPathRunRecord[]; total: number }
-  >({
+  const runsQuery = createPaginatedListQueryV2<AiPathRunRecord>({
     queryKey: QUERY_KEYS.ai.aiPaths.deadLetter({
       status: 'dead_lettered',
       pathId: normalizedPathId,
@@ -103,7 +104,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       page,
       pageSize,
     }),
-    queryFn: async (): Promise<{ runs: AiPathRunRecord[]; total: number }> => {
+    queryFn: async () => {
       const response = await runsApi.list({
         status: 'dead_lettered',
         ...(normalizedPathId ? { pathId: normalizedPathId } : {}),
@@ -114,8 +115,11 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       if (!response.ok) {
         throw new Error(response.error || 'Failed to load dead-letter runs.');
       }
-      return response.data as { runs: AiPathRunRecord[]; total: number };
+      const data = response.data as { runs: AiPathRunRecord[]; total: number };
+      return { items: data.runs, total: data.total };
     },
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load dead-letter runs.'),
     meta: {
       source: 'ai.ai-paths.dead-letter.runs',
       operation: 'list',
@@ -129,7 +133,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
 
   const total = runsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data?.runs]);
+  const runs = useMemo(() => runsQuery.data?.items ?? [], [runsQuery.data?.items]);
 
   useEffect((): (() => void) => {
     const timer: ReturnType<typeof setTimeout> = setTimeout((): void => {

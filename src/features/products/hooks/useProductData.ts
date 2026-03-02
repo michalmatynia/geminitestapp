@@ -315,6 +315,7 @@ export function useProductData({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => normalizeProductPageSize(initialPageSize, 20));
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [productId, setProductId] = useState('');
   const [idMatchMode, setIdMatchMode] = useState<'exact' | 'partial'>('exact');
   const [sku, setSku] = useState('');
@@ -362,6 +363,15 @@ export function useProductData({
     initialAppliedAdvancedFilterPresetId,
   ]);
 
+  // Debounce the free-text search input so that we don't fire a new
+  // products query on every single keystroke while the user is typing.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     if (!preferencesLoaded) {
       setFiltersInitialized(false);
@@ -372,7 +382,7 @@ export function useProductData({
 
   const filters: UseProductsFilters = useMemo(
     () => ({
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       id: productId || undefined,
       idMatchMode: productId ? idMatchMode : undefined,
       sku: sku || undefined,
@@ -396,7 +406,7 @@ export function useProductData({
       baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
     }),
     [
-      search,
+      debouncedSearch,
       productId,
       idMatchMode,
       sku,
@@ -435,7 +445,7 @@ export function useProductData({
   useEffect(() => {
     setPage(1);
   }, [
-    search,
+    debouncedSearch,
     productId,
     idMatchMode,
     sku,

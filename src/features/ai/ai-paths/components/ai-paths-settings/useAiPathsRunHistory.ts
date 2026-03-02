@@ -320,6 +320,8 @@ export function useAiPathsRunHistory({
       );
       return hasActive ? 5000 : false;
     },
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load run history.'),
     meta: {
       source: 'ai.ai-paths.run-history.runs',
       operation: 'list',

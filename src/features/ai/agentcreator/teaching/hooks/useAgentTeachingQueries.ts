@@ -13,6 +13,7 @@ import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/
 import {
   createDeleteMutationV2,
   createListQueryV2,
+  createPaginatedListQueryV2,
   createSingleQueryV2,
   createCreateMutationV2,
   createUpdateMutationV2,
@@ -226,25 +227,32 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { i
 export function useEmbeddingDocuments(
   collectionId: string | null
 ): SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null> {
-  return createSingleQueryV2<{
-    items: AgentTeachingEmbeddingDocumentListItem[];
-    total: number;
-  } | null>({
+  if (!collectionId) {
+    return {
+      data: null,
+      isPending: false,
+      isFetching: false,
+      isError: false,
+      error: null,
+      refetch: async () => ({ data: null }),
+    } as SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null>;
+  }
+
+  const queryKey = agentTeachingKeys.documents(collectionId);
+
+  return createPaginatedListQueryV2<AgentTeachingEmbeddingDocumentListItem>({
     id: collectionId,
-    queryKey: (id: string) =>
-      id !== 'none'
-        ? agentTeachingKeys.documents(id)
-        : [...agentTeachingKeys.all, 'detail', 'documents', 'none'],
-    queryFn: async () => {
-      if (!collectionId) return null;
-      return fetchEmbeddingDocs(collectionId);
-    },
-    enabled: !!collectionId,
+    queryKey,
+    queryFn: () => fetchEmbeddingDocs(collectionId),
+    enabled: true,
+    transformError: (error: unknown): Error =>
+      error instanceof Error ? error : new Error('Failed to load embedding documents.'),
     meta: {
       source: 'agentTeaching.hooks.useEmbeddingDocuments',
       operation: 'detail',
       resource: 'agent-teaching.embedding-documents',
       domain: 'global',
+      queryKey,
       tags: ['agent-teaching', 'documents'],
     },
   });

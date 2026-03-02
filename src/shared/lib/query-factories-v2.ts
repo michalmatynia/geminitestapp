@@ -48,6 +48,7 @@ type BaseQueryFactoryV2Config<
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
+  transformError?: (error: unknown) => TError;
 };
 
 type InfiniteQueryFactoryV2Config<
@@ -64,6 +65,7 @@ type InfiniteQueryFactoryV2Config<
   queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
+  transformError?: (error: unknown) => TError;
 };
 
 type MutationFactoryV2Config<TData, TVariables, TError = Error, TContext = unknown> = Omit<
@@ -73,6 +75,7 @@ type MutationFactoryV2Config<TData, TVariables, TError = Error, TContext = unkno
   mutationFn: (variables: TVariables) => Promise<TData>;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
+  transformError?: (error: unknown) => TError;
 };
 
 type SingleQueryConfigV2<
@@ -88,6 +91,11 @@ type SingleQueryConfigV2<
   id?: string | null | undefined;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
+};
+
+export type PaginatedResult<TItem> = {
+  items: TItem[];
+  total: number;
 };
 
 type AnyRefetchIntervalOption = number | false | ((query: unknown) => number | false | undefined);
@@ -320,7 +328,7 @@ function useQueryFactoryV2<
 >(
   config: BaseQueryFactoryV2Config<TQueryFnData, TError, TData, TQueryKey>
 ): UseQueryResult<TData, TError> {
-  const { meta, queryFn, telemetryContext, queryKey, ...options } = config;
+  const { meta, queryFn, telemetryContext, queryKey, transformError, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
@@ -369,6 +377,7 @@ function useQueryFactoryV2<
         attemptRef.current = 0;
         return data;
       } catch (error) {
+        const finalError = transformError ? transformError(error) : (error as TError);
         emitFactoryTelemetry({
           entity: 'query',
           stage: telemetryErrorStage(error),
@@ -379,7 +388,7 @@ function useQueryFactoryV2<
           error,
           ...(telemetryContext ? { context: telemetryContext } : {}),
         });
-        throw error;
+        throw finalError;
       }
     },
   });
@@ -411,6 +420,20 @@ export function createSingleQueryV2<
   }) as SingleQuery<TTransformedData>;
 }
 
+export function createPaginatedListQueryV2<
+  TItem,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  config: SingleQueryConfigV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>
+): SingleQuery<PaginatedResult<TItem>> {
+  const { placeholderData, ...rest } = config;
+
+  return createSingleQueryV2<PaginatedResult<TItem>, PaginatedResult<TItem>, TQueryKey>({
+    ...rest,
+    placeholderData: placeholderData ?? ((previous) => previous),
+  });
+}
+
 export function createInfiniteQueryV2<
   TQueryFnData,
   TError = Error,
@@ -420,7 +443,7 @@ export function createInfiniteQueryV2<
 >(
   config: InfiniteQueryFactoryV2Config<TQueryFnData, TError, TData, TQueryKey, TPageParam>
 ): UseInfiniteQueryResult<TData, TError> {
-  const { queryKey, queryFn, meta, telemetryContext, ...options } = config;
+  const { queryKey, queryFn, meta, telemetryContext, transformError, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
@@ -470,6 +493,7 @@ export function createInfiniteQueryV2<
           attemptRef.current = 0;
           return data;
         } catch (error) {
+          const finalError = transformError ? transformError(error) : (error as TError);
           emitFactoryTelemetry({
             entity: 'query',
             stage: telemetryErrorStage(error),
@@ -480,7 +504,7 @@ export function createInfiniteQueryV2<
             error,
             ...(telemetryContext ? { context: telemetryContext } : {}),
           });
-          throw error;
+          throw finalError;
         }
       },
     };
@@ -491,7 +515,7 @@ export function createInfiniteQueryV2<
 export function createMutationV2<TData, TVariables, TContext = unknown>(
   config: MutationFactoryV2Config<TData, TVariables, Error, TContext>
 ): MutationResult<TData, TVariables> {
-  const { mutationFn, meta, mutationKey, telemetryContext, ...options } = config;
+  const { mutationFn, meta, mutationKey, telemetryContext, transformError, ...options } = config;
   const normalizedMutationKey = mutationKey ? normalizeQueryKey(mutationKey) : undefined;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedMutationKey });
   const telemetryMeta = withMutationKeyMeta(meta, normalizedMutationKey);
@@ -539,6 +563,7 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
         attemptRef.current = 0;
         return data;
       } catch (error) {
+        const finalError = transformError ? transformError(error) : (error as Error);
         emitFactoryTelemetry({
           entity: 'mutation',
           stage: telemetryErrorStage(error),
@@ -549,7 +574,7 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
           error,
           ...(telemetryContext ? { context: telemetryContext } : {}),
         });
-        throw error;
+        throw finalError;
       }
     },
   });

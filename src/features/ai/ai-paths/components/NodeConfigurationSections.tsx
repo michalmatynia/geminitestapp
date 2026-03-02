@@ -27,6 +27,7 @@ import { MapperNodeConfigSection } from './node-config/dialog/MapperNodeConfigSe
 import { MathNodeConfigSection } from './node-config/dialog/MathNodeConfigSection';
 import { ModelNodeConfigSection } from './node-config/dialog/ModelNodeConfigSection';
 import { MutatorNodeConfigSection } from './node-config/dialog/MutatorNodeConfigSection';
+import { FunctionNodeConfigSection } from './node-config/dialog/FunctionNodeConfigSection';
 import { PlaywrightNodeConfigSection } from './node-config/dialog/PlaywrightNodeConfigSection';
 import { PollNodeConfigSection } from './node-config/dialog/PollNodeConfigSection';
 import { PromptNodeConfigSection } from './node-config/dialog/PromptNodeConfigSection';
@@ -67,6 +68,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <ValidationPatternNodeConfigSection />
       <ConstantNodeConfigSection />
       <MathNodeConfigSection />
+      <FunctionNodeConfigSection />
       <TemplateNodeConfigSection />
       <BundleNodeConfigSection />
       <GateNodeConfigSection />

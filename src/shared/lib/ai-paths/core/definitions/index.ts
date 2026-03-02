@@ -419,6 +419,14 @@ const basePalette: NodeDefinition[] = [
     inputContracts: buildOptionalInputContracts(TEMPLATE_INPUT_PORTS),
   },
   {
+    type: 'function',
+    title: 'Function',
+    description: 'Run small JavaScript transforms over inputs.',
+    inputs: ['value', 'context', 'bundle', 'result'],
+    outputs: ['value'],
+    inputContracts: buildOptionalInputContracts(['value', 'context', 'bundle', 'result']),
+  },
+  {
     type: 'prompt',
     title: 'Prompt',
     description: 'Formats text with placeholders.',

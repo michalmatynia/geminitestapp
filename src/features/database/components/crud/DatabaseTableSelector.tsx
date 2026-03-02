@@ -2,31 +2,20 @@ import React from 'react';
 import { PlusIcon } from 'lucide-react';
 
 import { Button, SelectSimple } from '@/shared/ui';
-import type { DatabaseTableDetail } from '@/shared/contracts/database';
+import { useCrudPanelContext } from '../../context/CrudPanelContext';
 
-export type DatabaseTableSelectorProps = {
-  selectedTable: string;
-  setSelectedTable: (table: string) => void;
-  tableDetails: DatabaseTableDetail[];
-  onRefresh: () => void;
-  onAddRow: () => void;
-  isFetching: boolean;
-  setPage: (page: number) => void;
-  setMutationError: (err: string | null) => void;
-  setSuccessMessage: (msg: string | null) => void;
-};
-
-export function DatabaseTableSelector({
-  selectedTable,
-  setSelectedTable,
-  tableDetails,
-  onRefresh,
-  onAddRow,
-  isFetching,
-  setPage,
-  setMutationError,
-  setSuccessMessage,
-}: DatabaseTableSelectorProps): React.JSX.Element {
+export function DatabaseTableSelector(): React.JSX.Element {
+  const {
+    selectedTable,
+    setSelectedTable,
+    tableDetails,
+    onRefresh,
+    onAddRow,
+    isFetching,
+    setPage,
+    setMutationError,
+    setSuccessMessage,
+  } = useCrudPanelContext();
   return (
     <div className='flex flex-wrap items-center gap-3'>
       <SelectSimple

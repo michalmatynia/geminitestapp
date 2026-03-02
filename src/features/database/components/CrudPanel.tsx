@@ -22,6 +22,7 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
+import { CrudPanelProvider } from '../context/CrudPanelContext';
 import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -275,69 +276,83 @@ export function CrudPanel(props: {
     ) : null;
 
   return (
-    <div className='space-y-4'>
-      {selectedTable ? (
-        <StandardDataTablePanel
-          columns={columnDefs}
-          data={rows}
-          isLoading={isLoadingRows}
-          maxHeight='50vh'
-          stickyHeader
-          alerts={alerts}
-          filters={filters}
-          footer={footer}
-          variant='flat'
-        />
-      ) : (
-        <div className='space-y-4'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'
-          >
-            {filters}
-          </Card>
-          {alerts}
-          <EmptyState
-            title='No table selected'
-            description='Please select a table from the list above to view and manage its data.'
-            variant='compact'
-            className='bg-card/40 border-dashed border-border/60 py-20'
+    <CrudPanelProvider
+      value={{
+        selectedTable,
+        setSelectedTable,
+        tableDetails,
+        onRefresh: fetchRows,
+        onAddRow: () => setShowAddModal(true),
+        isFetching: rowsQuery.isFetching,
+        setPage,
+        setMutationError,
+        setSuccessMessage,
+      }}
+    >
+      <div className='space-y-4'>
+        {selectedTable ? (
+          <StandardDataTablePanel
+            columns={columnDefs}
+            data={rows}
+            isLoading={isLoadingRows}
+            maxHeight='50vh'
+            stickyHeader
+            alerts={alerts}
+            filters={filters}
+            footer={footer}
+            variant='flat'
           />
-        </div>
-      )}
+        ) : (
+          <div className='space-y-4'>
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'
+            >
+              {filters}
+            </Card>
+            {alerts}
+            <EmptyState
+              title='No table selected'
+              description='Please select a table from the list above to view and manage its data.'
+              variant='compact'
+              className='bg-card/40 border-dashed border-border/60 py-20'
+            />
+          </div>
+        )}
 
-      {showAddModal && tableDetail && (
-        <RowFormModal
-          columns={tableDetail.columns}
-          mode='add'
-          onSubmit={handleAdd}
-          onClose={() => setShowAddModal(false)}
-          isPending={crudMutation.isPending}
+        {showAddModal && tableDetail && (
+          <RowFormModal
+            columns={tableDetail.columns}
+            mode='add'
+            onSubmit={handleAdd}
+            onClose={() => setShowAddModal(false)}
+            isPending={crudMutation.isPending}
+          />
+        )}
+
+        {editingRow && tableDetail && (
+          <RowFormModal
+            columns={tableDetail.columns}
+            initialData={editingRow}
+            mode='edit'
+            onSubmit={handleEdit}
+            onClose={() => setEditingRow(null)}
+            isPending={crudMutation.isPending}
+          />
+        )}
+
+        <ConfirmModal
+          isOpen={!!deletingRow}
+          onClose={() => setDeletingRow(null)}
+          onConfirm={handleDelete}
+          title='Delete Row'
+          message='Are you sure you want to delete this row? This action cannot be undone.'
+          confirmText='Delete'
+          isDangerous={true}
+          loading={crudMutation.isPending}
         />
-      )}
-
-      {editingRow && tableDetail && (
-        <RowFormModal
-          columns={tableDetail.columns}
-          initialData={editingRow}
-          mode='edit'
-          onSubmit={handleEdit}
-          onClose={() => setEditingRow(null)}
-          isPending={crudMutation.isPending}
-        />
-      )}
-
-      <ConfirmModal
-        isOpen={!!deletingRow}
-        onClose={() => setDeletingRow(null)}
-        onConfirm={handleDelete}
-        title='Delete Row'
-        message='Are you sure you want to delete this row? This action cannot be undone.'
-        confirmText='Delete'
-        isDangerous={true}
-        loading={crudMutation.isPending}
-      />
-    </div>
+      </div>
+    </CrudPanelProvider>
   );
 }

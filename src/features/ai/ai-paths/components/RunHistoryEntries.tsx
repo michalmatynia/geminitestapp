@@ -79,7 +79,7 @@ export function RunHistoryEntries({
                 {showNodeLabel ? (
                   <span className='text-gray-200'>
                     Node: {nodeLabel}
-                    {entry.nodeType ? ` (${entry.nodeType})` : ''}
+                    {entry.nodeType ? ` ({entry.nodeType})` : ''}
                   </span>
                 ) : null}
                 <span className='text-gray-500'>Path: {pathLabel}</span>
@@ -99,9 +99,6 @@ export function RunHistoryEntries({
                       +{entry.delayMs}ms delay
                     </span>
                   )}
-                {typeof entry.iteration === 'number' && (
-                  <span className='text-gray-500'>Iter {entry.iteration + 1}</span>
-                )}
                 {typeof entry.runId === 'string' && entry.runId && (
                   <span className='font-mono text-[10px] text-gray-500'>
                     {entry.runId.slice(0, 8)}…
@@ -133,7 +130,15 @@ export function RunHistoryEntries({
             </div>
             {entry.error && (
               <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-xs text-rose-200'>
-                Error: {entry.error}
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <span className='font-semibold'>Error</span>
+                  {typeof entry.outputs?.['errorCode'] === 'string' && (
+                    <span className='rounded-full border border-rose-400/60 bg-rose-500/20 px-2 py-px text-[10px] font-mono uppercase text-rose-100'>
+                      {entry.outputs['errorCode'] as string}
+                    </span>
+                  )}
+                </div>
+                <div className='mt-1'>{entry.error}</div>
               </div>
             )}
             {entry.skipReason && (
@@ -157,7 +162,19 @@ export function RunHistoryEntries({
                 </pre>
               </div>
               <div>
-                <div className='text-[11px] uppercase text-gray-500'>Outputs</div>
+                <div className='flex items-center justify-between text-[11px] uppercase text-gray-500'>
+                  <span>Outputs</span>
+                  {Array.isArray((entry.outputs as Record<string, unknown>)?.['__logs']) &&
+                  ((entry.outputs as Record<string, unknown>)['__logs'] as unknown[]).length > 0 ? (
+                    <span className='rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-px text-[10px] font-mono normal-case text-sky-100'>
+                      Logs:{' '}
+                      {
+                        ((entry.outputs as Record<string, unknown>)['__logs'] as unknown[])
+                          .length
+                      }
+                    </span>
+                  ) : null}
+                </div>
                 <pre className='mt-2 max-h-64 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
                   {formatPortData(entry.outputs)}
                 </pre>

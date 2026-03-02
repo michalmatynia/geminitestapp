@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { randomUUID } from 'crypto';
 
 import { Prisma, type SystemLog } from '@prisma/client';

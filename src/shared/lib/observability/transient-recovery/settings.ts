@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { ObjectId } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';

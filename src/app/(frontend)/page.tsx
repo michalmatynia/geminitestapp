@@ -13,7 +13,8 @@ import {
 } from './home-helpers';
 import { createHomeTimingRecorder } from './home-timing';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Home(): Promise<JSX.Element> {
   const { withTiming, flush } = createHomeTimingRecorder();

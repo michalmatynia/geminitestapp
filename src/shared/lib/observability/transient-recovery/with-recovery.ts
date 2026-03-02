@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { isRetryableError } from '@/shared/errors/app-error';
 import {
   withRetry,

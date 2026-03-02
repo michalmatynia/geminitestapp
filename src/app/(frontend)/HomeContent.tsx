@@ -76,10 +76,14 @@ export async function HomeContent({
     );
   }
 
-  const productsRaw = await withTiming('products', () =>
-    productService.getProducts({ page: 1, pageSize: 20 })
-  );
-  const products = normalizeHomeProducts(productsRaw);
+  const hasDatabase =
+    typeof process.env['DATABASE_URL'] === 'string' ||
+    typeof process.env['MONGODB_URI'] === 'string';
+
+  const productsRaw = hasDatabase
+    ? await withTiming('products', () => productService.getProducts({ page: 1, pageSize: 20 }))
+    : null;
+  const products = productsRaw ? normalizeHomeProducts(productsRaw) : [];
 
   const showFallbackHeader = !menuSettings.showMenu;
 

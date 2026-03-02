@@ -14,8 +14,6 @@ import {
   parseCaseResolverWorkspace,
 } from './settings';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
 const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
@@ -274,14 +272,6 @@ export const logCaseResolverWorkspaceEvent = (
   };
   const nextEvents = [...readDebugBuffer(), entry].slice(-CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT);
   writeDebugBuffer(nextEvents);
-  if (process.env['NODE_ENV'] !== 'production') {
-    void logSystemEvent({
-      level: 'info',
-      message: '[case-resolver][workspace] persistence successful',
-      source: 'case-resolver-persistence',
-      context: entry,
-    });
-  }
   if (typeof window !== 'undefined') {
     // Defer notification so debug-panel state updates never run inside another component render.
     window.setTimeout(() => {

@@ -15,15 +15,17 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
-import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
+import {
+  fetchAiPathsSettingsByKeysCached,
+  fetchAiPathsSettingsCached,
+} from '@/shared/lib/ai-paths/settings-store-client';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
-import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { QueryClient } from '@tanstack/react-query';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
-const USER_PREFERENCES_STALE_MS = 5 * 60_000;
+const AI_PATHS_SETTINGS_SELECTIVE_TIMEOUT_MS = 8_000;
 
 const resolvePreferredActivePathId = (
   data: { aiPathsActivePathId?: unknown } | null | undefined
@@ -38,6 +40,7 @@ export type PathSettingsResult = {
   pathOrder: string[];
   uiState: Record<string, unknown> | null;
   preferredActivePathId: string | null;
+  settingsLoadMode: 'selective' | 'full';
 };
 
 export type FindTriggerPathOptions = {
@@ -64,45 +67,63 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
   };
 };
 
-export async function fetchPathSettings(queryClient: QueryClient): Promise<PathSettingsResult> {
-  let settingsData: Array<{ key: string; value: string }>;
-  try {
-    settingsData = await queryClient.fetchQuery({
-      queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-      queryFn: async () => {
-        return await fetchAiPathsSettingsCached();
-      },
-      staleTime: AI_PATHS_SETTINGS_STALE_MS,
-    });
-  } catch {
-    settingsData = await fetchAiPathsSettingsCached();
+type FetchPathSettingsOptions = {
+  forceFullLoad?: boolean;
+};
+
+const loadPathSettingsData = async (
+  queryClient: QueryClient,
+  args: {
+    preferredActivePathId: string | null;
+    forceFullLoad: boolean;
   }
+): Promise<{
+  settingsData: Array<{ key: string; value: string }>;
+  settingsLoadMode: 'selective' | 'full';
+}> => {
+  if (args.preferredActivePathId && !args.forceFullLoad) {
+    const preferredConfigKey = `${PATH_CONFIG_PREFIX}${args.preferredActivePathId}`;
+    try {
+      const selectiveSettings = await fetchAiPathsSettingsByKeysCached(
+        [PATH_INDEX_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
+        { timeoutMs: AI_PATHS_SETTINGS_SELECTIVE_TIMEOUT_MS }
+      );
+      const hasPreferredConfig = selectiveSettings.some((item) => item.key === preferredConfigKey);
+      if (hasPreferredConfig) {
+        return { settingsData: selectiveSettings, settingsLoadMode: 'selective' };
+      }
+    } catch {
+      // Fall through to full settings fetch.
+    }
+  }
+
+  const settingsData = await queryClient.fetchQuery({
+    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
+    queryFn: async () => {
+      return await fetchAiPathsSettingsCached();
+    },
+    staleTime: AI_PATHS_SETTINGS_STALE_MS,
+  });
+  return { settingsData, settingsLoadMode: 'full' };
+};
+
+export async function fetchPathSettings(
+  queryClient: QueryClient,
+  options: FetchPathSettingsOptions = {}
+): Promise<PathSettingsResult> {
+  const startedAt = Date.now();
+  const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
+    QUERY_KEYS.userPreferences.all
+  );
+  const preferredActivePathId = resolvePreferredActivePathId(cachedPreferences);
+  const { settingsData, settingsLoadMode } = await loadPathSettingsData(queryClient, {
+    preferredActivePathId,
+    forceFullLoad: options.forceFullLoad === true,
+  });
 
   const map = new Map<string, string>(
     settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
   );
-
-  let preferredActivePathId: string | null;
-  const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
-    QUERY_KEYS.userPreferences.all
-  );
-  try {
-    preferredActivePathId = resolvePreferredActivePathId(cachedPreferences);
-    if (!cachedPreferences) {
-      const preferencesResponse = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.userPreferences.all,
-        queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
-          return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
-            logError: false,
-          });
-        },
-        staleTime: USER_PREFERENCES_STALE_MS,
-      });
-      preferredActivePathId = resolvePreferredActivePathId(preferencesResponse);
-    }
-  } catch {
-    preferredActivePathId = null;
-  }
 
   const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
   const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
@@ -163,12 +184,25 @@ export async function fetchPathSettings(queryClient: QueryClient): Promise<PathS
       .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
+  const totalDurationMs = Date.now() - startedAt;
+  if (totalDurationMs >= 250) {
+    console.info('[ai-paths.products] fetchPathSettings timing', {
+      totalDurationMs,
+      settingsLoadMode,
+      settingsRecordCount: settingsData.length,
+      pathCount: orderedConfigs.length,
+      preferredActivePathId,
+      forceFullLoad: options.forceFullLoad === true,
+    });
+  }
+
   return {
     configs,
     orderedConfigs,
     pathOrder: settingsPathOrder,
     uiState,
     preferredActivePathId,
+    settingsLoadMode,
   };
 }
 

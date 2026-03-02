@@ -27,12 +27,12 @@ import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-prefl
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 import {
   fetchAiPathsSettingsCached,
+  fetchAiPathsSettingsByKeysCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
-import { api } from '@/shared/lib/api-client';
 import {
   invalidateAiPathQueue,
   invalidateAiPathSettings,
@@ -47,8 +47,8 @@ import { useToast } from '@/shared/ui';
 
 type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
-const AI_PATHS_SETTINGS_STALE_MS = 10_000;
-const USER_PREFERENCES_STALE_MS = 5 * 60_000;
+const PRODUCT_MODAL_TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
+const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
 
 const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
   return typeof name === 'string' ? name.trim() : '';
@@ -111,6 +111,92 @@ const resolveHistoryRetentionPasses = (
     (item: { key: string; value: string }) => item.key === AI_PATHS_HISTORY_RETENTION_KEY
   )?.value;
   return normalizeHistoryRetentionPasses(raw);
+};
+
+const isTimeoutMessage = (message: string | null | undefined): boolean => {
+  if (!message || typeof message !== 'string') return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes('timed out') || normalized.includes('timeout');
+};
+
+const resolvePreferredPathId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const buildSelectiveTriggerSettingsData = async (
+  preferredPathId: string
+): Promise<Array<{ key: string; value: string }>> => {
+  const preferredConfigKey = `${PATH_CONFIG_PREFIX}${preferredPathId}`;
+  const selectiveRecords = await fetchAiPathsSettingsByKeysCached(
+    [AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
+    { timeoutMs: TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS }
+  );
+  const configRecord =
+    selectiveRecords.find((item: { key: string }) => item.key === preferredConfigKey) ?? null;
+  if (!configRecord || typeof configRecord.value !== 'string' || configRecord.value.length === 0) {
+    throw new Error(`Missing preferred path config for ${preferredPathId}.`);
+  }
+
+  let preferredPathName = `Path ${preferredPathId.slice(0, 6)}`;
+  try {
+    const parsed = JSON.parse(configRecord.value) as { name?: unknown };
+    if (typeof parsed?.name === 'string' && parsed.name.trim().length > 0) {
+      preferredPathName = parsed.name.trim();
+    }
+  } catch {
+    // Keep fallback name when config is malformed.
+  }
+
+  const timestamp = new Date().toISOString();
+  const syntheticIndex = JSON.stringify([
+    {
+      id: preferredPathId,
+      name: preferredPathName,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  ]);
+  const baseRecords = selectiveRecords.filter(
+    (item: { key: string }) => item.key !== PATH_INDEX_KEY && item.key !== preferredConfigKey
+  );
+  return [
+    ...baseRecords,
+    { key: PATH_INDEX_KEY, value: syntheticIndex },
+    { key: preferredConfigKey, value: configRecord.value },
+  ];
+};
+
+const loadTriggerSettingsData = async (args: {
+  preferredPathId?: string | null | undefined;
+}): Promise<{ mode: 'selective' | 'full'; settingsData: Array<{ key: string; value: string }> }> => {
+  const preferredPathId = resolvePreferredPathId(args.preferredPathId ?? null);
+  if (!preferredPathId) {
+    return {
+      mode: 'full',
+      settingsData: await fetchAiPathsSettingsCached(),
+    };
+  }
+
+  try {
+    return {
+      mode: 'selective',
+      settingsData: await buildSelectiveTriggerSettingsData(preferredPathId),
+    };
+  } catch (error) {
+    logClientError(error, {
+      context: {
+        source: 'useAiPathTriggerEvent',
+        action: 'selectiveSettingsFallback',
+        preferredPathId,
+      },
+    });
+    return {
+      mode: 'full',
+      settingsData: await fetchAiPathsSettingsCached(),
+    };
+  }
 };
 
 const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
@@ -459,35 +545,15 @@ export function useAiPathTriggerEvent(): {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const resolvePreferredActivePathId = async (): Promise<string | null> => {
+  const resolvePreferredActivePathId = (): string | null => {
     const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
       QUERY_KEYS.userPreferences.all
     );
-    const cachedPathId =
-      typeof cachedPreferences?.aiPathsActivePathId === 'string' &&
-      cachedPreferences.aiPathsActivePathId.trim().length > 0
-        ? cachedPreferences.aiPathsActivePathId.trim()
-        : null;
-    if (cachedPathId) {
-      return cachedPathId;
-    }
-    try {
-      const data = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.userPreferences.all,
-        queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
-          return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
-            logError: false,
-          });
-        },
-        staleTime: USER_PREFERENCES_STALE_MS,
-      });
-      return typeof data.aiPathsActivePathId === 'string' &&
-        data.aiPathsActivePathId.trim().length > 0
-        ? data.aiPathsActivePathId.trim()
-        : null;
-    } catch {
-      return null;
-    }
+    return resolvePreferredPathId(
+      typeof cachedPreferences?.aiPathsActivePathId === 'string'
+        ? cachedPreferences.aiPathsActivePathId
+        : null
+    );
   };
 
   const fireAiPathTriggerEvent = useCallback(async (args: FireAiPathTriggerEventArgs): Promise<void> => {
@@ -509,32 +575,55 @@ export function useAiPathTriggerEvent(): {
         node: null,
       });
 
+      const phaseStartedAt = performance.now();
+      const preferredPathStartedAt = performance.now();
+      const preferredActivePathId = resolvePreferredActivePathId();
+      const resolvePreferredPathMs = performance.now() - preferredPathStartedAt;
+
+      const settingsStartedAt = performance.now();
       let settingsData: Array<{ key: string; value: string }> = [];
-      const [preferredActivePathId, fetchedSettingsData] = await Promise.all([
-        resolvePreferredActivePathId(),
-        queryClient
-          .fetchQuery({
-            queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-            queryFn: async () => {
-              return await fetchAiPathsSettingsCached();
-            },
-            staleTime: AI_PATHS_SETTINGS_STALE_MS,
-          })
-          .catch(async () => {
-            try {
-              return await fetchAiPathsSettingsCached();
-            } catch {
-              return [] as Array<{ key: string; value: string }>;
-            }
-          }),
-      ]);
-      settingsData = fetchedSettingsData;
+      let settingsLoadMode: 'selective' | 'full' = 'full';
+      try {
+        const settingsLoad = await loadTriggerSettingsData({
+          preferredPathId: args.preferredPathId ?? null,
+        });
+        settingsData = settingsLoad.settingsData;
+        settingsLoadMode = settingsLoad.mode;
+      } catch (settingsError) {
+        const errorMessage =
+          settingsError instanceof Error ? settingsError.message : String(settingsError);
+        const timeoutCode = isTimeoutMessage(errorMessage) ? 'settings_preload_timeout' : null;
+        logClientError(settingsError, {
+          context: {
+            source: 'useAiPathTriggerEvent',
+            action: 'loadTriggerSettingsData',
+            timeoutCode,
+          },
+        });
+        toast(
+          timeoutCode
+            ? 'Failed to prepare AI Path run (settings_preload_timeout). Please retry.'
+            : 'Failed to load AI Path settings. Please retry.',
+          { variant: 'error' }
+        );
+        args.onProgress?.({
+          status: 'error',
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
+          node: null,
+        });
+        return;
+      }
+      const settingsLoadMs = performance.now() - settingsStartedAt;
       let historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
 
+      const selectionStartedAt = performance.now();
       let selection = await resolveTriggerSelection(settingsData, triggerEventId, {
         preferredPathId: args.preferredPathId ?? null,
         preferredActivePathId,
       });
+      const selectionMs = performance.now() - selectionStartedAt;
       const triggerCandidates: PathConfig[] = selection.triggerCandidates;
       const activeTriggerCandidates: PathConfig[] = selection.activeTriggerCandidates;
 
@@ -782,6 +871,7 @@ export function useAiPathTriggerEvent(): {
         );
       }
 
+      const enqueueStartedAt = performance.now();
       const enqueueResult = await runsApi.enqueue({
         pathId: selectedConfig.id ?? 'path',
         pathName: selectedConfig.name ?? undefined,
@@ -826,17 +916,50 @@ export function useAiPathTriggerEvent(): {
           ...(args.source ? { sourceInfo: args.source } : {}),
           ...(args.extras ?? {}),
         },
+      }, {
+        timeoutMs: PRODUCT_MODAL_TRIGGER_ENQUEUE_TIMEOUT_MS,
+      });
+      const enqueueRequestMs = performance.now() - enqueueStartedAt;
+      const triggerToEnqueueMs = performance.now() - phaseStartedAt;
+      console.info('[ai-paths.trigger] enqueue timing', {
+        triggerEventId,
+        pathId: selectedConfig.id,
+        settingsLoadMode,
+        resolvePreferredPathMs: Math.round(resolvePreferredPathMs),
+        settingsLoadMs: Math.round(settingsLoadMs),
+        selectionMs: Math.round(selectionMs),
+        enqueueRequestMs: Math.round(enqueueRequestMs),
+        triggerToEnqueueMs: Math.round(triggerToEnqueueMs),
       });
 
       if (!enqueueResult.ok) {
         reportProgress({ status: 'error', progress: 0 });
         const errorMsg = enqueueResult.error || 'Failed to enqueue AI Path run.';
+        const timeoutCode =
+          typeof errorMsg === 'string' && errorMsg.includes('queue_preflight_timeout')
+            ? 'queue_preflight_timeout'
+            : isTimeoutMessage(errorMsg)
+              ? 'enqueue_request_timeout'
+              : null;
         const isBrainError =
           typeof errorMsg === 'string' &&
           (errorMsg.includes('Brain settings') ||
             errorMsg.includes('AI Paths execution is disabled'));
+        logClientError(new Error(errorMsg), {
+          context: {
+            source: 'useAiPathTriggerEvent',
+            action: 'enqueuePathRun',
+            triggerEventId,
+            pathId: selectedConfig.id,
+            timeoutCode,
+          },
+        });
         toast(
-          isBrainError ? `${errorMsg} Go to /admin/brain to configure.` : errorMsg,
+          timeoutCode
+            ? `AI Path run request timed out (${timeoutCode}). Please retry.`
+            : isBrainError
+              ? `${errorMsg} Go to /admin/brain to configure.`
+              : errorMsg,
           { variant: 'error', duration: isBrainError ? 10_000 : undefined }
         );
         return;

@@ -1,3 +1,4 @@
+Connect job runs to Observability through context registry
 Improve query factories
 Improve foldre tree
 

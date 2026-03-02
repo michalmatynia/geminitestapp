@@ -46,6 +46,10 @@ const RUN_RATE_WINDOW_SECONDS = parseNumber(
 const RUN_RATE_MAX = parseNumber(process.env['AI_PATHS_RUN_RATE_LIMIT_MAX'], 20);
 const RUN_ACTIVE_MAX = parseNumber(process.env['AI_PATHS_RUN_ACTIVE_LIMIT'], 5);
 const RUN_GLOBAL_QUEUED_MAX = parseNumber(process.env['AI_PATHS_RUN_GLOBAL_QUEUED_LIMIT'], 500);
+const RUN_RATE_QUERY_TIMEOUT_MS = parseNumber(
+  process.env['AI_PATHS_RUN_RATE_QUERY_TIMEOUT_MS'],
+  1_500
+);
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS'],
   60
@@ -54,6 +58,33 @@ const ACTION_RATE_MAX = parseNumber(process.env['AI_PATHS_ACTION_RATE_LIMIT_MAX'
 const ACTION_RATE_BUCKET_PREFIX = 'ai_paths:action-rate:v1';
 
 const actionBuckets = new Map<string, { count: number; resetAt: number }>();
+
+const withSoftTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number
+): Promise<{ value: T | null; timedOut: boolean }> => {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    try {
+      return { value: await promise, timedOut: false };
+    } catch {
+      return { value: null, timedOut: false };
+    }
+  }
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const value = await Promise.race<T | null>([
+      promise,
+      new Promise<null>((resolve) => {
+        timeoutId = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+    return { value, timedOut: value === null };
+  } catch {
+    return { value: null, timedOut: false };
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
 
 export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
   const session = await auth();
@@ -140,30 +171,50 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
   const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
 
-  // Run both rate-limit queries in parallel.
-  // Use includeTotal: false + limit: threshold — avoids countDocuments() which scans the full
-  // collection even when limit: 1 is set.  Check runs.length against the threshold instead.
-  const [recent, active, queueStats] = await Promise.all([
+  // Run rate-limit probes in parallel with short soft timeouts.
+  // If a probe times out, fail open for that probe to keep enqueue hot path responsive.
+  const [recentProbe, activeProbe, queueStatsProbe] = await Promise.all([
     RUN_RATE_MAX > 0
-      ? repo.listRuns({
-        userId: access.userId,
-        createdAfter: new Date(now - windowMs).toISOString(),
-        limit: RUN_RATE_MAX,
-        offset: 0,
-        includeTotal: false,
-      })
+      ? withSoftTimeout(
+        repo.listRuns({
+          userId: access.userId,
+          createdAfter: new Date(now - windowMs).toISOString(),
+          limit: RUN_RATE_MAX,
+          offset: 0,
+          includeTotal: false,
+        }),
+        RUN_RATE_QUERY_TIMEOUT_MS
+      )
       : null,
     RUN_ACTIVE_MAX > 0
-      ? repo.listRuns({
-        userId: access.userId,
-        statuses: activeStatuses,
-        limit: RUN_ACTIVE_MAX,
-        offset: 0,
-        includeTotal: false,
-      })
+      ? withSoftTimeout(
+        repo.listRuns({
+          userId: access.userId,
+          statuses: activeStatuses,
+          limit: RUN_ACTIVE_MAX,
+          offset: 0,
+          includeTotal: false,
+        }),
+        RUN_RATE_QUERY_TIMEOUT_MS
+      )
       : null,
-    RUN_GLOBAL_QUEUED_MAX > 0 ? repo.getQueueStats() : null,
+    RUN_GLOBAL_QUEUED_MAX > 0
+      ? withSoftTimeout(repo.getQueueStats(), RUN_RATE_QUERY_TIMEOUT_MS)
+      : null,
   ]);
+  const recent = recentProbe?.value ?? null;
+  const active = activeProbe?.value ?? null;
+  const queueStats = queueStatsProbe?.value ?? null;
+
+  if (recentProbe?.timedOut || activeProbe?.timedOut || queueStatsProbe?.timedOut) {
+    console.warn('[ai-paths.rate-limit] soft timeout while probing rate limits', {
+      userId: access.userId,
+      recentTimedOut: recentProbe?.timedOut ?? false,
+      activeTimedOut: activeProbe?.timedOut ?? false,
+      queueTimedOut: queueStatsProbe?.timedOut ?? false,
+      timeoutMs: RUN_RATE_QUERY_TIMEOUT_MS,
+    });
+  }
 
   if (recent && recent.runs.length >= RUN_RATE_MAX) {
     throw rateLimitedError('Too many runs queued. Please wait before trying again.', windowMs);

@@ -10,8 +10,10 @@ export { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQ
 export {
   startAiPathRunQueue,
   assertAiPathRunQueueReady,
+  assertAiPathRunQueueReadyForEnqueue,
   enqueuePathRunJob,
   getAiPathRunQueueStatus,
+  getAiPathRunQueueHotStatus,
   removePathRunQueueEntries,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 export {

@@ -274,27 +274,47 @@ const withCsrfHeadersCompat = async (headers?: HeadersInit): Promise<Headers> =>
   return withCsrfHeaders(headers);
 };
 
-async function apiPost<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+async function apiPost<T>(
+  url: string,
+  body: unknown,
+  options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
+): Promise<ApiResponse<T>> {
   const headers = await withCsrfHeadersCompat({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
+    ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
 }
 
-async function apiPatch<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
+async function apiPatch<T>(
+  url: string,
+  body: unknown,
+  options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
+): Promise<ApiResponse<T>> {
   const headers = await withCsrfHeadersCompat({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'PATCH',
     headers,
     body: JSON.stringify(body),
+    ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options?.signal ? { signal: options.signal } : {}),
   });
 }
 
-async function apiDelete<T>(url: string): Promise<ApiResponse<T>> {
+async function apiDelete<T>(
+  url: string,
+  options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
+): Promise<ApiResponse<T>> {
   const headers = await withCsrfHeadersCompat();
-  return apiFetch<T>(url, { method: 'DELETE', headers });
+  return apiFetch<T>(url, {
+    method: 'DELETE',
+    headers,
+    ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+    ...(options?.signal ? { signal: options.signal } : {}),
+  });
 }
 
 const coerceDbProvider = (
@@ -783,8 +803,11 @@ export const runsApi = {
     backoffMs?: number | null;
     backoffMaxMs?: number | null;
     meta?: Record<string, unknown> | null;
-  }): Promise<ApiResponse<{ run: unknown }>> {
-    return apiPost<{ run: unknown }>('/api/ai-paths/runs/enqueue', payload);
+  }, options?: { timeoutMs?: number; signal?: AbortSignal }): Promise<ApiResponse<{ run: unknown }>> {
+    return apiPost<{ run: unknown }>('/api/ai-paths/runs/enqueue', payload, {
+      timeoutMs: options?.timeoutMs ?? 60_000,
+      ...(options?.signal ? { signal: options.signal } : {}),
+    });
   },
 
   async list(options?: {

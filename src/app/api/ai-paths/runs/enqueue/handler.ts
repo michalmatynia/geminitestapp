@@ -13,12 +13,13 @@ import {
 } from '@/shared/lib/ai-paths';
 import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
-import { assertAiPathRunQueueReady } from '@/features/jobs/server';
+import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { Edge } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { badRequestError, serviceUnavailableError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -42,9 +43,43 @@ const enqueueSchema = z.object({
   meta: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
+const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
+  process.env['AI_PATHS_ENQUEUE_QUEUE_PREFLIGHT_TIMEOUT_MS'] ?? '10000',
+  10
+);
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string
+): Promise<T> => {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(timeoutMessage));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const access = await requireAiPathsRunAccess();
-  await enforceAiPathsRunRateLimit(access);
+  const timings: Record<string, number> = {};
+  const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const startedAt = performance.now();
+    const result = await fn();
+    timings[label] = performance.now() - startedAt;
+    return result;
+  };
+
+  const access = await withTiming('accessMs', async () => await requireAiPathsRunAccess());
+  await withTiming('rateLimitMs', async () => await enforceAiPathsRunRateLimit(access));
   const parsed = await parseJsonBody(req, enqueueSchema, {
     logPrefix: 'ai-paths.runs.enqueue',
   });
@@ -118,12 +153,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     validationPreflight: validationReport,
   };
 
-  const compileReport = nodeValidationEnabled
-    ? compileGraph(normalizedNodes, normalizedEdges)
-    : compileGraph(normalizedNodes, normalizedEdges, {
-      scopeMode: 'reachable_from_roots',
-      ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
-    });
+  const compileReport = await withTiming('compileMs', async () => {
+    return nodeValidationEnabled
+      ? compileGraph(normalizedNodes, normalizedEdges)
+      : compileGraph(normalizedNodes, normalizedEdges, {
+        scopeMode: 'reachable_from_roots',
+        ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+      });
+  });
   if (nodeValidationEnabled && !compileReport.ok) {
     const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
     throw badRequestError(
@@ -141,24 +178,60 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
   };
 
-  await assertAiPathRunQueueReady();
+  try {
+    await withTiming('queueReadyMs', async () => {
+      return await withTimeout(
+        assertAiPathRunQueueReadyForEnqueue(),
+        QUEUE_PREFLIGHT_TIMEOUT_MS,
+        `queue_preflight_timeout after ${QUEUE_PREFLIGHT_TIMEOUT_MS}ms`
+      );
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('queue_preflight_timeout')) {
+      throw serviceUnavailableError(
+        'AI Paths queue readiness check timed out (queue_preflight_timeout). Please retry.',
+        3_000,
+        { code: 'queue_preflight_timeout' }
+      );
+    }
+    throw error;
+  }
 
-  const run = await enqueuePathRun({
-    userId: access.userId,
-    pathId: rest.pathId,
-    pathName: rest.pathName ?? null,
-    nodes: normalizedNodes,
-    edges: normalizedEdges,
-    ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
-    ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
-    triggerContext: rest.triggerContext ?? null,
-    entityId: rest.entityId ?? null,
-    entityType: rest.entityType ?? null,
-    ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
-    ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
-    ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
-    ...(rest.requestId ? { requestId: rest.requestId } : {}),
-    meta: normalizedMeta,
+  const run = await withTiming('enqueueServiceMs', async () => {
+    return await enqueuePathRun({
+      userId: access.userId,
+      pathId: rest.pathId,
+      pathName: rest.pathName ?? null,
+      nodes: normalizedNodes,
+      edges: normalizedEdges,
+      ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
+      ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
+      triggerContext: rest.triggerContext ?? null,
+      entityId: rest.entityId ?? null,
+      entityType: rest.entityType ?? null,
+      ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
+      ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
+      ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
+      ...(rest.requestId ? { requestId: rest.requestId } : {}),
+      meta: normalizedMeta,
+    });
   });
+  void logSystemEvent({
+    level: 'info',
+    source: 'ai-paths.runs.enqueue',
+    message: '[ai-paths.runs.enqueue] timing',
+    context: {
+      pathId: rest.pathId,
+      nodeCount: normalizedNodes.length,
+      edgeCount: normalizedEdges.length,
+      accessMs: Math.round(timings['accessMs'] ?? 0),
+      rateLimitMs: Math.round(timings['rateLimitMs'] ?? 0),
+      compileMs: Math.round(timings['compileMs'] ?? 0),
+      queueReadyMs: Math.round(timings['queueReadyMs'] ?? 0),
+      enqueueServiceMs: Math.round(timings['enqueueServiceMs'] ?? 0),
+    },
+  });
+
   return NextResponse.json({ run });
 }

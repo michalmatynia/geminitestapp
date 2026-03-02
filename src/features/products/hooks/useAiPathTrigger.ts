@@ -17,9 +17,15 @@ import { useToast } from '@/shared/ui';
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
 const PRODUCT_TRIGGER_PRIMARY_EVENT_ID = 'path_generate_description';
 const PRODUCT_TRIGGER_FALLBACK_EVENT_ID = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
+const PRODUCT_TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 const PRODUCT_TRIGGER_EVENT_IDS = Array.from(
   new Set([PRODUCT_TRIGGER_PRIMARY_EVENT_ID, PRODUCT_TRIGGER_FALLBACK_EVENT_ID])
 );
+const isTimeoutMessage = (message: string | null | undefined): boolean => {
+  if (!message || typeof message !== 'string') return false;
+  const normalized = message.toLowerCase();
+  return normalized.includes('timed out') || normalized.includes('timeout');
+};
 
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({
@@ -147,9 +153,12 @@ export function useAiPathTrigger(): {
     }
 
     try {
+      const phaseStartedAt = performance.now();
       toast('Preparing AI Path run: Path Generate Description', { variant: 'info' });
-      const { orderedConfigs, preferredActivePathId, uiState } =
-        await fetchPathSettings(queryClient);
+      const settingsStartedAt = performance.now();
+      const initialSettings = await fetchPathSettings(queryClient);
+      let { orderedConfigs, preferredActivePathId, uiState, settingsLoadMode } = initialSettings;
+      const settingsLoadMs = performance.now() - settingsStartedAt;
 
       const resolveTriggerSelection = (
         requireServerExecution: boolean
@@ -178,7 +187,18 @@ export function useAiPathTrigger(): {
         );
       };
 
-      const triggerSelection = resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
+      const selectionStartedAt = performance.now();
+      let triggerSelection = resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
+
+      if (!triggerSelection && settingsLoadMode === 'selective') {
+        const fullSettings = await fetchPathSettings(queryClient, { forceFullLoad: true });
+        orderedConfigs = fullSettings.orderedConfigs;
+        preferredActivePathId = fullSettings.preferredActivePathId;
+        uiState = fullSettings.uiState;
+        settingsLoadMode = fullSettings.settingsLoadMode;
+        triggerSelection = resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
+      }
+      const selectionMs = performance.now() - selectionStartedAt;
 
       if (!triggerSelection) {
         toast(
@@ -235,25 +255,60 @@ export function useAiPathTrigger(): {
           }
         );
       }
-      const enqueueResult = await runsApi.enqueue({
-        pathId: selectedConfig.id ?? 'path',
-        pathName: selectedConfig.name ?? undefined,
-        nodes,
-        edges,
-        triggerEvent,
-        triggerNodeId: triggerNode.id,
-        triggerContext,
-        entityId: product.id,
-        entityType: 'product',
-        meta: {
-          source: 'product_panel',
-          triggerLabel: 'Path Generate Description',
-          strictFlowMode: selectedConfig.strictFlowMode !== false,
+      const enqueueStartedAt = performance.now();
+      const enqueueResult = await runsApi.enqueue(
+        {
+          pathId: selectedConfig.id ?? 'path',
+          pathName: selectedConfig.name ?? undefined,
+          nodes,
+          edges,
+          triggerEvent,
+          triggerNodeId: triggerNode.id,
+          triggerContext,
+          entityId: product.id,
+          entityType: 'product',
+          meta: {
+            source: 'product_panel',
+            triggerLabel: 'Path Generate Description',
+            strictFlowMode: selectedConfig.strictFlowMode !== false,
+          },
         },
+        { timeoutMs: PRODUCT_TRIGGER_ENQUEUE_TIMEOUT_MS }
+      );
+      const enqueueRequestMs = performance.now() - enqueueStartedAt;
+      const triggerToEnqueueMs = performance.now() - phaseStartedAt;
+      console.info('[ai-paths.products] trigger enqueue timing', {
+        productId: product.id,
+        pathId: selectedConfig.id,
+        triggerEvent,
+        settingsLoadMode,
+        settingsLoadMs: Math.round(settingsLoadMs),
+        selectionMs: Math.round(selectionMs),
+        enqueueRequestMs: Math.round(enqueueRequestMs),
+        triggerToEnqueueMs: Math.round(triggerToEnqueueMs),
       });
       if (!enqueueResult.ok) {
-        toast(enqueueResult.error || 'Failed to enqueue AI Path run.', {
-          variant: 'error',
+        const errorMsg = enqueueResult.error || 'Failed to enqueue AI Path run.';
+        const timeoutCode =
+          typeof errorMsg === 'string' && errorMsg.includes('queue_preflight_timeout')
+            ? 'queue_preflight_timeout'
+            : isTimeoutMessage(errorMsg)
+              ? 'enqueue_request_timeout'
+              : null;
+        toast(
+          timeoutCode
+            ? `AI Path run request timed out (${timeoutCode}). Please retry.`
+            : errorMsg,
+          { variant: 'error' }
+        );
+        logClientError(new Error(errorMsg), {
+          context: {
+            source: 'useAiPathTrigger',
+            action: 'enqueueFailed',
+            productId: product.id,
+            pathId: selectedConfig.id,
+            timeoutCode,
+          },
         });
         return;
       }
@@ -275,7 +330,14 @@ export function useAiPathTrigger(): {
       logClientError(error, {
         context: { source: 'useAiPathTrigger', action: 'runPathTrigger', productId: product.id },
       });
-      toast('Failed to run AI Path trigger.', { variant: 'error' });
+      const message = error instanceof Error ? error.message : String(error);
+      const timeoutCode = isTimeoutMessage(message) ? 'settings_preload_timeout' : null;
+      toast(
+        timeoutCode
+          ? `Failed to prepare AI Path run (${timeoutCode}). Please retry.`
+          : 'Failed to run AI Path trigger.',
+        { variant: 'error' }
+      );
     }
   };
 

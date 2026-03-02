@@ -478,8 +478,39 @@ const isAiPathsEnabled = async (): Promise<boolean> => {
   return brain.enabled;
 };
 
+const getAiPathsEnabledCached = async (options?: { bypassCache?: boolean }): Promise<boolean> => {
+  const now = Date.now();
+  const bypassCache = options?.bypassCache === true;
+  if (!bypassCache && aiPathsEnabledCache && aiPathsEnabledCache.expiresAt > now) {
+    return aiPathsEnabledCache.value;
+  }
+  if (!bypassCache && aiPathsEnabledInFlight) {
+    return await aiPathsEnabledInFlight;
+  }
+
+  const fetchEnabled = async (): Promise<boolean> => {
+    const enabled = await isAiPathsEnabled();
+    aiPathsEnabledCache = {
+      value: enabled,
+      expiresAt: Date.now() + AI_PATHS_ENABLED_CACHE_TTL_MS,
+    };
+    return enabled;
+  };
+
+  if (bypassCache) {
+    return await fetchEnabled();
+  }
+
+  aiPathsEnabledInFlight = fetchEnabled();
+  try {
+    return await aiPathsEnabledInFlight;
+  } finally {
+    aiPathsEnabledInFlight = null;
+  }
+};
+
 const assertAiPathsEnabled = async (): Promise<void> => {
-  const enabled = await isAiPathsEnabled();
+  const enabled = await getAiPathsEnabledCached();
   if (enabled) return;
   throw configurationError(
     'AI Paths is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
@@ -504,7 +535,7 @@ export const startAiPathRunQueue = (): void => {
   reconcileInFlight = (async (): Promise<void> => {
     let enabled: boolean;
     try {
-      enabled = await isAiPathsEnabled();
+      enabled = await getAiPathsEnabledCached();
     } catch (error) {
       void ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
@@ -596,21 +627,48 @@ type AiPathRunQueueStatus = {
 };
 
 const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber('AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS', 2_000, 250);
+const QUEUE_HOT_STATUS_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_QUEUE_HOT_STATUS_CACHE_TTL_MS',
+  1_000,
+  100
+);
+const QUEUE_HOT_WAITING_LIMIT = parseEnvNumber('AI_PATHS_QUEUE_HOT_WAITING_LIMIT', 2_000, 1);
 const QUEUE_UNAVAILABLE_RETRY_AFTER_MS = parseEnvNumber(
   'AI_PATHS_QUEUE_UNAVAILABLE_RETRY_AFTER_MS',
   5_000,
   500
 );
+const AI_PATHS_ENABLED_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_ENABLED_CACHE_TTL_MS',
+  5_000,
+  250
+);
+
+type AiPathRunQueueHotStatus = {
+  running: boolean;
+  healthy: boolean;
+  processing: boolean;
+  activeRuns: number;
+  waitingRuns: number;
+  failedRuns: number;
+  completedRuns: number;
+  lastPollTime: number;
+  timeSinceLastPoll: number;
+};
 
 let queueStatusCache: { value: AiPathRunQueueStatus; expiresAt: number } | null = null;
 let queueStatusInFlight: Promise<AiPathRunQueueStatus> | null = null;
+let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } | null = null;
+let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
+let aiPathsEnabledCache: { value: boolean; expiresAt: number } | null = null;
+let aiPathsEnabledInFlight: Promise<boolean> | null = null;
 
 type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;
 };
 
-const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
-  const health = aiPathRunQueueState.workerStarted
+const readQueueHealthSnapshot = async () => {
+  return aiPathRunQueueState.workerStarted
     ? await queue.getHealthStatus()
     : {
       running: false,
@@ -623,6 +681,10 @@ const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStat
       lastPollTime: 0,
       timeSinceLastPoll: 0,
     };
+};
+
+const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStatus> => {
+  const health = await readQueueHealthSnapshot();
   const repo = await getPathRunRepository();
   const [stats, insightsQueueHealth, runtimeAnalyticsSummary] = await Promise.all([
     repo.getQueueStats(),
@@ -695,6 +757,21 @@ const readAiPathRunQueueStatus = async (now: number): Promise<AiPathRunQueueStat
   };
 };
 
+const readAiPathRunQueueHotStatus = async (): Promise<AiPathRunQueueHotStatus> => {
+  const health = await readQueueHealthSnapshot();
+  return {
+    running: health.running ?? false,
+    healthy: health.healthy ?? false,
+    processing: health.processing ?? false,
+    activeRuns: health.activeCount,
+    waitingRuns: health.waitingCount,
+    failedRuns: health.failedCount,
+    completedRuns: health.completedCount,
+    lastPollTime: health.lastPollTime ?? 0,
+    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+  };
+};
+
 export const getAiPathRunQueueStatus = async (
   options: GetAiPathRunQueueStatusOptions = {}
 ): Promise<AiPathRunQueueStatus> => {
@@ -728,13 +805,46 @@ export const getAiPathRunQueueStatus = async (
   }
 };
 
+export const getAiPathRunQueueHotStatus = async (
+  options: GetAiPathRunQueueStatusOptions = {}
+): Promise<AiPathRunQueueHotStatus> => {
+  const now = Date.now();
+  const bypassCache = options.bypassCache === true;
+  if (!bypassCache && queueHotStatusCache && queueHotStatusCache.expiresAt > now) {
+    return queueHotStatusCache.value;
+  }
+  if (!bypassCache && queueHotStatusInFlight) {
+    return queueHotStatusInFlight;
+  }
+
+  const fetchStatus = async (): Promise<AiPathRunQueueHotStatus> => {
+    const status = await readAiPathRunQueueHotStatus();
+    queueHotStatusCache = {
+      value: status,
+      expiresAt: Date.now() + QUEUE_HOT_STATUS_CACHE_TTL_MS,
+    };
+    return status;
+  };
+
+  if (bypassCache) {
+    return fetchStatus();
+  }
+
+  queueHotStatusInFlight = fetchStatus();
+  try {
+    return await queueHotStatusInFlight;
+  } finally {
+    queueHotStatusInFlight = null;
+  }
+};
+
 const waitForQueueReconciliation = async (): Promise<void> => {
   if (!reconcileInFlight) return;
   await reconcileInFlight;
 };
 
 export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus> => {
-  const aiPathsEnabled = await isAiPathsEnabled().catch(() => false);
+  const aiPathsEnabled = await getAiPathsEnabledCached().catch(() => false);
   if (!aiPathsEnabled) {
     throw serviceUnavailableError(
       'AI Paths execution is disabled in Brain settings. Enable AI Paths and retry.',
@@ -771,6 +881,56 @@ export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus>
       queueRunning: status.running,
       queueHealthy: status.healthy,
       queuedCount: status.queuedCount,
+      activeRuns: status.activeRuns,
+    }
+  );
+};
+
+export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQueueHotStatus> => {
+  const aiPathsEnabled = await getAiPathsEnabledCached().catch(() => false);
+  if (!aiPathsEnabled) {
+    throw serviceUnavailableError(
+      'AI Paths execution is disabled in Brain settings. Enable AI Paths and retry.',
+      QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+      { feature: 'ai_paths' }
+    );
+  }
+
+  if (!aiPathRunQueueState.workerStarted || !aiPathRunQueueState.recoveryScheduled) {
+    startAiPathRunQueue();
+    await waitForQueueReconciliation();
+  }
+  const status = await getAiPathRunQueueHotStatus();
+  if (status.waitingRuns >= QUEUE_HOT_WAITING_LIMIT) {
+    throw serviceUnavailableError(
+      'AI Paths queue is currently saturated. Please retry in a few seconds.',
+      QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+      {
+        queueWaitingRuns: status.waitingRuns,
+        queueWaitingLimit: QUEUE_HOT_WAITING_LIMIT,
+      }
+    );
+  }
+  if (status.running) return status;
+
+  if (!REQUIRE_DURABLE_QUEUE) {
+    debugQueueWarn(
+      '[aiPathRunQueue] Worker not running, but durable queue is not required; allowing local fallback execution.',
+      {
+        queueRunning: status.running,
+        queueHealthy: status.healthy,
+      }
+    );
+    return status;
+  }
+
+  throw serviceUnavailableError(
+    'AI Paths queue worker is unavailable. Please retry in a few seconds.',
+    QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
+    {
+      queueRunning: status.running,
+      queueHealthy: status.healthy,
+      queueWaitingRuns: status.waitingRuns,
       activeRuns: status.activeRuns,
     }
   );

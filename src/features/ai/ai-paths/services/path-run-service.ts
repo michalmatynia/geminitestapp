@@ -72,6 +72,17 @@ const resolveDispatchErrorMessage = (error: unknown): string => {
   return String(error);
 };
 
+const shouldLogEnqueueTimings = (timings: {
+  totalMs: number;
+  persistRunMs: number;
+  persistNodesMs: number;
+  dispatchMs: number;
+}): boolean =>
+  timings.totalMs >= 200 ||
+  timings.persistRunMs >= 100 ||
+  timings.persistNodesMs >= 100 ||
+  timings.dispatchMs >= 100;
+
 const dispatchRun = async (runId: string, options?: { delayMs?: number }): Promise<void> => {
   try {
     await enqueuePathRunJob(runId, options);
@@ -184,6 +195,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
   const lockKey = requestId ? `${input.userId ?? 'anon'}:${input.pathId}:${requestId}` : null;
 
   const execute = async (): Promise<AiPathRunRecord> => {
+    const enqueueStartedAt = performance.now();
     const repo = await getPathRunRepository();
     if (requestId) {
       const existingByRequestId = await repo.listRuns({
@@ -293,6 +305,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         warnings: runPreflight.warnings,
       },
     });
+    const persistRunStartedAt = performance.now();
     const run = await repo.createRun({
       userId: input.userId ?? null,
       pathId: input.pathId,
@@ -306,9 +319,13 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       meta,
       maxAttempts: input.maxAttempts ?? null,
     });
+    const persistRunMs = performance.now() - persistRunStartedAt;
 
+    let persistNodesMs = 0;
     try {
+      const persistNodesStartedAt = performance.now();
       await repo.createRunNodes(run.id, nodes);
+      persistNodesMs = performance.now() - persistNodesStartedAt;
     } catch (setupError) {
       const finishedAt = new Date();
       const message = `Run setup failed: ${
@@ -362,8 +379,11 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       });
     }
 
+    let dispatchMs = 0;
     try {
+      const dispatchStartedAt = performance.now();
       await dispatchRun(run.id);
+      dispatchMs = performance.now() - dispatchStartedAt;
     } catch (dispatchError) {
       const finishedAt = new Date();
       const dispatchMessage = resolveDispatchErrorMessage(dispatchError);
@@ -404,6 +424,25 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       }
 
       throw new Error(message, { cause: dispatchError });
+    }
+
+    const enqueueTotalMs = performance.now() - enqueueStartedAt;
+    if (
+      shouldLogEnqueueTimings({
+        totalMs: enqueueTotalMs,
+        persistRunMs,
+        persistNodesMs,
+        dispatchMs,
+      })
+    ) {
+      console.info('[ai-paths-service] enqueuePathRun timing', {
+        pathId: input.pathId,
+        runId: run.id,
+        persistRunMs: Math.round(persistRunMs),
+        persistNodesMs: Math.round(persistNodesMs),
+        dispatchMs: Math.round(dispatchMs),
+        enqueueTotalMs: Math.round(enqueueTotalMs),
+      });
     }
 
     return run;

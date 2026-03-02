@@ -68,6 +68,7 @@ export function RunDetailDialog(): React.JSX.Element {
     runDetailSelectedHistoryNodeId: runHistoryNodeId,
     setRunStreamPaused: onStreamPauseToggle,
     setRunHistoryNodeId: onHistoryNodeSelect,
+    handleResumeRun,
   } = useAiPathsSettingsOrchestrator();
 
   const onClose = () => setRunDetailOpen(false);
@@ -164,7 +165,7 @@ export function RunDetailDialog(): React.JSX.Element {
               <div className='flex flex-wrap items-center gap-2 text-sm'>
                 <span>{runDetail.run.status}</span>
                 {isScheduledRun ? (
-                  <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
+                  <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-px text-[9px] uppercase text-amber-200'>
                     Scheduled
                   </span>
                 ) : null}
@@ -337,6 +338,11 @@ export function RunDetailDialog(): React.JSX.Element {
                 <RunHistoryEntries
                   entries={historyEntries}
                   emptyMessage='No history for this node.'
+                  onReplayFromEntry={(entry): void => {
+                    if (!runDetail?.run?.id) return;
+                    // For now we replay the whole run that produced this history entry.
+                    void handleResumeRun(runDetail.run.id, 'replay').catch(() => {});
+                  }}
                 />
               </div>
             ) : (

@@ -28,6 +28,7 @@ import { MathNodeConfigSection } from './node-config/dialog/MathNodeConfigSectio
 import { ModelNodeConfigSection } from './node-config/dialog/ModelNodeConfigSection';
 import { MutatorNodeConfigSection } from './node-config/dialog/MutatorNodeConfigSection';
 import { FunctionNodeConfigSection } from './node-config/dialog/FunctionNodeConfigSection';
+import { StateNodeConfigSection } from './node-config/dialog/StateNodeConfigSection';
 import { PlaywrightNodeConfigSection } from './node-config/dialog/PlaywrightNodeConfigSection';
 import { PollNodeConfigSection } from './node-config/dialog/PollNodeConfigSection';
 import { PromptNodeConfigSection } from './node-config/dialog/PromptNodeConfigSection';
@@ -69,6 +70,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <ConstantNodeConfigSection />
       <MathNodeConfigSection />
       <FunctionNodeConfigSection />
+      <StateNodeConfigSection />
       <TemplateNodeConfigSection />
       <BundleNodeConfigSection />
       <GateNodeConfigSection />

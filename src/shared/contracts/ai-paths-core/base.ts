@@ -9,6 +9,7 @@ export const aiNodeTypeSchema = z.enum([
   'simulation',
   'context',
   'function',
+  'state',
   'audio_oscillator',
   'audio_speaker',
   'parser',

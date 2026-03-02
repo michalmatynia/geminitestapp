@@ -47,6 +47,7 @@ import {
   handleValidator,
   handleViewer,
   handleFunctionNode,
+  handleStateNode,
 } from './handlers';
 
 import prisma from '@/shared/lib/db/prisma';
@@ -78,6 +79,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   notification: handleNotification,
   playwright: handlePlaywright,
   function: handleFunctionNode,
+  state: handleStateNode,
   agent: handleAgent,
   learner_agent: handleLearnerAgent,
   description_updater: handleDescriptionUpdater,

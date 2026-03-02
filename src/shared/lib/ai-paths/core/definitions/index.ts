@@ -427,6 +427,14 @@ const basePalette: NodeDefinition[] = [
     inputContracts: buildOptionalInputContracts(['value', 'context', 'bundle', 'result']),
   },
   {
+    type: 'state',
+    title: 'State',
+    description: 'Read and write named variables shared across the run.',
+    inputs: ['value', 'delta'],
+    outputs: ['value', 'previous', 'delta'],
+    inputContracts: buildOptionalInputContracts(['value', 'delta']),
+  },
+  {
     type: 'prompt',
     title: 'Prompt',
     description: 'Formats text with placeholders.',

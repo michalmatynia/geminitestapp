@@ -188,6 +188,7 @@ export async function evaluateGraphInternal(
   const outputs: Record<string, RuntimePortValues> = options.seedOutputs
     ? cloneValue(options.seedOutputs)
     : {};
+  const variables: Record<string, unknown> = {};
 
   const history = new Map<string, RuntimeHistoryEntry[]>();
   const activeNodes = new Set<string>();
@@ -274,7 +275,7 @@ export async function evaluateGraphInternal(
             : 'running',
       nodeStatuses,
       nodeOutputs: outputsSnapshot,
-      variables: {},
+      variables: cloneValue(variables),
       events: [],
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
@@ -774,6 +775,10 @@ export async function evaluateGraphInternal(
                 idempotencyKey: null,
               },
               executed,
+              variables,
+              setVariable: (key: string, value: unknown) => {
+                variables[key] = cloneValue(value);
+              },
             };
 
             const retryConfig = node.config?.runtime?.retry;

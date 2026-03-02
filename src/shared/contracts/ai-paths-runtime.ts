@@ -528,6 +528,8 @@ export interface NodeHandlerContext {
     schema: Set<string>;
     mapper: Set<string>;
   };
+  variables: Record<string, unknown>;
+  setVariable: (key: string, value: unknown) => void;
 }
 
 export type NodeHandler = (

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { UpdateFilter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
@@ -287,6 +288,7 @@ export async function updateImageStudioRun(
     $set: patch,
   };
   if (nextHistoryEvents.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     updateDocument.$push = {
       historyEvents: {
         $each: nextHistoryEvents,
@@ -363,6 +365,7 @@ export async function removeImageStudioRunOutputs(
   if (runId) query['_id'] = runId;
 
   const result = await collection.updateMany(query, {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     $pull: {
       outputs: {
         $or: outputSelectors,

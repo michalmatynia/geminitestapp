@@ -237,9 +237,9 @@ const createRunOutputSlotMetadata = (params: {
       (id) => id !== params.sourceContext.primarySourceSlotId
     )
     : params.sourceContext.sourceSlotIds;
-  const centerMeta =
-    isCenterOperation && isObjectRecord(params.executionMeta) ? params.executionMeta : null;
-
+  const centerMeta = (isCenterOperation && isObjectRecord(params.executionMeta)
+    ? params.executionMeta
+    : null) as ImageStudioCenterExecutionMeta | null;
   return {
     role: 'generation',
     ...(params.sourceContext.primarySourceSlotId

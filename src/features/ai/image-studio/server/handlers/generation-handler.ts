@@ -97,9 +97,8 @@ export async function executeGenerationOperation(params: {
   const overrides =
     settings.targetAi.openai.advanced_overrides &&
     typeof settings.targetAi.openai.advanced_overrides === 'object'
-      ? (settings.targetAi.openai.advanced_overrides as Record<string, unknown>)
+      ? settings.targetAi.openai.advanced_overrides
       : null;
-
   let polygons: Array<Array<{ x: number; y: number }>> = [];
   let invert = false;
   let feather = 0;

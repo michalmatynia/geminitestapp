@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { FunctionConfig } from '@/shared/lib/ai-paths';
-import { Textarea, Label, Input } from '@/shared/ui';
+import { Textarea, Label, Input, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -67,6 +67,15 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
+  const handleExpectedTypeChange = (value: string): void => {
+    updateSelectedNodeConfig({
+      function: {
+        ...functionConfig,
+        expectedType: value || undefined,
+      },
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div>
@@ -124,6 +133,29 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           <span className='font-mono text-gray-300'>eval(...)</span>, or{' '}
           <span className='font-mono text-gray-300'>window</span> are blocked with{' '}
           <span className='font-mono text-gray-300'>FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN</span>.
+        </p>
+      </div>
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>Expected output type (optional)</Label>
+        <SelectSimple
+          size='sm'
+          value={functionConfig.expectedType ?? ''}
+          onValueChange={handleExpectedTypeChange}
+          options={[
+            { value: '', label: 'Any type' },
+            { value: 'string', label: 'string' },
+            { value: 'number', label: 'number' },
+            { value: 'boolean', label: 'boolean' },
+            { value: 'object', label: 'object' },
+            { value: 'array', label: 'array' },
+          ]}
+          placeholder='Any type'
+          variant='subtle'
+        />
+        <p className='mt-1 text-[11px] text-gray-500'>
+          When set, the runtime validates the{' '}
+          <span className='font-mono text-gray-300'>value</span> output and fails with{' '}
+          <span className='font-mono text-gray-300'>FUNCTION_OUTPUT_TYPE_MISMATCH</span> on mismatch.
         </p>
       </div>
       <div className='grid gap-4 md:grid-cols-2'>

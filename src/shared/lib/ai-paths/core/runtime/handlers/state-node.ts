@@ -43,6 +43,33 @@ export const handleStateNode: NodeHandler = ({
 
   const current = variables[key];
   const maxValueBytes = config?.maxValueBytes;
+  const expectedType = config?.expectedType;
+
+  const matchesExpectedType = (value: unknown): boolean => {
+    if (!expectedType) return true;
+    if (value === undefined) return true;
+    if (value === null) return expectedType === 'object'; // null treated as object-ish here
+    if (expectedType === 'array') return Array.isArray(value);
+    if (expectedType === 'object') return typeof value === 'object' && !Array.isArray(value);
+    return typeof value === expectedType;
+  };
+
+  const buildTypeError = (value: unknown) => {
+    const actual =
+      value === null
+        ? 'null'
+        : Array.isArray(value)
+          ? 'array'
+          : typeof value === 'undefined'
+            ? 'undefined'
+            : typeof value;
+    return {
+      ...prevOutputs,
+      status: 'failed',
+      error: `State value type mismatch: expected ${expectedType}, got ${actual}.`,
+      errorCode: 'STATE_VALUE_TYPE_MISMATCH',
+    } as RuntimePortValues;
+  };
 
   if (mode === 'read') {
     let next = current;
@@ -52,6 +79,9 @@ export const handleStateNode: NodeHandler = ({
           ? parseJsonSafe(config.initialJson)
           : undefined;
       if (initial !== undefined) {
+        if (!matchesExpectedType(initial)) {
+          return buildTypeError(initial);
+        }
         if (exceedsSizeLimit(initial, maxValueBytes)) {
           return {
             ...prevOutputs,
@@ -63,6 +93,9 @@ export const handleStateNode: NodeHandler = ({
         setVariable(key, initial);
         next = initial;
       } else if (nodeInputs['value'] !== undefined) {
+        if (!matchesExpectedType(nodeInputs['value'])) {
+          return buildTypeError(nodeInputs['value']);
+        }
         if (exceedsSizeLimit(nodeInputs['value'], maxValueBytes)) {
           return {
             ...prevOutputs,
@@ -82,6 +115,9 @@ export const handleStateNode: NodeHandler = ({
 
   if (mode === 'write') {
     const value = nodeInputs['value'];
+    if (!matchesExpectedType(value)) {
+      return buildTypeError(value);
+    }
     if (exceedsSizeLimit(value, maxValueBytes)) {
       return {
         ...prevOutputs,

@@ -65,6 +65,15 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
+  const handleExpectedTypeChange = (value: string): void => {
+    updateSelectedNodeConfig({
+      state: {
+        ...stateConfig,
+        expectedType: value || undefined,
+      },
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div className='space-y-2'>
@@ -129,6 +138,29 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           Soft limit on serialized variable size. If exceeded, the node fails with{' '}
           <span className='font-mono text-gray-300'>STATE_VALUE_TOO_LARGE</span> instead of updating
           the shared variable.
+        </p>
+      </div>
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>Expected value type (optional)</Label>
+        <Select
+          value={stateConfig.expectedType ?? ''}
+          onValueChange={handleExpectedTypeChange}
+        >
+          <SelectTrigger className='h-8 w-full rounded-md border border-border bg-card/70 text-xs text-gray-100'>
+            <SelectValue placeholder='Any type' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value=''>Any type</SelectItem>
+            <SelectItem value='string'>string</SelectItem>
+            <SelectItem value='number'>number</SelectItem>
+            <SelectItem value='boolean'>boolean</SelectItem>
+            <SelectItem value='object'>object</SelectItem>
+            <SelectItem value='array'>array</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className='mt-1 text-[11px] text-gray-500'>
+          When set, the runtime validates the stored value and fails with{' '}
+          <span className='font-mono text-gray-300'>STATE_VALUE_TYPE_MISMATCH</span> on mismatch.
         </p>
       </div>
     </div>

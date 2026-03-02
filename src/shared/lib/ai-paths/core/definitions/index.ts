@@ -170,6 +170,14 @@ const basePalette: NodeDefinition[] = [
     inputContracts: buildOptionalInputContracts(VIEWER_INPUT_PORTS),
   },
   {
+    type: 'subgraph',
+    title: 'Subgraph',
+    description: 'Call another AI Path as a reusable macro.',
+    inputs: ['value', 'context'],
+    outputs: ['value', 'result'],
+    inputContracts: buildOptionalInputContracts(['value', 'context']),
+  },
+  {
     type: 'notification',
     title: 'Toast Notification',
     description: 'Display an instant toast from incoming results.',

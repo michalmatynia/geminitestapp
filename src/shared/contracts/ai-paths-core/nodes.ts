@@ -337,6 +337,12 @@ export const functionConfigSchema = z.object({
    * fail fast with FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN.
    */
   safeMode: z.boolean().optional(),
+  /**
+   * Optional expected output type for the primary value. When set, the runtime
+   * will validate the resolved `value` output and fail with
+   * FUNCTION_OUTPUT_TYPE_MISMATCH if it does not match.
+   */
+  expectedType: z.enum(['string', 'number', 'boolean', 'object', 'array']).optional(),
 });
 
 export type FunctionConfigDto = z.infer<typeof functionConfigSchema>;
@@ -365,6 +371,42 @@ export const switchConfigSchema = z.object({
 export type SwitchConfigDto = z.infer<typeof switchConfigSchema>;
 export type SwitchConfig = SwitchConfigDto;
 
+export const subgraphConfigSchema = z.object({
+  /**
+   * ID of the AI Path that defines this subgraph.
+   */
+  pathId: z.string().optional(),
+  /**
+   * Optional human-friendly name for the subgraph reference.
+   */
+  subgraphName: z.string().optional(),
+  /**
+   * Node ID inside the subgraph graph that should be treated as the trigger/root.
+   * If omitted, the subgraph's own trigger node will be used.
+   */
+  triggerNodeId: z.string().optional(),
+  /**
+   * Optional JSON mapping from parent inputs to subgraph inputs.
+   * Example:
+   * {
+   *   "value": "subgraphInput",
+   *   "context": "subgraphContext"
+   * }
+   */
+  inputMappingJson: z.string().optional(),
+  /**
+   * Optional JSON mapping from subgraph outputs back to parent outputs.
+   * Example:
+   * {
+   *   "result": "value"
+   * }
+   */
+  outputMappingJson: z.string().optional(),
+});
+
+export type SubgraphConfigDto = z.infer<typeof subgraphConfigSchema>;
+export type SubgraphConfig = SubgraphConfigDto;
+
 export const stateConfigSchema = z.object({
   key: z.string().optional(),
   mode: z.enum(['read', 'write', 'increment']).optional(),
@@ -376,6 +418,12 @@ export const stateConfigSchema = z.object({
    * the shared variable.
    */
   maxValueBytes: z.number().int().min(1024).max(512_000).optional(),
+  /**
+   * Optional expected runtime type of the stored value. When set, the runtime
+   * will validate incoming values and fail with STATE_VALUE_TYPE_MISMATCH
+   * instead of mutating the variable on mismatch.
+   */
+  expectedType: z.enum(['string', 'number', 'boolean', 'object', 'array']).optional(),
 });
 
 export type StateConfigDto = z.infer<typeof stateConfigSchema>;
@@ -1038,6 +1086,7 @@ export const nodeConfigSchema = z.object({
   function: functionConfigSchema.optional(),
   state: stateConfigSchema.optional(),
   switch: switchConfigSchema.optional(),
+  subgraph: subgraphConfigSchema.optional(),
   bundle: bundleConfigSchema.optional(),
   gate: gateConfigSchema.optional(),
   compare: compareConfigSchema.optional(),

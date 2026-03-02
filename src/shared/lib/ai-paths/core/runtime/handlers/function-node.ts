@@ -65,6 +65,14 @@ const ensureNumber = (value: unknown, fallback: number = 0): number => {
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
+const resolveTypeTag = (value: unknown): 'string' | 'number' | 'boolean' | 'object' | 'array' | 'null' => {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  const t = typeof value;
+  if (t === 'string' || t === 'number' || t === 'boolean') return t;
+  return 'object';
+};
+
 const buildFunctionContext = (config: FunctionConfig | undefined): Record<string, unknown> => {
   const baseContext = (() => {
     if (!config?.contextJson) return {};
@@ -181,6 +189,29 @@ export const handleFunctionNode: NodeHandler = ({
       result !== null && typeof result === 'object' && !Array.isArray(result)
         ? (result as RuntimePortValues)
         : { value: result as unknown };
+
+    const primaryValue =
+      (outputs['value'] as unknown) !== undefined ? (outputs['value'] as unknown) : (result as unknown);
+
+    if (config?.expectedType) {
+      const actualTag = resolveTypeTag(primaryValue);
+      const expected = config.expectedType;
+      const matches =
+        (expected === 'array' && actualTag === 'array') ||
+        (expected === 'object' && actualTag === 'object') ||
+        (expected === 'string' && actualTag === 'string') ||
+        (expected === 'number' && actualTag === 'number') ||
+        (expected === 'boolean' && actualTag === 'boolean');
+
+      if (!matches && primaryValue !== undefined) {
+        return {
+          ...prevOutputs,
+          status: 'failed',
+          error: `Function output type mismatch: expected ${expected}, got ${actualTag}.`,
+          errorCode: 'FUNCTION_OUTPUT_TYPE_MISMATCH',
+        };
+      }
+    }
 
     if (logs.length > 0) {
       outputs = {

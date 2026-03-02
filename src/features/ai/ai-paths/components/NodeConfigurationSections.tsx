@@ -30,6 +30,7 @@ import { MutatorNodeConfigSection } from './node-config/dialog/MutatorNodeConfig
 import { FunctionNodeConfigSection } from './node-config/dialog/FunctionNodeConfigSection';
 import { StateNodeConfigSection } from './node-config/dialog/StateNodeConfigSection';
 import { SwitchNodeConfigSection } from './node-config/dialog/SwitchNodeConfigSection';
+import { SubgraphNodeConfigSection } from './node-config/dialog/SubgraphNodeConfigSection';
 import { PlaywrightNodeConfigSection } from './node-config/dialog/PlaywrightNodeConfigSection';
 import { PollNodeConfigSection } from './node-config/dialog/PollNodeConfigSection';
 import { PromptNodeConfigSection } from './node-config/dialog/PromptNodeConfigSection';
@@ -73,6 +74,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <FunctionNodeConfigSection />
       <StateNodeConfigSection />
       <SwitchNodeConfigSection />
+      <SubgraphNodeConfigSection />
       <TemplateNodeConfigSection />
       <BundleNodeConfigSection />
       <GateNodeConfigSection />

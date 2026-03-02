@@ -11,7 +11,6 @@ export const aiNodeTypeSchema = z.enum([
   'function',
   'state',
   'switch',
-  'state',
   'audio_oscillator',
   'audio_speaker',
   'parser',
@@ -49,6 +48,7 @@ export const aiNodeTypeSchema = z.enum([
   'description_updater',
   'bounds_normalizer',
   'canvas_output',
+  'subgraph',
 ]);
 
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;

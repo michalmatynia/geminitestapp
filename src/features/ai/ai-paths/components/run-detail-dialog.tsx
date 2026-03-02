@@ -147,6 +147,42 @@ export function RunDetailDialog(): React.JSX.Element {
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
+  const switchRoutingSummary = useMemo(() => {
+    if (!runDetailHistory || !runDetail?.run?.graph?.nodes) return [];
+    const graphNodes = runDetail.run.graph.nodes;
+    return graphNodes
+      .filter((node) => node.type === 'switch')
+      .map((node) => {
+        const entriesForNode = runDetailHistory[node.id] ?? [];
+        const caseCounts: Record<string, number> = {};
+        let defaultCount = 0;
+        let errorCount = 0;
+        entriesForNode.forEach((entry: RuntimeHistoryEntry) => {
+          const outputs = (entry.outputs ?? {}) as Record<string, unknown>;
+          const caseIdRaw = outputs['caseId'];
+          const errorCodeRaw = outputs['errorCode'];
+          if (typeof errorCodeRaw === 'string' && errorCodeRaw.length > 0) {
+            errorCount += 1;
+          }
+          if (typeof caseIdRaw === 'string' && caseIdRaw.length > 0) {
+            caseCounts[caseIdRaw] = (caseCounts[caseIdRaw] ?? 0) + 1;
+          } else {
+            defaultCount += 1;
+          }
+        });
+        const total = entriesForNode.length;
+        return {
+          nodeId: node.id,
+          nodeTitle: node.title ?? node.id,
+          total,
+          caseCounts,
+          defaultCount,
+          errorCount,
+        };
+      })
+      .filter((summary) => summary.total > 0);
+  }, [runDetailHistory, runDetail?.run?.graph?.nodes]);
+
   return (
     <DetailModal
       isOpen={isOpen}
@@ -273,6 +309,67 @@ export function RunDetailDialog(): React.JSX.Element {
                   {Math.round(slowestRuntimeNodeSpan.durationMs ?? 0)}ms
                 </div>
               ) : null}
+            </div>
+          ) : null}
+          {switchRoutingSummary.length > 0 ? (
+            <div className='rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3'>
+              <div className='mb-2 text-[11px] font-semibold text-emerald-100'>
+                Switch routing (this run)
+              </div>
+              <div className='space-y-2 text-[11px] text-emerald-50'>
+                {switchRoutingSummary.map((summary) => {
+                  const hasNeverHitCases =
+                    Array.isArray(runDetail.run.graph?.nodes) &&
+                    runDetail.run.graph.nodes.some(
+                      (n) =>
+                        n.id === summary.nodeId &&
+                        Array.isArray(n.config?.switch?.cases) &&
+                        (n.config?.switch?.cases ?? []).some(
+                          (c) => !summary.caseCounts[c.id] && summary.defaultCount === 0
+                        )
+                    );
+                  return (
+                    <div
+                      key={summary.nodeId}
+                      className='rounded-md border border-emerald-500/40 bg-black/20 p-2'
+                    >
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <span className='font-semibold'>
+                          {summary.nodeTitle} <span className='font-mono text-xs'>({summary.nodeId})</span>
+                        </span>
+                        <span className='text-[10px] text-emerald-200'>
+                          Samples: {summary.total}
+                          {summary.errorCount > 0 ? (
+                            <span className='ml-2 rounded-full border border-rose-400/60 bg-rose-500/20 px-2 py-px text-[10px] text-rose-100'>
+                              Errors: {summary.errorCount}
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+                      <div className='mt-1 flex flex-wrap gap-2 text-[10px] text-emerald-200'>
+                        {Object.entries(summary.caseCounts).map(([caseId, count]) => (
+                          <span
+                            key={caseId}
+                            className='rounded-full border border-emerald-400/60 bg-emerald-500/15 px-2 py-px font-mono'
+                          >
+                            caseId={caseId}: {count}
+                          </span>
+                        ))}
+                        {summary.defaultCount > 0 && (
+                          <span className='rounded-full border border-sky-400/60 bg-sky-500/15 px-2 py-px font-mono text-sky-100'>
+                            default: {summary.defaultCount}
+                          </span>
+                        )}
+                      </div>
+                      {hasNeverHitCases ? (
+                        <div className='mt-1 text-[10px] text-amber-200'>
+                          Some configured cases were never hit in this run.
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : null}
           {playwrightArtifacts.length > 0 ? (

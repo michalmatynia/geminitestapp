@@ -12,6 +12,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { runsApi } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
   invalidateAiPathQueue,
   notifyAiPathRunEnqueued,
@@ -37,9 +38,6 @@ const TERMINAL_RUN_STATUSES = new Set<TerminalRunStatus>([
   'canceled',
   'dead_lettered',
 ]);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object';
 
 const asString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -73,13 +71,13 @@ const normalizeRuntimeEventLevel = (value: unknown): RuntimeEventLevel => {
 const normalizeNodeStreamPayload = (value: unknown): AiPathRunNodeRecord[] => {
   if (Array.isArray(value)) {
     return value.filter((entry: unknown): boolean =>
-      isRecord(entry)
+      isObjectRecord(entry)
     ) as unknown as AiPathRunNodeRecord[];
   }
-  if (!isRecord(value)) return [];
+  if (!isObjectRecord(value)) return [];
   if (Array.isArray(value['nodes'])) {
     return value['nodes'].filter((entry: unknown): boolean =>
-      isRecord(entry)
+      isObjectRecord(entry)
     ) as unknown as AiPathRunNodeRecord[];
   }
   if (typeof value['nodeId'] === 'string') {
@@ -92,13 +90,13 @@ const normalizeEventStreamPayload = (
   value: unknown
 ): Array<AiPathRunEventRecord | Record<string, unknown>> => {
   if (Array.isArray(value)) {
-    return value.filter((entry: unknown): boolean => isRecord(entry)) as Array<
+    return value.filter((entry: unknown): boolean => isObjectRecord(entry)) as Array<
       AiPathRunEventRecord | Record<string, unknown>
     >;
   }
-  if (!isRecord(value)) return [];
+  if (!isObjectRecord(value)) return [];
   if (Array.isArray(value['events'])) {
-    return value['events'].filter((entry: unknown): boolean => isRecord(entry)) as Array<
+    return value['events'].filter((entry: unknown): boolean => isObjectRecord(entry)) as Array<
       AiPathRunEventRecord | Record<string, unknown>
     >;
   }
@@ -230,7 +228,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         }
 
         const runPayload =
-          isRecord(enqueueResult.data) && isRecord(enqueueResult.data['run'])
+          isObjectRecord(enqueueResult.data) && isObjectRecord(enqueueResult.data['run'])
             ? (enqueueResult.data['run'] as AiPathRunRecord)
             : null;
         const runId = runPayload && typeof runPayload.id === 'string' ? runPayload.id : null;
@@ -403,7 +401,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           try {
             if (!(event instanceof MessageEvent)) return;
             const payload = parseSsePayload(event);
-            if (!isRecord(payload)) return;
+            if (!isObjectRecord(payload)) return;
             const run = payload as AiPathRunRecord;
             const latestRunStartedAt =
               resolveRunStartedAt(run, args.runtimeStateRef.current) ??
@@ -476,11 +474,11 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               const status = args.normalizeNodeStatus(nodeUpdate.status);
               if (!status) return;
               const nodeInputs =
-                isRecord(nodeUpdate.inputs) && !Array.isArray(nodeUpdate.inputs)
+                isObjectRecord(nodeUpdate.inputs) && !Array.isArray(nodeUpdate.inputs)
                   ? nodeUpdate.inputs
                   : null;
               const nodeOutputs =
-                isRecord(nodeUpdate.outputs) && !Array.isArray(nodeUpdate.outputs)
+                isObjectRecord(nodeUpdate.outputs) && !Array.isArray(nodeUpdate.outputs)
                   ? nodeUpdate.outputs
                   : null;
               const runtimeNode = runtimeNodeById.get(nodeId);
@@ -560,10 +558,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             const streamedEvents: AiPathRuntimeEvent[] = [];
             rawEvents.forEach(
               (rawEvent: AiPathRunEventRecord | Record<string, unknown>, index: number): void => {
-                if (!isRecord(rawEvent)) return;
+                if (!isObjectRecord(rawEvent)) return;
                 const message = asString(rawEvent.message);
                 if (!message) return;
-                const metadata = isRecord(rawEvent.metadata) ? rawEvent.metadata : null;
+                const metadata = isObjectRecord(rawEvent.metadata) ? rawEvent.metadata : null;
                 const nodeId =
                   asString(rawEvent.nodeId) ??
                   (metadata ? asString(metadata['nodeId']) : null) ??
@@ -615,7 +613,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           try {
             if (!(event instanceof MessageEvent)) return;
             const payload = parseSsePayload(event);
-            const status = isRecord(payload) ? asString(payload['status']) : null;
+            const status = isObjectRecord(payload) ? asString(payload['status']) : null;
             if (status === 'completed') {
               finalizeRun('completed');
               return;
@@ -645,7 +643,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           if (!(event instanceof MessageEvent)) return;
           try {
             const payload = parseSsePayload(event);
-            const errorMessage = isRecord(payload)
+            const errorMessage = isObjectRecord(payload)
               ? (asString(payload['error']) ?? asString(payload['message']))
               : null;
             finalizeRun('failed', {

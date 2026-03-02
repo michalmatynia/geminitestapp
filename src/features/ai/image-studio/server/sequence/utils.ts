@@ -6,9 +6,6 @@ export const STUDIO_UPLOADS_ROOT = path.join(process.cwd(), 'public', 'uploads',
 export const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 export const asTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();

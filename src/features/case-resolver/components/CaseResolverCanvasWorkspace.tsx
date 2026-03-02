@@ -37,7 +37,7 @@ import {
   type NodeFileWorkspaceContextValue,
 } from './NodeFileWorkspaceContext';
 import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
-import { isObjectRecord } from '@/shared/utils/object';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { workspace, activeFile, onGraphChange } = useCaseResolverPageContext();
@@ -104,9 +104,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     [selectedNode, selectedNodeMeta]
   );
 
-  const updateSelectedPromptTemplate = useCallback((template: string): void => {
+  const updateSelectedPromptTemplate = useCallback((_template: string): void => {
     // No-op for now in canvas workspace
-    console.log('Update template requested:', template);
   }, []);
 
   const updateSelectedNodeMeta = useCallback(

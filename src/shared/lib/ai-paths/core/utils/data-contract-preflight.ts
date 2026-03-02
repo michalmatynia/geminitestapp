@@ -24,6 +24,7 @@ import {
   isValueCompatibleWithTypes,
 } from './port-types';
 import { parseJsonSafe } from './runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type {
   DataContractPreflightMode,
@@ -73,14 +74,11 @@ const parseSampleJson = (
   return parseJsonSafe(raw);
 };
 
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;
-  if (isPlainRecord(value)) return Object.keys(value).length === 0;
+  if (isObjectRecord(value)) return Object.keys(value).length === 0;
   return false;
 };
 
@@ -642,11 +640,11 @@ export const evaluateDataContractPreflight = (
         updaterSamples,
       });
       if (queryInputValue === undefined || queryInputValue === null) return;
-      if (isPlainRecord(queryInputValue)) return;
+      if (isObjectRecord(queryInputValue)) return;
       if (typeof queryInputValue === 'string') {
         const candidate = extractTemplateRawJsonCandidate(queryInputValue);
         const parsed = parseJsonSafe(candidate);
-        if (isPlainRecord(parsed)) return;
+        if (isObjectRecord(parsed)) return;
         const severity: DataContractIssueSeverity =
           queryInputValue.includes('{{') || queryInputValue.includes('[') ? 'warning' : 'error';
         pushIssue(issuesByKey, {

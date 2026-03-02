@@ -8,6 +8,7 @@ import type {
   RuntimeState,
   SvgDetailLevel,
 } from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { type ConnectorInfo } from './canvas-board-connectors';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 
@@ -249,14 +250,11 @@ export const downgradeDetailLevel = (level: SvgDetailLevel): SvgDetailLevel => {
   return 'skeleton';
 };
 
-export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 export const mergeRuntimePayload = (
   current: Record<string, unknown> | undefined,
   historyValue: unknown
 ): Record<string, unknown> | undefined => {
-  const historical = isPlainRecord(historyValue) ? historyValue : undefined;
+  const historical = isObjectRecord(historyValue) ? historyValue : undefined;
   if (!historical && !current) return undefined;
   if (!historical) return current;
   if (!current) return historical;

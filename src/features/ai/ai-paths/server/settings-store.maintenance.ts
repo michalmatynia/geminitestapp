@@ -1,3 +1,4 @@
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import {
   AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -55,16 +56,21 @@ export const logSeedRewriteFlags = (input: {
   const previousLocked = previousFlags.isLocked ?? null;
   const nextActive = nextFlags.isActive ?? null;
   const nextLocked = nextFlags.isLocked ?? null;
-  console.info('[ai-paths-settings] Seeded path config rewrite', {
-    actionId: input.actionId,
-    pathId: input.pathId,
-    previousFlags: {
-      isActive: previousActive,
-      isLocked: previousLocked,
-    },
-    nextFlags: {
-      isActive: nextActive,
-      isLocked: nextLocked,
+  void logSystemEvent({
+    level: 'info',
+    message: '[ai-paths-settings] Seeded path config rewrite',
+    source: 'ai-paths-settings-maintenance',
+    context: {
+      actionId: input.actionId,
+      pathId: input.pathId,
+      previousFlags: {
+        isActive: previousActive,
+        isLocked: previousLocked,
+      },
+      nextFlags: {
+        isActive: nextActive,
+        isLocked: nextLocked,
+      },
     },
   });
 };

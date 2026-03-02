@@ -6,8 +6,6 @@ import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { NODE_MIN_HEIGHT, NODE_WIDTH, PORT_SIZE } from '@/shared/lib/ai-paths/core/constants';
 
 import { buildConnectorInfo } from './canvas-board-connectors';
-import { useCanvasBoardUI } from './CanvasBoardUIContext';
-
 import {
   BLOCKER_PROCESSING_STATUSES,
   formatRuntimeStatusLabel,
@@ -17,12 +15,17 @@ import {
   mergeRuntimePayload,
 } from './canvas/node/canvas-svg-node-utils';
 import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
+import { type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
 
 type CanvasSvgNodeProps = {
   node: AiNode;
+  ui: CanvasBoardUIContextValue;
 };
 
-export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
+export const CanvasSvgNode = React.memo(function CanvasSvgNode({
+  node,
+  ui,
+}: CanvasSvgNodeProps): React.JSX.Element {
   const {
     detailLevel,
     inputPulseNodes,
@@ -60,7 +63,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
     runtimeNodeStatuses,
     runtimeRunStatus,
     nodeDiagnosticsById,
-  } = useCanvasBoardUI();
+  } = ui;
 
   const buildConnectorKey = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): string =>
@@ -528,4 +531,4 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       )}
     </g>
   );
-}
+});

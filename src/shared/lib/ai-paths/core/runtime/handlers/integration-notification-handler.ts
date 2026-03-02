@@ -93,11 +93,6 @@ export const handleNotification: NodeHandler = ({
     coerceInput(nodeInputs['entityId']) ??
     coerceInput(nodeInputs['entityType']);
 
-  if (process.env['NODE_ENV'] === 'test') {
-    console.log(
-      `[handleNotification] nodeInputs keys: ${Object.keys(nodeInputs)}, messageSource: ${JSON.stringify(messageSource)}`
-    );
-  }
 
   if (messageSource === undefined) {
     return prevOutputs;

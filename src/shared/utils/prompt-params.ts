@@ -6,7 +6,7 @@ import type {
   ParamLeaf,
 } from '@/shared/contracts/prompt-engine';
 
-import { isObjectRecord } from './object';
+import { isObjectRecord } from './object-utils';
 
 export type ExtractParamsResult = ExtractParamsResultDto;
 export type ParamSpec = ParamSpecDto;

@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { Pagination, Card, Badge, Alert, LoadingState } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
@@ -99,9 +100,6 @@ const toPrettyJson = (value: unknown): string => {
   }
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const buildFallbackRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
   const events: RunTimelineEvent[] = [
     {
@@ -168,7 +166,7 @@ const resolveRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
     at: event.at,
     payload: {
       message: event.message,
-      ...(isRecord(event.payload) ? event.payload : {}),
+      ...(isObjectRecord(event.payload) ? event.payload : {}),
     },
   }));
   return mapped.sort((left, right) => {
@@ -182,9 +180,9 @@ const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | 
   const events = Array.isArray(run.historyEvents) ? run.historyEvents : [];
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const event = events[index];
-    if (!event || !isRecord(event.payload)) continue;
+    if (!event || !isObjectRecord(event.payload)) continue;
     const executionMeta = event.payload['executionMeta'];
-    if (isRecord(executionMeta)) {
+    if (isObjectRecord(executionMeta)) {
       return executionMeta;
     }
   }

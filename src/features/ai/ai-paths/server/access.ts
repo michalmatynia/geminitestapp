@@ -5,6 +5,7 @@ import { auth } from '@/features/auth/server';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
 import { getRedisConnection } from '@/shared/lib/queue';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import type { NextRequest } from 'next/server';
 
@@ -207,12 +208,17 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const queueStats = queueStatsProbe?.value ?? null;
 
   if (recentProbe?.timedOut || activeProbe?.timedOut || queueStatsProbe?.timedOut) {
-    console.warn('[ai-paths.rate-limit] soft timeout while probing rate limits', {
-      userId: access.userId,
-      recentTimedOut: recentProbe?.timedOut ?? false,
-      activeTimedOut: activeProbe?.timedOut ?? false,
-      queueTimedOut: queueStatsProbe?.timedOut ?? false,
-      timeoutMs: RUN_RATE_QUERY_TIMEOUT_MS,
+    void logSystemEvent({
+      level: 'warn',
+      message: '[ai-paths.rate-limit] soft timeout while probing rate limits',
+      source: 'ai-paths-access',
+      context: {
+        userId: access.userId,
+        recentTimedOut: recentProbe?.timedOut ?? false,
+        activeTimedOut: activeProbe?.timedOut ?? false,
+        queueTimedOut: queueStatsProbe?.timedOut ?? false,
+        timeoutMs: RUN_RATE_QUERY_TIMEOUT_MS,
+      },
     });
   }
 

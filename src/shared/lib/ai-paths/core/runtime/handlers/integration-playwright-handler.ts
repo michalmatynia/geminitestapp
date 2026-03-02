@@ -8,14 +8,12 @@ import type {
 import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '../../../api';
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
 import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const parseObjectJson = (value: string | undefined, fieldName: string): Record<string, unknown> => {
   if (!value?.trim()) return {};
   const parsed = parseJsonSafe(value);
-  if (!isRecord(parsed)) {
+  if (!isObjectRecord(parsed)) {
     throw new Error(`${fieldName} must be a valid JSON object.`);
   }
   return parsed;
@@ -70,8 +68,8 @@ const mapArtifactsWithUrls = (
 
 const mapRunToOutputs = (run: PlaywrightNodeRunSnapshot): RuntimePortValues => {
   const resultPayload = run.result;
-  const resultRecord = isRecord(resultPayload) ? resultPayload : {};
-  const outputPorts = isRecord(resultRecord['outputs']) ? resultRecord['outputs'] : {};
+  const resultRecord = isObjectRecord(resultPayload) ? resultPayload : {};
+  const outputPorts = isObjectRecord(resultRecord['outputs']) ? resultRecord['outputs'] : {};
   const returnValue = resultRecord['returnValue'] ?? resultPayload ?? null;
   const resultValue = outputPorts['result'] ?? returnValue;
   const valueValue = outputPorts['value'] ?? returnValue;
@@ -126,7 +124,7 @@ export const handlePlaywright: NodeHandler = async ({
   try {
     const launchOptions = parseObjectJson(playwrightConfig.launchOptionsJson, 'Launch options');
     const contextOptions = parseObjectJson(playwrightConfig.contextOptionsJson, 'Context options');
-    const settingsOverrides = isRecord(playwrightConfig.settingsOverrides)
+    const settingsOverrides = isObjectRecord(playwrightConfig.settingsOverrides)
       ? playwrightConfig.settingsOverrides
       : {};
     const normalizedCapture = normalizeCaptureConfig(playwrightConfig.capture);

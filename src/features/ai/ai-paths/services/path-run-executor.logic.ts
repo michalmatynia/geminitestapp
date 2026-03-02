@@ -17,8 +17,8 @@ import {
   RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
   RUNTIME_PROFILE_SLOW_NODE_MS,
   collectDroppedRuntimePorts,
-  isRecord,
 } from './path-run-executor.helpers';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import type {
   RuntimeProfileHighlight,
   RuntimeProfileNodeSpan,
@@ -73,9 +73,9 @@ export const mergeRuntimePortMaps = (
 ): Record<string, RuntimePortValues> => {
   const merged: Record<string, RuntimePortValues> = {};
   maps.forEach((map) => {
-    if (!isRecord(map)) return;
+    if (!isObjectRecord(map)) return;
     Object.entries(map).forEach(([nodeId, nodePorts]) => {
-      if (!isRecord(nodePorts)) return;
+      if (!isObjectRecord(nodePorts)) return;
       merged[nodeId] = {
         ...(merged[nodeId] ?? {}),
         ...nodePorts,

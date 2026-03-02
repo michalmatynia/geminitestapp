@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type ImageStudioSequenceRunStatus =
   | 'queued'
@@ -142,9 +143,6 @@ const createId = (): string => {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
@@ -199,7 +197,7 @@ const toHistoryEvent = (
   const message =
     typeof event.message === 'string' && event.message.trim() ? event.message.trim() : '';
   const at = typeof event.at === 'string' && event.at.trim() ? event.at : fallbackAt;
-  const payload = isRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
+  const payload = isObjectRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
   return {
     id: typeof event.id === 'string' && event.id.trim() ? event.id : createId(),
     type,
@@ -225,7 +223,7 @@ const buildHistoryEventDocument = (
   source: normalizeHistoryEventSource(event.source),
   message: event.message.trim(),
   at: event.at?.trim() || fallbackAt,
-  ...(event.payload && isRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
+  ...(event.payload && isObjectRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
 });
 
 const toRecord = (doc: ImageStudioSequenceRunDocument): ImageStudioSequenceRunRecord => ({

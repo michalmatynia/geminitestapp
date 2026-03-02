@@ -4,6 +4,7 @@ import { productService } from './productService';
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type ProductSummary = {
   name_en: string | null;
@@ -30,12 +31,9 @@ const GRAPH_MODEL_REUSE_SCAN_LIMIT = parseEnvMs(
   1
 );
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object';
-
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
-  return isRecord(value) ? value : null;
+  return isObjectRecord(value) ? value : null;
 };
 
 const toIsoString = (value?: Date | null): string | null => {
@@ -49,7 +47,7 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   status: record.status === 'canceled' ? 'cancelled' : record.status,
   type: record.type,
   jobType: record.type as ProductAiJobType,
-  payload: isRecord(record.payload) ? record.payload : undefined,
+  payload: isObjectRecord(record.payload) ? record.payload : undefined,
   result: toJobResult(record.result),
   errorMessage: record.errorMessage ?? null,
   error: record.errorMessage ?? null,
@@ -230,7 +228,7 @@ export async function getProductAiJobs(
       async (id: string): Promise<{ id: string; product: Record<string, unknown> | null }> => {
         try {
           const product = await productService.getProductById(id);
-          return { id, product: isRecord(product) ? product : null };
+          return { id, product: isObjectRecord(product) ? product : null };
         } catch (error: unknown) {
           try {
             const { logSystemError } = await import('@/shared/lib/observability/system-logger');
@@ -303,7 +301,7 @@ export async function getProductAiJob(
   if (shouldFetch && job.productId) {
     try {
       const result = await productService.getProductById(job.productId);
-      product = isRecord(result) ? result : null;
+      product = isObjectRecord(result) ? result : null;
     } catch (error: unknown) {
       try {
         const { logSystemError } = await import('@/shared/lib/observability/system-logger');

@@ -91,7 +91,7 @@ const countMongoConnectionDependencies = async (
     _id: {
       $in: candidates.asDocumentIds,
     },
-  } as Filter<{ _id: ObjectId | string }>;
+  } as Filter<Document>;
 
   const [
     productListings,
@@ -102,13 +102,13 @@ const countMongoConnectionDependencies = async (
     tagMappings,
     externalTags,
   ] = await Promise.all([
-    db.collection('product_listings').countDocuments(filter as Filter<Document>),
-    db.collection('category_mappings').countDocuments(filter as Filter<Document>),
-    db.collection('external_categories').countDocuments(filter as Filter<Document>),
-    db.collection('producer_mappings').countDocuments(filter as Filter<Document>),
-    db.collection('external_producers').countDocuments(filter as Filter<Document>),
-    db.collection('tag_mappings').countDocuments(filter as Filter<Document>),
-    db.collection('external_tags').countDocuments(filter as Filter<Document>),
+    db.collection('product_listings').countDocuments(filter),
+    db.collection('category_mappings').countDocuments(filter),
+    db.collection('external_categories').countDocuments(filter),
+    db.collection('producer_mappings').countDocuments(filter),
+    db.collection('external_producers').countDocuments(filter),
+    db.collection('tag_mappings').countDocuments(filter),
+    db.collection('external_tags').countDocuments(filter),
   ]);
   return withDependencyTotal({
     productListings,
@@ -128,16 +128,16 @@ const cleanupMongoConnectionReferences = async (connectionId: string): Promise<v
     _id: {
       $in: candidates.asDocumentIds,
     },
-  } as Filter<{ _id: ObjectId | string }>;
+  } as Filter<Document>;
 
   await Promise.all([
-    db.collection('product_listings').deleteMany(filter as Filter<Document>),
-    db.collection('category_mappings').deleteMany(filter as Filter<Document>),
-    db.collection('external_categories').deleteMany(filter as Filter<Document>),
-    db.collection('producer_mappings').deleteMany(filter as Filter<Document>),
-    db.collection('external_producers').deleteMany(filter as Filter<Document>),
-    db.collection('tag_mappings').deleteMany(filter as Filter<Document>),
-    db.collection('external_tags').deleteMany(filter as Filter<Document>),
+    db.collection('product_listings').deleteMany(filter),
+    db.collection('category_mappings').deleteMany(filter),
+    db.collection('external_categories').deleteMany(filter),
+    db.collection('producer_mappings').deleteMany(filter),
+    db.collection('external_producers').deleteMany(filter),
+    db.collection('tag_mappings').deleteMany(filter),
+    db.collection('external_tags').deleteMany(filter),
   ]);
 };
 
@@ -151,28 +151,28 @@ const reassignMongoConnectionReferences = async (
     _id: {
       $in: candidates.asDocumentIds,
     },
-  } as Filter<{ _id: ObjectId | string }>;
+  } as Filter<Document>;
 
   await Promise.all([
-    db.collection('product_listings').updateMany(filter as Filter<Document>, {
+    db.collection('product_listings').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('category_mappings').updateMany(filter as Filter<Document>, {
+    db.collection('category_mappings').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_categories').updateMany(filter as Filter<Document>, {
+    db.collection('external_categories').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('producer_mappings').updateMany(filter as Filter<Document>, {
+    db.collection('producer_mappings').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_producers').updateMany(filter as Filter<Document>, {
+    db.collection('external_producers').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('tag_mappings').updateMany(filter as Filter<Document>, {
+    db.collection('tag_mappings').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_tags').updateMany(filter as Filter<Document>, {
+    db.collection('external_tags').updateMany(filter, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
   ]);

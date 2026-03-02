@@ -1,3 +1,4 @@
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   CaseResolverCompiledSegment,
   CaseResolverCompileResult,
@@ -511,7 +512,12 @@ export const compileCaseResolverPrompt = (
       warnings: [],
     };
   } catch (error) {
-    console.error('Failed to compile Case Resolver prompt:', error);
+    void logSystemEvent({
+      level: 'error',
+      message: 'Failed to compile Case Resolver prompt',
+      source: 'case-resolver-composer',
+      context: { error: error instanceof Error ? error.message : String(error) },
+    });
     return {
       combinedContent: '',
       prompt: '',
@@ -520,4 +526,5 @@ export const compileCaseResolverPrompt = (
       warnings: [(error as Error).message || 'Unknown error'],
     };
   }
+
 };

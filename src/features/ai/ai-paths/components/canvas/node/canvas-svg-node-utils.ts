@@ -1,4 +1,5 @@
 import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export const BLOCKER_PROCESSING_STATUSES = new Set<string>([
   'running',
@@ -171,14 +172,11 @@ export const resolveNodeDiagnosticsBadgePalette = (
   return null;
 };
 
-export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 export const mergeRuntimePayload = (
   current: Record<string, unknown> | undefined,
   historyValue: unknown
 ): Record<string, unknown> | undefined => {
-  const historical = isPlainRecord(historyValue) ? historyValue : undefined;
+  const historical = isObjectRecord(historyValue) ? historyValue : undefined;
   if (!historical && !current) return undefined;
   if (!historical) return current;
   if (!current) return historical;

@@ -1,6 +1,7 @@
 import type { AiNode, NodeDefinition, PathConfig } from '@/shared/contracts/ai-paths';
 
 import { hashString, stableStringify } from './runtime';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type NodeIdentityLike = Pick<AiNode, 'type' | 'title'> &
   Partial<Pick<AiNode, 'config' | 'nodeTypeId'>>;
@@ -28,9 +29,6 @@ const NODE_INSTANCE_ID_HASH_PATTERN = /^node-[a-f0-9]{24}$/;
 const NODE_TYPE_ID_HASH_PATTERN = /^nt-[a-f0-9]{24}$/;
 
 const asTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const getTriggerEvent = (node: NodeIdentityLike): string =>
   asTrimmedString((node.config as { trigger?: { event?: unknown } } | undefined)?.trigger?.event);
@@ -201,7 +199,7 @@ const remapNodeKeyedRecord = (
   value: unknown,
   remapNodeId: (nodeId: string) => string
 ): { value: unknown; changed: boolean } => {
-  if (!isRecord(value)) {
+  if (!isObjectRecord(value)) {
     return { value, changed: false };
   }
 
@@ -223,7 +221,7 @@ const remapNodeKeyedRecord = (
       next[remappedKey] = [...existingArray, ...incomingArray];
       continue;
     }
-    if (isRecord(existing) && isRecord(entry)) {
+    if (isObjectRecord(existing) && isObjectRecord(entry)) {
       next[remappedKey] = {
         ...existing,
         ...entry,
@@ -267,7 +265,7 @@ const remapRuntimeState = (
   if (typeof runtimeState === 'string') {
     try {
       const parsed = JSON.parse(runtimeState) as unknown;
-      if (!isRecord(parsed)) {
+      if (!isObjectRecord(parsed)) {
         return {
           runtimeState: runtimeState as string | Record<string, unknown> | undefined,
           changed: false,
@@ -292,7 +290,7 @@ const remapRuntimeState = (
     }
   }
 
-  if (!isRecord(runtimeState)) {
+  if (!isObjectRecord(runtimeState)) {
     return {
       runtimeState: runtimeState as string | Record<string, unknown> | undefined,
       changed: false,

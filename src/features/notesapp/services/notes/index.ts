@@ -4,6 +4,7 @@ import type { NoteRepository } from '@/features/notesapp/services/notes/types/no
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   RelatedNoteDto as RelatedNote,
@@ -50,9 +51,12 @@ export const invalidateNoteRepositoryCache = (): void => {
 const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
   const provider = (await getAppDbProvider()) as 'mongodb' | 'prisma';
   if (process.env['NODE_ENV'] === 'test') {
-    console.log(
-      `[note-service] Resolved provider: ${provider} (APP_DB_PROVIDER=${process.env['APP_DB_PROVIDER']})`
-    );
+    void logSystemEvent({
+      level: 'info',
+      message: `[note-service] Resolved provider: ${provider}`,
+      source: 'note-service',
+      context: { appDbProvider: process.env['APP_DB_PROVIDER'] },
+    });
   }
   return provider;
 };

@@ -1,7 +1,9 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { UpdateFilter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { ImageStudioRunRequest } from './run-executor';
 
@@ -106,9 +108,6 @@ const createId = (): string => {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
@@ -158,7 +157,7 @@ const toHistoryEvent = (
   const message =
     typeof event.message === 'string' && event.message.trim() ? event.message.trim() : '';
   const at = typeof event.at === 'string' && event.at.trim() ? event.at : fallbackAt;
-  const payload = isRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
+  const payload = isObjectRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
   return {
     id: typeof event.id === 'string' && event.id.trim() ? event.id : createId(),
     type,
@@ -184,7 +183,7 @@ const buildHistoryEventDocument = (
   source: normalizeHistoryEventSource(event.source),
   message: event.message.trim(),
   at: event.at?.trim() || fallbackAt,
-  ...(event.payload && isRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
+  ...(event.payload && isObjectRecord(event.payload) ? { payload: toJsonSafe(event.payload) } : {}),
 });
 
 const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
@@ -285,18 +284,16 @@ export async function updateImageStudioRun(
     : [];
 
   const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
-  const updateDocument: {
-    $set: Partial<ImageStudioRunDocument>;
-    $push?: { historyEvents: { $each: ImageStudioRunHistoryEventDocument[] } };
-  } = {
+  const updateDocument: UpdateFilter<ImageStudioRunDocument> = {
     $set: patch,
   };
   if (nextHistoryEvents.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     updateDocument.$push = {
       historyEvents: {
         $each: nextHistoryEvents,
       },
-    };
+    } as any;
   }
 
   const result = await collection.findOneAndUpdate({ _id: runId }, updateDocument, {
@@ -368,16 +365,16 @@ export async function removeImageStudioRunOutputs(
   if (runId) query['_id'] = runId;
 
   const result = await collection.updateMany(query, {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     $pull: {
       outputs: {
         $or: outputSelectors,
-      } as unknown as ImageFileRecord,
-    },
+      },
+    } as any,
     $set: {
       updatedAt: now,
     },
   });
-
   return result.modifiedCount ?? 0;
 }
 

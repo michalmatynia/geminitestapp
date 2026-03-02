@@ -1,4 +1,4 @@
-import type {
+import {
   AgentAuditLogDto as AgentAuditLog,
   AgentBrowserLogDto as AgentBrowserLog,
   ChatMessageDto as ChatMessage,
@@ -7,9 +7,6 @@ import type {
   ChatbotTimelineEntryDto as TimelineEntry,
   ExtendedModelProfile,
 } from '@/shared/contracts/chatbot';
-
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === 'object' && !Array.isArray(value);
 
 export const parseModelSize = (normalized: string): number | null => {
   const mixMatch: RegExpMatchArray | null = normalized.match(/(\d+)\s*x\s*(\d+(?:\.\d+)?)b/);

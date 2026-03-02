@@ -5,13 +5,15 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { computeBackoffMs, processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
 import {
   assertAiPathRunQueueReady,
-  computeAiPathRunQueueSlo,
   enqueuePathRunJob,
   getAiPathRunQueueStatus,
   removePathRunQueueEntries,
   __testOnly,
-  type QueueSloThresholds,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
+import {
+  computeAiPathRunQueueSlo,
+  type QueueSloThresholds,
+} from '@/features/ai/ai-paths/workers/ai-path-run-queue-slo';
 
 const getRuntimeAnalyticsSummaryMock = vi.hoisted(() => vi.fn());
 const recordRuntimeRunStartedMock = vi.hoisted(() => vi.fn());

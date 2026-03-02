@@ -1,4 +1,5 @@
 import type { AiNode } from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type LocalExecutionSecurityIssue = {
   nodeId: string;
@@ -7,9 +8,6 @@ export type LocalExecutionSecurityIssue = {
   reason: string;
 };
 
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
@@ -17,7 +15,7 @@ const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
   if (!headersText) return false;
   try {
     const parsed = JSON.parse(headersText) as unknown;
-    if (!isPlainRecord(parsed)) return false;
+    if (!isObjectRecord(parsed)) return false;
     return Object.entries(parsed).some(([key, value]) => {
       const normalizedKey = key.trim().toLowerCase();
       if (
@@ -37,16 +35,16 @@ const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
 };
 
 const hasPlaywrightProxyPassword = (value: unknown): boolean => {
-  if (!isPlainRecord(value)) return false;
+  if (!isObjectRecord(value)) return false;
   const proxy = value['proxy'];
-  if (!isPlainRecord(proxy)) return false;
+  if (!isObjectRecord(proxy)) return false;
   return normalizeText(proxy['password']).length > 0;
 };
 
 const hasPlaywrightHttpCredentials = (value: unknown): boolean => {
-  if (!isPlainRecord(value)) return false;
+  if (!isObjectRecord(value)) return false;
   const httpCredentials = value['httpCredentials'];
-  if (!isPlainRecord(httpCredentials)) return false;
+  if (!isObjectRecord(httpCredentials)) return false;
   return normalizeText(httpCredentials['password']).length > 0;
 };
 
@@ -55,7 +53,7 @@ const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
   if (!text) return null;
   try {
     const parsed = JSON.parse(text) as unknown;
-    return isPlainRecord(parsed) ? parsed : null;
+    return isObjectRecord(parsed) ? parsed : null;
   } catch {
     return null;
   }
@@ -124,7 +122,7 @@ export const evaluateLocalExecutionSecurity = (nodes: AiNode[]): LocalExecutionS
       const config = (node.config?.playwright ?? {}) as Record<string, unknown>;
       const settingsOverrides = config['settingsOverrides'];
       if (
-        isPlainRecord(settingsOverrides) &&
+        isObjectRecord(settingsOverrides) &&
         normalizeText(settingsOverrides['proxyPassword']).length > 0
       ) {
         issues.push({

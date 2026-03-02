@@ -11,6 +11,7 @@ import {
   type ErrorContext,
 } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
 const MAX_CLIENT_CONTEXT_BYTES = 16_000;
@@ -20,11 +21,8 @@ const NETWORK_FETCH_FAILURE_MESSAGES = new Set([
   'networkerror when attempting to fetch resource.',
 ]);
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
 const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> => {
-  if (!isRecord(rawBody)) return {};
+  if (!isObjectRecord(rawBody)) return {};
 
   const normalized: Record<string, unknown> = {};
 
@@ -48,7 +46,7 @@ const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> 
 };
 
 const sanitizeClientContext = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (!isObjectRecord(value)) return null;
   try {
     const seen = new WeakSet();
     const serialized = JSON.stringify(value, (key: string, current: unknown): unknown => {
@@ -70,8 +68,8 @@ const sanitizeClientContext = (value: unknown): Record<string, unknown> | null =
       };
     }
     const parsed = JSON.parse(serialized) as unknown;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
+    if (isObjectRecord(parsed)) {
+      return parsed;
     }
     return { value: parsed };
   } catch {

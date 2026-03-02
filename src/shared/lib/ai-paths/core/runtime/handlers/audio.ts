@@ -3,6 +3,7 @@ import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 type OscillatorSignal = {
   kind: 'oscillator';
@@ -56,9 +57,6 @@ const normalizeWaveform = (value: unknown, fallback: AudioWaveform = 'sine'): Au
   return fallback;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const buildOscillatorSignal = (
   raw: Partial<OscillatorSignal> | null | undefined,
   fallback: OscillatorSignal = DEFAULT_OSCILLATOR_SIGNAL
@@ -81,7 +79,7 @@ const buildOscillatorSignal = (
 };
 
 const parseOscillatorSignal = (value: unknown): OscillatorSignal | null => {
-  if (!isRecord(value)) return null;
+  if (!isObjectRecord(value)) return null;
   const maybeKind = value['kind'];
   if (typeof maybeKind === 'string' && maybeKind !== 'oscillator') return null;
   return buildOscillatorSignal({
@@ -107,7 +105,7 @@ const hasWebAudio = (): boolean => {
 const getAudioState = (): AudioPlaybackState => {
   const root = globalThis as unknown as Record<string, unknown>;
   const current = root[AUDIO_STATE_KEY];
-  if (isRecord(current) && current['activeByNode'] instanceof Map) {
+  if (isObjectRecord(current) && current['activeByNode'] instanceof Map) {
     return current as unknown as AudioPlaybackState;
   }
   const created: AudioPlaybackState = {
@@ -208,7 +206,7 @@ export const handleAudioOscillator: NodeHandler = ({
   nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
   const configRaw = node.config?.['audioOscillator'];
-  const config = (isRecord(configRaw)
+  const config = (isObjectRecord(configRaw)
     ? configRaw
     : DEFAULT_OSCILLATOR_SIGNAL) as unknown as OscillatorSignal;
   const triggerValue = coerceInput(nodeInputs['trigger']);
@@ -247,7 +245,7 @@ export const handleAudioSpeaker: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const configRaw = node.config?.['audioSpeaker'];
   const config = (
-    isRecord(configRaw)
+    isObjectRecord(configRaw)
       ? configRaw
       : {
         enabled: true,

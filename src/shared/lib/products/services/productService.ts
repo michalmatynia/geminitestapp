@@ -225,7 +225,12 @@ async function getProducts(
     }
 
     if (shouldLogTiming()) {
-      console.log(`[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`);
+      await ErrorSystem.logInfo(`[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`, {
+        service: 'product-service',
+        action: 'getProducts',
+        totalMs,
+        repoMs,
+      });
     }
 
     return products;
@@ -478,15 +483,6 @@ async function duplicateProduct(
 
   const duplicated = await productRepository.duplicateProduct(id, sku);
   if (!duplicated) return null;
-
-  // Duplicate images if any
-  const images = await productRepository.getProductImages(id);
-  if (images.length > 0) {
-    await productRepository.addProductImages(
-      duplicated.id,
-      images.map((i) => i.imageFileId)
-    );
-  }
 
   void logActivity({
     type: ActivityTypes.PRODUCT.DUPLICATED,

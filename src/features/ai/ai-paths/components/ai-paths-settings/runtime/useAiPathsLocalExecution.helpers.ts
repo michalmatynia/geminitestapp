@@ -1,7 +1,5 @@
 import type { AiNode, RuntimePortValues } from '@/shared/lib/ai-paths';
-
-export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
 export type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
@@ -118,7 +116,7 @@ export const extractDatabaseRuntimeMetadata = (
   nextOutputs: RuntimePortValues
 ): Record<string, unknown> | null => {
   const bundle = nextOutputs['bundle'];
-  if (!isPlainRecord(bundle)) return null;
+  if (!isObjectRecord(bundle)) return null;
 
   const collection =
     typeof bundle['collection'] === 'string' && bundle['collection'].trim().length > 0
@@ -134,7 +132,7 @@ export const extractDatabaseRuntimeMetadata = (
       : typeof bundle['provider'] === 'string' && bundle['provider'].trim().length > 0
         ? bundle['provider']
         : null;
-  const providerFallback = isPlainRecord(bundle['providerFallback'])
+  const providerFallback = isObjectRecord(bundle['providerFallback'])
     ? bundle['providerFallback']
     : null;
   const count =

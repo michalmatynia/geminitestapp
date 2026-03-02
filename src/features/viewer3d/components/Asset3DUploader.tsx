@@ -4,7 +4,7 @@ import { Upload, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField } from '@/shared/ui';
+import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField, FormActions } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
@@ -312,15 +312,15 @@ export function Asset3DUploader({ className }: Asset3DUploaderProps): React.JSX.
 
       {/* Actions */}
       {file && (
-        <div className='flex justify-end gap-2 mt-4'>
-          <Button variant='ghost' onClick={onCancel} disabled={isUploading}>
-            Cancel
-          </Button>
-          <Button onClick={() => void handleUpload()} disabled={isUploading} loading={isUploading}>
-            <Upload className='h-4 w-4 mr-2' />
-            Upload Asset
-          </Button>
-        </div>
+        <FormActions
+          onSave={() => void handleUpload()}
+          onCancel={onCancel}
+          saveText='Upload Asset'
+          saveIcon={<Upload className='h-4 w-4' />}
+          isSaving={isUploading}
+          cancelVariant='ghost'
+          className='mt-4'
+        />
       )}
     </div>
   );

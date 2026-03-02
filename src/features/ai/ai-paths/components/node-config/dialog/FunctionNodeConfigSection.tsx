@@ -34,6 +34,30 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
+  const handleMaxExecutionMsChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const raw = event.target.value.trim();
+    const next =
+      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : functionConfig.maxExecutionMs;
+    updateSelectedNodeConfig({
+      function: {
+        ...functionConfig,
+        maxExecutionMs: next,
+      },
+    });
+  };
+
+  const handleMaxOutputBytesChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const raw = event.target.value.trim();
+    const next =
+      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : functionConfig.maxOutputBytes;
+    updateSelectedNodeConfig({
+      function: {
+        ...functionConfig,
+        maxOutputBytes: next,
+      },
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div>
@@ -70,6 +94,41 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
           Parsed once and passed as <span className='font-mono text-gray-300'>context</span>. If
           invalid, it is ignored.
         </p>
+      </div>
+      <div className='grid gap-4 md:grid-cols-2'>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Max execution time (ms, optional)</Label>
+          <Input
+            type='number'
+            min={1}
+            max={10000}
+            className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
+            placeholder='e.g. 2000'
+            value={functionConfig.maxExecutionMs?.toString() ?? ''}
+            onChange={handleMaxExecutionMsChange}
+          />
+          <p className='mt-1 text-[11px] text-gray-500'>
+            Soft limit for this node&apos;s script. If execution exceeds this, the node fails with{' '}
+            <span className='font-mono text-gray-300'>FUNCTION_EXECUTION_TIMEOUT</span>.
+          </p>
+        </div>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Max output size (bytes, optional)</Label>
+          <Input
+            type='number'
+            min={1024}
+            max={512000}
+            step={1024}
+            className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
+            placeholder='e.g. 32768'
+            value={functionConfig.maxOutputBytes?.toString() ?? ''}
+            onChange={handleMaxOutputBytesChange}
+          />
+          <p className='mt-1 text-[11px] text-gray-500'>
+            Soft limit on serialized outputs. If exceeded, the node fails with{' '}
+            <span className='font-mono text-gray-300'>FUNCTION_OUTPUT_TOO_LARGE</span>.
+          </p>
+        </div>
       </div>
     </div>
   );

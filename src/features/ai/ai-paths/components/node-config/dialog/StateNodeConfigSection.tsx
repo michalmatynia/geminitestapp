@@ -3,7 +3,16 @@
 import React from 'react';
 
 import type { StateConfig } from '@/shared/lib/ai-paths';
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Input } from '@/shared/ui';
+import {
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+  Input,
+} from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -40,6 +49,18 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
       state: {
         ...stateConfig,
         initialJson: event.target.value,
+      },
+    });
+  };
+
+  const handleMaxValueBytesChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const raw = event.target.value.trim();
+    const next =
+      raw.length === 0 ? undefined : Number.isFinite(Number(raw)) ? Number(raw) : stateConfig.maxValueBytes;
+    updateSelectedNodeConfig({
+      state: {
+        ...stateConfig,
+        maxValueBytes: next,
       },
     });
   };
@@ -90,6 +111,24 @@ export function StateNodeConfigSection(): React.JSX.Element | null {
           Used only when the variable does not yet exist. If empty or invalid, the node will fall back to
           <span className='font-mono text-gray-300'> inputs.value</span> (for read) or numeric defaults
           (for increment).
+        </p>
+      </div>
+      <div className='space-y-2'>
+        <Label className='text-xs text-gray-400'>Max stored size (bytes, optional)</Label>
+        <Input
+          type='number'
+          min={1024}
+          max={512000}
+          step={1024}
+          className='h-8 rounded-md border border-border bg-card/70 text-xs text-gray-100'
+          placeholder='e.g. 32768'
+          value={stateConfig.maxValueBytes?.toString() ?? ''}
+          onChange={handleMaxValueBytesChange}
+        />
+        <p className='mt-1 text-[11px] text-gray-500'>
+          Soft limit on serialized variable size. If exceeded, the node fails with{' '}
+          <span className='font-mono text-gray-300'>STATE_VALUE_TOO_LARGE</span> instead of updating
+          the shared variable.
         </p>
       </div>
     </div>

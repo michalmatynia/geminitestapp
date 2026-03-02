@@ -110,7 +110,37 @@ export const handleFunctionNode: NodeHandler = ({
     };
   }
 
-  const fnContext = buildFunctionContext(config);
+  const forbiddenPatterns: Array<{ pattern: RegExp; label: string }> = [
+    { pattern: /\bprocess\./i, label: 'process.*' },
+    { pattern: /\brequire\s*\(/i, label: 'require(...)' },
+    { pattern: /\bimport\s*\(/i, label: 'import(...)' },
+    { pattern: /\beval\s*\(/i, label: 'eval(...)' },
+    { pattern: /\bFunction\s*\(/, label: 'Function(...)' },
+    { pattern: /\bglobalThis\b/, label: 'globalThis' },
+    { pattern: /\bwindow\b/, label: 'window' },
+    { pattern: /\bdocument\b/, label: 'document' },
+  ];
+
+  if (config?.safeMode) {
+    const violated = forbiddenPatterns.find(({ pattern }) => pattern.test(script));
+    if (violated) {
+      return {
+        ...prevOutputs,
+        status: 'failed',
+        error: `Function script blocked by safeMode: forbidden token "${violated.label}".`,
+        errorCode: 'FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN',
+      };
+    }
+  }
+
+  const logs: string[] = [];
+  const fnContext = {
+    ...buildFunctionContext(config),
+    log: (...args: unknown[]): void => {
+      const payload = args.length === 1 ? args[0] : args;
+      logs.push(safeStringify(payload));
+    },
+  };
 
   let fn: (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown;
   try {
@@ -147,10 +177,17 @@ export const handleFunctionNode: NodeHandler = ({
       };
     }
 
-    const outputs: RuntimePortValues =
+    let outputs: RuntimePortValues =
       result !== null && typeof result === 'object' && !Array.isArray(result)
         ? (result as RuntimePortValues)
         : { value: result as unknown };
+
+    if (logs.length > 0) {
+      outputs = {
+        ...outputs,
+        __logs: logs,
+      };
+    }
 
     if (typeof config?.maxOutputBytes === 'number' && config.maxOutputBytes > 0) {
       const serialized = safeStringify(outputs);
@@ -174,7 +211,15 @@ export const handleFunctionNode: NodeHandler = ({
       status: 'failed',
       error: `Function script execution failed: ${serializedError}`,
       errorCode: 'FUNCTION_SCRIPT_RUNTIME_ERROR',
-      errorRaw: error instanceof Error ? { name: error.name, message: error.message } : undefined,
+      errorRaw:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+              logs: logs.length > 0 ? logs : undefined,
+            }
+          : undefined,
     };
   }
 };

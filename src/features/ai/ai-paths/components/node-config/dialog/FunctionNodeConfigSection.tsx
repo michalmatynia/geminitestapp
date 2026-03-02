@@ -58,6 +58,15 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
     });
   };
 
+  const handleSafeModeToggle = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    updateSelectedNodeConfig({
+      function: {
+        ...functionConfig,
+        safeMode: event.target.checked,
+      },
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div>
@@ -93,6 +102,28 @@ export function FunctionNodeConfigSection(): React.JSX.Element | null {
         <p className='mt-2 text-[11px] text-gray-500'>
           Parsed once and passed as <span className='font-mono text-gray-300'>context</span>. If
           invalid, it is ignored.
+        </p>
+      </div>
+      <div className='space-y-1 rounded-md border border-border bg-card/60 px-3 py-2'>
+        <div className='flex items-center gap-2'>
+          <input
+            id='function-safe-mode'
+            type='checkbox'
+            className='h-3 w-3 accent-emerald-500'
+            checked={Boolean(functionConfig.safeMode)}
+            onChange={handleSafeModeToggle}
+          />
+          <Label htmlFor='function-safe-mode' className='text-xs text-gray-200'>
+            Safe mode (block risky tokens)
+          </Label>
+        </div>
+        <p className='mt-1 text-[11px] text-gray-500'>
+          When enabled, scripts using obvious dangerous patterns like{' '}
+          <span className='font-mono text-gray-300'>process.*</span>,{' '}
+          <span className='font-mono text-gray-300'>require(...)</span>,{' '}
+          <span className='font-mono text-gray-300'>eval(...)</span>, or{' '}
+          <span className='font-mono text-gray-300'>window</span> are blocked with{' '}
+          <span className='font-mono text-gray-300'>FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN</span>.
         </p>
       </div>
       <div className='grid gap-4 md:grid-cols-2'>

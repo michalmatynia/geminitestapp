@@ -331,6 +331,12 @@ export const functionConfigSchema = z.object({
    * the node will fail with FUNCTION_OUTPUT_TOO_LARGE.
    */
   maxOutputBytes: z.number().int().min(1024).max(512_000).optional(),
+  /**
+   * Optional safe mode flag. When enabled, the runtime will block scripts that
+   * contain obviously dangerous tokens (e.g. process., require(), import(), eval()) and
+   * fail fast with FUNCTION_SAFE_MODE_FORBIDDEN_TOKEN.
+   */
+  safeMode: z.boolean().optional(),
 });
 
 export type FunctionConfigDto = z.infer<typeof functionConfigSchema>;

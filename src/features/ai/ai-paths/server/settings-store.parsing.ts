@@ -1,8 +1,9 @@
 import {
   type ParsedPathMeta,
   type ParsedPathConfig,
-  type TriggerButtonSettingRecord,
 } from './settings-store.constants';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import { parseAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
 export const parsePathMetas = (raw: string | null | undefined): ParsedPathMeta[] => {
   if (!raw) return [];
@@ -120,25 +121,6 @@ export const preservePathConfigFlagsOnSeed = (
 
 export const parseTriggerButtons = (
   raw: string | undefined
-): TriggerButtonSettingRecord[] | null => {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((entry: unknown): TriggerButtonSettingRecord | null => {
-        if (!entry || typeof entry !== 'object') return null;
-        const id = (entry as { id?: unknown }).id;
-        if (typeof id !== 'string' || id.trim().length === 0) return null;
-        return {
-          ...(entry as Record<string, unknown>),
-          id: id.trim(),
-        };
-      })
-      .filter((entry: TriggerButtonSettingRecord | null): entry is TriggerButtonSettingRecord =>
-        Boolean(entry)
-      );
-  } catch {
-    return null;
-  }
+): AiTriggerButtonRecord[] => {
+  return parseAiTriggerButtonsRaw(raw ?? null);
 };

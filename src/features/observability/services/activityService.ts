@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CreateActivityLogDto, ActivityLogDto } from '@/shared/contracts/system';
+import type { CreateActivityLog, ActivityLog } from '@/shared/contracts/system';
 
 import { getActivityRepository } from './activity-repository';
 import { logSystemEvent } from '../lib/system-logger';
@@ -19,7 +19,7 @@ import { logSystemEvent } from '../lib/system-logger';
  * });
  * ```
  */
-export async function logActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {
+export async function logActivity(data: CreateActivityLog): Promise<ActivityLog> {
   const repository = await getActivityRepository();
   const log = await repository.createActivity(data);
 

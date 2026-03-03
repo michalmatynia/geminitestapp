@@ -5,7 +5,6 @@ import {
   type AiBrainFeature,
   type AiBrainCapabilityKey,
   type AiBrainAssignment,
-  type AiBrainCapabilityAssignment,
   type AiBrainSettings,
   type AiBrainProviderCatalog,
   type BrainModelFamily,
@@ -19,11 +18,12 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
+  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
   entriesToCatalogArrays,
   sanitizeCatalogEntries,
 } from '@/shared/lib/ai-brain/catalog-entries';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { validationError } from '@/shared/errors/app-error';
 
 export type {
   AiBrainCatalogEntry,
@@ -32,7 +32,6 @@ export type {
   AiBrainFeature,
   AiBrainCapabilityKey,
   AiBrainAssignment,
-  AiBrainCapabilityAssignment,
   AiBrainSettings,
   AiBrainProviderCatalog,
   BrainModelFamily,
@@ -344,7 +343,7 @@ export const defaultBrainSettings: AiBrainSettings = {
         undefined,
       ]
     )
-  ) as Record<AiBrainCapabilityKey, AiBrainCapabilityAssignment | undefined>,
+  ) as Record<AiBrainCapabilityKey, AiBrainAssignment | undefined>,
 };
 
 export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
@@ -378,20 +377,87 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
 };
 
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
-  const parsed = parseJsonSetting<unknown>(raw, null);
-  const result = settingsSchema.safeParse(parsed ?? defaultBrainSettings);
-  if (!result.success) return defaultBrainSettings;
+  if (!raw?.trim()) return defaultBrainSettings;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (error: unknown) {
+    throw validationError('Invalid AI Brain settings payload.', {
+      source: 'ai_brain.settings',
+      reason: 'invalid_json',
+      cause: error instanceof Error ? error.message : 'unknown_error',
+    });
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw validationError('Invalid AI Brain settings payload.', {
+      source: 'ai_brain.settings',
+      reason: 'invalid_shape',
+    });
+  }
+
+  const result = settingsSchema.safeParse(parsed);
+  if (!result.success) {
+    throw validationError('Invalid AI Brain settings payload.', {
+      source: 'ai_brain.settings',
+      reason: 'schema_validation_failed',
+      issues: result.error.flatten(),
+    });
+  }
+
   return result.data;
 };
 
 export const parseBrainProviderCatalog = (
   raw: string | null | undefined
 ): AiBrainProviderCatalog => {
-  const parsed = parseJsonSetting<unknown>(raw, null);
-  const result = providerCatalogSchema.safeParse(parsed ?? defaultBrainProviderCatalog);
-  if (!result.success) return defaultBrainProviderCatalog;
+  if (!raw?.trim()) return defaultBrainProviderCatalog;
 
-  const entries = catalogToEntries(result.data);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (error: unknown) {
+    throw validationError('Invalid AI Brain provider catalog payload.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'invalid_json',
+      cause: error instanceof Error ? error.message : 'unknown_error',
+    });
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw validationError('Invalid AI Brain provider catalog payload.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'invalid_shape',
+    });
+  }
+
+  const result = providerCatalogSchema.safeParse(parsed);
+  if (!result.success) {
+    throw validationError('Invalid AI Brain provider catalog payload.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'schema_validation_failed',
+      issues: result.error.flatten(),
+    });
+  }
+
+  const entries = sanitizeCatalogEntries(result.data.entries ?? []);
+  if (entries.length === 0) {
+    const legacyPools = BRAIN_CATALOG_POOL_VALUES.filter(
+      (pool: AiBrainCatalogPool): boolean => result.data[pool].length > 0
+    );
+    if (legacyPools.length > 0) {
+      throw validationError(
+        'Legacy AI Brain provider catalog pool arrays are no longer supported without canonical entries.',
+        {
+          source: 'ai_brain.provider_catalog',
+          reason: 'deprecated_pool_arrays',
+          pools: legacyPools,
+        }
+      );
+    }
+  }
+
   const arrays = entriesToCatalogArrays(entries);
 
   return {

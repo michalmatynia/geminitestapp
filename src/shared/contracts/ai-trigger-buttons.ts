@@ -87,14 +87,6 @@ const normalizePathId = (value: unknown): string | null | undefined => {
   return normalized.length > 0 ? normalized : null;
 };
 
-const normalizeDisplayForRead = (value: unknown): AiTriggerButtonDisplayMode | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'icon') return 'icon';
-  if (normalized === 'icon_label') return 'icon_label';
-  return undefined;
-};
-
 const normalizeModeForRead = (value: unknown): AiTriggerButtonMode | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
@@ -107,22 +99,13 @@ export const aiTriggerButtonRecordValidatorSchema = z.object({
   name: z.string().trim().min(1),
   iconId: z.string().trim().min(1).nullable().optional(),
   pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
-  enabled: z.boolean().optional(),
-  locations: z.array(aiTriggerButtonLocationSchema).optional(),
-  mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema).optional(),
-  display: z
-    .preprocess((value: unknown): unknown => {
-      if (value === undefined) return undefined;
-      return normalizeDisplayForRead(value) ?? value;
-    }, aiTriggerButtonDisplayModeSchema)
-    .optional(),
-  createdAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-  updatedAt: z
-    .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
-    .optional(),
-  sortIndex: z.coerce.number().optional(),
+  enabled: z.boolean(),
+  locations: z.array(aiTriggerButtonLocationSchema).min(1),
+  mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema),
+  display: aiTriggerButtonDisplayModeSchema,
+  createdAt: z.string().trim().min(1),
+  updatedAt: z.string().trim().min(1),
+  sortIndex: z.number().int(),
 }).strict();
 
 export const aiTriggerButtonCreatePayloadSchema = z.object({

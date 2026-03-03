@@ -21,47 +21,16 @@ import type {
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
+export type {
+  LastErrorInfo,
+  RuntimeRunStatus,
+  RuntimeControlHandlers,
+  RuntimeNodeConfigHandlers,
+} from '@/shared/contracts/ai-paths';
 
 // ---------------------------------------------------------------------------
-// Types
+// Context Value
 // ---------------------------------------------------------------------------
-
-export interface LastErrorInfo {
-  message: string;
-  time: string;
-  pathId?: string | null;
-}
-
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
-
-export interface RuntimeControlHandlers {
-  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
-  fireTriggerPersistent?: (
-    node: AiNode,
-    event?: React.MouseEvent<HTMLButtonElement>
-  ) => void | Promise<void>;
-  pauseActiveRun?: () => void;
-  resumeActiveRun?: () => void;
-  stepActiveRun?: (triggerNode?: AiNode) => void;
-  cancelActiveRun?: () => void;
-  clearWires?: () => void | Promise<void>;
-}
-
-export interface RuntimeNodeConfigHandlers {
-  fetchParserSample?: (
-    nodeId: string,
-    entityType: string,
-    entityId: string
-  ) => void | Promise<void>;
-  fetchUpdaterSample?: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => void | Promise<void>;
-  runSimulation?: (node: AiNode, triggerEvent?: string) => void | Promise<void>;
-  sendToAi?: (databaseNodeId: string, prompt: string) => void | Promise<void>;
-}
 
 export interface RuntimeStateData {
   // Core runtime state

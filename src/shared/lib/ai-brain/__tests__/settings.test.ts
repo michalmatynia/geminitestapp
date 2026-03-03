@@ -5,6 +5,7 @@ import {
   getDefaultCapabilityForFeature,
   getBrainCapabilityDefinition,
   getBrainCapabilityModelFamilies,
+  parseBrainSettings,
   parseBrainProviderCatalog,
   resolveBrainCapabilityAssignment,
   sanitizeBrainProviderCatalog,
@@ -83,28 +84,40 @@ describe('ai-brain settings helpers', () => {
     expect(getBrainCapabilityModelFamilies('chatbot.reply')).toEqual(['chat']);
   });
 
-  it('hydrates provider catalog entries from legacy pool arrays', () => {
-    const parsed = parseBrainProviderCatalog(
-      JSON.stringify({
-        modelPresets: [' gpt-4o-mini ', 'gpt-4o-mini'],
-        paidModels: ['gpt-4.1'],
-        ollamaModels: ['llama3.1'],
-        agentModels: [],
-        deepthinkingAgents: [],
-        playwrightPersonas: ['persona_checkout_bot'],
-      })
-    );
+  it('rejects legacy snapshot keys in non-empty brain settings payloads', () => {
+    expect(() =>
+      parseBrainSettings(
+        JSON.stringify({
+          defaults: {
+            ...defaultBrainSettings.defaults,
+            fallbackModelId: 'legacy-model',
+          },
+          assignments: {},
+          capabilities: {},
+        })
+      )
+    ).toThrowError(/Invalid AI Brain settings payload/i);
+  });
 
-    expect(parsed.entries).toEqual([
-      { pool: 'modelPresets', value: 'gpt-4o-mini' },
-      { pool: 'paidModels', value: 'gpt-4.1' },
-      { pool: 'ollamaModels', value: 'llama3.1' },
-      { pool: 'playwrightPersonas', value: 'persona_checkout_bot' },
-    ]);
-    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
-    expect(parsed.paidModels).toEqual(['gpt-4.1']);
-    expect(parsed.ollamaModels).toEqual(['llama3.1']);
-    expect(parsed.playwrightPersonas).toEqual(['persona_checkout_bot']);
+  it('rejects non-object brain settings payloads', () => {
+    expect(() => parseBrainSettings(JSON.stringify(['legacy']))).toThrowError(
+      /Invalid AI Brain settings payload/i
+    );
+  });
+
+  it('rejects legacy provider catalog pool arrays when canonical entries are missing', () => {
+    expect(() =>
+      parseBrainProviderCatalog(
+        JSON.stringify({
+          modelPresets: ['gpt-4o-mini'],
+          paidModels: ['gpt-4.1'],
+          ollamaModels: ['llama3.1'],
+          agentModels: [],
+          deepthinkingAgents: [],
+          playwrightPersonas: [],
+        })
+      )
+    ).toThrowError(/Legacy AI Brain provider catalog pool arrays are no longer supported/i);
   });
 
   it('treats non-empty entries as canonical and preserves entry order', () => {

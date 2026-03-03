@@ -163,6 +163,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   void persistAnalyticsEvent(input, serverContext).catch((error: unknown) => {
     logger.error('analytics.events.POST background ingestion failed', error, {
+      service: 'analytics.events',
       source: 'analytics.events.POST',
       path: input.path,
       scope: input.scope,

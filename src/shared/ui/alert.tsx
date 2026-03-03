@@ -1,11 +1,15 @@
 import * as React from 'react';
+import { AlertCircle, X } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
 
 type AlertVariant = 'default' | 'error' | 'warning' | 'success' | 'info';
 
-interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: AlertVariant;
+  title?: React.ReactNode;
+  icon?: React.ReactNode;
+  onDismiss?: () => void;
 }
 
 const variantStyles: Record<AlertVariant, string> = {
@@ -16,15 +20,51 @@ const variantStyles: Record<AlertVariant, string> = {
   info: 'border-blue-500/40 bg-blue-500/10 text-blue-100',
 };
 
+const iconMap: Record<AlertVariant, React.ReactNode> = {
+  default: <AlertCircle className='size-4' />,
+  error: <AlertCircle className='size-4' />,
+  warning: <AlertCircle className='size-4' />,
+  success: <AlertCircle className='size-4' />,
+  info: <AlertCircle className='size-4' />,
+};
+
+/**
+ * Alert - A standardized component for displaying messages and feedback.
+ * Supports multiple variants, titles, custom icons, and dismissal.
+ */
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
+  ({ className, variant = 'default', title, icon, onDismiss, children, ...props }, ref) => {
+    const resolvedIcon = icon ?? iconMap[variant];
+
     return (
       <div
         ref={ref}
         role='alert'
-        className={cn('rounded-md border px-4 py-3 text-sm', variantStyles[variant], className)}
+        className={cn(
+          'relative flex gap-3 rounded-md border px-4 py-3 text-sm transition-all',
+          variantStyles[variant],
+          className
+        )}
         {...props}
-      />
+      >
+        {resolvedIcon && <div className='mt-0.5 shrink-0 opacity-80'>{resolvedIcon}</div>}
+        <div className='flex-1 min-w-0'>
+          {title && <div className='font-semibold mb-1 leading-none tracking-tight'>{title}</div>}
+          <div className={cn('text-xs opacity-90 leading-relaxed', !title && 'text-sm')}>
+            {children}
+          </div>
+        </div>
+        {onDismiss && (
+          <button
+            type='button'
+            onClick={onDismiss}
+            className='shrink-0 rounded-md p-1 opacity-50 hover:opacity-100 hover:bg-black/10 transition-all'
+            aria-label='Dismiss alert'
+          >
+            <X className='size-3.5' />
+          </button>
+        )}
+      </div>
     );
   }
 );

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { FormSection, StatusBadge } from '@/shared/ui';
+import { FormSection, StatusBadge, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
 
@@ -22,12 +22,12 @@ export function StudioSourceImageSelector(): React.JSX.Element {
           {imageSlotPreviews.map((preview) => {
             const isSelected = preview.index === selectedImageIndex;
             return (
-              <button
+              <Button
                 key={preview.index}
-                type='button'
+                variant='ghost'
                 onClick={() => setSelectedImageIndex(preview.index)}
                 className={cn(
-                  'group relative overflow-hidden rounded border p-1 text-left transition h-32',
+                  'group relative overflow-hidden rounded border p-1 text-left transition h-32 hover:bg-transparent font-normal',
                   isSelected
                     ? 'border-emerald-400/80 bg-emerald-500/10'
                     : 'border-border/60 hover:border-emerald-400/40'
@@ -43,7 +43,7 @@ export function StudioSourceImageSelector(): React.JSX.Element {
                   <span className='bg-black/50 px-1 rounded'>{preview.label}</span>
                   {isSelected && <StatusBadge status='Selected' variant='active' size='sm' />}
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

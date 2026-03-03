@@ -101,6 +101,37 @@ describe('parseImageStudioSettings', () => {
       )
     ).toThrowError(/Invalid Image Studio settings payload/);
   });
+
+  it('rejects deprecated persisted UI extractor model fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          uiExtractor: {
+            ...defaultImageStudioSettings.uiExtractor,
+            model: 'gpt-4.1-mini',
+          },
+        })
+      )
+    ).toThrowError(/Invalid Image Studio settings payload/);
+  });
+
+  it('rejects deprecated persisted modelPresets fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          targetAi: {
+            ...defaultImageStudioSettings.targetAi,
+            openai: {
+              ...defaultImageStudioSettings.targetAi.openai,
+              modelPresets: ['gpt-image-1'],
+            },
+          },
+        })
+      )
+    ).toThrowError(/Invalid Image Studio settings payload/);
+  });
 });
 
 describe('buildImageStudioSequenceSnapshot', () => {

@@ -1,5 +1,7 @@
 export type RequestContext = {
   requestId: string;
+  traceId: string;
+  correlationId: string;
   userId?: string | null;
   startTime: number;
 };

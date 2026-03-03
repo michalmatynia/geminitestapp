@@ -94,8 +94,8 @@ export function LogDiagnostics(): React.JSX.Element {
 
   return (
     <StandardDataTablePanel
-      title='Database Health'
-      description='Mongo index consistency for observability collections.'
+      title='Observability Index Health'
+      description='Index consistency for observability storage collections.'
       headerActions={
         <div className='flex items-center gap-2'>
           {diagnosticsUpdatedAt ? (
@@ -118,7 +118,7 @@ export function LogDiagnostics(): React.JSX.Element {
               confirmAction({
                 title: 'Restore Index Health',
                 message:
-                  'Initiate a background scan and reconstruction of missing telemetry indexes.',
+                  'Initiate a background scan and reconstruction of missing observability indexes.',
                 confirmText: 'Begin Rebuild',
                 onConfirm: handleRebuildMongoIndexes,
               })

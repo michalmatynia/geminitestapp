@@ -1,73 +1,16 @@
 import 'server-only';
 
 import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
+import {
+  ImageStudioSequenceRunRecord,
+  ImageStudioSequenceRunStatus,
+  ImageStudioSequenceRunDispatchMode,
+  ImageStudioSequenceRunHistoryEvent,
+  ImageStudioSequenceRunRequest,
+  ImageStudioSequenceMaskContext,
+} from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
-
-export type ImageStudioSequenceRunStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
-
-export type ImageStudioSequenceRunDispatchMode = 'queued' | 'inline';
-
-export type ImageStudioSequenceRunHistoryEventSource =
-  | 'api'
-  | 'queue'
-  | 'worker'
-  | 'stream'
-  | 'client';
-
-export type ImageStudioSequenceMaskContext = {
-  polygons: Array<Array<{ x: number; y: number }>>;
-  invert: boolean;
-  feather: number;
-  slotId?: string | null;
-} | null;
-
-export type ImageStudioSequenceRunRequest = {
-  projectId: string;
-  sourceSlotId: string;
-  prompt: string;
-  paramsState: Record<string, unknown> | null;
-  referenceSlotIds: string[];
-  steps: ImageStudioSequenceStep[];
-  mask: ImageStudioSequenceMaskContext;
-  studioSettings: Record<string, unknown> | null;
-  metadata: Record<string, unknown> | null;
-};
-
-export type ImageStudioSequenceRunHistoryEvent = {
-  id: string;
-  type: string;
-  source: ImageStudioSequenceRunHistoryEventSource;
-  message: string;
-  at: string;
-  payload?: Record<string, unknown>;
-};
-
-export type ImageStudioSequenceRunRecord = {
-  id: string;
-  projectId: string;
-  sourceSlotId: string;
-  currentSlotId: string;
-  status: ImageStudioSequenceRunStatus;
-  dispatchMode: ImageStudioSequenceRunDispatchMode | null;
-  request: ImageStudioSequenceRunRequest;
-  activeStepIndex: number | null;
-  activeStepId: string | null;
-  outputSlotIds: string[];
-  runtimeMask: ImageStudioSequenceMaskContext;
-  cancelRequested: boolean;
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEvents: ImageStudioSequenceRunHistoryEvent[];
-};
 
 type ImageStudioSequenceRunHistoryEventDocument = {
   id?: string | null;

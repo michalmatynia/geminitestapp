@@ -14,9 +14,12 @@ type LogSystemEventParams = {
   level: SystemLogLevelDto | string;
   message: string;
   source: string;
+  service?: string;
   error?: unknown;
   request?: Request;
   requestId?: string;
+  traceId?: string;
+  correlationId?: string;
   statusCode?: number;
   context?: Record<string, unknown>;
 };
@@ -41,6 +44,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     await mod.logSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, {
+      service: 'api.error-handler',
       context: params,
     });
   }
@@ -54,6 +58,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
     return mod.getErrorFingerprint(params);
   } catch (error) {
     logger.error('Failed to get error fingerprint via observability feature', error, {
+      service: 'api.error-handler',
       context: params,
     });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
@@ -63,14 +68,38 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
 type ApiErrorOptions = {
   request?: Request | undefined;
   source?: string | undefined;
+  service?: string | undefined;
   fallbackMessage?: string | undefined;
   includeDetails?: boolean | undefined;
   extra?: Record<string, unknown> | undefined;
   /** Request ID for tracing (will be included in response headers) */
   requestId?: string | undefined;
+  traceId?: string | undefined;
+  correlationId?: string | undefined;
 };
 
 const MAX_QUERY_KEYS = 20;
+
+const resolveServiceFromSource = (source: string | undefined): string => {
+  const trimmed = source?.trim() ?? '';
+  if (!trimmed) return 'api.error';
+  const segments = trimmed.split('.').filter(Boolean);
+  const maybeMethod = segments[segments.length - 1];
+  const isMethod =
+    maybeMethod === 'GET' ||
+    maybeMethod === 'POST' ||
+    maybeMethod === 'PUT' ||
+    maybeMethod === 'PATCH' ||
+    maybeMethod === 'DELETE' ||
+    maybeMethod === 'HEAD' ||
+    maybeMethod === 'OPTIONS';
+  const base = isMethod ? segments.slice(0, -1) : segments;
+  const first = base[0];
+  const second = base[1];
+  if (first && second) return `${first}.${second}`;
+  if (first) return first;
+  return 'api.error';
+};
 
 const extractRequestDiagnostics = (
   request: Request | undefined
@@ -115,6 +144,10 @@ export const createErrorResponse = async (
 
   const requestId =
     options?.requestId ?? options?.request?.headers.get('x-request-id') ?? randomUUID();
+  const traceId = options?.traceId ?? options?.request?.headers.get('x-trace-id') ?? randomUUID();
+  const correlationId =
+    options?.correlationId ?? options?.request?.headers.get('x-correlation-id') ?? requestId;
+  const service = options?.service ?? resolveServiceFromSource(options?.source);
 
   const fingerprint = await getErrorFingerprint({
     message: resolved.message,
@@ -133,9 +166,12 @@ export const createErrorResponse = async (
     level,
     message: resolved.message,
     source: options?.source ?? 'api',
+    service,
     error,
     ...(options?.request ? { request: options.request } : {}),
     requestId,
+    traceId,
+    correlationId,
     statusCode: resolved.httpStatus,
     context: {
       errorId: resolved.errorId,
@@ -144,6 +180,9 @@ export const createErrorResponse = async (
       critical: resolved.critical,
       retryable: resolved.retryable,
       expected: resolved.expected,
+      service,
+      traceId,
+      correlationId,
       ...requestDiagnostics,
       ...(resolved.retryAfterMs ? { retryAfterMs: resolved.retryAfterMs } : {}),
       ...(resolved.meta ? { meta: resolved.meta } : {}),
@@ -185,6 +224,8 @@ export const createErrorResponse = async (
 
   // Set tracking headers
   response.headers.set('x-request-id', requestId);
+  response.headers.set('x-trace-id', traceId);
+  response.headers.set('x-correlation-id', correlationId);
   response.headers.set('x-error-id', resolved.errorId);
   response.headers.set('x-error-fingerprint', fingerprint);
   if (!response.headers.has('Cache-Control')) {
@@ -228,7 +269,10 @@ export const createSimpleErrorResponse = (
  */
 export const createValidationErrorResponse = async (
   fieldErrors: Record<string, string[]>,
-  options?: Pick<ApiErrorOptions, 'request' | 'source' | 'requestId'>
+  options?: Pick<
+    ApiErrorOptions,
+    'request' | 'source' | 'service' | 'requestId' | 'traceId' | 'correlationId'
+  >
 ): Promise<NextResponse> => {
   const error = validationError('Validation failed', { fields: fieldErrors });
   return await createErrorResponse(error, options);

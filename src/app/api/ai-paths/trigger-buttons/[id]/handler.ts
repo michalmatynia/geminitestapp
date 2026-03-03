@@ -9,6 +9,7 @@ import {
   aiTriggerButtonUpdateSchema,
   buildCanonicalTriggerButtonDisplay,
   parseAiTriggerButtonsRaw,
+  serializeAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -63,7 +64,7 @@ export async function PATCH_handler(
   };
   const next = existing.slice();
   next[index] = nextRecord;
-  await writeTriggerButtonsRaw(JSON.stringify(next));
+  await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(next));
   return NextResponse.json(nextRecord);
 }
 
@@ -77,10 +78,13 @@ export async function DELETE_handler(
   if (!id) throw badRequestError('Missing trigger button id.');
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
-  const next = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
-  if (next.length === existing.length) {
+  const filtered = existing.filter((item: AiTriggerButtonRecord) => item.id !== id);
+  if (filtered.length === existing.length) {
     throw notFoundError('Trigger button not found.', { id });
   }
-  await writeTriggerButtonsRaw(JSON.stringify(next));
+  const next = filtered.map((record, index) =>
+    record.sortIndex === index ? record : { ...record, sortIndex: index }
+  );
+  await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(next));
   return NextResponse.json({ ok: true });
 }

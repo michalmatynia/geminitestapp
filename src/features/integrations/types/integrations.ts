@@ -6,5 +6,4 @@ export type {
   IntegrationRecord,
   IntegrationRepository,
   IntegrationWithConnections,
-  IntegrationWithConnectionsBasic,
 } from '@/shared/contracts/integrations';

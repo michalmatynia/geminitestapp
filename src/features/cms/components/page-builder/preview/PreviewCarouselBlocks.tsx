@@ -185,24 +185,26 @@ export function PreviewCarouselBlock({
       {/* Navigation arrows */}
       {showNavigation && frameCount > 1 && (
         <>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={goToPrev}
             disabled={!loop && currentIndex === 0}
-            className='absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+            className='absolute left-2 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none'
             aria-label='Previous slide'
           >
             <ChevronLeft className='w-6 h-6' />
-          </button>
-          <button
-            type='button'
+          </Button>
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={goToNext}
             disabled={!loop && currentIndex === frameCount - 1}
-            className='absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed'
+            className='absolute right-2 top-1/2 -translate-y-1/2 z-10 size-10 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-none'
             aria-label='Next slide'
           >
             <ChevronRight className='w-6 h-6' />
-          </button>
+          </Button>
         </>
       )}
 
@@ -210,13 +212,14 @@ export function PreviewCarouselBlock({
       {showIndicators && frameCount > 1 && (
         <div className='absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2'>
           {frames.map((_: BlockInstance, index: number) => (
-            <button
+            <Button
               key={index}
-              type='button'
+              variant='ghost'
               onClick={(): void => goToIndex(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                index === currentIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/60'
-              }`}
+              className={cn(
+                'size-2.5 min-w-0 rounded-full p-0 transition-all hover:bg-white/60',
+                index === currentIndex ? 'bg-white' : 'bg-white/40'
+              )}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
@@ -417,10 +420,15 @@ export function PreviewSlideshowBlock({
           {frames.length > 1 && (showArrows || showDots) && (
             <div className='mt-4 flex items-center justify-center gap-4'>
               {showArrows && (
-                <button
-                  type='button'
-                  onClick={goToPrev}
-                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    goToPrev();
+                  }}
+                  className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
+                  aria-label='Previous slide'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
@@ -430,25 +438,37 @@ export function PreviewSlideshowBlock({
                       d='M15 19l-7-7 7-7'
                     />
                   </svg>
-                </button>
+                </Button>
               )}
               {showDots && (
                 <div className='flex gap-2'>
                   {frames.map((_: BlockInstance, idx: number) => (
-                    <button
+                    <Button
                       key={idx}
-                      type='button'
-                      onClick={(): void => setActiveIndex(idx)}
-                      className={`size-2 rounded-full transition ${idx === currentActiveIndex ? 'bg-white' : 'bg-gray-600'}`}
+                      variant='ghost'
+                      onClick={(e: React.MouseEvent): void => {
+                        e.stopPropagation();
+                        setActiveIndex(idx);
+                      }}
+                      className={cn(
+                        'size-2 min-w-0 rounded-full p-0 transition-all hover:bg-white/40',
+                        idx === currentActiveIndex ? 'bg-white' : 'bg-gray-600'
+                      )}
+                      aria-label={`Go to slide ${idx + 1}`}
                     />
                   ))}
                 </div>
               )}
               {showArrows && (
-                <button
-                  type='button'
-                  onClick={goToNext}
-                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    goToNext();
+                  }}
+                  className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
+                  aria-label='Next slide'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
@@ -458,7 +478,7 @@ export function PreviewSlideshowBlock({
                       d='M9 5l7 7-7 7'
                     />
                   </svg>
-                </button>
+                </Button>
               )}
             </div>
           )}

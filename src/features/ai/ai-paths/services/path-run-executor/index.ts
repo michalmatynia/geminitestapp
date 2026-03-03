@@ -24,7 +24,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
-import type { RuntimeProfileSummaryDto } from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimeProfileSummary } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   EMPTY_RUNTIME_STATE,
@@ -125,7 +125,7 @@ export const executePathRun = async (
   const runtimeFingerprint = getAiPathsRuntimeFingerprint();
 
   const profiling = createPathRunProfiling();
-  let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
+  let runtimeProfileSummary: RuntimeProfileSummary | null = null;
 
   const nodes = normalizeNodes(run.graph?.nodes ?? []);
    

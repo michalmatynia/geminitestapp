@@ -367,9 +367,10 @@ function MenuBuilderSection(): React.JSX.Element {
                       className='flex min-w-0 flex-1 flex-wrap items-center gap-2'
                       style={{ paddingLeft: depth * 16 }}
                     >
-                      <button
+                      <Button
                         type='button'
-                        className='grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200'
+                        variant='ghost'
+                        className='grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200 p-0'
                         draggable
                         onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
                           const payload = JSON.stringify(path);
@@ -387,7 +388,7 @@ function MenuBuilderSection(): React.JSX.Element {
                         title='Drag to reorder'
                       >
                         <GripVertical className='size-4' />
-                      </button>
+                      </Button>
                       <div className='min-w-[160px] flex-1'>
                         <Input
                           value={labelValue}

@@ -6,6 +6,23 @@ import {
   parseAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
+const createCanonicalStoredButton = (
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> => ({
+  id: 'btn-1',
+  name: 'Run Path',
+  iconId: null,
+  pathId: null,
+  enabled: true,
+  locations: ['product_modal'],
+  mode: 'click',
+  display: 'icon_label',
+  createdAt: '2026-03-03T00:00:00.000Z',
+  updatedAt: '2026-03-03T00:00:00.000Z',
+  sortIndex: 0,
+  ...overrides,
+});
+
 const expectStoredPayloadToThrow = (payload: unknown): void => {
   expect(() => parseAiTriggerButtonsRaw(JSON.stringify(payload))).toThrow();
 };
@@ -57,38 +74,30 @@ describe('trigger button validation', () => {
     expect(parsed.pathId).toBe('path-target');
   });
 
-  it('normalizes missing enabled field to true when reading stored buttons', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-1',
-          name: 'Run Path',
-        },
-      ])
-    );
-
-    expect(parsed[0]?.enabled).toBe(true);
+  it('rejects stored records with missing canonical fields', () => {
+    const { enabled, ...recordWithoutEnabled } = createCanonicalStoredButton();
+    void enabled;
+    expectStoredPayloadToThrow([recordWithoutEnabled]);
   });
 
   it('rejects legacy isActive when reading stored buttons', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-legacy-inactive',
-        name: 'Legacy Inactive',
         isActive: false,
-      },
+      }),
     ]);
   });
 
   it('preserves enabled=false when reading stored buttons', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
-        {
+        createCanonicalStoredButton({
           id: 'btn-2',
           name: 'Hidden Path',
           enabled: false,
-          locations: ['product_modal'],
-        },
+          sortIndex: 1,
+        }),
       ])
     );
 
@@ -97,43 +106,41 @@ describe('trigger button validation', () => {
 
   it('rejects conflicting enabled/isActive flags instead of repairing them', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-conflict',
-        name: 'Conflicting Flags',
         enabled: false,
         isActive: true,
-        locations: ['product_modal'],
-      },
+      }),
     ]);
   });
 
   it('rejects legacy icon field instead of mapping it to iconId', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-legacy-icon',
-        name: 'Legacy',
         icon: 'sparkles',
-      },
+      }),
     ]);
   });
 
   it('rejects legacy top-level label when canonical name is missing', () => {
-    expectStoredPayloadToThrow([
-      {
-        id: 'btn-legacy-label',
-        label: 'Legacy Label',
-      },
-    ]);
+    const base = createCanonicalStoredButton({
+      id: 'btn-legacy-label',
+      label: 'Legacy Label',
+    });
+    const { name, ...recordWithoutName } = base;
+    void name;
+    expectStoredPayloadToThrow([recordWithoutName]);
   });
 
-  it('infers display.label from button name for canonical display modes', () => {
+  it('infers display.label from canonical display mode values', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
-        {
+        createCanonicalStoredButton({
           id: 'btn-display-label',
           name: 'Display Label',
           display: 'icon_label',
-        },
+        }),
       ])
     );
 
@@ -143,11 +150,11 @@ describe('trigger button validation', () => {
   it('maps icon display mode into showLabel=false', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
-        {
+        createCanonicalStoredButton({
           id: 'btn-icon-mode',
           name: 'Icon Mode',
           display: 'icon',
-        },
+        }),
       ])
     );
 
@@ -156,32 +163,30 @@ describe('trigger button validation', () => {
 
   it('rejects legacy label display mode', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-legacy-display',
-        name: 'Legacy Display',
         display: 'label',
-      },
+      }),
     ]);
   });
 
-  it('rejects legacy display object payloads', () => {
+  it('rejects display object payloads', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-display-object',
-        name: 'Legacy Display',
-        display: { label: 'Friendly Trigger Name', showLabel: true },
-      },
+        display: { label: 'Canonical Display', showLabel: false },
+      }),
     ]);
   });
 
   it('preserves canonical stored name for canonical display mode payloads', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
-        {
+        createCanonicalStoredButton({
           id: 'btn-opaque-name',
           name: '90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f',
           display: 'icon_label',
-        },
+        }),
       ])
     );
 
@@ -191,32 +196,29 @@ describe('trigger button validation', () => {
 
   it('rejects non-boolean enabled values', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-enabled-string',
-        name: 'Enabled String',
         enabled: 'false',
-      },
+      }),
     ]);
   });
 
   it('rejects invalid location values instead of filtering them', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-locations',
-        name: 'Locations',
         locations: ['product_modal', 'invalid_location', 'product_modal'],
-      },
+      }),
     ]);
   });
 
   it('preserves stored pathId', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
-        {
+        createCanonicalStoredButton({
           id: 'btn-path-id',
-          name: 'Run Target Path',
           pathId: 'path_desc_name',
-        },
+        }),
       ])
     );
 
@@ -225,11 +227,10 @@ describe('trigger button validation', () => {
 
   it('rejects legacy pathIds when pathId is missing', () => {
     expectStoredPayloadToThrow([
-      {
+      createCanonicalStoredButton({
         id: 'btn-path-ids',
-        name: 'Run Target Path',
         pathIds: ['path_one', 'path_two'],
-      },
+      }),
     ]);
   });
 });

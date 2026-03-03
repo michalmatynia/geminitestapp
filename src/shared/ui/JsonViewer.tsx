@@ -55,7 +55,7 @@ export function JsonViewer({
             <CopyButton
               value={formattedJson}
               variant='ghost'
-              size='xs'
+              size='sm'
               className='h-6 px-2 text-[10px] text-gray-400 hover:text-white hover:bg-white/10'
               showText
             />

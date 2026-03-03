@@ -243,10 +243,11 @@ export function CaseTreeRenderer({
                           />
                         )}
                         {identifier && (
-                          <button
-                            type='button'
+                          <Button
+                            variant='ghost'
+                            size='sm'
                             onClick={() => handleFilterByCaseIdentifier(identifier.id)}
-                            className='group/ident'
+                            className='group/ident h-auto p-0 font-normal hover:bg-transparent'
                           >
                             <MetadataItem
                               variant='minimal'
@@ -255,7 +256,7 @@ export function CaseTreeRenderer({
                               value={caseIdentifierPathById.get(identifier.id)}
                               valueClassName='group-hover/ident:text-cyan-300'
                             />
-                          </button>
+                          </Button>
                         )}
                         {category && (
                           <MetadataItem

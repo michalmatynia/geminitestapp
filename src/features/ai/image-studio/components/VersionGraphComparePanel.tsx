@@ -40,15 +40,17 @@ export function VersionGraphComparePanel(): React.JSX.Element {
             <div className='truncate text-[10px] font-medium text-gray-300'>{cNode.label}</div>
             {onOpenDetails ? (
               <div className='flex justify-end'>
-                <button
+                <Button
                   type='button'
-                  className='inline-flex h-5 w-5 items-center justify-center rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
+                  variant='ghost'
+                  size='sm'
+                  className='size-5 p-0 rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
                   title={versionGraphTooltipsEnabled ? tooltipContent.openDetails : undefined}
                   aria-label='Open full node/file details'
                   onClick={() => onOpenDetails(cNode.id)}
                 >
                   <Info className='size-3' />
-                </button>
+                </Button>
               </div>
             ) : (
               <div className='h-5' />

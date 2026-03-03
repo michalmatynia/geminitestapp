@@ -252,10 +252,10 @@ export function ThemeColorsSection(): React.JSX.Element {
       </Card>
 
       <Card variant='subtle-compact' padding='sm' className='bg-gray-900/40'>
-        <button
-          type='button'
+        <Button
+          variant='ghost'
           onClick={toggleGlobalPalette}
-          className='flex w-full items-center justify-between gap-2 text-left'
+          className='flex w-full items-center justify-between gap-2 text-left h-auto p-0 hover:bg-transparent font-normal'
         >
           <Hint size='xxs' uppercase className='text-gray-500'>
             Global palette
@@ -263,7 +263,7 @@ export function ThemeColorsSection(): React.JSX.Element {
           <ChevronDown
             className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? 'rotate-180' : ''}`}
           />
-        </button>
+        </Button>
         {isGlobalPaletteOpen && (
           <div className='mt-3 space-y-3'>
             <ColorField

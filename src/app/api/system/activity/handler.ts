@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { ActivityFiltersDto } from '@/shared/contracts/system';
+import type { ActivityFilters } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getActivityRepository } from '@/shared/lib/observability/activity-repository';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';
@@ -16,7 +16,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const query = ctx.query as ListQuery;
   const repository = await getActivityRepository();
 
-  const filters: ActivityFiltersDto = {
+  const filters: ActivityFilters = {
     limit: query.pageSize,
     offset: (query.page - 1) * query.pageSize,
   };

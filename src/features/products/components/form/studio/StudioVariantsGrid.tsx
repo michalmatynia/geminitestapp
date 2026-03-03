@@ -47,13 +47,13 @@ export function StudioVariantsGrid(): React.JSX.Element {
 
             return (
               <div key={slot.id} className='space-y-1'>
-                <button
-                  type='button'
+                <Button
+                  variant='ghost'
                   onClick={() => {
                     if (slot.id) setSelectedVariantSlotId(slot.id);
                   }}
                   className={cn(
-                    'group relative w-full rounded border p-1 text-left transition h-32',
+                    'group relative w-full rounded border p-1 text-left transition h-32 hover:bg-transparent font-normal',
                     isSelected
                       ? 'border-blue-400/80 bg-blue-500/10'
                       : 'border-border/60 hover:border-blue-400/40'
@@ -79,7 +79,7 @@ export function StudioVariantsGrid(): React.JSX.Element {
                       {isSelected && <StatusBadge status='Selected' variant='info' size='sm' />}
                     </div>
                   </div>
-                </button>{' '}
+                </Button>
                 <Button
                   size='xs'
                   variant='outline'

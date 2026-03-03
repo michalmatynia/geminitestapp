@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Button, Input, Label, Checkbox, Badge, ToggleRow } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Badge, ToggleRow, SegmentedControl } from '@/shared/ui';
 import { usePageBuilder } from '../../../../hooks/usePageBuilderContext';
 import { useCmsDomainSelection } from '../../../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdateSlug } from '../../../../hooks/useCmsQueries';
@@ -140,24 +140,13 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
     <div className='space-y-4'>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Status</Label>
-        <div className='flex gap-2'>
-          {STATUS_OPTIONS.map((opt: { label: string; value: PageStatus }) => (
-            <button
-              key={opt.value}
-              type='button'
-              onClick={(): void => handleStatusChange(opt.value)}
-              className={`flex-1 rounded-md border px-3 py-1.5 text-xs font-medium transition ${
-                page.status === opt.value
-                  ? opt.value === 'published'
-                    ? 'border-green-500 bg-green-500/10 text-green-400'
-                    : 'border-blue-500 bg-blue-500/10 text-blue-400'
-                  : 'border-border/40 bg-gray-800/30 text-gray-400 hover:border-border/60'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={page.status}
+          onValueChange={(value: string) => handleStatusChange(value as PageStatus)}
+          options={STATUS_OPTIONS}
+          size='sm'
+          className='w-full'
+        />
         {page.publishedAt && page.status === 'published' && (
           <p className='text-[10px] text-gray-500'>
             Published: {new Date(page.publishedAt).toLocaleDateString()}

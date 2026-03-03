@@ -357,26 +357,39 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
 
     let isCancelled = false;
     void (async (): Promise<void> => {
-      const keyedSnapshot = await fetchCaseResolverNodeFileSnapshot(
-        selectedAssetId,
-        'node_file_workspace_load'
-      );
-      if (isCancelled) return;
-      if (keyedSnapshot) {
+      try {
+        const keyedSnapshot = await fetchCaseResolverNodeFileSnapshot(
+          selectedAssetId,
+          'node_file_workspace_load'
+        );
+        if (isCancelled) return;
+        if (keyedSnapshot) {
+          setResolvedSnapshot({
+            isLoading: false,
+            snapshot: keyedSnapshot,
+            source: 'keyed',
+            validationErrorMessage: null,
+          });
+          return;
+        }
         setResolvedSnapshot({
           isLoading: false,
-          snapshot: keyedSnapshot,
-          source: 'keyed',
+          snapshot: createEmptyNodeFileSnapshot(),
+          source: 'empty_default',
           validationErrorMessage: null,
         });
-        return;
+      } catch (error) {
+        if (isCancelled) return;
+        setResolvedSnapshot({
+          isLoading: false,
+          snapshot: createEmptyNodeFileSnapshot(),
+          source: 'empty_default',
+          validationErrorMessage:
+            error instanceof Error
+              ? error.message
+              : 'Invalid node-file snapshot payload.',
+        });
       }
-      setResolvedSnapshot({
-        isLoading: false,
-        snapshot: createEmptyNodeFileSnapshot(),
-        source: 'empty_default',
-        validationErrorMessage: null,
-      });
     })();
 
     return (): void => {
@@ -435,6 +448,16 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       <EmptyState
         title='Loading node file'
         description='Loading node file map...'
+        className='h-[420px] bg-card/20'
+      />
+    );
+  }
+
+  if (resolvedSnapshot.validationErrorMessage) {
+    return (
+      <EmptyState
+        title='Invalid node file snapshot'
+        description={resolvedSnapshot.validationErrorMessage}
         className='h-[420px] bg-card/20'
       />
     );

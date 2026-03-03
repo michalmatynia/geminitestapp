@@ -123,6 +123,32 @@ export function LogMetrics(): React.JSX.Element {
               </div>
               <div>
                 <Hint uppercase variant='muted' className='mb-1 text-[10px]'>
+                  Top Services
+                </Hint>
+                <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
+                  {metrics.topServices.map((item: { service: string; count: number }) => (
+                    <MetadataItem
+                      key={item.service}
+                      label={
+                        <StatusBadge
+                          status={item.service}
+                          variant='neutral'
+                          size='sm'
+                          className='font-mono h-4'
+                        />
+                      }
+                      value={item.count}
+                      className='bg-white/5 px-2 py-1 rounded'
+                      variant='subtle'
+                    />
+                  ))}
+                  {metrics.topServices.length === 0 && (
+                    <div className='text-[11px] text-gray-600'>No service data for this filter.</div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Hint uppercase variant='muted' className='mb-1 text-[10px]'>
                   Top Paths
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>

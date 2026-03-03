@@ -11,6 +11,7 @@ import {
   type DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
+import { useDocumentRelationSearchUiContext } from '../DocumentRelationSearchUiContext';
 
 const SORT_OPTIONS: { value: DocumentRelationSortMode; label: string }[] = [
   { value: 'name_asc', label: 'Name A→Z' },
@@ -25,13 +26,8 @@ const FILE_TYPE_OPTIONS: { value: DocumentRelationFileTypeFilter; label: string 
   { value: 'scanfile', label: 'Scans' },
 ];
 
-export function ScopeBar({
-  showFileTypeFilter,
-  showSortControl,
-}: {
-  showFileTypeFilter: boolean;
-  showSortControl: boolean;
-}): React.JSX.Element {
+export function ScopeBar(): React.JSX.Element {
+  const { showFileTypeFilter, showSortControl } = useDocumentRelationSearchUiContext();
   const {
     documentSearchScope,
     setDocumentSearchScope,

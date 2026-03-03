@@ -220,23 +220,24 @@ function EditPageContent({
             >
               <div className='flex flex-wrap gap-2'>
                 {crossZoneSlugs.map((slug) => (
-                  <button
+                  <Button
                     key={slug.id}
-                    type='button'
+                    variant='ghost'
+                    size='sm'
                     onClick={() =>
                       setManualSelectedSlugIds((prev) => {
                         const current = prev ?? selectedSlugIds;
                         return current.filter((id) => id !== slug.id);
                       })
                     }
-                    className='group'
+                    className='h-auto p-0 hover:bg-transparent'
                   >
                     <StatusBadge
                       status={'/' + slug.slug + ' ×'}
                       variant='warning'
                       className='cursor-pointer hover:opacity-80 transition-opacity font-mono'
                     />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </FormSection>

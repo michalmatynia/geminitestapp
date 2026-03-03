@@ -1126,8 +1126,7 @@ export const nodeConfigSchema = z.object({
     .optional(),
 });
 
-export type NodeConfigDto = z.infer<typeof nodeConfigSchema>;
-export type NodeConfig = NodeConfigDto;
+export type NodeConfig = z.infer<typeof nodeConfigSchema>;
 
 export const nodeDefinitionSchema = z.object({
   type: aiNodeTypeSchema,
@@ -1162,17 +1161,3 @@ export const aiNodeSchema = z.object({
 });
 
 export type AiNode = z.infer<typeof aiNodeSchema>;
-
-/**
- * Legacy Type Aliases for compatibility
- */
-export type AiNodeDto = AiNode;
-export type CreateAiNodeDto = Omit<AiNode, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateAiNodeDto = Partial<CreateAiNodeDto>;
-
-export type AiEdgeDto = Edge;
-export type EdgeDto = Edge;
-export type CreateAiEdgeDto = Omit<Edge, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateAiEdgeDto = Partial<CreateAiEdgeDto>;
-
-export type NodeDefinitionDto = NodeDefinition;

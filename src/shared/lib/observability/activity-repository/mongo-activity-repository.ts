@@ -1,7 +1,7 @@
 import { ObjectId, Filter } from 'mongodb';
 
-import type { ActivityRepository, ActivityFiltersDto } from '@/shared/contracts/system';
-import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
+import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
+import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION = 'activity_logs';
@@ -18,7 +18,7 @@ interface ActivityLogDoc {
   updatedAt?: Date | null;
 }
 
-const toActivityDto = (doc: ActivityLogDoc): ActivityLogDto => ({
+const toActivityDto = (doc: ActivityLogDoc): ActivityLog => ({
   id: doc._id.toString(),
   type: doc.type,
   description: doc.description,
@@ -31,7 +31,7 @@ const toActivityDto = (doc: ActivityLogDoc): ActivityLogDto => ({
 });
 
 export const mongoActivityRepository: ActivityRepository = {
-  async listActivity(filters: ActivityFiltersDto): Promise<ActivityLogDto[]> {
+  async listActivity(filters: ActivityFilters): Promise<ActivityLog[]> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
 
@@ -54,7 +54,7 @@ export const mongoActivityRepository: ActivityRepository = {
     return logs.map(toActivityDto);
   },
 
-  async countActivity(filters: ActivityFiltersDto): Promise<number> {
+  async countActivity(filters: ActivityFilters): Promise<number> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
 
@@ -69,7 +69,7 @@ export const mongoActivityRepository: ActivityRepository = {
     return db.collection<ActivityLogDoc>(COLLECTION).countDocuments(query);
   },
 
-  async createActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {
+  async createActivity(data: CreateActivityLog): Promise<ActivityLog> {
     const db = await getMongoDb();
     const now = new Date();
     const doc = {

@@ -885,11 +885,56 @@ export type SegmentSelectionStrategy =
       previousId: string | null;
     };
 
-export type BenchmarkSuggestionPreparation = {
-  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
-  validSuggestions: PromptExploderBenchmarkSuggestion[];
-  invalidSegmentTitles: string[];
+/**
+ * Prompt Exploder Segmentation & Library DTOs
+ */
+
+export type PromptExploderSegmentationRecord = {
+  id: string;
+  prompt: string;
+  segments: PromptExploderSegment[];
+  createdAt: string;
+  metadata?: Record<string, unknown>;
 };
+
+export type PromptExploderSegmentationAnalysisRecord = {
+  segmentCount: number;
+  averageConfidence: number;
+  lowConfidenceCount: number;
+  types: PromptExploderSegmentType[];
+  matchedRules: string[];
+};
+
+export type CaptureSegmentationRecordReason =
+  | 'manual_save'
+  | 'benchmark_suggestion'
+  | 'auto_learning'
+  | 'rule_tuning';
+
+export type CaptureSegmentationRecordResult = {
+  ok: boolean;
+  recordId?: string;
+  error?: string;
+  reason: CaptureSegmentationRecordReason;
+};
+
+/**
+ * Prompt Exploder Manual Bindings DTOs
+ */
+
+export type ManualBindingBuildSuccess = {
+  ok: true;
+  bindings: PromptExploderBinding[];
+  warnings: string[];
+};
+
+export type ManualBindingBuildError = {
+  ok: false;
+  error: string;
+  details?: Record<string, unknown>;
+};
+
+export type ManualBindingBuildResult = ManualBindingBuildSuccess | ManualBindingBuildError;
 
 /**
  * Prompt Exploder Tree DTOs

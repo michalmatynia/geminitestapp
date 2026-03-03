@@ -326,62 +326,62 @@ const iconSlotSchema = z.string().trim().min(1).nullable();
 
 const iconSlotsSchema = z
   .object({
-  folderClosed: iconSlotSchema.optional().default('Folder'),
-  folderOpen: iconSlotSchema.optional().default('FolderOpen'),
-  file: iconSlotSchema.optional().default('FileText'),
-  root: iconSlotSchema.optional().default('Folder'),
-  dragHandle: iconSlotSchema.optional().default('GripVertical'),
+    folderClosed: iconSlotSchema.optional().default('Folder'),
+    folderOpen: iconSlotSchema.optional().default('FolderOpen'),
+    file: iconSlotSchema.optional().default('FileText'),
+    root: iconSlotSchema.optional().default('Folder'),
+    dragHandle: iconSlotSchema.optional().default('GripVertical'),
   })
   .strict();
 
 const nestingRuleSchema = z
   .object({
-  childType: nodeTypeSchema.optional().default('file'),
-  childKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
-  targetType: targetTypeSchema.optional().default('folder'),
-  targetKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
-  allow: z.boolean().optional().default(false),
+    childType: nodeTypeSchema.optional().default('file'),
+    childKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
+    targetType: targetTypeSchema.optional().default('folder'),
+    targetKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
+    allow: z.boolean().optional().default(false),
   })
   .strict();
 
 const badgeSpecSchema: z.ZodType<FolderTreeBadgeSpec> = z
   .object({
-  field: z.enum(['children_count', 'custom']).optional().default('children_count'),
-  position: z.enum(['inline_after_name', 'trailing']).optional().default('trailing'),
-  style: z.enum(['count', 'dot', 'status_icon']).optional().default('count'),
-  statusMap: z
-    .record(z.string(), z.enum(['info', 'warning', 'error', 'success']))
-    .optional(),
+    field: z.enum(['children_count', 'custom']).optional().default('children_count'),
+    position: z.enum(['inline_after_name', 'trailing']).optional().default('trailing'),
+    style: z.enum(['count', 'dot', 'status_icon']).optional().default('count'),
+    statusMap: z
+      .record(z.string(), z.enum(['info', 'warning', 'error', 'success']))
+      .optional(),
   })
   .strict();
 
 const keyboardConfigSchema: z.ZodType<Partial<FolderTreeKeyboardConfig>> = z
   .object({
-  enabled: z.boolean().optional(),
-  arrowNavigation: z.boolean().optional(),
-  enterToRename: z.boolean().optional(),
-  deleteKey: z.boolean().optional(),
+    enabled: z.boolean().optional(),
+    arrowNavigation: z.boolean().optional(),
+    enterToRename: z.boolean().optional(),
+    deleteKey: z.boolean().optional(),
   })
   .strict();
 
 const multiSelectConfigSchema: z.ZodType<Partial<FolderTreeMultiSelectConfig>> = z
   .object({
-  enabled: z.boolean().optional(),
-  ctrlClick: z.boolean().optional(),
-  shiftClick: z.boolean().optional(),
-  selectAll: z.boolean().optional(),
+    enabled: z.boolean().optional(),
+    ctrlClick: z.boolean().optional(),
+    shiftClick: z.boolean().optional(),
+    selectAll: z.boolean().optional(),
   })
   .strict();
 
 const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z
   .object({
-  enabled: z.boolean().optional(),
-  debounceMs: z.number().optional(),
-  filterMode: z.enum(['highlight', 'filter_tree']).optional(),
-  matchFields: z
-    .array(z.enum(['name', 'path', 'metadata']))
-    .optional(),
-  minQueryLength: z.number().optional(),
+    enabled: z.boolean().optional(),
+    debounceMs: z.number().optional(),
+    filterMode: z.enum(['highlight', 'filter_tree']).optional(),
+    matchFields: z
+      .array(z.enum(['name', 'path', 'metadata']))
+      .optional(),
+    minQueryLength: z.number().optional(),
   })
   .strict();
 
@@ -395,11 +395,11 @@ const nodeStatusValues: [MasterTreeNodeStatus, ...MasterTreeNodeStatus[]] = [
 
 const statusIconsSchema: z.ZodType<Partial<Record<MasterTreeNodeStatus, string | null>>> = z
   .object({
-  loading: z.string().nullable().optional(),
-  error: z.string().nullable().optional(),
-  locked: z.string().nullable().optional(),
-  warning: z.string().nullable().optional(),
-  success: z.string().nullable().optional(),
+    loading: z.string().nullable().optional(),
+    error: z.string().nullable().optional(),
+    locked: z.string().nullable().optional(),
+    warning: z.string().nullable().optional(),
+    success: z.string().nullable().optional(),
   })
   .strict();
 
@@ -408,75 +408,75 @@ export const masterTreeNodeStatusValues: readonly MasterTreeNodeStatus[] = nodeS
 
 const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z
   .object({
-  version: z.literal(2).optional().default(2),
-  placeholders: z
-    .object({
-      preset: placeholderPresetSchema.optional().default('sublime'),
-      style: placeholderStyleSchema.optional().default('line'),
-      emphasis: placeholderEmphasisSchema.optional().default('subtle'),
-      rootDropLabel: z.string().trim().min(1).optional().default('Drop to Root'),
-      inlineDropLabel: z.string().trim().min(1).optional().default('Drop here'),
-    })
-    .strict()
-    .optional()
-    .default({
-      preset: 'sublime',
-      style: 'line',
-      emphasis: 'subtle',
-      rootDropLabel: 'Drop to Root',
-      inlineDropLabel: 'Drop here',
-    }),
-  icons: z
-    .object({
-      slots: iconSlotsSchema.optional().default({
-        folderClosed: 'Folder',
-        folderOpen: 'FolderOpen',
-        file: 'FileText',
-        root: 'Folder',
-        dragHandle: 'GripVertical',
+    version: z.literal(2).optional().default(2),
+    placeholders: z
+      .object({
+        preset: placeholderPresetSchema.optional().default('sublime'),
+        style: placeholderStyleSchema.optional().default('line'),
+        emphasis: placeholderEmphasisSchema.optional().default('subtle'),
+        rootDropLabel: z.string().trim().min(1).optional().default('Drop to Root'),
+        inlineDropLabel: z.string().trim().min(1).optional().default('Drop here'),
+      })
+      .strict()
+      .optional()
+      .default({
+        preset: 'sublime',
+        style: 'line',
+        emphasis: 'subtle',
+        rootDropLabel: 'Drop to Root',
+        inlineDropLabel: 'Drop here',
       }),
-      byKind: z.record(z.string(), iconSlotSchema).optional().default({}),
-    })
-    .strict()
-    .optional()
-    .default({
-      slots: {
-        folderClosed: 'Folder',
-        folderOpen: 'FolderOpen',
-        file: 'FileText',
-        root: 'Folder',
-        dragHandle: 'GripVertical',
-      },
-      byKind: {},
-    }),
-  nesting: z
-    .object({
-      defaultAllow: z.boolean().optional().default(false),
-      blockedTargetKinds: z.array(z.string().trim().min(1)).optional().default([]),
-      rules: z.array(nestingRuleSchema).optional().default([]),
-    })
-    .strict()
-    .optional()
-    .default({
-      defaultAllow: false,
-      blockedTargetKinds: [],
-      rules: [],
-    }),
-  interactions: z
-    .object({
-      selectionBehavior: selectionBehaviorSchema.optional().default('click_away'),
-    })
-    .strict()
-    .optional()
-    .default({
-      selectionBehavior: 'click_away',
-    }),
-  // Optional capability sections — missing in old persisted JSON → undefined (safe default)
-  badges: badgeSpecSchema.optional(),
-  keyboard: keyboardConfigSchema.optional(),
-  multiSelect: multiSelectConfigSchema.optional(),
-  search: searchConfigSchema.optional(),
-  statusIcons: statusIconsSchema.optional(),
+    icons: z
+      .object({
+        slots: iconSlotsSchema.optional().default({
+          folderClosed: 'Folder',
+          folderOpen: 'FolderOpen',
+          file: 'FileText',
+          root: 'Folder',
+          dragHandle: 'GripVertical',
+        }),
+        byKind: z.record(z.string(), iconSlotSchema).optional().default({}),
+      })
+      .strict()
+      .optional()
+      .default({
+        slots: {
+          folderClosed: 'Folder',
+          folderOpen: 'FolderOpen',
+          file: 'FileText',
+          root: 'Folder',
+          dragHandle: 'GripVertical',
+        },
+        byKind: {},
+      }),
+    nesting: z
+      .object({
+        defaultAllow: z.boolean().optional().default(false),
+        blockedTargetKinds: z.array(z.string().trim().min(1)).optional().default([]),
+        rules: z.array(nestingRuleSchema).optional().default([]),
+      })
+      .strict()
+      .optional()
+      .default({
+        defaultAllow: false,
+        blockedTargetKinds: [],
+        rules: [],
+      }),
+    interactions: z
+      .object({
+        selectionBehavior: selectionBehaviorSchema.optional().default('click_away'),
+      })
+      .strict()
+      .optional()
+      .default({
+        selectionBehavior: 'click_away',
+      }),
+    // Optional capability sections — missing in old persisted JSON → undefined (safe default)
+    badges: badgeSpecSchema.optional(),
+    keyboard: keyboardConfigSchema.optional(),
+    multiSelect: multiSelectConfigSchema.optional(),
+    search: searchConfigSchema.optional(),
+    statusIcons: statusIconsSchema.optional(),
   })
   .strict();
 

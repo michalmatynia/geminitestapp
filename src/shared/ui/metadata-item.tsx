@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
+import { Label } from './label';
 
 interface MetadataItemProps {
   label: ReactNode;
@@ -41,16 +42,16 @@ export function MetadataItem({
         )}
       >
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <span
+        <Label
           className={cn(
-            'uppercase tracking-wider text-gray-500 shrink-0',
+            'uppercase tracking-wider text-gray-500 shrink-0 leading-none',
             isSubtle ? 'font-medium' : 'font-bold',
             labelClassName
           )}
         >
           {label}
           {isStringLabel ? ':' : ''}
-        </span>
+        </Label>
         <div
           className={cn(
             'text-gray-300 truncate',
@@ -68,14 +69,14 @@ export function MetadataItem({
     <div className={cn('p-3 rounded-lg bg-card/40 border border-border/60', className)}>
       <div className='flex items-center gap-1.5 mb-1'>
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <span
+        <Label
           className={cn(
             'block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none',
             labelClassName
           )}
         >
           {label}
-        </span>
+        </Label>
       </div>
       <div
         className={cn(

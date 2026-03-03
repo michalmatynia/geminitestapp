@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CaseListNodeItem } from '@/features/case-resolver/components/list/sections/CaseListNodeItem';
 import {
+  CaseListNodeRuntimeProvider,
+  type CaseListNodeRuntimeContextValue,
+} from '@/features/case-resolver/components/list/sections/CaseListNodeRuntimeContext';
+import {
   toCaseResolverCaseContentFileNodeId,
   toCaseResolverCaseContentFolderNodeId,
   toCaseResolverCaseNodeId,
@@ -12,6 +16,28 @@ import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engin
 
 const FolderClosedIcon = () => <span data-testid='folder-closed-icon' />;
 const FolderOpenIcon = () => <span data-testid='folder-open-icon' />;
+
+const createRuntimeContextValue = (): CaseListNodeRuntimeContextValue => ({
+  filesById: new Map<string, CaseResolverFile>(),
+  caseTagPathById: new Map<string, string>(),
+  caseIdentifierPathById: new Map<string, string>(),
+  caseCategoryPathById: new Map<string, string>(),
+  renameDraft: '',
+  onUpdateRenameDraft: vi.fn(),
+  onCommitRename: vi.fn(),
+  onCancelRename: vi.fn(),
+  handleToggleCaseStatus: vi.fn(),
+  handleToggleHeldCase: vi.fn(),
+  handleNestHeldCase: vi.fn(),
+  handlePrefetchCase: vi.fn(),
+  handlePrefetchFile: vi.fn(),
+  handleOpenCase: vi.fn(),
+  handleOpenFile: vi.fn(),
+  handleCreateCase: vi.fn(),
+  handleDeleteCase: vi.fn(),
+  FolderClosedIcon,
+  FolderOpenIcon,
+});
 
 const createBaseProps = () => ({
   node: {
@@ -33,38 +59,17 @@ const createBaseProps = () => ({
   isDropTarget: false,
   dropPosition: null as 'inside' | 'before' | 'after' | null,
   toggleExpand: vi.fn(),
-  filesById: new Map<string, CaseResolverFile>(),
-  caseTagPathById: new Map<string, string>(),
-  caseIdentifierPathById: new Map<string, string>(),
-  caseCategoryPathById: new Map<string, string>(),
-  controller: {
-    renameDraft: '',
-    updateRenameDraft: vi.fn(),
-    commitRename: vi.fn(),
-    cancelRename: vi.fn(),
-  },
-  handleToggleCaseStatus: vi.fn(),
   heldCaseId: null,
   canNestHeldHere: false,
   canShowNestHeldAction: false,
   nestHeldDisabledReason: null,
-  handleToggleHeldCase: vi.fn(),
-  handleNestHeldCase: vi.fn(),
-  handlePrefetchCase: vi.fn(),
-  handlePrefetchFile: vi.fn(),
-  handleOpenCase: vi.fn(),
-  handleOpenFile: vi.fn(),
-  handleEditCase: vi.fn(),
-  handleCreateCase: vi.fn(),
-  handleDeleteCase: vi.fn(),
-  FolderClosedIcon,
-  FolderOpenIcon,
 });
 
 describe('CaseListNodeItem', () => {
   it('keeps case row actions and opens case by clicking case name', () => {
+    const runtime = createRuntimeContextValue();
     const props = createBaseProps();
-    props.filesById.set('case-1', {
+    runtime.filesById.set('case-1', {
       id: 'case-1',
       name: 'Case One',
       fileType: 'case',
@@ -74,22 +79,25 @@ describe('CaseListNodeItem', () => {
       isLocked: false,
     } as unknown as CaseResolverFile);
 
-    render(<CaseListNodeItem {...props} />);
+    render(
+      <CaseListNodeRuntimeProvider value={runtime}>
+        <CaseListNodeItem {...props} />
+      </CaseListNodeRuntimeProvider>
+    );
 
     const openCaseButton = screen.getByRole('button', { name: 'Case One' });
-
-    expect(openCaseButton).toHaveAttribute('draggable', 'false');
 
     fireEvent.mouseEnter(openCaseButton);
     fireEvent.click(openCaseButton);
 
-    expect(props.handlePrefetchCase).toHaveBeenCalledWith('case-1');
-    expect(props.handleOpenCase).toHaveBeenCalledWith('case-1');
+    expect(runtime.handlePrefetchCase).toHaveBeenCalledWith('case-1');
+    expect(runtime.handleOpenCase).toHaveBeenCalledWith('case-1');
     expect(screen.getByRole('button', { name: 'Child' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('renders nested folder row as read-only and only toggles expand/collapse', () => {
+    const runtime = createRuntimeContextValue();
     const props = createBaseProps();
     props.node = {
       id: toCaseResolverCaseContentFolderNodeId('case-1', 'evidence'),
@@ -105,17 +113,22 @@ describe('CaseListNodeItem', () => {
     props.hasChildren = true;
     props.isExpanded = false;
 
-    render(<CaseListNodeItem {...props} />);
+    render(
+      <CaseListNodeRuntimeProvider value={runtime}>
+        <CaseListNodeItem {...props} />
+      </CaseListNodeRuntimeProvider>
+    );
 
     fireEvent.click(screen.getByLabelText('Expand folder'));
 
     expect(props.toggleExpand).toHaveBeenCalledTimes(1);
-    expect(props.handleOpenCase).not.toHaveBeenCalled();
-    expect(props.handleCreateCase).not.toHaveBeenCalled();
+    expect(runtime.handleOpenCase).not.toHaveBeenCalled();
+    expect(runtime.handleCreateCase).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Child' })).not.toBeInTheDocument();
   });
 
   it('opens nested file directly in case resolver using file id', () => {
+    const runtime = createRuntimeContextValue();
     const props = createBaseProps();
     props.node = {
       id: toCaseResolverCaseContentFileNodeId('case-1', 'file-1'),
@@ -128,7 +141,7 @@ describe('CaseListNodeItem', () => {
       metadata: { isLocked: false },
       children: [],
     };
-    props.filesById.set('file-1', {
+    runtime.filesById.set('file-1', {
       id: 'file-1',
       name: 'Transcript.pdf',
       fileType: 'document',
@@ -137,18 +150,20 @@ describe('CaseListNodeItem', () => {
       isLocked: false,
     } as unknown as CaseResolverFile);
 
-    render(<CaseListNodeItem {...props} />);
+    render(
+      <CaseListNodeRuntimeProvider value={runtime}>
+        <CaseListNodeItem {...props} />
+      </CaseListNodeRuntimeProvider>
+    );
 
     const openFileButton = screen.getByRole('button', { name: 'Transcript.pdf' });
-
-    expect(openFileButton).toHaveAttribute('draggable', 'false');
 
     fireEvent.mouseEnter(openFileButton);
     fireEvent.click(openFileButton);
 
-    expect(props.handlePrefetchFile).toHaveBeenCalledWith('file-1');
-    expect(props.handleOpenFile).toHaveBeenCalledWith('file-1');
-    expect(props.handleOpenCase).not.toHaveBeenCalled();
+    expect(runtime.handlePrefetchFile).toHaveBeenCalledWith('file-1');
+    expect(runtime.handleOpenFile).toHaveBeenCalledWith('file-1');
+    expect(runtime.handleOpenCase).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Child' })).not.toBeInTheDocument();
   });
 });

@@ -437,6 +437,54 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
   });
 
+  it('rejects inline person email fields when canonical email links are missing', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              email: 'jane@example.com',
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline person email payloads are no longer supported/);
+  });
+
+  it('rejects inline organization email fields when canonical email links are missing', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [],
+          organizations: [
+            createOrganizationRecord({
+              emails: ['org@example.com'],
+            }),
+          ],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline organization email payloads are no longer supported/);
+  });
+
   it('normalizes email records and email links', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({

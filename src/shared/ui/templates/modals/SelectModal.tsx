@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useMemo } from 'react';
 
-import { AppModal } from '@/shared/ui/app-modal';
-import { Button } from '@/shared/ui/button';
+import { FormModal } from '@/shared/ui/FormModal';
+import { SearchInput } from '@/shared/ui/search-input';
+import { cn } from '@/shared/utils';
 
 export interface SelectOption<T> {
   id: string | number;
@@ -19,7 +20,7 @@ export interface SelectModalProps<T> {
   title: string;
   subtitle?: string;
   options: SelectOption<T>[];
-  onSelect: (option: SelectOption<T>) => void;
+  onSelect: (option: SelectOption<T> | SelectOption<T>[]) => void;
   loading?: boolean;
   searchable?: boolean;
   multiple?: boolean;
@@ -28,7 +29,7 @@ export interface SelectModalProps<T> {
 
 /**
  * Reusable modal template for single/multi-select operations.
- * Consolidates SelectIntegrationModal, SelectProductForListingModal patterns.
+ * Refactored to leverage FormModal and SearchInput for consistent UX.
  */
 export function SelectModal<T>({
   open,
@@ -43,118 +44,102 @@ export function SelectModal<T>({
   size = 'md',
 }: SelectModalProps<T>) {
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Set<string | number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
 
   const filteredOptions = useMemo(() => {
     if (!searchable || !search) return options;
+    const term = search.toLowerCase();
     return options.filter(
       (opt) =>
-        opt.label.toLowerCase().includes(search.toLowerCase()) ||
-        opt.description?.toLowerCase().includes(search.toLowerCase())
+        opt.label.toLowerCase().includes(term) ||
+        opt.description?.toLowerCase().includes(term)
     );
   }, [options, search, searchable]);
 
   const handleSelect = useCallback(
     (option: SelectOption<T>) => {
       if (multiple) {
-        const newSelected = new Set(selected);
-        if (newSelected.has(option.id)) {
-          newSelected.delete(option.id);
+        const next = new Set(selectedIds);
+        if (next.has(option.id)) {
+          next.delete(option.id);
         } else {
-          newSelected.add(option.id);
+          next.add(option.id);
         }
-        setSelected(newSelected);
+        setSelectedIds(next);
       } else {
         onSelect(option);
         onClose();
       }
     },
-    [multiple, selected, onSelect, onClose]
+    [multiple, selectedIds, onSelect, onClose]
   );
 
   const handleConfirm = useCallback(() => {
     if (multiple) {
-      const selectedOptions = options.filter((opt) => selected.has(opt.id));
-      selectedOptions.forEach((opt) => onSelect(opt));
+      const selectedOptions = options.filter((opt) => selectedIds.has(opt.id));
+      onSelect(selectedOptions);
       onClose();
     }
-  }, [multiple, selected, options, onSelect, onClose]);
+  }, [multiple, selectedIds, options, onSelect, onClose]);
 
   return (
-    <AppModal
+    <FormModal
       open={open}
-      onOpenChange={onClose}
       onClose={onClose}
       title={title}
       subtitle={subtitle}
       size={size}
-      headerActions={
-        <Button onClick={onClose} variant='outline' disabled={loading}>
-          Close
-        </Button>
-      }
+      onSave={handleConfirm}
+      showSaveButton={multiple}
+      saveText={`Select (${selectedIds.size})`}
+      isSaveDisabled={selectedIds.size === 0}
+      isSaving={loading}
     >
       <div className='flex flex-col gap-4'>
         {searchable && (
-          <input
-            type='text'
+          <SearchInput
             placeholder='Search options...'
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
             disabled={loading}
-            className='px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground'
+            size='sm'
           />
         )}
 
         {loading ? (
-          <div className='flex items-center justify-center py-8'>
-            <span className='text-muted-foreground'>Loading...</span>
+          <div className='flex items-center justify-center py-12'>
+            <span className='text-sm text-muted-foreground animate-pulse'>Loading options...</span>
           </div>
         ) : filteredOptions.length === 0 ? (
-          <div className='flex items-center justify-center py-8'>
-            <span className='text-muted-foreground'>No options available</span>
+          <div className='flex items-center justify-center py-12'>
+            <span className='text-sm text-muted-foreground italic'>No options available</span>
           </div>
         ) : (
-          <div className='space-y-2 max-h-96 overflow-y-auto'>
+          <div className='space-y-1 max-h-96 overflow-y-auto pr-1'>
             {filteredOptions.map((option) => (
               <button
                 key={option.id}
+                type='button'
                 onClick={() => handleSelect(option)}
                 disabled={option.disabled || loading}
-                className={`
-                  w-full p-3 text-left rounded-md border transition-colors
-                  ${
-              selected.has(option.id)
-                ? 'bg-primary/10 border-primary'
-                : 'bg-card border-border hover:bg-muted'
-              }
-                  ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                `}
+                className={cn(
+                  'w-full p-3 text-left rounded-md border transition-all duration-200',
+                  selectedIds.has(option.id)
+                    ? 'bg-primary/10 border-primary text-primary'
+                    : 'bg-card/40 border-border/60 hover:border-border hover:bg-muted/20 text-gray-300',
+                  option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                )}
               >
-                <div className='font-medium'>{option.label}</div>
+                <div className='font-medium text-sm'>{option.label}</div>
                 {option.description && (
-                  <div className='text-sm text-muted-foreground'>{option.description}</div>
+                  <div className='text-xs opacity-70 mt-0.5'>{option.description}</div>
                 )}
               </button>
             ))}
           </div>
         )}
-
-        {multiple && (
-          <div className='flex justify-end gap-2 pt-4 border-t border-border'>
-            <Button onClick={onClose} variant='outline' disabled={loading}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirm}
-              variant='default'
-              disabled={selected.size === 0 || loading}
-            >
-              Select ({selected.size})
-            </Button>
-          </div>
-        )}
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

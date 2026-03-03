@@ -2,11 +2,20 @@
 
 import React from 'react';
 
-import { AppModal } from '@/shared/ui/app-modal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/ui/alert-dialog';
 import { Button } from '@/shared/ui/button';
-
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { cn } from '@/shared/utils';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -29,7 +38,8 @@ export interface ConfirmModalProps {
 
 /**
  * Reusable modal template for confirmation dialogs.
- * Consolidates delete/destructive action confirmations across features.
+ * Refactored to leverage AlertDialog primitive for better accessibility.
+ * Consolidates destructive action confirmations across features.
  */
 export function ConfirmModal({
   isOpen,
@@ -49,7 +59,8 @@ export function ConfirmModal({
   confirmPasswordLabel = 'Confirm with your user password',
   children,
 }: ConfirmModalProps) {
-  const handleConfirm = async () => {
+  const handleConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault();
     try {
       await Promise.resolve(onConfirm());
       onClose();
@@ -60,57 +71,69 @@ export function ConfirmModal({
 
   const isConfirmDisabled = loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
 
+  const sizeClasses = {
+    sm: 'sm:max-w-[425px]',
+    md: 'sm:max-w-[600px]',
+    lg: 'sm:max-w-[800px]',
+    xl: 'sm:max-w-[1000px]',
+  }[size];
+
   return (
-    <AppModal
-      open={isOpen}
-      onOpenChange={onClose}
-      onClose={onClose}
-      title={title}
-      subtitle={subtitle}
-      size={size}
-      showClose={false}
-      footer={
-        <div className='flex gap-2 w-full'>
-          {extraAction}
-          <div className='flex-1' />
-          <Button onClick={onClose} variant='outline' disabled={loading}>
-            {cancelText}
-          </Button>
-          <Button
-            onClick={() => {
-              void handleConfirm();
-            }}
-            variant={isDangerous ? 'destructive' : 'primary'}
-            disabled={isConfirmDisabled}
-          >
-            {loading ? 'Processing...' : confirmText}
-          </Button>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <AlertDialogContent className={cn(sizeClasses)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          {subtitle && <AlertDialogDescription>{subtitle}</AlertDialogDescription>}
+        </AlertDialogHeader>
+
+        <div className='py-4 space-y-4'>
+          {message && (
+            <div className='text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed'>
+              {message}
+            </div>
+          )}
+
+          {onConfirmPasswordChange && (
+            <div className='space-y-2'>
+              <Label className='text-xs font-medium text-gray-300'>
+                {confirmPasswordLabel}
+              </Label>
+              <Input
+                type='password'
+                value={confirmPassword}
+                onChange={(e) => onConfirmPasswordChange(e.target.value)}
+                placeholder='Enter your password'
+                disabled={loading}
+                autoFocus
+              />
+            </div>
+          )}
+
+          {children}
         </div>
-      }
-    >
-      <div className='space-y-4'>
-        {message && (
-          <div className='text-sm text-muted-foreground whitespace-pre-wrap'>{message}</div>
-        )}
 
-        {onConfirmPasswordChange && (
-          <div className='space-y-2'>
-            <Label className='text-xs font-medium text-gray-300'>
-              {confirmPasswordLabel}
-            </Label>
-            <Input
-              type='password'
-              value={confirmPassword}
-              onChange={(e) => onConfirmPasswordChange(e.target.value)}
-              placeholder='Enter your password'
-              disabled={loading}
-              autoFocus
-            />
+        <AlertDialogFooter>
+          <div className='flex gap-2 w-full'>
+            {extraAction}
+            <div className='flex-1' />
+            <AlertDialogCancel asChild>
+              <Button variant='outline' disabled={loading} onClick={onClose}>
+                {cancelText}
+              </Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                onClick={handleConfirm}
+                variant={isDangerous ? 'destructive' : 'primary'}
+                disabled={isConfirmDisabled}
+                loading={loading}
+              >
+                {confirmText}
+              </Button>
+            </AlertDialogAction>
           </div>
-        )}
-
-        {children}
-      </div>
-    </AppModal>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

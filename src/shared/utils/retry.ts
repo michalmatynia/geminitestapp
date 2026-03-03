@@ -24,8 +24,13 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     const mod = await import('@/shared/lib/observability/system-logger');
     await mod.logSystemEvent(params);
   } catch (error) {
-    logger.error('Failed to log system event via observability feature', error);
-    logger.info('System event (fallback)', params as unknown as Record<string, unknown>);
+    logger.error('Failed to log system event via observability feature', error, {
+      service: 'shared.retry',
+    });
+    logger.info('System event (fallback)', {
+      service: 'shared.retry',
+      ...(params as unknown as Record<string, unknown>),
+    });
   }
 };
 

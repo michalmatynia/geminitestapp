@@ -14,7 +14,7 @@ import {
   useUpsertEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
 
-export function useAgentTeachingQueriesCollectionsState() {
+export function useAgentTeachingCollectionsState() {
   const { toast } = useToast();
   const { collections, agents, embeddingModelId, isLoading } = useAgentTeachingQueriesContext();
   const embeddingModels = useMemo(() => {

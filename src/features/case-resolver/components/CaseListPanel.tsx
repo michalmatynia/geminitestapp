@@ -43,29 +43,17 @@ import { CaseListSorting } from './list/sections/CaseListSorting';
 import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
 import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
 import { useCaseListAutoExpandBootstrap } from './list/hooks/useCaseListAutoExpandBootstrap';
+import {
+  CaseListNodeRuntimeProvider,
+  type CaseListNodeRuntimeContextValue,
+} from './list/sections/CaseListNodeRuntimeContext';
 
 /** Thin wrapper that computes per-node derived values so CaseListNodeItem can be memo'd. */
 type CaseListNodeItemWrapperProps = FolderTreeViewportRenderNodeInput & {
-  filesById: Map<string, CaseResolverFile>;
-  caseTagPathById: Map<string, string>;
-  caseIdentifierPathById: Map<string, string>;
-  caseCategoryPathById: Map<string, string>;
-  controller: MasterFolderTreeController;
-  handleToggleCaseStatus: (id: string) => Promise<void>;
   heldCaseId: string | null;
   heldCaseFile: CaseResolverFile | null;
   isHierarchyLocked: boolean;
   isHeldCaseAncestorOf: (candidateCaseId: string) => boolean;
-  handleToggleHeldCase: (caseId: string) => void;
-  handleNestHeldCase: (targetCaseId: string) => void;
-  handlePrefetchCase: (id: string) => void;
-  handlePrefetchFile: (id: string) => void;
-  handleOpenCase: (id: string) => void;
-  handleOpenFile: (id: string) => void;
-  handleCreateCase: (parentId: string | null) => void;
-  handleDeleteCase: (id: string) => void;
-  FolderClosedIcon: React.ComponentType<{ className?: string }>;
-  FolderOpenIcon: React.ComponentType<{ className?: string }>;
 };
 
 const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(
@@ -539,39 +527,56 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     (props: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
       <CaseListNodeItemWrapper
         {...props}
-        filesById={filesById}
-        caseTagPathById={caseTagPathById}
-        caseIdentifierPathById={caseIdentifierPathById}
-        caseCategoryPathById={caseCategoryPathById}
-        controller={controller}
-        handleToggleCaseStatus={handleToggleCaseStatus}
         heldCaseId={heldCaseId}
         heldCaseFile={heldCaseFile}
         isHierarchyLocked={isHierarchyLocked}
         isHeldCaseAncestorOf={isHeldCaseAncestorOf}
-        handleToggleHeldCase={handleToggleHeldCase}
-        handleNestHeldCase={handleNestHeldCaseVoid}
-        handlePrefetchCase={handlePrefetchCase}
-        handlePrefetchFile={handlePrefetchFile}
-        handleOpenCase={handleOpenCase}
-        handleOpenFile={handleOpenFile}
-        handleCreateCase={handleCreateCaseLocal}
-        handleDeleteCase={handleDeleteCase}
-        FolderClosedIcon={FolderClosedIcon}
-        FolderOpenIcon={FolderOpenIcon}
       />
     ),
+    [
+      heldCaseId,
+      heldCaseFile,
+      isHierarchyLocked,
+      isHeldCaseAncestorOf,
+    ]
+  );
+
+  const caseListNodeRuntimeValue = useMemo(
+    (): CaseListNodeRuntimeContextValue => ({
+      filesById,
+      caseTagPathById,
+      caseIdentifierPathById,
+      caseCategoryPathById,
+      renameDraft: controller.renameDraft,
+      onUpdateRenameDraft: (value: string): void => {
+        controller.updateRenameDraft(value);
+      },
+      onCommitRename: (): void => {
+        void controller.commitRename();
+      },
+      onCancelRename: (): void => {
+        controller.cancelRename();
+      },
+      handleToggleCaseStatus,
+      handleToggleHeldCase,
+      handleNestHeldCase: handleNestHeldCaseVoid,
+      handlePrefetchCase,
+      handlePrefetchFile,
+      handleOpenCase,
+      handleOpenFile,
+      handleCreateCase: handleCreateCaseLocal,
+      handleDeleteCase,
+      FolderClosedIcon,
+      FolderOpenIcon,
+    }),
     [
       filesById,
       caseTagPathById,
       caseIdentifierPathById,
       caseCategoryPathById,
       controller,
+      controller.renameDraft,
       handleToggleCaseStatus,
-      heldCaseId,
-      heldCaseFile,
-      isHierarchyLocked,
-      isHeldCaseAncestorOf,
       handleToggleHeldCase,
       handleNestHeldCaseVoid,
       handlePrefetchCase,
@@ -698,18 +703,20 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             onOpenCase={handleOpenCase}
             onClearHeldCase={handleClearHeldCase}
           />
-          <FolderTreeViewportV2
-            controller={controller}
-            scrollToNodeRef={scrollToNodeRef}
-            enableDnd={!isHierarchyLocked}
-            canStartDrag={canStartDrag}
-            canDrop={canDrop}
-            rootDropUi={rootDropUi}
-            onNodeDrop={(input, treeController): void => {
-              void handleNodeDrop(input, treeController);
-            }}
-            renderNode={handleRenderNode}
-          />
+          <CaseListNodeRuntimeProvider value={caseListNodeRuntimeValue}>
+            <FolderTreeViewportV2
+              controller={controller}
+              scrollToNodeRef={scrollToNodeRef}
+              enableDnd={!isHierarchyLocked}
+              canStartDrag={canStartDrag}
+              canDrop={canDrop}
+              rootDropUi={rootDropUi}
+              onNodeDrop={(input, treeController): void => {
+                void handleNodeDrop(input, treeController);
+              }}
+              renderNode={handleRenderNode}
+            />
+          </CaseListNodeRuntimeProvider>
           <MasterTreeSettingsButton
             instance='case_resolver_cases'
             href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}

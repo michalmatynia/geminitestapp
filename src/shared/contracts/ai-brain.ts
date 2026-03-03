@@ -73,32 +73,34 @@ export const aiBrainCapabilityKeySchema = z.enum([
 ]);
 export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 
-export const aiBrainAssignmentSchema = z.object({
-  enabled: z.boolean().default(true),
-  provider: aiBrainProviderSchema.default('model'),
-  modelId: z.string().trim().default(''),
-  agentId: z.string().trim().default(''),
-  temperature: numberField(0, 2),
-  maxTokens: numberField(1, 8192),
-  systemPrompt: z.string().trim().optional(),
-  notes: z.string().trim().nullable().optional().default(null),
-});
+export const aiBrainAssignmentSchema = z
+  .object({
+    enabled: z.boolean().default(true),
+    provider: aiBrainProviderSchema.default('model'),
+    modelId: z.string().trim().default(''),
+    agentId: z.string().trim().default(''),
+    temperature: numberField(0, 2),
+    maxTokens: numberField(1, 8192),
+    systemPrompt: z.string().trim().optional(),
+    notes: z.string().trim().nullable().optional().default(null),
+  })
+  .strict();
 
 export type AiBrainAssignment = z.infer<typeof aiBrainAssignmentSchema>;
-export const aiBrainCapabilityAssignmentSchema = aiBrainAssignmentSchema;
-export type AiBrainCapabilityAssignment = AiBrainAssignment;
 
-export const aiBrainSettingsSchema = z.object({
-  defaults: aiBrainAssignmentSchema,
-  assignments: z
-    .record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional())
-    .optional()
-    .default({} as Record<AiBrainFeature, AiBrainAssignment>),
-  capabilities: z
-    .record(aiBrainCapabilityKeySchema, aiBrainCapabilityAssignmentSchema.optional())
-    .optional()
-    .default({} as Record<AiBrainCapabilityKey, AiBrainCapabilityAssignment>),
-});
+export const aiBrainSettingsSchema = z
+  .object({
+    defaults: aiBrainAssignmentSchema,
+    assignments: z
+      .record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional())
+      .optional()
+      .default({} as Record<AiBrainFeature, AiBrainAssignment>),
+    capabilities: z
+      .record(aiBrainCapabilityKeySchema, aiBrainAssignmentSchema.optional())
+      .optional()
+      .default({} as Record<AiBrainCapabilityKey, AiBrainAssignment>),
+  })
+  .strict();
 
 export type AiBrainSettings = z.infer<typeof aiBrainSettingsSchema>;
 export type UpdateAiBrainSettings = Partial<AiBrainSettings>;
@@ -127,21 +129,25 @@ export const aiBrainCatalogPoolSchema = z.enum([
 ]);
 export type AiBrainCatalogPool = z.infer<typeof aiBrainCatalogPoolSchema>;
 
-export const aiBrainCatalogEntrySchema = z.object({
-  pool: aiBrainCatalogPoolSchema,
-  value: z.string().trim().min(1),
-});
+export const aiBrainCatalogEntrySchema = z
+  .object({
+    pool: aiBrainCatalogPoolSchema,
+    value: z.string().trim().min(1),
+  })
+  .strict();
 export type AiBrainCatalogEntry = z.infer<typeof aiBrainCatalogEntrySchema>;
 
-export const aiBrainProviderCatalogSchema = z.object({
-  entries: z.array(aiBrainCatalogEntrySchema).optional().default([]),
-  modelPresets: providerListSchema,
-  paidModels: providerListSchema,
-  ollamaModels: providerListSchema,
-  agentModels: providerListSchema,
-  deepthinkingAgents: providerListSchema,
-  playwrightPersonas: providerListSchema,
-});
+export const aiBrainProviderCatalogSchema = z
+  .object({
+    entries: z.array(aiBrainCatalogEntrySchema).optional().default([]),
+    modelPresets: providerListSchema,
+    paidModels: providerListSchema,
+    ollamaModels: providerListSchema,
+    agentModels: providerListSchema,
+    deepthinkingAgents: providerListSchema,
+    playwrightPersonas: providerListSchema,
+  })
+  .strict();
 
 export type AiBrainProviderCatalog = z.infer<typeof aiBrainProviderCatalogSchema>;
 

@@ -77,6 +77,7 @@ export function ImageStudioSettingsProvider({
   const [backfillDryRun, setBackfillDryRun] = useState<boolean>(true);
   const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] =
     useState<boolean>(true);
+  const [settingsHydrationError, setSettingsHydrationError] = useState<Error | null>(null);
   const hydratedSignatureRef = useRef<string | null>(null);
 
   const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
@@ -123,8 +124,13 @@ export function ImageStudioSettingsProvider({
     setPromptValidationEnabled,
     setPromptValidationRulesText,
     setPromptValidationRulesError,
+    setSettingsHydrationError,
     hydrationSignature,
   });
+
+  if (settingsHydrationError) {
+    throw settingsHydrationError;
+  }
 
   const handleRefresh = useCallback(async (): Promise<void> => {
     hydratedSignatureRef.current = null;

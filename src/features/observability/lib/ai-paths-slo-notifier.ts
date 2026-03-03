@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
-import type { AiPathRunQueueSloStatusDto as AiPathRunQueueSloStatus } from '@/shared/contracts/ai-paths-runtime';
+import type { AiPathRunQueueSloStatus } from '@/shared/contracts/ai-paths-runtime';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

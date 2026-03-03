@@ -3,7 +3,7 @@
 import React from 'react';
 import { GripVertical, Layers } from 'lucide-react';
 
-import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow, Button } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 
 import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
@@ -161,9 +161,9 @@ export function SequenceGroupFolderNodeItem({
           dragOverClassName='bg-transparent text-gray-100 ring-0'
           className={cn('relative h-8 text-xs', isDragging && 'opacity-50')}
         >
-          <button
-            type='button'
-            className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left'
+          <Button
+            variant='ghost'
+            className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left p-0 font-normal hover:bg-transparent justify-start'
             onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.stopPropagation();
               select();
@@ -191,7 +191,7 @@ export function SequenceGroupFolderNodeItem({
               <Layers className='size-3.5 text-cyan-400' />
             </span>
             <span className='min-w-0 flex-1 truncate font-medium text-cyan-200'>{node.name}</span>
-            <span className='ml-1 flex shrink-0 items-center gap-1.5'>
+            <span className='ml-1 flex shrink-0 items-center gap-1.5 pr-2'>
               <span className='text-[10px] text-gray-500'>
                 {childCount} pattern{childCount === 1 ? '' : 's'}
               </span>
@@ -215,7 +215,7 @@ export function SequenceGroupFolderNodeItem({
                 Ungroup
               </span>
             </span>
-          </button>
+          </Button>
         </TreeRow>
       )}
     </TreeContextMenu>

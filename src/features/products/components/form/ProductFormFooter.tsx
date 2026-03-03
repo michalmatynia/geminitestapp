@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
+import { Button } from '@/shared/ui';
 
 export interface ProductFormFooterProps {
   entityId: string | null;
@@ -8,26 +9,29 @@ export interface ProductFormFooterProps {
 
 export function ProductFormFooter({ entityId }: ProductFormFooterProps): React.JSX.Element | null {
   const handleCopyProductId = useCallback(async (): Promise<void> => {
-    if (!entityId || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    if (!entityId) return;
     try {
-      await navigator.clipboard.writeText(entityId);
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(entityId);
+      }
     } catch {
-      // Ignore clipboard failures to keep form interactions non-blocking.
+      // ignore
     }
   }, [entityId]);
 
   if (!entityId) return null;
 
   return (
-    <button
-      type='button'
-      className='absolute bottom-0 right-0 text-[10px] font-mono text-muted-foreground/50 hover:text-muted-foreground transition-colors'
+    <Button
+      variant='ghost'
+      size='xs'
+      className='mt-4 flex w-full items-center justify-center gap-1.5 border-t border-border/40 py-3 text-[10px] font-mono text-muted-foreground/50 hover:text-muted-foreground transition-colors h-auto bg-transparent'
       title='Click to copy ID'
-      onClick={() => {
+      onClick={(): void => {
         void handleCopyProductId();
       }}
     >
       {entityId}
-    </button>
+    </Button>
   );
 }

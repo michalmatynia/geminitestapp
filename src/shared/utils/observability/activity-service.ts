@@ -1,9 +1,9 @@
 import 'server-only';
 
 import type {
-  CreateActivityLogDto,
-  ActivityLogDto,
-  ActivityFiltersDto,
+  CreateActivityLog,
+  ActivityLog,
+  ActivityFilters,
 } from '@/shared/contracts/system';
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
@@ -23,7 +23,7 @@ import { logSystemEvent } from '../../lib/observability/system-logger';
  * });
  * ```
  */
-export async function logActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {
+export async function logActivity(data: CreateActivityLog): Promise<ActivityLog> {
   const repository = await getActivityRepository();
   const activity = await repository.createActivity(data);
 
@@ -52,7 +52,7 @@ export async function logActivity(data: CreateActivityLogDto): Promise<ActivityL
 /**
  * List activity logs with optional filtering.
  */
-export async function listActivity(filters: ActivityFiltersDto = {}): Promise<ActivityLogDto[]> {
+export async function listActivity(filters: ActivityFilters = {}): Promise<ActivityLog[]> {
   const repository = await getActivityRepository();
   return repository.listActivity(filters);
 }

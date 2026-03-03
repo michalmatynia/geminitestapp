@@ -20,6 +20,7 @@ import {
   EmptyState,
   Card,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
@@ -103,29 +104,30 @@ export function AgentTeachingChatPage(): React.JSX.Element {
           ) : (
             <div className='space-y-2'>
               {agents.map((agent: AgentTeachingAgentRecord) => (
-                <button
+                <Button
                   key={agent.id}
-                  type='button'
-                  className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
+                  variant='ghost'
+                  className={cn(
+                    'w-full flex-col items-start gap-1 rounded-md border p-3 text-left transition h-auto font-normal',
                     agent.id === selectedAgentId
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15'
                       : 'border-border bg-card/40 text-gray-200 hover:bg-card/60'
-                  }`}
+                  )}
                   onClick={(): void => {
                     setSelectedAgentId(agent.id);
                     setMessages([]);
                     setLastSources([]);
                   }}
                 >
-                  <div className='font-medium'>{agent.name}</div>
-                  <div className='mt-1 text-[11px] text-gray-400'>
+                  <div className='font-medium text-sm'>{agent.name}</div>
+                  <div className='text-[11px] text-gray-400'>
                     LLM: {agent.llmModel} • Embed: {agent.embeddingModel}
                   </div>
-                  <div className='mt-1 text-[11px] text-gray-500'>
+                  <div className='text-[11px] text-gray-500'>
                     Collections:{' '}
                     {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           )}

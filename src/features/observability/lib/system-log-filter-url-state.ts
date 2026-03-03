@@ -13,9 +13,12 @@ const MANAGED_PARAM_KEYS: Array<keyof SystemLogFilterFormValues | 'from' | 'to' 
   'level',
   'query',
   'source',
+  'service',
   'method',
   'statusCode',
   'requestId',
+  'traceId',
+  'correlationId',
   'userId',
   'fingerprint',
   'category',
@@ -64,9 +67,12 @@ export const readSystemLogUrlState = (search: string): SystemLogUrlState => {
     level: parseLevel(params.get('level')),
     query: params.get('query') ?? '',
     source: params.get('source') ?? '',
+    service: params.get('service') ?? '',
     method: params.get('method') ?? '',
     statusCode: normalizeStatusCode(params.get('statusCode') ?? ''),
     requestId: params.get('requestId') ?? '',
+    traceId: params.get('traceId') ?? '',
+    correlationId: params.get('correlationId') ?? '',
     userId: params.get('userId') ?? '',
     fingerprint: params.get('fingerprint') ?? '',
     category: params.get('category') ?? '',
@@ -83,8 +89,11 @@ export const writeSystemLogUrlState = (baseSearch: string, state: SystemLogUrlSt
   if (state.level !== 'all') params.set('level', state.level);
   if (state.query.trim()) params.set('query', state.query.trim());
   if (state.source.trim()) params.set('source', state.source.trim());
+  if (state.service.trim()) params.set('service', state.service.trim());
   if (state.method.trim()) params.set('method', state.method.trim());
   if (state.requestId.trim()) params.set('requestId', state.requestId.trim());
+  if (state.traceId.trim()) params.set('traceId', state.traceId.trim());
+  if (state.correlationId.trim()) params.set('correlationId', state.correlationId.trim());
   if (state.userId.trim()) params.set('userId', state.userId.trim());
   if (state.fingerprint.trim()) params.set('fingerprint', state.fingerprint.trim());
   if (state.category.trim()) params.set('category', state.category.trim());

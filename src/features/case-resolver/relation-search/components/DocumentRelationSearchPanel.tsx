@@ -20,20 +20,18 @@ import { BulkActionBar } from './sections/BulkActionBar';
 import { DocumentTableBody } from './sections/DocumentTableBody';
 import { CaseTableBody } from './sections/CaseTableBody';
 import { DocumentPreviewDialog } from './sections/DocumentPreviewDialog';
+import {
+  DocumentRelationSearchUiProvider,
+  type DocumentRelationSearchUiContextValue,
+} from './DocumentRelationSearchUiContext';
 
-function DocumentRelationSearchInner({
-  showSortControl = true,
-  showFileTypeFilter = true,
-}: {
-  showSortControl?: boolean;
-  showFileTypeFilter?: boolean;
-}): React.JSX.Element {
+function DocumentRelationSearchInner(): React.JSX.Element {
   const { showFiltersBar, showDocTable, resultHeight } = useDocumentRelationSearchContext();
 
   return (
     <>
       <div className='flex flex-col overflow-hidden rounded-md border border-border/60 bg-card/20'>
-        <ScopeBar showFileTypeFilter={showFileTypeFilter} showSortControl={showSortControl} />
+        <ScopeBar />
 
         {showFiltersBar && <FilterBar />}
 
@@ -76,6 +74,14 @@ export function DocumentRelationSearchPanel({
   showSortControl = true,
   showFileTypeFilter = true,
 }: DocumentRelationSearchPanelProps): React.JSX.Element {
+  const uiContextValue = React.useMemo(
+    (): DocumentRelationSearchUiContextValue => ({
+      showSortControl,
+      showFileTypeFilter,
+    }),
+    [showSortControl, showFileTypeFilter]
+  );
+
   return (
     <DocumentRelationSearchProvider
       draftFileId={draftFileId}
@@ -84,10 +90,9 @@ export function DocumentRelationSearchPanel({
       defaultScope={defaultScope}
       defaultSort={defaultSort}
     >
-      <DocumentRelationSearchInner
-        showSortControl={showSortControl}
-        showFileTypeFilter={showFileTypeFilter}
-      />
+      <DocumentRelationSearchUiProvider value={uiContextValue}>
+        <DocumentRelationSearchInner />
+      </DocumentRelationSearchUiProvider>
     </DocumentRelationSearchProvider>
   );
 }

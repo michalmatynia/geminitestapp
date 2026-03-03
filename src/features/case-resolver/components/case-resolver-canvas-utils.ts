@@ -6,7 +6,7 @@ import {
   NODE_WIDTH,
 } from '@/shared/lib/ai-paths/core/constants';
 import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
-import { type AiEdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
+import { type Edge as AiEdge } from '@/shared/contracts/ai-paths';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,

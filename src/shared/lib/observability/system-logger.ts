@@ -3,7 +3,7 @@ import type {
   SystemLogRecordDto as SystemLogRecord,
 } from '@/shared/contracts/observability';
 
-import { isSensitiveKey, REDACTED_VALUE, truncateString } from './log-redaction';
+import { isSensitiveKey, REDACTED_VALUE, redactSensitiveText, truncateString } from './log-redaction';
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
@@ -14,6 +14,7 @@ type CentralLogPayload = {
   level: SystemLogLevel;
   message: string;
   source?: string | null;
+  service?: string | null;
   category?: string | null;
   context?: Record<string, unknown> | null;
   stack?: string | null;
@@ -21,6 +22,10 @@ type CentralLogPayload = {
   method?: string | null;
   statusCode?: number | null;
   requestId?: string | null;
+  traceId?: string | null;
+  correlationId?: string | null;
+  spanId?: string | null;
+  parentSpanId?: string | null;
   userId?: string | null;
   fingerprint?: string | null;
   createdAt: string;
@@ -53,12 +58,17 @@ type CreateSystemLogFn = (input: {
   message: string;
   category?: string | null;
   source?: string | null;
+  service?: string | null;
   context?: Record<string, unknown> | null;
   stack?: string | null;
   path?: string | undefined;
   method?: string | undefined;
   statusCode?: number | null;
   requestId?: string | null;
+  traceId?: string | null;
+  correlationId?: string | null;
+  spanId?: string | null;
+  parentSpanId?: string | null;
   userId?: string | null;
 }) => Promise<SystemLogRecord>;
 
@@ -105,7 +115,9 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
         }
         if (typeof val === 'function') return '[Function]';
         if (typeof val === 'bigint') return val.toString();
-        if (typeof val === 'string') return truncateString(val, MAX_VALUE_LENGTH);
+        if (typeof val === 'string') {
+          return truncateString(redactSensitiveText(val), MAX_VALUE_LENGTH);
+        }
         return val;
       },
       2
@@ -309,20 +321,49 @@ export const normalizeErrorInfo = (error: unknown): NormalizedErrorInfo => {
 
 const extractRequestInfo = (
   request?: Request
-): { path?: string; method?: string; requestId?: string } => {
+): {
+  path?: string;
+  method?: string;
+  requestId?: string;
+  traceId?: string;
+  correlationId?: string;
+} => {
   if (!request) return {};
   try {
     const url = new URL(request.url);
+    const headerRequestId = request.headers.get('x-request-id')?.trim() || null;
+    const headerTraceId = request.headers.get('x-trace-id')?.trim() || null;
+    const headerCorrelationId = request.headers.get('x-correlation-id')?.trim() || null;
     return {
       path: url.pathname,
       method: request.method,
-      ...(request.headers.get('x-request-id') && {
-        requestId: request.headers.get('x-request-id')!,
-      }),
+      ...(headerRequestId ? { requestId: headerRequestId } : {}),
+      ...(headerTraceId ? { traceId: headerTraceId } : {}),
+      ...(headerCorrelationId ? { correlationId: headerCorrelationId } : {}),
     };
   } catch {
     return {};
   }
+};
+
+const resolveServiceFromSource = (source: string | undefined): string | null => {
+  if (!source) return null;
+  const trimmed = source.trim();
+  if (!trimmed) return null;
+  const segments = trimmed.split('.').filter(Boolean);
+  const maybeMethod = segments[segments.length - 1];
+  const isMethod =
+    maybeMethod === 'GET' ||
+    maybeMethod === 'POST' ||
+    maybeMethod === 'PUT' ||
+    maybeMethod === 'PATCH' ||
+    maybeMethod === 'DELETE' ||
+    maybeMethod === 'HEAD' ||
+    maybeMethod === 'OPTIONS';
+  const base = isMethod ? segments.slice(0, -1) : segments;
+  if (base.length >= 2) return `${base[0]}.${base[1]}`;
+  if (base.length === 1) return base[0] ?? null;
+  return null;
 };
 
 export const buildErrorFingerprint = (input: {
@@ -379,12 +420,17 @@ export type SystemLogInput = {
   level?: SystemLogLevel;
   message: string;
   source?: string;
+  service?: string;
   context?: Record<string, unknown> | null;
   error?: unknown;
   request?: Request;
   statusCode?: number | undefined;
   userId?: string | null;
   requestId?: string | null;
+  traceId?: string | null;
+  correlationId?: string | null;
+  spanId?: string | null;
+  parentSpanId?: string | null;
   critical?: boolean;
 };
 
@@ -413,7 +459,50 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       (typeof input.context?.['errorName'] === 'string' ? input.context['errorName'] : undefined) ??
       errorInfo?.name;
     const service =
-      typeof input.context?.['service'] === 'string' ? input.context['service'] : undefined;
+      (typeof input.service === 'string' && input.service.trim().length > 0
+        ? input.service.trim()
+        : null) ??
+      (typeof input.context?.['service'] === 'string' && input.context['service'].trim().length > 0
+        ? input.context['service'].trim()
+        : null) ??
+      resolveServiceFromSource(input.source) ??
+      undefined;
+    const traceId =
+      (typeof input.traceId === 'string' && input.traceId.trim().length > 0
+        ? input.traceId.trim()
+        : null) ??
+      requestInfo.traceId ??
+      (typeof input.context?.['traceId'] === 'string' && input.context['traceId'].trim().length > 0
+        ? input.context['traceId'].trim()
+        : null) ??
+      null;
+    const correlationId =
+      (typeof input.correlationId === 'string' && input.correlationId.trim().length > 0
+        ? input.correlationId.trim()
+        : null) ??
+      requestInfo.correlationId ??
+      (typeof input.context?.['correlationId'] === 'string' &&
+      input.context['correlationId'].trim().length > 0
+        ? input.context['correlationId'].trim()
+        : null) ??
+      null;
+    const spanId =
+      (typeof input.spanId === 'string' && input.spanId.trim().length > 0
+        ? input.spanId.trim()
+        : null) ??
+      (typeof input.context?.['spanId'] === 'string' && input.context['spanId'].trim().length > 0
+        ? input.context['spanId'].trim()
+        : null) ??
+      null;
+    const parentSpanId =
+      (typeof input.parentSpanId === 'string' && input.parentSpanId.trim().length > 0
+        ? input.parentSpanId.trim()
+        : null) ??
+      (typeof input.context?.['parentSpanId'] === 'string' &&
+      input.context['parentSpanId'].trim().length > 0
+        ? input.context['parentSpanId'].trim()
+        : null) ??
+      null;
 
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
@@ -432,6 +521,10 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       ...(errorCode ? { errorCode } : {}),
       ...(errorName ? { errorName } : {}),
       ...(service ? { service } : {}),
+      ...(traceId ? { traceId } : {}),
+      ...(correlationId ? { correlationId } : {}),
+      ...(spanId ? { spanId } : {}),
+      ...(parentSpanId ? { parentSpanId } : {}),
       ...(fingerprint ? { fingerprint } : {}),
     };
 
@@ -476,6 +569,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           level: input.level ?? 'info',
           message: input.message,
           source: input.source ?? null,
+          service: service ?? null,
           category: category ?? null,
           context: hydratedContext,
           stack: errorInfo?.stack ?? null,
@@ -483,6 +577,10 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           method: requestInfo.method ?? null,
           statusCode: input.statusCode ?? null,
           requestId: input.requestId ?? requestInfo.requestId ?? null,
+          traceId,
+          correlationId,
+          spanId,
+          parentSpanId,
           userId: input.userId ?? null,
           fingerprint: fingerprint ?? null,
           createdAt: new Date().toISOString(),
@@ -497,12 +595,17 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
           message: input.message,
           category: category ?? null,
           source: input.source ?? null,
+          service: service ?? null,
           context: sanitizeValue(hydratedContext),
           stack: errorInfo?.stack ?? null,
           path: input.request?.url ? requestInfo.path : undefined,
           method: requestInfo.method,
           statusCode: input.statusCode ?? null,
           requestId: input.requestId ?? requestInfo.requestId ?? null,
+          traceId,
+          correlationId,
+          spanId,
+          parentSpanId,
           userId: input.userId ?? null,
         });
         await forwardPromise;

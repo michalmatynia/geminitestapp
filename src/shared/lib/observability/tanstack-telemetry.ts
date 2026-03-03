@@ -12,6 +12,12 @@ import type {
 } from '@/shared/lib/tanstack-factory-v2.types';
 import { getTraceId } from '@/shared/utils/observability/trace';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  redactSensitiveText,
+  truncateString,
+} from '@/shared/utils/observability/client-redaction';
 
 import type { QueryKey } from '@tanstack/react-query';
 
@@ -20,6 +26,7 @@ const DEDUPE_WINDOW_MS = 1_000;
 const DEDUPE_BUCKET_LIMIT = 500;
 const DEFAULT_SAMPLING_RATE = 0.2;
 const MAX_CONTEXT_SIZE = 6_000;
+const MAX_CONTEXT_VALUE_LENGTH = 2_000;
 const MAX_META_SOURCE_LENGTH = 240;
 const MAX_META_RESOURCE_LENGTH = 240;
 const MAX_META_TAGS = 16;
@@ -154,6 +161,7 @@ const sanitizeContext = (
   try {
     const seen = new WeakSet<object>();
     const serialized = JSON.stringify(context, (_key, value: unknown): unknown => {
+      if (_key && isSensitiveKey(_key)) return REDACTED_VALUE;
       if (value && typeof value === 'object') {
         const objectValue = value;
         if (seen.has(objectValue)) return '[Circular]';
@@ -161,6 +169,9 @@ const sanitizeContext = (
       }
       if (typeof value === 'bigint') return value.toString();
       if (typeof value === 'function') return '[Function]';
+      if (typeof value === 'string') {
+        return truncateString(redactSensitiveText(value), MAX_CONTEXT_VALUE_LENGTH);
+      }
       return value;
     });
     if (!serialized) {

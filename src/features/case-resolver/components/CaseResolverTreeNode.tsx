@@ -19,23 +19,9 @@ import {
 import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
 import { Button, Badge, Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { useCaseResolverTreeNodeRuntimeContext } from './CaseResolverTreeNodeRuntimeContext';
 
-export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput & {
-  armDragHandle: (nodeId: string) => void;
-  releaseDragHandle: () => void;
-  renameDraft: string;
-  onUpdateRenameDraft: (value: string) => void;
-  onCommitRename: () => void;
-  onCancelRename: () => void;
-  FolderClosedIcon: React.ComponentType<{ className?: string }>;
-  FolderOpenIcon: React.ComponentType<{ className?: string }>;
-  DefaultFileIcon: React.ComponentType<{ className?: string }>;
-  ScanCaseFileIcon: React.ComponentType<{ className?: string }>;
-  NodeFileIcon: React.ComponentType<{ className?: string }>;
-  ImageFileIcon: React.ComponentType<{ className?: string }>;
-  PdfFileIcon: React.ComponentType<{ className?: string }>;
-  DragHandleIcon: React.ComponentType<{ className?: string }>;
-};
+export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput;
 
 export function CaseResolverTreeNode({
   node,
@@ -50,21 +36,23 @@ export function CaseResolverTreeNode({
   select,
   toggleExpand,
   startRename,
-  armDragHandle,
-  releaseDragHandle,
-  renameDraft,
-  onUpdateRenameDraft,
-  onCommitRename,
-  onCancelRename,
-  FolderClosedIcon,
-  FolderOpenIcon,
-  DefaultFileIcon,
-  ScanCaseFileIcon,
-  NodeFileIcon,
-  ImageFileIcon,
-  PdfFileIcon,
-  DragHandleIcon,
 }: CaseResolverTreeNodeProps): React.JSX.Element {
+  const {
+    armDragHandle,
+    releaseDragHandle,
+    renameDraft,
+    onUpdateRenameDraft,
+    onCommitRename,
+    onCancelRename,
+    FolderClosedIcon,
+    FolderOpenIcon,
+    DefaultFileIcon,
+    ScanCaseFileIcon,
+    NodeFileIcon,
+    ImageFileIcon,
+    PdfFileIcon,
+    DragHandleIcon,
+  } = useCaseResolverTreeNodeRuntimeContext();
   const {
     onSelectFile,
     onSelectAsset,

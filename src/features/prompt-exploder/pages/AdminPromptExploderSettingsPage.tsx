@@ -8,7 +8,6 @@ import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/shared/contracts/validator';
-import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
@@ -160,14 +159,9 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const brainEffectiveModelId = brainModelOptions.effectiveModelId.trim();
   const hasConfiguredBrainModel =
     brainAssignment.enabled && brainAssignment.provider === 'model' && brainEffectiveModelId !== '';
-  const providerSnapshot = hasConfiguredBrainModel
-    ? inferBrainModelVendor(brainEffectiveModelId)
-    : 'Not configured in AI Brain';
-  const primaryModelSnapshot = hasConfiguredBrainModel
+  const brainAssignmentStatus = hasConfiguredBrainModel
     ? brainEffectiveModelId
     : 'Not configured in AI Brain';
-  const temperatureSnapshot = brainAssignment.temperature;
-  const maxTokensSnapshot = brainAssignment.maxTokens;
 
   const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
     () => [
@@ -497,57 +491,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField
-              label='Provider Snapshot'
-              description='Derived from the Brain-assigned model.'
+              label='Brain Assignment'
+              description='Read-only effective model assignment from AI Brain.'
             >
               <Input
-                value={providerSnapshot}
+                value={brainAssignmentStatus}
                 readOnly
                 disabled
                 className='cursor-not-allowed'
                 placeholder='Not configured in AI Brain'
-              />
-            </FormField>
-            <FormField
-              label='Primary AI Model'
-              description='Read-only Brain-managed effective model.'
-            >
-              <Input
-                value={primaryModelSnapshot}
-                readOnly
-                disabled
-                className='cursor-not-allowed'
-                placeholder='Not configured in AI Brain'
-              />
-            </FormField>
-            <FormField
-              label='Brain Temperature'
-              description='Read-only Brain-managed temperature.'
-            >
-              <Input
-                value={
-                  temperatureSnapshot === null || temperatureSnapshot === undefined
-                    ? 'Not set'
-                    : String(temperatureSnapshot)
-                }
-                readOnly
-                disabled
-                className='cursor-not-allowed'
-              />
-            </FormField>
-            <FormField
-              label='Brain Max Tokens'
-              description='Read-only Brain-managed max token limit.'
-            >
-              <Input
-                value={
-                  maxTokensSnapshot === null || maxTokensSnapshot === undefined
-                    ? 'Not set'
-                    : String(maxTokensSnapshot)
-                }
-                readOnly
-                disabled
-                className='cursor-not-allowed'
               />
             </FormField>
           </div>

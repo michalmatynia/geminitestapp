@@ -485,7 +485,7 @@ export const fetchCaseResolverNodeFileSnapshot = async (
       action: 'node_file_snapshot_validation_failed',
       message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
     });
-    return null;
+    throw error;
   }
 };
 
@@ -1084,7 +1084,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `ownership_repaired_count=${normalizationDiagnostics.ownershipRepairedCount}`,
       `ownership_unresolved_count=${normalizationDiagnostics.ownershipUnresolvedCount}`,
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
-      ].join(' '),
+    ].join(' '),
   });
   const inlineNodeFileSnapshotAssetIds = findInlineNodeFileSnapshotAssetIds(
     workspaceForPersistPipeline

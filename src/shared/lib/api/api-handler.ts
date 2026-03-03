@@ -44,9 +44,12 @@ type LogSystemEventParams = {
   level: SystemLogLevel;
   message: string;
   source: string;
+  service?: string;
   error?: unknown;
   request?: NextRequest;
   requestId?: string;
+  traceId?: string;
+  correlationId?: string;
   statusCode?: number;
   context?: Record<string, unknown>;
 };
@@ -59,6 +62,43 @@ type ErrorFingerprintParams = {
   error: unknown;
 };
 
+const DEFAULT_SLOW_SUCCESS_THRESHOLD_MS = 750;
+
+const readHeaderTrimmed = (request: NextRequest, key: string): string | null => {
+  const value = request.headers.get(key);
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const resolveServiceFromSource = (source: string): string => {
+  const trimmed = source.trim();
+  if (!trimmed) return 'api.unknown';
+  const segments = trimmed.split('.').filter(Boolean);
+  const maybeMethod = segments[segments.length - 1];
+  const isMethod =
+    maybeMethod === 'GET' ||
+    maybeMethod === 'POST' ||
+    maybeMethod === 'PUT' ||
+    maybeMethod === 'PATCH' ||
+    maybeMethod === 'DELETE' ||
+    maybeMethod === 'HEAD' ||
+    maybeMethod === 'OPTIONS';
+  const base = isMethod ? segments.slice(0, -1) : segments;
+  const first = base[0];
+  const second = base[1];
+  if (first && second) return `${first}.${second}`;
+  if (first) return first;
+  return 'api.unknown';
+};
+
+const resolveSuccessLoggingPolicy = (options: ApiHandlerOptions): 'all' | 'slow' | 'off' => {
+  if (options.successLogging) return options.successLogging;
+  if (options.logSuccess === true) return 'all';
+  if (options.logSuccess === false) return 'off';
+  return 'slow';
+};
+
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
@@ -67,6 +107,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     await realLogSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, {
+      service: 'api.handler',
       context: params,
     });
   }
@@ -79,6 +120,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
     return realGetFingerprint(params);
   } catch (error) {
     logger.error('Failed to get error fingerprint via observability feature', error, {
+      service: 'api.handler',
       context: params,
     });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
@@ -213,18 +255,31 @@ export function apiHandler(
       });
     }
 
-    const requestId = request.headers.get('x-request-id') ?? randomUUID();
+    const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
+    const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
+    const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
+    const service = options.service?.trim() || resolveServiceFromSource(options.source);
     const startTime = performance.now();
     const user = await getSessionUser();
 
     const context: ApiHandlerContext = {
       requestId,
+      traceId,
+      correlationId,
       startTime,
       userId: user?.id ?? null,
       getElapsedMs: (): number => Math.round(performance.now() - startTime),
     };
 
-    return runWithContext({ requestId, startTime, userId: context.userId ?? null }, async () => {
+    return runWithContext(
+      {
+        requestId,
+        traceId,
+        correlationId,
+        startTime,
+        userId: context.userId ?? null,
+      },
+      async () => {
       try {
         enforceCsrf(request, options);
 
@@ -256,17 +311,29 @@ export function apiHandler(
 
         const response = await handler(request, context);
 
-        // Log successful requests if configured
-        if (options.logSuccess) {
+        const durationMs = context.getElapsedMs();
+        const successPolicy = resolveSuccessLoggingPolicy(options);
+        const slowSuccessThresholdMs =
+          options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
+        const shouldLogSuccess =
+          successPolicy === 'all' ||
+          (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
+
+        if (shouldLogSuccess) {
           void logSystemEvent({
             level: options.successLogLevel ?? 'info',
             message: `${options.source} completed successfully`,
             source: options.source,
+            service,
             request,
             requestId,
+            traceId,
+            correlationId,
             statusCode: response.status,
             context: {
-              durationMs: context.getElapsedMs(),
+              durationMs,
+              successPolicy,
+              slowSuccessThresholdMs,
             },
           });
         }
@@ -274,6 +341,12 @@ export function apiHandler(
         // Add request ID to response headers for client-side tracking
         if (!response.headers.has('x-request-id')) {
           response.headers.set('x-request-id', requestId);
+        }
+        if (!response.headers.has('x-trace-id')) {
+          response.headers.set('x-trace-id', traceId);
+        }
+        if (!response.headers.has('x-correlation-id')) {
+          response.headers.set('x-correlation-id', correlationId);
         }
         if (context.rateLimitHeaders) {
           Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
@@ -293,7 +366,8 @@ export function apiHandler(
         applySecurityHeaders(response);
         return response;
       }
-    });
+      }
+    );
   };
 }
 
@@ -322,19 +396,30 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       });
     }
 
-    const requestId = request.headers.get('x-request-id') ?? randomUUID();
+    const requestId = readHeaderTrimmed(request, 'x-request-id') ?? randomUUID();
+    const traceId = readHeaderTrimmed(request, 'x-trace-id') ?? randomUUID();
+    const correlationId = readHeaderTrimmed(request, 'x-correlation-id') ?? requestId;
+    const service = options.service?.trim() || resolveServiceFromSource(options.source);
     const startTime = performance.now();
     const user = await getSessionUser();
 
     const handlerContext: ApiHandlerContext = {
       requestId,
+      traceId,
+      correlationId,
       startTime,
       userId: user?.id ?? null,
       getElapsedMs: () => Math.round(performance.now() - startTime),
     };
 
     return runWithContext(
-      { requestId, startTime, userId: handlerContext.userId ?? null },
+      {
+        requestId,
+        traceId,
+        correlationId,
+        startTime,
+        userId: handlerContext.userId ?? null,
+      },
       async () => {
         try {
           enforceCsrf(request, options);
@@ -378,16 +463,29 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 
           const response = await handler(request, handlerContext, params);
 
-          if (options.logSuccess) {
+          const durationMs = handlerContext.getElapsedMs();
+          const successPolicy = resolveSuccessLoggingPolicy(options);
+          const slowSuccessThresholdMs =
+            options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
+          const shouldLogSuccess =
+            successPolicy === 'all' ||
+            (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
+
+          if (shouldLogSuccess) {
             void logSystemEvent({
               level: options.successLogLevel ?? 'info',
               message: `${options.source} completed successfully`,
               source: options.source,
+              service,
               request,
               requestId,
+              traceId,
+              correlationId,
               statusCode: response.status,
               context: {
-                durationMs: handlerContext.getElapsedMs(),
+                durationMs,
+                successPolicy,
+                slowSuccessThresholdMs,
                 params,
               },
             });
@@ -395,6 +493,12 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 
           if (!response.headers.has('x-request-id')) {
             response.headers.set('x-request-id', requestId);
+          }
+          if (!response.headers.has('x-trace-id')) {
+            response.headers.set('x-trace-id', traceId);
+          }
+          if (!response.headers.has('x-correlation-id')) {
+            response.headers.set('x-correlation-id', correlationId);
           }
           if (handlerContext.rateLimitHeaders) {
             Object.entries(handlerContext.rateLimitHeaders).forEach(
@@ -501,15 +605,19 @@ async function createErrorResponseWithTiming(
   })();
   const queryKeys = getQueryKeys(request);
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
+  const service = options.service?.trim() || resolveServiceFromSource(options.source);
 
   // Log the error with full context
   void logSystemEvent({
     level,
     message: resolved.message,
     source: options.source,
+    service,
     error,
     request,
     requestId: context.requestId,
+    traceId: context.traceId,
+    correlationId: context.correlationId,
     statusCode: resolved.httpStatus,
     context: {
       errorId: resolved.errorId,
@@ -519,6 +627,9 @@ async function createErrorResponseWithTiming(
       source: options.source,
       route: routePath,
       method: request.method,
+      traceId: context.traceId,
+      correlationId: context.correlationId,
+      service,
       expected: resolved.expected,
       critical: resolved.critical,
       retryable: resolved.retryable,
@@ -562,6 +673,8 @@ async function createErrorResponseWithTiming(
 
   const response = NextResponse.json(payload, { status: resolved.httpStatus });
   response.headers.set('x-request-id', context.requestId);
+  response.headers.set('x-trace-id', context.traceId);
+  response.headers.set('x-correlation-id', context.correlationId);
   response.headers.set('x-error-id', resolved.errorId);
   response.headers.set('x-error-fingerprint', fingerprint);
 

@@ -8,6 +8,7 @@ import {
 import {
   aiTriggerButtonReorderSchema,
   parseAiTriggerButtonsRaw,
+  serializeAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -48,7 +49,9 @@ const applyReorder = (
     next.push(item);
   });
 
-  return next;
+  return next.map((record, index) =>
+    record.sortIndex === index ? record : { ...record, sortIndex: index }
+  );
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -66,6 +69,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
   const next = applyReorder(existing, orderedIds);
-  await writeTriggerButtonsRaw(JSON.stringify(next));
+  await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(next));
   return NextResponse.json(next);
 }

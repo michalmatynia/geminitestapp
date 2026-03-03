@@ -9,9 +9,9 @@ import prisma from '@/shared/lib/db/prisma';
 
 import {
   CreateProductListingInput,
+  ProductListing,
   ProductListingExportEvent,
   ProductListingExportEventRecord,
-  ProductListingRecord,
   ProductListingRepository,
   ProductListingWithDetails,
 } from '../types/listings';
@@ -149,7 +149,7 @@ const normalizeIsoDate = (value: string | Date | null | undefined): string | nul
   return value instanceof Date ? value.toISOString() : value;
 };
 
-const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => ({
+const toListingRecord = (doc: ProductListingDocument): ProductListing => ({
   id: normalizeLookupIdOrFallback(doc._id),
   productId: normalizeLookupIdOrFallback(doc.productId),
   integrationId: normalizeLookupIdOrFallback(doc.integrationId),
@@ -160,7 +160,7 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   listedAt: normalizeIsoDate(doc.listedAt),
   expiresAt: normalizeIsoDate(doc.expiresAt),
   nextRelistAt: normalizeIsoDate(doc.nextRelistAt),
-  relistPolicy: (doc.relistPolicy ?? null) as ProductListingRecord['relistPolicy'],
+  relistPolicy: (doc.relistPolicy ?? null) as ProductListing['relistPolicy'],
   relistAttempts: doc.relistAttempts ?? 0,
   lastRelistedAt: normalizeIsoDate(doc.lastRelistedAt),
   lastStatusCheckAt: normalizeIsoDate(doc.lastStatusCheckAt),
@@ -234,7 +234,7 @@ const prismaRepository: ProductListingRepository = {
     return (listings as EnrichedPrismaListing[]).map(toDetailsRecord);
   },
 
-  getListingById: async (id: string): Promise<ProductListingRecord | null> => {
+  getListingById: async (id: string): Promise<ProductListing | null> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return null;
     return toListingRecord({ ...listing, _id: listing.id } as unknown as ProductListingDocument);
@@ -356,7 +356,7 @@ const prismaRepository: ProductListingRepository = {
     return count > 0;
   },
 
-  getListingsByProductIds: async (productIds: string[]): Promise<ProductListingRecord[]> => {
+  getListingsByProductIds: async (productIds: string[]): Promise<ProductListing[]> => {
     if (productIds.length === 0) return [];
     const listings = await prisma.productListing.findMany({
       where: { productId: { in: productIds } },
@@ -364,7 +364,7 @@ const prismaRepository: ProductListingRepository = {
     return listings.map((l) => toListingRecord({ ...l, _id: l.id } as ProductListingDocument));
   },
 
-  getListingsByConnection: async (connectionId: string): Promise<ProductListingRecord[]> => {
+  getListingsByConnection: async (connectionId: string): Promise<ProductListing[]> => {
     const listings = await prisma.productListing.findMany({
       where: { connectionId },
     });
@@ -372,7 +372,7 @@ const prismaRepository: ProductListingRepository = {
   },
 
   listAllListings: async (): Promise<
-    Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > => {
     const listings = await prisma.productListing.findMany({
       select: {
@@ -384,7 +384,7 @@ const prismaRepository: ProductListingRepository = {
     });
     return listings.map((l) => ({
       ...l,
-      marketplaceData: l.marketplaceData as ProductListingRecord['marketplaceData'],
+      marketplaceData: l.marketplaceData as ProductListing['marketplaceData'],
     }));
   },
 };
@@ -454,7 +454,7 @@ const mongoRepository: ProductListingRepository = {
     });
   },
 
-  getListingById: async (id: string): Promise<ProductListingRecord | null> => {
+  getListingById: async (id: string): Promise<ProductListing | null> => {
     const collection = await getListingCollection();
     const doc = await collection.findOne(buildLookupFilter('_id', id));
     return doc ? toListingRecord(doc) : null;
@@ -598,21 +598,21 @@ const mongoRepository: ProductListingRepository = {
     return count > 0;
   },
 
-  getListingsByProductIds: async (productIds: string[]): Promise<ProductListingRecord[]> => {
+  getListingsByProductIds: async (productIds: string[]): Promise<ProductListing[]> => {
     if (productIds.length === 0) return [];
     const collection = await getListingCollection();
     const listings = await collection.find(buildLookupFilterForIds('productId', productIds)).toArray();
     return listings.map(toListingRecord);
   },
 
-  getListingsByConnection: async (connectionId: string): Promise<ProductListingRecord[]> => {
+  getListingsByConnection: async (connectionId: string): Promise<ProductListing[]> => {
     const collection = await getListingCollection();
     const listings = await collection.find(buildLookupFilter('connectionId', connectionId)).toArray();
     return listings.map(toListingRecord);
   },
 
   listAllListings: async (): Promise<
-    Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > => {
     const collection = await getListingCollection();
     const listings = await collection
@@ -638,7 +638,7 @@ export async function getProductListingRepository(): Promise<ProductListingRepos
  */
 
 export async function findProductListingByIdAcrossProviders(id: string): Promise<{
-  listing: ProductListingRecord;
+  listing: ProductListing;
   repository: ProductListingRepository;
 } | null> {
   // Check active provider first for performance
@@ -663,7 +663,7 @@ export async function findProductListingByProductAndConnectionAcrossProviders(
   productId: string,
   connectionId: string
 ): Promise<{
-  listing: ProductListingRecord;
+  listing: ProductListing;
   repository: ProductListingRepository;
 } | null> {
   const providers = [
@@ -684,10 +684,10 @@ export async function findProductListingByProductAndConnectionAcrossProviders(
 export async function findProductListingsByProductsAndConnectionAcrossProviders(
   productIds: string[],
   connectionId: string
-): Promise<Map<string, { listing: ProductListingRecord; repository: ProductListingRepository }>> {
+): Promise<Map<string, { listing: ProductListing; repository: ProductListingRepository }>> {
   const result = new Map<
     string,
-    { listing: ProductListingRecord; repository: ProductListingRepository }
+    { listing: ProductListing; repository: ProductListingRepository }
   >();
   if (productIds.length === 0) return result;
 
@@ -729,7 +729,7 @@ export async function listProductListingsByProductIdAcrossProviders(
 export async function listProductListingsByProductIdsAcrossProviders(
   productIds: string[]
 ): Promise<
-  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
 > {
   const uniqueProductIds = Array.from(
     new Set(productIds.map((id) => id.trim()).filter((id) => id.length > 0))
@@ -750,7 +750,7 @@ export async function listProductListingsByProductIdsAcrossProviders(
 }
 
 export async function listAllProductListingsAcrossProviders(): Promise<
-  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > {
   const [prismaListings, mongoListings] = await Promise.all([
     prismaRepository.listAllListings(),

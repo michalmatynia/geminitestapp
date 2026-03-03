@@ -1,16 +1,15 @@
 import type { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type {
-  AiPathRuntimeProfileEventDto,
-  RuntimeProfileNodeStatsDto,
-  RuntimeProfileSummaryDto,
+  AiPathRuntimeProfileEvent,
+  RuntimeProfileNodeStats,
+  RuntimeProfileSummary,
   RuntimeState,
   NodeHandler,
 } from '@/shared/contracts/ai-paths-runtime';
 import type { Toast } from '@/shared/contracts/ui';
 
-export type RuntimeProfileEvent = AiPathRuntimeProfileEventDto;
-export type RuntimeProfileNodeStats = RuntimeProfileNodeStatsDto;
-export type RuntimeProfileSummary = RuntimeProfileSummaryDto;
+export type RuntimeProfileEvent = AiPathRuntimeProfileEvent;
+export type { RuntimeProfileNodeStats, RuntimeProfileSummary };
 
 export type RuntimeProfileOptions = {
   onEvent?: (event: RuntimeProfileEvent) => void;

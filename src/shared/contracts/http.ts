@@ -11,7 +11,7 @@ export const apiEnvelopeSchema = z.object({
   message: z.string().optional(),
 });
 
-export type ApiEnvelopeDto<T = unknown> = {
+export type ApiEnvelope<T = unknown> = {
   success: boolean;
   data?: T;
   error?: string;
@@ -39,7 +39,7 @@ export const paginationSchema = z.object({
   hasPreviousPage: z.boolean(),
 });
 
-export type PaginationDto = z.infer<typeof paginationSchema>;
+export type Pagination = z.infer<typeof paginationSchema>;
 
 export const paginatedResponseSchema = z.object({
   data: z.array(z.unknown()),
@@ -49,9 +49,9 @@ export const paginatedResponseSchema = z.object({
   limit: z.number().optional(),
 });
 
-export type PaginatedResponseDto<T> = {
+export type PaginatedResponse<T> = {
   data: T[];
-  pagination: PaginationDto;
+  pagination: Pagination;
   total?: number;
   page?: number;
   limit?: number;

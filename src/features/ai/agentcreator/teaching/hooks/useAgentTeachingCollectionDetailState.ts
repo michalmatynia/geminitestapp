@@ -17,7 +17,7 @@ import {
   useSearchEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
 
-export function useAgentTeachingQueriesCollectionDetailState() {
+export function useAgentTeachingCollectionDetailState() {
   const { toast } = useToast();
   const params = useParams<{ collectionId: string }>();
   const collectionId = params?.collectionId ?? null;

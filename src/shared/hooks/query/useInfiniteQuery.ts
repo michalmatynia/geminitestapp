@@ -1,4 +1,4 @@
-import type { PaginatedResponseDto, PaginationDto } from '@/shared/contracts/http';
+import type { PaginatedResponse, Pagination } from '@/shared/contracts/http';
 import { createInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type {
@@ -7,15 +7,13 @@ import type {
   UseInfiniteQueryResult,
 } from '@tanstack/react-query';
 
-export type PaginatedResponse<T> = PaginatedResponseDto<T>;
-
 export interface InfiniteQueryParams {
   page: number;
   pageSize: number;
   [key: string]: unknown;
 }
 
-const toPagination = <T>(page: PaginatedResponse<T>): PaginationDto => {
+const toPagination = <T>(page: PaginatedResponse<T>): Pagination => {
   return page.pagination;
 };
 

@@ -7,6 +7,10 @@ import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { pruneProductStudioSourceSlotsForProject } from '@/shared/lib/products/services/product-studio-config';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import {
+  ImageStudioSlotRecord,
+  SlotGenerationMetadata,
+} from '@/shared/contracts/image-studio';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -48,26 +52,7 @@ export type ImageStudioSlotDocument = {
   imageBase64?: string | null;
   asset3dId?: string | null;
   screenshotFileId?: string | null;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type ImageStudioSlotRecord = {
-  id: string;
-  projectId: string;
-  name: string | null;
-  folderPath: string | null;
-  position: number | null;
-  imageFileId: string | null;
-  imageUrl: string | null;
-  imageBase64: string | null;
-  asset3dId: string | null;
-  screenshotFileId: string | null;
-  metadata: Record<string, unknown> | null;
-  imageFile: ImageFileRecord | null;
-  screenshotFile: ImageFileRecord | null;
-  asset3d: Asset3DRecord | null;
+  metadata?: SlotGenerationMetadata | null;
   createdAt: string;
   updatedAt: string;
 };

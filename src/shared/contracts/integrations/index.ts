@@ -168,9 +168,9 @@ export type BaseParameterImportSummary = {
 };
 
 import {
-  type ProductParameterDto as ProductParameter,
-  type ProductParameterValueDto as ProductParameterValue,
-  type CreateProductParameterDto as ParameterCreateInput,
+  type ProductParameter,
+  type ProductParameterValue,
+  type ProductParameterCreateInput as ParameterCreateInput,
 } from '../products';
 
 export type ApplyBaseParameterImportInput = {
@@ -507,12 +507,6 @@ export const integrationDefinitions = [
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
 ] as const;
-
-/**
- * Legacy Integration Type Aliases (Standardized names already defined above)
- */
-export type ProductListingRecord = ProductListing;
-export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
 
 /**
  * Base Import processing

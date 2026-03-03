@@ -4,12 +4,12 @@ export * from '@/shared/contracts/ai-paths-runtime';
 export type {
   PathExecutionMode,
   PathRunMode,
-  QueuedRunDto,
-  RuntimeEventInputDto,
+  QueuedRun,
+  RuntimeEventInput,
   RuntimePortValues,
   RuntimeState,
-  RunStatusDto,
-  SetNodeStatusInputDto,
+  RunStatus,
+  SetNodeStatusInput,
 } from '@/shared/contracts/ai-paths-runtime';
 export * from './core/constants';
 export * from './core/helpers';

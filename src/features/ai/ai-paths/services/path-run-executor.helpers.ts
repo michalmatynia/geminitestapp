@@ -78,13 +78,12 @@ export const EMPTY_RUNTIME_STATE: RuntimeState = {
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
   const assertNoLegacyRunIdentity = (record: Record<string, unknown>): void => {
-    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key) => key in record);
-    if (deprecatedKeys.length > 0) {
-      throw validationError('Invalid AI Paths runtime state payload.', {
-        reason: 'deprecated_runtime_identity_fields',
-        deprecatedKeys,
-      });
-    }
+    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key: string): boolean => key in record);
+    if (deprecatedKeys.length === 0) return;
+    throw validationError('Legacy AI Paths runtime identity fields are no longer supported.', {
+      reason: 'deprecated_runtime_identity_fields',
+      keys: deprecatedKeys,
+    });
   };
   const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
     assertNoLegacyRunIdentity(parsed);

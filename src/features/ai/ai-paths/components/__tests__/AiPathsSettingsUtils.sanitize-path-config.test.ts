@@ -6,7 +6,6 @@ import {
   sanitizePathConfig,
 } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
-import { isAppError } from '@/shared/errors/app-error';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
@@ -226,7 +225,7 @@ describe('sanitizePathConfig', () => {
   });
 
   it('rejects legacy runtime identity fields in persisted runtime state payloads', () => {
-    try {
+    expect(() =>
       parseRuntimeState(
         JSON.stringify({
           status: 'running',
@@ -239,10 +238,31 @@ describe('sanitizePathConfig', () => {
           runId: 'legacy-run-id',
           runStartedAt: '2026-03-03T10:00:00.000Z',
         })
-      );
-      throw new Error('Expected parseRuntimeState to throw.');
-    } catch (error) {
-      expect(isAppError(error)).toBe(true);
-    }
+      )
+    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+  });
+
+  it('rejects legacy "cancelled" status spelling in runtime events', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [
+            {
+              id: 'evt-1',
+              timestamp: '2026-03-03T10:00:00.000Z',
+              type: 'status',
+              message: 'Node cancelled.',
+              status: 'cancelled',
+            },
+          ],
+          inputs: {},
+          outputs: {},
+        })
+      )
+    ).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 });

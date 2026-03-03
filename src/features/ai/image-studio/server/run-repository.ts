@@ -1,40 +1,17 @@
 import 'server-only';
 
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import {
+  ImageStudioRunRecord,
+  ImageStudioRunStatus,
+  ImageStudioRunHistoryEvent,
+  ImageStudioRunRequest,
+} from '@/shared/contracts/image-studio';
 import type { UpdateFilter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
-import type { ImageStudioRunRequest } from './run-executor';
-
-export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
 export type ImageStudioRunDispatchMode = 'queued' | 'inline';
-export type ImageStudioRunHistoryEventSource = 'api' | 'queue' | 'worker' | 'stream' | 'client';
-
-export type ImageStudioRunHistoryEvent = {
-  id: string;
-  type: string;
-  source: ImageStudioRunHistoryEventSource;
-  message: string;
-  at: string;
-  payload?: Record<string, unknown>;
-};
-
-export type ImageStudioRunRecord = {
-  id: string;
-  projectId: string;
-  status: ImageStudioRunStatus;
-  dispatchMode: ImageStudioRunDispatchMode | null;
-  request: ImageStudioRunRequest;
-  expectedOutputs: number;
-  outputs: ImageFileRecord[];
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEvents: ImageStudioRunHistoryEvent[];
-};
 
 type ImageStudioRunHistoryEventDocument = {
   id?: string | null;

@@ -1,17 +1,7 @@
 'use client';
 
 import React from 'react';
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './alert-dialog';
+import { ConfirmModal } from './templates/modals/ConfirmModal';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -26,6 +16,10 @@ interface ConfirmDialogProps {
   loading?: boolean;
 }
 
+/**
+ * ConfirmDialog - A simplified wrapper for the unified ConfirmModal.
+ * Maintains backward compatibility while leveraging the centralized implementation.
+ */
 export function ConfirmDialog({
   open,
   onOpenChange,
@@ -38,36 +32,20 @@ export function ConfirmDialog({
   variant = 'default',
   loading = false,
 }: ConfirmDialogProps): React.JSX.Element {
-  const confirmButtonClass =
-    variant === 'destructive'
-      ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-      : variant === 'success'
-        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-        : '';
-
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel} disabled={loading}>
-            {cancelText}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              onConfirm();
-            }}
-            className={confirmButtonClass}
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : confirmText}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmModal
+      isOpen={open}
+      onClose={() => {
+        onOpenChange(false);
+        onCancel?.();
+      }}
+      onConfirm={onConfirm}
+      title={title}
+      message={description}
+      confirmText={confirmText}
+      cancelText={cancelText}
+      isDangerous={variant === 'destructive'}
+      loading={loading}
+    />
   );
 }

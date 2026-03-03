@@ -42,9 +42,12 @@ const filterFields: FilterField[] = [
   { key: 'level', label: 'Level', type: 'select', options: [...levelOptions] },
   { key: 'query', label: 'Search', type: 'text', placeholder: 'Message or source' },
   { key: 'source', label: 'Source', type: 'text', placeholder: 'api/products, auth, etc.' },
+  { key: 'service', label: 'Service', type: 'text', placeholder: 'domain.feature' },
   { key: 'method', label: 'Method', type: 'text', placeholder: 'GET, POST, PATCH...' },
   { key: 'statusCode', label: 'Status', type: 'number', placeholder: '500' },
   { key: 'requestId', label: 'Request ID', type: 'text', placeholder: 'x-request-id' },
+  { key: 'traceId', label: 'Trace ID', type: 'text', placeholder: 'x-trace-id' },
+  { key: 'correlationId', label: 'Correlation ID', type: 'text', placeholder: 'request scope id' },
   { key: 'userId', label: 'User ID', type: 'text', placeholder: 'auth user id' },
   { key: 'fingerprint', label: 'Fingerprint', type: 'text', placeholder: 'error fingerprint' },
   { key: 'category', label: 'Category', type: 'text', placeholder: 'validation, db, network...' },
@@ -81,9 +84,12 @@ type SystemLogsContextValue = {
   level: SystemLogLevel | 'all';
   query: string;
   source: string;
+  service: string;
   method: string;
   statusCode: string;
   requestId: string;
+  traceId: string;
+  correlationId: string;
   userId: string;
   fingerprint: string;
   category: string;
@@ -159,9 +165,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   const [level, setLevel] = useState<SystemLogLevel | 'all'>(() => initialUrlState.level);
   const [query, setQuery] = useState(() => initialUrlState.query);
   const [source, setSource] = useState(() => initialUrlState.source);
+  const [service, setService] = useState(() => initialUrlState.service);
   const [method, setMethod] = useState(() => initialUrlState.method);
   const [statusCode, setStatusCode] = useState(() => initialUrlState.statusCode);
   const [requestId, setRequestId] = useState(() => initialUrlState.requestId);
+  const [traceId, setTraceId] = useState(() => initialUrlState.traceId);
+  const [correlationId, setCorrelationId] = useState(() => initialUrlState.correlationId);
   const [userId, setUserId] = useState(() => initialUrlState.userId);
   const [fingerprint, setFingerprint] = useState(() => initialUrlState.fingerprint);
   const [category, setCategory] = useState(() => initialUrlState.category);
@@ -182,9 +191,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       level,
       query,
       source,
+      service,
       method,
       statusCode,
       requestId,
+      traceId,
+      correlationId,
       userId,
       fingerprint,
       category,
@@ -205,8 +217,11 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     pathname,
     query,
     requestId,
+    traceId,
+    correlationId,
     router,
     searchParams,
+    service,
     source,
     statusCode,
     toDate,
@@ -220,9 +235,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       level: level === 'all' ? null : level,
       query,
       source,
+      service,
       method,
       statusCode: parseStatusCodeInput(statusCode),
       requestId,
+      traceId,
+      correlationId,
       userId,
       fingerprint,
       category,
@@ -238,11 +256,14 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       method,
       statusCode,
       requestId,
+      traceId,
+      correlationId,
       userId,
       fingerprint,
       category,
       fromDate,
       toDate,
+      service,
     ]
   );
 
@@ -251,9 +272,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       level: level === 'all' ? null : level,
       query,
       source,
+      service,
       method,
       statusCode: parseStatusCodeInput(statusCode),
       requestId,
+      traceId,
+      correlationId,
       userId,
       fingerprint,
       category,
@@ -267,11 +291,14 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       method,
       statusCode,
       requestId,
+      traceId,
+      correlationId,
       userId,
       fingerprint,
       category,
       fromDate,
       toDate,
+      service,
     ]
   );
 
@@ -371,9 +398,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     if (key === 'level') setLevel(value as SystemLogLevel | 'all');
     if (key === 'query') setQuery(value);
     if (key === 'source') setSource(value);
+    if (key === 'service') setService(value);
     if (key === 'method') setMethod(value);
     if (key === 'statusCode') setStatusCode(value);
     if (key === 'requestId') setRequestId(value);
+    if (key === 'traceId') setTraceId(value);
+    if (key === 'correlationId') setCorrelationId(value);
     if (key === 'userId') setUserId(value);
     if (key === 'fingerprint') setFingerprint(value);
     if (key === 'category') setCategory(value);
@@ -385,9 +415,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     setLevel('all');
     setQuery('');
     setSource('');
+    setService('');
     setMethod('');
     setStatusCode('');
     setRequestId('');
+    setTraceId('');
+    setCorrelationId('');
     setUserId('');
     setFingerprint('');
     setCategory('');
@@ -434,9 +467,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     level,
     query,
     source,
+    service,
     method,
     statusCode,
     requestId,
+    traceId,
+    correlationId,
     userId,
     fingerprint,
     category,

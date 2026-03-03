@@ -9,8 +9,8 @@ import type {
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import type {
-  AiPathRuntimeProfileEventDto,
-  RuntimeProfileSummaryDto,
+  AiPathRuntimeProfileEvent,
+  RuntimeProfileSummary,
 } from '@/shared/contracts/ai-paths-runtime';
 import {
   EMPTY_RUNTIME_STATE,
@@ -97,7 +97,7 @@ export const computeDurationMs = (
 };
 
 export const shouldCaptureRuntimeProfileHighlight = (
-  event: AiPathRuntimeProfileEventDto
+  event: AiPathRuntimeProfileEvent
 ): boolean => {
   if (event.type !== 'node') {
     return event.type === 'run' && event.phase === 'end';
@@ -110,7 +110,7 @@ export const shouldCaptureRuntimeProfileHighlight = (
 };
 
 export const toRuntimeProfileHighlight = (
-  event: AiPathRuntimeProfileEventDto
+  event: AiPathRuntimeProfileEvent
 ): RuntimeProfileHighlight => {
   if (event.type === 'run') {
     return {
@@ -142,7 +142,7 @@ export const buildRuntimeProfileSnapshot = (input: {
   traceId: string;
   eventCount: number;
   sampledHighlights: RuntimeProfileHighlight[];
-  summary: RuntimeProfileSummaryDto | null;
+  summary: RuntimeProfileSummary | null;
   nodeSpans: RuntimeProfileNodeSpan[];
 }): RuntimeProfileSnapshot => {
   const hottestNodes =

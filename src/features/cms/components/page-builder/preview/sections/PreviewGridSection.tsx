@@ -279,19 +279,20 @@ export function PreviewGridSection() {
 
                         {!virtual && isRowSelected && onRemoveRow && showEditorChrome && (
                           <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
-                            <button
-                              type='button'
+                            <Button
+                              variant='ghost'
+                              size='sm'
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 if (!canRemoveRow) return;
                                 onRemoveRow(section.id, row.id);
                               }}
                               disabled={!canRemoveRow}
-                              className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 transition-colors'
+                              className='size-7 p-0 text-gray-300 hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-40 transition-colors'
                               title={canRemoveRow ? 'Remove row' : 'At least one row is required'}
                             >
                               <Trash2 className='size-3.5' />
-                            </button>
+                            </Button>
                           </div>
                         )}
 

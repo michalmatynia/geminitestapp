@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { isAppError } from '@/shared/errors/app-error';
-
 import { EMPTY_RUNTIME_STATE, parseRuntimeState } from '../path-run-executor.helpers';
 
 describe('parseRuntimeState', () => {
@@ -10,7 +8,7 @@ describe('parseRuntimeState', () => {
   });
 
   it('rejects legacy runtime identity fields in non-empty payloads', () => {
-    try {
+    expect(() =>
       parseRuntimeState(
         JSON.stringify({
           status: 'running',
@@ -22,11 +20,8 @@ describe('parseRuntimeState', () => {
           outputs: {},
           runId: 'legacy-run-id',
         })
-      );
-      throw new Error('Expected parseRuntimeState to throw.');
-    } catch (error) {
-      expect(isAppError(error)).toBe(true);
-    }
+      )
+    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
   });
 
   it('accepts canonical runtime payloads with currentRun identity', () => {
@@ -54,5 +49,29 @@ describe('parseRuntimeState', () => {
 
     expect(parsed.currentRun?.id).toBe('run-1');
     expect(parsed.currentRun?.status).toBe('running');
+  });
+
+  it('rejects legacy "cancelled" runtime event status spelling', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [
+            {
+              id: 'evt-1',
+              timestamp: '2026-03-03T10:00:00.000Z',
+              type: 'status',
+              message: 'Node cancelled.',
+              status: 'cancelled',
+            },
+          ],
+          inputs: {},
+          outputs: {},
+        })
+      )
+    ).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 });

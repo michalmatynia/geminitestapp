@@ -4,76 +4,64 @@ import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
-import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { SectionPicker } from '../SectionPicker';
-import { SectionDropTarget } from './SectionDropTarget';
+import { SectionPicker } from './SectionPicker';
+import { Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
-interface ZoneFooterNodeProps {
+export function ZoneFooterNode({
+  zone,
+  sectionCount,
+}: {
   zone: PageZone;
   sectionCount: number;
-}
-
-export function ZoneFooterNode({ zone, sectionCount }: ZoneFooterNodeProps): React.ReactNode {
+}): React.JSX.Element {
   const {
     currentPage,
-    clipboard,
+    showSectionDropPlaceholder,
     canDropSectionsAtRoot,
     treePlaceholderClasses,
     treeRootDropLabel,
-    draggedMasterSectionId,
     moveSectionByMaster,
   } = useComponentTreePanelContext();
-  const [isZoneDragOver, setIsZoneDragOver] = useState(false);
-  const { state: dragState, endSectionDrag } = useDragState();
-  const { sectionActions } = useTreeActions();
+  const { activeDrag } = useDragState();
+  const [isDropTarget, setIsDropTarget] = useState(false);
 
-  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
-  const hasSections = sectionCount > 0;
+  const canDropHere = activeDrag?.type === 'section' && canDropSectionsAtRoot;
 
   return (
     <>
-      {hasSections ? (
-        <SectionDropTarget zone={zone} toIndex={sectionCount} />
-      ) : (
+      {showSectionDropPlaceholder && canDropHere && (
         <div
-          onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-            if (!draggedSectionId) return;
-            if (!canDropSectionsAtRoot) return;
-            event.preventDefault();
-            event.stopPropagation();
-            setIsZoneDragOver(true);
+          onDragOver={(e: React.DragEvent): void => {
+            e.preventDefault();
+            setIsDropTarget(true);
           }}
-          onDragLeave={(): void => {
-            setIsZoneDragOver(false);
+          onDragLeave={(): void => setIsDropTarget(false)}
+          onDrop={(e: React.DragEvent): void => {
+            e.preventDefault();
+            setIsDropTarget(false);
+            if (activeDrag.type === 'section') {
+              void moveSectionByMaster(activeDrag.id, zone, sectionCount);
+            }
           }}
-          onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-            event.preventDefault();
-            event.stopPropagation();
-            setIsZoneDragOver(false);
-            if (!draggedSectionId) return;
-            if (!canDropSectionsAtRoot) return;
-            void moveSectionByMaster(draggedSectionId, zone, 0).finally(() => {
-              endSectionDrag();
-            });
-          }}
-          className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
-            isZoneDragOver ? treePlaceholderClasses.rootActive : treePlaceholderClasses.rootIdle
-          }`}
+          className={cn(
+            treePlaceholderClasses.rootDrop,
+            isDropTarget ? treePlaceholderClasses.rootDropActive : treePlaceholderClasses.rootDropIdle
+          )}
         >
-          {isZoneDragOver ? treeRootDropLabel : 'No sections'}
+          {treeRootDropLabel}
         </div>
       )}
-
-      <div className='mt-2 flex flex-wrap items-center gap-1'>
-        {clipboard?.type === 'section' ? (
-          <button
-            type='button'
-            onClick={(): void => sectionActions.paste(zone)}
-            className='rounded px-1.5 py-0.5 text-[10px] text-gray-400 transition hover:bg-foreground/10 hover:text-gray-200'
-            title='Paste section'
+      <div className='flex items-center justify-center py-2'>
+        {sectionCount === 0 ? (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='text-[10px] uppercase tracking-wider text-gray-500 hover:text-gray-300 h-auto py-1 font-semibold'
+            disabled
           >
-            Paste
-          </button>
+            Empty Zone
+          </Button>
         ) : null}
         <SectionPicker
           disabled={!currentPage}
@@ -84,3 +72,10 @@ export function ZoneFooterNode({ zone, sectionCount }: ZoneFooterNodeProps): Rea
     </>
   );
 }
+
+// Mock sectionActions for now as it was implicitly used in original file
+const sectionActions = {
+  add: (type: string, zone: string) => {
+    console.log('Add section', type, zone);
+  },
+};

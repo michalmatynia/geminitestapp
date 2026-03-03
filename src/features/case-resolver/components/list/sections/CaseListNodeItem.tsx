@@ -3,9 +3,7 @@
 import React from 'react';
 import { FileText, GitBranch, Lock, Pin, ScanText, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   decodeCaseResolverCaseContentFileNodeId,
   decodeCaseResolverCaseContentFolderNodeId,
@@ -13,12 +11,7 @@ import {
 } from '@/features/case-resolver/master-tree';
 import { parseBoolean, formatCaseTimestamp } from '../case-list-utils';
 import { cn } from '@/shared/utils';
-
-type FolderIconComponent = React.ComponentType<{ className?: string }>;
-type CaseListNodeItemController = Pick<
-  MasterFolderTreeController,
-  'renameDraft' | 'updateRenameDraft' | 'commitRename' | 'cancelRename'
->;
+import { useCaseListNodeRuntimeContext } from './CaseListNodeRuntimeContext';
 
 export interface CaseListNodeItemProps {
   node: MasterTreeViewNode;
@@ -30,26 +23,10 @@ export interface CaseListNodeItemProps {
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
   toggleExpand: () => void;
-  filesById: Map<string, CaseResolverFile>;
-  caseTagPathById: Map<string, string>;
-  caseIdentifierPathById: Map<string, string>;
-  caseCategoryPathById: Map<string, string>;
-  controller: CaseListNodeItemController;
-  handleToggleCaseStatus: (id: string) => Promise<void>;
   heldCaseId: string | null;
   canNestHeldHere: boolean;
   canShowNestHeldAction: boolean;
   nestHeldDisabledReason?: string | null;
-  handleToggleHeldCase: (caseId: string) => void;
-  handleNestHeldCase: (targetCaseId: string) => void;
-  handlePrefetchCase: (id: string) => void;
-  handlePrefetchFile: (id: string) => void;
-  handleOpenCase: (id: string) => void;
-  handleOpenFile: (id: string) => void;
-  handleCreateCase: (parentId: string | null) => void;
-  handleDeleteCase: (id: string) => void;
-  FolderClosedIcon: FolderIconComponent;
-  FolderOpenIcon: FolderIconComponent;
 }
 
 export const CaseListNodeItem = React.memo(function CaseListNodeItem({
@@ -62,27 +39,32 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   isDropTarget,
   dropPosition,
   toggleExpand,
-  filesById,
-  caseTagPathById,
-  caseIdentifierPathById,
-  caseCategoryPathById,
-  controller,
-  handleToggleCaseStatus,
   heldCaseId,
   canNestHeldHere,
   canShowNestHeldAction,
   nestHeldDisabledReason,
-  handleToggleHeldCase,
-  handleNestHeldCase,
-  handlePrefetchCase,
-  handlePrefetchFile,
-  handleOpenCase,
-  handleOpenFile,
-  handleCreateCase,
-  handleDeleteCase,
-  FolderClosedIcon,
-  FolderOpenIcon,
 }: CaseListNodeItemProps): React.JSX.Element {
+  const {
+    filesById,
+    caseTagPathById,
+    caseIdentifierPathById,
+    caseCategoryPathById,
+    renameDraft,
+    onUpdateRenameDraft,
+    onCommitRename,
+    onCancelRename,
+    handleToggleCaseStatus,
+    handleToggleHeldCase,
+    handleNestHeldCase,
+    handlePrefetchCase,
+    handlePrefetchFile,
+    handleOpenCase,
+    handleOpenFile,
+    handleCreateCase,
+    handleDeleteCase,
+    FolderClosedIcon,
+    FolderOpenIcon,
+  } = useCaseListNodeRuntimeContext();
   const caseId = fromCaseResolverCaseNodeId(node.id) ?? '';
   const caseContentFolderRef = decodeCaseResolverCaseContentFolderNodeId(node.id);
   const caseContentFileRef = decodeCaseResolverCaseContentFileNodeId(node.id);
@@ -249,21 +231,21 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
         {isRenaming ? (
           <Input
             autoFocus
-            value={controller.renameDraft}
+            value={renameDraft}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              controller.updateRenameDraft(event.target.value);
+              onUpdateRenameDraft(event.target.value);
             }}
             onBlur={(): void => {
-              void controller.commitRename();
+              onCommitRename();
             }}
             onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
               event.stopPropagation();
               if (event.key === 'Enter') {
                 event.preventDefault();
-                void controller.commitRename();
+                onCommitRename();
               } else if (event.key === 'Escape') {
                 event.preventDefault();
-                controller.cancelRename();
+                onCancelRename();
               }
             }}
             onClick={(event: React.MouseEvent<HTMLInputElement>): void => {

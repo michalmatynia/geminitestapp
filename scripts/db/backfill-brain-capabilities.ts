@@ -11,7 +11,7 @@ import {
   sanitizeBrainAssignment,
 } from '@/shared/lib/ai-brain/settings';
 import type {
-  AiBrainCapabilityAssignment,
+  AiBrainAssignment,
   AiBrainCapabilityKey,
   AiBrainSettings,
 } from '@/shared/contracts/ai-brain';
@@ -93,12 +93,12 @@ async function main(): Promise<void> {
 
   const nextCapabilities = Object.fromEntries(
     BRAIN_CAPABILITY_KEYS.map(
-      (capability: AiBrainCapabilityKey): [AiBrainCapabilityKey, AiBrainCapabilityAssignment] => [
+      (capability: AiBrainCapabilityKey): [AiBrainCapabilityKey, AiBrainAssignment] => [
         capability,
         sanitizeBrainAssignment(resolveBrainCapabilityAssignment(currentSettings, capability)),
       ]
     )
-  ) as Record<AiBrainCapabilityKey, AiBrainCapabilityAssignment>;
+  ) as Record<AiBrainCapabilityKey, AiBrainAssignment>;
 
   const nextSettings: AiBrainSettings = {
     ...currentSettings,

@@ -18,10 +18,8 @@ import {
   aiPathRunSchema,
   aiPathRunStatusSchema,
   type AiPathNodeStatus,
-  type AiPathNodeStatusDto,
-  type AiPathRunDto,
+  type AiPathRun,
   type AiPathRunStatus,
-  type AiPathRunStatusDto,
 } from './ai-paths-runtime';
 
 export {
@@ -29,10 +27,8 @@ export {
   aiPathRunSchema,
   aiPathRunStatusSchema,
   type AiPathNodeStatus,
-  type AiPathNodeStatusDto,
-  type AiPathRunDto,
+  type AiPathRun,
   type AiPathRunStatus,
-  type AiPathRunStatusDto,
 };
 
 /**
@@ -336,6 +332,46 @@ export type CentralDocsSnapshotResponse = {
 };
 
 export type CandidateChangeKind = 'new' | 'changed' | 'existing';
+
+/**
+ * AI Path Runtime UI & Context Types
+ */
+export interface LastErrorInfo {
+  message: string;
+  time: string;
+  pathId?: string | null;
+}
+
+export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
+
+export interface RuntimeControlHandlers {
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTriggerPersistent?: (
+    node: AiNode,
+    event?: React.MouseEvent<HTMLButtonElement>
+  ) => void | Promise<void>;
+  pauseActiveRun?: () => void;
+  resumeActiveRun?: () => void;
+  stepActiveRun?: (triggerNode?: AiNode) => void;
+  cancelActiveRun?: () => void;
+  clearWires?: () => void | Promise<void>;
+}
+
+export interface RuntimeNodeConfigHandlers {
+  fetchParserSample?: (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => void | Promise<void>;
+  fetchUpdaterSample?: (
+    nodeId: string,
+    entityType: string,
+    entityId: string,
+    options?: { notify?: boolean }
+  ) => void | Promise<void>;
+  runSimulation?: (node: AiNode, triggerEvent?: string) => void | Promise<void>;
+  sendToAi?: (databaseNodeId: string, prompt: string) => void | Promise<void>;
+}
 
 /**
  * AI Path Local Run Contracts
@@ -788,12 +824,12 @@ export type AiPathRunRepository = {
 export type {
   RuntimeState,
   RuntimePortValues,
-  RuntimeEventInputDto,
-  RunStatusDto,
-  SetNodeStatusInputDto,
+  RuntimeEventInput,
+  RunStatus,
+  SetNodeStatusInput,
   PathExecutionMode,
   PathRunMode,
-  QueuedRunDto,
+  QueuedRun,
   RuntimeHistoryEntry,
   RuntimeHistoryLink,
 } from './ai-paths-runtime';

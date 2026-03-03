@@ -4,7 +4,7 @@ import React, { createContext, useContext } from 'react';
 import Link from 'next/link';
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { Tooltip, TreeContextMenu } from '@/shared/ui';
+import { Tooltip, TreeContextMenu, Button } from '@/shared/ui';
 import { type NavItem, isActiveHref } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';
 
@@ -115,7 +115,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
           };
 
         const rowClassName = cn(
-          'group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer border-l-2',
+          'group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer border-l-2 h-auto font-normal',
           sectionStyle ? sectionStyle.border : 'border-transparent',
           active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
         );
@@ -155,14 +155,14 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                     </TreeContextMenu>
                   ) : (
                     <TreeContextMenu items={contextItems} className='cursor-pointer'>
-                      <button
-                        type='button'
+                      <Button
+                        variant='ghost'
                         onClick={(): void => {
                           if (item.action) item.action();
                           if (!item.href && hasChildren) onToggleOpen(item.id);
                         }}
                         className={cn(
-                          'flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer',
+                          'flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer h-auto',
                           sectionStyle ? sectionStyle.border : 'border-transparent',
                           active
                             ? 'bg-gray-700/60 text-white'
@@ -181,7 +181,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                           ) : null}
                         </span>
                         <span className='sr-only'>{item.label}</span>
-                      </button>
+                      </Button>
                     </TreeContextMenu>
                   )}
                 </div>
@@ -190,8 +190,8 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
               <>
                 {hasChildren ? (
                   <TreeContextMenu items={contextItems} className='cursor-pointer'>
-                    <button
-                      type='button'
+                    <Button
+                      variant='ghost'
                       onClick={(): void => {
                         if (item.action) {
                           item.action();
@@ -230,7 +230,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                         )}
                         aria-hidden='true'
                       />
-                    </button>
+                    </Button>
                   </TreeContextMenu>
                 ) : item.href ? (
                   <TreeContextMenu items={contextItems} className='cursor-pointer'>
@@ -262,8 +262,8 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                   </TreeContextMenu>
                 ) : (
                   <TreeContextMenu items={contextItems} className='cursor-pointer'>
-                    <button
-                      type='button'
+                    <Button
+                      variant='ghost'
                       onClick={(): void => {
                         if (item.action) item.action();
                       }}
@@ -287,7 +287,7 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
                         ) : null}
                         <span className='min-w-0 truncate text-left'>{item.label}</span>
                       </div>
-                    </button>
+                    </Button>
                   </TreeContextMenu>
                 )}
 

@@ -1,7 +1,7 @@
 import { Prisma, type SystemLog } from '@prisma/client';
 
-import type { ActivityRepository, ActivityFiltersDto } from '@/shared/contracts/system';
-import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
+import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
+import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';
 import prisma from '@/shared/lib/db/prisma';
 
 const ACTIVITY_SOURCE = 'activity';
@@ -17,7 +17,7 @@ const toNullableString = (value: unknown): string | null => {
   return null;
 };
 
-const toActivityDto = (log: SystemLog): ActivityLogDto => {
+const toActivityDto = (log: SystemLog): ActivityLog => {
   const context = toRecord(log.context) ?? {};
   const rawMetadata = toRecord(context['metadata']);
 
@@ -36,7 +36,7 @@ const toActivityDto = (log: SystemLog): ActivityLogDto => {
 
 const matchesEntityFilters = (
   contextValue: Prisma.JsonValue | null,
-  filters: ActivityFiltersDto
+  filters: ActivityFilters
 ): boolean => {
   if (!filters.entityId && !filters.entityType) return true;
   const context = toRecord(contextValue) ?? {};
@@ -47,7 +47,7 @@ const matchesEntityFilters = (
 };
 
 export const prismaActivityRepository: ActivityRepository = {
-  async listActivity(filters: ActivityFiltersDto): Promise<ActivityLogDto[]> {
+  async listActivity(filters: ActivityFilters): Promise<ActivityLog[]> {
     const where: Prisma.SystemLogWhereInput = {
       source: ACTIVITY_SOURCE,
     };
@@ -79,7 +79,7 @@ export const prismaActivityRepository: ActivityRepository = {
     return logs.map(toActivityDto);
   },
 
-  async countActivity(filters: ActivityFiltersDto): Promise<number> {
+  async countActivity(filters: ActivityFilters): Promise<number> {
     const where: Prisma.SystemLogWhereInput = {
       source: ACTIVITY_SOURCE,
     };
@@ -98,7 +98,7 @@ export const prismaActivityRepository: ActivityRepository = {
     return prisma.systemLog.count({ where });
   },
 
-  async createActivity(data: CreateActivityLogDto): Promise<ActivityLogDto> {
+  async createActivity(data: CreateActivityLog): Promise<ActivityLog> {
     const log = await prisma.systemLog.create({
       data: {
         level: 'info',

@@ -169,28 +169,28 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             >
               <div className='overflow-y-auto max-h-60 divide-y divide-white/5'>
                 {filteredTags.map((tag: TagRecord) => (
-                  <button
+                  <Button
                     key={tag.id}
-                    type='button'
+                    variant='ghost'
                     onClick={(): void => handleAddTag(tag)}
-                    className='w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
+                    className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors font-normal'
                   >
                     {tag.name || 'Unnamed'}
-                  </button>
+                  </Button>
                 ))}
                 {tagInput &&
                   !filteredTags.find(
                     (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                  <button
-                    type='button'
+                  <Button
+                    variant='ghost'
                     onClick={(): void => {
                       void handleCreateTag();
                     }}
-                    className='w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors'
+                    className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors font-normal'
                   >
                       Create &quot;{tagInput}&quot;
-                  </button>
+                  </Button>
                 )}
               </div>
             </Card>
@@ -282,9 +282,9 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                         )
                     )
                     .map((candidate: NoteWithRelations) => (
-                      <button
+                      <Button
                         key={candidate.id}
-                        type='button'
+                        variant='ghost'
                         onClick={(): void => {
                           setSelectedRelatedNotes(
                             (
@@ -307,10 +307,10 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                           setRelatedNoteQuery('');
                           setIsRelatedDropdownOpen(false);
                         }}
-                        className='w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
+                        className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors font-normal'
                       >
                         {candidate.title}
-                      </button>
+                      </Button>
                     ))}
                   {!isRelatedLoading &&
                     relatedNoteResults.filter(

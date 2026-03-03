@@ -36,19 +36,34 @@ export const parseFolderTreeUiStateV2Entry = (
   raw: string | null | undefined
 ): FolderTreeUiStateV2Entry => {
   if (!raw) return createDefaultFolderTreeUiStateV2Entry();
-  const parsed = JSON.parse(raw) as unknown;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (error) {
+    throw validationError('Invalid folder tree V2 UI state payload.', {
+      reason: 'invalid_json',
+      cause: error instanceof Error ? error.message : 'unknown_error',
+    });
+  }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Invalid folder tree V2 UI state payload.');
+    throw validationError('Invalid folder tree V2 UI state payload.', {
+      reason: 'invalid_shape',
+    });
   }
   const record = parsed as Record<string, unknown>;
   const keys = Object.keys(record);
   const allowedKeys = new Set(['expandedNodeIds', 'panelCollapsed']);
   if (keys.some((key: string) => !allowedKeys.has(key))) {
-    throw new Error('Folder tree V2 UI state contains unsupported keys.');
+    throw validationError('Folder tree V2 UI state contains unsupported keys.', {
+      reason: 'unsupported_keys',
+      keys,
+    });
   }
   const rawExpandedNodeIds = record['expandedNodeIds'];
   if (rawExpandedNodeIds !== undefined && !Array.isArray(rawExpandedNodeIds)) {
-    throw new Error('Folder tree V2 expandedNodeIds must be an array.');
+    throw validationError('Folder tree V2 expandedNodeIds must be an array.', {
+      reason: 'invalid_expanded_node_ids',
+    });
   }
   const expandedNodeIds = Array.isArray(rawExpandedNodeIds)
     ? Array.from(
@@ -61,7 +76,9 @@ export const parseFolderTreeUiStateV2Entry = (
     : [];
   const panelCollapsed = record['panelCollapsed'];
   if (panelCollapsed !== undefined && typeof panelCollapsed !== 'boolean') {
-    throw new Error('Folder tree V2 panelCollapsed must be a boolean.');
+    throw validationError('Folder tree V2 panelCollapsed must be a boolean.', {
+      reason: 'invalid_panel_collapsed',
+    });
   }
   return {
     expandedNodeIds,

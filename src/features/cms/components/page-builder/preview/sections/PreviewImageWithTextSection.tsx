@@ -62,8 +62,10 @@ export function PreviewImageWithTextSection() {
       {renderSectionActions()}
       {divider}
       {showEditorChrome && onOpenMedia && (
-        <button
+        <Button
           type='button'
+          size='sm'
+          variant='outline'
           onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             onOpenMedia({
@@ -72,10 +74,10 @@ export function PreviewImageWithTextSection() {
               key: 'image',
             });
           }}
-          className='absolute left-3 top-3 z-10 rounded-full border border-border/40 bg-card/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100 hover:text-white hover:bg-card/90'
+          className='absolute left-3 top-3 z-10 h-7 rounded-full border-border/40 bg-card/70 px-2 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100 hover:bg-card/90 hover:text-white'
         >
           Replace image
-        </button>
+        </Button>
       )}
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
         <div

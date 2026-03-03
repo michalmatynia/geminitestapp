@@ -95,20 +95,20 @@ export function AttachSlugModal({
               maxHeight='max-h-60'
               extraActions={
                 <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
-                  <button
-                    type='button'
-                    className='text-primary hover:text-primary/80 transition-colors'
+                  <Button
+                    variant='link'
+                    className='h-auto p-0 text-[10px] uppercase font-bold text-primary hover:text-primary/80 transition-colors'
                     onClick={selectAllVisible}
                   >
                     Select All
-                  </button>
-                  <button
-                    type='button'
-                    className='text-muted-foreground hover:text-foreground transition-colors'
+                  </Button>
+                  <Button
+                    variant='link'
+                    className='h-auto p-0 text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground transition-colors'
                     onClick={clearSelection}
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
               }
               renderItem={(slug) => (

@@ -982,54 +982,25 @@ export type ImageStudioAutoScaleMetadata = {
   objectAreaPercentAfter?: number | null;
 };
 
-export interface RunStudioPayload {
-  projectId: string;
-  operation?: 'generate' | 'center_object' | undefined;
-  asset?: { filepath: string; id?: string | undefined } | undefined;
-  referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
-  prompt: string;
-  mask?:
-    | {
-        type: 'polygons';
-        polygons: Array<Array<{ x: number; y: number }>>;
-        invert?: boolean | undefined;
-        feather?: number | undefined;
-      }
-    | null
-    | undefined;
-  center?:
-    | {
-        mode:
-          | 'client_alpha_bbox'
-          | 'server_alpha_bbox'
-          | 'client_object_layout_v1'
-          | 'server_object_layout_v1';
-        dataUrl?: string | undefined;
-        layout?:
-          | {
-              paddingPercent?: number | undefined;
-              paddingXPercent?: number | undefined;
-              paddingYPercent?: number | undefined;
-              fillMissingCanvasWhite?: boolean | undefined;
-              targetCanvasWidth?: number | undefined;
-              targetCanvasHeight?: number | undefined;
-              whiteThreshold?: number | undefined;
-              chromaThreshold?: number | undefined;
-              detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | undefined;
-            }
-          | undefined;
-      }
-    | undefined;
-  studioSettings?: Record<string, unknown> | undefined;
-}
-
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+export type ImageStudioRunHistoryEventSource = 'api' | 'queue' | 'worker' | 'stream' | 'client';
+
+export type ImageStudioRunHistoryEvent = {
+  id: string;
+  type: string;
+  source: ImageStudioRunHistoryEventSource;
+  message: string;
+  at: string;
+  payload?: Record<string, unknown>;
+};
 
 export type ImageStudioRunRecord = {
   id: string;
   projectId: string;
   status: ImageStudioRunStatus;
   dispatchMode: 'queued' | 'inline' | null;
+  request: ImageStudioRunRequest;
   expectedOutputs: number;
   outputs: Array<{ id: string; filepath: string }>;
   errorMessage: string | null;
@@ -1037,14 +1008,71 @@ export type ImageStudioRunRecord = {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
-  historyEvents?: Array<{
-    id: string;
-    type: string;
-    source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
-    message: string;
-    at: string;
-    payload?: Record<string, unknown>;
-  }>;
+  historyEvents: ImageStudioRunHistoryEvent[];
+};
+
+// --- Sequence Runs ---
+
+export type ImageStudioSequenceRunStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+export type ImageStudioSequenceRunDispatchMode = 'queued' | 'inline';
+
+export type ImageStudioSequenceRunHistoryEventSource =
+  | 'api'
+  | 'queue' | 'worker' | 'stream' | 'client';
+
+export type ImageStudioSequenceMaskContext = {
+  polygons: Array<Array<{ x: number; y: number }>>;
+  invert: boolean;
+  feather: number;
+  slotId?: string | null;
+} | null;
+
+export type ImageStudioSequenceRunRequest = {
+  projectId: string;
+  sourceSlotId: string;
+  prompt: string;
+  paramsState: Record<string, unknown> | null;
+  referenceSlotIds: string[];
+  steps: any[]; // Avoid circular dependency with studio-settings for now or move steps to contract
+  mask: ImageStudioSequenceMaskContext;
+  studioSettings: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+};
+
+export type ImageStudioSequenceRunHistoryEvent = {
+  id: string;
+  type: string;
+  source: ImageStudioSequenceRunHistoryEventSource;
+  message: string;
+  at: string;
+  payload?: Record<string, unknown>;
+};
+
+export type ImageStudioSequenceRunRecord = {
+  id: string;
+  projectId: string;
+  sourceSlotId: string;
+  currentSlotId: string;
+  status: ImageStudioSequenceRunStatus;
+  dispatchMode: ImageStudioSequenceRunDispatchMode | null;
+  request: ImageStudioSequenceRunRequest;
+  activeStepIndex: number | null;
+  activeStepId: string | null;
+  outputSlotIds: string[];
+  runtimeMask: ImageStudioSequenceMaskContext;
+  cancelRequested: boolean;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  historyEvents: ImageStudioSequenceRunHistoryEvent[];
 };
 
 export type RunStudioEnqueueResult = {

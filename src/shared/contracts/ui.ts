@@ -114,6 +114,8 @@ export interface DeleteResponse {
 
 export interface ApiHandlerContext {
   requestId: string;
+  traceId: string;
+  correlationId: string;
   startTime: number;
   getElapsedMs: () => number;
   params?: Record<string, string | string[]>;
@@ -135,7 +137,10 @@ export interface ApiHandlerOptions {
   requireAuth?: boolean;
   allowedMethods?: string[];
   source: string;
+  service?: string;
   logSuccess?: boolean;
+  successLogging?: 'all' | 'slow' | 'off';
+  slowSuccessThresholdMs?: number;
   successLogLevel?: 'info' | 'warn' | 'error';
   fallbackMessage?: string;
   includeDetails?: boolean;

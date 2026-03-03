@@ -12,12 +12,12 @@ export * from './ai-paths';
 export type {
   PathExecutionMode,
   PathRunMode,
-  QueuedRunDto,
-  RuntimeEventInputDto,
+  QueuedRun,
+  RuntimeEventInput,
   RuntimePortValues,
   RuntimeState,
-  RunStatusDto,
-  SetNodeStatusInputDto,
+  RunStatus,
+  SetNodeStatusInput,
 } from './ai-paths-runtime';
 export * from './ai-trigger-buttons';
 export * from './analytics';

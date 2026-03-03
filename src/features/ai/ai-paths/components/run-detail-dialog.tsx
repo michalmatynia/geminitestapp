@@ -7,9 +7,9 @@ import {
   Button,
   Label,
   SelectSimple,
-  Textarea,
   LoadingState,
   CollapsibleSection,
+  JsonViewer,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -455,25 +455,15 @@ export function RunDetailDialog(): React.JSX.Element {
             className='bg-black/20'
           >
             <div className='mt-3 space-y-3'>
-              <div>
-                <Label className='text-[10px] uppercase text-gray-500'>Run</Label>
-                <Textarea
-                  className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                  readOnly
-                  value={JSON.stringify(runDetail.run, null, 2)}
-                />
-              </div>
-              <div>
-                <Label className='text-[10px] uppercase text-gray-500'>Nodes</Label>
-                <Textarea
-                  className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                  readOnly
-                  value={JSON.stringify(runDetail.nodes, null, 2)}
-                />
-              </div>
-              <div>
+              <JsonViewer title='Run' data={runDetail.run} maxHeight='200px' className='bg-card/70' />
+              <JsonViewer
+                title='Nodes'
+                data={runDetail.nodes}
+                maxHeight='200px'
+                className='bg-card/70'
+              />
+              <div className='space-y-2'>
                 <div className='flex items-center gap-2'>
-                  <Label className='text-[10px] uppercase text-gray-500'>Events</Label>
                   {runEventsOverflow ? (
                     <span className='rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200'>
                       Truncated
@@ -481,10 +471,11 @@ export function RunDetailDialog(): React.JSX.Element {
                     </span>
                   ) : null}
                 </div>
-                <Textarea
-                  className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                  readOnly
-                  value={JSON.stringify(runDetail.events, null, 2)}
+                <JsonViewer
+                  title='Events'
+                  data={runDetail.events}
+                  maxHeight='200px'
+                  className='bg-card/70'
                 />
               </div>
             </div>

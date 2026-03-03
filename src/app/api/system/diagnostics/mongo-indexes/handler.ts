@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { AI_PATHS_MONGO_INDEXES } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { buildObservabilityExpectedByCollection } from '@/shared/lib/observability/observability-index-manifest';
 
 import type { IndexSpecification } from 'mongodb';
 
@@ -22,15 +22,8 @@ type CollectionIndexStatus = {
 
 const serializeKey = (key: IndexSpecification) => JSON.stringify(key);
 
-const buildExpectedByCollection = () =>
-  AI_PATHS_MONGO_INDEXES.reduce<Record<string, IndexInfo[]>>((acc, index) => {
-    if (!index.collection) return acc;
-    const collection = index.collection;
-    const existing = acc[collection] ?? [];
-    existing.push({ key: index.key });
-    acc[collection] = existing;
-    return acc;
-  }, {});
+const buildExpectedByCollection = (): Record<string, IndexInfo[]> =>
+  buildObservabilityExpectedByCollection();
 
 const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
   const expectedByCollection = buildExpectedByCollection();

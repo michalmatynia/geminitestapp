@@ -1,4 +1,4 @@
-import { Copy, Split } from 'lucide-react';
+import { Split } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -21,7 +21,7 @@ import {
   SelectSimple,
   EmptyState,
   Textarea,
-  useToast,
+  CopyButton,
   ValidatorFormatterToggle,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
@@ -53,7 +53,6 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   } = useNodeFileWorkspaceContext();
 
   const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
-  const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const plainTextPatternStacks = React.useMemo(
@@ -78,17 +77,6 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
 
   const edgeFromPort = selectedEdge?.sourceHandle;
   const edgeToPort = selectedEdge?.targetHandle;
-  const handleCopyOutputPreview = React.useCallback(
-    async (value: string): Promise<void> => {
-      try {
-        await navigator.clipboard.writeText(value);
-        toast('output copied.', { variant: 'success' });
-      } catch {
-        toast('Failed to copy output.', { variant: 'error' });
-      }
-    },
-    [toast]
-  );
   const outputPreviewRows = React.useMemo((): Array<{ label: string; value: string }> => {
     if (!selectedPromptOutputPreview) return [];
     const rows: Array<{ label: string; value: string }> = [
@@ -408,19 +396,12 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                         <React.Fragment key={row.label}>
                           <div className='flex items-center justify-between gap-2'>
                             <div className='text-gray-500'>{row.label}</div>
-                            <Button
-                              type='button'
+                            <CopyButton
+                              value={row.value || ''}
                               variant='ghost'
-                              size='sm'
+                              size='icon'
                               className='h-6 w-6 p-0 text-gray-400 hover:text-gray-200'
-                              onClick={(): void => {
-                                void handleCopyOutputPreview(row.value || '');
-                              }}
-                              title={`Copy ${row.label}`}
-                              aria-label={`Copy ${row.label}`}
-                            >
-                              <Copy className='size-3' />
-                            </Button>
+                            />
                           </div>
                           <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
                             {row.value || '(empty)'}

@@ -649,14 +649,15 @@ export function MenuSettingsPanel({
                     />
                   )}
                 </div>
-                <button
-                  type='button'
+                <Button
+                  variant='ghost'
+                  size='sm'
                   onClick={(): void => removeMenuItem(item.id)}
-                  className='mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
+                  className='mt-1 size-7 p-0 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
                   title='Remove item'
                 >
                   <Trash2 className='size-3.5' />
-                </button>
+                </Button>
               </div>
             ))}
             <Button size='sm' variant='outline' className='w-full text-xs' onClick={addMenuItem}>

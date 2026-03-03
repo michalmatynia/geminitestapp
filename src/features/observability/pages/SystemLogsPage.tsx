@@ -17,10 +17,6 @@ import {
   useSystemLogsContext,
 } from '@/features/observability/context/SystemLogsContext';
 import {
-  SYSTEM_LOG_TRIAGE_PRESETS,
-  isSystemLogPresetActive,
-  resolveSystemLogPresetFilters,
-  type LogTriagePreset,
   type SystemLogFilterFormValues,
 } from '@/shared/lib/observability/log-triage-presets';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
@@ -34,7 +30,6 @@ import {
   Pagination,
   StatusBadge,
   PageLayout,
-  FormSection,
   Alert,
   MetadataItem,
   Tooltip,
@@ -50,6 +45,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { LogDiagnostics } from '../components/LogDiagnostics';
 import { LogMetrics } from '../components/LogMetrics';
 import { AiLogInterpreter } from '../components/AiLogInterpreter';
+import { LogTriagePresets } from '../components/LogTriagePresets';
 import { formatTimestamp } from '../utils/formatTimestamp';
 
 const readContextString = (log: SystemLogRecord, key: string): string | null => {
@@ -616,6 +612,9 @@ function EventStreamPanel(): React.JSX.Element {
                   </Hint>
                   <div className='grid grid-cols-2 gap-2'>
                     <MetadataItem label='Request ID' value={log.requestId} mono />
+                    <MetadataItem label='Trace ID' value={log.traceId} mono />
+                    <MetadataItem label='Correlation ID' value={log.correlationId} mono />
+                    <MetadataItem label='Service' value={log.service} mono />
                     <MetadataItem label='User ID' value={log.userId} mono />
                     <MetadataItem label='Error ID' value={errorId} mono />
                     <MetadataItem label='Category' value={category} />
@@ -624,7 +623,7 @@ function EventStreamPanel(): React.JSX.Element {
                     <MetadataItem label='Fingerprint' value={fingerprint} mono />
                     <MetadataItem label='Alert Type' value={alertType} />
                   </div>
-                  {(log.requestId || log.userId || fingerprint) && (
+                  {(log.requestId || log.traceId || log.correlationId || log.service || log.userId || fingerprint) && (
                     <div className='mt-3 flex flex-wrap gap-2 text-[11px]'>
                       {log.requestId && (
                         <Button
@@ -636,6 +635,42 @@ function EventStreamPanel(): React.JSX.Element {
                         >
                           <SearchIcon className='mr-1 size-3' />
                           View all in request
+                        </Button>
+                      )}
+                      {log.traceId && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('traceId', log.traceId ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View full trace
+                        </Button>
+                      )}
+                      {log.correlationId && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('correlationId', log.correlationId ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View correlation
+                        </Button>
+                      )}
+                      {log.service && (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='xs'
+                          className='h-6 px-2'
+                          onClick={() => handleFilterChange('service', log.service ?? '')}
+                        >
+                          <SearchIcon className='mr-1 size-3' />
+                          View service logs
                         </Button>
                       )}
                       {log.userId && (
@@ -862,9 +897,12 @@ function SystemLogsContent(): React.JSX.Element {
     level,
     query,
     source,
+    service,
     method,
     statusCode,
     requestId,
+    traceId,
+    correlationId,
     userId,
     fingerprint,
     category,
@@ -889,9 +927,12 @@ function SystemLogsContent(): React.JSX.Element {
     level,
     query,
     source,
+    service,
     method,
     statusCode,
     requestId,
+    traceId,
+    correlationId,
     userId,
     fingerprint,
     category,
@@ -980,9 +1021,12 @@ function SystemLogsContent(): React.JSX.Element {
               level !== 'all' ||
               query ||
               source ||
+              service ||
               method ||
               statusCode ||
               requestId ||
+              traceId ||
+              correlationId ||
               userId ||
               fingerprint ||
               category ||

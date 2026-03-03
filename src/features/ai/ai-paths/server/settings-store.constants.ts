@@ -39,10 +39,6 @@ export type ParsedPathConfig = {
   isLocked?: boolean;
 };
 
-export type TriggerButtonSettingRecord = Record<string, unknown> & {
-  id: string;
-};
-
 export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',

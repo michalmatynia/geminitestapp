@@ -48,9 +48,33 @@ const SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS = parseNumberFromEnv(
   1
 );
 
+const SYSTEM_LOG_ALERT_PER_SERVICE_MIN_ERRORS = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_ALERT_PER_SERVICE_MIN_ERRORS'],
+  10,
+  1
+);
+
 const SYSTEM_LOG_ALERT_COOLDOWN_SECONDS = parseNumberFromEnv(
   process.env['SYSTEM_LOG_ALERT_COOLDOWN_SECONDS'],
   600,
+  60
+);
+
+const SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS'],
+  750,
+  50
+);
+
+const SYSTEM_LOG_SLOW_REQUEST_MIN_COUNT = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_SLOW_REQUEST_MIN_COUNT'],
+  20,
+  1
+);
+
+const SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS'],
+  300,
   60
 );
 
@@ -66,10 +90,30 @@ const SYSTEM_LOG_SILENCE_COOLDOWN_SECONDS = parseNumberFromEnv(
   120
 );
 
+const SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS'],
+  900,
+  60
+);
+
+const SYSTEM_LOG_TELEMETRY_SILENCE_COOLDOWN_SECONDS = parseNumberFromEnv(
+  process.env['SYSTEM_LOG_TELEMETRY_SILENCE_COOLDOWN_SECONDS'],
+  900,
+  120
+);
+
+const SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES = String(
+  process.env['SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES'] ?? ''
+)
+  .split(',')
+  .map((entry) => entry.trim())
+  .filter((entry) => entry.length > 0);
+
 const ALERT_QUEUE_NAME = 'system-log-alerts';
 const ALERT_REPEAT_JOB_ID = 'system-log-alerts-tick';
 const ALERT_STARTUP_JOB_ID = 'system-log-alerts-startup-tick';
 const ALERT_EVIDENCE_SAMPLE_LIMIT = 5;
+const ALERT_GROUP_SCAN_LIMIT = 2000;
 type MongoSystemLogDoc = {
   _id?: string;
   id?: string;
@@ -77,12 +121,17 @@ type MongoSystemLogDoc = {
   message?: string;
   category?: string | null;
   source?: string | null;
+  service?: string | null;
   context?: Record<string, unknown> | null;
   stack?: string | null;
   path?: string | null;
   method?: string | null;
   statusCode?: number | null;
   requestId?: string | null;
+  traceId?: string | null;
+  correlationId?: string | null;
+  spanId?: string | null;
+  parentSpanId?: string | null;
   userId?: string | null;
   createdAt?: Date;
 };
@@ -119,6 +168,7 @@ type AlertEvidenceContext = {
 type AlertEvidenceQuery = {
   level?: 'info' | 'warn' | 'error';
   sourceContains?: string;
+  service?: string;
   pathPrefix?: string;
   statusCodeMin?: number;
   statusCodeMax?: number;
@@ -134,6 +184,9 @@ type SystemLogAlertsQueueState = {
   lastAlertAt: number;
   lastSilenceAlertAt: number;
   perSourceLastAlertAt: Record<string, number>;
+  perServiceLastAlertAt: Record<string, number>;
+  perSlowRouteLastAlertAt: Record<string, number>;
+  perServiceTelemetrySilenceLastAlertAt: Record<string, number>;
   perAlertLastFiredAt: Record<string, number>;
 };
 
@@ -150,6 +203,9 @@ const queueState =
     lastAlertAt: 0,
     lastSilenceAlertAt: 0,
     perSourceLastAlertAt: {},
+    perServiceLastAlertAt: {},
+    perSlowRouteLastAlertAt: {},
+    perServiceTelemetrySilenceLastAlertAt: {},
     perAlertLastFiredAt: {},
   });
 
@@ -175,12 +231,32 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   message: doc.message ?? '',
   category: doc.category ?? null,
   source: doc.source ?? null,
+  service:
+    (typeof doc.service === 'string' && doc.service.trim().length > 0
+      ? doc.service
+      : (doc.context?.['service'] as string | undefined)) ?? null,
   context: doc.context ?? null,
   stack: doc.stack ?? null,
   path: doc.path ?? null,
   method: doc.method ?? null,
   statusCode: doc.statusCode ?? null,
   requestId: doc.requestId ?? null,
+  traceId:
+    (typeof doc.traceId === 'string' && doc.traceId.trim().length > 0
+      ? doc.traceId
+      : (doc.context?.['traceId'] as string | undefined)) ?? null,
+  correlationId:
+    (typeof doc.correlationId === 'string' && doc.correlationId.trim().length > 0
+      ? doc.correlationId
+      : (doc.context?.['correlationId'] as string | undefined)) ?? null,
+  spanId:
+    (typeof doc.spanId === 'string' && doc.spanId.trim().length > 0
+      ? doc.spanId
+      : (doc.context?.['spanId'] as string | undefined)) ?? null,
+  parentSpanId:
+    (typeof doc.parentSpanId === 'string' && doc.parentSpanId.trim().length > 0
+      ? doc.parentSpanId
+      : (doc.context?.['parentSpanId'] as string | undefined)) ?? null,
   userId: doc.userId ?? null,
   createdAt: (doc.createdAt ?? new Date()).toISOString(),
   updatedAt: null,
@@ -192,6 +268,17 @@ const toPrismaWhere = (query: AlertEvidenceQuery): Prisma.SystemLogWhereInput =>
   if (query.level) where.level = query.level;
   if (query.sourceContains) {
     where.source = { contains: query.sourceContains, mode: 'insensitive' };
+  }
+  if (query.service) {
+    where.OR = [
+      { service: { equals: query.service, mode: 'insensitive' } },
+      {
+        context: {
+          path: ['service'],
+          equals: query.service,
+        },
+      },
+    ];
   }
   if (query.pathPrefix) {
     where.path = { startsWith: query.pathPrefix, mode: 'insensitive' };
@@ -218,6 +305,12 @@ const toMongoWhere = (query: AlertEvidenceQuery): Record<string, unknown> => {
   if (query.level) where['level'] = query.level;
   if (query.sourceContains) {
     where['source'] = { $regex: escapeRegex(query.sourceContains), $options: 'i' };
+  }
+  if (query.service) {
+    where['$or'] = [
+      { service: { $regex: `^${escapeRegex(query.service)}$`, $options: 'i' } },
+      { 'context.service': query.service },
+    ];
   }
   if (query.pathPrefix) {
     where['path'] = { $regex: `^${escapeRegex(query.pathPrefix)}`, $options: 'i' };
@@ -385,6 +478,34 @@ const isPerSourceInCooldown = (source: string, now: number): boolean => {
   if (!last) return false;
   const elapsedSeconds = (now - last) / 1000;
   return elapsedSeconds < SYSTEM_LOG_ALERT_COOLDOWN_SECONDS;
+};
+
+const isScopedCooldown = (
+  value: string,
+  now: number,
+  map: Record<string, number>,
+  cooldownSeconds: number
+): boolean => {
+  const last = map[value] ?? 0;
+  if (!last) return false;
+  const elapsedSeconds = (now - last) / 1000;
+  return elapsedSeconds < cooldownSeconds;
+};
+
+const readDurationMs = (log: SystemLogRecord): number | null => {
+  const raw = log.context?.['durationMs'];
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const readService = (log: SystemLogRecord): string | null => {
+  const fromTopLevel = readTrimmedString(log.service);
+  if (fromTopLevel) return fromTopLevel;
+  return readTrimmedString(log.context?.['service']);
 };
 
 const isAlertInCooldown = (alertId: string, now: number, cooldownSeconds: number): boolean => {
@@ -561,6 +682,228 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
         recentErrorCount: count,
         minErrors: SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS,
         source,
+        alertEvidence,
+      },
+    });
+  }
+};
+
+const evaluatePerServiceErrorSpikes = async (): Promise<void> => {
+  if (!shouldCheckAlerts()) return;
+  if (SYSTEM_LOG_ALERT_PER_SERVICE_MIN_ERRORS <= 0) return;
+
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - SYSTEM_LOG_ALERT_WINDOW_SECONDS * 1000);
+  const provider = await getAppDbProvider();
+  const nowMs = Date.now();
+  const logs = await listAlertEvidenceLogs(provider, {
+    level: 'error',
+    from: windowStart,
+    to: now,
+    limit: ALERT_GROUP_SCAN_LIMIT,
+  });
+
+  const groupedCounts = new Map<string, number>();
+  for (const log of logs) {
+    const service = readService(log);
+    if (!service) continue;
+    groupedCounts.set(service, (groupedCounts.get(service) ?? 0) + 1);
+  }
+
+  for (const [service, count] of groupedCounts.entries()) {
+    if (count < SYSTEM_LOG_ALERT_PER_SERVICE_MIN_ERRORS) continue;
+    if (
+      isScopedCooldown(
+        service,
+        nowMs,
+        queueState.perServiceLastAlertAt,
+        SYSTEM_LOG_ALERT_COOLDOWN_SECONDS
+      )
+    ) {
+      continue;
+    }
+    queueState.perServiceLastAlertAt[service] = nowMs;
+    const alertEvidence = await buildAlertEvidenceContext({
+      provider,
+      query: {
+        level: 'error',
+        service,
+        from: windowStart,
+        to: now,
+      },
+      matchedCount: count,
+      windowStart,
+    });
+
+    void logSystemEvent({
+      level: 'error',
+      source: 'system-log-alerts',
+      service: 'observability.alerts',
+      message: `Error spike for service "${service}": ${count} errors in the last ${SYSTEM_LOG_ALERT_WINDOW_SECONDS} seconds`,
+      critical: true,
+      context: {
+        alertType: 'error_volume_spike_per_service',
+        windowSeconds: SYSTEM_LOG_ALERT_WINDOW_SECONDS,
+        recentErrorCount: count,
+        minErrors: SYSTEM_LOG_ALERT_PER_SERVICE_MIN_ERRORS,
+        service,
+        alertEvidence,
+      },
+    });
+  }
+};
+
+const evaluateSlowRequestSpikes = async (): Promise<void> => {
+  if (!shouldCheckAlerts()) return;
+  if (SYSTEM_LOG_SLOW_REQUEST_MIN_COUNT <= 0) return;
+
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS * 1000);
+  const provider = await getAppDbProvider();
+  const nowMs = Date.now();
+  const logs = await listAlertEvidenceLogs(provider, {
+    from: windowStart,
+    to: now,
+    limit: ALERT_GROUP_SCAN_LIMIT,
+  });
+
+  const groupedCounts = new Map<string, { service: string; path: string; count: number }>();
+
+  for (const log of logs) {
+    const service = readService(log);
+    if (!service) continue;
+    const durationMs = readDurationMs(log);
+    if (durationMs === null || durationMs < SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS) continue;
+    if (typeof log.statusCode === 'number' && (log.statusCode < 200 || log.statusCode >= 400)) {
+      continue;
+    }
+    const path = readTrimmedString(log.path) ?? 'unknown-path';
+    const key = `${service}|${path}`;
+    const existing = groupedCounts.get(key);
+    if (!existing) {
+      groupedCounts.set(key, { service, path, count: 1 });
+      continue;
+    }
+    existing.count += 1;
+    groupedCounts.set(key, existing);
+  }
+
+  for (const item of groupedCounts.values()) {
+    if (item.count < SYSTEM_LOG_SLOW_REQUEST_MIN_COUNT) continue;
+    const cooldownKey = `${item.service}|${item.path}`;
+    if (
+      isScopedCooldown(
+        cooldownKey,
+        nowMs,
+        queueState.perSlowRouteLastAlertAt,
+        SYSTEM_LOG_ALERT_COOLDOWN_SECONDS
+      )
+    ) {
+      continue;
+    }
+
+    queueState.perSlowRouteLastAlertAt[cooldownKey] = nowMs;
+    const alertEvidence = await buildAlertEvidenceContext({
+      provider,
+      query: {
+        service: item.service,
+        pathPrefix: item.path === 'unknown-path' ? undefined : item.path,
+        from: windowStart,
+        to: now,
+      },
+      matchedCount: item.count,
+      windowStart,
+    });
+
+    void logSystemEvent({
+      level: 'warn',
+      source: 'system-log-alerts',
+      service: 'observability.alerts',
+      message: `Slow request spike for ${item.service} ${item.path}: ${item.count} slow responses in ${SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS} seconds`,
+      critical: false,
+      context: {
+        alertType: 'slow_request_spike_per_service_endpoint',
+        service: item.service,
+        path: item.path,
+        thresholdMs: SYSTEM_LOG_SLOW_REQUEST_THRESHOLD_MS,
+        minCount: SYSTEM_LOG_SLOW_REQUEST_MIN_COUNT,
+        windowSeconds: SYSTEM_LOG_SLOW_REQUEST_WINDOW_SECONDS,
+        matchedCount: item.count,
+        alertEvidence,
+      },
+    });
+  }
+};
+
+const evaluateTelemetrySilenceForCriticalServices = async (): Promise<void> => {
+  if (!shouldCheckAlerts()) return;
+  if (SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES.length === 0) return;
+
+  const provider = await getAppDbProvider();
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS * 1000);
+  const nowMs = Date.now();
+
+  for (const service of SYSTEM_LOG_TELEMETRY_CRITICAL_SERVICES) {
+    let count = 0;
+
+    if (provider === 'mongodb') {
+      const mongo = await getMongoDb();
+      count = await mongo.collection('system_logs').countDocuments({
+        createdAt: { $gte: windowStart },
+        $or: [{ service }, { 'context.service': service }],
+      });
+    } else {
+      count = await prisma.systemLog.count({
+        where: {
+          createdAt: { gte: windowStart },
+          OR: [
+            { service },
+            {
+              context: {
+                path: ['service'],
+                equals: service,
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    if (count > 0) continue;
+    if (
+      isScopedCooldown(
+        service,
+        nowMs,
+        queueState.perServiceTelemetrySilenceLastAlertAt,
+        SYSTEM_LOG_TELEMETRY_SILENCE_COOLDOWN_SECONDS
+      )
+    ) {
+      continue;
+    }
+
+    queueState.perServiceTelemetrySilenceLastAlertAt[service] = nowMs;
+    const alertEvidence = await buildAlertEvidenceContext({
+      provider,
+      query: {
+        service,
+        from: windowStart,
+        to: now,
+      },
+      matchedCount: 0,
+      windowStart,
+    });
+
+    void logSystemEvent({
+      level: 'error',
+      source: 'system-log-alerts',
+      service: 'observability.alerts',
+      message: `Telemetry silence detected for critical service "${service}" in the last ${SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS} seconds`,
+      critical: true,
+      context: {
+        alertType: 'telemetry_silence_per_service',
+        service,
+        windowSeconds: SYSTEM_LOG_TELEMETRY_SILENCE_WINDOW_SECONDS,
         alertEvidence,
       },
     });
@@ -791,6 +1134,9 @@ const queue = createManagedQueue<SystemLogAlertsJobData>({
     await evaluateErrorSpike();
     await evaluateLogSilence();
     await evaluatePerSourceErrorSpikes();
+    await evaluatePerServiceErrorSpikes();
+    await evaluateSlowRequestSpikes();
+    await evaluateTelemetrySilenceForCriticalServices();
     await evaluateUserDefinedAlerts();
   },
 });
@@ -839,3 +1185,17 @@ export const startSystemLogAlertsQueue = (): void => {
 
   syncRepeatSchedulerRegistration();
 };
+
+export function getSystemLogAlertsQueueStatus(): {
+  enabled: boolean;
+  workerStarted: boolean;
+  schedulerRegistered: boolean;
+  startupTickQueued: boolean;
+} {
+  return {
+    enabled: shouldCheckAlerts(),
+    workerStarted: queueState.workerStarted,
+    schedulerRegistered: queueState.schedulerRegistered,
+    startupTickQueued: queueState.startupTickQueued,
+  };
+}

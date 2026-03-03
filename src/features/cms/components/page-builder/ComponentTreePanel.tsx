@@ -273,10 +273,11 @@ export function ComponentTreePanel(): React.ReactNode {
                   const zoneSections = sectionsByZone[zoneFromNode];
                   return (
                     <div className='border-b border-border/50 px-4 py-2.5'>
-                      <button
-                        type='button'
+                      <Button
+                        variant='ghost'
+                        size='sm'
                         onClick={toggleExpand}
-                        className='flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:text-gray-300'
+                        className='flex h-auto w-full items-center justify-start gap-1.5 p-0 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:bg-transparent hover:text-gray-300 font-bold'
                       >
                         {isExpanded ? (
                           <ChevronDown className='size-3.5' />
@@ -289,7 +290,7 @@ export function ComponentTreePanel(): React.ReactNode {
                             ({zoneSections.length})
                           </span>
                         ) : null}
-                      </button>
+                      </Button>
                     </div>
                   );
                 }

@@ -144,6 +144,20 @@ const hasInlineAddressFields = (value: Record<string, unknown>): boolean =>
     countryId: normalizeString(value['countryId']),
   });
 
+const hasInlineEmailFields = (value: Record<string, unknown>): boolean => {
+  if (normalizeString(value['email'])) return true;
+  if (normalizeString(value['emailAddress'])) return true;
+  if (normalizeString(value['primaryEmail'])) return true;
+  const emails = value['emails'];
+  if (typeof emails === 'string') {
+    return Boolean(normalizeString(emails));
+  }
+  if (Array.isArray(emails)) {
+    return emails.length > 0;
+  }
+  return false;
+};
+
 const getRecordList = (value: unknown): Record<string, unknown>[] =>
   Array.isArray(value)
     ? value.filter(
@@ -228,6 +242,18 @@ export const normalizeFilemakerDatabase = (
   ) {
     throw validationError(
       'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported without phoneNumberLinks.'
+    );
+  }
+
+  if (rawEmailLinks.length === 0 && rawPersons.some(hasInlineEmailFields)) {
+    throw validationError(
+      'Legacy Filemaker inline person email payloads are no longer supported without emailLinks.'
+    );
+  }
+
+  if (rawEmailLinks.length === 0 && rawOrganizations.some(hasInlineEmailFields)) {
+    throw validationError(
+      'Legacy Filemaker inline organization email payloads are no longer supported without emailLinks.'
     );
   }
 

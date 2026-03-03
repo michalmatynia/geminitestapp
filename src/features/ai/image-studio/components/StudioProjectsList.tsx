@@ -391,17 +391,17 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
           }
 
           return (
-            <button
-              type='button'
+            <Button
+              variant='link'
               className={cn(
-                'max-w-[230px] truncate text-left transition-colors',
+                'h-auto p-0 max-w-[230px] truncate text-left transition-colors font-normal hover:no-underline',
                 isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
               )}
               onClick={() => handleOpenProject(id)}
               title={id}
             >
-              {id}
-            </button>
+              <span className='truncate'>{id}</span>
+            </Button>
           );
         },
       },

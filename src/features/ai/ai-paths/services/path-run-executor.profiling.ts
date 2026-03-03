@@ -1,12 +1,12 @@
 import { type AiPathRunNodeRecord, type RuntimeState } from '@/shared/contracts/ai-paths';
-import { type RuntimeProfileSummaryDto } from '@/shared/contracts/ai-paths-runtime';
+import { type RuntimeProfileSummary } from '@/shared/contracts/ai-paths-runtime';
 import { RUNTIME_PROFILE_HIGHLIGHT_LIMIT } from './path-run-executor.helpers';
 
 export const buildRunProfileSummary = (
   runId: string,
   _runtimeState: RuntimeState,
   nodeRecords: AiPathRunNodeRecord[]
-): RuntimeProfileSummaryDto => {
+): RuntimeProfileSummary => {
   const nodeStatsMap = new Map<
     string,
     {

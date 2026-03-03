@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { AppModal } from '@/shared/ui/app-modal';
-import { Button } from '@/shared/ui/button';
+import { FormModal } from '@/shared/ui/FormModal';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 
@@ -24,7 +23,7 @@ export interface PromptModalProps {
 
 /**
  * A standard modal for requesting a single text input from the user.
- * Replacement for native window.prompt().
+ * Refactored to leverage FormModal for consistent action handling.
  */
 export function PromptModal({
   open,
@@ -61,21 +60,16 @@ export function PromptModal({
   };
 
   return (
-    <AppModal
+    <FormModal
       open={open}
-      onOpenChange={onClose}
+      onClose={onClose}
       title={title}
       size='sm'
-      footer={
-        <div className='flex justify-end gap-2'>
-          <Button variant='outline' onClick={onClose} disabled={isLoading}>
-            {cancelText}
-          </Button>
-          <Button onClick={handleConfirm} disabled={isLoading || (required && !value.trim())}>
-            {isLoading ? 'Processing...' : confirmText}
-          </Button>
-        </div>
-      }
+      onSave={handleConfirm}
+      isSaving={isLoading}
+      isSaveDisabled={required && !value.trim()}
+      saveText={confirmText}
+      cancelText={cancelText}
     >
       <div className='space-y-4 py-2'>
         {message && <p className='text-sm text-gray-400'>{message}</p>}
@@ -92,6 +86,6 @@ export function PromptModal({
           />
         </div>
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

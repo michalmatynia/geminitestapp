@@ -1,27 +1,27 @@
 {
-  "generatedAt": "2026-02-28T10:36:15.456Z",
+  "generatedAt": "2026-03-03T08:36:14.313Z",
   "source": {
-    "totalFiles": 3718,
-    "totalLines": 599632,
-    "useClientFiles": 1233,
-    "filesOver800": 79,
-    "filesOver1000": 5,
+    "totalFiles": 3909,
+    "totalLines": 630978,
+    "useClientFiles": 1272,
+    "filesOver800": 89,
+    "filesOver1000": 16,
     "filesOver1500": 1,
     "largestFile": {
       "path": "src/features/case-resolver/__tests__/settings.test.ts",
-      "lines": 1774
+      "lines": 1854
     }
   },
   "api": {
-    "totalRoutes": 292,
-    "routesWithApiHandler": 277,
+    "totalRoutes": 318,
+    "routesWithApiHandler": 303,
     "delegatedServerRoutes": 15,
     "routesWithoutApiHandler": 0,
-    "forceDynamicRoutes": 73,
-    "revalidateRoutes": 18,
-    "routesWithCacheHeader": 0,
-    "routesWithCacheOption": 25,
-    "routesWithExplicitCachePolicy": 292,
+    "forceDynamicRoutes": 74,
+    "revalidateRoutes": 23,
+    "routesWithCacheHeader": 1,
+    "routesWithCacheOption": 30,
+    "routesWithExplicitCachePolicy": 318,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -37,6 +37,10 @@
         "lines": 69
       },
       {
+        "path": "src/app/api/products/[id]/studio/[action]/route.ts",
+        "lines": 40
+      },
+      {
         "path": "src/app/api/marketplace/[resource]/route.ts",
         "lines": 37
       },
@@ -45,12 +49,36 @@
         "lines": 31
       },
       {
+        "path": "src/app/api/price-groups/[id]/route.ts",
+        "lines": 28
+      },
+      {
+        "path": "src/app/api/countries/[id]/route.ts",
+        "lines": 26
+      },
+      {
+        "path": "src/app/api/currencies/[id]/route.ts",
+        "lines": 26
+      },
+      {
+        "path": "src/app/api/ai/schema/[entity]/route.ts",
+        "lines": 25
+      },
+      {
+        "path": "src/app/api/languages/[id]/route.ts",
+        "lines": 25
+      },
+      {
         "path": "src/app/api/auth/users/[id]/route.ts",
         "lines": 23
       },
       {
         "path": "src/app/api/products/sync/profiles/[id]/route.ts",
         "lines": 23
+      },
+      {
+        "path": "src/app/api/v2/metadata/[type]/[id]/route.ts",
+        "lines": 22
       },
       {
         "path": "src/app/api/v2/products/entities/[type]/[id]/route.ts",
@@ -65,64 +93,32 @@
         "lines": 21
       },
       {
+        "path": "src/app/api/drafts/[id]/route.ts",
+        "lines": 21
+      },
+      {
         "path": "src/app/api/products/validator-patterns/route.ts",
         "lines": 21
       },
       {
-        "path": "src/app/api/integrations/imports/base/runs/route.ts",
+        "path": "src/app/api/ai/context/related/[id]/route.ts",
         "lines": 20
-      },
-      {
-        "path": "src/app/api/products/categories/[id]/route.ts",
-        "lines": 20
-      },
-      {
-        "path": "src/app/api/products/categories/route.ts",
-        "lines": 20
-      },
-      {
-        "path": "src/app/api/products/validator-patterns/[id]/route.ts",
-        "lines": 20
-      },
-      {
-        "path": "src/app/api/assets3d/[id]/route.ts",
-        "lines": 19
-      },
-      {
-        "path": "src/app/api/chatbot/sessions/route.ts",
-        "lines": 19
-      },
-      {
-        "path": "src/app/api/cms/pages/[id]/route.ts",
-        "lines": 19
-      },
-      {
-        "path": "src/app/api/products/sync/profiles/route.ts",
-        "lines": 19
-      },
-      {
-        "path": "src/app/api/settings/route.ts",
-        "lines": 19
       }
     ]
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 308,
-    "sharedToFeaturesStaticImports": 2,
+    "appFeatureDeepImports": 316,
+    "sharedToFeaturesStaticImports": 7,
     "sharedToFeaturesDynamicImports": 5,
-    "sharedToFeaturesTotalImports": 7
+    "sharedToFeaturesTotalImports": 12
   },
   "architecture": {
-    "crossFeatureEdgePairs": 72,
+    "crossFeatureEdgePairs": 70,
     "topCrossFeatureEdges": [
       {
         "edge": "cms -> gsap",
         "references": 19
-      },
-      {
-        "edge": "drafter -> products",
-        "references": 15
       },
       {
         "edge": "ai -> products",
@@ -131,6 +127,10 @@
       {
         "edge": "case-resolver -> case-resolver-capture",
         "references": 14
+      },
+      {
+        "edge": "drafter -> products",
+        "references": 13
       },
       {
         "edge": "case-resolver -> filemaker",
@@ -149,12 +149,12 @@
         "references": 11
       },
       {
-        "edge": "case-resolver -> foldertree",
+        "edge": "case-resolver -> ai",
         "references": 10
       },
       {
-        "edge": "case-resolver -> ai",
-        "references": 10
+        "edge": "case-resolver -> foldertree",
+        "references": 8
       },
       {
         "edge": "cms -> viewer3d",
@@ -177,6 +177,10 @@
         "references": 7
       },
       {
+        "edge": "prompt-exploder -> foldertree",
+        "references": 7
+      },
+      {
         "edge": "case-resolver -> prompt-exploder",
         "references": 6
       },
@@ -189,19 +193,15 @@
         "references": 6
       },
       {
-        "edge": "notesapp -> foldertree",
-        "references": 6
-      },
-      {
-        "edge": "products -> foldertree",
-        "references": 6
-      },
-      {
         "edge": "jobs -> integrations",
         "references": 5
       },
       {
         "edge": "jobs -> product-sync",
+        "references": 5
+      },
+      {
+        "edge": "notesapp -> foldertree",
         "references": 5
       },
       {
@@ -220,123 +220,123 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 757,
-        "lines": 160914
+        "files": 789,
+        "lines": 164352
       },
       {
         "feature": "case-resolver",
-        "files": 209,
-        "lines": 52368
+        "files": 220,
+        "lines": 54999
       },
       {
         "feature": "cms",
-        "files": 242,
-        "lines": 41282
+        "files": 246,
+        "lines": 40832
       },
       {
         "feature": "products",
-        "files": 195,
-        "lines": 34981
+        "files": 209,
+        "lines": 36737
       },
       {
         "feature": "integrations",
-        "files": 178,
-        "lines": 30486
+        "files": 171,
+        "lines": 29707
       },
       {
         "feature": "prompt-exploder",
-        "files": 110,
-        "lines": 22926
+        "files": 129,
+        "lines": 26306
       },
       {
         "feature": "notesapp",
         "files": 76,
-        "lines": 13181
+        "lines": 13186
       },
       {
         "feature": "filemaker",
         "files": 39,
-        "lines": 8281
+        "lines": 8115
+      },
+      {
+        "feature": "foldertree",
+        "files": 55,
+        "lines": 6938
       },
       {
         "feature": "admin",
         "files": 28,
-        "lines": 6322
+        "lines": 6031
       },
       {
         "feature": "auth",
         "files": 39,
-        "lines": 5997
+        "lines": 5848
       },
       {
         "feature": "database",
         "files": 29,
-        "lines": 5780
+        "lines": 5624
       },
       {
         "feature": "data-import-export",
         "files": 29,
-        "lines": 5516
-      },
-      {
-        "feature": "foldertree",
-        "files": 41,
-        "lines": 5294
+        "lines": 5425
       },
       {
         "feature": "viewer3d",
         "files": 30,
-        "lines": 4528
+        "lines": 4648
       },
       {
         "feature": "prompt-engine",
         "files": 28,
-        "lines": 3977
+        "lines": 3939
       },
       {
         "feature": "case-resolver-capture",
         "files": 13,
-        "lines": 3180
+        "lines": 3211
+      },
+      {
+        "feature": "observability",
+        "files": 32,
+        "lines": 3112
       },
       {
         "feature": "drafter",
-        "files": 16,
-        "lines": 2945
+        "files": 15,
+        "lines": 2968
       },
       {
         "feature": "product-sync",
         "files": 11,
-        "lines": 2932
-      },
-      {
-        "feature": "observability",
-        "files": 26,
-        "lines": 2362
-      },
-      {
-        "feature": "files",
-        "files": 28,
-        "lines": 2213
+        "lines": 2914
       },
       {
         "feature": "document-editor",
         "files": 15,
-        "lines": 2172
+        "lines": 2173
+      },
+      {
+        "feature": "files",
+        "files": 24,
+        "lines": 2145
       },
       {
         "feature": "internationalization",
         "files": 20,
-        "lines": 1910
+        "lines": 1885
       },
       {
         "feature": "playwright",
         "files": 9,
-        "lines": 811
+        "lines": 808
       },
       {
         "feature": "jobs",
         "files": 5,
-        "lines": 419
+        "lines": 480
       },
       {
         "feature": "gsap",
@@ -354,11 +354,6 @@
         "lines": 242
       },
       {
-        "feature": "document-search",
-        "files": 2,
-        "lines": 65
-      },
-      {
         "feature": "constants.ts",
         "files": 1,
         "lines": 2
@@ -372,31 +367,95 @@
     "topFilesByLines": [
       {
         "path": "src/features/case-resolver/__tests__/settings.test.ts",
-        "lines": 1774
+        "lines": 1854
+      },
+      {
+        "path": "src/shared/utils/folder-tree-profiles-v2.ts",
+        "lines": 1426
+      },
+      {
+        "path": "src/features/prompt-exploder/pattern-pack-rules.ts",
+        "lines": 1283
+      },
+      {
+        "path": "src/features/case-resolver/workspace-persistence.ts",
+        "lines": 1243
+      },
+      {
+        "path": "src/shared/contracts/image-studio.ts",
+        "lines": 1197
+      },
+      {
+        "path": "src/shared/contracts/case-resolver/index.ts",
+        "lines": 1186
+      },
+      {
+        "path": "src/shared/lib/query-factories-v2.ts",
+        "lines": 1182
+      },
+      {
+        "path": "src/shared/contracts/ai-paths-core/nodes.ts",
+        "lines": 1179
       },
       {
         "path": "src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts",
-        "lines": 1127
+        "lines": 1156
+      },
+      {
+        "path": "src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts",
+        "lines": 1112
+      },
+      {
+        "path": "src/shared/contracts/prompt-exploder.ts",
+        "lines": 1069
+      },
+      {
+        "path": "src/features/prompt-exploder/utils/case-resolver-extraction.ts",
+        "lines": 1044
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
+        "lines": 1034
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
         "lines": 1030
       },
       {
-        "path": "src/features/ai/image-studio/server/run-executor.ts",
-        "lines": 1022
+        "path": "src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts",
+        "lines": 1024
       },
       {
-        "path": "src/features/prompt-exploder/pattern-pack-rules.ts",
-        "lines": 1000
+        "path": "src/features/observability/pages/SystemLogsPage.tsx",
+        "lines": 1016
       },
       {
-        "path": "src/features/filemaker/filemaker-settings.database.ts",
-        "lines": 999
+        "path": "src/features/prompt-exploder/parser.ts",
+        "lines": 994
+      },
+      {
+        "path": "src/features/ai/ai-paths/workers/aiPathRunQueue.ts",
+        "lines": 991
+      },
+      {
+        "path": "src/features/foldertree/pages/AdminFolderTreeSettingsPage.tsx",
+        "lines": 989
+      },
+      {
+        "path": "src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+        "lines": 987
       },
       {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsCanvasInteractions.ts",
         "lines": 985
+      },
+      {
+        "path": "src/features/case-resolver/workers/caseResolverOcrQueue.ts",
+        "lines": 984
+      },
+      {
+        "path": "src/features/filemaker/__tests__/settings.test.ts",
+        "lines": 983
       },
       {
         "path": "src/features/ai/agent-runtime/execution/step-runner.ts",
@@ -407,88 +466,24 @@
         "lines": 976
       },
       {
-        "path": "src/shared/utils/prompt-params.ts",
-        "lines": 969
-      },
-      {
-        "path": "src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts",
-        "lines": 964
+        "path": "src/shared/lib/ai-paths/api/client.ts",
+        "lines": 970
       },
       {
         "path": "src/features/integrations/services/category-mapping-repository.ts",
         "lines": 963
       },
       {
-        "path": "src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts",
-        "lines": 962
+        "path": "src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts",
+        "lines": 963
       },
       {
         "path": "src/features/case-resolver/utils/caseResolverUtils.ts",
         "lines": 961
       },
       {
-        "path": "src/features/integrations/services/exports/base-exporter-template-mappings.ts",
-        "lines": 958
-      },
-      {
-        "path": "src/features/integrations/context/IntegrationsContext.tsx",
-        "lines": 956
-      },
-      {
-        "path": "src/shared/contracts/cms.ts",
-        "lines": 956
-      },
-      {
-        "path": "src/features/products/components/settings/validator-settings/controller-sequence-actions.ts",
-        "lines": 950
-      },
-      {
-        "path": "src/features/products/hooks/useProductListState.tsx",
-        "lines": 950
-      },
-      {
-        "path": "src/app/api/settings/handler.ts",
-        "lines": 942
-      },
-      {
-        "path": "src/features/case-resolver/hooks/useAdminCaseResolverCaptureActions.ts",
-        "lines": 937
-      },
-      {
-        "path": "src/features/filemaker/__tests__/settings.test.ts",
-        "lines": 935
-      },
-      {
-        "path": "src/features/case-resolver/workers/caseResolverOcrQueue.ts",
-        "lines": 933
-      },
-      {
-        "path": "src/features/cms/hooks/page-builder/page-builder-reducer-core.ts",
-        "lines": 932
-      },
-      {
-        "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
-        "lines": 932
-      },
-      {
-        "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
-        "lines": 931
-      },
-      {
-        "path": "src/features/prompt-exploder/utils/case-resolver-extraction.ts",
-        "lines": 930
-      },
-      {
-        "path": "src/app/api/image-studio/slots/[slotId]/crop/handler.ts",
-        "lines": 929
-      },
-      {
-        "path": "src/app/api/integrations/products/[id]/export-to-base/handler.ts",
-        "lines": 929
-      },
-      {
-        "path": "src/shared/contracts/ai-paths-core/nodes.ts",
-        "lines": 929
+        "path": "src/shared/lib/products/services/product-repository/mongo-product-repository.ts",
+        "lines": 961
       }
     ],
     "topPagesByLines": [
@@ -506,7 +501,7 @@
       },
       {
         "path": "src/app/(frontend)/page.tsx",
-        "lines": 47
+        "lines": 48
       },
       {
         "path": "src/app/(admin)/admin/agentcreator/teaching/page.tsx",

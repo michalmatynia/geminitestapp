@@ -28,6 +28,7 @@ export function useSettingsHydration({
   setPromptValidationEnabled,
   setPromptValidationRulesText,
   setPromptValidationRulesError,
+  setSettingsHydrationError,
   hydrationSignature,
 }: {
   settingsStore: {
@@ -47,6 +48,7 @@ export function useSettingsHydration({
   setPromptValidationEnabled: (enabled: boolean) => void;
   setPromptValidationRulesText: (text: string) => void;
   setPromptValidationRulesError: (error: string | null) => void;
+  setSettingsHydrationError: (error: Error | null) => void;
   hydrationSignature: string;
 }) {
   useEffect(() => {
@@ -61,17 +63,30 @@ export function useSettingsHydration({
     const promptEngineStored = parsePromptEngineSettings(
       settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)
     );
+    const hasPersistedPayload = Boolean(storedRaw?.trim());
     let hydrated = defaultImageStudioSettings;
+    let parseError: Error | null = null;
     try {
       hydrated = parseImageStudioSettings(storedRaw);
     } catch (error) {
-      logClientError(error, {
+      parseError =
+        error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');
+      logClientError(parseError, {
         context: {
           source: 'ImageStudioSettingsProvider',
           action: 'hydrateSettings',
         },
       });
     }
+
+    if (parseError && hasPersistedPayload) {
+      setSettingsHydrationError(parseError);
+      hydratedSignatureRef.current = hydrationSignature;
+      setSettingsLoaded(true);
+      return;
+    }
+
+    setSettingsHydrationError(null);
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(
@@ -101,6 +116,7 @@ export function useSettingsHydration({
     setPromptValidationEnabled,
     setPromptValidationRulesText,
     setPromptValidationRulesError,
+    setSettingsHydrationError,
     hydratedSignatureRef,
   ]);
 }

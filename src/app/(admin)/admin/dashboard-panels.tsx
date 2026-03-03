@@ -2,7 +2,7 @@ import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import type { ActivityLogDto } from '@/shared/contracts/system';
+import type { ActivityLog } from '@/shared/contracts/system';
 import { Button, LoadingState } from '@/shared/ui';
 
 export function QuickAccessPanel(): React.JSX.Element {
@@ -52,7 +52,7 @@ export function RecentActivityPanel({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isLoading: boolean;
-  activity: ActivityLogDto[];
+  activity: ActivityLog[];
 }): React.JSX.Element {
   return (
     <Collapsible.Root
@@ -69,7 +69,7 @@ export function RecentActivityPanel({
           <LoadingState message='Loading activity...' className='py-4' size='sm' />
         ) : activity.length > 0 ? (
           <div className='space-y-3'>
-            {activity.map((log: ActivityLogDto) => (
+            {activity.map((log: ActivityLog) => (
               <div
                 key={log.id}
                 className='flex flex-col gap-1 border-b border-gray-800 pb-2 last:border-0'

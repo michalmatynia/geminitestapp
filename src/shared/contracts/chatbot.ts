@@ -392,6 +392,63 @@ export type ChatbotDebugStateDto = z.infer<typeof chatbotDebugStateSchema>;
 export type ChatbotDebugState = ChatbotDebugStateDto;
 
 /**
+ * Chatbot UI Context Data Types
+ */
+export interface ChatbotMessagesData {
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  sendMessage: () => Promise<void>;
+  attachments: File[];
+  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
+  isSending: boolean;
+  setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface ChatbotSettingsData {
+  model: string;
+  setModel: React.Dispatch<React.SetStateAction<string>>;
+  webSearchEnabled: boolean;
+  setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  useGlobalContext: boolean;
+  setUseGlobalContext: React.Dispatch<React.SetStateAction<boolean>>;
+  useLocalContext: boolean;
+  setUseLocalContext: React.Dispatch<React.SetStateAction<boolean>>;
+  searchProvider: string;
+  setSearchProvider: React.Dispatch<React.SetStateAction<string>>;
+  playwrightPersonaId: string | null;
+  setPlaywrightPersonaId: (id: string | null) => void;
+  globalContext: string;
+  setGlobalContext: React.Dispatch<React.SetStateAction<string>>;
+  localContext: string;
+  setLocalContext: React.Dispatch<React.SetStateAction<string>>;
+  localContextMode: 'override' | 'append';
+  setLocalContextMode: React.Dispatch<React.SetStateAction<'override' | 'append'>>;
+  settingsDirty: boolean;
+  settingsSaving: boolean;
+  loadChatbotSettings: () => Promise<void>;
+  saveChatbotSettings: () => Promise<void>;
+}
+
+export interface ChatbotSessionsData {
+  sessions: ChatbotSessionListItem[];
+  currentSessionId: string | null;
+  sessionsLoading: boolean;
+  sessionId: string | null;
+  createNewSession: () => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
+  selectSession: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+export interface ChatbotUIData {
+  debugState: ChatbotDebugState;
+  setDebugState: React.Dispatch<React.SetStateAction<ChatbotDebugState>>;
+  latestAgentRunId: string | null;
+  setLatestAgentRunId: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+/**
  * Model & Task Config DTOs
  */
 export const modelProfileSchema = z.object({

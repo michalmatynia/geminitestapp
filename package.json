@@ -24,6 +24,8 @@
     "cleanup:category-mapping-duplicates": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
     "cleanup:image-studio-orphan-variants": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/reconcile-image-studio-orphan-variant-slots.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
+    "observability:scan": "node scripts/observability/check-observability.mjs --mode=scan",
+    "observability:check": "node scripts/observability/check-observability.mjs --mode=check",
     "storage:configure:fastcomet": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/configure-fastcomet-storage.ts",
     "storage:migrate:fastcomet": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-uploads-to-fastcomet.ts",
     "metrics:collect": "node scripts/architecture/collect-metrics.mjs",

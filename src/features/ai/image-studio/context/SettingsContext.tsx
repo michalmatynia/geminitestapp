@@ -31,6 +31,7 @@ import {
 export interface SettingsState {
   studioSettings: ImageStudioSettings;
   settingsLoaded: boolean;
+  settingsValidationError: Error | null;
 }
 
 export type SaveStudioSettingsResult = {
@@ -71,6 +72,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(
     defaultImageStudioSettings
   );
+  const [settingsValidationError, setSettingsValidationError] = useState<Error | null>(null);
   const hydratedSignatureRef = useRef<string | null>(null);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
@@ -95,10 +97,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     }
 
     let hydrated = defaultImageStudioSettings;
+    let parseError: Error | null = null;
     try {
       hydrated = parseImageStudioSettings(studioSettingsRaw);
     } catch (error) {
-      logClientError(error, {
+      parseError =
+        error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');
+      logClientError(parseError, {
         context: {
           source: 'ImageStudioRuntimeSettings',
           action: 'hydrateSettings',
@@ -106,7 +111,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       });
     }
 
+    if (parseError) {
+      setSettingsValidationError(parseError);
+      hydratedSignatureRef.current = settingsSignature;
+      setSettingsLoaded(true);
+      toast(parseError.message, { variant: 'error' });
+      return;
+    }
+
     setStudioSettings(hydrated);
+    setSettingsValidationError(null);
     hydratedSignatureRef.current = settingsSignature;
     setSettingsLoaded(true);
   }, [
@@ -117,6 +131,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
     settingsStore,
+    toast,
   ]);
 
   const saveStudioSettings = useCallback(
@@ -226,8 +241,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   }, [settingsStore, heavySettings]);
 
   const state = useMemo<SettingsState>(
-    () => ({ studioSettings, settingsLoaded }),
-    [studioSettings, settingsLoaded]
+    () => ({ studioSettings, settingsLoaded, settingsValidationError }),
+    [studioSettings, settingsLoaded, settingsValidationError]
   );
 
   const actions = useMemo<SettingsActions>(
@@ -247,6 +262,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 export function useSettingsState(): SettingsState {
   const ctx = useContext(SettingsStateContext);
   if (!ctx) throw new Error('useSettingsState must be used within a SettingsProvider');
+  if (ctx.settingsValidationError) throw ctx.settingsValidationError;
   return ctx;
 }
 

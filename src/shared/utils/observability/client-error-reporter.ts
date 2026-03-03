@@ -30,7 +30,8 @@ export const reportClientError = async (
     const { logger } = await import('@/shared/utils/logger');
     logger.error(
       'Failed to send client error report',
-      err instanceof Error ? err : new Error(String(err))
+      err instanceof Error ? err : new Error(String(err)),
+      { service: 'observability.client-error-reporter' }
     );
   }
 };

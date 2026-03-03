@@ -9,11 +9,9 @@ import type {
 
 export type {
   CreateProductListingInput,
+  ProductListing,
   ProductListingExportEvent,
   ProductListingExportEventRecord,
   ProductListingRepository,
   ProductListingWithDetails,
 };
-
-// Legacy alias used by integration repositories/services.
-export type ProductListingRecord = ProductListing;

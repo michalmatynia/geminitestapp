@@ -139,6 +139,15 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
   });
 
+  it('rejects non-empty invalid trigger button payloads during starter seeding', () => {
+    expect(() =>
+      ensureStarterWorkflowDefaults([
+        { key: AI_PATHS_INDEX_KEY, value: '[]' },
+        { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '{"invalid":"shape"}' },
+      ])
+    ).toThrowError(/Invalid trigger button settings payload/i);
+  });
+
   it('refreshes stale seeded starter configs through legacy lineage matching when provenance is missing', () => {
     const template = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!template) throw new Error('Missing starter_parameter_inference template');
@@ -172,7 +181,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
             pathId: 'path_syr8f4',
             locations: ['product_modal'],
             mode: 'click',
-            display: { label: 'Infer Parameters', showLabel: true },
+            display: 'icon_label',
             enabled: true,
             sortIndex: 20,
             createdAt: '2026-03-03T10:00:00.000Z',

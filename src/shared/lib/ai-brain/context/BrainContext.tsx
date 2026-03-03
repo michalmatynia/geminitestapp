@@ -33,7 +33,6 @@ import {
   useUpdateSetting,
   useUpdateSettingsBulk,
 } from '@/shared/hooks/use-settings';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -260,8 +259,42 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   const [logsPromptSystem, setLogsPromptSystem] = useState(DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT);
 
   const hydrateFromSettingsMap = useCallback((map: Map<string, string>): void => {
-    const parsedBrain = parseBrainSettings(map.get(AI_BRAIN_SETTINGS_KEY));
-    const parsedCatalog = parseBrainProviderCatalog(map.get(AI_BRAIN_PROVIDER_CATALOG_KEY));
+    let parsedBrain = defaultBrainSettings;
+    try {
+      parsedBrain = parseBrainSettings(map.get(AI_BRAIN_SETTINGS_KEY));
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: {
+          source: 'BrainContext',
+          action: 'hydrateSettings',
+          settingKey: AI_BRAIN_SETTINGS_KEY,
+        },
+      });
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'AI Brain settings are invalid and could not be loaded.',
+        { variant: 'error' }
+      );
+    }
+    let parsedCatalog = defaultBrainProviderCatalog;
+    try {
+      parsedCatalog = parseBrainProviderCatalog(map.get(AI_BRAIN_PROVIDER_CATALOG_KEY));
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: {
+          source: 'BrainContext',
+          action: 'hydrateProviderCatalog',
+          settingKey: AI_BRAIN_PROVIDER_CATALOG_KEY,
+        },
+      });
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'AI Brain provider catalog is invalid and could not be loaded.',
+        { variant: 'error' }
+      );
+    }
     const playwrightPersonaIds = parsePlaywrightPersonaIds(
       map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)
     );
@@ -335,7 +368,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     setLogsPromptSystem(
       map.get(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem) ?? DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT
     );
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (!settingsQuery.data) return;
@@ -383,12 +416,15 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   const ollamaModelsQuery = useBrainModels();
   const operationsOverviewQuery = useBrainOperationsOverview({ range: operationsRange });
-  const runtimeAnalyticsCapability = useBrainAssignment({
-    capability: 'insights.runtime_analytics',
-  });
-  const aiPathsModelCapability = useBrainAssignment({
-    capability: 'ai_paths.model',
-  });
+  const runtimeAnalyticsCapability = useMemo(
+    (): AiBrainAssignment =>
+      resolveBrainCapabilityAssignment(settings, 'insights.runtime_analytics'),
+    [settings]
+  );
+  const aiPathsModelCapability = useMemo(
+    (): AiBrainAssignment => resolveBrainCapabilityAssignment(settings, 'ai_paths.model'),
+    [settings]
+  );
 
   const liveOllamaModels = useMemo((): string[] => {
     const models = Array.isArray(ollamaModelsQuery.data?.sources?.liveOllamaModels)
@@ -449,7 +485,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   const insightsQuery = useBrainInsights();
 
   const runtimeAnalyticsLiveEnabled =
-    runtimeAnalyticsCapability.assignment.enabled && aiPathsModelCapability.assignment.enabled;
+    runtimeAnalyticsCapability.enabled && aiPathsModelCapability.enabled;
   const runtimeAnalyticsQuery = useBrainRuntimeAnalytics(runtimeAnalyticsLiveEnabled);
 
   const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {

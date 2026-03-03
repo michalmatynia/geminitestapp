@@ -1,10 +1,10 @@
 'use client';
 
-import { Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
 import { PanelAction } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui/button';
+import { RefreshButton } from '@/shared/ui/RefreshButton';
 import { cn } from '@/shared/utils';
 
 interface PanelHeaderProps {
@@ -22,7 +22,8 @@ interface PanelHeaderProps {
 }
 
 /**
- * PanelHeader - Renders panel header with title, description, and action buttons
+ * PanelHeader - Renders panel header with title, description, and action buttons.
+ * Refactored to leverage centralized RefreshButton and consistent action styling.
  */
 export const PanelHeader: React.FC<PanelHeaderProps> = ({
   title,
@@ -102,23 +103,14 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
           ))}
 
           {/* Refresh Button */}
-          {refreshable && (
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => {
-                void handleRefresh();
-              }}
-              disabled={isRefreshing}
-              className='h-8 w-8 p-0'
-              title='Refresh'
-            >
-              {isRefreshing ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                <RefreshCw className='h-4 w-4' />
-              )}
-            </Button>
+          {refreshable && onRefresh && (
+            <RefreshButton 
+              onRefresh={handleRefresh} 
+              isRefreshing={isRefreshing} 
+              label='' 
+              size='icon' 
+              className='h-8 w-8'
+            />
           )}
         </div>
       )}

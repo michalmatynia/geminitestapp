@@ -69,7 +69,7 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
 };
 
 const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
-  if (!rawValue || !rawValue.trim()) return [];
+  if (!rawValue?.trim()) return [];
   try {
     const parsed = JSON.parse(rawValue) as unknown;
     if (!Array.isArray(parsed)) {

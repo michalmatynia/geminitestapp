@@ -1,14 +1,12 @@
 import type {
-  AiPathRunQueueSloStatusDto,
-  QueueSloThresholdsDto,
-  SloLevelDto,
+  AiPathRunQueueSloStatus,
+  QueueSloThresholds,
+  SloLevel,
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { parseEnvNumber } from './ai-path-run-queue-utils';
 
-export type AiPathRunQueueSloStatus = AiPathRunQueueSloStatusDto;
-export type QueueSloThresholds = QueueSloThresholdsDto;
-export type SloLevel = SloLevelDto;
+export type { AiPathRunQueueSloStatus, QueueSloThresholds, SloLevel };
 
 export type ComputeQueueSloInput = {
   queueRunning: boolean;

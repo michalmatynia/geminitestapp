@@ -8,10 +8,10 @@ import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/i
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
-  AppProviderValueDto as ProviderValue,
-  AppProviderSourceDto as ProviderSource,
-  AppProviderServiceStatusDto as ProviderServiceStatus,
-  AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
+  AppProviderValue as ProviderValue,
+  AppProviderSource as ProviderSource,
+  AppProviderServiceStatus as ProviderServiceStatus,
+  AppProviderDiagnostics as ProviderDiagnosticsResponse,
 } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {

@@ -21,7 +21,6 @@ import type { FilterField } from '@/shared/ui/templates/panels';
  * - Display toggles remain separate (not filter concerns)
  * - View mode settings remain separate
  * - All state management preserved
- * - 100% backward compatible
  */
 export function NotesFilters(): React.JSX.Element {
   const { settings, updateSettings, filters, availableTagsInScope } = useNotesAppContext();

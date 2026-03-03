@@ -1,5 +1,6 @@
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
+import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import {
   getAutoSeedStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
@@ -63,7 +64,7 @@ export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecor
   const metas = parsePathMetas(indexEntry?.value);
   const triggerButtons = parseTriggerButtons(
     records.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
-  ) ?? [];
+  );
 
   return getAutoSeedStarterWorkflowEntries().reduce((count, entry) => {
     const defaultPathId = entry.seedPolicy?.defaultPathId;
@@ -74,9 +75,9 @@ export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecor
     const parsedConfig = existingConfig ? parsePathConfigRecord(existingConfig.value) : null;
     const pendingConfigRefresh = parsedConfig
       ? (() => {
-          const upgraded = upgradeStarterWorkflowPathConfig(parsedConfig);
-          return upgraded.changed && upgraded.resolution?.entry.templateId === entry.templateId;
-        })()
+        const upgraded = upgradeStarterWorkflowPathConfig(parsedConfig);
+        return upgraded.changed && upgraded.resolution?.entry.templateId === entry.templateId;
+      })()
       : false;
     const hasIndexMeta = metas.some((meta) => meta.id === defaultPathId);
     const missingButtons = (entry.triggerButtonPresets ?? []).some(
@@ -117,11 +118,11 @@ export const ensureStarterWorkflowDefaults = (
 
   const triggerButtonsEntry = ensureRecord(
     AI_PATHS_TRIGGER_BUTTONS_KEY,
-    JSON.stringify(parseTriggerButtons(
+    serializeAiTriggerButtonsRaw(parseTriggerButtons(
       nextRecords.find((record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY)?.value
-    ) ?? [])
+    ))
   );
-  const nextButtons = parseTriggerButtons(triggerButtonsEntry.value) ?? [];
+  const nextButtons = parseTriggerButtons(triggerButtonsEntry.value);
 
   getAutoSeedStarterWorkflowEntries().forEach((entry) => {
     const defaultPathId = entry.seedPolicy?.defaultPathId;
@@ -181,7 +182,7 @@ export const ensureStarterWorkflowDefaults = (
   });
 
   indexEntry.value = JSON.stringify(nextMetas);
-  triggerButtonsEntry.value = JSON.stringify(nextButtons);
+  triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);
   return { nextRecords, affectedCount };
 };
 

@@ -254,10 +254,15 @@ export function PreviewSlideshowSection() {
           {slideCount > 1 && (showArrows || showDots) && (
             <div className='mt-4 flex items-center justify-center gap-4'>
               {showArrows && (
-                <button
-                  type='button'
-                  onClick={goToPrevSlideshow}
-                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    goToPrevSlideshow();
+                  }}
+                  className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
+                  aria-label='Previous slide'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
@@ -267,25 +272,37 @@ export function PreviewSlideshowSection() {
                       d='M15 19l-7-7 7-7'
                     />
                   </svg>
-                </button>
+                </Button>
               )}
               {showDots && (
                 <div className='flex gap-2'>
                   {slideshowFrames.map((_: BlockInstance, idx: number) => (
-                    <button
+                    <Button
                       key={idx}
-                      type='button'
-                      onClick={(): void => setSlideshowIndex(idx)}
-                      className={`size-2 rounded-full transition ${idx === currentSlideshowIndex ? 'bg-white' : 'bg-gray-600'}`}
+                      variant='ghost'
+                      onClick={(e: React.MouseEvent): void => {
+                        e.stopPropagation();
+                        setSlideshowIndex(idx);
+                      }}
+                      className={cn(
+                        'size-2 min-w-0 rounded-full p-0 transition-all hover:bg-white/40',
+                        idx === currentSlideshowIndex ? 'bg-white' : 'bg-gray-600'
+                      )}
+                      aria-label={`Go to slide ${idx + 1}`}
                     />
                   ))}
                 </div>
               )}
               {showArrows && (
-                <button
-                  type='button'
-                  onClick={goToNextSlideshow}
-                  className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    goToNextSlideshow();
+                  }}
+                  className='size-8 rounded-full border-gray-600 bg-transparent p-0 text-gray-400 hover:bg-white/10 hover:text-white transition'
+                  aria-label='Next slide'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path
@@ -295,7 +312,7 @@ export function PreviewSlideshowSection() {
                       d='M9 5l7 7-7 7'
                     />
                   </svg>
-                </button>
+                </Button>
               )}
             </div>
           )}

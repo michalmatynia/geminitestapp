@@ -1,4 +1,4 @@
-import type { AiPathRuntimeProfileEventDto } from '@/shared/contracts/ai-paths-runtime';
+import type { AiPathRuntimeProfileEvent } from '@/shared/contracts/ai-paths-runtime';
 import {
   RUNTIME_PROFILE_SAMPLE_LIMIT,
   RUNTIME_TRACE_SPAN_LIMIT,
@@ -9,7 +9,7 @@ import type {
 } from '../path-run-executor.types';
 
 export function createPathRunProfiling() {
-  const runtimeProfileHighlights: AiPathRuntimeProfileEventDto[] = [];
+  const runtimeProfileHighlights: AiPathRuntimeProfileEvent[] = [];
   const runtimeNodeSpans = new Map<string, RuntimeProfileNodeSpan>();
   const runtimeNodeSpanOrder: string[] = [];
 
@@ -81,7 +81,7 @@ export function createPathRunProfiling() {
       .map((id) => runtimeNodeSpans.get(id))
       .filter((span): span is RuntimeProfileNodeSpan => Boolean(span));
 
-  const captureRuntimeProfileEvent = (event: AiPathRuntimeProfileEventDto): void => {
+  const captureRuntimeProfileEvent = (event: AiPathRuntimeProfileEvent): void => {
     if (runtimeProfileHighlights.length >= RUNTIME_PROFILE_SAMPLE_LIMIT) return;
     if (event.type === 'node' && (event.status === 'error' || event.status === 'skipped')) {
       runtimeProfileHighlights.push(event);

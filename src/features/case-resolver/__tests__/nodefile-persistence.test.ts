@@ -75,7 +75,7 @@ describe('case resolver nodefile persistence', () => {
     expect(resolvedSnapshot).toBeNull();
   });
 
-  it('treats invalid keyed nodefile snapshots as missing without throwing', async () => {
+  it('rejects invalid keyed nodefile snapshots instead of treating them as missing', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
@@ -89,8 +89,9 @@ describe('case resolver nodefile persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    const snapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 'test');
-    expect(snapshot).toBeNull();
+    await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 'test')).rejects.toThrowError(
+      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
+    );
   });
 
   it('clears keyed nodefile snapshots via blank writes', async () => {

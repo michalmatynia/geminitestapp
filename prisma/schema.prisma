@@ -71,18 +71,27 @@ model SystemLog {
   message    String
   category   String?
   source     String?
+  service    String?
   context    Json?
   stack      String?
   path       String?
   method     String?
   statusCode Int?
   requestId  String?
+  traceId    String?
+  correlationId String?
+  spanId     String?
+  parentSpanId String?
   userId     String?
   createdAt  DateTime @default(now())
 
   @@index([level])
   @@index([category])
   @@index([createdAt])
+  @@index([service])
+  @@index([traceId])
+  @@index([traceId, createdAt])
+  @@index([correlationId])
 }
 
 model FileUploadEvent {

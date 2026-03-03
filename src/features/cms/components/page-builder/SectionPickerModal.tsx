@@ -8,6 +8,7 @@ import type { ModalStateProps } from '@/shared/contracts/ui';
 import type { GridPickerItem } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
+import { Button } from '@/shared/ui';
 
 interface SectionTemplate {
   name: string;
@@ -154,28 +155,31 @@ export function SectionPickerModal({
                               key={template.name}
                               className='flex items-center justify-between rounded-md border border-border/50 bg-card/60 p-3'
                             >
-                              <button
-                                type='button'
+                              <Button
+                                variant='ghost'
                                 onClick={() => {
                                   template.create?.();
                                   onSelect(template.name);
                                 }}
-                                className='flex-1 text-left transition hover:text-gray-100'
+                                className='flex-1 justify-start h-auto p-0 font-normal hover:bg-transparent transition text-left group'
                               >
-                                <span className='text-sm font-medium text-gray-200'>
-                                  {template.name}
-                                </span>
-                                <span className='block text-xs text-gray-500'>
-                                  {template.description}
-                                </span>
-                              </button>
-                              <button
-                                type='button'
+                                <div>
+                                  <span className='text-sm font-medium text-gray-200 group-hover:text-white transition'>
+                                    {template.name}
+                                  </span>
+                                  <span className='block text-xs text-gray-500'>
+                                    {template.description}
+                                  </span>
+                                </div>
+                              </Button>
+                              <Button
+                                variant='ghost'
+                                size='sm'
                                 onClick={() => onDeleteTemplate(template.name)}
-                                className='ml-2 text-gray-400 hover:text-red-400'
+                                className='ml-2 size-8 p-0 text-gray-400 hover:text-red-400'
                               >
                                 <Trash2 className='size-4' />
-                              </button>
+                              </Button>
                             </div>
                           ))}
                         </div>

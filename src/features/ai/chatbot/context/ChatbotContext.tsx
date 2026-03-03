@@ -7,20 +7,13 @@ import type {
   ChatMessageDto as ChatMessage,
   ChatbotDebugStateDto as ChatbotDebugState,
   ChatbotSessionDto as ChatSession,
+  ChatbotMessagesData,
+  ChatbotSettingsData,
+  ChatbotSessionsData,
+  ChatbotUIData,
 } from '@/shared/contracts/chatbot';
 
 // --- Messages Context ---
-export interface ChatbotMessagesData {
-  messages: ChatMessage[];
-  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
-  input: string;
-  setInput: React.Dispatch<React.SetStateAction<string>>;
-  sendMessage: () => Promise<void>;
-  attachments: File[];
-  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
-  isSending: boolean;
-  setIsSending: React.Dispatch<React.SetStateAction<boolean>>;
-}
 const MessagesContext = createContext<ChatbotMessagesData | null>(null);
 export const useChatbotMessages = () => {
   const context = useContext(MessagesContext);
@@ -29,30 +22,6 @@ export const useChatbotMessages = () => {
 };
 
 // --- Settings Context ---
-export interface ChatbotSettingsData {
-  model: string;
-  setModel: React.Dispatch<React.SetStateAction<string>>;
-  webSearchEnabled: boolean;
-  setWebSearchEnabled: React.Dispatch<React.SetStateAction<boolean>>;
-  useGlobalContext: boolean;
-  setUseGlobalContext: React.Dispatch<React.SetStateAction<boolean>>;
-  useLocalContext: boolean;
-  setUseLocalContext: React.Dispatch<React.SetStateAction<boolean>>;
-  searchProvider: string;
-  setSearchProvider: React.Dispatch<React.SetStateAction<string>>;
-  playwrightPersonaId: string | null;
-  setPlaywrightPersonaId: (id: string | null) => void;
-  globalContext: string;
-  setGlobalContext: React.Dispatch<React.SetStateAction<string>>;
-  localContext: string;
-  setLocalContext: React.Dispatch<React.SetStateAction<string>>;
-  localContextMode: 'override' | 'append';
-  setLocalContextMode: React.Dispatch<React.SetStateAction<'override' | 'append'>>;
-  settingsDirty: boolean;
-  settingsSaving: boolean;
-  loadChatbotSettings: () => Promise<void>;
-  saveChatbotSettings: () => Promise<void>;
-}
 const SettingsContext = createContext<ChatbotSettingsData | null>(null);
 export const useChatbotSettings = () => {
   const context = useContext(SettingsContext);
@@ -61,15 +30,6 @@ export const useChatbotSettings = () => {
 };
 
 // --- Sessions Context ---
-export interface ChatbotSessionsData {
-  sessions: ChatSession[];
-  currentSessionId: string | null;
-  sessionsLoading: boolean;
-  sessionId: string | null;
-  createNewSession: () => Promise<void>;
-  deleteSession: (id: string) => Promise<void>;
-  selectSession: React.Dispatch<React.SetStateAction<string | null>>;
-}
 const SessionsContext = createContext<ChatbotSessionsData | null>(null);
 export const useChatbotSessions = () => {
   const context = useContext(SessionsContext);
@@ -78,12 +38,6 @@ export const useChatbotSessions = () => {
 };
 
 // --- UI / Debug Context ---
-export interface ChatbotUIData {
-  debugState: ChatbotDebugState;
-  setDebugState: React.Dispatch<React.SetStateAction<ChatbotDebugState>>;
-  latestAgentRunId: string | null;
-  setLatestAgentRunId: React.Dispatch<React.SetStateAction<string | null>>;
-}
 const UIContext = createContext<ChatbotUIData | null>(null);
 export const useChatbotUI = () => {
   const context = useContext(UIContext);

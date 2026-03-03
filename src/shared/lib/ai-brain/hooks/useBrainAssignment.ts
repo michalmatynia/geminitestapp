@@ -12,6 +12,7 @@ import {
   type AiBrainFeature,
 } from '@/shared/lib/ai-brain/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type UseBrainAssignmentInput = {
   feature?: AiBrainFeature;
@@ -29,7 +30,20 @@ export function useBrainAssignment({
 }: UseBrainAssignmentInput): UseBrainAssignmentResult {
   const settingsStore = useSettingsStore();
   const rawBrainSettings = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
-  const brainSettings = useMemo(() => parseBrainSettings(rawBrainSettings), [rawBrainSettings]);
+  const brainSettings = useMemo(() => {
+    try {
+      return parseBrainSettings(rawBrainSettings);
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: {
+          source: 'useBrainAssignment',
+          action: 'parseBrainSettings',
+          settingKey: AI_BRAIN_SETTINGS_KEY,
+        },
+      });
+      throw error;
+    }
+  }, [rawBrainSettings]);
 
   const assignment = useMemo(() => {
     if (capability) {

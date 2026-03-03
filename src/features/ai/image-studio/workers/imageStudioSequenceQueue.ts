@@ -6,10 +6,12 @@ import {
 } from '@/features/ai/image-studio/server/sequence-executor';
 import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
-  getImageStudioSequenceRunById,
-  updateImageStudioSequenceRun,
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
+} from '@/shared/contracts/image-studio';
+import {
+  getImageStudioSequenceRunById,
+  updateImageStudioSequenceRun,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

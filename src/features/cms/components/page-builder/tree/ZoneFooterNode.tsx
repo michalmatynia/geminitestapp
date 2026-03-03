@@ -22,33 +22,40 @@ export function ZoneFooterNode({
     canDropSectionsAtRoot,
     treePlaceholderClasses,
     treeRootDropLabel,
+    draggedMasterSectionId,
     moveSectionByMaster,
   } = useComponentTreePanelContext();
   const { sectionActions } = useTreeActions();
-  const { activeDrag } = useDragState();
+  const { state: dragState, endSectionDrag } = useDragState();
   const [isDropTarget, setIsDropTarget] = useState(false);
 
-  const canDropHere = activeDrag?.type === 'section' && canDropSectionsAtRoot;
+  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
+  const canDropHere =
+    showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
 
   return (
     <>
-      {showSectionDropPlaceholder && canDropHere && (
+      {canDropHere && (
         <div
           onDragOver={(e: React.DragEvent): void => {
             e.preventDefault();
             setIsDropTarget(true);
           }}
-          onDragLeave={(): void => setIsDropTarget(false)}
+          onDragLeave={(e: React.DragEvent): void => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+            setIsDropTarget(false);
+          }}
           onDrop={(e: React.DragEvent): void => {
             e.preventDefault();
             setIsDropTarget(false);
-            if (activeDrag?.type === 'section') {
-              void moveSectionByMaster(activeDrag.id, zone, sectionCount);
-            }
+            if (!draggedSectionId) return;
+            void moveSectionByMaster(draggedSectionId, zone, sectionCount).finally(() => {
+              endSectionDrag();
+            });
           }}
           className={cn(
-            treePlaceholderClasses.rootDrop,
-            isDropTarget ? treePlaceholderClasses.rootDropActive : treePlaceholderClasses.rootDropIdle
+            'mb-1.5 flex h-6 items-center justify-center rounded border-2 border-dashed text-[9px] font-medium transition',
+            isDropTarget ? treePlaceholderClasses.rootActive : treePlaceholderClasses.rootIdle
           )}
         >
           {treeRootDropLabel}

@@ -1737,64 +1737,63 @@ describe('case-resolver settings', () => {
     expect(second.edgeMeta).toEqual({});
   });
 
-  it('strips legacy inline node-file snapshots when loading the workspace', () => {
-    const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
-        workspaceRevision: 0,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
-        files: [
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            graph: {
-              nodes: [],
-              edges: [],
-              nodeMeta: {},
-              edgeMeta: {},
+  it('rejects legacy inline node-file snapshots when loading the workspace', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-a',
+              fileType: 'case',
+              name: 'Case A',
+              folder: '',
+              graph: {
+                nodes: [],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+              },
             },
-          },
-          {
-            id: 'doc-legacy',
-            fileType: 'document',
-            name: 'Legacy Document',
-            folder: '',
-            parentCaseId: 'case-a',
-            graph: {
-              nodes: [],
-              edges: [],
-              nodeMeta: {},
-              edgeMeta: {},
+            {
+              id: 'doc-legacy',
+              fileType: 'document',
+              name: 'Legacy Document',
+              folder: '',
+              parentCaseId: 'case-a',
+              graph: {
+                nodes: [],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+              },
             },
-          },
-        ],
-        assets: [
-          {
-            id: 'node-file-legacy',
-            name: 'Legacy Node File',
-            folder: '',
-            kind: 'node_file',
-            sourceFileId: 'doc-legacy',
-            textContent: JSON.stringify({
-              kind: 'case_resolver_node_file_snapshot_v1',
-              source: 'manual',
-              nodeId: 'legacy-node',
+          ],
+          assets: [
+            {
+              id: 'node-file-legacy',
+              name: 'Legacy Node File',
+              folder: '',
+              kind: 'node_file',
               sourceFileId: 'doc-legacy',
-              sourceFileType: 'document',
-              sourceFileName: 'Legacy Document',
-            }),
-          },
-        ],
-        activeFileId: 'doc-legacy',
-      })
-    );
-    const legacyAsset = workspace.assets.find((asset) => asset.id === 'node-file-legacy');
-    expect(legacyAsset && 'textContent' in legacyAsset).toBe(false);
-    expect(legacyAsset?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
+              textContent: JSON.stringify({
+                kind: 'case_resolver_node_file_snapshot_v1',
+                source: 'manual',
+                nodeId: 'legacy-node',
+                sourceFileId: 'doc-legacy',
+                sourceFileType: 'document',
+                sourceFileName: 'Legacy Document',
+              }),
+            },
+          ],
+          activeFileId: 'doc-legacy',
+        })
+      )
+    ).toThrow(/Inline Case Resolver node-file snapshots are no longer supported\./);
   });
 
   it('keeps canonical text node edge ports on prompt nodes', () => {

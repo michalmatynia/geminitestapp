@@ -4,8 +4,29 @@ import type {
   CaseResolverGraph,
   CaseResolverNodeFileRelationIndex,
 } from '@/shared/contracts/case-resolver';
+import { validationError } from '@/shared/errors/app-error';
 
-const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY = 'nodeFileSnapshotStorage';
+const assertNoInlineNodeFileSnapshotText = (
+  asset: CaseResolverAssetFile,
+  source: string
+): void => {
+  if (asset.kind !== 'node_file') return;
+  const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
+  if (inlineText.length === 0) return;
+  throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
+    source,
+    assetId: asset.id,
+  });
+};
+
+const assertNoInlineNodeFileSnapshotTextInAssets = (
+  assets: CaseResolverAssetFile[],
+  source: string
+): void => {
+  assets.forEach((asset: CaseResolverAssetFile): void => {
+    assertNoInlineNodeFileSnapshotText(asset, source);
+  });
+};
 
 const addUnique = (target: Record<string, string[]>, key: string, value: string): void => {
   const normalizedKey = key.trim();
@@ -43,25 +64,6 @@ const recordsEqual = (left: Record<string, string>, right: Record<string, string
   return leftKeys.every((key: string): boolean => left[key] === right[key]);
 };
 
-const stripInlineNodeFileSnapshotText = (
-  asset: CaseResolverAssetFile,
-  _source: string
-): CaseResolverAssetFile => {
-  if (asset.kind !== 'node_file') return asset;
-  const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-  if (inlineText.length === 0) return asset;
-  const metadata =
-    asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
-      ? { ...asset.metadata }
-      : {};
-  metadata[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY] = 'keyed';
-  const { textContent: _textContent, ...assetRest } = asset;
-  return {
-    ...assetRest,
-    metadata,
-  };
-};
-
 const mergeRelationMap = (
   target: Record<string, string[]>,
   source: Record<string, string[]>
@@ -82,9 +84,7 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    assertNoInlineNodeFileSnapshotText(asset, 'case_resolver.node_file_relations');
-  });
+  assertNoInlineNodeFileSnapshotTextInAssets(assets, 'case_resolver.node_file_relation_index');
 
   const validNodeIds = new Set<string>(
     graph.nodes
@@ -156,9 +156,10 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    assertNoInlineNodeFileSnapshotText(asset, 'case_resolver.node_file_relations');
-  });
+  assertNoInlineNodeFileSnapshotTextInAssets(
+    assets,
+    'case_resolver.node_file_relation_index_from_assets'
+  );
 
   const nodeIdsByDocumentFileId: Record<string, string[]> = {};
   const nodeFileAssetIdsByDocumentFileId: Record<string, string[]> = {};
@@ -202,9 +203,10 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
 }): CaseResolverAssetFile[] => {
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    assertNoInlineNodeFileSnapshotText(asset, 'case_resolver.node_file_asset_sanitize');
-  });
+  assertNoInlineNodeFileSnapshotTextInAssets(
+    assets,
+    'case_resolver.node_file_asset_sanitize'
+  );
   return assets;
 };
 
@@ -217,9 +219,10 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
 }): CaseResolverGraph => {
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    assertNoInlineNodeFileSnapshotText(asset, 'case_resolver.graph_node_file_relations');
-  });
+  assertNoInlineNodeFileSnapshotTextInAssets(
+    assets,
+    'case_resolver.node_file_graph_sanitize'
+  );
 
   const validNodeIds = new Set<string>(
     graph.nodes

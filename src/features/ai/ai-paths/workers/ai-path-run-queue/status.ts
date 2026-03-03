@@ -9,45 +9,14 @@ import {
   type AiPathRunQueueStatus,
 } from '@/shared/contracts/ai-paths-runtime';
 import {
-  computeAiPathRunQueueSlo,
-} from '../ai-path-run-queue-slo';
-import {
-  AI_PATHS_ENABLED_CACHE_TTL_MS,
   DEFAULT_CONCURRENCY,
   QUEUE_HOT_STATUS_CACHE_TTL_MS,
   QUEUE_STATUS_CACHE_TTL_MS,
 } from './config';
 import { aiPathRunQueueState } from './state';
-import { AiInsightsQueueStatus, AiPathRunQueueHotStatus } from './types';
-
-const EMPTY_AI_INSIGHTS_QUEUE_STATUS: AiInsightsQueueStatus = {
-  running: false,
-  healthy: false,
-  processing: false,
-  activeJobs: 0,
-  waitingJobs: 0,
-  failedJobs: 0,
-  completedJobs: 0,
-  lastPollTime: 0,
-  timeSinceLastPoll: 0,
-};
-
-export const getAiInsightsQueueStatusSnapshot = async (): Promise<AiInsightsQueueStatus> => {
-  const module = (await import('@/features/ai/insights/workers/aiInsightsQueue')) as {
-    getAiInsightsQueueStatus?: () => Promise<AiInsightsQueueStatus>;
-  };
-  const readStatus = module.getAiInsightsQueueStatus;
-  if (typeof readStatus !== 'function') return EMPTY_AI_INSIGHTS_QUEUE_STATUS;
-  return readStatus();
-};
-
-const EMPTY_BRAIN_ANALYTICS_24H: AiPathRunQueueStatus['brainAnalytics24h'] = {
-  analyticsReports: 0,
-  logReports: 0,
-  totalReports: 0,
-  warningReports: 0,
-  errorReports: 0,
-};
+import { AiPathRunQueueHotStatus } from './types';
+import { queue } from './queue';
+import { finalizeAiPathRunQueueStatus, getAiInsightsQueueStatusSnapshot, getQueueStatusScopeKey } from './status-utils';
 
 export type GetAiPathRunQueueStatusOptions = {
   bypassCache?: boolean;
@@ -55,64 +24,182 @@ export type GetAiPathRunQueueStatusOptions = {
   userId?: string | null;
 };
 
-let queueStatusCache = new Map<string, { value: AiPathRunQueueStatus; expiresAt: number }>();
-let queueStatusInFlight = new Map<string, Promise<AiPathRunQueueStatus>>();
+const queueStatusCache = new Map<string, { value: AiPathRunQueueStatus; expiresAt: number }>();
+const queueStatusInFlight = new Map<string, Promise<AiPathRunQueueStatus>>();
 let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } | null = null;
 let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
 
-export const getQueueStatusScopeKey = (
-  visibility: AiPathRunVisibility,
-  options: GetAiPathRunQueueStatusOptions
-): string => {
-  if (visibility === 'global') return 'global';
-  return `scoped:${options.userId?.trim() || 'anonymous'}`;
+const readQueueHealthSnapshot = async () => {
+  return aiPathRunQueueState.workerStarted
+    ? await queue.getHealthStatus()
+    : {
+      running: false,
+      healthy: false,
+      processing: false,
+      activeCount: 0,
+      waitingCount: 0,
+      failedCount: 0,
+      completedCount: 0,
+      delayedCount: 0,
+      pausedCount: 0,
+      lastPollTime: 0,
+      timeSinceLastPoll: 0,
+    };
 };
 
-type RuntimeAnalyticsSummarySnapshot = Awaited<ReturnType<typeof getRuntimeAnalyticsSummary>>;
-
-export const finalizeAiPathRunQueueStatus = (
-  baseStatus: AiPathRunQueueBaseStatus,
-  runtimeAnalyticsSummary?: RuntimeAnalyticsSummarySnapshot
-): AiPathRunQueueStatus => {
-  const brainAnalytics24h = runtimeAnalyticsSummary
-    ? {
-      analyticsReports: runtimeAnalyticsSummary.brain.analyticsReports,
-      logReports: runtimeAnalyticsSummary.brain.logReports,
-      totalReports: runtimeAnalyticsSummary.brain.totalReports,
-      warningReports: runtimeAnalyticsSummary.brain.warningReports,
-      errorReports: runtimeAnalyticsSummary.brain.errorReports,
-    }
-    : EMPTY_BRAIN_ANALYTICS_24H;
-  const terminalRuns24h = runtimeAnalyticsSummary
-    ? runtimeAnalyticsSummary.runs.completed +
-      runtimeAnalyticsSummary.runs.failed +
-      runtimeAnalyticsSummary.runs.canceled +
-      runtimeAnalyticsSummary.runs.deadLettered
-    : 0;
-  const brainTotalReports24h = brainAnalytics24h.totalReports;
-  const brainErrorRate24h =
-    brainTotalReports24h > 0
-      ? Math.max(0, Math.min(100, (brainAnalytics24h.errorReports / brainTotalReports24h) * 100))
-      : 0;
-  const slo = computeAiPathRunQueueSlo({
-    queueRunning: baseStatus.running,
-    queueHealthy: baseStatus.healthy,
-    queueLagMs: baseStatus.queueLagMs,
-    successRate24h: runtimeAnalyticsSummary?.runs.successRate ?? 0,
-    terminalRuns24h,
-    deadLetterRate24h: runtimeAnalyticsSummary?.runs.deadLetterRate ?? 0,
-    brainErrorRate24h,
-    brainTotalReports24h,
-  });
+const readAiPathRunQueueBaseStatus = async (
+  now: number,
+  options: GetAiPathRunQueueStatusOptions
+): Promise<AiPathRunQueueBaseStatus> => {
+  const health = await readQueueHealthSnapshot();
+  const repo = await getPathRunRepository();
+  const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
+  const [stats, insightsQueueHealth, runtimeAnalytics] = await Promise.all([
+    repo.getQueueStats(
+      visibility === 'scoped' && options.userId ? { userId: options.userId } : undefined
+    ),
+    getAiInsightsQueueStatusSnapshot(),
+    getRuntimeAnalyticsAvailability(),
+  ]);
+  const oldestQueuedAt = stats.oldestQueuedAt ? stats.oldestQueuedAt.getTime() : null;
+  const queueLagMs = oldestQueuedAt !== null ? Math.max(0, now - oldestQueuedAt) : null;
 
   return {
-    ...baseStatus,
-    avgRuntimeMs: runtimeAnalyticsSummary?.runs.avgDurationMs ?? null,
+    running: health.running ?? false,
+    healthy: health.healthy ?? false,
+    processing: health.processing ?? false,
+    activeCount: health.activeCount,
+    activeRuns: health.activeCount,
+    concurrency: Math.max(1, DEFAULT_CONCURRENCY),
+    lastPollTime: health.lastPollTime ?? 0,
+    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    queuedCount: stats.queuedCount,
+    oldestQueuedAt,
+    queueLagMs,
+    completedLastMinute: health.completedCount,
+    throughputPerMinute: health.completedCount,
+    waitingCount: health.waitingCount,
+    failedCount: health.failedCount,
+    completedCount: health.completedCount,
+    delayedCount: health.delayedCount,
+    pausedCount: (health as any).pausedCount ?? 0, // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+    avgRuntimeMs: null,
     p50RuntimeMs: null,
-    p95RuntimeMs: runtimeAnalyticsSummary?.runs.p95DurationMs ?? null,
-    lastCheckedAt: new Date().toISOString(),
-    isStale: false,
-    brainAnalytics24h,
-    slo,
+    p95RuntimeMs: null,
+    runtimeAnalytics,
+    brainQueue: {
+      running: insightsQueueHealth.running,
+      healthy: insightsQueueHealth.healthy,
+      processing: insightsQueueHealth.processing,
+      activeJobs: insightsQueueHealth.activeJobs,
+      waitingJobs: insightsQueueHealth.waitingJobs,
+      failedJobs: insightsQueueHealth.failedJobs,
+      completedJobs: insightsQueueHealth.completedJobs,
+    },
   };
+};
+
+const readAiPathRunQueueStatus = async (
+  now: number,
+  options: GetAiPathRunQueueStatusOptions
+): Promise<AiPathRunQueueStatus> => {
+  const baseStatus = await readAiPathRunQueueBaseStatus(now, options);
+  if (!baseStatus.runtimeAnalytics?.enabled) {
+    return finalizeAiPathRunQueueStatus(baseStatus);
+  }
+
+  const runtimeAnalyticsSummary = await getRuntimeAnalyticsSummary({
+    from: new Date(now - 24 * 60 * 60 * 1000),
+    to: new Date(now),
+    range: '24h',
+    includeTraces: false,
+  });
+  return finalizeAiPathRunQueueStatus(baseStatus, runtimeAnalyticsSummary);
+};
+
+const readAiPathRunQueueHotStatus = async (): Promise<AiPathRunQueueHotStatus> => {
+  const health = await readQueueHealthSnapshot();
+  return {
+    running: health.running ?? false,
+    healthy: health.healthy ?? false,
+    processing: health.processing ?? false,
+    activeRuns: health.activeCount,
+    waitingRuns: health.waitingCount,
+    failedRuns: health.failedCount,
+    completedRuns: health.completedCount,
+    lastPollTime: health.lastPollTime ?? 0,
+    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+  };
+};
+
+export const getAiPathRunQueueStatus = async (
+  options: GetAiPathRunQueueStatusOptions = {}
+): Promise<AiPathRunQueueStatus> => {
+  const now = Date.now();
+  const bypassCache = options.bypassCache === true;
+  const visibility = options.visibility === 'scoped' ? 'scoped' : 'global';
+  const scopeKey = getQueueStatusScopeKey(visibility, options);
+  const cached = queueStatusCache.get(scopeKey);
+  if (!bypassCache && cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+  const inFlight = queueStatusInFlight.get(scopeKey);
+  if (!bypassCache && inFlight) {
+    return inFlight;
+  }
+
+  const fetchStatus = async (): Promise<AiPathRunQueueStatus> => {
+    const status = await readAiPathRunQueueStatus(now, options);
+    queueStatusCache.set(scopeKey, {
+      value: status,
+      expiresAt: Date.now() + QUEUE_STATUS_CACHE_TTL_MS,
+    });
+    return status;
+  };
+
+  if (bypassCache) {
+    return fetchStatus();
+  }
+
+  const result = fetchStatus();
+  queueStatusInFlight.set(scopeKey, result);
+  try {
+    return await result;
+  } finally {
+    queueStatusInFlight.delete(scopeKey);
+  }
+};
+
+export const getAiPathRunQueueHotStatus = async (
+  options: GetAiPathRunQueueStatusOptions = {}
+): Promise<AiPathRunQueueHotStatus> => {
+  const now = Date.now();
+  const bypassCache = options.bypassCache === true;
+  if (!bypassCache && queueHotStatusCache && queueHotStatusCache.expiresAt > now) {
+    return queueHotStatusCache.value;
+  }
+  if (!bypassCache && queueHotStatusInFlight) {
+    return queueHotStatusInFlight;
+  }
+
+  const fetchStatus = async (): Promise<AiPathRunQueueHotStatus> => {
+    const status = await readAiPathRunQueueHotStatus();
+    queueHotStatusCache = {
+      value: status,
+      expiresAt: Date.now() + QUEUE_HOT_STATUS_CACHE_TTL_MS,
+    };
+    return status;
+  };
+
+  if (bypassCache) {
+    return fetchStatus();
+  }
+
+  const result = fetchStatus();
+  queueHotStatusInFlight = result;
+  try {
+    return await result;
+  } finally {
+    queueHotStatusInFlight = null;
+  }
 };

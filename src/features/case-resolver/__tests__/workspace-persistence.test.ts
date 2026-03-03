@@ -128,7 +128,7 @@ describe('case-resolver workspace persistence', () => {
     }
   });
 
-  it('strips deprecated inline node-file snapshots before persist', async () => {
+  it('rejects deprecated inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -159,17 +159,12 @@ describe('case-resolver workspace persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
-    const persistedWorkspace = JSON.parse(String(body.value)) as {
-      assets: Array<{ id: string; textContent?: string; metadata?: Record<string, unknown> }>;
-    };
-    expect(persistedWorkspace.assets[0]?.id).toBe('node-file-inline');
-    expect(persistedWorkspace.assets[0]).not.toHaveProperty('textContent');
-    expect(persistedWorkspace.assets[0]?.metadata?.[
-      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
-    ]).toBe('keyed');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.conflict).toBe(false);
+      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported\./);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -567,22 +562,15 @@ describe('case-resolver workspace persistence', () => {
       name: 'Migrated Node File',
       folder: '',
       kind: 'node_file',
-      textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-1"}]}',
+      textContent: '',
       metadata: {
         [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
       },
     });
-    const legacyNodeFileAsset = createCaseResolverAssetFile({
-      id: 'node-asset-inline',
-      name: 'Legacy Node File',
-      folder: '',
-      kind: 'node_file',
-      textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
-    });
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       files: [scanfile, documentFile],
-      assets: [migratedNodeFileAsset, legacyNodeFileAsset],
+      assets: [migratedNodeFileAsset],
     };
 
     const compacted = compactCaseResolverWorkspaceForPersist(workspace);
@@ -590,9 +578,6 @@ describe('case-resolver workspace persistence', () => {
     const compactedDoc = compacted.files.find((file) => file.id === 'doc-persist-1');
     const compactedMigratedNodeAsset = compacted.assets.find(
       (asset) => asset.id === 'node-asset-keyed'
-    );
-    const compactedLegacyNodeAsset = compacted.assets.find(
-      (asset) => asset.id === 'node-asset-inline'
     );
 
     expect(compactedScan).toBeDefined();
@@ -620,10 +605,28 @@ describe('case-resolver workspace persistence', () => {
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
 
     expect(compactedMigratedNodeAsset && 'textContent' in compactedMigratedNodeAsset).toBe(false);
-    expect(compactedLegacyNodeAsset && 'textContent' in compactedLegacyNodeAsset).toBe(false);
-    expect(compactedLegacyNodeAsset?.metadata?.[
+    expect(compactedMigratedNodeAsset?.metadata?.[
       CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
     ]).toBe('keyed');
+  });
+
+  it('rejects inline node-file snapshot text during workspace compaction', () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      assets: [
+        createCaseResolverAssetFile({
+          id: 'node-asset-inline',
+          name: 'Legacy Node File',
+          folder: '',
+          kind: 'node_file',
+          textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
+        }),
+      ],
+    };
+
+    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrow(
+      /Inline Case Resolver node-file snapshots are no longer supported\./
+    );
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

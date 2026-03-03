@@ -2,7 +2,11 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
+import {
+  FolderTreeViewportV2,
+  handleMasterTreeDrop,
+  useMasterFolderTreeShell,
+} from '@/features/foldertree/v2';
 import type {
   MasterFolderTreeAdapterV3,
   MasterFolderTreeTransaction,
@@ -137,17 +141,29 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
               releaseDragHandle={releaseDragHandle}
             />
           )}
-          onNodeDrop={async (input) => {
-            if (input.targetId === null) {
-              const targetIndex = input.rootDropZone === 'top' ? 0 : undefined;
-              await controller.dropNodeToRoot(input.draggedNodeId, targetIndex);
-              return;
-            }
-            await controller.reorderNode(
-              input.draggedNodeId,
-              input.targetId,
-              input.position as 'before' | 'after'
-            );
+          onNodeDrop={async (input, treeController) => {
+            await handleMasterTreeDrop({
+              input,
+              controller: treeController,
+              onInternalDrop: async ({ input: dropInput, controller: dropController }) => {
+                if (dropInput.targetId === null) {
+                  const targetIndex = dropInput.rootDropZone === 'top' ? 0 : undefined;
+                  await dropController.dropNodeToRoot(dropInput.draggedNodeId, targetIndex);
+                  return true;
+                }
+
+                if (dropInput.position === 'inside') {
+                  return true;
+                }
+
+                await dropController.reorderNode(
+                  dropInput.draggedNodeId,
+                  dropInput.targetId,
+                  dropInput.position
+                );
+                return true;
+              },
+            });
           }}
         />
       </div>

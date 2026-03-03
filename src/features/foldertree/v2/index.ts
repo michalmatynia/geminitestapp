@@ -6,6 +6,7 @@ export * from './hooks/useFolderTreeKeyboardNav';
 export * from './operations/bulk';
 export * from './operations/clipboard';
 export * from './operations/drop';
+export * from './operations/drag-data';
 export * from './operations/expansion';
 export * from './operations/external-drop';
 export * from './operations/internal-drop';

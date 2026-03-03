@@ -22,19 +22,10 @@ import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
 import { cn } from '@/shared/utils';
-
-const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
-
-const getMasterTreeDragNodeId = (dataTransfer: DataTransfer | null): MasterTreeId | null => {
-  if (!dataTransfer) return null;
-  try {
-    const value = dataTransfer.getData(MASTER_TREE_DRAG_NODE_ID);
-    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
-  } catch {
-    // no-op
-  }
-  return null;
-};
+import {
+  getMasterTreeDragNodeData,
+  setMasterTreeDragNodeData,
+} from '../operations/drag-data';
 
 export type FolderTreeViewportRenderNodeInput = {
   node: MasterTreeViewNode;
@@ -349,7 +340,7 @@ export function FolderTreeViewportV2({
     if (controller.dragState?.draggedNodeId) {
       return controller.dragState.draggedNodeId;
     }
-    const payloadNodeId = getMasterTreeDragNodeId(event.dataTransfer);
+    const payloadNodeId = getMasterTreeDragNodeData(event.dataTransfer);
     if (payloadNodeId) return payloadNodeId;
     return resolveDraggedNodeId?.(event) ?? null;
   };
@@ -662,8 +653,7 @@ export function FolderTreeViewportV2({
                           }
 
                           try {
-                            event.dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, node.id);
-                            event.dataTransfer.setData('text/plain', node.id);
+                            setMasterTreeDragNodeData(event.dataTransfer, node.id);
                           } catch {
                             // no-op
                           }

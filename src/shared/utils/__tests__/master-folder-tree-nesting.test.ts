@@ -308,4 +308,269 @@ describe('cross-profile nesting rules', () => {
       expect(result.ok).toBe(true);
     });
   });
+
+  describe('case_resolver_cases profile', () => {
+    const profile = defaultFolderTreeProfilesV2.case_resolver_cases;
+
+    it('allows case_entry nesting inside another case_entry folder', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'case-a', type: 'folder', kind: 'case_entry', name: 'Case A' }),
+        node({ id: 'case-b', type: 'folder', kind: 'case_entry', name: 'Case B' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'case-b',
+        targetId: 'case-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks file drops in case list tree', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'case-root', type: 'folder', kind: 'case_entry', name: 'Case Root' }),
+        node({ id: 'doc-1', type: 'file', kind: 'case_file', name: 'Case File 1' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'doc-1',
+        targetId: 'case-root',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('validator_list_tree profile', () => {
+    const profile = defaultFolderTreeProfilesV2.validator_list_tree;
+
+    it('allows validator-list files at root', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'validator-list-a', type: 'file', kind: 'validator-list', name: 'A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'validator-list-a',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks validator-list files inside folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'group-a', type: 'folder', kind: 'group', name: 'Group A' }),
+        node({ id: 'validator-list-a', type: 'file', kind: 'validator-list', name: 'A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'validator-list-a',
+        targetId: 'group-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('validator_pattern_tree profile', () => {
+    const profile = defaultFolderTreeProfilesV2.validator_pattern_tree;
+
+    it('allows pattern files inside sequence-group folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'group-a', type: 'folder', kind: 'sequence-group', name: 'Group A' }),
+        node({ id: 'pattern-a', type: 'file', kind: 'pattern', name: 'Pattern A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'pattern-a',
+        targetId: 'group-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks pattern files inside non-sequence folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'folder-a', type: 'folder', kind: 'folder', name: 'Folder A' }),
+        node({ id: 'pattern-a', type: 'file', kind: 'pattern', name: 'Pattern A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'pattern-a',
+        targetId: 'folder-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('prompt_exploder_segments profile', () => {
+    const profile = defaultFolderTreeProfilesV2.prompt_exploder_segments;
+
+    it('allows prompt segments at root', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'segment-a', type: 'file', kind: 'prompt_segment', name: 'Segment A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'segment-a',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks prompt segments inside folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'group-a', type: 'folder', kind: 'folder', name: 'Group A' }),
+        node({ id: 'segment-a', type: 'file', kind: 'prompt_segment', name: 'Segment A' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'segment-a',
+        targetId: 'group-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('prompt_exploder_hierarchy profile', () => {
+    const profile = defaultFolderTreeProfilesV2.prompt_exploder_hierarchy;
+
+    it('allows hierarchy folder nesting', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'item-a', type: 'folder', kind: 'folder', name: 'Item A' }),
+        node({ id: 'item-b', type: 'folder', kind: 'folder', name: 'Item B' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'item-b',
+        targetId: 'item-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks file nodes in hierarchy tree', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'item-file', type: 'file', kind: 'item', name: 'Item File' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'item-file',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('brain_catalog_tree profile', () => {
+    const profile = defaultFolderTreeProfilesV2.brain_catalog_tree;
+
+    it('allows catalog entries at root', () => {
+      const nodes: MasterTreeNode[] = [
+        node({
+          id: 'brain-entry-a',
+          type: 'file',
+          kind: 'brain-catalog-entry',
+          name: 'Catalog Entry A',
+        }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'brain-entry-a',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks catalog entries inside folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'brain-folder-a', type: 'folder', kind: 'folder', name: 'Folder A' }),
+        node({
+          id: 'brain-entry-a',
+          type: 'file',
+          kind: 'brain-catalog-entry',
+          name: 'Catalog Entry A',
+        }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'brain-entry-a',
+        targetId: 'brain-folder-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
+  describe('brain_routing_tree profile', () => {
+    const profile = defaultFolderTreeProfilesV2.brain_routing_tree;
+
+    it('allows capabilities inside feature folders', () => {
+      const nodes: MasterTreeNode[] = [
+        node({
+          id: 'feature-a',
+          type: 'folder',
+          kind: 'brain-routing-feature',
+          name: 'Feature A',
+        }),
+        node({
+          id: 'capability-a',
+          type: 'file',
+          kind: 'brain-routing-capability',
+          name: 'Capability A',
+        }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'capability-a',
+        targetId: 'feature-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks capabilities at root', () => {
+      const nodes: MasterTreeNode[] = [
+        node({
+          id: 'capability-a',
+          type: 'file',
+          kind: 'brain-routing-capability',
+          name: 'Capability A',
+        }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'capability-a',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
 });

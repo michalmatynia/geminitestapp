@@ -223,12 +223,7 @@ describe('case resolver nodefile persistence', () => {
       ],
     };
 
-    const fetchMock = vi.fn().mockResolvedValue(
-      toJsonResponse(200, {
-        key: 'case_resolver_workspace',
-        value: JSON.stringify(workspace),
-      })
-    );
+    const fetchMock = vi.fn();
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await persistCaseResolverWorkspaceSnapshot({
@@ -238,13 +233,11 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
-    const parsedPersistedWorkspace = JSON.parse(String(body.value)) as {
-      assets: Array<{ id: string; textContent?: string }>;
-    };
-    expect(parsedPersistedWorkspace.assets[0]?.id).toBe('asset-1');
-    expect(parsedPersistedWorkspace.assets[0]).not.toHaveProperty('textContent');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.conflict).toBe(false);
+      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported\./);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 });

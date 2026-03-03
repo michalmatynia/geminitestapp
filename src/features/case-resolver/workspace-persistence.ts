@@ -54,6 +54,7 @@ import {
   deleteCaseResolverNodeFileSnapshot,
   readCaseResolverNodeFileSnapshotStorageMode,
 } from './node-file-persistence';
+import { validationError } from '@/shared/errors/app-error';
 
 export {
   createCaseResolverWorkspaceMutationId,
@@ -463,6 +464,28 @@ const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
   };
 };
 
+const assertNoLegacyNodeFileSnapshotPayload = (
+  asset: CaseResolverWorkspace['assets'][number],
+  source: string
+): void => {
+  if (asset.kind !== 'node_file') return;
+  const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
+  if (inlineText.length > 0) {
+    throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
+      source,
+      assetId: asset.id,
+    });
+  }
+  const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
+  if (storageMode && storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED) {
+    throw validationError('Legacy Case Resolver node-file snapshot storage mode is no longer supported.', {
+      source,
+      assetId: asset.id,
+      storageMode,
+    });
+  }
+};
+
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
@@ -516,24 +539,10 @@ export const compactCaseResolverWorkspaceForPersist = (
   const compactedAssets = Array.isArray(workspace.assets)
     ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
       if (asset.kind !== 'node_file') return asset;
-      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-      const existingMetadata =
-        asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
-          ? asset.metadata
-          : {};
-      const normalizedStorageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
-      const nextMetadata =
-        inlineText.length > 0 || normalizedStorageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED
-          ? {
-            ...existingMetadata,
-            [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]:
-              CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED,
-          }
-          : existingMetadata;
+      assertNoLegacyNodeFileSnapshotPayload(asset, 'case_resolver.workspace_compact');
       const { textContent: _textContent, ...assetRest } = asset;
       return {
         ...assetRest,
-        metadata: nextMetadata,
       } as CaseResolverWorkspace['assets'][number];
     })
     : workspace.assets;
@@ -564,23 +573,29 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
     ].join(' '),
   });
-  const inlineNodeFileSnapshotCount = Array.isArray(workspaceForPersistPipeline.assets)
-    ? workspaceForPersistPipeline.assets.filter((asset): boolean => {
-      if (asset.kind !== 'node_file') return false;
-      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-      return inlineText.length > 0;
-    }).length
-    : 0;
-  if (inlineNodeFileSnapshotCount > 0) {
+  let workspaceForPersist: CaseResolverWorkspace;
+  try {
+    workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Invalid Case Resolver workspace payload.';
     logCaseResolverWorkspaceEvent({
       source: input.source,
-      action: 'persist_inline_node_file_snapshots_stripped',
+      action: 'persist_rejected_invalid_payload',
       mutationId: input.mutationId,
+      expectedRevision: input.expectedRevision,
       workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
-      message: `count=${inlineNodeFileSnapshotCount}`,
+      durationMs: Date.now() - startedAt,
+      message,
     });
+    return {
+      ok: false,
+      conflict: false,
+      error: message,
+    };
   }
-  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);
   const payloadBytes = serializedWorkspace.length;
   logCaseResolverWorkspaceEvent({

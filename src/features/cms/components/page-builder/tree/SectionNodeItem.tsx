@@ -4,6 +4,7 @@ import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'l
 import React from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
+import { setMasterTreeDragNodeData } from '@/features/foldertree/v2';
 import type { SectionInstance } from '@/shared/contracts/cms';
 import { Button, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -11,26 +12,29 @@ import { cn } from '@/shared/utils';
 import { BlockNodeItem } from './';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { TreeSectionProvider } from './TreeSectionContext';
+import { setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
+import { toCmsSectionNodeId } from '../utils/cms-master-tree';
+import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { SectionPicker } from './SectionPicker';
 
 export function SectionNodeItem({
   section,
+  sectionIndex,
 }: {
   section: SectionInstance;
   sectionIndex: number;
 }): React.JSX.Element {
-  const {
-    startSectionMasterDrag,
-    endSectionMasterDrag,
-    draggedMasterSectionId,
-    onSelect,
-    selectedNodeId,
-  } = useComponentTreePanelContext();
-  const { expandedIds, sectionActions, blockActions } = useTreeActions();
+  const { startSectionMasterDrag, endSectionMasterDrag, draggedMasterSectionId } =
+    useComponentTreePanelContext();
+  const { state: pbState } = usePageBuilder();
+  const drag = useDragStateExtract();
+  const { startSectionDrag, endSectionDrag } = drag.actions;
+  const { expandedIds, sectionActions, blockActions, selectNode } = useTreeActions();
 
   const isExpanded = expandedIds.has(section.id);
-  const isSelected = selectedNodeId === section.id;
+  const isSelected = pbState.selectedNodeId === section.id;
   const isDragging = draggedMasterSectionId === section.id;
   const isHidden = isCmsSectionHidden(section.settings['isHidden']);
 
@@ -39,16 +43,29 @@ export function SectionNodeItem({
   const dragProps = {
     draggable: true,
     onDragStart: (e: React.DragEvent): void => {
-      e.dataTransfer.setData('text/plain', section.id);
+      setSectionDragData(e.dataTransfer, {
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        index: sectionIndex,
+      });
+      setMasterTreeDragNodeData(e.dataTransfer, toCmsSectionNodeId(section.id), section.id);
+      startSectionDrag({
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        index: sectionIndex,
+      });
       startSectionMasterDrag(section.id);
     },
     onDragEnd: (): void => {
+      endSectionDrag();
       endSectionMasterDrag();
     },
   };
 
   return (
-    <TreeSectionProvider value={{ sectionId: section.id }}>
+    <TreeSectionProvider sectionId={section.id}>
       <div
         className={cn(
           'group mb-1 flex flex-col transition-all',
@@ -64,7 +81,7 @@ export function SectionNodeItem({
           )}
           onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
-            onSelect(section.id);
+            selectNode(section.id);
           }}
         >
           <div

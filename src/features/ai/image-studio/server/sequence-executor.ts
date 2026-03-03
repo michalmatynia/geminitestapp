@@ -11,7 +11,7 @@ import {
 import type {
   ImageStudioSequenceMaskContext,
   ImageStudioSequenceRunRecord,
-} from './sequence-run-repository';
+} from '@/shared/contracts/image-studio';
 
 import { executeCropStep, executeUpscaleStep } from './sequence/image-processing';
 import { executeGenerateStep } from './sequence/generation';

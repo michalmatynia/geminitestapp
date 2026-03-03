@@ -33,9 +33,10 @@ export const getAiPathsEnabledCached = async (options?: { bypassCache?: boolean 
     return await fetchEnabled();
   }
 
-  aiPathsEnabledInFlight = fetchEnabled();
+  const result = fetchEnabled();
+  aiPathsEnabledInFlight = result;
   try {
-    return await aiPathsEnabledInFlight;
+    return await result;
   } finally {
     aiPathsEnabledInFlight = null;
   }

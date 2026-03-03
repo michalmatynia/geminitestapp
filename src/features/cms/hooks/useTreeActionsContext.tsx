@@ -87,6 +87,7 @@ export interface TreeActionsContextValue {
   sectionActions: {
     add: (sectionType: string, zone: PageZone) => void;
     remove: (sectionId: string) => void;
+    duplicate: (sectionId: string) => void;
     toggleVisibility: (sectionId: string, isHidden: boolean) => void;
     dropInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
     dropToColumn: (
@@ -367,6 +368,13 @@ export function TreeActionsProvider({
     [dispatch]
   );
 
+  const duplicateSection = useCallback(
+    (sectionId: string) => {
+      dispatch({ type: 'DUPLICATE_SECTION', sectionId });
+    },
+    [dispatch]
+  );
+
   const toggleSectionVisibility = useCallback(
     (sectionId: string, isHidden: boolean) => {
       dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId, settings: { isHidden } });
@@ -541,6 +549,7 @@ export function TreeActionsProvider({
     () => ({
       add: addSection,
       remove: removeSection,
+      duplicate: duplicateSection,
       toggleVisibility: toggleSectionVisibility,
       dropInZone: dropSectionInZone,
       dropToColumn: dropSectionToColumn,
@@ -552,6 +561,7 @@ export function TreeActionsProvider({
     [
       addSection,
       removeSection,
+      duplicateSection,
       toggleSectionVisibility,
       dropSectionInZone,
       dropSectionToColumn,

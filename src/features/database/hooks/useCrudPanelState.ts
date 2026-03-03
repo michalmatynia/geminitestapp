@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -73,7 +72,6 @@ export function useCrudPanelState(props: {
   const [pageSize, setPageSize] = useState(20);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const queryClient = useQueryClient();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
@@ -157,7 +155,7 @@ export function useCrudPanelState(props: {
       source: 'database.hooks.useCrudPanelState.rows',
       operation: 'list',
       resource: 'database.crud-rows',
-      domain: 'global',
+      domain: 'database',
       tags: ['database', 'crud', dbType],
     },
   });
@@ -166,10 +164,8 @@ export function useCrudPanelState(props: {
     if (!selectedTable) return;
     setMutationError(null);
     setSuccessMessage(null);
-    void queryClient.invalidateQueries({
-      queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
-    });
-  }, [dbKeys, dbType, page, pageSize, queryClient, selectedTable]);
+    void rowsQuery.refetch();
+  }, [rowsQuery, selectedTable]);
 
   const getPrimaryKey = (row: Record<string, unknown>) => {
     const pk: Record<string, unknown> = {};

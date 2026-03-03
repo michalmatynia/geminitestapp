@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 
 import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
@@ -30,7 +29,7 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
       source: 'chatbot.hooks.useChatbotMemoryList',
       operation: 'list',
       resource: 'chatbot.memory',
-      domain: 'global',
+      domain: 'chatbot',
       queryKey,
       tags: ['chatbot', 'memory'],
     },
@@ -38,7 +37,6 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
 }
 
 export function useDeleteMemoryItemMutation(): MutationResult<void, string> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('delete-memory-item');
 
   return createDeleteMutationV2({
@@ -50,12 +48,10 @@ export function useDeleteMemoryItemMutation(): MutationResult<void, string> {
       source: 'chatbot.hooks.useDeleteMemoryItemMutation',
       operation: 'delete',
       resource: 'chatbot.memory',
-      domain: 'global',
+      domain: 'chatbot',
       mutationKey,
       tags: ['chatbot', 'memory', 'delete'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: chatbotMemoryKeys.all() });
-    },
+    invalidateKeys: [chatbotMemoryKeys.all()],
   });
 }

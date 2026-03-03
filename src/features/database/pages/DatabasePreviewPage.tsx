@@ -17,7 +17,6 @@ import {
   ShieldCheckIcon,
   TableIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useMemo, useState } from 'react';
 
@@ -49,6 +48,7 @@ import {
   EmptyState,
   PageLayout,
   Hint,
+  Breadcrumbs,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -449,12 +449,14 @@ function DatabasePreviewContent(): React.JSX.Element {
             : 'No source selected.'
       }
       eyebrow={
-        <Link
-          href='/admin/databases/engine'
-          className='text-blue-300 hover:text-blue-200 transition-colors'
-        >
-          ← Back to databases
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'Databases', href: '/admin/databases/engine' },
+            { label: 'Preview' },
+          ]}
+          className='mb-2'
+        />
       }
       refresh={{
         onRefresh: () => window.location.reload(),
@@ -582,40 +584,35 @@ function DatabasePreviewContent(): React.JSX.Element {
                   const isExpanded = expandedGroups[group.type] ?? false;
                   const Icon = groupIconMap[group.type] ?? FileTextIcon;
                   return (
-                    <div key={group.type} className='rounded-md border border-border/60 bg-card/40'>
-                      <button
-                        type='button'
-                        onClick={() => toggleGroup(group.type)}
-                        className='flex w-full items-center justify-between p-3 text-left'
-                      >
-                        <span className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
+                    <CollapsibleSection
+                      key={group.type}
+                      open={isExpanded}
+                      onOpenChange={() => toggleGroup(group.type)}
+                      variant='card'
+                      className='bg-card/40'
+                      title={
+                        <div className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
                           <Icon className='size-4 text-sky-300' />
                           {group.type}
-                          <Badge variant='outline' className='text-[9px] bg-sky-500/5'>
+                          <Badge variant='outline' className='text-[9px] bg-sky-500/5 ml-1'>
                             {group.objects.length}
                           </Badge>
-                        </span>
-                        {isExpanded ? (
-                          <ChevronDownIcon className='size-4 text-gray-500' />
-                        ) : (
-                          <ChevronRightIcon className='size-4 text-gray-500' />
-                        )}
-                      </button>
-                      {isExpanded && (
-                        <div className='border-t border-border/40 p-3 bg-black/20'>
-                          <div className='flex flex-wrap gap-2'>
-                            {group.objects.map((obj) => (
-                              <span
-                                key={obj}
-                                className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded'
-                              >
-                                {obj}
-                              </span>
-                            ))}
-                          </div>
                         </div>
-                      )}
-                    </div>
+                      }
+                    >
+                      <div className='p-3 bg-black/20'>
+                        <div className='flex flex-wrap gap-2'>
+                          {group.objects.map((obj) => (
+                            <span
+                              key={obj}
+                              className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5'
+                            >
+                              {obj}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </CollapsibleSection>
                   );
                 })}
               </div>

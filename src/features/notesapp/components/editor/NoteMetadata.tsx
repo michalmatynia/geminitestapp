@@ -8,7 +8,18 @@ import type {
   NoteTagDto as TagRecord,
   NoteWithRelationsDto as NoteWithRelations,
 } from '@/shared/contracts/notes';
-import { Button, Input, Label, Checkbox, SelectSimple, Badge, FormField, Card } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Checkbox,
+  SelectSimple,
+  Badge,
+  FormField,
+  Card,
+  Chip,
+  SearchableSelect,
+} from '@/shared/ui';
 
 interface NoteMetadataProps {
   showTitle?: boolean;
@@ -79,21 +90,15 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
       ) : null}
 
       <FormField label='Folder'>
-        <SelectSimple
-          size='sm'
-          value={selectedFolderId || '__none__'}
-          onValueChange={(value: string): void =>
-            setSelectedFolderId(value === '__none__' ? '' : value)
-          }
-          options={[
-            { value: '__none__', label: 'No Folder' },
-            ...flatFolders.map((folder: { id: string; name: string; level: number }) => ({
-              value: folder.id,
-              label: `${'  '.repeat(folder.level)}${folder.name}`,
-            })),
-          ]}
+        <SearchableSelect
+          value={selectedFolderId}
+          onChange={(value: string | null): void => setSelectedFolderId(value ?? '')}
+          options={flatFolders.map((folder: { id: string; name: string; level: number }) => ({
+            value: folder.id,
+            label: `${'  '.repeat(folder.level)}${folder.name}`,
+          }))}
           placeholder='Select folder'
-          className='w-full'
+          emptyMessage='No folders found.'
         />
       </FormField>
 
@@ -123,27 +128,15 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             const tag = availableTags.find((t: TagRecord) => t.id === tagId);
             if (!tag) return null;
             return (
-              <Badge
+              <Chip
                 key={tag.id}
-                variant='info'
-                className='gap-1 px-2 py-1 bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30'
-              >
-                <span
-                  onClick={(): void => handleFilterByTag(tag.id)}
-                  className='cursor-pointer hover:underline'
-                >
-                  {tag.name}
-                </span>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={(): void => handleRemoveTag(tag.id)}
-                  className='h-auto w-auto p-0 hover:text-white hover:bg-transparent'
-                >
-                  <X size={12} />
-                </Button>
-              </Badge>
+                label={tag.name}
+                active
+                onClick={(): void => handleFilterByTag(tag.id)}
+                icon={X}
+                // Custom override for remove action
+                className='pr-1'
+              />
             );
           })}
         </div>
@@ -175,32 +168,34 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
             <Card
               variant='glass'
               padding='none'
-              className='absolute z-10 mt-1 w-full border bg-card shadow-lg'
+              className='absolute z-10 mt-1 w-full border bg-card shadow-lg max-h-60 overflow-hidden'
             >
-              <ul className='max-h-60 overflow-auto py-1 text-sm text-gray-300'>
+              <div className='overflow-y-auto max-h-60 divide-y divide-white/5'>
                 {filteredTags.map((tag: TagRecord) => (
-                  <li
+                  <button
                     key={tag.id}
+                    type='button'
                     onClick={(): void => handleAddTag(tag)}
-                    className='cursor-pointer px-4 py-2 hover:bg-muted/50 hover:text-white'
+                    className='w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
                   >
                     {tag.name || 'Unnamed'}
-                  </li>
+                  </button>
                 ))}
                 {tagInput &&
                   !filteredTags.find(
                     (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                  <li
+                  <button
+                    type='button'
                     onClick={(): void => {
                       void handleCreateTag();
                     }}
-                    className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
+                    className='w-full text-left px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors'
                   >
                       Create &quot;{tagInput}&quot;
-                  </li>
+                  </button>
                 )}
-              </ul>
+              </div>
             </Card>
           )}
           {isTagDropdownOpen && (
@@ -274,10 +269,10 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
               <Card
                 variant='glass'
                 padding='none'
-                className='absolute z-10 mt-1 w-full border bg-card shadow-lg'
+                className='absolute z-10 mt-1 w-full border bg-card shadow-lg max-h-60 overflow-hidden'
               >
-                <ul className='max-h-60 overflow-auto py-1 text-sm text-gray-300'>
-                  {isRelatedLoading && <li className='px-4 py-2 text-gray-500'>Searching...</li>}
+                <div className='overflow-y-auto max-h-60 divide-y divide-white/5'>
+                  {isRelatedLoading && <div className='px-4 py-2.5 text-sm text-gray-500'>Searching...</div>}
                   {relatedNoteResults
                     .filter((candidate: NoteWithRelations) =>
                       noteId ? candidate.id !== noteId : true
@@ -290,8 +285,9 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                         )
                     )
                     .map((candidate: NoteWithRelations) => (
-                      <li
+                      <button
                         key={candidate.id}
+                        type='button'
                         onClick={(): void => {
                           setSelectedRelatedNotes(
                             (
@@ -314,10 +310,10 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                           setRelatedNoteQuery('');
                           setIsRelatedDropdownOpen(false);
                         }}
-                        className='cursor-pointer px-4 py-2 hover:bg-muted/50 hover:text-white'
+                        className='w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
                       >
                         {candidate.title}
-                      </li>
+                      </button>
                     ))}
                   {!isRelatedLoading &&
                     relatedNoteResults.filter(
@@ -327,8 +323,8 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                         !selectedRelatedNotes.some(
                           (selected: { id: string }) => selected.id === candidate.id
                         )
-                    ).length === 0 && <li className='px-4 py-2 text-gray-500'>No matches</li>}
-                </ul>
+                    ).length === 0 && <div className='px-4 py-2.5 text-sm text-gray-500'>No matches</div>}
+                </div>
               </Card>
             )}
             {isRelatedDropdownOpen && (

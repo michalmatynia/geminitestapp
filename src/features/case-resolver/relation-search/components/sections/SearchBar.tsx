@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { SearchInput } from '@/shared/ui';
+import { ArrowLeft, X } from 'lucide-react';
+import { SearchInput, Button, Chip } from '@/shared/ui';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 
 export function SearchBar(): React.JSX.Element {
@@ -23,9 +23,10 @@ export function SearchBar(): React.JSX.Element {
   return (
     <div className='flex items-center gap-2 border-b border-border/40 bg-card/10 px-3 py-1.5'>
       {isDrillMode && (
-        <button
-          type='button'
-          className='flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-cyan-300 transition-colors hover:bg-card/60 hover:text-cyan-100'
+        <Button
+          variant='ghost'
+          size='xs'
+          className='flex shrink-0 items-center gap-1 h-7 text-cyan-300 hover:text-cyan-100'
           onClick={() => {
             setSelectedDrillCaseId(null);
             setDocumentSearchQuery('');
@@ -34,7 +35,7 @@ export function SearchBar(): React.JSX.Element {
         >
           <ArrowLeft className='size-3' />
           {drillSignatureLabel}
-        </button>
+        </Button>
       )}
 
       <div className='min-w-0 flex-1'>
@@ -60,17 +61,13 @@ export function SearchBar(): React.JSX.Element {
       </div>
 
       {showDocTable && selectedSearchFolderPath && (
-        <div className='flex shrink-0 items-center gap-1 rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200'>
-          <span className='max-w-[100px] truncate'>{selectedSearchFolderPath}</span>
-          <button
-            type='button'
-            className='ml-1 text-cyan-400 hover:text-cyan-100'
-            onClick={() => setSelectedSearchFolderPath(null)}
-            aria-label='Clear folder filter'
-          >
-            ×
-          </button>
-        </div>
+        <Chip
+          active
+          label={selectedSearchFolderPath}
+          onClick={() => setSelectedSearchFolderPath(null)}
+          icon={X}
+          className='max-w-[150px]'
+        />
       )}
 
       {showDocTable && (

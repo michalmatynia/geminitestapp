@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface StreamConfig<T = unknown> {
   endpoint: string;
@@ -12,6 +13,7 @@ interface StreamConfig<T = unknown> {
   onError?: (error: Error) => void;
   reconnectAttempts?: number;
   reconnectDelay?: number;
+  domain?: TanstackFactoryDomain;
 }
 
 // Hook for streaming data with automatic reconnection
@@ -24,6 +26,7 @@ export function useStreamingQuery<T>(
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = config.reconnectAttempts || 5;
   const reconnectDelay = config.reconnectDelay || 1000;
+  const domain = config.domain ?? 'global';
 
   const connect = useCallback((): void => {
     if (eventSourceRef.current) {
@@ -78,7 +81,7 @@ export function useStreamingQuery<T>(
       source: 'shared.hooks.query.useStreamingQuery',
       operation: 'list',
       resource: 'streaming-query',
-      domain: 'global',
+      domain,
       tags: ['streaming'],
     },
   });
@@ -92,6 +95,7 @@ export function useWebSocketQuery<T>(
     onMessage?: (data: T) => void;
     onError?: (error: Event) => void;
     reconnect?: boolean;
+    domain?: TanstackFactoryDomain;
   }
 ): {
   sendMessage: (message: unknown) => void;
@@ -170,6 +174,7 @@ export function useSmartPolling<T>(
     backoffMultiplier?: number;
     stopOnError?: boolean;
     visibilityAware?: boolean;
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<T, Error> {
   const baseInterval = options?.baseInterval || 5000;
@@ -177,6 +182,7 @@ export function useSmartPolling<T>(
   const backoffMultiplier = options?.backoffMultiplier || 1.5;
   const intervalRef = useRef(baseInterval);
   const errorCountRef = useRef(0);
+  const domain = options?.domain ?? 'global';
 
   const query = createListQueryV2<T, T>({
     queryKey,
@@ -193,7 +199,7 @@ export function useSmartPolling<T>(
       source: 'shared.hooks.query.useSmartPolling',
       operation: 'polling',
       resource: 'smart-polling',
-      domain: 'global',
+      domain,
       tags: ['polling', 'smart'],
     },
   });

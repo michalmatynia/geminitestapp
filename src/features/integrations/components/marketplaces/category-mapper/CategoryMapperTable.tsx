@@ -1,7 +1,7 @@
 'use client';
 
-import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
-import React, { useMemo, useId } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
+import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { StandardDataTablePanel, EmptyState, GenericMapperStats } from '@/shared/ui';
@@ -10,7 +10,7 @@ import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
 import { CategoryMapperTableHeaderActions } from './category-table/CategoryMapperTableHeaderActions';
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
-import { buildCategoryTree, type CategoryRow } from './category-table/utils';
+import { type CategoryRow } from './category-table/utils';
 
 export function CategoryMapperTable(): React.JSX.Element {
   const {
@@ -32,27 +32,6 @@ export function CategoryMapperTable(): React.JSX.Element {
     saveMutation,
     stats,
   } = useCategoryMapper();
-
-  const datalistKey = useId();
-  const internalCategoryDatalistId = useMemo(
-    () => `internal-category-options-${datalistKey.replace(/:/g, '')}`,
-    [datalistKey]
-  );
-
-  const data = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
-
-  // Sync expanded state
-  const expanded = useMemo(() => {
-    const state: ExpandedState = {};
-    expandedIds.forEach((id) => {
-      state[id] = true;
-    });
-    return state;
-  }, [expandedIds]);
-
-  const onExpandedChange = (_updater: Updater<ExpandedState>) => {
-    // Controlled via expandedIds in context
-  };
 
   const isFetchPending = fetchMutation.isPending;
   const isSavePending = saveMutation.isPending;
@@ -92,7 +71,6 @@ export function CategoryMapperTable(): React.JSX.Element {
               onChange={(value) => handleMappingChange(row.original.id, value)}
               options={internalCategoryOptions}
               disabled={internalCategoriesLoading || !selectedCatalogId}
-              datalistId={internalCategoryDatalistId}
             />
           );
         },
@@ -106,7 +84,6 @@ export function CategoryMapperTable(): React.JSX.Element {
       internalCategoriesLoading,
       selectedCatalogId,
       internalCategoryOptions,
-      internalCategoryDatalistId,
     ]
   );
 
@@ -124,48 +101,41 @@ export function CategoryMapperTable(): React.JSX.Element {
   }
 
   return (
-    <>
-      <StandardDataTablePanel
-        title='Marketplace Categories'
-        description={`Connection: ${connectionName}`}
-        headerActions={
-          <CategoryMapperTableHeaderActions
-            onFetch={() => void handleFetchFromBase()}
-            isFetching={isFetchPending}
-            onSave={() => void handleSave()}
-            isSaving={isSavePending}
-            pendingCount={pendingCount}
-          />
-        }
-        filters={
-          <div className='mb-2'>
-            <CategoryMapperCatalogSelector />
-          </div>
-        }
-        alerts={
-          <GenericMapperStats
-            total={stats.total}
-            mapped={stats.mapped}
-            pending={stats.pending}
-            itemLabel='Categories'
-          />
-        }
-        isLoading={isLoading}
-        variant='flat'
-        columns={columns}
-        data={data}
-        expanded={expanded}
-        onExpandedChange={onExpandedChange}
-        getRowId={(row) => row.id}
-        getSubRows={(row) => row.subRows}
-        maxHeight='60vh'
-        stickyHeader
-      />
-      <datalist id={internalCategoryDatalistId}>
-        {internalCategoryOptions.map((option) => (
-          <option key={option.value} value={option.label} />
-        ))}
-      </datalist>
-    </>
+    <StandardDataTablePanel
+      title='Marketplace Categories'
+      description={`Connection: ${connectionName}`}
+      headerActions={
+        <CategoryMapperTableHeaderActions
+          onFetch={() => void handleFetchFromBase()}
+          isFetching={isFetchPending}
+          onSave={() => void handleSave()}
+          isSaving={isSavePending}
+          pendingCount={pendingCount}
+        />
+      }
+      filters={
+        <div className='mb-2'>
+          <CategoryMapperCatalogSelector />
+        </div>
+      }
+      alerts={
+        <GenericMapperStats
+          total={stats.total}
+          mapped={stats.mapped}
+          pending={stats.pending}
+          itemLabel='Categories'
+        />
+      }
+      isLoading={isLoading}
+      variant='flat'
+      columns={columns}
+      data={externalCategories}
+      expanded={expandedIds}
+      onExpandedChange={() => {}}
+      getRowId={(row) => row.id}
+      getSubRows={(row) => row.subRows}
+      maxHeight='60vh'
+      stickyHeader
+    />
   );
 }

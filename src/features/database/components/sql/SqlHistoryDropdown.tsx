@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import { ClockIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';
-import { Button } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 export type SqlHistoryDropdownProps = {
   history: string[];
@@ -28,36 +31,46 @@ export function SqlHistoryDropdown({
       >
         <ClockIcon className='size-3' />
         History ({history.length})
-        <ChevronDownIcon className='size-3' />
+        <ChevronDownIcon className={cn('size-3 transition-transform', showHistory && 'rotate-180')} />
       </Button>
       {showHistory && history.length > 0 && (
-        <div className='absolute right-0 top-full z-50 mt-1 w-96 max-h-64 overflow-auto rounded-md border border-border bg-card shadow-lg'>
-          <div className='flex items-center justify-between border-b border-border px-3 py-2'>
-            <span className='text-[11px] text-gray-500'>Recent queries</span>
+        <Card
+          variant='glass'
+          padding='none'
+          className='absolute right-0 top-full z-50 mt-1 w-96 max-h-64 overflow-hidden border-border bg-card/95 shadow-xl backdrop-blur-md'
+        >
+          <div className='flex items-center justify-between border-b border-white/5 px-3 py-2 bg-white/5'>
+            <span className='text-[10px] uppercase font-bold text-gray-500 tracking-wider'>Recent queries</span>
             <Button
               variant='ghost'
-              size='sm'
-              onClick={onClearHistory}
-              className='h-6 gap-1 text-[10px] text-red-400'
+              size='xs'
+              onClick={(e) => {
+                e.stopPropagation();
+                onClearHistory();
+              }}
+              className='h-6 gap-1 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10'
             >
               <Trash2Icon className='size-3' />
               Clear
             </Button>
           </div>
-          {history.map((item: string, i: number) => (
-            <button
-              key={i}
-              type='button'
-              onClick={(): void => {
-                onSelectQuery(item);
-                setShowHistory(false);
-              }}
-              className='w-full truncate border-b border-border px-3 py-2 text-left text-xs font-mono text-gray-300 hover:bg-muted/50 last:border-b-0'
-            >
-              {item}
-            </button>
-          ))}
-        </div>
+          <div className='overflow-y-auto max-h-56 divide-y divide-white/5 custom-scrollbar'>
+            {history.map((item: string, i: number) => (
+              <button
+                key={i}
+                type='button'
+                onClick={(): void => {
+                  onSelectQuery(item);
+                  setShowHistory(false);
+                }}
+                className='w-full truncate px-3 py-2.5 text-left text-xs font-mono text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
+                title={item}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </Card>
       )}
     </div>
   );

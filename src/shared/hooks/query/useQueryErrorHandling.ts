@@ -6,6 +6,7 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface LoggableWithErrorFlag {
   __logged?: boolean;
@@ -282,9 +283,11 @@ export function useResilientQuery<TData>(
     maxRetries?: number;
     retryDelay?: number;
     onError?: (error: Error) => void;
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<TData, Error> {
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
+  const domain = options?.domain ?? 'global';
 
   const query = createListQueryV2<unknown, TData>({
     queryKey,
@@ -306,7 +309,7 @@ export function useResilientQuery<TData>(
       source: 'shared.hooks.query.useResilientQuery',
       operation: 'list',
       resource: 'resilient-query',
-      domain: 'global',
+      domain,
       tags: ['error-handling', 'resilient'],
     },
   });
@@ -332,10 +335,12 @@ export function useCircuitBreakerQuery<TData>(
     failureThreshold?: number;
     resetTimeout?: number;
     fallbackData?: TData;
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<TData, Error> {
   const failureThreshold = options?.failureThreshold || 5;
   const resetTimeout = options?.resetTimeout || 60000; // 1 minute
+  const domain = options?.domain ?? 'global';
 
   const circuitKey = `circuit-${JSON.stringify(queryKey)}`;
 
@@ -399,7 +404,7 @@ export function useCircuitBreakerQuery<TData>(
       source: 'shared.hooks.query.useCircuitBreakerQuery',
       operation: 'list',
       resource: 'circuit-breaker-query',
-      domain: 'global',
+      domain,
       tags: ['error-handling', 'circuit-breaker'],
     },
   });

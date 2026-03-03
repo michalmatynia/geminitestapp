@@ -59,9 +59,9 @@ import type { UseAiPathsSettingsStateReturn } from './types';
 export function useAiPathsSettingsState({
   activeTab,
 }: AiPathsSettingsStateOptions): UseAiPathsSettingsStateReturn {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const queryClient = useQueryClient();
 
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === 'Product Modal - Context Grabber'

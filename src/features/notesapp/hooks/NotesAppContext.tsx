@@ -28,6 +28,8 @@ import type {
 } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -152,6 +154,7 @@ const NotesAppContext = createContext<NotesAppContextValue | null>(null);
 export function NotesAppProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { settings, updateSettings } = useNoteSettings();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Mutations
   const updateNoteMutation = useUpdateNoteMutation();
@@ -340,18 +343,33 @@ export function NotesAppProvider({ children }: { children: React.ReactNode }): R
   }, [notesInScope]);
 
   // Handlers
-  const handleSelectNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
-    try {
-      const note = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      setSelectedNote(note);
-      updateSettings({ selectedNoteId: noteId });
-      setIsEditing(false);
-    } catch (error: unknown) {
-      logClientError(error, {
-        context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
-      });
-    }
-  }, []);
+  const handleSelectNoteFromTree = useCallback(
+    async (noteId: string): Promise<void> => {
+      try {
+        const note = await fetchQueryV2<NoteWithRelations>(queryClient, {
+          queryKey: QUERY_KEYS.notes.detail(noteId),
+          queryFn: () => api.get<NoteWithRelations>(`/api/notes/${noteId}`),
+          staleTime: 10_000,
+          meta: {
+            source: 'notes.context.handleSelectNoteFromTree',
+            operation: 'detail',
+            resource: 'notes.detail',
+            domain: 'notes',
+            queryKey: QUERY_KEYS.notes.detail(noteId),
+            tags: ['notes', 'detail', 'fetch'],
+          },
+        })();
+        setSelectedNote(note);
+        updateSettings({ selectedNoteId: noteId });
+        setIsEditing(false);
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
+        });
+      }
+    },
+    [queryClient, updateSettings]
+  );
 
   const handleCreateSuccess = useCallback((): void => {
     setIsCreating(false);

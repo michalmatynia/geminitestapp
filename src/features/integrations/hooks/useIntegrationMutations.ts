@@ -273,3 +273,22 @@ export function useUpdatePreferredInventory() {
     },
   });
 }
+
+export function useUpdateDefaultExportConnection() {
+  return createUpdateMutationV2<void, { connectionId: string }>({
+    mutationFn: (variables) =>
+      api.post<void>('/api/integrations/exports/base/default-connection', variables),
+    mutationKey: QUERY_KEYS.integrations.selection.defaultConnection(),
+    meta: {
+      source: 'integrations.hooks.useUpdateDefaultExportConnection',
+      operation: 'update',
+      resource: 'integrations.exports.base.default-connection',
+      domain: 'integrations',
+      tags: ['integrations', 'exports', 'base', 'default-connection'],
+    },
+    invalidateKeys: [
+      QUERY_KEYS.integrations.selection.defaultConnection(),
+      QUERY_KEYS.integrations.importExport.pref('default-connection'),
+    ],
+  });
+}

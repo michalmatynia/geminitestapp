@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
-import { Input, SelectSimple } from '@/shared/ui';
+import { Input, SelectSimple, Button } from '@/shared/ui';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 import { TAG_NONE, CAT_NONE } from './document-relation-search-utils';
 
@@ -75,14 +75,15 @@ export function FilterBar(): React.JSX.Element {
       />
       <div className='flex-1' />
       {filtersActiveCount > 0 && (
-        <button
-          type='button'
+        <Button
+          variant='ghost'
+          size='xs'
           onClick={resetFilters}
-          className='flex items-center gap-1 rounded border border-border/40 px-2 py-0.5 text-xs text-gray-400 transition-colors hover:border-border hover:text-gray-200'
+          className='flex items-center gap-1 h-7 text-gray-400 hover:text-gray-200'
         >
           <X className='size-3' />
           Reset
-        </button>
+        </Button>
       )}
     </div>
   );

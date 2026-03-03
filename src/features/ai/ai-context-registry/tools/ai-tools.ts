@@ -1,23 +1,9 @@
-import type OpenAI from 'openai';
+import type {
+  ContextRegistryTool,
+  BuildContextRegistryToolsOptions,
+} from '@/shared/contracts/ai-context-registry';
 
-/**
- * Phase 4: OpenAI-compatible tool definitions for the AI Context Registry.
- *
- * Pass the result of buildContextRegistryTools() to OpenAI's tools array so
- * models can query context on demand rather than receiving a large static prompt.
- *
- * Usage:
- *   const tools = buildContextRegistryTools({ baseUrl: process.env.NEXTAUTH_URL! });
- *   const completion = await openai.chat.completions.create({ model, messages, tools });
- *   // Route tool_calls by function.name using resolveToolCallUrl() to fetch results.
- */
-
-export type ContextRegistryTool = OpenAI.ChatCompletionTool;
-
-export type BuildContextRegistryToolsOptions = {
-  baseUrl: string;
-  maxResults?: number | undefined;
-};
+export type { ContextRegistryTool, BuildContextRegistryToolsOptions };
 
 export function buildContextRegistryTools(
   options: BuildContextRegistryToolsOptions

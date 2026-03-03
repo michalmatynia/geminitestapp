@@ -22,11 +22,11 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  Alert,
   MetadataItem,
   LoadingState,
   ToggleRow,
   PageLayout,
+  DocumentationList,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -371,23 +371,19 @@ function DatabaseEngineContent(): React.JSX.Element {
       </Tabs>
 
       {validationErrors.length > 0 && (
-        <Alert variant='error'>
-          <div className='flex items-center gap-2 font-bold mb-2'>
-            <ShieldCheckIcon className='size-4' />
-            Blocking Configuration Issues
-          </div>
-          <ul className='list-disc list-inside space-y-1'>
-            {validationErrors.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
-          </ul>
-        </Alert>
+        <div className='mt-6'>
+          <DocumentationList
+            title='Blocking Configuration Issues'
+            items={validationErrors}
+            className='border-red-500/20 bg-red-500/5'
+          />
+        </div>
       )}
     </PageLayout>
   );
 }
 
-export default function DatabaseEnginePage(): React.JSX.Element {
+export function DatabaseEnginePage(): React.JSX.Element {
   return (
     <Suspense fallback={<LoadingState message='Loading database engine...' />}>
       <DatabaseEngineProvider>
@@ -396,3 +392,5 @@ export default function DatabaseEnginePage(): React.JSX.Element {
     </Suspense>
   );
 }
+
+export default DatabaseEnginePage;

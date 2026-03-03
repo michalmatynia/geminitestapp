@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { getLanguages } from '@/features/internationalization/api';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -21,6 +22,7 @@ import {
   createMultiQueryV2,
   createMutationV2,
   createDeleteMutationV2,
+  prefetchQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
@@ -174,7 +176,6 @@ export function useSaveProducerMutation(): SaveMutation<
   Producer,
   { id: string | undefined; data: { name: string; website: string | null } }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = productMetadataKeys.producers();
   return createMutationV2({
     mutationFn: ({ id, data }) =>
@@ -190,14 +191,13 @@ export function useSaveProducerMutation(): SaveMutation<
       mutationKey,
       tags: ['products', 'metadata', 'producers', 'save'],
     },
-    onSuccess: () => {
-      void invalidateProductMetadata(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductMetadata(queryClient);
     },
   });
 }
 
 export function useDeleteProducerMutation(): DeleteMutation {
-  const queryClient = useQueryClient();
   const mutationKey = productMetadataKeys.producers();
   return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<void>(`/api/products/producers/${id}`),
@@ -210,8 +210,8 @@ export function useDeleteProducerMutation(): DeleteMutation {
       mutationKey,
       tags: ['products', 'metadata', 'producers', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateProductMetadata(queryClient);
+    invalidate: async (queryClient) => {
+      await invalidateProductMetadata(queryClient);
     },
   });
 }
@@ -322,4 +322,63 @@ export function usePriceGroups(): ListQuery<PriceGroupWithDetails> {
       tags: ['products', 'metadata', 'price-groups'],
     },
   });
+}
+
+export function useProductMetadataPrefetch(catalogId?: string): () => void {
+  const queryClient = useQueryClient();
+
+  return useCallback(() => {
+    if (!catalogId) return;
+
+    void prefetchQueryV2(queryClient, {
+      queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
+      queryFn: async () => {
+        const tree = await api.get<ProductCategoryWithChildren[]>(
+          `/api/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
+        );
+        return flattenCategoryTree(tree);
+      },
+      meta: {
+        source: 'products.hooks.useProductMetadataPrefetch.categories',
+        operation: 'list',
+        resource: 'products.metadata.categories',
+        domain: 'products',
+        queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
+        tags: ['products', 'metadata', 'categories', 'prefetch'],
+      },
+    })();
+
+    void prefetchQueryV2(queryClient, {
+      queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
+      queryFn: () =>
+        api.get<ProductTag[]>(
+          `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+        ),
+      meta: {
+        source: 'products.hooks.useProductMetadataPrefetch.tags',
+        operation: 'list',
+        resource: 'products.metadata.tags',
+        domain: 'products',
+        queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
+        tags: ['products', 'metadata', 'tags', 'prefetch'],
+      },
+    })();
+
+    void prefetchQueryV2(queryClient, {
+      queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
+      queryFn: () =>
+        api.get<ProductParameter[]>('/api/products/parameters', {
+          params: { catalogId, fresh: 1 },
+          cache: 'no-store',
+        }),
+      meta: {
+        source: 'products.hooks.useProductMetadataPrefetch.parameters',
+        operation: 'list',
+        resource: 'products.metadata.parameters',
+        domain: 'products',
+        queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
+        tags: ['products', 'metadata', 'parameters', 'prefetch'],
+      },
+    })();
+  }, [catalogId, queryClient]);
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
-import Link from 'next/link';
 
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
@@ -15,7 +14,8 @@ import {
   TabsList,
   TabsTrigger,
   SimpleSettingsList,
-  Card,
+  LoadingState,
+  Breadcrumbs,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -53,23 +53,13 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-1'>
               <h2 className='text-2xl font-bold tracking-tight text-white'>Operations Console</h2>
-              <nav
-                aria-label='Breadcrumb'
-                className='flex flex-wrap items-center gap-1 text-xs text-gray-400'
-              >
-                <Link href='/admin' className='transition-colors hover:text-gray-200'>
-                  Admin
-                </Link>
-                <span>/</span>
-                <Link
-                  href='/admin/databases/engine'
-                  className='transition-colors hover:text-gray-200'
-                >
-                  Databases
-                </Link>
-                <span>/</span>
-                <span className='text-gray-300'>Operations</span>
-              </nav>
+              <Breadcrumbs
+                items={[
+                  { label: 'Admin', href: '/admin' },
+                  { label: 'Databases', href: '/admin/databases/engine' },
+                  { label: 'Operations' },
+                ]}
+              />
             </div>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='active' className='gap-1.5'>
@@ -142,12 +132,12 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         </TabsContent>
 
         <TabsContent value='crud'>
-          {previewLoading && (
-            <Card variant='subtle' padding='lg' className='border-border/60 bg-card/50'>
-              <p className='text-xs text-gray-400'>Loading table metadata...</p>
-            </Card>
-          )}
-          {!previewLoading && tableDetails.length === 0 && (
+          {previewLoading ? (
+            <LoadingState
+              message='Loading table metadata...'
+              className='py-12 border border-border/60 bg-card/50 rounded-lg'
+            />
+          ) : tableDetails.length === 0 ? (
             <EmptyState
               title='No tables found'
               description={
@@ -157,8 +147,9 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
               }
               icon={<Table2Icon className='size-12 opacity-20' />}
             />
+          ) : (
+            <CrudPanel />
           )}
-          {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>
       </Tabs>
     </ListPanel>

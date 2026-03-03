@@ -5,9 +5,9 @@ import type {
   ContextRegistryRef,
   ContextRegistryResolutionBundle,
   ContextRuntimeDocument,
+  ContextRegistryBackend,
 } from '@/shared/contracts/ai-context-registry';
 
-import type { ContextRegistryBackend } from '../registry/backend';
 import type { RuntimeContextProvider } from './runtime-provider';
 import type { ContextRetrievalService } from './retrieval';
 

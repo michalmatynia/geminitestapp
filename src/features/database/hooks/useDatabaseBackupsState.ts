@@ -18,11 +18,11 @@ import {
   type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import {
+  invalidateBackups,
   useCreateBackupMutation,
   useDatabaseBackups,
   useDeleteBackupMutation,
@@ -31,7 +31,6 @@ import {
 } from '../hooks/useDatabaseQueries';
 
 export function useDatabaseBackupsState() {
-  const dbKeys = QUERY_KEYS.system.databases;
   const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalContent, setLogModalContent] = useState('');
@@ -123,8 +122,8 @@ export function useDatabaseBackupsState() {
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
     setLogModalContent('');
-    void queryClient.invalidateQueries({ queryKey: dbKeys.backups(activeTab) });
-  }, [queryClient, dbKeys, activeTab]);
+    invalidateBackups(queryClient, activeTab);
+  }, [queryClient, activeTab]);
 
   const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {
     setSelectedBackupForRestore(backup.name);

@@ -529,3 +529,31 @@ export type AgentSessionContext = AgentSessionContextDto;
 
 export type AgentLoginCandidatesDto = unknown;
 export type AgentLoginCandidates = AgentLoginCandidatesDto;
+
+export type ChatbotJobCreateInput = {
+  sessionId: string;
+  model?: string;
+  payload: ChatbotJobPayload;
+  resultText?: string;
+  errorMessage?: string;
+};
+
+export type ChatbotJobUpdateInput = {
+  status?: ChatbotJob['status'];
+  model?: string;
+  payload?: ChatbotJobPayload;
+  resultText?: string;
+  errorMessage?: string;
+  startedAt?: Date;
+  finishedAt?: Date;
+};
+
+export interface ChatbotJobRepository {
+  findAll(limit?: number): Promise<ChatbotJob[]>;
+  findById(id: string): Promise<ChatbotJob | null>;
+  findNextPending(): Promise<ChatbotJob | null>;
+  create(input: ChatbotJobCreateInput): Promise<ChatbotJob>;
+  update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null>;
+  deleteMany(statusIn: Array<ChatbotJob['status']>): Promise<number>;
+  delete(id: string): Promise<boolean>;
+}

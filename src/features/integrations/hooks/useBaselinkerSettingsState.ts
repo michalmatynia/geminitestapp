@@ -1,13 +1,11 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
+import { useUpdateDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useSettings, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export function useBaselinkerSettingsState() {
   const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
@@ -20,7 +18,7 @@ export function useBaselinkerSettingsState() {
   const settingsQuery = useSettings();
   const updateSettingsBulkMutation = useUpdateSettingsBulk();
   const defaultExportConnectionQuery = useDefaultExportConnection();
-  const queryClient = useQueryClient();
+  const updateDefaultConnectionMutation = useUpdateDefaultExportConnection();
 
   const storedSyncInterval = useMemo(() => {
     const found = settingsQuery.data?.find(
@@ -85,23 +83,14 @@ export function useBaselinkerSettingsState() {
       }
 
       if (defaultOneClickConnectionId !== storedDefaultConnectionId) {
-        await api.post('/api/integrations/exports/base/default-connection', {
+        await updateDefaultConnectionMutation.mutateAsync({
           connectionId: defaultOneClickConnectionId,
         });
-
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.integrations.selection.defaultConnection(),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.integrations.importExport.pref('default-connection'),
-          }),
-        ]);
       }
     } finally {
       setIsSaving(false);
     }
-  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId, updateSettingsBulkMutation, queryClient]);
+  }, [syncIntervalMinutes, storedSyncInterval, defaultOneClickConnectionId, storedDefaultConnectionId, updateSettingsBulkMutation, updateDefaultConnectionMutation]);
 
   return {
     connections,

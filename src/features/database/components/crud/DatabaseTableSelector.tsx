@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlusIcon } from 'lucide-react';
 
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button, SearchableSelect } from '@/shared/ui';
 import { useCrudPanelContext } from '../../context/CrudPanelContext';
 
 export function DatabaseTableSelector(): React.JSX.Element {
@@ -18,11 +18,10 @@ export function DatabaseTableSelector(): React.JSX.Element {
   } = useCrudPanelContext();
   return (
     <div className='flex flex-wrap items-center gap-3'>
-      <SelectSimple
-        size='sm'
+      <SearchableSelect
         value={selectedTable}
-        onValueChange={(v) => {
-          setSelectedTable(v);
+        onChange={(v) => {
+          setSelectedTable(v ?? '');
           setPage(1);
           setMutationError(null);
           setSuccessMessage(null);
@@ -32,7 +31,7 @@ export function DatabaseTableSelector(): React.JSX.Element {
           label: `${t.name} (~${t.rowEstimate} rows)`,
         }))}
         placeholder='Select a table to manage...'
-        triggerClassName='h-8 min-w-[240px] text-xs'
+        className='min-w-[280px]'
       />
 
       {selectedTable && (

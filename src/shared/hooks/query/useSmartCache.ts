@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { fetchLiteSettingsCached } from '@/shared/api/settings-client';
 import { createListQueryV2, prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 // Predefined cache strategies
 export const cacheStrategies = {
@@ -43,7 +44,7 @@ export const cacheStrategies = {
 } as const;
 
 // Hook for intelligent cache management
-export function useSmartCache(): {
+export function useSmartCache(options?: { domain?: TanstackFactoryDomain }): {
   optimizeCache: () => void;
   getCacheStats: () => {
     totalQueries: number;
@@ -56,8 +57,9 @@ export function useSmartCache(): {
   preloadCriticalData: <TData = unknown>(
     criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<TData> }>
   ) => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
+  const domain = options?.domain ?? 'global';
 
   const optimizeCache = useCallback((): void => {
     const cache = queryClient.getQueryCache();
@@ -136,7 +138,7 @@ export function useSmartCache(): {
             source: 'shared.hooks.query.useSmartCache.preloadCriticalData',
             operation: 'list',
             resource: 'critical-data',
-            domain: 'global',
+            domain,
             tags: ['cache', 'preload'],
           },
         })()
@@ -144,7 +146,7 @@ export function useSmartCache(): {
 
       await Promise.allSettled(promises);
     },
-    [queryClient]
+    [queryClient, domain]
   );
 
   return {
@@ -155,12 +157,13 @@ export function useSmartCache(): {
 }
 
 // Hook for cache warming strategies
-export function useCacheWarming(): {
+export function useCacheWarming(options?: { domain?: TanstackFactoryDomain }): {
   warmUserSpecificData: (userId: string) => Promise<void>;
   warmNavigationData: (routes: string[]) => Promise<void>;
   warmFrequentlyAccessedData: () => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
+  const domain = options?.domain ?? 'global';
 
   const warmUserSpecificData = useCallback(
     async (userId: string): Promise<void> => {
@@ -188,14 +191,14 @@ export function useCacheWarming(): {
               source: 'shared.hooks.query.useCacheWarming.warmUserSpecificData',
               operation: 'list',
               resource,
-              domain: 'global',
+              domain,
               tags: ['cache', 'warming', 'user'],
             },
           })()
         )
       );
     },
-    [queryClient]
+    [queryClient, domain]
   );
 
   const warmNavigationData = useCallback(
@@ -216,14 +219,14 @@ export function useCacheWarming(): {
               source: 'shared.hooks.query.useCacheWarming.warmNavigationData',
               operation: 'list',
               resource: 'navigation',
-              domain: 'global',
+              domain,
               tags: ['cache', 'warming', 'navigation'],
             },
           })()
         )
       );
     },
-    [queryClient]
+    [queryClient, domain]
   );
 
   const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
@@ -245,13 +248,13 @@ export function useCacheWarming(): {
             source: 'shared.hooks.query.useCacheWarming.warmFrequentlyAccessedData',
             operation: 'list',
             resource: 'settings.lite',
-            domain: 'global',
+            domain,
             tags: ['cache', 'warming', 'frequent'],
           },
         })()
       )
     );
-  }, [queryClient]);
+  }, [queryClient, domain]);
 
   return {
     warmUserSpecificData,
@@ -267,10 +270,12 @@ export function useAdaptiveQuery<T>(
   options?: {
     dataType?: 'realtime' | 'standard' | 'longTerm' | 'static';
     priority?: 'high' | 'medium' | 'low';
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<T> {
   const dataType = options?.dataType || 'standard';
   const strategy = cacheStrategies[dataType];
+  const domain = options?.domain ?? 'global';
 
   return createListQueryV2<T, T>({
     queryKey,
@@ -285,7 +290,7 @@ export function useAdaptiveQuery<T>(
       source: 'shared.hooks.query.useAdaptiveQuery',
       operation: 'list',
       resource: 'adaptive-query',
-      domain: 'global',
+      domain,
       tags: ['cache', 'adaptive'],
     },
   });

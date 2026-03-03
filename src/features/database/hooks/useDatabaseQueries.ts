@@ -63,17 +63,17 @@ import {
   uploadDatabaseBackup,
 } from '../api';
 
-const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {
+export const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
 };
 
-const invalidateSchemaAll = (queryClient: QueryClient): void => {
+export const invalidateSchemaAll = (queryClient: QueryClient): void => {
   void queryClient.invalidateQueries({
     queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }),
   });
 };
 
-const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void => {
+export const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus() });
 };
 

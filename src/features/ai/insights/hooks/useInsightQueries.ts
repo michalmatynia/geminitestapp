@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 
 import type { AiInsightRecord } from '@/shared/contracts';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
@@ -22,7 +21,7 @@ export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightR
       source: 'insights.hooks.useAnalyticsInsightsQuery',
       operation: 'list',
       resource: 'ai.insights.analytics',
-      domain: 'global',
+      domain: 'analytics',
       queryKey,
       tags: ['ai', 'insights', 'analytics'],
     },
@@ -41,7 +40,7 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
       source: 'insights.hooks.useLogInsightsQuery',
       operation: 'list',
       resource: 'ai.insights.logs',
-      domain: 'global',
+      domain: 'analytics',
       queryKey,
       tags: ['ai', 'insights', 'logs'],
     },
@@ -49,7 +48,6 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
 }
 
 export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord | null, void> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.insights.analytics();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
@@ -61,18 +59,15 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
       source: 'insights.hooks.useRunAnalyticsInsightMutation',
       operation: 'create',
       resource: 'ai.insights.analytics',
-      domain: 'global',
+      domain: 'analytics',
       mutationKey,
       tags: ['ai', 'insights', 'analytics', 'run'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.insights.analytics() });
-    },
+    invalidateKeys: [QUERY_KEYS.ai.insights.analytics()],
   });
 }
 
 export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | null, void> {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.insights.logs();
   return createCreateMutationV2<AiInsightRecord | null, void>({
     mutationFn: async () => {
@@ -84,12 +79,10 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
       source: 'insights.hooks.useRunLogInsightMutation',
       operation: 'create',
       resource: 'ai.insights.logs',
-      domain: 'global',
+      domain: 'analytics',
       mutationKey,
       tags: ['ai', 'insights', 'logs', 'run'],
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.insights.logs() });
-    },
+    invalidateKeys: [QUERY_KEYS.ai.insights.logs()],
   });
 }

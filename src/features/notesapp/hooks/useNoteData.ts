@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import {
@@ -250,55 +250,54 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
-        }
-        >({
-          mutationFn: async ({
-            slotIndex,
-            file,
-            onProgress,
-          }: {
+    }
+  >({
+    mutationFn: async ({
+      slotIndex,
+      file,
+      onProgress,
+    }: {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
     }): Promise<NoteFileRecord> => {
-            if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('slotIndex', slotIndex.toString());
+      if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('slotIndex', slotIndex.toString());
 
-            const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-            const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
-              `/api/notes/${noteId}/files`,
-              {
-                formData,
-                onProgress,
-              }
-            );
-            if (!result.ok) {
-              const error = result.data as { error?: string };
-              throw new ApiError(error.error || 'Failed to upload note file', 400);
-            }
-            return result.data as NoteFileRecord;
-          },
-          mutationKey,
-          meta: {
-            source: 'notes.hooks.useCreateNoteFileMutation',
-            operation: 'upload',
-            resource: 'notes.files',
-            domain: 'notes',
-            mutationKey,
-            tags: ['notes', 'files', 'upload'],
-          },
-          invalidate: async (queryClient) => {
-            if (noteId) {
-              await invalidateNoteDetail(queryClient, noteId);
-            }
-          },
-        });
+      const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+      const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
+        `/api/notes/${noteId}/files`,
+        {
+          formData,
+          onProgress,
+        }
+      );
+      if (!result.ok) {
+        const error = result.data as { error?: string };
+        throw new ApiError(error.error || 'Failed to upload note file', 400);
+      }
+      return result.data as NoteFileRecord;
+    },
+    mutationKey,
+    meta: {
+      source: 'notes.hooks.useCreateNoteFileMutation',
+      operation: 'upload',
+      resource: 'notes.files',
+      domain: 'notes',
+      mutationKey,
+      tags: ['notes', 'files', 'upload'],
+    },
+    invalidate: async (queryClient) => {
+      if (noteId) {
+        await invalidateNoteDetail(queryClient, noteId);
+      }
+    },
+  });
 };
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
-  const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
   return createDeleteMutationV2<DeleteResponse, number>({
     mutationFn: (slotIndex) => {
@@ -310,13 +309,13 @@ export const useDeleteNoteFileMutation = (noteId?: string) => {
       source: 'notes.hooks.useDeleteNoteFileMutation',
       operation: 'delete',
       resource: 'notes.files',
-      domain: 'global',
+      domain: 'notes',
       mutationKey,
       tags: ['notes', 'files', 'delete'],
     },
-    onSuccess: () => {
+    invalidate: async (queryClient) => {
       if (noteId) {
-        void invalidateNoteDetail(queryClient, noteId);
+        await invalidateNoteDetail(queryClient, noteId);
       }
     },
   });
@@ -332,7 +331,9 @@ export interface UseNoteDataResult {
   tags: TagRecord[];
   themes: ThemeRecord[];
   notebook: NotebookRecord | null;
-  setNotebook: (newNotebook: NotebookRecord) => void;
+  setNotebook: (
+    updater: NotebookRecord | null | ((prev: NotebookRecord | null | undefined) => NotebookRecord | null)
+  ) => void;
   folderTree: CategoryWithChildren[];
   loading: boolean;
   notesRef: React.MutableRefObject<NoteWithRelations[]>;
@@ -353,9 +354,9 @@ export function useNoteData({
   filterTagIds,
   setSelectedNotebookId,
 }: UseNoteDataProps): UseNoteDataResult {
-  const queryClient = useQueryClient();
   const notesRef = useRef<NoteWithRelations[]>([]);
   const folderTreeRef = useRef<CategoryWithChildren[]>([]);
+  const queryClient = useQueryClient();
 
   // Queries
   const filters = useMemo(
@@ -456,7 +457,13 @@ export function useNoteData({
     folderTreeRef.current = folderTree;
   }, [folderTree]);
 
-  // Setters (wrappers for query updates or optimistic UI - simplified for now)
+  // Initial selection
+  useEffect(() => {
+    if (!selectedNotebookId && notebooks.length > 0) {
+      setSelectedNotebookId(notebooks[0]!.id);
+    }
+  }, [selectedNotebookId, notebooks, setSelectedNotebookId]);
+
   const setNotes = useCallback(
     (
       updater:
@@ -469,26 +476,16 @@ export function useNoteData({
   );
 
   const setNotebook = useCallback(
-    (newNotebook: NotebookRecord): void => {
-      // This might need to update the notebook in the list
-      queryClient.setQueryData(
-        QUERY_KEYS.notes.notebooks(),
-        (old: NotebookRecord[] | undefined) => {
-          if (!old) return [newNotebook];
-          return old.map((n: NotebookRecord) => (n.id === newNotebook.id ? newNotebook : n));
-        }
-      );
-      // And possibly selected notebook state if needed, but that's passed in
+    (
+      updater:
+        | NotebookRecord
+        | null
+        | ((prev: NotebookRecord | null | undefined) => NotebookRecord | null)
+    ): void => {
+      queryClient.setQueryData(QUERY_KEYS.notes.detail(selectedNotebookId ?? ''), updater);
     },
-    [queryClient]
+    [queryClient, selectedNotebookId]
   );
-
-  // Initial selection
-  useEffect(() => {
-    if (!selectedNotebookId && notebooks.length > 0) {
-      setSelectedNotebookId(notebooks[0]!.id);
-    }
-  }, [selectedNotebookId, notebooks, setSelectedNotebookId]);
 
   return {
     notes,

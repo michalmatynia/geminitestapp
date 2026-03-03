@@ -1,20 +1,12 @@
 import 'server-only';
 
-import type { ContextNode, ContextNodeKind } from '@/shared/contracts/ai-context-registry';
+import type {
+  ContextNode,
+  ContextNodeKind,
+  ContextRegistryBackend,
+} from '@/shared/contracts/ai-context-registry';
 
-// ─── Backend interface ────────────────────────────────────────────────────────
-
-export interface ContextRegistryBackend {
-  getByIds(ids: string[]): ContextNode[];
-  search(params: {
-    query?: string;
-    kinds?: ContextNodeKind[];
-    tags?: string[];
-    limit: number;
-  }): ContextNode[];
-  listAll(): ContextNode[];
-  getVersion(): string;
-}
+export type { ContextRegistryBackend };
 
 // ─── Normalization ────────────────────────────────────────────────────────────
 

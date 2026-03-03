@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -375,7 +374,7 @@ export function ProductStudioProvider({
       setRunStatus(result.runStatus);
       setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs ?? 0)));
       toast('Image sent to Studio.', { variant: 'success' });
-      await queryClient.invalidateQueries({ queryKey: studioKeys.slots(studioProjectId) });
+      void invalidateImageStudioSlots(queryClient, studioProjectId);
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
@@ -419,7 +418,7 @@ export function ProductStudioProvider({
         }
       );
       refreshImagesFromProduct(response.product);
-      await invalidateProductsAndCounts(queryClient);
+      void invalidateProductsAndCounts(queryClient);
       toast('Variant accepted.', { variant: 'success' });
       await refreshVariants();
       await refreshAudit();
@@ -462,7 +461,7 @@ export function ProductStudioProvider({
         }
       );
       refreshImagesFromProduct(response.product);
-      await invalidateProductsAndCounts(queryClient);
+      void invalidateProductsAndCounts(queryClient);
       await refreshVariants();
       toast('Image rotated.', { variant: 'success' });
     } catch (error) {

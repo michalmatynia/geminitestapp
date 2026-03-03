@@ -363,13 +363,23 @@ export function useProductListState(): ProductListContextType & {
             const { draftKeys } = await import('@/features/drafter/hooks/useDraftQueries');
             const { normalizeQueryKey } = await import('@/shared/lib/query-key-utils');
             const { api } = await import('@/shared/lib/api-client');
-            const draft = await queryClient.fetchQuery({
+            const { fetchQueryV2 } = await import('@/shared/lib/query-factories-v2');
+            const draft = await fetchQueryV2<ProductDraftDto>(queryClient, {
               queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
               queryFn: () =>
                 api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
                   timeout: 30_000,
                 }),
-            });
+              staleTime: 5 * 60 * 1000,
+              meta: {
+                source: 'products.hooks.useProductListState.onCreateFromDraft',
+                operation: 'detail',
+                resource: 'drafts.detail',
+                domain: 'drafter',
+                queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
+                tags: ['drafts', 'detail', 'fetch'],
+              },
+            })();
             setCreateDraft(draft);
             handleOpenCreateFromDraft(draft);
             toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });

@@ -1,5 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface PrefetchConfig {
   queryKey: unknown[];
@@ -8,8 +10,12 @@ interface PrefetchConfig {
   delay?: number;
 }
 
-export function usePrefetchQueries(configs: PrefetchConfig[]): void {
+export function usePrefetchQueries(
+  configs: PrefetchConfig[],
+  options?: { domain?: TanstackFactoryDomain }
+): void {
   const queryClient = useQueryClient();
+  const domain = options?.domain ?? 'global';
 
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
@@ -18,18 +24,25 @@ export function usePrefetchQueries(configs: PrefetchConfig[]): void {
       if (condition && !condition()) return;
 
       const timeoutId = setTimeout(() => {
-        void queryClient.prefetchQuery({
+        void prefetchQueryV2(queryClient, {
           queryKey,
           queryFn,
           staleTime: 1000 * 60 * 5, // 5 minutes
-        });
+          meta: {
+            source: 'shared.hooks.usePrefetchQueries',
+            operation: 'list',
+            resource: 'prefetch',
+            domain,
+            tags: ['prefetch'],
+          },
+        })();
       }, delay);
 
       timeouts.push(timeoutId);
     });
 
     return (): void => timeouts.forEach((t: NodeJS.Timeout) => clearTimeout(t));
-  }, [configs, queryClient]);
+  }, [configs, queryClient, domain]);
 }
 
 export interface SmartPrefetchResult {
@@ -44,8 +57,9 @@ export interface SmartPrefetchResult {
 }
 
 // Smart prefetching based on user behavior
-export function useSmartPrefetch(): SmartPrefetchResult {
+export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): SmartPrefetchResult {
   const queryClient = useQueryClient();
+  const domain = options?.domain ?? 'global';
 
   const prefetchOnHover = (
     queryKey: unknown[],
@@ -53,7 +67,17 @@ export function useSmartPrefetch(): SmartPrefetchResult {
   ): { onMouseEnter: () => void } => {
     return {
       onMouseEnter: (): void => {
-        void queryClient.prefetchQuery({ queryKey, queryFn });
+        void prefetchQueryV2(queryClient, {
+          queryKey,
+          queryFn,
+          meta: {
+            source: 'shared.hooks.useSmartPrefetch.onHover',
+            operation: 'list',
+            resource: 'smart-prefetch',
+            domain,
+            tags: ['prefetch', 'hover'],
+          },
+        })();
       },
     };
   };
@@ -64,7 +88,17 @@ export function useSmartPrefetch(): SmartPrefetchResult {
   ): { onFocus: () => void } => {
     return {
       onFocus: (): void => {
-        void queryClient.prefetchQuery({ queryKey, queryFn });
+        void prefetchQueryV2(queryClient, {
+          queryKey,
+          queryFn,
+          meta: {
+            source: 'shared.hooks.useSmartPrefetch.onFocus',
+            operation: 'list',
+            resource: 'smart-prefetch',
+            domain,
+            tags: ['prefetch', 'focus'],
+          },
+        })();
       },
     };
   };

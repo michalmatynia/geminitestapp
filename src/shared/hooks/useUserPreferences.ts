@@ -60,7 +60,7 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
       source: 'shared.hooks.useUserPreferences',
       operation: 'detail',
       resource: 'user-preferences',
-      domain: 'global',
+      domain: 'auth',
       tags: ['user-preferences'],
     },
   });
@@ -97,7 +97,7 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
       source: 'shared.hooks.useUpdateUserPreferences',
       operation: 'update',
       resource: 'user-preferences',
-      domain: 'global',
+      domain: 'auth',
       tags: ['user-preferences', 'update'],
     },
   });

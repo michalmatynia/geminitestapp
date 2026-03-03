@@ -299,3 +299,90 @@ export interface ContextPack {
   systemPrompt: string;
   buildSeedContext(rootIds: string[]): string;
 }
+
+/**
+ * Runtime Provider DTOs
+ */
+
+export type RuntimeContextProviderResolveOptions = {
+  signal?: AbortSignal | undefined;
+  maxDocuments?: number | undefined;
+};
+
+export interface RuntimeContextProvider {
+  id: string;
+  canInferRefs(input: Record<string, unknown> | null): boolean;
+  inferRefs(input: Record<string, unknown>): ContextRegistryRef[];
+  canResolveRef(ref: ContextRegistryRef): boolean;
+  resolveRefs(
+    refs: ContextRegistryRef[],
+    options?: RuntimeContextProviderResolveOptions
+  ): Promise<ContextRuntimeDocument[]>;
+  getVersion(): string;
+}
+
+/**
+ * Retrieval DTOs
+ */
+
+export interface ResolveResult {
+  nodes: ContextNode[];
+  documents?: ContextRuntimeDocument[];
+  truncated: boolean;
+  visitedIds: string[];
+}
+
+export interface RelatedResult {
+  sourceId: string;
+  nodes: ContextNode[];
+}
+
+/**
+ * Registry Backend Interface (Low-level storage)
+ */
+
+export interface ContextRegistryBackend {
+  getByIds(ids: string[]): ContextNode[];
+  search(params: {
+    query?: string;
+    kinds?: ContextNodeKind[];
+    tags?: string[];
+    limit: number;
+  }): ContextNode[];
+  listAll(): ContextNode[];
+  getVersion(): string;
+}
+
+/**
+ * Registry Service Interface (High-level API)
+ */
+
+export interface ContextRegistryService {
+  search(request: ContextSearchRequest): Promise<ContextSearchResponse>;
+  resolve(request: ContextResolveRequest): Promise<ContextResolveResponse>;
+  getRelated(id: string): Promise<ContextRelatedResponse>;
+  getSchema(entity: string): Promise<ContextSchemaResponse>;
+  resolveRuntime(
+    refs: ContextRegistryRef[],
+    options?: RuntimeContextProviderResolveOptions
+  ): Promise<ContextRuntimeDocument[]>;
+}
+
+/**
+ * AI Tool Types
+ */
+
+// This type mirrors OpenAI.ChatCompletionTool but decouples the contract from the OpenAI SDK
+export type ContextRegistryTool = {
+  type: 'function';
+  function: {
+    name: string;
+    description?: string;
+    parameters?: Record<string, unknown>;
+  };
+};
+
+export type BuildContextRegistryToolsOptions = {
+  baseUrl: string;
+  maxResults?: number | undefined;
+};

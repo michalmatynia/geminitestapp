@@ -118,8 +118,8 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
   ExportResponse,
   GenericExportToBaseVariables
   > {
-  const queryClient = useQueryClient();
   const mutationKey = listingBadgesQueryKey;
+  const queryClient = useQueryClient();
 
   return createCreateMutationV2({
     mutationFn: async (vars: GenericExportToBaseVariables): Promise<ExportResponse> => {
@@ -210,8 +210,8 @@ export function useDeleteFromBaseMutation(
   { status?: string; message?: string; runId?: string | null },
   { listingId: string; inventoryId?: string }
 > {
-  const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
+  const queryClient = useQueryClient();
 
   return createDeleteMutationV2({
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) =>
@@ -369,7 +369,6 @@ export function useExportToBaseMutation(
   productId: string
 ): UpdateMutation<ExportResponse, ExportToBaseVariables> {
   const queryClient = useQueryClient();
-
   return createCreateMutationV2({
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
       const { requestId, ...body } = payload;
@@ -400,7 +399,7 @@ export function useExportToBaseMutation(
       mutationKey: getProductListingsQueryKey(productId),
       tags: ['integrations', 'listings', 'export-to-base'],
     },
-    onMutate: async (): Promise<ListingBadgeContext> => {
+    onMutate: async (_vars): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
       const previousListingBadges = getListingBadgesSnapshot(queryClient);
       setListingBadgeStatus(queryClient, productId, 'base', 'pending');

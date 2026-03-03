@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, {
   createContext,
@@ -23,7 +23,6 @@ import type {
   IntegrationDefinition,
   SaveConnectionOptions,
 } from '@/features/integrations/context/integrations-context-types';
-import { invalidateIntegrationConnections } from '@/features/integrations/hooks/integrationCache';
 import {
   useCreateIntegration,
   useDeleteConnection,
@@ -101,7 +100,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
 
   // Queries
   const integrationsQuery = useIntegrations();
@@ -225,12 +223,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setActiveIntegration(null);
   }, [activeIntegration, integrations]);
 
-  const refreshConnections = useCallback(
-    (integrationId: string): void => {
-      void invalidateIntegrationConnections(queryClient, integrationId);
-    },
-    [queryClient]
-  );
 
   useEffect(() => {
     if (connections.length === 0) {
@@ -317,7 +309,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     const integration = await ensureIntegration(definition);
     if (!integration) return;
     setActiveIntegration(integration);
-    refreshConnections(integration.id);
     setIsModalOpen(true);
   };
 
@@ -509,7 +500,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
           `${title} succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${extraInfo}`
         );
         setShowTestSuccessModal(true);
-        refreshConnections(activeIntegration.id);
       } catch (error: unknown) {
         const durationMs = Math.round(performance.now() - startedAt);
         const message = (error as Error)?.message ?? 'Unknown error';
@@ -562,7 +552,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         setIsTesting(false);
       }
     },
-    [activeIntegration, testConnectionMutation, refreshConnections]
+    [activeIntegration, testConnectionMutation]
   );
 
   const handleBaselinkerTest = (c: IntegrationConnection) =>

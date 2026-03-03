@@ -400,7 +400,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     async (slotsToCreate: Array<Partial<ImageStudioSlotRecord>>) => {
       const data = await createSlotsMutation.mutateAsync(slotsToCreate);
       if (data.slots.length > 0) {
-        queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
           if (!current) return { slots: data.slots };
           const existingById = new Set(current.slots.map((slot: ImageStudioSlotRecord) => slot.id));
           const appended = data.slots.filter(
@@ -415,7 +415,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       }
       return data.slots;
     },
-    [createSlotsMutation, queryClient, slotsQueryKey]
+    [createSlotsMutation]
   );
 
   const updateSlotMutation = useUpdateStudioSlot(projectId);
@@ -429,8 +429,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       const normalizedTarget = targetFolder.trim();
 
       // Optimistic cache update — move the slot to the target folder immediately.
-      await queryClient.cancelQueries({ queryKey: slotsQueryKey });
-      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+      queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
         if (!current) return current;
         const targetFolderPath = normalizedTarget || null;
         const existingSlot = current.slots.find(
@@ -453,9 +452,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       // (invalidateImageStudioSlots). The cache already has correct data from onSuccess.
       // Without this, the refetch completes after the tree's isApplying guard drops
       // and replaceNodes overwrites the optimistic state, causing a "jump back".
-      void queryClient.cancelQueries({ queryKey: slotsQueryKey });
     },
-    [queryClient, slotsQueryKey, updateSlotMutation]
+    [updateSlotMutation]
   );
 
   const handleMoveFolder = useCallback(
@@ -488,7 +486,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
           })
         );
 
-        queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
           if (!current) return current;
           const nextSlots = current.slots.map((slot: ImageStudioSlotRecord) => {
             const nextFolderPath = optimisticNextById.get(slot.id);
@@ -508,14 +506,12 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
             });
           })
         ).then(() => {
-          void invalidateImageStudioSlots(queryClient, projectId);
         });
         return;
       }
 
-      void invalidateImageStudioSlots(queryClient, projectId);
     },
-    [virtualFolders, persistFolders, slots, queryClient, slotsQueryKey, projectId]
+    [virtualFolders, persistFolders, slots]
   );
 
   const handleRenameFolder = useCallback(
@@ -546,7 +542,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
           })
         );
 
-        queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
           if (!current) return current;
           const nextSlots = current.slots.map((slot: ImageStudioSlotRecord) => {
             const nextPath = optimisticNextById.get(slot.id);
@@ -573,9 +569,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
         setSelectedFolderRaw(rebasePath(normalizedSelectedFolder));
       }
 
-      void invalidateImageStudioSlots(queryClient, projectId);
     },
-    [virtualFolders, persistFolders, slots, queryClient, slotsQueryKey, projectId, selectedFolder]
+    [virtualFolders, persistFolders, slots, selectedFolder]
   );
 
   const handleDeleteFolder = useCallback(
@@ -613,7 +608,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
           )
         );
         if (deletedSlotIds.size > 0) {
-          queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+          queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
             if (!current) return current;
             return {
               ...current,
@@ -637,7 +632,6 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
           throw new Error(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
         }
       } finally {
-        void invalidateImageStudioSlots(queryClient, projectId);
       }
     },
     [

@@ -20,6 +20,7 @@ import {
   fetchAiPathsSettingsCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -97,13 +98,22 @@ const loadPathSettingsData = async (
     }
   }
 
-  const settingsData = await queryClient.fetchQuery({
-    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
+  const queryKey = QUERY_KEYS.ai.aiPaths.settings();
+  const settingsData = await fetchQueryV2<Array<{ key: string; value: string }>>(queryClient, {
+    queryKey,
     queryFn: async () => {
       return await fetchAiPathsSettingsCached();
     },
     staleTime: AI_PATHS_SETTINGS_STALE_MS,
-  });
+    meta: {
+      source: 'ai.ai-paths.settings.fetchPathSettingsData',
+      operation: 'list',
+      resource: 'aiPaths.settings',
+      domain: 'ai_paths',
+      queryKey,
+      tags: ['ai-paths', 'settings', 'fetch'],
+    },
+  })();
   return { settingsData, settingsLoadMode: 'full' };
 };
 

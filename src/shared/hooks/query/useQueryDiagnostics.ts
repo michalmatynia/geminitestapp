@@ -2,6 +2,7 @@
 
 import { useQueryClient, type QueryClient, type Query } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 export type QueryDiagnosticsItem = {
   key: readonly unknown[];
@@ -18,6 +19,7 @@ export type QueryDiagnosticsItem = {
 
 type UseQueryDiagnosticsOptions = {
   enabled?: boolean;
+  domain?: TanstackFactoryDomain;
 };
 
 const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
@@ -82,26 +84,6 @@ const snapshotsEqual = (a: QueryDiagnosticsItem[], b: QueryDiagnosticsItem[]): b
     if (left.dataSize !== right.dataSize) return false;
   }
   return true;
-};
-
-export function useQueryDiagnostics(): {
-  queries: QueryDiagnosticsItem[];
-  invalidate: (key: readonly unknown[]) => void;
-  refetch: (key: readonly unknown[]) => void;
-  remove: (key: readonly unknown[]) => void;
-  clearAll: () => void;
-  invalidateAll: () => void;
-  refetchAll: () => void;
-};
-
-export function useQueryDiagnostics(options?: UseQueryDiagnosticsOptions): {
-  queries: QueryDiagnosticsItem[];
-  invalidate: (key: readonly unknown[]) => void;
-  refetch: (key: readonly unknown[]) => void;
-  remove: (key: readonly unknown[]) => void;
-  clearAll: () => void;
-  invalidateAll: () => void;
-  refetchAll: () => void;
 };
 
 export function useQueryDiagnostics(options: UseQueryDiagnosticsOptions = {}): {

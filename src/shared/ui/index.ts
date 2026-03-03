@@ -104,3 +104,6 @@ export * from './templates/modals';
 export * from './AiInsightList';
 export * from './DocumentationList';
 export * from './SearchableList';
+export * from './segmented-control';
+export * from './chip';
+export * from './searchable-select';

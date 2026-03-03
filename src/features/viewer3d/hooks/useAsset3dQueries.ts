@@ -18,6 +18,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAsset3d, invalidateAsset3dDetail } from '@/shared/lib/query-invalidation';
+export { invalidateAsset3d, invalidateAsset3dDetail };
 import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
 
 export { asset3dKeys };

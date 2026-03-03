@@ -3,7 +3,7 @@ import React from 'react';
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -85,23 +85,39 @@ export function useAiPathsSettingsSamples({
         normalized === 'products' ? 'product' : normalized === 'notes' ? 'note' : normalized;
       let sample: Record<string, unknown> | null = null;
       if (resolvedType === 'product') {
-        sample = await queryClient.fetchQuery({
+        sample = await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
           queryKey: getProductDetailQueryKey(entityId),
           queryFn: async () => {
             const result = await entityApi.getProduct(entityId);
-            return result.ok ? result.data : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
-        });
+          meta: {
+            source: 'ai.ai-paths.settings.fetch-parser-sample.product',
+            operation: 'detail',
+            resource: 'products.detail',
+            domain: 'ai_paths',
+            queryKey: getProductDetailQueryKey(entityId),
+            tags: ['ai-paths', 'samples', 'fetch'],
+          },
+        })();
       } else if (resolvedType === 'note') {
-        sample = await queryClient.fetchQuery({
+        sample = await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
           queryKey: QUERY_KEYS.notes.detail(entityId),
           queryFn: async () => {
             const result = await entityApi.getNote(entityId);
-            return result.ok ? result.data : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
-        });
+          meta: {
+            source: 'ai.ai-paths.settings.fetch-parser-sample.note',
+            operation: 'detail',
+            resource: 'notes.detail',
+            domain: 'ai_paths',
+            queryKey: QUERY_KEYS.notes.detail(entityId),
+            tags: ['ai-paths', 'samples', 'fetch'],
+          },
+        })();
       }
       if (!sample) {
         throw new Error('No sample found for that ID.');
@@ -112,7 +128,7 @@ export function useAiPathsSettingsSamples({
       source: 'ai.ai-paths.settings.fetch-parser-sample',
       operation: 'action',
       resource: 'ai-paths.samples.parser',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'settings', 'samples'],
     },
     onSuccess: ({
@@ -224,23 +240,39 @@ export function useAiPathsSettingsSamples({
       } else {
         const normalized = entityType.toLowerCase();
         if (normalized === 'product') {
-          sample = await queryClient.fetchQuery({
+          sample = await fetchQueryV2<unknown>(queryClient, {
             queryKey: getProductDetailQueryKey(entityId),
             queryFn: async () => {
               const result = await entityApi.getProduct(entityId);
               return result.ok ? result.data : null;
             },
             staleTime: AI_PATHS_SAMPLE_STALE_MS,
-          });
+            meta: {
+              source: 'ai.ai-paths.settings.fetch-updater-sample.product',
+              operation: 'detail',
+              resource: 'products.detail',
+              domain: 'ai_paths',
+              queryKey: getProductDetailQueryKey(entityId),
+              tags: ['ai-paths', 'samples', 'fetch'],
+            },
+          })();
         } else if (normalized === 'note') {
-          sample = await queryClient.fetchQuery({
+          sample = await fetchQueryV2<unknown>(queryClient, {
             queryKey: QUERY_KEYS.notes.detail(entityId),
             queryFn: async () => {
               const result = await entityApi.getNote(entityId);
               return result.ok ? result.data : null;
             },
             staleTime: AI_PATHS_SAMPLE_STALE_MS,
-          });
+            meta: {
+              source: 'ai.ai-paths.settings.fetch-updater-sample.note',
+              operation: 'detail',
+              resource: 'notes.detail',
+              domain: 'ai_paths',
+              queryKey: QUERY_KEYS.notes.detail(entityId),
+              tags: ['ai-paths', 'samples', 'fetch'],
+            },
+          })();
         } else {
           const fetched = await fetchViaDbQuery(entityType, entityId);
           sample = fetched.sample;
@@ -264,7 +296,7 @@ export function useAiPathsSettingsSamples({
       source: 'ai.ai-paths.settings.fetch-updater-sample',
       operation: 'action',
       resource: 'ai-paths.samples.updater',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'settings', 'samples'],
     },
     onSuccess: ({

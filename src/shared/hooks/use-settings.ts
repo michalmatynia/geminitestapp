@@ -68,7 +68,7 @@ export function useSettings(options?: {
       source: 'shared.hooks.useSettings',
       operation: 'list',
       resource: 'settings',
-      domain: 'global',
+      domain: 'observability',
       tags: ['settings', scope],
     },
   });
@@ -95,7 +95,7 @@ export function useSettingsMap(options?: {
       source: 'shared.hooks.useSettingsMap',
       operation: 'detail',
       resource: 'settings',
-      domain: 'global',
+      domain: 'observability',
       tags: ['settings', 'map', scope],
     },
   });
@@ -119,7 +119,7 @@ export function useLiteSettingsMap(options?: {
       source: 'shared.hooks.useLiteSettingsMap',
       operation: 'detail',
       resource: 'settings',
-      domain: 'global',
+      domain: 'observability',
       tags: ['settings', 'map', 'lite'],
     },
   });
@@ -138,7 +138,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
       source: 'shared.hooks.useUpdateSetting',
       operation: 'update',
       resource: 'settings',
-      domain: 'global',
+      domain: 'observability',
       tags: ['settings', 'update'],
     },
   });
@@ -175,7 +175,7 @@ export function useUpdateSettingsBulk(): MutationResult<
       source: 'shared.hooks.useUpdateSettingsBulk',
       operation: 'update',
       resource: 'settings',
-      domain: 'global',
+      domain: 'observability',
       tags: ['settings', 'bulk-update'],
     },
   });

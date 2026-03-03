@@ -13,6 +13,7 @@ import type {
 } from '@/shared/lib/ai-paths';
 import { TRIGGER_EVENTS, evaluateDataContractPreflight, entityApi } from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { buildSimulationContext } from './utils';
@@ -119,14 +120,23 @@ export function useAiPathsSimulation(args: SimulationArgs) {
   const fetchProductById = useCallback(
     async (productId: string): Promise<Record<string, unknown> | null> => {
       try {
-        return await queryClient.fetchQuery({
-          queryKey: getProductDetailQueryKey(productId),
+        const queryKey = getProductDetailQueryKey(productId);
+        return await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
+          queryKey,
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;
           },
           staleTime: 0,
-        });
+          meta: {
+            source: 'ai.ai-paths.simulation.fetchProduct',
+            operation: 'detail',
+            resource: 'products.detail',
+            domain: 'ai_paths',
+            queryKey,
+            tags: ['ai-paths', 'simulation', 'fetch'],
+          },
+        })();
       } catch (error) {
         args.reportAiPathsError(
           error,
@@ -142,14 +152,23 @@ export function useAiPathsSimulation(args: SimulationArgs) {
   const fetchNoteById = useCallback(
     async (noteId: string): Promise<Record<string, unknown> | null> => {
       try {
-        return await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.notes.detail(noteId),
+        const queryKey = QUERY_KEYS.notes.detail(noteId);
+        return await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
+          queryKey,
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getNote(noteId);
             return result.ok ? result.data : null;
           },
           staleTime: 0,
-        });
+          meta: {
+            source: 'ai.ai-paths.simulation.fetchNote',
+            operation: 'detail',
+            resource: 'notes.detail',
+            domain: 'ai_paths',
+            queryKey,
+            tags: ['ai-paths', 'simulation', 'fetch'],
+          },
+        })();
       } catch (error) {
         args.reportAiPathsError(error, { action: 'fetchNote', noteId }, 'Failed to fetch note:');
         return null;

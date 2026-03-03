@@ -5,6 +5,9 @@ import { ObjectId } from 'mongodb';
 import type {
   ChatbotJobDto as ChatbotJob,
   ChatbotJobPayloadDto as ChatbotJobPayload,
+  ChatbotJobRepository,
+  ChatbotJobCreateInput,
+  ChatbotJobUpdateInput,
 } from '@/shared/contracts/chatbot';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -24,17 +27,6 @@ interface ChatbotJobDocument {
   finishedAt?: Date | undefined;
 }
 
-type ChatbotJobCreateInput = Pick<
-  ChatbotJobDocument,
-  'sessionId' | 'model' | 'payload' | 'resultText' | 'errorMessage'
->;
-type ChatbotJobUpdateInput = Partial<
-  Pick<
-    ChatbotJobDocument,
-    'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'
-  >
->;
-
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
@@ -47,16 +39,6 @@ function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
     createdAt: doc.createdAt.toISOString(),
     updatedAt: null,
   };
-}
-
-export interface ChatbotJobRepository {
-  findAll(limit?: number): Promise<ChatbotJob[]>;
-  findById(id: string): Promise<ChatbotJob | null>;
-  findNextPending(): Promise<ChatbotJob | null>;
-  create(input: ChatbotJobCreateInput): Promise<ChatbotJob>;
-  update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null>;
-  deleteMany(statusIn: Array<ChatbotJob['status']>): Promise<number>;
-  delete(id: string): Promise<boolean>;
 }
 
 export const chatbotJobRepository: ChatbotJobRepository = {

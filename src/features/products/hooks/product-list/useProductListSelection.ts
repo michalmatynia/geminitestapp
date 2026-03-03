@@ -51,12 +51,17 @@ export function useProductListSelection({
     setRowSelection(newSelection);
   }, [data, rowSelection]);
 
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+
+// ... other imports ...
+
   const handleSelectAllGlobal = useCallback(
     async (filters: ProductFilters) => {
       setLoadingGlobalSelection(true);
       try {
-        const allProducts = await queryClient.fetchQuery({
-          queryKey: normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters })),
+        const queryKey = normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters }));
+        const allProducts = await fetchQueryV2<ProductWithImages[]>(queryClient, {
+          queryKey,
           queryFn: () =>
             getProducts({
               ...filters,
@@ -65,7 +70,16 @@ export function useProductListSelection({
               advancedFilter: undefined,
               baseExported: undefined,
             }),
-        });
+          staleTime: 5000,
+          meta: {
+            source: 'products.hooks.useProductListSelection.selectAllGlobal',
+            operation: 'list',
+            resource: 'products.list.all',
+            domain: 'products',
+            queryKey,
+            tags: ['products', 'list', 'select-all'],
+          },
+        })();
 
         const newSelection: RowSelectionState = {};
         allProducts.forEach((p: ProductWithImages) => {

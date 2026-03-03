@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
@@ -79,7 +79,6 @@ const ProjectsActionsContext = createContext<ProjectsActions | null>(null);
 
 export function ProjectsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [projectId, setProjectId] = useState<string>('');
   const [projectSearch, setProjectSearch] = useState<string>('');
   const [localActiveProjectId, setLocalActiveProjectId] = useState<string>(() =>
@@ -203,8 +202,6 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
           if (projectId === id) {
             setProjectId('');
           }
-          void invalidateImageStudioProjects(queryClient);
-          void invalidateImageStudioSlots(queryClient, id);
           toast(`Project "${id}" no longer exists.`, { variant: 'info' });
           return;
         }
@@ -214,7 +211,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         throw error;
       }
     },
-    [deleteProjectMutation, projectId, queryClient, toast]
+    [deleteProjectMutation, projectId, toast]
   );
 
   const handleConfirmDeleteProject = useCallback(

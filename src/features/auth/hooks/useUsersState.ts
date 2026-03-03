@@ -2,7 +2,7 @@
 
  
 
-import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -22,7 +22,6 @@ import type {
   AuthUser as AuthUserSummary,
   AuthRole,
 } from '@/shared/contracts/auth';
-import { invalidateUsers } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -117,7 +116,6 @@ export interface UseUsersStateReturn {
 
 export function useUsersState(): UseUsersStateReturn {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const {
     roles,
     userRoles,
@@ -195,7 +193,6 @@ export function useUsersState(): UseUsersStateReturn {
     if (!userToDelete) return;
     try {
       await deleteAuthUserMutation.mutateAsync({ userId: userToDelete.id });
-      await invalidateUsers(queryClient);
       toast('User deleted', { variant: 'success' });
       setUserToDelete(null);
     } catch (_e) {

@@ -1,20 +1,13 @@
 import 'server-only';
 
-import type { ContextNode } from '@/shared/contracts/ai-context-registry';
-import type { ContextRegistryBackend } from '../registry/backend';
+import type {
+  ContextNode,
+  ResolveResult,
+  RelatedResult,
+  ContextRegistryBackend,
+} from '@/shared/contracts/ai-context-registry';
 
-// ─── Result types ─────────────────────────────────────────────────────────────
-
-export interface ResolveResult {
-  nodes: ContextNode[];
-  truncated: boolean;
-  visitedIds: string[];
-}
-
-export interface RelatedResult {
-  sourceId: string;
-  nodes: ContextNode[];
-}
+export type { ResolveResult, RelatedResult };
 
 // ─── ContextRetrievalService ──────────────────────────────────────────────────
 

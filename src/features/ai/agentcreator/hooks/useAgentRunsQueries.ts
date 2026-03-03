@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
@@ -20,7 +19,7 @@ export function useAgentRuns(): ListQuery<AiPathRunRecord> {
       source: 'agentRuns.hooks.useAgentRuns',
       operation: 'list',
       resource: 'agent-runs',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'list'],
     },
@@ -37,7 +36,7 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
       source: 'agentRuns.hooks.useAgentSnapshots',
       operation: 'list',
       resource: 'agent-runs.snapshots',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'snapshots'],
     },
@@ -58,7 +57,7 @@ export function useAgentLogs(
       source: 'agentRuns.hooks.useAgentLogs',
       operation: 'polling',
       resource: 'agent-runs.logs',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'logs'],
     },
@@ -79,7 +78,7 @@ export function useAgentAudits(
       source: 'agentRuns.hooks.useAgentAudits',
       operation: 'polling',
       resource: 'agent-runs.audits',
-      domain: 'global',
+      domain: 'agent_creator',
       queryKey,
       tags: ['agent-runs', 'audits'],
     },
@@ -90,7 +89,6 @@ export function useDeleteAgentRunMutation(): MutationResult<
   void,
   { runId: string; force?: boolean }
   > {
-  const queryClient = useQueryClient();
   const mutationKey = agentRunsKeys.lists();
   return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) =>
@@ -100,18 +98,15 @@ export function useDeleteAgentRunMutation(): MutationResult<
       source: 'agentRuns.hooks.useDeleteAgentRunMutation',
       operation: 'delete',
       resource: 'agent-runs',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-runs', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateAgentRuns(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAgentRuns(queryClient),
   });
 }
 
 export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void> {
-  const queryClient = useQueryClient();
   const mutationKey = agentRunsKeys.lists();
   return createDeleteMutationV2<void, void>({
     mutationFn: api.deleteCompletedAgentRuns,
@@ -120,12 +115,10 @@ export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void
       source: 'agentRuns.hooks.useDeleteCompletedAgentRunsMutation',
       operation: 'delete',
       resource: 'agent-runs.completed',
-      domain: 'global',
+      domain: 'agent_creator',
       mutationKey,
       tags: ['agent-runs', 'completed', 'delete'],
     },
-    onSuccess: () => {
-      void invalidateAgentRuns(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAgentRuns(queryClient),
   });
 }

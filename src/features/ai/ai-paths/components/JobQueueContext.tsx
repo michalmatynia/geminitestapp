@@ -117,16 +117,20 @@ export function JobQueueProvider({
   activePathId,
   sourceFilter,
   sourceMode = 'include',
+  visibility = 'scoped',
   isActive = true,
 }: {
   children: React.ReactNode;
   activePathId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
+  visibility?: AiPathRunVisibility;
   isActive?: boolean;
 }): React.JSX.Element {
   const pathname = usePathname();
   const { toast } = useToast();
+
+  const normalizedVisibility = visibility === 'global' ? 'global' : 'scoped';
 
   const [pathFilter, setPathFilter] = useState(activePathId ?? '');
   const [searchQuery, setSearchQuery] = useState('');
@@ -266,7 +270,7 @@ export function JobQueueProvider({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
       sourceMode,
-      visibility: visibility,
+      visibility: normalizedVisibility as AiPathRunVisibility,
       query: normalizedQuery,
       status: statusFilter,
       page,
@@ -279,7 +283,7 @@ export function JobQueueProvider({
         pathId: normalizedPathFilter || undefined,
         source: normalizedSourceFilter || undefined,
         sourceMode,
-        visibility: visibility,
+        visibility: normalizedVisibility as AiPathRunVisibility,
         query: normalizedQuery || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         limit: pageSize,
@@ -300,7 +304,7 @@ export function JobQueueProvider({
         pathId: normalizedPathFilter,
         source: normalizedSourceFilter,
         sourceMode,
-        visibility: visibility,
+        visibility: normalizedVisibility as AiPathRunVisibility,
         query: normalizedQuery,
         status: statusFilter,
         page,
@@ -312,12 +316,12 @@ export function JobQueueProvider({
   });
 
   const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
-    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: visibility }),
+    queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: normalizedVisibility as AiPathRunVisibility }),
     queryFn: async () => {
       const fresh = forceFreshQueueStatusRef.current;
       forceFreshQueueStatusRef.current = false;
       const response = await runsApi.queueStatus({
-        visibility: visibility,
+        visibility: normalizedVisibility as AiPathRunVisibility,
         ...(fresh ? { fresh: true } : {}),
       });
       if (!response.ok) throw new Error(response.error);
@@ -331,7 +335,7 @@ export function JobQueueProvider({
       source: 'ai-paths.job-queue',
       operation: 'polling',
       resource: 'ai-path-runs-queue-status',
-      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: visibility }),
+      queryKey: QUERY_KEYS.ai.aiPaths.queueStatus({ visibility: normalizedVisibility as AiPathRunVisibility }),
       domain: 'global',
       criticality: 'normal',
     },
@@ -524,7 +528,7 @@ export function JobQueueProvider({
 
   useEffect(() => {
     if (!queueStatusQuery.data?.status) return;
-    const status = queueStatusQuery.data.status;
+    const status = queueStatusQuery.data.status as any;
     const signature = JSON.stringify({
       queuedCount: status.queuedCount ?? 0,
       activeRuns: status.activeRuns ?? 0,
@@ -774,6 +778,7 @@ export function JobQueueProvider({
       runToDelete,
       sourceFilter,
       sourceMode,
+      normalizedVisibility,
       heavyMap,
       runsQuery.data,
       runsQuery.isLoading,

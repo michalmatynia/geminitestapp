@@ -18,6 +18,7 @@ import {
   Card,
   EmptyState,
   PanelPagination,
+  Button,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -190,22 +191,24 @@ export function CrudPanel(props: {
       header: 'Actions',
       cell: ({ row }) => (
         <div className='flex items-center gap-1'>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='xs'
             onClick={() => setEditingRow(row.original)}
-            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-blue-300 transition-colors'
+            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-blue-300'
             title='Edit row'
           >
             <EditIcon className='size-3.5' />
-          </button>
-          <button
-            type='button'
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
             onClick={() => setDeletingRow(row.original)}
-            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-rose-300 transition-colors'
+            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-rose-300'
             title='Delete row'
           >
             <Trash2Icon className='size-3.5' />
-          </button>
+          </Button>
         </div>
       ),
       size: 80,

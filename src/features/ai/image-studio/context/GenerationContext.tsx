@@ -366,7 +366,6 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;
 
           setRunOutputs(outputs);
-          void invalidateImageStudioSlots(queryClient, projectId);
           if (generatedSourceSlotId && shouldPromoteGeneratedSource) {
             setPendingSourceSlotId(generatedSourceSlotId);
           }
@@ -749,11 +748,10 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
               .catch(() => {})
           )
         );
-        void invalidateImageStudioSlots(queryClient, projectId);
       }
       setGenerationHistory((prev) => prev.filter((r) => r.id !== recordId));
     },
-    [projectId, queryClient]
+    [projectId]
   );
 
   const state = useMemo<GenerationState>(

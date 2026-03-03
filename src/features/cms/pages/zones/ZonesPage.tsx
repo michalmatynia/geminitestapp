@@ -21,7 +21,7 @@ import {
   SectionHeader,
   FormField,
   FormSection,
-  FilterPanel,
+  PanelFilters,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -220,9 +220,9 @@ export default function ZonesPage(): React.JSX.Element {
               className='h-9'
             />
           </FormField>
-          <Button type='submit' size='sm' className='h-9' disabled={createDomain.isPending}>
+          <Button type='submit' size='sm' className='h-9' loading={createDomain.isPending}>
             <PlusIcon className='size-3.5 mr-2' />
-            {createDomain.isPending ? 'Adding...' : 'Add Zone'}
+            Add Zone
           </Button>
         </form>
       </FormSection>
@@ -232,7 +232,7 @@ export default function ZonesPage(): React.JSX.Element {
         columns={columns}
         data={filteredDomains}
         filters={
-          <FilterPanel
+          <PanelFilters
             filters={[]}
             values={{}}
             search={search}
@@ -240,7 +240,6 @@ export default function ZonesPage(): React.JSX.Element {
             onFilterChange={() => {}}
             onSearchChange={setSearch}
             onReset={() => setSearch('')}
-            showHeader={false}
             compact
           />
         }

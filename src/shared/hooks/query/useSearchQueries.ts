@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
@@ -11,6 +12,7 @@ interface SearchConfig<T> {
   searchFn: (query: string) => Promise<T[]>;
   minLength?: number;
   cacheTime?: number;
+  domain?: TanstackFactoryDomain;
 }
 
 // Hook for search with caching
@@ -18,7 +20,7 @@ export function useSearchQuery<T>(
   searchTerm: string,
   config: SearchConfig<T>
 ): UseQueryResult<T[], Error> {
-  const { searchFn, minLength = 2, cacheTime = 5 * 60 * 1000 } = config;
+  const { searchFn, minLength = 2, cacheTime = 5 * 60 * 1000, domain = 'global' } = config;
 
   return createListQueryV2<T, T[]>({
     queryKey: QUERY_KEYS.search.term(searchTerm),
@@ -30,7 +32,7 @@ export function useSearchQuery<T>(
       source: 'shared.hooks.query.useSearchQuery',
       operation: 'list',
       resource: 'search',
-      domain: 'global',
+      domain,
       tags: ['search'],
     },
   });
@@ -43,6 +45,7 @@ export function useAutocomplete<T>(
   options?: {
     maxRecentSearches?: number;
     storageKey?: string;
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<T[], Error> & {
   recentSearches: string[];
@@ -50,6 +53,7 @@ export function useAutocomplete<T>(
 } {
   const maxRecent = options?.maxRecentSearches || 5;
   const storageKey = options?.storageKey || 'recentSearches';
+  const domain = options?.domain ?? 'global';
 
   const getRecentSearches = useCallback((): string[] => {
     try {
@@ -70,7 +74,7 @@ export function useAutocomplete<T>(
     [getRecentSearches, maxRecent, storageKey]
   );
 
-  const searchQuery = useSearchQuery(searchTerm, { searchFn });
+  const searchQuery = useSearchQuery(searchTerm, { searchFn, domain });
 
   const recentSearches = useMemo((): string[] => {
     if (searchTerm.length === 0) {
@@ -101,10 +105,12 @@ export function usePaginatedSearch<T>(
   options?: {
     pageSize?: number;
     enabled?: boolean;
+    domain?: TanstackFactoryDomain;
   }
 ): UseQueryResult<{ data: T[]; total: number; hasMore: boolean }, Error> {
   const pageSize = options?.pageSize || 20;
   const enabled = options?.enabled !== false;
+  const domain = options?.domain ?? 'global';
 
   return createListQueryV2<
     { data: T[]; total: number; hasMore: boolean },
@@ -136,7 +142,7 @@ export function usePaginatedSearch<T>(
       source: 'shared.hooks.query.usePaginatedSearch',
       operation: 'list',
       resource: 'search',
-      domain: 'global',
+      domain,
       tags: ['search', 'paginated'],
     },
   });
@@ -145,8 +151,10 @@ export function usePaginatedSearch<T>(
 // Hook for search suggestions
 export function useSearchSuggestions(
   searchTerm: string,
-  getSuggestions: (query: string) => Promise<string[]>
+  getSuggestions: (query: string) => Promise<string[]>,
+  options?: { domain?: TanstackFactoryDomain }
 ): UseQueryResult<string[], Error> {
+  const domain = options?.domain ?? 'global';
   return createListQueryV2<string, string[]>({
     queryKey: QUERY_KEYS.search.suggestions(searchTerm),
     queryFn: (): Promise<string[]> => getSuggestions(searchTerm),
@@ -157,7 +165,7 @@ export function useSearchSuggestions(
       source: 'shared.hooks.query.useSearchSuggestions',
       operation: 'list',
       resource: 'search-suggestions',
-      domain: 'global',
+      domain,
       tags: ['search', 'suggestions'],
     },
   });

@@ -5,12 +5,14 @@ import { useMemo } from 'react';
 
 import { createListQueryV2, createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 // Hook for dependent queries - execute queries in sequence
 export function useDependentQueries<T1, T2, T3>(
   firstQuery: { queryKey: unknown[]; queryFn: () => Promise<T1>; enabled?: boolean },
   secondQuery: { queryKey: unknown[]; queryFn: (data: T1) => Promise<T2> },
-  thirdQuery?: { queryKey: unknown[]; queryFn: (data: T2) => Promise<T3> }
+  thirdQuery?: { queryKey: unknown[]; queryFn: (data: T2) => Promise<T3> },
+  options?: { domain?: TanstackFactoryDomain }
 ): {
   first: UseQueryResult<T1, Error>;
   second: UseQueryResult<T2, Error>;
@@ -19,6 +21,8 @@ export function useDependentQueries<T1, T2, T3>(
   isError: boolean;
   error: Error | null;
 } {
+  const domain = options?.domain ?? 'global';
+
   const first = createListQueryV2<T1, T1>({
     queryKey: normalizeQueryKey(firstQuery.queryKey),
     queryFn: firstQuery.queryFn,
@@ -27,7 +31,7 @@ export function useDependentQueries<T1, T2, T3>(
       source: 'shared.hooks.query.useDependentQueries.first',
       operation: 'list',
       resource: 'dependent-query',
-      domain: 'global',
+      domain,
       tags: ['dependent', 'first'],
     },
   });
@@ -40,7 +44,7 @@ export function useDependentQueries<T1, T2, T3>(
       source: 'shared.hooks.query.useDependentQueries.second',
       operation: 'list',
       resource: 'dependent-query',
-      domain: 'global',
+      domain,
       tags: ['dependent', 'second'],
     },
   });
@@ -57,7 +61,7 @@ export function useDependentQueries<T1, T2, T3>(
       source: 'shared.hooks.query.useDependentQueries.third',
       operation: 'list',
       resource: 'dependent-query',
-      domain: 'global',
+      domain,
       tags: ['dependent', 'third'],
     },
   });
@@ -77,13 +81,16 @@ export function useDependentQueries<T1, T2, T3>(
 }
 
 // Hook for parallel queries with combined loading state
-export function useParallelQueries<T extends Record<string, unknown>>(queries: {
-  [K in keyof T]: {
-    queryKey: unknown[];
-    queryFn: () => Promise<T[K]>;
-    enabled?: boolean;
-  };
-}): {
+export function useParallelQueries<T extends Record<string, unknown>>(
+  queries: {
+    [K in keyof T]: {
+      queryKey: unknown[];
+      queryFn: () => Promise<T[K]>;
+      enabled?: boolean;
+    };
+  },
+  options?: { domain?: TanstackFactoryDomain }
+): {
   data: T;
   isLoading: boolean;
   isError: boolean;
@@ -91,6 +98,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(queries: {
   isSuccess: boolean;
   refetch: () => Promise<unknown[]>;
 } {
+  const domain = options?.domain ?? 'global';
   const keys = Object.keys(queries) as Array<keyof T>;
   const queryResults = createMultiQueryV2({
     queries: keys.map((key) => ({
@@ -101,7 +109,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(queries: {
         source: `shared.hooks.query.useParallelQueries.${String(key)}`,
         operation: 'list',
         resource: 'parallel-query',
-        domain: 'global',
+        domain,
         tags: ['parallel', String(key)],
       },
     })),
@@ -142,8 +150,10 @@ export function useConditionalQuery<T>(
     featureFlag?: string;
     permission?: string;
     customCondition?: () => boolean;
-  }
+  },
+  options?: { domain?: TanstackFactoryDomain }
 ) {
+  const domain = options?.domain ?? 'global';
   const enabled = useMemo(() => {
     // Check user role
     if (conditions.userRole) {
@@ -188,7 +198,7 @@ export function useConditionalQuery<T>(
       source: 'shared.hooks.query.useConditionalQuery',
       operation: 'list',
       resource: 'conditional-query',
-      domain: 'global',
+      domain,
       tags: ['conditional'],
     },
   });

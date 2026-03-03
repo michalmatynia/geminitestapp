@@ -10,6 +10,7 @@ import type {
   RelatedNoteDto as RelatedNote,
 } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
@@ -168,7 +169,7 @@ export function useNoteOperations({
   const handleDuplicateNote = useCallback(
     async (noteId: string): Promise<void> => {
       try {
-        const note = await queryClient.fetchQuery<NoteWithRelations>({
+        const note = await fetchQueryV2<NoteWithRelations>(queryClient, {
           queryKey: QUERY_KEYS.notes.detail(noteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const response = await fetch(`/api/notes/${noteId}`);
@@ -176,7 +177,15 @@ export function useNoteOperations({
             return response.json() as Promise<NoteWithRelations>;
           },
           staleTime: NOTES_STALE_MS,
-        });
+          meta: {
+            source: 'notes.hooks.useNoteOperations.handleDuplicateNote',
+            operation: 'detail',
+            resource: 'notes.detail',
+            domain: 'notes',
+            queryKey: QUERY_KEYS.notes.detail(noteId),
+            tags: ['notes', 'detail', 'fetch'],
+          },
+        })();
 
         const baseTitle = note.title.replace(/\s*\(\d+\)$/, '');
         let newTitle = `${baseTitle} (1)`;
@@ -436,7 +445,7 @@ export function useNoteOperations({
       if (sourceNoteId === targetNoteId) return;
       try {
         const [sourceNote, targetNote] = await Promise.all([
-          queryClient.fetchQuery<NoteWithRelations>({
+          fetchQueryV2<NoteWithRelations>(queryClient, {
             queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
             queryFn: async (): Promise<NoteWithRelations> => {
               const res = await fetch(`/api/notes/${sourceNoteId}`);
@@ -444,8 +453,16 @@ export function useNoteOperations({
               return res.json() as Promise<NoteWithRelations>;
             },
             staleTime: NOTES_STALE_MS,
-          }),
-          queryClient.fetchQuery<NoteWithRelations>({
+            meta: {
+              source: 'notes.hooks.useNoteOperations.handleRelateNotes.source',
+              operation: 'detail',
+              resource: 'notes.detail',
+              domain: 'notes',
+              queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
+              tags: ['notes', 'detail', 'fetch'],
+            },
+          })(),
+          fetchQueryV2<NoteWithRelations>(queryClient, {
             queryKey: QUERY_KEYS.notes.detail(targetNoteId),
             queryFn: async (): Promise<NoteWithRelations> => {
               const res = await fetch(`/api/notes/${targetNoteId}`);
@@ -453,7 +470,15 @@ export function useNoteOperations({
               return res.json() as Promise<NoteWithRelations>;
             },
             staleTime: NOTES_STALE_MS,
-          }),
+            meta: {
+              source: 'notes.hooks.useNoteOperations.handleRelateNotes.target',
+              operation: 'detail',
+              resource: 'notes.detail',
+              domain: 'notes',
+              queryKey: QUERY_KEYS.notes.detail(targetNoteId),
+              tags: ['notes', 'detail', 'fetch'],
+            },
+          })(),
         ]);
 
         const sourceRelatedIds =

@@ -19,7 +19,10 @@ import {
   isEditingProductHydrated,
   markEditingProductHydrated,
 } from './editingProductHydration';
-import { getProductDetailQueryKey } from './productCache';
+import {
+  getProductDetailQueryKey,
+  invalidateProductsAndDetail,
+} from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
 
 import type { BaseSyntheticEvent } from 'react';
@@ -240,9 +243,7 @@ const invalidateProductCachesInBackground = (
   queryClient: QueryClient,
   productId: string
 ): void => {
-  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.lists() });
-  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.counts() });
-  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.detail(productId) });
+  void invalidateProductsAndDetail(queryClient, productId);
 };
 
 export function useProductFormSubmit({

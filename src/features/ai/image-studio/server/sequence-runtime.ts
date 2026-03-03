@@ -1,12 +1,14 @@
 import 'server-only';
 
 import {
-  createImageStudioSequenceRun,
-  getImageStudioSequenceRunById,
-  updateImageStudioSequenceRun,
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
   type ImageStudioSequenceRunStatus,
+} from '@/shared/contracts/image-studio';
+import {
+  createImageStudioSequenceRun,
+  getImageStudioSequenceRunById,
+  updateImageStudioSequenceRun,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {

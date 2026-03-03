@@ -80,6 +80,18 @@ describe('case-resolver settings', () => {
     expect(workspace.lastMutationId).toBeNull();
   });
 
+  it('rejects non-empty invalid workspace JSON payloads', () => {
+    expect(() => parseCaseResolverWorkspace('{not-json')).toThrowError(
+      /Case Resolver workspace payload is not valid JSON\./
+    );
+  });
+
+  it('rejects non-empty non-object workspace payloads', () => {
+    expect(() => parseCaseResolverWorkspace('[]')).toThrowError(
+      /Case Resolver workspace payload must be a JSON object\./
+    );
+  });
+
   it('preserves workspace revision metadata when present', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({

@@ -272,9 +272,9 @@ export type PaletteEntry = {
   id: string;
   label: string;
   description: string;
-  definition: any; // NodeDefinition | null
+  definition: unknown; // NodeDefinition | null
   toneClassName: string;
-  Icon: any; // React.ComponentType<{ className?: string }>
+  Icon: unknown; // React.ComponentType<{ className?: string }>
 };
 
 export type FolderCaseFileStats = {

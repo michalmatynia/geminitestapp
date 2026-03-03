@@ -21,6 +21,7 @@ import {
   type NodeFileDocumentFolderNode,
   type NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
+import { buildRelationMasterTree } from '../tree/relation-master-tree';
 
 export type UseDocumentRelationSearchProps = {
   workspace: CaseResolverWorkspace;
@@ -32,6 +33,8 @@ export type UseDocumentRelationSearchProps = {
   initialScope?: NodeFileDocumentSearchScope;
   /** Initial sort mode, applied only on first mount */
   initialSort?: DocumentRelationSortMode;
+  /** Initial file type filter, applied only on first mount */
+  initialFileType?: DocumentRelationFileTypeFilter;
 };
 
 export function useDocumentRelationSearch({
@@ -41,6 +44,7 @@ export function useDocumentRelationSearch({
   excludeFileIds,
   initialScope = 'case_scope',
   initialSort = 'name_asc',
+  initialFileType = 'all',
 }: UseDocumentRelationSearchProps) {
   const [documentSearchScope, setDocumentSearchScope] =
     useState<NodeFileDocumentSearchScope>(initialScope);
@@ -48,7 +52,8 @@ export function useDocumentRelationSearch({
   const [selectedSearchFolderPath, setSelectedSearchFolderPath] = useState<string | null>(null);
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
   const [selectedDrillCaseId, setSelectedDrillCaseId] = useState<string | null>(null);
-  const [fileTypeFilter, setFileTypeFilter] = useState<DocumentRelationFileTypeFilter>('all');
+  const [fileTypeFilter, setFileTypeFilter] =
+    useState<DocumentRelationFileTypeFilter>(initialFileType);
   const [sortMode, setSortMode] = useState<DocumentRelationSortMode>(initialSort);
   const [dateFrom, setDateFrom] = useState<string | null>(null);
   const [dateTo, setDateTo] = useState<string | null>(null);
@@ -229,6 +234,14 @@ export function useDocumentRelationSearch({
       );
   }, [caseSearchQuery, workspace.files, caseIdentifierLabelById, excludeSet]);
 
+  const relationTreeBuildResult = useMemo(
+    () =>
+      buildRelationMasterTree({
+        rows: visibleDocumentSearchRows,
+      }),
+    [visibleDocumentSearchRows]
+  );
+
   const resetFilters = useCallback((): void => {
     setFileTypeFilter('all');
     setDateFrom(null);
@@ -270,5 +283,8 @@ export function useDocumentRelationSearch({
     folderTree,
     visibleCaseRows,
     totalRowCount: documentSearchRows.length,
+    relationTreeNodes: relationTreeBuildResult.nodes,
+    relationTreeLookup: relationTreeBuildResult.lookup,
+    visibleFileIdsInTreeOrder: relationTreeBuildResult.visibleFileIdsInTreeOrder,
   };
 }

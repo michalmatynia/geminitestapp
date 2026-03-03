@@ -82,7 +82,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/Invalid Image Studio settings payload/);
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
   it('rejects deprecated persisted prompt extractor model fields', () => {
@@ -99,7 +99,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/Invalid Image Studio settings payload/);
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
   it('rejects deprecated persisted UI extractor model fields', () => {
@@ -113,7 +113,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/Invalid Image Studio settings payload/);
+    ).toThrowError(/deprecated AI snapshot keys/i);
   });
 
   it('rejects deprecated persisted modelPresets fields', () => {
@@ -126,6 +126,23 @@ describe('parseImageStudioSettings', () => {
             openai: {
               ...defaultImageStudioSettings.targetAi.openai,
               modelPresets: ['gpt-image-1'],
+            },
+          },
+        })
+      )
+    ).toThrowError(/deprecated AI snapshot keys/i);
+  });
+
+  it('still rejects unknown strict fields', () => {
+    expect(() =>
+      parseImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          targetAi: {
+            ...defaultImageStudioSettings.targetAi,
+            openai: {
+              ...defaultImageStudioSettings.targetAi.openai,
+              unknownSetting: true,
             },
           },
         })

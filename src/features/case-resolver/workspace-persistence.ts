@@ -558,7 +558,27 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   input: PersistWorkspaceInput
 ): Promise<PersistCaseResolverWorkspaceResult> => {
   const startedAt = Date.now();
-  const normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
+  let normalizedWorkspace: CaseResolverWorkspace;
+  try {
+    normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Invalid Case Resolver workspace payload.';
+    logCaseResolverWorkspaceEvent({
+      source: input.source,
+      action: 'persist_rejected_invalid_payload',
+      mutationId: input.mutationId,
+      expectedRevision: input.expectedRevision,
+      workspaceRevision: getCaseResolverWorkspaceRevision(input.workspace),
+      durationMs: Date.now() - startedAt,
+      message,
+    });
+    return {
+      ok: false,
+      conflict: false,
+      error: message,
+    };
+  }
   let workspaceForPersistPipeline = normalizedWorkspace;
   const normalizationDiagnostics =
     getCaseResolverWorkspaceNormalizationDiagnostics(normalizedWorkspace);

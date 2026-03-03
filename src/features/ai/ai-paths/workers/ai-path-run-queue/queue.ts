@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { createManagedQueue } from '@/shared/lib/queue';
 import { 
   AI_PATH_RUN_QUEUE_NAME, 

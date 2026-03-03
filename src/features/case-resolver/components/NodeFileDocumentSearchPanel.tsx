@@ -1,17 +1,16 @@
 'use client';
 
-import { ArrowLeft, Sparkles, X } from 'lucide-react';
-import React, { useMemo, useCallback } from 'react';
+import { Sparkles } from 'lucide-react';
+import React, { useCallback } from 'react';
 
-import { Button, SelectSimple, SearchInput, DataTable, SegmentedControl, Chip } from '@/shared/ui';
+import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { Button, SelectSimple, SegmentedControl } from '@/shared/ui';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
-import { normalizeSearchText, type NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
-import { getNodeFileDocumentColumns, getNodeFileCaseColumns } from './CaseResolverNodeFileColumns';
-
-const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
+import { RelationTreeBrowser } from '../relation-search/components/RelationTreeBrowser';
+import type { RelationTreeLookup } from '../relation-search/types';
 
 type NodeFileDocumentSearchPanelProps = {
   newNodeType: 'prompt' | 'model' | 'database' | 'viewer';
@@ -31,66 +30,21 @@ export function NodeFileDocumentSearchPanel({
     setDocumentSearchScope,
     documentSearchQuery,
     setDocumentSearchQuery,
-    selectedSearchFolderPath,
-    setSelectedSearchFolderPath,
-    folderTree,
-    documentSearchRows,
+    relationTreeNodes,
+    relationTreeLookup,
     visibleDocumentSearchRows,
-    caseSearchQuery,
-    setCaseSearchQuery,
-    selectedDrillCaseId,
-    setSelectedDrillCaseId,
-    visibleCaseRows,
     view,
     canvasHostRef,
     addNode,
     setNodeFileMeta,
   } = useNodeFileWorkspaceContext();
-
-  const isCurrentCase = documentSearchScope === 'case_scope';
-  const isAllCases = documentSearchScope === 'all_cases';
-  const isDrillMode = isAllCases && selectedDrillCaseId !== null;
-  const showDocTable = isCurrentCase || isDrillMode;
-
-  const drillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (!selectedDrillCaseId) return [];
-    return documentSearchRows.filter(
-      (row: NodeFileDocumentSearchRow): boolean => row.file.parentCaseId === selectedDrillCaseId
-    );
-  }, [documentSearchRows, selectedDrillCaseId]);
-
-  const visibleDrillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const q = normalizeSearchText(documentSearchQuery);
-    if (!q) return drillRows;
-    return drillRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      row.searchable.includes(q)
-    );
-  }, [drillRows, documentSearchQuery]);
-
-  const topLevelFolderPaths = useMemo((): string[] => {
-    return folderTree.childPathsByParent.get(null) ?? [];
-  }, [folderTree]);
-
-  const drillTopLevelFolderPaths = useMemo((): string[] => {
-    if (!selectedDrillCaseId) return [];
-    const seen = new Set<string>();
-    drillRows.forEach((row: NodeFileDocumentSearchRow): void => {
-      const topSegment = row.folderSegments[0];
-      if (topSegment) seen.add(topSegment);
-    });
-    return Array.from(seen).sort();
-  }, [drillRows, selectedDrillCaseId]);
-
-  const drillSignatureLabel = useMemo((): string => {
-    if (!selectedDrillCaseId) return '';
-    const caseRow = visibleCaseRows.find((r) => r.file.id === selectedDrillCaseId);
-    if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
-    const anyRow = documentSearchRows.find((r) => r.file.parentCaseId === selectedDrillCaseId);
-    return anyRow?.signatureLabel ?? selectedDrillCaseId;
-  }, [selectedDrillCaseId, visibleCaseRows, documentSearchRows]);
-
-  const currentFolderPaths = isDrillMode ? drillTopLevelFolderPaths : topLevelFolderPaths;
-  const currentDocRows = isDrillMode ? visibleDrillRows : visibleDocumentSearchRows;
+  const resolvedRelationTreeNodes = relationTreeNodes ?? [];
+  const resolvedRelationTreeLookup: RelationTreeLookup = relationTreeLookup ?? {
+    fileRowByNodeId: new Map(),
+    fileNodeIdByFileId: new Map(),
+    caseMetaByNodeId: new Map(),
+    folderMetaByNodeId: new Map(),
+  };
 
   const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
     const rect = canvasHostRef.current?.getBoundingClientRect();
@@ -128,40 +82,14 @@ export function NodeFileDocumentSearchPanel({
     [addNode, resolveCanvasCenter, setNodeFileMeta]
   );
 
-  const handleRowDragStart = useCallback(
-    (e: React.DragEvent<HTMLTableRowElement>, file: CaseResolverFile): void => {
-      e.dataTransfer.effectAllowed = 'copy';
-      e.dataTransfer.setData(DRAG_FILE_ID_TYPE, file.id);
-    },
-    []
-  );
-
-  const docColumns = useMemo(
-    () => getNodeFileDocumentColumns({ isAllCases, onAddDocument: addDocumentToCanvas }),
-    [isAllCases, addDocumentToCanvas]
-  );
-
-  const caseColumns = useMemo(
-    () =>
-      getNodeFileCaseColumns({
-        onDrillInto: (id) => {
-          setSelectedDrillCaseId(id);
-          setDocumentSearchQuery('');
-          setSelectedSearchFolderPath(null);
-        },
-      }),
-    [setSelectedDrillCaseId, setDocumentSearchQuery, setSelectedSearchFolderPath]
-  );
-
   return (
     <div className='shrink-0 border-b border-border/60 bg-card/30'>
       <div className='flex items-center gap-2 px-3 py-2'>
         <SegmentedControl
           size='xs'
           value={documentSearchScope}
-          onChange={(v) => {
-            setDocumentSearchScope(v);
-            setSelectedDrillCaseId(null);
+          onChange={(value) => {
+            setDocumentSearchScope(value);
           }}
           options={[
             { value: 'case_scope', label: 'Current Case' },
@@ -199,114 +127,40 @@ export function NodeFileDocumentSearchPanel({
       </div>
 
       <div className='flex items-center gap-2 border-t border-border/40 px-3 py-1.5'>
-        {isDrillMode && (
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 flex shrink-0 items-center gap-1 text-cyan-300 hover:text-cyan-100 hover:bg-card/60'
-            onClick={() => {
-              setSelectedDrillCaseId(null);
-              setDocumentSearchQuery('');
-              setSelectedSearchFolderPath(null);
-            }}
-          >
-            <ArrowLeft className='size-3' />
-            {drillSignatureLabel}
-          </Button>
-        )}
-
         <div className='min-w-0 flex-1'>
-          {showDocTable ? (
-            <SearchInput
-              value={documentSearchQuery}
-              onChange={(e) => setDocumentSearchQuery(e.target.value)}
-              onClear={() => setDocumentSearchQuery('')}
-              placeholder={
-                isDrillMode ? `Search in ${drillSignatureLabel}...` : 'Search documents...'
-              }
-              className='h-7 border-border bg-card/60 text-xs text-white'
-            />
-          ) : (
-            <SearchInput
-              value={caseSearchQuery}
-              onChange={(e) => setCaseSearchQuery(e.target.value)}
-              onClear={() => setCaseSearchQuery('')}
-              placeholder='Search by Signature ID...'
-              className='h-7 border-border bg-card/60 text-xs text-white'
-            />
-          )}
-        </div>
-
-        {showDocTable && selectedSearchFolderPath && (
-          <Chip
-            active
-            label={selectedSearchFolderPath}
-            onClick={() => setSelectedSearchFolderPath(null)}
-            icon={X}
-            className='max-w-[150px]'
+          <FolderTreeSearchBar
+            value={documentSearchQuery}
+            onChange={setDocumentSearchQuery}
+            placeholder='Search catalogs & documents…'
           />
-        )}
-
-        {showDocTable && (
-          <span className='shrink-0 text-xs text-gray-500'>
-            {currentDocRows.length} doc{currentDocRows.length !== 1 ? 's' : ''}
-          </span>
-        )}
+        </div>
+        <span className='shrink-0 text-xs text-gray-500'>
+          {visibleDocumentSearchRows.length} doc
+          {visibleDocumentSearchRows.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
-      {showDocTable && currentFolderPaths.length > 0 && (
-        <div className='flex items-center gap-1.5 overflow-x-auto px-3 pb-1.5 custom-scrollbar'>
-          <Chip
-            label='All'
-            active={selectedSearchFolderPath === null}
-            onClick={() => setSelectedSearchFolderPath(null)}
-          />
-          {currentFolderPaths.map((path: string) => (
-            <Chip
-              key={path}
-              label={path.split('/').pop() ?? path}
-              active={selectedSearchFolderPath === path}
-              onClick={() =>
-                setSelectedSearchFolderPath(selectedSearchFolderPath === path ? null : path)
-              }
-              className='shrink-0'
-            />
-          ))}
-        </div>
-      )}
-
-      <div className='max-h-56 overflow-auto border-t border-border/40'>
-        {showDocTable && (
-          <DataTable
-            columns={docColumns}
-            data={currentDocRows}
-            className='border-none'
-            getRowId={(row) => row.file.id}
-            getRowClassName={() =>
-              'cursor-grab border-border/20 transition-colors hover:bg-card/50 active:cursor-grabbing'
-            }
-            stickyHeader
-            meta={{
-              onDragStart: handleRowDragStart,
-            }}
-          />
-        )}
-
-        {isAllCases && !selectedDrillCaseId && (
-          <DataTable
-            columns={caseColumns}
-            data={visibleCaseRows}
-            className='border-none'
-            getRowId={(row) => row.file.id}
-            getRowClassName={() => 'border-border/20 transition-colors hover:bg-card/50'}
-            stickyHeader
-          />
-        )}
+      <div className='max-h-64 overflow-auto border-t border-border/40'>
+        <RelationTreeBrowser
+          instance='case_resolver_nodefile_relations'
+          mode='add_to_node_canvas'
+          nodes={resolvedRelationTreeNodes}
+          lookup={resolvedRelationTreeLookup}
+          onAddFile={(fileId): void => {
+            const rowNodeId = resolvedRelationTreeLookup.fileNodeIdByFileId.get(fileId);
+            if (!rowNodeId) return;
+            const row = resolvedRelationTreeLookup.fileRowByNodeId.get(rowNodeId);
+            if (!row) return;
+            addDocumentToCanvas(row.file);
+          }}
+          searchQuery={documentSearchQuery}
+          emptyLabel='No matching documents'
+        />
       </div>
 
-      {showDocTable && currentDocRows.length > 0 && (
+      {visibleDocumentSearchRows.length > 0 && (
         <div className='border-t border-border/30 px-3 py-1 text-xs text-gray-600'>
-          Drag rows onto the canvas to place documents, or click + to add at center.
+          Drag file rows by handle onto the canvas, or click + to add at center.
         </div>
       )}
     </div>

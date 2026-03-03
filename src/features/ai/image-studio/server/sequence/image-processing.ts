@@ -2,22 +2,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
 import {
-  type ImageStudioSlotRecord,
   createImageStudioSlots,
 } from '@/features/ai/image-studio/server/slot-repository';
-import {
-  upscaleImageWithSharp,
-  validateUpscaleSourceDimensions,
-} from '@/features/ai/image-studio/server/upscale-utils';
-import {
-  getDiskPathFromPublicPath,
-  getImageFileRepository,
-} from '@/shared/lib/files/services/image-file-service';
-import {
-  type ImageStudioSequenceCropStep,
-  type ImageStudioSequenceUpscaleStep,
-} from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSequenceRunRecord } from '../sequence-run-repository';
+import type {
+  ImageStudioSlotRecord,
+  ImageStudioSequenceRunRecord,
+} from '@/shared/contracts/image-studio';
 import {
   STUDIO_UPLOADS_ROOT,
   sanitizeSegment,

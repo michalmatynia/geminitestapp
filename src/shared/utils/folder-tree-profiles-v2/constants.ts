@@ -92,6 +92,27 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
     folderHint: 'Example: case_entry',
   },
+  case_resolver_document_relations: {
+    title: 'Case Resolver Document Relations',
+    description:
+      'Controls relation tree behavior in the Document editor relation browser.',
+    fileHint: 'Example: relation_file',
+    folderHint: 'Example: relation_case, relation_folder',
+  },
+  case_resolver_nodefile_relations: {
+    title: 'Case Resolver Nodefile Relations',
+    description:
+      'Controls relation tree behavior in the Nodefile document-to-canvas browser.',
+    fileHint: 'Example: relation_file',
+    folderHint: 'Example: relation_case, relation_folder',
+  },
+  case_resolver_scanfile_relations: {
+    title: 'Case Resolver Scanfile Relations',
+    description:
+      'Controls relation tree behavior in the Scanfile editor relation browser.',
+    fileHint: 'Example: relation_file',
+    folderHint: 'Example: relation_case, relation_folder',
+  },
   validator_list_tree: {
     title: 'Validator Lists',
     description: 'Controls drag/drop behavior for validator list ordering in admin settings.',
@@ -163,6 +184,21 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: true,
     notifyError: true,
     successMessage: 'Case hierarchy updated.',
+  },
+  case_resolver_document_relations: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Document relation tree updated.',
+  },
+  case_resolver_nodefile_relations: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Nodefile relation tree updated.',
+  },
+  case_resolver_scanfile_relations: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Scanfile relation tree updated.',
   },
   validator_list_tree: {
     notifySuccess: false,

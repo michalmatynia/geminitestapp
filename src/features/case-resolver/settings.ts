@@ -4,6 +4,7 @@ import {
   type CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { validationError } from '@/shared/errors/app-error';
 import { DEFAULT_CASE_RESOLVER_SETTINGS } from './settings.constants';
 import {
   normalizeCaseResolverDefaultDocumentFormatValue,
@@ -122,12 +123,31 @@ export const hasCaseResolverWorkspaceFilesArray = (raw: string | null | undefine
 };
 
 export const parseCaseResolverWorkspace = (raw: string | null | undefined): CaseResolverWorkspace =>
-  normalizeCaseResolverWorkspace(
-    parseJsonSetting<unknown>(raw, createDefaultCaseResolverWorkspace()) as
-      | CaseResolverWorkspace
-      | null
-      | undefined
-  );
+{
+  if (!raw || raw.trim().length === 0) {
+    return createDefaultCaseResolverWorkspace();
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (error: unknown) {
+    throw validationError('Case Resolver workspace payload is not valid JSON.', {
+      source: 'case_resolver.workspace',
+      reason: 'invalid_json',
+      cause: error instanceof Error ? error.message : 'unknown_error',
+    });
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw validationError('Case Resolver workspace payload must be a JSON object.', {
+      source: 'case_resolver.workspace',
+      reason: 'payload_not_object',
+    });
+  }
+
+  return normalizeCaseResolverWorkspace(parsed as CaseResolverWorkspace);
+};
 
 const parseDateTokenToIso = (token: string): string | null => {
   const trimmed = token.trim();

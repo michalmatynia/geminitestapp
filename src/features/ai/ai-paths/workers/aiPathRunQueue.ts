@@ -241,20 +241,26 @@ export const scheduleLocalFallbackRun = (runId: string, delayMs: number): void =
   const existing = localFallbackTimers.get(runId);
   if (existing) clearTimeout(existing);
 
-  const timer = setTimeout(async () => {
-    localFallbackTimers.delete(runId);
-    try {
-      const { runAiPathNodeExecutionInline } = await import(
-        '@/features/ai/ai-paths/services/path-run-execution-service'
-      );
-      await (runAiPathNodeExecutionInline)({ runId });
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: LOG_SOURCE,
-        action: 'localFallbackExecution',
-        runId,
-      });
-    }
+  const timer = setTimeout(() => {
+    void (async () => {
+      localFallbackTimers.delete(runId);
+      try {
+        const [{ getPathRunRepository }, { processRun }] = await Promise.all([
+          import('@/features/ai/ai-paths/services/path-run-repository'),
+          import('@/features/ai/ai-paths/workers/ai-path-run-processor'),
+        ]);
+        const repo = await getPathRunRepository();
+        const run = await repo.claimRunForProcessing(runId);
+        if (!run) return;
+        await processRun(run);
+      } catch (error) {
+        void ErrorSystem.captureException(error, {
+          service: LOG_SOURCE,
+          action: 'localFallbackExecution',
+          runId,
+        });
+      }
+    })();
   }, delayMs);
 
   localFallbackTimers.set(runId, timer);
@@ -266,4 +272,39 @@ export const cancelLocalFallbackRun = (runId: string): void => {
     clearTimeout(timer);
     localFallbackTimers.delete(runId);
   }
+};
+
+export const removePathRunQueueEntries = async (runIds: string[]): Promise<void> => {
+  const uniqueRunIds = Array.from(
+    new Set(
+      runIds
+        .map((runId: string): string => runId.trim())
+        .filter((runId: string): boolean => runId.length > 0)
+    )
+  );
+  if (uniqueRunIds.length === 0) return;
+
+  uniqueRunIds.forEach((runId: string) => {
+    cancelLocalFallbackRun(runId);
+  });
+
+  const queueApi = queue.getQueue();
+  if (!queueApi || typeof (queueApi as { getJob?: unknown }).getJob !== 'function') return;
+
+  await Promise.all(
+    uniqueRunIds.map(async (runId: string) => {
+      try {
+        const job = await queueApi.getJob(runId);
+        if (!job) return;
+        await job.remove();
+      } catch (error) {
+        void ErrorSystem.logWarning(`Non-critical queue removal failure for run ${runId}`, {
+          service: LOG_SOURCE,
+          action: 'removePathRunQueueEntries',
+          runId,
+          error,
+        });
+      }
+    })
+  );
 };

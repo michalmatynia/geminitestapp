@@ -20,7 +20,9 @@ import {
   type SelectOption,
 } from '../../components/CaseResolverViewContext';
 import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
-import { normalizeSearchText } from '../../components/CaseResolverNodeFileUtils';
+import type { RelationTreeLookup } from '../types';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 
 export type DocumentSearchScope = NodeFileDocumentSearchScope;
 
@@ -89,6 +91,9 @@ interface DocumentRelationSearchContextType {
   someVisibleSelected: boolean;
   previewRow: NodeFileDocumentSearchRow | null;
   previewFile: CaseResolverFile | null;
+  relationTreeNodes: MasterTreeNode[];
+  relationTreeLookup: RelationTreeLookup;
+  visibleFileIdsInTreeOrder: string[];
 }
 
 const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextType | null>(null);
@@ -111,6 +116,7 @@ export interface DocumentRelationSearchProviderProps {
   isLocked?: boolean;
   defaultScope?: DocumentSearchScope;
   defaultSort?: DocumentRelationSortMode;
+  defaultFileType?: DocumentRelationFileTypeFilter;
 }
 
 export function DocumentRelationSearchProvider({
@@ -120,6 +126,7 @@ export function DocumentRelationSearchProvider({
   isLocked = false,
   defaultScope,
   defaultSort,
+  defaultFileType,
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
   const { state } = useCaseResolverViewContext();
   const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } = state;
@@ -136,12 +143,12 @@ export function DocumentRelationSearchProvider({
     excludeFileIds: [draftFileId],
     initialScope: defaultScope,
     initialSort: defaultSort,
+    initialFileType: defaultFileType,
   });
 
   const {
     documentSearchScope,
     selectedDrillCaseId,
-    documentSearchRows,
     visibleDocumentSearchRows,
     visibleCaseRows,
     folderTree,
@@ -156,22 +163,19 @@ export function DocumentRelationSearchProvider({
   // Reset selection when scope or filters change
   useEffect(() => {
     setSelectedFileIds(new Set());
-  }, [documentSearchScope, documentSearchQuery, dateFrom, dateTo, tagIdFilter, categoryIdFilter]);
+  }, [
+    documentSearchScope,
+    documentSearchQuery,
+    dateFrom,
+    dateTo,
+    tagIdFilter,
+    categoryIdFilter,
+    fileTypeFilter,
+  ]);
 
   const isDrillMode = documentSearchScope === 'all_cases' && selectedDrillCaseId !== null;
   const isAllCases = documentSearchScope === 'all_cases';
-  const showDocTable = documentSearchScope === 'case_scope' || isDrillMode;
-
-  const drillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (!selectedDrillCaseId) return [];
-    return documentSearchRows.filter((row) => row.file.parentCaseId === selectedDrillCaseId);
-  }, [documentSearchRows, selectedDrillCaseId]);
-
-  const visibleDrillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const q = normalizeSearchText(documentSearchQuery);
-    if (!q) return drillRows;
-    return drillRows.filter((row) => row.searchable.includes(q));
-  }, [drillRows, documentSearchQuery]);
+  const showDocTable = true;
 
   const drillSignatureLabel = useMemo((): string => {
     if (!selectedDrillCaseId) return '';
@@ -180,18 +184,10 @@ export function DocumentRelationSearchProvider({
     return selectedDrillCaseId;
   }, [selectedDrillCaseId, visibleCaseRows]);
 
-  const currentDocRows = isDrillMode ? visibleDrillRows : visibleDocumentSearchRows;
+  const currentDocRows = visibleDocumentSearchRows;
   const currentFolderPaths = useMemo(() => {
-    if (isDrillMode) {
-      const seen = new Set<string>();
-      drillRows.forEach((row) => {
-        const top = row.folderSegments[0];
-        if (top) seen.add(top);
-      });
-      return Array.from(seen).sort();
-    }
     return folderTree.childPathsByParent.get(null) ?? [];
-  }, [isDrillMode, drillRows, folderTree]);
+  }, [folderTree]);
 
   const filtersActiveCount = useMemo(() => {
     let count = 0;
@@ -240,6 +236,11 @@ export function DocumentRelationSearchProvider({
   const handleLinkAll = useCallback(async () => {
     if (selectedFileIds.size === 0) return;
     const ids = Array.from(selectedFileIds);
+    logCaseResolverWorkspaceEvent({
+      source: 'document_relation_search',
+      action: 'relation_tree_bulk_link_applied',
+      message: `count=${ids.length}`,
+    });
     for (const id of ids) {
       onLinkFile(id);
     }
@@ -282,6 +283,9 @@ export function DocumentRelationSearchProvider({
       someVisibleSelected,
       previewRow,
       previewFile,
+      relationTreeNodes: searchProps.relationTreeNodes,
+      relationTreeLookup: searchProps.relationTreeLookup,
+      visibleFileIdsInTreeOrder: searchProps.visibleFileIdsInTreeOrder,
     }),
     [
       searchProps,
@@ -308,6 +312,9 @@ export function DocumentRelationSearchProvider({
       someVisibleSelected,
       previewRow,
       previewFile,
+      searchProps.relationTreeNodes,
+      searchProps.relationTreeLookup,
+      searchProps.visibleFileIdsInTreeOrder,
     ]
   );
 

@@ -4,7 +4,10 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import type { DocumentRelationSortMode } from '@/shared/contracts/case-resolver';
+import type {
+  DocumentRelationFileTypeFilter,
+  DocumentRelationSortMode,
+} from '@/shared/contracts/case-resolver';
 import {
   DocumentRelationSearchProvider,
   useDocumentRelationSearchContext,
@@ -15,18 +18,32 @@ import { RESULT_HEIGHT_MAP } from './sections/document-relation-search-utils';
 import { ScopeBar } from './sections/ScopeBar';
 import { FilterBar } from './sections/FilterBar';
 import { SearchBar } from './sections/SearchBar';
-import { FolderChips } from './sections/FolderChips';
 import { BulkActionBar } from './sections/BulkActionBar';
-import { DocumentTableBody } from './sections/DocumentTableBody';
-import { CaseTableBody } from './sections/CaseTableBody';
 import { DocumentPreviewDialog } from './sections/DocumentPreviewDialog';
 import {
   DocumentRelationSearchUiProvider,
   type DocumentRelationSearchUiContextValue,
 } from './DocumentRelationSearchUiContext';
+import { RelationTreeBrowser } from './RelationTreeBrowser';
+import type { RelationTreeInstance } from '../types';
 
-function DocumentRelationSearchInner(): React.JSX.Element {
-  const { showFiltersBar, showDocTable, resultHeight } = useDocumentRelationSearchContext();
+function DocumentRelationSearchInner({
+  relationTreeInstance,
+}: {
+  relationTreeInstance: RelationTreeInstance;
+}): React.JSX.Element {
+  const {
+    showFiltersBar,
+    resultHeight,
+    relationTreeNodes,
+    relationTreeLookup,
+    selectedFileIds,
+    toggleFileSelection,
+    onLinkFile,
+    isLocked,
+    setPreviewFileId,
+    documentSearchQuery,
+  } = useDocumentRelationSearchContext();
 
   return (
     <>
@@ -37,12 +54,26 @@ function DocumentRelationSearchInner(): React.JSX.Element {
 
         <SearchBar />
 
-        {showDocTable && <FolderChips />}
-
         <BulkActionBar />
 
         <div className={cn('overflow-auto', RESULT_HEIGHT_MAP[resultHeight])}>
-          {showDocTable ? <DocumentTableBody /> : <CaseTableBody />}
+          <RelationTreeBrowser
+            instance={relationTreeInstance}
+            mode='link_relations'
+            nodes={relationTreeNodes}
+            lookup={relationTreeLookup}
+            isLocked={isLocked}
+            selectedFileIds={selectedFileIds}
+            onToggleFileSelection={toggleFileSelection}
+            onLinkFile={(fileId): void => {
+              onLinkFile(fileId);
+            }}
+            onPreviewFile={(fileId): void => {
+              setPreviewFileId(fileId);
+            }}
+            searchQuery={documentSearchQuery}
+            emptyLabel='No matching files'
+          />
         </div>
       </div>
 
@@ -55,10 +86,14 @@ export type DocumentRelationSearchPanelProps = {
   draftFileId: string;
   isLocked: boolean;
   onLinkFile: (fileId: string) => void;
+  /** Folder-tree instance used by relation browser. */
+  relationTreeInstance?: RelationTreeInstance | undefined;
   /** Initial scope on first mount (default: 'case_scope') */
   defaultScope?: NodeFileDocumentSearchScope | undefined;
   /** Initial sort mode on first mount (default: 'name_asc') */
   defaultSort?: DocumentRelationSortMode | undefined;
+  /** Initial file type filter on first mount (default: 'all') */
+  defaultFileType?: DocumentRelationFileTypeFilter | undefined;
   /** Show sort dropdown (default: true) */
   showSortControl?: boolean | undefined;
   /** Show file-type filter chips (default: true) */
@@ -69,8 +104,10 @@ export function DocumentRelationSearchPanel({
   draftFileId,
   isLocked,
   onLinkFile,
+  relationTreeInstance = 'case_resolver_document_relations',
   defaultScope = 'case_scope',
   defaultSort = 'name_asc',
+  defaultFileType = 'all',
   showSortControl = true,
   showFileTypeFilter = true,
 }: DocumentRelationSearchPanelProps): React.JSX.Element {
@@ -89,9 +126,10 @@ export function DocumentRelationSearchPanel({
       onLinkFile={onLinkFile}
       defaultScope={defaultScope}
       defaultSort={defaultSort}
+      defaultFileType={defaultFileType}
     >
       <DocumentRelationSearchUiProvider value={uiContextValue}>
-        <DocumentRelationSearchInner />
+        <DocumentRelationSearchInner relationTreeInstance={relationTreeInstance} />
       </DocumentRelationSearchUiProvider>
     </DocumentRelationSearchProvider>
   );

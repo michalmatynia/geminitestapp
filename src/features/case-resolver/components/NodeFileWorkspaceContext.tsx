@@ -15,6 +15,8 @@ import {
   NodeFileDocumentSearchRow,
   NodeFileDocumentFolderTree,
 } from './CaseResolverNodeFileUtils';
+import type { RelationTreeLookup } from '../relation-search/types';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 export type NodeFileWorkspaceContextValue = {
   // State from useNodeFileWorkspaceState
@@ -66,6 +68,9 @@ export type NodeFileWorkspaceContextValue = {
   folderScopedDocumentSearchRows: NodeFileDocumentSearchRow[];
   visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
   folderTree: NodeFileDocumentFolderTree;
+  relationTreeNodes?: MasterTreeNode[] | undefined;
+  relationTreeLookup?: RelationTreeLookup | undefined;
+  visibleFileIdsInTreeOrder?: string[] | undefined;
   compiled: CaseResolverCompileResult;
   selectedNode: AiNode | null;
   selectedNodeMeta: CaseResolverNodeMeta | null;

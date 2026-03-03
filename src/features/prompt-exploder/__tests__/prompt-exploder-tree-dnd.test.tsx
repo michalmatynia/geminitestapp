@@ -52,6 +52,7 @@ vi.mock('@/features/prompt-exploder/context/hooks/useSegmentEditor', () => ({
 }));
 
 type MinimalController = {
+  nodes: Array<{ id: string }>;
   selectedNodeId: string | null;
   expandNode: ReturnType<typeof vi.fn>;
   selectNode: ReturnType<typeof vi.fn>;
@@ -60,6 +61,7 @@ type MinimalController = {
 };
 
 const createController = (): MinimalController => ({
+  nodes: [{ id: toPromptExploderTreeNodeId('segment', 'segment-a') }],
   selectedNodeId: null,
   expandNode: vi.fn(),
   selectNode: vi.fn(),
@@ -234,6 +236,70 @@ describe('Prompt Exploder master-tree DnD wiring', () => {
         createController() as never
       )
     ).toBe(false);
+  });
+
+  it('routes root top drops to dropNodeToRoot with index 0', async () => {
+    useDocumentStateMock.mockReturnValue({
+      documentState: {
+        segments: [createSegment({ id: 'segment-a', code: 'A1' })],
+      },
+      selectedSegmentId: 'segment-a',
+    });
+
+    render(<PromptExploderSegmentsTreeEditor />);
+
+    const viewportProps = getLatestViewportProps();
+    const controller = createController();
+    await viewportProps.onNodeDrop?.(
+      {
+        draggedNodeId: toPromptExploderTreeNodeId('segment', 'segment-a'),
+        targetId: null,
+        position: 'inside',
+        rootDropZone: 'top',
+      },
+      controller as never
+    );
+
+    expect(controller.dropNodeToRoot).toHaveBeenCalledWith(
+      toPromptExploderTreeNodeId('segment', 'segment-a'),
+      0
+    );
+    expect(controller.reorderNode).not.toHaveBeenCalled();
+  });
+
+  it('routes non-root drops to reorderNode', async () => {
+    useDocumentStateMock.mockReturnValue({
+      documentState: {
+        segments: [
+          createSegment({ id: 'segment-a', code: 'A1' }),
+          createSegment({ id: 'segment-b', code: 'B1' }),
+        ],
+      },
+      selectedSegmentId: 'segment-a',
+    });
+
+    render(<PromptExploderSegmentsTreeEditor />);
+
+    const viewportProps = getLatestViewportProps();
+    const controller = createController();
+    controller.nodes = [
+      { id: toPromptExploderTreeNodeId('segment', 'segment-a') },
+      { id: toPromptExploderTreeNodeId('segment', 'segment-b') },
+    ];
+    await viewportProps.onNodeDrop?.(
+      {
+        draggedNodeId: toPromptExploderTreeNodeId('segment', 'segment-a'),
+        targetId: toPromptExploderTreeNodeId('segment', 'segment-b'),
+        position: 'after',
+      },
+      controller as never
+    );
+
+    expect(controller.reorderNode).toHaveBeenCalledWith(
+      toPromptExploderTreeNodeId('segment', 'segment-a'),
+      toPromptExploderTreeNodeId('segment', 'segment-b'),
+      'after'
+    );
   });
 
   it('wires handle-only drag policy and renders an explicit handle for hierarchy rows', () => {

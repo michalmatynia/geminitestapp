@@ -82,7 +82,7 @@ const readAiPathRunQueueBaseStatus = async (
     failedCount: health.failedCount,
     completedCount: health.completedCount,
     delayedCount: health.delayedCount,
-    pausedCount: (health as any).pausedCount ?? 0, // eslint-disable-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+    pausedCount: (health as any).pausedCount ?? 0, // eslint-disable-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     avgRuntimeMs: null,
     p50RuntimeMs: null,
     p95RuntimeMs: null,

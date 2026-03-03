@@ -512,6 +512,46 @@ const resolveActivePresetId = (
   return presets.some((preset) => preset.id === normalized) ? normalized : null;
 };
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const hasOwn = (value: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(value, key);
+
+const getDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
+  if (!isPlainObject(value)) return [];
+
+  const deprecatedKeys: string[] = [];
+
+  const promptExtraction = value['promptExtraction'];
+  if (isPlainObject(promptExtraction)) {
+    const gpt = promptExtraction['gpt'];
+    if (isPlainObject(gpt) && hasOwn(gpt, 'model')) {
+      deprecatedKeys.push('promptExtraction.gpt.model');
+    }
+  }
+
+  const uiExtractor = value['uiExtractor'];
+  if (isPlainObject(uiExtractor) && hasOwn(uiExtractor, 'model')) {
+    deprecatedKeys.push('uiExtractor.model');
+  }
+
+  const targetAi = value['targetAi'];
+  if (isPlainObject(targetAi)) {
+    const openai = targetAi['openai'];
+    if (isPlainObject(openai)) {
+      if (hasOwn(openai, 'model')) {
+        deprecatedKeys.push('targetAi.openai.model');
+      }
+      if (hasOwn(openai, 'modelPresets')) {
+        deprecatedKeys.push('targetAi.openai.modelPresets');
+      }
+    }
+  }
+
+  return deprecatedKeys;
+};
+
 export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
   if (!raw.trim()) return defaultImageStudioSettings;
@@ -524,6 +564,14 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       reason: 'json_parse_failed',
       raw,
       cause: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const deprecatedKeys = getDeprecatedImageStudioSnapshotKeys(parsed);
+  if (deprecatedKeys.length > 0) {
+    throw validationError('Image Studio settings contain deprecated AI snapshot keys.', {
+      reason: 'deprecated_ai_snapshot_keys',
+      deprecatedKeys,
     });
   }
 

@@ -18,3 +18,13 @@ export {
   type ResultHeight,
   type CaseRow,
 } from './context/DocumentRelationSearchContext';
+
+export { RelationTreeBrowser } from './components/RelationTreeBrowser';
+
+export type {
+  RelationBrowserMode,
+  RelationTreeInstance,
+  RelationTreeNodeType,
+  RelationTreeLookup,
+  RelationTreeBuildResult,
+} from './types';

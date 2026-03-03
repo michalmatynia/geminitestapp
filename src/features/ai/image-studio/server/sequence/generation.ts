@@ -4,15 +4,15 @@ import {
 } from '@/features/ai/image-studio/server/run-repository';
 import {
   listImageStudioSlots,
-  type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server/slot-repository';
+import type {
+  ImageStudioSlotRecord,
+  ImageStudioSequenceRunRecord,
+  ImageStudioSequenceMaskContext,
+} from '@/shared/contracts/image-studio';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import { enqueueImageStudioRunJob } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 import { type ImageStudioSequenceGenerateStep } from '@/features/ai/image-studio/utils/studio-settings';
-import type {
-  ImageStudioSequenceRunRecord,
-  ImageStudioSequenceMaskContext,
-} from '../sequence-run-repository';
 import { sleep } from './utils';
 
 const POLL_INTERVAL_MS = 1200;

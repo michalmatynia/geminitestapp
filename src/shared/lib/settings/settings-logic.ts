@@ -3,7 +3,7 @@ import type { SettingsScope, SettingRecord } from '@/shared/lib/settings-cache';
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>([
   'agent_personas',
-  'case_resolver_workspace_v1',
+  'case_resolver_workspace_v2',
   'product_validator_decision_log',
   'ai_insights_analytics_history',
   'ai_insights_runtime_analytics_history',
@@ -11,7 +11,7 @@ const HEAVY_KEYS = new Set<string>([
 ]);
 
 export const AI_PATHS_KEY_PREFIX = 'ai_paths_';
-export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
+export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 export const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
 
 export const isHeavySettingKey = (key: string): boolean =>

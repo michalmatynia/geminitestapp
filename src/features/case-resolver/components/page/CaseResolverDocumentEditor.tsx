@@ -453,6 +453,8 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
             <DocumentRelationSearchPanel
               draftFileId={draft.id}
               isLocked={isEditingDocumentLocked ?? false}
+              relationTreeInstance='case_resolver_document_relations'
+              defaultFileType='document'
               onLinkFile={(fileId) => handleLinkRelatedFiles(editingDocumentDraft.id, fileId)}
             />
 

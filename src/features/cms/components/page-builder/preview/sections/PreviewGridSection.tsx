@@ -30,7 +30,7 @@ import {
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { Separator, EmptyState } from '@/shared/ui';
+import { Separator, EmptyState, Button } from '@/shared/ui';
 
 export function PreviewGridSection() {
   const { colorSchemes, layout } = useCmsPageContext();

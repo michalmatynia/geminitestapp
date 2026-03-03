@@ -197,7 +197,7 @@ const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> =>
       key: {
         in: [
           'agent_personas',
-          'case_resolver_workspace_v1',
+          'case_resolver_workspace_v2',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',
@@ -228,7 +228,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
       key: {
         $in: [
           'agent_personas',
-          'case_resolver_workspace_v1',
+          'case_resolver_workspace_v2',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',
@@ -240,7 +240,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
       _id: {
         $in: [
           'agent_personas',
-          'case_resolver_workspace_v1',
+          'case_resolver_workspace_v2',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',

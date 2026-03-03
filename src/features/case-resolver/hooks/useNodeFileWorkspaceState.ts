@@ -104,11 +104,15 @@ export function useNodeFileWorkspaceState({
     visibleDocumentSearchRows,
     folderTree,
     visibleCaseRows,
+    relationTreeNodes,
+    relationTreeLookup,
+    visibleFileIdsInTreeOrder,
   } = useDocumentRelationSearch({
     workspace,
     activeCaseId,
     caseResolverIdentifiers,
     excludeFileIds: [],
+    initialFileType: 'all',
   });
 
   const filesById = useMemo(
@@ -345,6 +349,9 @@ export function useNodeFileWorkspaceState({
     folderScopedDocumentSearchRows,
     visibleDocumentSearchRows,
     folderTree,
+    relationTreeNodes,
+    relationTreeLookup,
+    visibleFileIdsInTreeOrder,
     compiled,
     selectedNode,
     selectedNodeMeta,

@@ -353,6 +353,189 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  case_resolver_document_relations: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move relation to root',
+      inlineDropLabel: 'Drop relation',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        relation_case: 'Folder',
+        relation_folder: 'Folder',
+        relation_file: 'FileText',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: false,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  case_resolver_nodefile_relations: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move relation to root',
+      inlineDropLabel: 'Drop relation',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        relation_case: 'Folder',
+        relation_folder: 'Folder',
+        relation_file: 'FileText',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: false,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  case_resolver_scanfile_relations: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Move relation to root',
+      inlineDropLabel: 'Drop relation',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        relation_case: 'Folder',
+        relation_folder: 'Folder',
+        relation_file: 'FileText',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'folder',
+          targetKinds: ['relation_case', 'relation_folder'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['relation_case', 'relation_folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['relation_file'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: false,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   validator_list_tree: {
     version: 2,
     placeholders: {

@@ -423,6 +423,8 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
             <DocumentRelationSearchPanel
               draftFileId={draft.id}
               isLocked={isEditingDocumentLocked ?? false}
+              relationTreeInstance='case_resolver_scanfile_relations'
+              defaultFileType='scanfile'
               onLinkFile={(fileId) => handleLinkRelatedFiles(draft.id, fileId)}
             />
 

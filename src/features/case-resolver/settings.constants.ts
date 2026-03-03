@@ -3,7 +3,7 @@ import type {
   CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
 
-export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
+export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
 export const CASE_RESOLVER_IDENTIFIERS_KEY = 'case_resolver_identifiers_v1';
 export const CASE_RESOLVER_CATEGORIES_KEY = 'case_resolver_categories_v1';

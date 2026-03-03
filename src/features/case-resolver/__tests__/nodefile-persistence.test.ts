@@ -75,7 +75,7 @@ describe('case resolver nodefile persistence', () => {
     expect(resolvedSnapshot).toBeNull();
   });
 
-  it('migrates legacy keyed nodefile snapshots with legacy edge keys to canonical payload', async () => {
+  it('rejects legacy keyed nodefile snapshots with legacy edge keys', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -126,29 +126,16 @@ describe('case resolver nodefile persistence', () => {
             nodeFileMeta: {},
           }),
         })
-      )
-      .mockResolvedValueOnce(toJsonResponse(200, { ok: true }));
+      );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot(
-      'asset-legacy',
-      8_000,
-      'test'
+    await expect(fetchCaseResolverNodeFileSnapshot('asset-legacy', 8_000, 'test')).rejects.toThrow(
+      /Legacy Case Resolver edge fields are no longer supported\./
     );
-
-    expect(resolvedSnapshot?.edges[0]).toMatchObject({
-      source: 'node-a',
-      target: 'node-b',
-      sourceHandle: 'wysiwygText',
-      targetHandle: 'plaintextContent',
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
-      key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
-    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('purges invalid keyed nodefile snapshots and treats them as missing', async () => {
+  it('rejects invalid keyed nodefile snapshots instead of treating them as missing', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
@@ -162,14 +149,10 @@ describe('case resolver nodefile persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test');
-
-    expect(resolvedSnapshot).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
-      key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
-      value: '',
-    });
+    await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test')).rejects.toThrow(
+      /Legacy Case Resolver node-file snapshot fields are no longer supported\./
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('clears keyed nodefile snapshots via blank writes', async () => {

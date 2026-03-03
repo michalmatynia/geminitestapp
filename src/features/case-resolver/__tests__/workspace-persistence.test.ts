@@ -148,12 +148,8 @@ describe('case-resolver workspace persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    const mutatedWorkspace = stampCaseResolverWorkspaceMutation(workspace, {
-      baseRevision: 0,
-      mutationId: 'mutation-inline',
-    });
     const result = await persistCaseResolverWorkspaceSnapshot({
-      workspace: mutatedWorkspace,
+      workspace,
       expectedRevision: 0,
       mutationId: 'mutation-inline',
       source: 'test',

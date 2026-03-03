@@ -902,6 +902,12 @@ export const promptExploderSegmentationRecordSchema = z.object({
 
 export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
 
+export type PromptExploderSegmentationLibraryState = {
+  records: PromptExploderSegmentationRecord[];
+  lastCapturedAt: string | null;
+  totalCaptured: number;
+};
+
 export type CaptureSegmentationRecordReason =
   | 'manual_save'
   | 'benchmark_suggestion'

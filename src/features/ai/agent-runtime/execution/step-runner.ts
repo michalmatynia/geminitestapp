@@ -48,15 +48,15 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
   let replanCount = 0;
   let lastContextUrl = context.browserContext?.url ?? null;
   let hasBrowserContext = Boolean(lastContextUrl && lastContextUrl !== 'about:blank');
-  let consecutiveFailures = 0;
+  let _consecutiveFailures = 0;
   let approvalRequestedStepId: string | null = input.checkpoint?.approvalRequestedStepId ?? null;
   const approvalGrantedStepId: string | null = input.checkpoint?.approvalGrantedStepId ?? null;
   let checkpointContext: CheckpointContext = {
     checkpointBriefStepId: input.checkpoint?.checkpointStepId ?? null,
     checkpointBriefError: input.checkpoint?.lastError ?? null,
   };
-  let stagnationCount = 0;
-  let noContextCount = 0;
+  let _stagnationCount = 0;
+  let _noContextCount = 0;
   let lastStableUrl = lastContextUrl;
   let loopGuardCooldown = 0;
   let loopSignalStreak = 0;
@@ -246,9 +246,9 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       lastError = toolResult.error || 'Tool failed.';
       requiresHuman =
         typeof lastError === 'string' && /requires human|cloudflare challenge/i.test(lastError);
-      consecutiveFailures += 1;
+      _consecutiveFailures += 1;
     } else {
-      consecutiveFailures = 0;
+      _consecutiveFailures = 0;
     }
 
     planSteps = planSteps.map((item: PlanStep) =>
@@ -266,15 +266,15 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       hasBrowserContext = Boolean(outputUrl && outputUrl !== 'about:blank');
       if (hasBrowserContext && outputUrl) {
         lastContextUrl = outputUrl;
-        noContextCount = 0;
+        _noContextCount = 0;
         if (lastStableUrl === outputUrl) {
-          stagnationCount += 1;
+          _stagnationCount += 1;
         } else {
-          stagnationCount = 0;
+          _stagnationCount = 0;
           lastStableUrl = outputUrl;
         }
       } else {
-        noContextCount += 1;
+        _noContextCount += 1;
       }
     }
     await logAgentAudit(run.id, 'info', 'Plan updated.', {

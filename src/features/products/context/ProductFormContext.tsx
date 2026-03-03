@@ -160,13 +160,36 @@ export type ProductFormSubmitContextType = Pick<
   'handleSubmit' | 'ConfirmationModal'
 >;
 
+type ProductFormProviderConfigContextType = {
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialCatalogId?: string;
+  onSuccess?: (info?: { queued?: boolean }) => void;
+  onEditSave?: (saved: ProductWithImages) => void;
+  requireHydratedEditProduct?: boolean;
+  nonFormDirtyTrackingLockedRef: { current: boolean };
+};
+
 export const ProductFormSubmitContext = createContext<ProductFormSubmitContextType | null>(null);
+const ProductFormProviderConfigContext = createContext<ProductFormProviderConfigContextType | null>(
+  null
+);
 
 export const useProductFormSubmitContext = (): ProductFormSubmitContextType => {
   const context = useContext(ProductFormSubmitContext);
   if (!context) {
     throw internalError(
       'useProductFormSubmitContext must be used within a ProductFormSubmitContext provider'
+    );
+  }
+  return context;
+};
+
+const useProductFormProviderConfigContext = (): ProductFormProviderConfigContextType => {
+  const context = useContext(ProductFormProviderConfigContext);
+  if (!context) {
+    throw internalError(
+      'useProductFormProviderConfigContext must be used within a ProductFormProviderConfigContext provider'
     );
   }
   return context;
@@ -194,18 +217,12 @@ export const useProductFormContext = (): ProductFormContextType => {
 };
 
 function ProductFormSubmitController({
-  onSuccess,
-  onEditSave,
   children,
-  nonFormDirtyTrackingLockedRef,
-  requireHydratedEditProduct,
 }: {
-  onSuccess?: (info?: { queued?: boolean }) => void;
-  onEditSave?: (saved: ProductWithImages) => void;
   children: React.ReactNode;
-  nonFormDirtyTrackingLockedRef: { current: boolean };
-  requireHydratedEditProduct?: boolean;
 }) {
+  const { onSuccess, onEditSave, nonFormDirtyTrackingLockedRef, requireHydratedEditProduct } =
+    useProductFormProviderConfigContext();
   const {
     methods,
     setHasUnsavedChanges,
@@ -375,6 +392,20 @@ export function ProductFormProvider({
   initialSku?: string;
   initialCatalogId?: string;
 }): React.ReactNode {
+  const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
+  const providerConfigContextValue = useMemo(
+    (): ProductFormProviderConfigContextType => ({
+      product,
+      draft,
+      initialCatalogId,
+      onSuccess,
+      onEditSave,
+      requireHydratedEditProduct,
+      nonFormDirtyTrackingLockedRef,
+    }),
+    [product, draft, initialCatalogId, onSuccess, onEditSave, requireHydratedEditProduct]
+  );
+
   return (
     <ProductFormCoreProvider
       product={product}
@@ -382,38 +413,20 @@ export function ProductFormProvider({
       requireSku={requireSku}
       initialSku={initialSku}
     >
-      <ProductFormSubProviders
-        product={product}
-        draft={draft}
-        initialCatalogId={initialCatalogId}
-        onSuccess={onSuccess}
-        onEditSave={onEditSave}
-        requireHydratedEditProduct={requireHydratedEditProduct}
-      >
-        {children}
-      </ProductFormSubProviders>
+      <ProductFormProviderConfigContext.Provider value={providerConfigContextValue}>
+        <ProductFormSubProviders>{children}</ProductFormSubProviders>
+      </ProductFormProviderConfigContext.Provider>
     </ProductFormCoreProvider>
   );
 }
 
 function ProductFormSubProviders({
   children,
-  product,
-  draft,
-  initialCatalogId,
-  onSuccess,
-  onEditSave,
-  requireHydratedEditProduct,
 }: {
   children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
-  initialCatalogId?: string;
-  onSuccess?: (info?: { queued?: boolean }) => void;
-  onEditSave?: (saved: ProductWithImages) => void;
-  requireHydratedEditProduct?: boolean;
 }) {
-  const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
+  const { product, requireHydratedEditProduct, nonFormDirtyTrackingLockedRef } =
+    useProductFormProviderConfigContext();
   const markNonFormInteraction = (): void => {
     nonFormDirtyTrackingLockedRef.current = true;
   };
@@ -433,40 +446,17 @@ function ProductFormSubProviders({
 
   return (
     <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>
-      <ProductFormSubProvidersInner
-        product={product}
-        draft={draft}
-        initialCatalogId={initialCatalogId}
-        onSuccess={onSuccess}
-        onEditSave={onEditSave}
-        requireHydratedEditProduct={requireHydratedEditProduct}
-        nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
-      >
-        {children}
-      </ProductFormSubProvidersInner>
+      <ProductFormSubProvidersInner>{children}</ProductFormSubProvidersInner>
     </ProductFormInteractionProvider>
   );
 }
 
 function ProductFormSubProvidersInner({
   children,
-  product,
-  draft,
-  initialCatalogId,
-  onSuccess,
-  onEditSave,
-  requireHydratedEditProduct,
-  nonFormDirtyTrackingLockedRef,
 }: {
   children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
-  initialCatalogId?: string;
-  onSuccess?: (info?: { queued?: boolean }) => void;
-  onEditSave?: (saved: ProductWithImages) => void;
-  requireHydratedEditProduct?: boolean;
-  nonFormDirtyTrackingLockedRef: { current: boolean };
 }) {
+  const { product, draft, initialCatalogId } = useProductFormProviderConfigContext();
   const onInteraction = useProductFormInteraction() || (() => {});
   const { uploading, uploadError, uploadSuccess } = useProductFormCore();
 
@@ -478,8 +468,6 @@ function ProductFormSubProvidersInner({
       onInteraction={onInteraction}
     >
       <ProductFormParameterProviderWrapper
-        product={product}
-        draft={draft}
         onInteraction={onInteraction}
       >
         <ProductFormStudioProvider product={product}>
@@ -491,12 +479,7 @@ function ProductFormSubProvidersInner({
             uploadSuccess={uploadSuccess}
             onInteraction={onInteraction}
           >
-            <ProductFormSubmitController
-              onSuccess={onSuccess}
-              onEditSave={onEditSave}
-              requireHydratedEditProduct={requireHydratedEditProduct}
-              nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
-            >
+            <ProductFormSubmitController>
               {children}
             </ProductFormSubmitController>
           </ProductFormImageProvider>
@@ -508,15 +491,12 @@ function ProductFormSubProvidersInner({
 
 function ProductFormParameterProviderWrapper({
   children,
-  product,
-  draft,
   onInteraction,
 }: {
   children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
   onInteraction: () => void;
 }) {
+  const { product, draft } = useProductFormProviderConfigContext();
   const { selectedCatalogIds } = useProductFormMetadata();
   return (
     <ProductFormParameterProvider

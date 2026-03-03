@@ -45,6 +45,7 @@ import { cn } from '@/shared/utils';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
+import { getCaseResolverDocTooltipWithFallback } from '../../relation-search/utils/docs';
 import {
   resolvePromptExploderTransferStatusLabel,
   type PromptExploderTransferUiStatus,
@@ -428,7 +429,13 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   <MetadataItem variant='minimal' label='Created' value={createdAtLabel} />
                   <MetadataItem variant='minimal' label='Modified' value={updatedAtLabel} />
                 </div>
-                <Tooltip content='Copy Document ID' side='top'>
+                <Tooltip
+                  content={getCaseResolverDocTooltipWithFallback(
+                    'copyDocumentId',
+                    'Copy Document ID'
+                  )}
+                  side='top'
+                >
                   <Button
                     type='button'
                     variant='ghost'

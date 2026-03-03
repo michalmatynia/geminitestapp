@@ -202,13 +202,21 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
 
 export function useUpdateProductField(): UpdateMutation<
   void,
-  { id: string; field: keyof ProductWithImages; value: unknown }
+  {
+    id: string;
+    field: keyof ProductWithImages;
+    value: ProductWithImages[keyof ProductWithImages];
+  }
   > {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<
     void,
-    { id: string; field: keyof ProductWithImages; value: unknown },
+    {
+      id: string;
+      field: keyof ProductWithImages;
+      value: ProductWithImages[keyof ProductWithImages];
+    },
     { previousLists: unknown; previousDetail: unknown }
   >({
     mutationFn: async ({ id, field, value }): Promise<void> => {

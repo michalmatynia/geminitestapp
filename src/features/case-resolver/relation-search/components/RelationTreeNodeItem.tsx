@@ -8,6 +8,7 @@ import { cn } from '@/shared/utils';
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
 import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
 import type { RelationBrowserMode, RelationTreeNodeType } from '../types';
+import { getCaseResolverDocTooltipWithFallback } from '../utils/docs';
 
 type RelationTreeNodeItemProps = FolderTreeViewportRenderNodeInput & {
   mode: RelationBrowserMode;
@@ -123,7 +124,13 @@ export function RelationTreeNodeItem({
           aria-label={`Select ${row.file.name}`}
         />
       ) : (
-        <Tooltip content='Drag from handle to canvas' side='top'>
+        <Tooltip
+          content={getCaseResolverDocTooltipWithFallback(
+            'dragToCanvas',
+            'Drag from handle to canvas'
+          )}
+          side='top'
+        >
           <button
             type='button'
             data-relation-drag-handle='true'

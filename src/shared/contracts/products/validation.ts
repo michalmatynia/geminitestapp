@@ -14,29 +14,25 @@ export const productValidationTargetSchema = z.enum([
 ]);
 
 export const productValidationSeveritySchema = z.enum(['error', 'warning']);
-export type ProductValidationSeverityDto = z.infer<typeof productValidationSeveritySchema>;
-export type ProductValidationSeverity = ProductValidationSeverityDto;
+export type ProductValidationSeverity = z.infer<typeof productValidationSeveritySchema>;
 
 export const productValidationDenyBehaviorSchema = z.enum(['ask_again', 'mute_session']);
-export type ProductValidationDenyBehaviorDto = z.infer<typeof productValidationDenyBehaviorSchema>;
-export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
+export type ProductValidationDenyBehavior = z.infer<typeof productValidationDenyBehaviorSchema>;
 export type ProductValidationPatternDenyBehaviorOverride = ProductValidationDenyBehavior | null;
 
 export const productValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'condition_only']);
-export type ProductValidationLaunchScopeBehaviorDto = z.infer<
+export type ProductValidationLaunchScopeBehavior = z.infer<
   typeof productValidationLaunchScopeBehaviorSchema
 >;
-export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 
 export const productValidationInstanceScopeSchema = z.enum([
   'draft_template',
   'product_create',
   'product_edit',
 ]);
-export type ProductValidationInstanceScopeDto = z.infer<
+export type ProductValidationInstanceScope = z.infer<
   typeof productValidationInstanceScopeSchema
 >;
-export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
 
 export type ProductValidationDenyIssueInput = {
   fieldName: string;
@@ -105,20 +101,15 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
 });
 
-export type ProductValidationTargetDto = z.infer<typeof productValidationTargetSchema>;
-export type ProductValidationTarget = ProductValidationTargetDto;
-export type ProductValidationRuntimeTypeDto = 'none' | 'database_query' | 'ai_prompt';
-export type ProductValidationRuntimeType = ProductValidationRuntimeTypeDto;
-export type ProductValidationPostAcceptBehaviorDto = 'revalidate' | 'stop_after_accept';
-export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
-export type ProductValidationChainModeDto = 'continue' | 'stop_on_match' | 'stop_on_replace';
-export type ProductValidationChainMode = ProductValidationChainModeDto;
-export type ProductValidationLaunchSourceModeDto =
+export type ProductValidationTarget = z.infer<typeof productValidationTargetSchema>;
+export type ProductValidationRuntimeType = 'none' | 'database_query' | 'ai_prompt';
+export type ProductValidationPostAcceptBehavior = 'revalidate' | 'stop_after_accept';
+export type ProductValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type ProductValidationLaunchSourceMode =
   | 'current_field'
   | 'form_field'
   | 'latest_product_field';
-export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
-export type ProductValidationLaunchOperatorDto =
+export type ProductValidationLaunchOperator =
   | 'equals'
   | 'not_equals'
   | 'contains'
@@ -131,7 +122,6 @@ export type ProductValidationLaunchOperatorDto =
   | 'lte'
   | 'is_empty'
   | 'is_not_empty';
-export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
 
 export type FieldValidatorIssue = {
   patternId: string;
@@ -150,8 +140,7 @@ export type FieldValidatorIssue = {
   debounceMs: number;
 };
 
-export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
-export type ProductValidationPattern = ProductValidationPatternDto;
+export type ProductValidationPattern = z.infer<typeof productValidationPatternSchema>;
 
 export const createProductValidationPatternSchema = z.object({
   label: z.string().trim().min(1, 'Label is required'),
@@ -207,7 +196,7 @@ export const createProductValidationPatternSchema = z.object({
   appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
 });
 
-export type CreateProductValidationPatternDto = z.infer<
+export type CreateProductValidationPatternInput = z.infer<
   typeof createProductValidationPatternSchema
 >;
 
@@ -217,7 +206,7 @@ export const updateProductValidationPatternSchema = createProductValidationPatte
     expectedUpdatedAt: z.string().nullable().optional(),
   });
 
-export type UpdateProductValidationPatternDto = z.infer<
+export type UpdateProductValidationPatternInput = z.infer<
   typeof updateProductValidationPatternSchema
 >;
 
@@ -228,9 +217,7 @@ export const productValidationSequenceGroupSchema = z.object({
   patternIds: z.array(z.string()),
 });
 
-export type ProductValidationSequenceGroupDto = z.infer<
-  typeof productValidationSequenceGroupSchema
->;
+export type ProductValidationSequenceGroup = z.infer<typeof productValidationSequenceGroupSchema>;
 
 export const productValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean(),
@@ -241,12 +228,10 @@ export const productValidatorSettingsSchema = z.object({
   ),
 });
 
-export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<
+export type ProductValidationInstanceDenyBehaviorMap = z.infer<
   typeof productValidatorSettingsSchema
 >['instanceDenyBehavior'];
-export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
-export type ProductValidatorSettings = ProductValidatorSettingsDto;
-export type ProductValidationInstanceDenyBehaviorMap = ProductValidationInstanceDenyBehaviorMapDto;
+export type ProductValidatorSettings = z.infer<typeof productValidatorSettingsSchema>;
 
 export const updateProductValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean().optional(),
@@ -259,6 +244,7 @@ export const updateProductValidatorSettingsSchema = z.object({
 export type UpdateProductValidatorSettingsDto = z.infer<
   typeof updateProductValidatorSettingsSchema
 >;
+export type UpdateProductValidatorSettings = z.infer<typeof updateProductValidatorSettingsSchema>;
 
 export const productValidatorConfigSchema = z.object({
   enabledByDefault: z.boolean(),
@@ -270,8 +256,7 @@ export const productValidatorConfigSchema = z.object({
   patterns: z.array(productValidationPatternSchema),
 });
 
-export type ProductValidatorConfigDto = z.infer<typeof productValidatorConfigSchema>;
-export type ProductValidatorConfig = ProductValidatorConfigDto;
+export type ProductValidatorConfig = z.infer<typeof productValidatorConfigSchema>;
 
 /**
  * Product Validation Replacement DTOs
@@ -282,8 +267,7 @@ export const dynamicReplacementSourceModeSchema = z.enum([
   'form_field',
   'latest_product_field',
 ]);
-export type DynamicReplacementSourceModeDto = z.infer<typeof dynamicReplacementSourceModeSchema>;
-export type DynamicReplacementSourceMode = DynamicReplacementSourceModeDto;
+export type DynamicReplacementSourceMode = z.infer<typeof dynamicReplacementSourceModeSchema>;
 
 export const dynamicReplacementMathOperationSchema = z.enum([
   'none',
@@ -292,30 +276,26 @@ export const dynamicReplacementMathOperationSchema = z.enum([
   'multiply',
   'divide',
 ]);
-export type DynamicReplacementMathOperationDto = z.infer<
+export type DynamicReplacementMathOperation = z.infer<
   typeof dynamicReplacementMathOperationSchema
 >;
-export type DynamicReplacementMathOperation = DynamicReplacementMathOperationDto;
 
 export const dynamicReplacementRoundModeSchema = z.enum(['none', 'round', 'floor', 'ceil']);
-export type DynamicReplacementRoundModeDto = z.infer<typeof dynamicReplacementRoundModeSchema>;
-export type DynamicReplacementRoundMode = DynamicReplacementRoundModeDto;
+export type DynamicReplacementRoundMode = z.infer<typeof dynamicReplacementRoundModeSchema>;
 
 export const dynamicReplacementResultAssemblySchema = z.enum([
   'segment_only',
   'source_replace_match',
 ]);
-export type DynamicReplacementResultAssemblyDto = z.infer<
+export type DynamicReplacementResultAssembly = z.infer<
   typeof dynamicReplacementResultAssemblySchema
 >;
-export type DynamicReplacementResultAssembly = DynamicReplacementResultAssemblyDto;
 
 export const dynamicReplacementTargetApplySchema = z.enum([
   'replace_whole_field',
   'replace_matched_segment',
 ]);
-export type DynamicReplacementTargetApplyDto = z.infer<typeof dynamicReplacementTargetApplySchema>;
-export type DynamicReplacementTargetApply = DynamicReplacementTargetApplyDto;
+export type DynamicReplacementTargetApply = z.infer<typeof dynamicReplacementTargetApplySchema>;
 
 export const dynamicReplacementLogicOperatorSchema = z.enum([
   'none',
@@ -332,14 +312,12 @@ export const dynamicReplacementLogicOperatorSchema = z.enum([
   'is_empty',
   'is_not_empty',
 ]);
-export type DynamicReplacementLogicOperatorDto = z.infer<
+export type DynamicReplacementLogicOperator = z.infer<
   typeof dynamicReplacementLogicOperatorSchema
 >;
-export type DynamicReplacementLogicOperator = DynamicReplacementLogicOperatorDto;
 
 export const dynamicReplacementLogicActionSchema = z.enum(['keep', 'set_value', 'clear', 'abort']);
-export type DynamicReplacementLogicActionDto = z.infer<typeof dynamicReplacementLogicActionSchema>;
-export type DynamicReplacementLogicAction = DynamicReplacementLogicActionDto;
+export type DynamicReplacementLogicAction = z.infer<typeof dynamicReplacementLogicActionSchema>;
 
 export const dynamicReplacementRecipeSchema = z.object({
   version: z.literal(1),
@@ -364,22 +342,21 @@ export const dynamicReplacementRecipeSchema = z.object({
   targetApply: dynamicReplacementTargetApplySchema.optional(),
 });
 
-export type DynamicReplacementRecipeDto = z.infer<typeof dynamicReplacementRecipeSchema>;
-export type DynamicReplacementRecipe = DynamicReplacementRecipeDto;
+export type DynamicReplacementRecipe = z.infer<typeof dynamicReplacementRecipeSchema>;
 
 export const productReplacementModeSchema = z.enum(['static', 'dynamic']);
-export type ProductReplacementModeDto = z.infer<typeof productReplacementModeSchema>;
-export type ReplacementMode = ProductReplacementModeDto;
+export type ProductReplacementMode = z.infer<typeof productReplacementModeSchema>;
+export type ReplacementMode = ProductReplacementMode;
 
 export const productValidationSequenceGroupDraftSchema = z.object({
   label: z.string(),
   debounceMs: z.string(),
 });
 
-export type ProductValidationSequenceGroupDraftDto = z.infer<
+export type ProductValidationSequenceGroupDraft = z.infer<
   typeof productValidationSequenceGroupDraftSchema
 >;
-export type SequenceGroupDraft = ProductValidationSequenceGroupDraftDto;
+export type SequenceGroupDraft = ProductValidationSequenceGroupDraft;
 
 export const productValidationPatternFormDataSchema = z.object({
   label: z.string(),
@@ -438,7 +415,7 @@ export const productValidationPatternFormDataSchema = z.object({
   appliesToScopes: z.array(productValidationInstanceScopeSchema),
 });
 
-export type ProductValidationPatternFormDataDto = z.infer<
+export type ProductValidationPatternFormData = z.infer<
   typeof productValidationPatternFormDataSchema
 >;
 
@@ -451,7 +428,7 @@ export const reorderProductValidationPatternUpdateSchema = z.object({
   expectedUpdatedAt: z.string().trim().nullable().optional(),
 });
 
-export type ReorderProductValidationPatternUpdateDto = z.infer<
+export type ReorderProductValidationPatternUpdate = z.infer<
   typeof reorderProductValidationPatternUpdateSchema
 >;
 

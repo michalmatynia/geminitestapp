@@ -724,7 +724,7 @@ export type SettingsBackfillResultDto = SettingsBackfillResult;
  * Database UI Context DTOs
  */
 
-export interface DatabaseConfig {
+export interface DatabaseUiConfig {
   dbType: DatabaseType;
   setDbType: (type: DatabaseType) => void;
   mode: DatabasePreviewMode;

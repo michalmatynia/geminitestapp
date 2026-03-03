@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getValidationPatternRepository } from '@/features/products/server';
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/shared/lib/products/utils/validator-instance-behavior';
 import {
-  type ProductValidationInstanceDenyBehaviorMapDto as ProductValidationInstanceDenyBehaviorMap,
+  type ProductValidationInstanceDenyBehaviorMap,
   updateProductValidatorSettingsSchema as updateValidatorSettingsSchema,
 } from '@/shared/contracts/products';
 export { updateValidatorSettingsSchema };

@@ -5,6 +5,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table';
 import { StatusBadge, Button, Tooltip, Badge } from '@/shared/ui';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
+import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 
 export interface NodeFileDocumentColumnsProps {
   isAllCases: boolean;
@@ -74,7 +75,13 @@ export const getNodeFileDocumentColumns = ({
       id: 'actions',
       header: '',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <Tooltip content='Add to canvas center' side='left'>
+        <Tooltip
+          content={getCaseResolverDocTooltipWithFallback(
+            'addToCanvasCenter',
+            'Add to canvas center'
+          )}
+          side='left'
+        >
           <Button
             variant='ghost'
             size='sm'
@@ -142,7 +149,13 @@ export const getNodeFileCaseColumns = ({
     id: 'actions',
     header: '',
     cell: ({ row }): React.JSX.Element => (
-      <Tooltip content='Browse documents in this case' side='left'>
+      <Tooltip
+        content={getCaseResolverDocTooltipWithFallback(
+          'browseCaseDocs',
+          'Browse documents in this case'
+        )}
+        side='left'
+      >
         <Button
           variant='ghost'
           size='sm'

@@ -1,9 +1,9 @@
  
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
-/* eslint-disable @typescript-eslint/no-unsafe-call */
  
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+ 
+ 
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';

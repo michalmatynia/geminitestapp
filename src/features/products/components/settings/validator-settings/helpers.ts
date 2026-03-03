@@ -6,7 +6,7 @@ import {
 } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import type {
   ProductValidationPattern,
-  ProductValidationPatternFormDataDto as PatternFormData,
+  ProductValidationPatternFormData as PatternFormData,
   SequenceGroupView,
 } from '@/shared/contracts/products';
 

@@ -33,12 +33,21 @@ import { SettingsActionsContext, type SettingsActions } from './settings/Setting
 
 import { useSettingsDataImpl } from './settings/useSettingsDataImpl';
 import { useSettingsActionsImpl } from './settings/useSettingsActionsImpl';
+import { useLibrary } from './LibraryContext';
+import { useDocument } from './DocumentContext';
 
 export type { LearningDraft, SettingsActions };
 export { SettingsActionsContext };
 
 export interface SettingsState
-  extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {}
+  extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {
+  isBusy: boolean;
+  templateMergeThreshold: number;
+  settingsMap: Map<string, string>;
+  runtimeSelection: any;
+  applyToDrafts: boolean;
+  setApplyToDrafts: (value: boolean) => void;
+}
 
 export const SettingsStateContext = createContext<SettingsState | null>(null);
 
@@ -52,6 +61,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     settingsQuery,
     settingsMap,
   });
+
+  const { segmentationLibraryState } = useLibrary();
+  const { documentState } = useDocument();
 
   const actions = useSettingsActionsImpl({
     settingsMap,
@@ -76,6 +88,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     setSaveError: data.setSaveError,
   });
 
+  const [applyToDrafts, setApplyToDrafts] = React.useState(false);
+  const returnTarget = documentState?.returnTarget || 'image-studio';
+
   const coreValue = useMemo<SettingsCoreState>(
     () => ({
       promptSettings: data.promptSettings,
@@ -83,10 +98,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       promptExploderSettingsValidationError: data.promptExploderSettingsValidationError,
       validatorPatternLists: data.validatorPatternLists,
       incomingBridgeSource: data.incomingBridgeSource,
+      activeValidationScope: data.activeValidationScope,
+      activeValidationRuleStack: data.activeValidationRuleStack,
+      segmentationLibrary: segmentationLibraryState,
       isInitialLoading: settingsQuery.isLoading && data.validatorPatternLists.length === 0,
       isRefreshing: settingsQuery.isRefetching,
     }),
-    [data, settingsQuery.isLoading, settingsQuery.isRefetching]
+    [data, settingsQuery.isLoading, settingsQuery.isRefetching, segmentationLibraryState]
   );
 
   const runtimeValue = useMemo<SettingsRuntimeState>(
@@ -99,8 +117,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       effectiveLearnedTemplates: data.effectiveLearnedTemplates,
       runtimeLearnedTemplates: data.runtimeLearnedTemplates,
       runtimeGuardrailIssue: data.runtimeGuardrailIssue,
+      returnTarget,
+      applyToDrafts,
     }),
-    [data]
+    [data, returnTarget, applyToDrafts]
   );
 
   const draftsValue = useMemo<SettingsDraftsState>(
@@ -163,8 +183,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       ...runtimeValue,
       ...draftsValue,
       ...snapshotsValue,
+      isBusy: data.isBusy,
+      templateMergeThreshold: data.templateMergeThreshold,
+      settingsMap: data.settingsMap,
+      runtimeSelection: data.runtimeSelection,
+      applyToDrafts,
+      setApplyToDrafts,
     }),
-    [coreValue, runtimeValue, draftsValue, snapshotsValue]
+    [coreValue, runtimeValue, draftsValue, snapshotsValue, data, applyToDrafts]
   );
 
   return (

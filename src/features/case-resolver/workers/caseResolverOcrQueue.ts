@@ -271,7 +271,7 @@ export const enqueueCaseResolverOcrJob = async (
 
   await resolveBrainExecutionConfigForCapability('case_resolver.ocr');
 
-  const isRedis = await isRedisAvailable();
+  const isRedis = isRedisAvailable();
   if (!isRedis) {
     void (async () => {
       try {

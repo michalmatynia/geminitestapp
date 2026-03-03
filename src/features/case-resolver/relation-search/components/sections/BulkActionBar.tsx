@@ -18,7 +18,9 @@ export function BulkActionBar(): React.JSX.Element | null {
         variant='ghost'
         size='xs'
         disabled={isLocked}
-        onClick={handleLinkAll}
+        onClick={(): void => {
+          void handleLinkAll();
+        }}
         className='flex items-center gap-1 h-7 border border-cyan-500/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25'
       >
         <ListPlus className='size-3' />

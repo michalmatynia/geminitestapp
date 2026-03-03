@@ -48,6 +48,7 @@ import { useSettingsState } from './hooks/useSettings';
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
+  PromptExploderLearnedTemplate,
   PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
@@ -303,7 +304,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         0.95
       );
       const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
+        .map((template: PromptExploderLearnedTemplate) => `${template.id}:${template.state}:${template.updatedAt}`)
         .join('|');
       const runtimeSignature = [
         trimmed,

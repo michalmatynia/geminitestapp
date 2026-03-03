@@ -38,22 +38,22 @@ export const mongoProductAssociationsImpl = {
     const fallbackAssignedAt =
       doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date().toISOString();
 
-    const parsedEntries = doc.images.reduce<ProductImageRecord[]>((acc, rawImage: any) => {
-      if (!rawImage || typeof rawImage !== 'object') return acc;
+    const parsedEntries: ProductImageRecord[] = [];
+    doc.images.forEach((rawImage: any) => {
+      if (!rawImage || typeof rawImage !== 'object') return;
       let assignedAt = fallbackAssignedAt;
       if (rawImage.assignedAt instanceof Date) {
         assignedAt = rawImage.assignedAt.toISOString();
       } else if (typeof rawImage.assignedAt === 'string' && rawImage.assignedAt.length > 0) {
         assignedAt = rawImage.assignedAt;
       }
-      acc.push({
+      parsedEntries.push({
         productId: rawImage.productId || fallbackProductId,
         imageFileId: rawImage.imageFileId,
         assignedAt,
         imageFile: rawImage.imageFile,
       });
-      return acc;
-    }, []);
+    });
 
     const missingImageFileIds = parsedEntries
       .filter((e: ProductImageRecord) => !e.imageFile)
@@ -69,7 +69,7 @@ export const mongoProductAssociationsImpl = {
       });
     }
 
-    return parsedEntries.filter((e: ProductImageRecord) => !!e.imageFile) as ProductImageRecord[];
+    return parsedEntries.filter((e: ProductImageRecord) => !!e.imageFile);
   },
 
   async addProductImages(productId: string, imageFileIds: string[], getCollection: () => Promise<any>) {
@@ -293,5 +293,4 @@ export const mongoProductAssociationsImpl = {
       await collection.bulkWrite(bulkOps as any);
     }
   },
-};
 };

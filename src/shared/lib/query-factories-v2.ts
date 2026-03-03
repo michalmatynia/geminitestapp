@@ -186,7 +186,7 @@ export function createMultiQueryV2<
   TCombine = MultiQueryResultsV2<TQueries>,
 >(config: MultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
-  const queryOptions = (queries as any[]).map((queryConfig) =>
+  const queryOptions = (queries as unknown as any[]).map((queryConfig) =>
     useTelemetrizedMultiQueryOptionsV2(queryConfig)
   );
 
@@ -249,7 +249,7 @@ export function createSuspenseMultiQueryV2<
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 >(config: SuspenseMultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
-  const queryOptions = (queries as any[]).map((queryConfig) =>
+  const queryOptions = (queries as unknown as any[]).map((queryConfig) =>
     useTelemetrizedSuspenseMultiQueryOptionsV2(queryConfig)
   );
 

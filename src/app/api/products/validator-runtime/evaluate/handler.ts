@@ -28,9 +28,9 @@ import {
 } from '@/features/products/validation-engine/core';
 import { parseRuntimeConfigForEvaluation } from '@/features/products/validations/validator-runtime-config';
 import type {
-  ProductValidationPatternDto as ProductValidationPattern,
-  ProductValidationPostAcceptBehaviorDto as ProductValidationPostAcceptBehavior,
-  ProductValidationSeverityDto as ProductValidationSeverity,
+  ProductValidationPattern,
+  ProductValidationPostAcceptBehavior,
+  ProductValidationSeverity,
 } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

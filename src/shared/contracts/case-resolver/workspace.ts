@@ -156,11 +156,6 @@ export type CaseResolverCanvasEdge = z.infer<typeof caseResolverCanvasEdgeSchema
 /**
  * Case Resolver Settings DTOs
  */
-export const caseResolverDefaultDocumentFormatSchema = z.enum(['wysiwyg', 'markdown']);
-export type CaseResolverDefaultDocumentFormat = z.infer<
-  typeof caseResolverDefaultDocumentFormatSchema
->;
-
 export const caseResolverSettingsSchema = z.object({
   ocrModel: z.string(),
   ocrPrompt: z.string(),

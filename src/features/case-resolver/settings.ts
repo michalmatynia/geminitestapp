@@ -59,7 +59,7 @@ export {
 
 export const parseCaseResolverDefaultDocumentFormat = (
   raw: string | null | undefined,
-  fallback: CaseResolverDefaultDocumentFormat = DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat
+  fallback: CaseResolverDefaultDocumentFormat = 'wysiwyg'
 ): CaseResolverDefaultDocumentFormat => {
   const direct = normalizeCaseResolverDefaultDocumentFormatValue(raw);
   if (direct) return direct;
@@ -89,9 +89,10 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   const ocrPrompt = typeof record['ocrPrompt'] === 'string' ? record['ocrPrompt'].trim() : '';
   const rawFormatCandidate =
     typeof record['defaultDocumentFormat'] === 'string' ? record['defaultDocumentFormat'] : null;
-  const defaultDocumentFormat =
-    normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate) ??
-    DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat;
+  const normalizedDefaultDocumentFormat =
+    normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate);
+  const defaultDocumentFormat: CaseResolverDefaultDocumentFormat =
+    normalizedDefaultDocumentFormat ?? 'wysiwyg';
   const confirmDeleteDocument = record['confirmDeleteDocument'] !== false;
   const defaultAddresserPartyKind =
     normalizeCaseResolverPartySearchKindValue(record['defaultAddresserPartyKind']) ??

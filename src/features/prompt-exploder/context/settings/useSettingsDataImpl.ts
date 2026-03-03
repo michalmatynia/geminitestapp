@@ -295,6 +295,8 @@ export function useSettingsDataImpl(args: {
   const runtimeSelection = runtimeResolution.selection;
   const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
 
+  const isBusy = settingsQuery.isLoading || settingsQuery.isRefetching;
+
   const activeValidationScope: PromptExploderRuntimeValidationScope =
     preferredValidatorScope === 'case-resolver-prompt-exploder'
       ? 'case_resolver_prompt_exploder'
@@ -408,5 +410,9 @@ export function useSettingsDataImpl(args: {
     availableSnapshots,
     selectedSnapshot,
     runtimeResolution,
+    runtimeSelection,
+    isBusy,
+    settingsMap,
+    templateMergeThreshold: learningDraft.templateMergeThreshold,
   };
 }

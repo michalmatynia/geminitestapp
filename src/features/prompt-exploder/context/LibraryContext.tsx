@@ -359,11 +359,10 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
           ok: true,
           captured: true,
           persisted,
+          reason: 'manual_save' as const,
           ...(persisted
             ? { recordId: nextRecord.id }
-            : {
-              reason: 'no_changes' as const,
-            }),
+            : {}),
         };
       } catch (error) {
         toast(

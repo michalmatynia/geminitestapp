@@ -28,14 +28,14 @@ import type {
   ProductTagUpdateInput,
 } from './tags';
 import type {
-  ProductValidationPatternFormDataDto,
+  ProductValidationPatternFormData,
   ProductValidationPattern,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
   ProductValidationDenyBehavior,
   SequenceGroupDraft,
-  CreateProductValidationPatternDto,
-  UpdateProductValidationPatternDto,
+  CreateProductValidationPatternInput,
+  UpdateProductValidationPatternInput,
 } from './validation';
 export const productDraftOpenFormTabSchema = z.enum([
   'general',
@@ -248,7 +248,7 @@ export type TagRepository = {
   findByName(catalogId: string, name: string): Promise<ProductTag | null>;
 };
 
-export type PatternFormData = ProductValidationPatternFormDataDto;
+export type PatternFormData = ProductValidationPatternFormData;
 
 export interface SequenceGroupView {
   id: string;
@@ -342,9 +342,6 @@ export interface ValidatorSettingsController {
   openCreate: (target?: string) => void;
   openEdit: (pattern: ProductValidationPattern) => void;
 }
-
-export type CreateProductValidationPatternInput = CreateProductValidationPatternDto;
-export type UpdateProductValidationPatternInput = UpdateProductValidationPatternDto;
 
 export type ProductValidationPatternRepository = {
   listPatterns(): Promise<ProductValidationPattern[]>;

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getValidationPatternRepository } from '@/features/products/server';
 import { invalidateValidationPatternRuntimeCache } from '@/shared/lib/products/services/validation-pattern-runtime-cache';
 import type { UpdateProductValidationPatternInput } from '@/shared/contracts/products';
-import type { ProductValidationPatternDto as ProductValidationPattern } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 

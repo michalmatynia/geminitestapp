@@ -265,16 +265,16 @@ export function parseSegmentsRuleDriven(
     const blockLines = lines.slice(start, index);
     if (blockLines.length > 0) {
       segments.push(
-                  createRuleDrivenSegment({
-                    runtime,
-                    blockLines,
-                    headingLine: null,
-                    headingRule: null,
-                    segmentId,
-                    subsectionId,
-                    parseListLinesWithRuntimeIds,
-                    FINAL_QA_BOUNDARY_FALLBACK_RE,
-                  })      );
+        createRuleDrivenSegment({
+          runtime,
+          blockLines,
+          headingLine: null,
+          headingRule: null,
+          segmentId,
+          subsectionId,
+          parseListLinesWithRuntimeIds,
+          FINAL_QA_BOUNDARY_FALLBACK_RE,
+        })      );
     }
   }
 

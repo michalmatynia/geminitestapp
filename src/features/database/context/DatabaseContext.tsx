@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 import type {
   DatabaseType,
   DatabasePreviewMode,
-  DatabaseConfig,
+  DatabaseUiConfig,
   DatabaseData,
   DatabasePagination,
 } from '@/shared/contracts/database';
@@ -15,7 +15,7 @@ import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
 // --- Granular Contexts ---
 
-const ConfigContext = createContext<DatabaseConfig | null>(null);
+const ConfigContext = createContext<DatabaseUiConfig | null>(null);
 export const useDatabaseConfig = () => {
   const context = useContext(ConfigContext);
   if (!context) throw internalError('useDatabaseConfig must be used within a DatabaseProvider');
@@ -38,7 +38,7 @@ export const useDatabasePagination = () => {
 
 // --- Legacy Aggregator ---
 
-interface DatabaseContextType extends DatabaseConfig, DatabaseData, DatabasePagination {}
+interface DatabaseContextType extends DatabaseUiConfig, DatabaseData, DatabasePagination {}
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
@@ -73,7 +73,7 @@ export function DatabaseProvider({
   const enums = useMemo(() => data?.enums ?? [], [data]);
   const databaseSize = data?.databaseSize ?? '';
 
-  const configValue = useMemo<DatabaseConfig>(
+  const configValue = useMemo<DatabaseUiConfig>(
     () => ({
       dbType,
       setDbType,

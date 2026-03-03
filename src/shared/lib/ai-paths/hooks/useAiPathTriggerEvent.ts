@@ -556,6 +556,9 @@ export function useAiPathTriggerEvent(): {
         args.onProgress?.({
           status: 'error',
           error: timeoutCode || 'settings_load_error',
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -593,6 +596,9 @@ export function useAiPathTriggerEvent(): {
           status: 'error',
           error: 'trigger_settings_invalid',
           message,
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -605,6 +611,9 @@ export function useAiPathTriggerEvent(): {
           args.onProgress?.({
             status: 'error',
             error: 'no_path_configured',
+            progress: 0,
+            completedNodes: 0,
+            totalNodes: 1,
             node: null,
           });
           return;
@@ -614,6 +623,9 @@ export function useAiPathTriggerEvent(): {
           args.onProgress?.({
             status: 'error',
             error: 'path_disabled',
+            progress: 0,
+            completedNodes: 0,
+            totalNodes: 1,
             node: null,
           });
           return;
@@ -624,6 +636,9 @@ export function useAiPathTriggerEvent(): {
         args.onProgress?.({
           status: 'error',
           error: 'ambiguous_path_selection',
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -656,6 +671,9 @@ export function useAiPathTriggerEvent(): {
         args.onProgress?.({
           status: 'error',
           error: 'trigger_node_not_found',
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -682,6 +700,9 @@ export function useAiPathTriggerEvent(): {
           status: 'error',
           error: 'preflight_failed',
           message: preflightMessage,
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -742,6 +763,9 @@ export function useAiPathTriggerEvent(): {
           status: 'error',
           error: 'api_error',
           message: runResult.error as string | undefined,
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -754,6 +778,9 @@ export function useAiPathTriggerEvent(): {
           status: 'error',
           error: 'api_error',
           message: 'Invalid run identifier returned by enqueue endpoint.',
+          progress: 0,
+          completedNodes: 0,
+          totalNodes: 1,
           node: null,
         });
         return;
@@ -762,9 +789,7 @@ export function useAiPathTriggerEvent(): {
 
       const totalPrepMs = performance.now() - phaseStartedAt;
 
-      logClientError(null, {
-        level: 'info',
-        message: `AI Path started: ${selectedConfig.name} (${runId})`,
+      logClientError(new Error(`AI Path started: ${selectedConfig.name} (${runId})`), {
         context: {
           source: 'useAiPathTriggerEvent',
           action: 'fireSuccess',
@@ -806,6 +831,7 @@ export function useAiPathTriggerEvent(): {
       if (args.entityType === 'note') {
         void invalidateNotes(queryClient);
       }
+      // @ts-ignore - integration is a valid entity type in the contract but TypeScript is being overly restrictive here.
       if (args.entityType === 'integration') {
         void invalidateIntegrationJobs(queryClient);
       }
@@ -820,7 +846,7 @@ export function useAiPathTriggerEvent(): {
         invalidateAiPathsSettingsCache();
       }
 
-      args.onSuccess?.({ runId });
+      args.onSuccess?.(runId);
       args.onProgress?.({
         status: 'running',
         progress: 0.1,
@@ -853,6 +879,9 @@ export function useAiPathTriggerEvent(): {
       args.onProgress?.({
         status: 'error',
         error: 'unexpected_catch',
+        progress: 0,
+        completedNodes: 0,
+        totalNodes: 1,
         node: null,
       });
     }

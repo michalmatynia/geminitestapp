@@ -9,13 +9,7 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
-import {
-  PROMPT_ENGINE_SETTINGS_KEY,
-} from '../settings';
-import { 
-  parsePromptEngineSettings, 
-  defaultPromptEngineSettings 
-} from '../settings';
+import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '../settings';
 
 import {
   ConfigContext,

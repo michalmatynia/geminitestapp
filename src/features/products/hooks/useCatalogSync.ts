@@ -151,10 +151,10 @@ export function useCatalogSync(
     ] as const,
   });
 
-  const catalogsQuery = results[0]!;
-  const priceGroupsQuery = results[1]!;
-  const languagesQuery = results[2]!;
-  const currenciesQuery = results[3]!;
+  const catalogsQuery = results[0];
+  const priceGroupsQuery = results[1];
+  const languagesQuery = results[2];
+  const currenciesQuery = results[3];
 
   // Log errors
   useEffect(() => {

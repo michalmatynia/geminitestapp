@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import 'server-only';
 
 import { 
@@ -60,6 +60,14 @@ type RepeatableJobEntry = {
   key: string;
 };
 
+type QueueJobRemovalApi = {
+  remove: () => Promise<void>;
+};
+
+type QueueJobLookupApi = {
+  getJob: (jobId: string) => Promise<QueueJobRemovalApi | null>;
+};
+
 const hasRepeatableQueueApi = (
   value: unknown
 ): value is {
@@ -70,6 +78,11 @@ const hasRepeatableQueueApi = (
   value !== null &&
   typeof (value as { getRepeatableJobs?: unknown }).getRepeatableJobs === 'function' &&
   typeof (value as { removeRepeatableByKey?: unknown }).removeRepeatableByKey === 'function';
+
+const hasJobLookupQueueApi = (value: unknown): value is QueueJobLookupApi =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as { getJob?: unknown }).getJob === 'function';
 
 const removeRecoveryRepeatJobs = async (): Promise<void> => {
   const queueApi = queue.getQueue();
@@ -304,8 +317,8 @@ export const removePathRunQueueEntries = async (
     cancelLocalFallbackRun(runId);
   });
 
-  const queueApi = queue.getQueue() as any;
-  if (!queueApi || typeof queueApi.getJob !== 'function') {
+  const queueApi = queue.getQueue();
+  if (!hasJobLookupQueueApi(queueApi)) {
     return { requested: uniqueRunIds.length, removed };
   }
 

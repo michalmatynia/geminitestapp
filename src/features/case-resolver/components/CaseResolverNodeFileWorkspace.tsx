@@ -27,6 +27,7 @@ import {
 } from '../hooks/useNodeFileWorkspaceState';
 import { NodeFilePanel } from './NodeFilePanel';
 import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
+import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import {
   CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchCaseResolverNodeFileSnapshot,
@@ -282,7 +283,13 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
                       }
                       className='pr-1'
                     />
-                    <Tooltip content='Copy Node ID' side='top'>
+                    <Tooltip
+                      content={getCaseResolverDocTooltipWithFallback(
+                        'copyNodeId',
+                        'Copy Node ID'
+                      )}
+                      side='top'
+                    >
                       <Button
                         variant='ghost'
                         size='xs'

@@ -31,6 +31,7 @@ import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesCont
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 
 export function CaseTreeRenderer({
   nodes,
@@ -306,7 +307,10 @@ export function CaseTreeRenderer({
                   </div>
                 </div>
               )}
-              <Tooltip content='Copy Case ID' side='left'>
+              <Tooltip
+                content={getCaseResolverDocTooltipWithFallback('copyCaseId', 'Copy Case ID')}
+                side='left'
+              >
                 <Button
                   variant='ghost'
                   size='xs'

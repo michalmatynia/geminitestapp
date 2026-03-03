@@ -84,6 +84,12 @@ export const caseResolverEditorTypeSchema = z.enum([
 export type CaseResolverEditorType = z.infer<typeof caseResolverEditorTypeSchema>;
 
 /**
+ * Case Resolver Document Formats
+ */
+export const caseResolverDefaultDocumentFormatSchema = z.enum(['wysiwyg', 'markdown']);
+export type CaseResolverDefaultDocumentFormat = z.infer<typeof caseResolverDefaultDocumentFormatSchema>;
+
+/**
  * Case Resolver PDF Extraction Presets
  */
 export const caseResolverPdfExtractionPresetIdSchema = z.enum([

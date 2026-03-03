@@ -19,9 +19,9 @@ import {
   type ProductValidationPattern,
   type ProductValidatorConfig,
   type ProductValidatorSettings,
-  type CreateProductValidationPatternDto as CreateValidationPatternPayload,
-  type UpdateProductValidationPatternDto as UpdateValidationPatternPayload,
-  type ReorderProductValidationPatternUpdateDto as ReorderValidationPatternUpdatePayload,
+  type CreateProductValidationPatternInput as CreateValidationPatternPayload,
+  type UpdateProductValidationPatternInput as UpdateValidationPatternPayload,
+  type ReorderProductValidationPatternUpdate as ReorderValidationPatternUpdatePayload,
 } from '@/shared/contracts/products/validation';
 import {
   type ProductValidatorImportRequest as ImportValidationPatternsPayload,

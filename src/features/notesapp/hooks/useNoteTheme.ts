@@ -5,8 +5,8 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { UseNoteThemeProps } from '@/shared/contracts/notes';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
-  NotebookDto as NotebookRecord,
-  NoteThemeDto as ThemeRecord,
+  NotebookRecord,
+  ThemeRecord,
 } from '@/shared/contracts/notes';
 
 export function useNoteTheme({

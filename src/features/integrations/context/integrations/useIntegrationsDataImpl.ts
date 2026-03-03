@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useIntegrations, useIntegrationConnections, usePlaywrightPersonas } from '@/features/integrations/hooks/useIntegrationQueries';
-import { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
-import { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { useToast } from '@/shared/ui';
 
 const EMPTY_INTEGRATIONS: Integration[] = [];

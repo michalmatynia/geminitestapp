@@ -5,9 +5,9 @@ import {
 } from '@/shared/contracts/ai-paths-semantic-grammar';
  
 import type {
-  CanvasSemanticDocumentDto as CanvasSemanticDocument,
-  SemanticEdgeDto as SemanticEdge,
-  SemanticNodeDto as SemanticNode,
+  CanvasSemanticDocument,
+  SemanticEdge,
+  SemanticNode,
   ParseSemanticDocumentResult,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 

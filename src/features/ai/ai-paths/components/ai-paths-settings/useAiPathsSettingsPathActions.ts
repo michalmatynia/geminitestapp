@@ -156,6 +156,31 @@ export function useAiPathsSettingsPathActions({
 }: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
   const switchRequestSeqRef = React.useRef(0);
 
+  const sanitizePathConfigWithRuntimeFallback = useCallback(
+    (config: PathConfig, pathId: string): PathConfig => {
+      try {
+        return sanitizePathConfig(config);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const shouldRetryWithEmptyRuntime =
+          message.includes('Legacy AI Paths runtime identity fields are no longer supported') ||
+          message.includes('Invalid AI Paths runtime state payload');
+        if (!shouldRetryWithEmptyRuntime) {
+          throw error;
+        }
+        console.warn('[AI Paths] Recovering selected path from invalid runtime state.', {
+          pathId,
+          error: message,
+        });
+        return sanitizePathConfig({
+          ...config,
+          runtimeState: '',
+        });
+      }
+    },
+    []
+  );
+
   const resolveDuplicatePathName = useCallback(
     (sourceName: string): string => {
       const baseName = sourceName.trim() || 'Untitled Path';
@@ -575,7 +600,7 @@ export function useAiPathsSettingsPathActions({
             }
           }
 
-          config = sanitizePathConfig(config);
+          config = sanitizePathConfigWithRuntimeFallback(config, value);
 
           setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
             ...prev,
@@ -598,7 +623,7 @@ export function useAiPathsSettingsPathActions({
                   'Failed to parse fallback selected path config:'
                 );
               }
-              recoveredConfig = sanitizePathConfig(recoveredConfig);
+              recoveredConfig = sanitizePathConfigWithRuntimeFallback(recoveredConfig, value);
               setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
                 ...prev,
                 [value]: recoveredConfig,
@@ -637,6 +662,7 @@ export function useAiPathsSettingsPathActions({
       pathConfigs,
       persistActivePathPreference,
       reportAiPathsError,
+      sanitizePathConfigWithRuntimeFallback,
       setActivePathId,
       setPathConfigs,
       toast,

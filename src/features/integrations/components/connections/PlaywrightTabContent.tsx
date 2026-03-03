@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';

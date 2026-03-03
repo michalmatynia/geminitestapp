@@ -18,7 +18,7 @@ export const fileSchema = dtoBaseSchema.extend({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export type FileDto = z.infer<typeof fileSchema>;
+export type FileRecord = z.infer<typeof fileSchema>;
 
 export const uploadFileSchema = fileSchema.omit({
   id: true,
@@ -26,11 +26,11 @@ export const uploadFileSchema = fileSchema.omit({
   updatedAt: true,
 });
 
-export type UploadFileDto = z.infer<typeof uploadFileSchema>;
+export type UploadFileInput = z.infer<typeof uploadFileSchema>;
 
 export const updateFileSchema = uploadFileSchema.partial();
 
-export type UpdateFileDto = z.infer<typeof updateFileSchema>;
+export type UpdateFileInput = z.infer<typeof updateFileSchema>;
 
 /**
  * Image File Contracts
@@ -47,13 +47,13 @@ export const imageFileSchema = fileSchema.extend({
   tags: z.array(z.string()).optional(),
 });
 
-export type ImageFileDto = z.infer<typeof imageFileSchema>;
+export type ImageFile = z.infer<typeof imageFileSchema>;
 
 export const imageFileRecordSchema = imageFileSchema.extend({
   // Added fields specific to DB record if needed
 });
 
-export interface ImageFileRecordDto {
+export interface ImageFileRecord {
   id: string;
   name?: string;
   filename: string;
@@ -77,8 +77,6 @@ export interface ImageFileRecordDto {
   updatedAt?: string | null;
 }
 
-export type ImageFileRecord = ImageFileRecordDto;
-
 export const imageFileSelectionSchema = z.object({
   id: z.string(),
   url: z.string().optional(),
@@ -89,8 +87,7 @@ export const imageFileSelectionSchema = z.object({
   height: z.number().nullable().optional(),
 });
 
-export type ImageFileSelectionDto = z.infer<typeof imageFileSelectionSchema>;
-export type ImageFileSelection = ImageFileSelectionDto;
+export type ImageFileSelection = z.infer<typeof imageFileSelectionSchema>;
 
 export const imageFileCreateInputSchema = imageFileSchema
   .omit({
@@ -105,12 +102,10 @@ export const imageFileCreateInputSchema = imageFileSchema
     metadata: z.record(z.string(), z.unknown()).optional(),
   });
 
-export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
-export type ImageFileCreateInput = ImageFileCreateInputDto;
+export type ImageFileCreateInput = z.infer<typeof imageFileCreateInputSchema>;
 
 export const imageFileUpdateInputSchema = imageFileCreateInputSchema.partial();
-export type ImageFileUpdateInputDto = z.infer<typeof imageFileUpdateInputSchema>;
-export type ImageFileUpdateInput = ImageFileUpdateInputDto;
+export type ImageFileUpdateInput = z.infer<typeof imageFileUpdateInputSchema>;
 
 export const imageFileListFiltersSchema = z.object({
   search: z.string().optional(),
@@ -119,8 +114,7 @@ export const imageFileListFiltersSchema = z.object({
   mimetypes: z.array(z.string()).optional(),
 });
 
-export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
-export type ImageFileListFilters = ImageFileListFiltersDto;
+export type ImageFileListFilters = z.infer<typeof imageFileListFiltersSchema>;
 
 /**
  * Image Optimization DTOs
@@ -178,8 +172,7 @@ export const fileUploadEventSchema = z.object({
   createdAt: z.union([z.string(), z.date()]),
 });
 
-export type FileUploadEventDto = z.infer<typeof fileUploadEventSchema>;
-export type FileUploadEventRecord = FileUploadEventDto;
+export type FileUploadEventRecord = z.infer<typeof fileUploadEventSchema>;
 
 export const fileUploadEventsResponseSchema = z.object({
   events: z.array(fileUploadEventSchema).optional(),
@@ -188,8 +181,7 @@ export const fileUploadEventsResponseSchema = z.object({
   pageSize: z.number().optional(),
 });
 
-export type FileUploadEventsResponseDto = z.infer<typeof fileUploadEventsResponseSchema>;
-export type FileUploadEventsResponse = FileUploadEventsResponseDto;
+export type FileUploadEventsResponse = z.infer<typeof fileUploadEventsResponseSchema>;
 
 export const fileUploadEventsFiltersSchema = z.object({
   page: z.number().optional(),
@@ -202,8 +194,7 @@ export const fileUploadEventsFiltersSchema = z.object({
   to: z.string().nullable().optional(),
 });
 
-export type FileUploadEventsFiltersDto = z.infer<typeof fileUploadEventsFiltersSchema>;
-export type FileUploadEventsFilters = FileUploadEventsFiltersDto;
+export type FileUploadEventsFilters = z.infer<typeof fileUploadEventsFiltersSchema>;
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;

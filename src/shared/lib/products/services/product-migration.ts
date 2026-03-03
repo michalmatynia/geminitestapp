@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
   CatalogDto as CatalogRecord,
   ProductMigrationDirectionDto as MigrationDirection,

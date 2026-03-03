@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';
+import type { NoteFileRecord } from '@/shared/contracts/notes';
 
 export interface NoteFilesData {
   noteFiles: NoteFileRecord[];

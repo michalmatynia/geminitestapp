@@ -12,8 +12,7 @@ export const notebookSchema = namedDtoSchema.extend({
   defaultThemeId: z.string().nullable().optional(),
 });
 
-export type NotebookDto = z.infer<typeof notebookSchema>;
-export type NotebookRecord = NotebookDto;
+export type NotebookRecord = z.infer<typeof notebookSchema>;
 
 export const createNotebookSchema = notebookSchema.omit({
   id: true,
@@ -21,14 +20,12 @@ export const createNotebookSchema = notebookSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNotebookDto = z.infer<typeof createNotebookSchema>;
-export type NotebookCreateInput = CreateNotebookDto;
-export type NotebookCreateData = CreateNotebookDto;
+export type NotebookCreateInput = z.infer<typeof createNotebookSchema>;
+export type NotebookCreateData = NotebookCreateInput;
 
 export const updateNotebookSchema = createNotebookSchema.partial();
-export type UpdateNotebookDto = z.infer<typeof updateNotebookSchema>;
-export type NotebookUpdateInput = UpdateNotebookDto;
-export type NotebookUpdateData = UpdateNotebookDto;
+export type NotebookUpdateInput = z.infer<typeof updateNotebookSchema>;
+export type NotebookUpdateData = NotebookUpdateInput;
 
 /**
  * Note Theme Contract
@@ -50,8 +47,7 @@ export const noteThemeSchema = namedDtoSchema.extend({
   themeData: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type NoteThemeDto = z.infer<typeof noteThemeSchema>;
-export type ThemeRecord = NoteThemeDto;
+export type ThemeRecord = z.infer<typeof noteThemeSchema>;
 
 export const createNoteThemeSchema = noteThemeSchema.omit({
   id: true,
@@ -59,14 +55,12 @@ export const createNoteThemeSchema = noteThemeSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteThemeDto = z.input<typeof createNoteThemeSchema>;
-export type ThemeCreateInput = CreateNoteThemeDto;
+export type ThemeCreateInput = z.input<typeof createNoteThemeSchema>;
 export type ThemeCreateData = z.infer<typeof createNoteThemeSchema>;
 
 export const updateNoteThemeSchema = createNoteThemeSchema.partial();
-export type UpdateNoteThemeDto = z.infer<typeof updateNoteThemeSchema>;
-export type ThemeUpdateInput = UpdateNoteThemeDto;
-export type ThemeUpdateData = UpdateNoteThemeDto;
+export type ThemeUpdateInput = z.infer<typeof updateNoteThemeSchema>;
+export type ThemeUpdateData = ThemeUpdateInput;
 
 /**
  * Note Category Contract
@@ -81,8 +75,7 @@ export const noteCategorySchema = dtoBaseSchema.extend({
   sortIndex: z.number().nullable().optional(),
 });
 
-export type NoteCategoryDto = z.infer<typeof noteCategorySchema>;
-export type CategoryRecord = NoteCategoryDto;
+export type CategoryRecord = z.infer<typeof noteCategorySchema>;
 
 export const createNoteCategorySchema = noteCategorySchema.omit({
   id: true,
@@ -90,16 +83,14 @@ export const createNoteCategorySchema = noteCategorySchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteCategoryDto = z.infer<typeof createNoteCategorySchema>;
-export type CategoryCreateInput = CreateNoteCategoryDto;
-export type CategoryCreateData = CreateNoteCategoryDto;
+export type CategoryCreateInput = z.infer<typeof createNoteCategorySchema>;
+export type CategoryCreateData = CategoryCreateInput;
 
 export const updateNoteCategorySchema = createNoteCategorySchema.partial();
-export type UpdateNoteCategoryDto = z.infer<typeof updateNoteCategorySchema>;
-export type CategoryUpdateInput = UpdateNoteCategoryDto;
-export type CategoryUpdateData = UpdateNoteCategoryDto;
+export type CategoryUpdateInput = z.infer<typeof updateNoteCategorySchema>;
+export type CategoryUpdateData = CategoryUpdateInput;
 
-export type NoteCategoryRecordWithChildrenDto = NoteCategoryDto & {
+export type NoteCategoryRecordWithChildrenDto = CategoryRecord & {
   children: NoteCategoryRecordWithChildrenDto[];
   notes?: NoteRecord[] | undefined;
   _count?: { notes: number };
@@ -119,8 +110,7 @@ export const noteTagSchema = dtoBaseSchema.extend({
   notebookId: z.string().nullable().optional(),
 });
 
-export type NoteTagDto = z.infer<typeof noteTagSchema>;
-export type TagRecord = NoteTagDto;
+export type TagRecord = z.infer<typeof noteTagSchema>;
 
 export const createNoteTagSchema = noteTagSchema.omit({
   id: true,
@@ -128,14 +118,12 @@ export const createNoteTagSchema = noteTagSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteTagDto = z.infer<typeof createNoteTagSchema>;
-export type TagCreateInput = CreateNoteTagDto;
-export type TagCreateData = CreateNoteTagDto;
+export type TagCreateInput = z.infer<typeof createNoteTagSchema>;
+export type TagCreateData = TagCreateInput;
 
 export const updateNoteTagSchema = createNoteTagSchema.partial();
-export type UpdateNoteTagDto = z.infer<typeof updateNoteTagSchema>;
-export type TagUpdateInput = UpdateNoteTagDto;
-export type TagUpdateData = UpdateNoteTagDto;
+export type TagUpdateInput = z.infer<typeof updateNoteTagSchema>;
+export type TagUpdateData = TagUpdateInput;
 
 /**
  * Note File Contract
@@ -152,8 +140,7 @@ export const noteFileSchema = dtoBaseSchema.extend({
   publicUrl: z.string().optional(),
 });
 
-export type NoteFileDto = z.infer<typeof noteFileSchema>;
-export type NoteFileRecord = NoteFileDto;
+export type NoteFileRecord = z.infer<typeof noteFileSchema>;
 
 export const createNoteFileSchema = noteFileSchema.omit({
   id: true,
@@ -161,8 +148,7 @@ export const createNoteFileSchema = noteFileSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;
-export type NoteFileCreateInput = CreateNoteFileDto;
+export type NoteFileCreateInput = z.infer<typeof createNoteFileSchema>;
 
 export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
   notes?: NoteRecord[] | undefined;
@@ -269,7 +255,7 @@ export type NoteRelationWithTarget = NoteRelationDto & {
 };
 
 export type NoteTagWithDetails = NoteTagRelationDto & {
-  tag: NoteTagDto;
+  tag: TagRecord;
 };
 export type NoteRelationRecord = NoteRelationDto;
 
@@ -488,14 +474,14 @@ export interface UseNoteFiltersProps {
 }
 
 export interface UseNoteThemeProps {
-  themes: NoteThemeDto[];
-  notebook: NotebookDto | null;
+  themes: ThemeRecord[];
+  notebook: NotebookRecord | null;
   folderTree: CategoryWithChildren[];
   selectedFolderId: string | null;
   selectedNotebookId: string | null;
   selectedNote: NoteWithRelations | null;
   fetchFolderTree: () => Promise<void>;
-  setNotebook: (notebook: NotebookDto) => void;
+  setNotebook: (notebook: NotebookRecord) => void;
 }
 
 export interface UseNoteDataProps {
@@ -525,39 +511,39 @@ export interface NoteRepository {
   delete(id: string): Promise<boolean>;
 
   // Tags
-  getAllTags(notebookId?: string | null): Promise<NoteTagDto[]>;
-  getTagById(id: string): Promise<NoteTagDto | null>;
-  createTag(data: CreateNoteTagDto): Promise<NoteTagDto>;
-  updateTag(id: string, data: UpdateNoteTagDto): Promise<NoteTagDto | null>;
+  getAllTags(notebookId?: string | null): Promise<TagRecord[]>;
+  getTagById(id: string): Promise<TagRecord | null>;
+  createTag(data: TagCreateInput): Promise<TagRecord>;
+  updateTag(id: string, data: TagUpdateInput): Promise<TagRecord | null>;
   deleteTag(id: string): Promise<boolean>;
 
   // Categories
-  getAllCategories(notebookId?: string | null): Promise<NoteCategoryDto[]>;
-  getCategoryById(id: string): Promise<NoteCategoryDto | null>;
+  getAllCategories(notebookId?: string | null): Promise<CategoryRecord[]>;
+  getCategoryById(id: string): Promise<CategoryRecord | null>;
   getCategoryTree(notebookId?: string | null): Promise<NoteCategoryRecordWithChildrenDto[]>;
-  createCategory(data: CreateNoteCategoryDto): Promise<NoteCategoryDto>;
-  updateCategory(id: string, data: UpdateNoteCategoryDto): Promise<NoteCategoryDto | null>;
+  createCategory(data: CategoryCreateInput): Promise<CategoryRecord>;
+  updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null>;
   deleteCategory(id: string, recursive?: boolean): Promise<boolean>;
 
   // Notebooks
-  getAllNotebooks(): Promise<NotebookDto[]>;
-  getNotebookById(id: string): Promise<NotebookDto | null>;
-  createNotebook(data: CreateNotebookDto): Promise<NotebookDto>;
-  updateNotebook(id: string, data: UpdateNotebookDto): Promise<NoteWithRelations | null>; // Fix return type
+  getAllNotebooks(): Promise<NotebookRecord[]>;
+  getNotebookById(id: string): Promise<NotebookRecord | null>;
+  createNotebook(data: NotebookCreateInput): Promise<NotebookRecord>;
+  updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null>;
   deleteNotebook(id: string): Promise<boolean>;
-  getOrCreateDefaultNotebook(): Promise<NotebookDto>;
+  getOrCreateDefaultNotebook(): Promise<NotebookRecord>;
   invalidateDefaultNotebookCache(): Promise<void>;
 
   // Themes
-  getAllThemes(notebookId?: string | null): Promise<NoteThemeDto[]>;
-  getThemeById(id: string): Promise<NoteThemeDto | null>;
-  createTheme(data: CreateNoteThemeDto): Promise<NoteThemeDto>;
-  updateTheme(id: string, data: UpdateNoteThemeDto): Promise<NoteThemeDto | null>;
+  getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]>;
+  getThemeById(id: string): Promise<ThemeRecord | null>;
+  createTheme(data: ThemeCreateInput): Promise<ThemeRecord>;
+  updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null>;
   deleteTheme(id: string): Promise<boolean>;
 
   // Files
-  createNoteFile(data: CreateNoteFileDto): Promise<NoteFileDto>;
-  getNoteFiles(noteId: string): Promise<NoteFileDto[]>;
+  createNoteFile(data: NoteFileCreateInput): Promise<NoteFileRecord>;
+  getNoteFiles(noteId: string): Promise<NoteFileRecord[]>;
   deleteNoteFile(noteId: string, slotIndex: number): Promise<boolean>;
 }
 

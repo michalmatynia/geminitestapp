@@ -13,8 +13,8 @@ import {
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   playwrightSettingsSchema,
-  type PlaywrightPersonaDto,
-  type PlaywrightSettingsDto,
+  type PlaywrightPersona,
+  type PlaywrightSettings,
 } from '@/shared/contracts/playwright';
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
@@ -188,27 +188,31 @@ const updateRunState = async (
 
 const normalizeSettingsOverrides = (
   overrides: Record<string, unknown> | undefined
-): Partial<PlaywrightSettingsDto> => {
-  if (!overrides) return {};
+): Partial<PlaywrightSettings> => {
+  if (!overrides) {
+    return {};
+  }
   const parsed = playwrightSettingsSchema.partial().safeParse(overrides);
-  if (!parsed.success) return {};
+  if (!parsed.success) {
+    return {};
+  }
   const sanitized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
     if (value !== undefined) {
       sanitized[key] = value;
     }
   }
-  return sanitized as Partial<PlaywrightSettingsDto>;
+  return sanitized as Partial<PlaywrightSettings>;
 };
 
 const resolvePersonaSettings = async (
   personaId: string | undefined
-): Promise<PlaywrightSettingsDto> => {
+): Promise<PlaywrightSettings> => {
   if (!personaId?.trim()) return { ...defaultPlaywrightSettings };
   const raw = await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY);
   const parsed = parseJsonSetting<unknown>(raw, null);
   if (!Array.isArray(parsed)) return { ...defaultPlaywrightSettings };
-  const persona = parsed.find((entry: unknown): entry is PlaywrightPersonaDto => {
+  const persona = parsed.find((entry: unknown): entry is PlaywrightPersona => {
     if (!isObjectRecord(entry)) return false;
     return entry['id'] === personaId;
   });
@@ -217,7 +221,7 @@ const resolvePersonaSettings = async (
   }
   return {
     ...defaultPlaywrightSettings,
-    ...(persona.settings as Partial<PlaywrightSettingsDto>),
+    ...(persona.settings as Partial<PlaywrightSettings>),
   };
 };
 
@@ -232,7 +236,7 @@ const getBrowserType = (
       : playwright.chromium;
 
 const buildLaunchOptions = (
-  settings: PlaywrightSettingsDto,
+  settings: PlaywrightSettings,
   launchOverrides: Record<string, unknown>,
   capture: PlaywrightNodeRunRequest['capture']
 ): LaunchOptions => {
@@ -261,7 +265,7 @@ const buildLaunchOptions = (
 
 const buildContextOptions = (
   playwright: typeof import('playwright'),
-  settings: PlaywrightSettingsDto,
+  settings: PlaywrightSettings,
   runArtifactsDir: string,
   contextOverrides: Record<string, unknown>,
   capture: PlaywrightNodeRunRequest['capture']
@@ -403,7 +407,7 @@ const executePlaywrightNodeRun = async (
   const playwright = getPlaywright();
   const personaSettings = await resolvePersonaSettings(request.personaId);
   const settingsOverrides = normalizeSettingsOverrides(request.settingsOverrides);
-  const effectiveSettings: PlaywrightSettingsDto = {
+  const effectiveSettings: PlaywrightSettings = {
     ...personaSettings,
     ...settingsOverrides,
   };

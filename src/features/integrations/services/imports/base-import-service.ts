@@ -2,9 +2,6 @@ import 'server-only';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
- 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { getImportTemplate } from '@/features/integrations/services/import-template-repository';
@@ -721,8 +718,8 @@ export const processBaseImportRun = async (
             {
               status,
               action: status === 'pending' ? 'pending' : 'failed',
-              errorCode: 'INTERNAL_ERROR',
-              errorClass: 'permanent',
+              errorCode: 'UNEXPECTED_ERROR',
+              errorClass: isRetryable ? 'transient' : 'permanent',
               errorMessage: error instanceof Error ? error.message : String(error),
               retryable: isRetryable,
               lastErrorAt: now,

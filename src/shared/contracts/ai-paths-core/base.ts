@@ -119,8 +119,7 @@ export const aiPathsValidationConditionSchema = z.object({
   collectionMapKey: z.string().optional(),
   negate: z.boolean().optional(),
 });
-export type AiPathsValidationConditionDto = z.infer<typeof aiPathsValidationConditionSchema>;
-export type AiPathsValidationCondition = AiPathsValidationConditionDto;
+export type AiPathsValidationCondition = z.infer<typeof aiPathsValidationConditionSchema>;
 
 export const aiPathsValidationRuleSchema = z.object({
   id: z.string(),
@@ -156,8 +155,7 @@ export const aiPathsValidationRuleSchema = z.object({
     })
     .optional(),
 });
-export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
-export type AiPathsValidationRule = AiPathsValidationRuleDto;
+export type AiPathsValidationRule = z.infer<typeof aiPathsValidationRuleSchema>;
 
 /**
  * Audio Node Types

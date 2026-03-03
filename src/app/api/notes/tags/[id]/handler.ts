@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { tagUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { UpdateNoteTagDto as TagUpdateInput } from '@/shared/contracts/notes';
+import type { TagUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';
 

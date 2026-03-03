@@ -22,7 +22,6 @@ export const validatorPatternListSchema = dtoBaseSchema.extend({
 });
 
 export type ValidatorPatternList = z.infer<typeof validatorPatternListSchema>;
-export type ValidatorPatternListDto = ValidatorPatternList;
 
 export type ValidatorListNodeMetadata = {
   listId: string;

@@ -4,7 +4,7 @@ import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
+import type { TagRecord } from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -23,7 +23,8 @@ import type { FilterField } from '@/shared/ui/templates/panels';
  * - All state management preserved
  */
 export function NotesFilters(): React.JSX.Element {
-  const { settings, updateSettings, filters, availableTagsInScope } = useNotesAppContext();
+  const notesAppContext = useNotesAppContext();
+  const { settings, updateSettings, filters, availableTagsInScope } = notesAppContext;
 
   const { searchQuery, setSearchQuery, filterTagIds, setFilterTagIds } = filters;
   const {

@@ -167,7 +167,7 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
     tags: ['shared-hook', 'offline'],
   };
 
-  return createMutationV2<TData, TVariables, TContext, TError>({
+  const mutation = createMutationV2<TData, TVariables, TContext, TError>({
     mutationKey,
     meta: {
       ...defaultMeta,
@@ -199,27 +199,26 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
         toast(options.queuedMessage || 'Changes saved offline. Will sync when online.', {
           variant: 'info',
         });
-        return null as TData;
+        return null as unknown as TData;
       }
 
       return mutationFn(variables, { queryClient });
     },
-    onSuccess: async (data: TData, variables: TVariables, context, mutationContext: any): Promise<void> => {
-      const qc = mutationContext?.queryClient || queryClient;
+    onSuccess: async (data: TData, variables: TVariables, context): Promise<void> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (isOnline && options.successMessage) {
         toast(options.successMessage, { variant: 'success' });
       }
       if (!isOnline) return;
-      
-      void qc.invalidateQueries({ queryKey: options.queryKey });
+
+      void queryClient.invalidateQueries({ queryKey: options.queryKey });
       const extraKeys = resolveExtraKeys(variables);
       extraKeys.forEach((key: readonly unknown[]) => {
-        void qc.invalidateQueries({ queryKey: key });
+        void queryClient.invalidateQueries({ queryKey: key });
       });
 
       if (options.invalidate) {
-        await options.invalidate(qc, data, variables, context);
+        await options.invalidate(queryClient, data, variables, context);
       }
     },
     onError: (error: Error): void => {
@@ -229,7 +228,9 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
       }
       toast(message, { variant: 'error' });
     },
-  }) as any;
+  });
+
+  return mutation as UseMutationResult<TData, TError, TVariables, TContext>;
 }
 
 export function useOfflineSync(): {

@@ -9,6 +9,7 @@ import { resolveBaseConnectionToken } from '@/features/integrations/services/bas
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
   parseJsonBody,
+  type ProductWithImagesDto as ProductWithImages,
 } from '@/features/products/server';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -145,18 +146,19 @@ export async function postExportToBaseHandler(
       imagesOnly,
     });
 
-    const preparedProduct = {
+    const preparedProduct: ProductWithImages = {
       ...product,
       categoryId: product.categoryId ?? null,
-    } as any;
+    };
 
-    const preparedExportContext = await prepareBaseExportMappingsAndProduct({
-      data,
-      imagesOnly,
-      productId,
-      resolvedInventoryId,
-      product: preparedProduct,
-    });
+    const preparedExportContext =
+      await prepareBaseExportMappingsAndProduct<ProductWithImages>({
+        data,
+        imagesOnly,
+        productId,
+        resolvedInventoryId,
+        product: preparedProduct,
+      });
 
     const { mappings, resolvedTemplateId, requestedTemplateId, exportProduct } = preparedExportContext;
     let { exportImagesAsBase64, imageBase64Mode, imageTransform } = preparedExportContext;

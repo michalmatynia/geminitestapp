@@ -13,9 +13,9 @@ import React, {
 
 import type {
   NoteWithRelationsDto as NoteWithRelations,
-  NoteTagDto as TagRecord,
-  NoteFileDto as NoteFileRecord,
-  NoteThemeDto as ThemeRecord,
+  TagRecord,
+  NoteFileRecord,
+  ThemeRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   RelatedNoteDto as RelatedNote,
   NoteRelationDto,

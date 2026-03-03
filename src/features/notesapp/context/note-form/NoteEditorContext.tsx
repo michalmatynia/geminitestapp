@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
+import type { ThemeRecord } from '@/shared/contracts/notes';
 
 export interface NoteEditorData {
   editorMode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text';

@@ -3,7 +3,7 @@
 import React, { createContext, useContext } from 'react';
 
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
-import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import { internalError } from '@/shared/errors/app-error';
 
 export type ProductImagesTabContextValue = {

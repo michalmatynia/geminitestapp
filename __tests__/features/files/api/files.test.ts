@@ -63,12 +63,18 @@ describe('Files API', () => {
     try {
       await fs.unlink(imagePath1);
     } catch (error) {
-      console.error('Failed to unlink imagePath1:', error);
+      const fileError = error as NodeJS.ErrnoException;
+      if (fileError.code !== 'ENOENT') {
+        console.error('Failed to unlink imagePath1:', error);
+      }
     }
     try {
       await fs.unlink(imagePath2);
     } catch (error) {
-      console.error('Failed to unlink imagePath2:', error);
+      const fileError = error as NodeJS.ErrnoException;
+      if (fileError.code !== 'ENOENT') {
+        console.error('Failed to unlink imagePath2:', error);
+      }
     }
   });
 
@@ -119,10 +125,15 @@ describe('Files API', () => {
     });
 
     it('should return 404 for non-existent file', async () => {
-      const res = await DELETE(new NextRequest('http://localhost'), {
-        params: Promise.resolve({ id: 'non-existent-id' }),
-      } as unknown as { params: Promise<{ id: string }> });
-      expect(res.status).toBe(404);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const res = await DELETE(new NextRequest('http://localhost'), {
+          params: Promise.resolve({ id: 'non-existent-id' }),
+        } as unknown as { params: Promise<{ id: string }> });
+        expect(res.status).toBe(404);
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
     });
   });
 });

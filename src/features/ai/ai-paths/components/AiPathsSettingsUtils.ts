@@ -20,8 +20,8 @@ import {
   dbApi,
   aiJobsApi,
   backfillPathConfigNodeContracts,
+  findPathConfigCollectionAliasIssues,
   getValueAtMappingPath,
-  migratePathConfigCollections,
   normalizeNodes,
   parserSampleStateSchema,
   safeStringify,
@@ -344,12 +344,13 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const migrated = migratePathConfigCollections(config);
-  if (migrated.changed) {
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
+  if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains deprecated collection aliases.', {
       source: 'ai_paths.path_config',
       reason: 'deprecated_collection_aliases',
       pathId: config.id,
+      issues: collectionAliasIssues,
     });
   }
   const contractBackfilled = backfillPathConfigNodeContracts(config).config;

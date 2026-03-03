@@ -51,6 +51,8 @@ type SlotTreeRevealRequest = {
   nonce: number;
 };
 
+type SlotTreeDropInput = Parameters<typeof handleMasterTreeDrop>[0]['input'];
+
 const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId | null => {
   const slotId = getFirstDragValue(dataTransfer, [DRAG_KEYS.ASSET_ID], null);
   if (slotId) return toSlotMasterNodeId(slotId);
@@ -373,7 +375,7 @@ export function SlotTree({
             });
           }}
           onNodeDrop={async (
-            { draggedNodeId, targetId, position, rootDropZone },
+            { draggedNodeId, targetId, position, rootDropZone }: SlotTreeDropInput,
             ctlr
           ): Promise<void> => {
             await handleMasterTreeDrop({

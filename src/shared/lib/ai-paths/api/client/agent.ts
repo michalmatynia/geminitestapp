@@ -76,10 +76,14 @@ export async function enqueueAgentRun(payload: AgentEnqueuePayload): Promise<Api
   return apiPost<{ runId: string }>('/api/ai/agent-runtime/enqueue', payload);
 }
 
-export async function enqueuePlaywrightRun(payload: PlaywrightNodeEnqueuePayload): Promise<ApiResponse<{ runId: string }>> {
-  return apiPost<{ runId: string }>('/api/ai/agent-runtime/playwright/enqueue', payload);
+export async function enqueuePlaywrightRun(
+  payload: PlaywrightNodeEnqueuePayload
+): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+  return apiPost<{ run: PlaywrightNodeRunSnapshot }>('/api/ai-paths/playwright', payload);
 }
 
-export async function fetchPlaywrightRun(runId: string): Promise<ApiResponse<PlaywrightNodeRunSnapshot>> {
-  return apiFetch<PlaywrightNodeRunSnapshot>(`/api/ai/agent-runtime/playwright/runs/${runId}`);
+export async function fetchPlaywrightRun(
+  runId: string
+): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+  return apiFetch<{ run: PlaywrightNodeRunSnapshot }>(`/api/ai-paths/playwright/${runId}`);
 }

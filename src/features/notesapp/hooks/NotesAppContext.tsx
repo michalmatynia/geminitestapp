@@ -11,17 +11,14 @@ import {
 } from '@/features/notesapp/hooks/useNoteData';
 import {
   useNoteFilters,
-  type UseNoteFiltersResult,
 } from '@/features/notesapp/hooks/useNoteFilters';
 import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/shared/contracts/notes';
-import type { NoteSettings } from '@/shared/contracts/notes';
+import type { NotesAppContextValue } from '@/shared/contracts/notes';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
-  NoteTagDto as TagRecord,
-  NoteThemeDto as ThemeRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  TagRecord,
   NoteRelationWithSource,
   NoteRelationWithTarget,
   NoteTagWithDetails,
@@ -34,111 +31,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-export interface NotesAppContextValue {
-  settings: NoteSettings;
-  updateSettings: (updates: Partial<NoteSettings>) => void;
-  filters: UseNoteFiltersResult;
-  folderTree: CategoryWithChildren[];
-  tags: TagRecord[];
-  themes: ThemeRecord[];
-  loading: boolean;
-  selectedNote: NoteWithRelations | null;
-  setSelectedNote: (note: NoteWithRelations | null) => void;
-  selectedFolderId: string | null;
-  selectedNotebookId: string | null;
-  isEditing: boolean;
-  setIsEditing: (val: boolean) => void;
-  isCreating: boolean;
-  setIsCreating: (val: boolean) => void;
-  isFolderTreeCollapsed: boolean;
-  setIsFolderTreeCollapsed: (val: boolean) => void;
-  draggedNoteId: string | null;
-  setDraggedNoteId: (id: string | null) => void;
-  sortedNotes: NoteWithRelations[];
-  pagedNotes: NoteWithRelations[];
-  totalPages: number;
-  noteLayoutClassName: string;
-  availableTagsInScope: TagRecord[];
-  selectedFolderThemeId: string;
-  selectedFolderTheme: ThemeRecord | null;
-  selectedNoteTheme: ThemeRecord | null;
-  getThemeForNote: (note: NoteWithRelations) => ThemeRecord | null;
-  handleThemeChange: (themeId: string | null) => void | Promise<void>;
-  fetchTags: () => void;
-  setSelectedFolderId: (id: string | null) => void;
-  handleSelectNoteFromTree: (id: string) => Promise<void>;
-  handleToggleFavorite: (note: NoteWithRelations) => Promise<void>;
-  handleDeleteNote: () => Promise<void>;
-  handleUpdateSuccess: () => void;
-  handleCreateSuccess: () => void;
-  handleUnlinkRelatedNote: (id: string) => Promise<void>;
-  handleFilterByTag: (tagId: string) => void;
-
-  // Confirmation Modal
-  confirmation: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  } | null;
-  setConfirmation: (
-    val: {
-      title: string;
-      message: string;
-      onConfirm: () => void | Promise<void>;
-      confirmText?: string;
-      isDangerous?: boolean;
-    } | null
-  ) => void;
-  confirmAction: (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  }) => void;
-
-  // Prompt Modal
-  prompt: {
-    title: string;
-    message?: string;
-    label?: string;
-    defaultValue?: string;
-    placeholder?: string;
-    onConfirm: (value: string) => void | Promise<void>;
-    required?: boolean;
-  } | null;
-  setPrompt: (
-    val: {
-      title: string;
-      message?: string;
-      label?: string;
-      defaultValue?: string;
-      placeholder?: string;
-      onConfirm: (value: string) => void | Promise<void>;
-      required?: boolean;
-    } | null
-  ) => void;
-  promptAction: (config: {
-    title: string;
-    message?: string;
-    label?: string;
-    defaultValue?: string;
-    placeholder?: string;
-    onConfirm: (value: string) => void | Promise<void>;
-    required?: boolean;
-  }) => void;
-
-  // Operations
-  operations: ReturnType<typeof useNoteOperations>;
-  undoStack: UndoAction[];
-  undoHistory: { label: string }[];
-  handleUndoFolderTree: (count?: number) => Promise<void>;
-  handleUndoAtIndex: (index: number) => void;
-  fetchFolderTree: () => Promise<void>;
-}
 
 const NotesAppContext = createContext<NotesAppContextValue | null>(null);
 

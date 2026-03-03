@@ -166,8 +166,8 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
   const now = new Date().toISOString();
   const graph = canonicalizePathNodes({
     pathId: id,
-    nodes: cloneValue(initialNodes) as AiNode[],
-    edges: cloneValue(initialEdges) as Edge[],
+    nodes: cloneValue(initialNodes),
+    edges: cloneValue(initialEdges),
     selectedNodeId: initialNodes[0]?.id ?? null,
     parserSamples: {},
     updaterSamples: {},
@@ -417,8 +417,8 @@ export const duplicatePathConfig = ({
 }): PathConfig => {
   const graph = canonicalizePathNodes({
     pathId: duplicateId,
-    nodes: cloneValue(sourceConfig.nodes ?? []) as AiNode[],
-    edges: cloneValue(sourceConfig.edges ?? []) as Edge[],
+    nodes: cloneValue(sourceConfig.nodes ?? []),
+    edges: cloneValue(sourceConfig.edges ?? []),
     selectedNodeId: sourceConfig.uiState?.selectedNodeId ?? null,
     parserSamples: cloneValue(sourceConfig.parserSamples ?? {}) as PathConfig['parserSamples'],
     updaterSamples: cloneValue(sourceConfig.updaterSamples ?? {}) as PathConfig['updaterSamples'],

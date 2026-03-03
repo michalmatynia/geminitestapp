@@ -2,10 +2,9 @@ import 'server-only';
 
 import { LRUCache } from 'lru-cache';
 
-import type { SettingRecordDto, SettingsScopeDto } from '@/shared/contracts/settings';
+import type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
 
-export type SettingRecord = SettingRecordDto;
-export type SettingsScope = SettingsScopeDto;
+export type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
 
 const SETTINGS_CACHE_TTL_MS = 120_000;
 const SETTINGS_CACHE_STALE_TTL_MS = 10 * 60_000;

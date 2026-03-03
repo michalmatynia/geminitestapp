@@ -6,16 +6,16 @@ import type {
   NoteFiltersDto as NoteFilters,
   CreateNoteDto as NoteCreateInput,
   UpdateNoteDto as NoteUpdateInput,
-  CreateNoteTagDto as TagCreateInput,
-  UpdateNoteTagDto as TagUpdateInput,
-  CreateNoteCategoryDto as CategoryCreateInput,
-  UpdateNoteCategoryDto as CategoryUpdateInput,
-  NoteTagDto as TagRecord,
-  NoteCategoryDto as CategoryRecord,
+  TagCreateInput,
+  TagUpdateInput,
+  CategoryCreateInput,
+  CategoryUpdateInput,
+  TagRecord,
+  CategoryRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  NotebookDto as NotebookRecord,
-  CreateNotebookDto as NotebookCreateInput,
-  UpdateNotebookDto as NotebookUpdateInput,
+  NotebookRecord,
+  NotebookCreateInput,
+  NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 
 import { mongoThemeImpl } from './mongo/themes';
@@ -104,7 +104,7 @@ export const mongoNoteRepository: NoteRepository = {
     return mongoCategoryImpl.updateCategory(id, data);
   },
 
-  async deleteCategory(id: string, recursive?: boolean): Promise<boolean> {
+  async deleteCategory(id: string, _recursive?: boolean): Promise<boolean> {
     await mongoCategoryImpl.deleteCategory(id);
     return true;
   },

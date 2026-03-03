@@ -19,9 +19,9 @@ import {
 } from '@/shared/lib/products/services/product-service-form-utils';
 import { validateProductCreate, validateProductUpdate } from '@/shared/lib/products/validations';
 import type {
-  ImageFileRecordDto as ImageFileRecord,
-  ImageFileCreateInputDto as ImageFileCreateInput,
-  ImageFileListFiltersDto as ImageFileListFilters,
+  ImageFileRecord,
+  ImageFileCreateInput,
+  ImageFileListFilters,
 } from '@/shared/contracts/files';
 import type {
   ProductParameterValue,

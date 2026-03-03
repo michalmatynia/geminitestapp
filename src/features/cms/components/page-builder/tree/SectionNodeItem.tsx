@@ -75,6 +75,45 @@ export function SectionNodeItem({
   const hasBlockChildren = section.blocks.length > 0;
   const hasAnyChildren = hasBlockChildren || hasTreeChildren;
 
+  const handleSectionDragStart = React.useCallback(
+    (event: React.DragEvent): void => {
+      const target = event.target as HTMLElement | null;
+      const isInteractiveTarget =
+        target?.closest(
+          'button,a,input,textarea,select,[role="button"],[data-no-section-drag="true"]'
+        ) !== null;
+      const isDragHandle =
+        target?.closest('[data-cms-section-drag-handle="true"]') !== null;
+      if (isInteractiveTarget && !isDragHandle) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      setSectionDragData(event.dataTransfer, {
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        index: sectionIndex,
+      });
+      setMasterTreeDragNodeData(event.dataTransfer, toCmsSectionNodeId(section.id), section.id);
+      startSectionDrag({
+        id: section.id,
+        type: section.type,
+        zone: section.zone,
+        index: sectionIndex,
+      });
+      startSectionMasterDrag(section.id);
+    },
+    [section.id, section.type, section.zone, sectionIndex, startSectionDrag, startSectionMasterDrag]
+  );
+
+  const handleSectionDragEnd = React.useCallback((): void => {
+    endSectionDrag();
+    setIsInsideDropOver(false);
+    endSectionMasterDrag();
+  }, [endSectionDrag, endSectionMasterDrag]);
+
   const handleToggleExpand = React.useCallback((): void => {
     const nextOpen = !isRowExpanded;
     if (isExpanded !== nextOpen) {
@@ -84,31 +123,6 @@ export function SectionNodeItem({
       toggleTreeExpand();
     }
   }, [isExpanded, isRowExpanded, isTreeExpanded, section.id, toggleExpand, toggleTreeExpand]);
-
-  const dragProps = {
-    draggable: true,
-    onDragStart: (e: React.DragEvent): void => {
-      setSectionDragData(e.dataTransfer, {
-        id: section.id,
-        type: section.type,
-        zone: section.zone,
-        index: sectionIndex,
-      });
-      setMasterTreeDragNodeData(e.dataTransfer, toCmsSectionNodeId(section.id), section.id);
-      startSectionDrag({
-        id: section.id,
-        type: section.type,
-        zone: section.zone,
-        index: sectionIndex,
-      });
-      startSectionMasterDrag(section.id);
-    },
-    onDragEnd: (): void => {
-      endSectionDrag();
-      setIsInsideDropOver(false);
-      endSectionMasterDrag();
-    },
-  };
 
   return (
     <TreeSectionProvider sectionId={section.id}>
@@ -122,6 +136,7 @@ export function SectionNodeItem({
           data-cms-section-row='true'
           data-cms-section-id={section.id}
           data-cms-section-zone={section.zone}
+          draggable
           onDragOver={(event: React.DragEvent): void => {
             const sectionDrag = readSectionDragData(event.dataTransfer, {
               id: draggedSectionId,
@@ -178,6 +193,8 @@ export function SectionNodeItem({
             e.stopPropagation();
             selectNode(section.id);
           }}
+          onDragStart={handleSectionDragStart}
+          onDragEnd={handleSectionDragEnd}
         >
           <TreeCaret
             isOpen={isRowExpanded}
@@ -191,8 +208,8 @@ export function SectionNodeItem({
             placeholderClassName='block size-3 shrink-0'
           />
           <div
+            data-cms-section-drag-handle='true'
             className='flex h-7 w-5 cursor-grab items-center justify-center text-gray-600 hover:text-gray-400 active:cursor-grabbing'
-            {...dragProps}
           >
             <GripVertical className='size-3.5' />
           </div>
@@ -217,6 +234,7 @@ export function SectionNodeItem({
                 e.stopPropagation();
                 sectionActions.toggleVisibility(section.id, !isHidden);
               }}
+              data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:text-gray-200'
               title={isHidden ? 'Show section' : 'Hide section'}
             >
@@ -229,6 +247,7 @@ export function SectionNodeItem({
                 e.stopPropagation();
                 sectionActions.remove(section.id);
               }}
+              data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:bg-red-500/10 hover:text-red-400'
               title='Delete section'
             >
@@ -241,6 +260,7 @@ export function SectionNodeItem({
                 e.stopPropagation();
                 sectionActions.duplicate(section.id);
               }}
+              data-no-section-drag='true'
               className='size-7 p-0 text-gray-500 hover:text-gray-200'
               title='Duplicate section'
             >

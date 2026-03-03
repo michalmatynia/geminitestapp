@@ -20,8 +20,7 @@ export const vectorToolModeSchema = z.enum([
   'lasso',
 ]);
 
-export type VectorToolModeDto = z.infer<typeof vectorToolModeSchema>;
-export type VectorToolMode = VectorToolModeDto;
+export type VectorToolMode = z.infer<typeof vectorToolModeSchema>;
 
 export const vectorPointSchema = z.object({
   x: z.number(),
@@ -29,8 +28,7 @@ export const vectorPointSchema = z.object({
   pressure: z.number().optional(),
 });
 
-export type VectorPointDto = z.infer<typeof vectorPointSchema>;
-export type VectorPoint = VectorPointDto;
+export type VectorPoint = z.infer<typeof vectorPointSchema>;
 
 export const vectorShapeTypeSchema = z.enum([
   'path',
@@ -45,8 +43,7 @@ export const vectorShapeTypeSchema = z.enum([
   'brush',
 ]);
 
-export type VectorShapeTypeDto = z.infer<typeof vectorShapeTypeSchema>;
-export type VectorShapeType = VectorShapeTypeDto;
+export type VectorShapeType = z.infer<typeof vectorShapeTypeSchema>;
 
 export const vectorShapeRoleSchema = z.enum([
   'contour',
@@ -58,8 +55,7 @@ export const vectorShapeRoleSchema = z.enum([
   'shadow',
   'background',
 ]);
-export type VectorShapeRoleDto = z.infer<typeof vectorShapeRoleSchema>;
-export type VectorShapeRole = VectorShapeRoleDto;
+export type VectorShapeRole = z.infer<typeof vectorShapeRoleSchema>;
 
 export const vectorShapeSchema = z.object({
   id: z.string(),
@@ -75,8 +71,7 @@ export const vectorShapeSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type VectorShapeDto = z.infer<typeof vectorShapeSchema>;
-export type VectorShape = VectorShapeDto;
+export type VectorShape = z.infer<typeof vectorShapeSchema>;
 
 export const vectorLayerSchema = z.object({
   id: z.string(),
@@ -87,8 +82,7 @@ export const vectorLayerSchema = z.object({
   opacity: z.number(),
 });
 
-export type VectorLayerDto = z.infer<typeof vectorLayerSchema>;
-export type VectorLayer = VectorLayerDto;
+export type VectorLayer = z.infer<typeof vectorLayerSchema>;
 
 export const vectorDrawingSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -99,8 +93,7 @@ export const vectorDrawingSchema = dtoBaseSchema.extend({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type VectorDrawingDto = z.infer<typeof vectorDrawingSchema>;
-export type VectorDrawing = VectorDrawingDto;
+export type VectorDrawing = z.infer<typeof vectorDrawingSchema>;
 
 export const createVectorDrawingSchema = vectorDrawingSchema.omit({
   id: true,
@@ -108,10 +101,10 @@ export const createVectorDrawingSchema = vectorDrawingSchema.omit({
   updatedAt: true,
 });
 
-export type CreateVectorDrawingDto = z.infer<typeof createVectorDrawingSchema>;
-export type UpdateVectorDrawingDto = Partial<CreateVectorDrawingDto>;
+export type CreateVectorDrawing = z.infer<typeof createVectorDrawingSchema>;
+export type UpdateVectorDrawing = Partial<CreateVectorDrawing>;
 
-export type VectorTool = VectorToolModeDto;
+export type VectorTool = VectorToolMode;
 
 export interface VectorCanvasState {
   shapes: VectorShape[];

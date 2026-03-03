@@ -1,10 +1,9 @@
 'use client';
 
-import type { SettingRecordDto, SettingsScopeDto } from '@/shared/contracts/settings';
+import type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-export type SettingRecord = SettingRecordDto;
-export type SettingsScope = SettingsScopeDto;
+export type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
 
 type SettingsCache = {
   data: SettingRecord[];

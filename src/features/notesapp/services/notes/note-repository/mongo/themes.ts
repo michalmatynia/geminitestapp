@@ -2,11 +2,7 @@ import { randomUUID } from 'crypto';
 import type { Filter, WithId } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ThemeDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
-import type {
-  NoteThemeDto as ThemeRecord,
-  CreateNoteThemeDto as ThemeCreateInput,
-  UpdateNoteThemeDto as ThemeUpdateInput,
-} from '@/shared/contracts/notes';
+import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
 import { toThemeResponse } from '../mongo-note-repository-utils';
 import { themeCollectionName } from './common';
 

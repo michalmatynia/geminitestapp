@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 import type {
   NoteWithRelationsDto as NoteWithRelations,
-  NoteFileDto as NoteFileRecord,
+  NoteFileRecord,
 } from '@/shared/contracts/notes';
 import { Tag } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';

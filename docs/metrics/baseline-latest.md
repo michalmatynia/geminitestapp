@@ -1,21 +1,21 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-03T08:36:14.313Z
+Generated at: 2026-03-03T22:32:07.612Z
 
 ## Snapshot
 
-- Source files: 3909
-- Source lines: 630978
-- use client files: 1272
-- Files >= 1000 LOC: 16
+- Source files: 4138
+- Source lines: 645051
+- use client files: 1329
+- Files >= 1000 LOC: 8
 - Files >= 1500 LOC: 1
-- Largest file: `src/features/case-resolver/__tests__/settings.test.ts` (1854 LOC)
+- Largest file: `src/features/case-resolver/__tests__/settings.test.ts` (2005 LOC)
 - API routes: 318
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 318/318 (100.0%)
-- Cross-feature dependency pairs: 70
-- Shared -> features imports: 12
+- Cross-feature dependency pairs: 71
+- Shared -> features imports: 13
 - setInterval occurrences: 22
 
 ## Top API Hotspots (by LOC)
@@ -43,42 +43,42 @@ Generated at: 2026-03-03T08:36:14.313Z
 | Edge | References |
 | --- | ---: |
 | `cms -> gsap` | 19 |
+| `case-resolver -> foldertree` | 18 |
+| `case-resolver -> case-resolver-capture` | 16 |
 | `ai -> products` | 14 |
-| `case-resolver -> case-resolver-capture` | 14 |
+| `case-resolver -> filemaker` | 13 |
 | `drafter -> products` | 13 |
-| `case-resolver -> filemaker` | 12 |
+| `case-resolver -> document-editor` | 12 |
 | `jobs -> ai` | 12 |
 | `products -> integrations` | 12 |
-| `case-resolver -> document-editor` | 11 |
 | `case-resolver -> ai` | 10 |
-| `case-resolver -> foldertree` | 8 |
 | `cms -> viewer3d` | 8 |
-| `integrations -> playwright` | 8 |
+| `integrations -> products` | 8 |
 | `products -> internationalization` | 8 |
-| `integrations -> products` | 7 |
+| `integrations -> playwright` | 7 |
 | `products -> ai` | 7 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/case-resolver/__tests__/settings.test.ts` | 1854 |
-| `src/shared/utils/folder-tree-profiles-v2.ts` | 1426 |
-| `src/features/prompt-exploder/pattern-pack-rules.ts` | 1283 |
-| `src/features/case-resolver/workspace-persistence.ts` | 1243 |
-| `src/shared/contracts/image-studio.ts` | 1197 |
-| `src/shared/contracts/case-resolver/index.ts` | 1186 |
-| `src/shared/lib/query-factories-v2.ts` | 1182 |
-| `src/shared/contracts/ai-paths-core/nodes.ts` | 1179 |
-| `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1156 |
-| `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 1112 |
-| `src/shared/contracts/prompt-exploder.ts` | 1069 |
-| `src/features/prompt-exploder/utils/case-resolver-extraction.ts` | 1044 |
-| `src/shared/lib/ai-paths/core/starter-workflows/registry.ts` | 1034 |
-| `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 1030 |
-| `src/features/foldertree/v2/hooks/useFolderTreeInstanceV2.ts` | 1024 |
-| `src/features/observability/pages/SystemLogsPage.tsx` | 1016 |
-| `src/features/prompt-exploder/parser.ts` | 994 |
-| `src/features/ai/ai-paths/workers/aiPathRunQueue.ts` | 991 |
-| `src/features/foldertree/pages/AdminFolderTreeSettingsPage.tsx` | 989 |
-| `src/shared/lib/ai-paths/core/runtime/engine-core.ts` | 987 |
+| `src/features/case-resolver/__tests__/settings.test.ts` | 2005 |
+| `src/features/filemaker/__tests__/settings.test.ts` | 1228 |
+| `src/shared/contracts/image-studio.ts` | 1198 |
+| `src/shared/contracts/case-resolver/index.ts` | 1173 |
+| `src/shared/contracts/ai-paths-core/nodes.ts` | 1164 |
+| `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1159 |
+| `src/shared/contracts/prompt-exploder.ts` | 1137 |
+| `src/shared/contracts/cms.ts` | 1018 |
+| `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 933 |
+| `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
+| `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 929 |
+| `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 919 |
+| `src/shared/lib/documentation/catalogs/validator-docs.ts` | 907 |
+| `src/features/case-resolver-capture/__tests__/proposals.test.ts` | 903 |
+| `src/features/notesapp/context/NoteFormContext.tsx` | 890 |
+| `src/features/products/hooks/useProductFormValidator.ts` | 886 |
+| `src/shared/lib/ai-brain/context/BrainContext.tsx` | 884 |
+| `src/shared/lib/observability/system-log-repository.ts` | 884 |
+| `src/features/ai/ai-paths/services/path-run-service.ts` | 883 |
+| `src/features/case-resolver/workspace-persistence.ts` | 877 |

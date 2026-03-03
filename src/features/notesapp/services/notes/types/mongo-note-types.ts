@@ -1,6 +1,6 @@
 import type {
-  NoteTagDto as TagRecord,
-  NoteCategoryDto as CategoryRecord,
+  TagRecord,
+  CategoryRecord,
 } from '@/shared/contracts/notes';
 
 export interface NoteTagEmbedded {

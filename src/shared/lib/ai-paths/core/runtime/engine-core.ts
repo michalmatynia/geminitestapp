@@ -14,6 +14,7 @@ import {
   cloneValue,
   sanitizeEdges,
 } from '../utils';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { 
   nowMs, 
   resolveNodeTimeoutMs, 
@@ -52,6 +53,47 @@ import { deriveNodeInputs } from './engine-modules/engine-node-input-deriver';
 export { GraphExecutionError, GraphExecutionCancelled };
 
 const MAX_ITERATIONS = process.env['NODE_ENV'] === 'test' ? 10 : 500;
+
+type RuntimeRetryPolicy = {
+  enabled: boolean;
+  attempts: number;
+  backoffMs: number;
+};
+
+const readRuntimeRetryPolicy = (node: AiNode): RuntimeRetryPolicy => {
+  const runtimeConfig = node.config?.runtime;
+  if (!isObjectRecord(runtimeConfig)) {
+    return {
+      enabled: false,
+      attempts: 1,
+      backoffMs: DEFAULT_RETRY_BACKOFF_MS,
+    };
+  }
+
+  const retryConfig = runtimeConfig['retry'];
+  if (!isObjectRecord(retryConfig)) {
+    return {
+      enabled: false,
+      attempts: 1,
+      backoffMs: DEFAULT_RETRY_BACKOFF_MS,
+    };
+  }
+
+  const attemptsValue =
+    typeof retryConfig['attempts'] === 'number' && Number.isFinite(retryConfig['attempts'])
+      ? Math.max(1, Math.trunc(retryConfig['attempts']))
+      : 1;
+  const backoffValue =
+    typeof retryConfig['backoffMs'] === 'number' && Number.isFinite(retryConfig['backoffMs'])
+      ? Math.max(0, Math.trunc(retryConfig['backoffMs']))
+      : DEFAULT_RETRY_BACKOFF_MS;
+
+  return {
+    enabled: retryConfig['enabled'] === true,
+    attempts: attemptsValue,
+    backoffMs: backoffValue,
+  };
+};
 
 export async function evaluateGraphInternal(
   nodes: AiNode[],
@@ -150,7 +192,7 @@ export async function evaluateGraphInternal(
         nodeStatuses: snapshot.nodeStatuses,
       });
     } catch (error) {
-      void options.reportAiPathsError(error, {
+      options.reportAiPathsError(error, {
         action: 'onHalt',
         reason,
         runId: resolvedRunId,
@@ -581,8 +623,8 @@ export async function evaluateGraphInternal(
               },
               toast: (message: string, toastOptions?: ToastOptions): void => {
                 options.toast?.(message, toastOptions);
-                if (options['onToast']) {
-                  void (options['onToast'] as any)({
+                if (options.onToast) {
+                  void options.onToast({
                     runId: resolvedRunId,
                     nodeId: node.id,
                     message,
@@ -609,11 +651,7 @@ export async function evaluateGraphInternal(
               },
             };
 
-            const retryPolicy = (node.config?.runtime?.retry as any) ?? {
-              enabled: false,
-              attempts: 1,
-              backoffMs: DEFAULT_RETRY_BACKOFF_MS,
-            };
+            const retryPolicy = readRuntimeRetryPolicy(node);
 
              
             const nodeResult = await withRetries(
@@ -623,8 +661,8 @@ export async function evaluateGraphInternal(
                   ctx.timeoutMs,
                   `Node ${node.title || node.id}`
                 ),
-              (retryPolicy['enabled'] ? (retryPolicy['attempts'] ?? 1) : 1),
-              (retryPolicy['backoffMs'] ?? DEFAULT_RETRY_BACKOFF_MS),
+              retryPolicy.enabled ? retryPolicy.attempts : 1,
+              retryPolicy.backoffMs,
               `Node ${node.title || node.id}`,
               options.abortSignal
             );

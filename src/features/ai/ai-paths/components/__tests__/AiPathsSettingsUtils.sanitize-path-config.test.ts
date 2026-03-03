@@ -129,6 +129,9 @@ describe('sanitizePathConfig', () => {
           outputs: ['value'],
         }),
       ],
+      uiState: {
+        selectedNodeId: 'node-111111111111111111111111',
+      },
     } as PathConfig;
 
     expect(() => sanitizePathConfig(config)).toThrowError(

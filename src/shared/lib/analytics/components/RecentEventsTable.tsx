@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import type { AnalyticsSummaryDto } from '@/shared/contracts';
+import type { AnalyticsSummary } from '@/shared/contracts';
 import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -11,7 +11,7 @@ import { AnalyticsEventDetails } from './AnalyticsEventDetails';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-type AnalyticsEvent = NonNullable<AnalyticsSummaryDto['recent']>[number];
+type AnalyticsEvent = NonNullable<AnalyticsSummary['recent']>[number];
 
 export function RecentEventsTable(): React.JSX.Element {
   const { summaryQuery } = useAnalytics();

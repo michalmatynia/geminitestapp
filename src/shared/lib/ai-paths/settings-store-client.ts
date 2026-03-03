@@ -1,7 +1,7 @@
 'use client';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { SettingRecordDto } from '@/shared/contracts/settings';
+import type { SettingRecord } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
@@ -11,7 +11,7 @@ import {
   type AiPathsMaintenanceApplyResult,
 } from '@/shared/contracts/ai-paths';
 
-export type AiPathsSettingRecord = SettingRecordDto;
+export type AiPathsSettingRecord = SettingRecord;
 export { AI_PATHS_MAINTENANCE_ACTION_IDS };
 export type {
   AiPathsMaintenanceActionId,

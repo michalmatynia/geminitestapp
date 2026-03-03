@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 
 import { useCreateNoteTag } from '@/features/notesapp/api/useNoteMutations';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
+import type { TagRecord } from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
 
 // Why: Tag selection has complex state:

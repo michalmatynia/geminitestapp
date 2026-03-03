@@ -21,7 +21,7 @@ import type {
   AiInsightSourceDto as AiInsightSource,
   AiInsightTypeDto as AiInsightType,
 } from '@/shared/contracts/ai-insights';
-import type { AiPathRuntimeAnalyticsRangeDto as AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { sanitizeSystemLogForAi } from '@/shared/lib/observability/runtime-context/sanitize-system-log-for-ai';
 

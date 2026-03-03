@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from 'react';
 
-import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   ProductImageSlot,
   ProductWithImages,

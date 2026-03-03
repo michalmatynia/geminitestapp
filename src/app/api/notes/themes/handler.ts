@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { themeCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { CreateNoteThemeDto as ThemeCreateInput } from '@/shared/contracts/notes';
+import type { ThemeCreateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';
 

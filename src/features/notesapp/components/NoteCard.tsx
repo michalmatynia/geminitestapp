@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
-  NoteThemeDto as ThemeRecord,
+  ThemeRecord,
   NoteWithRelationsDto as NoteWithRelations,
 } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';

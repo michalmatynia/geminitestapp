@@ -242,6 +242,33 @@ export const migrateDatabaseConfigCollections = (
   };
 };
 
+export type AiPathsCollectionAliasIssue = {
+  nodeId: string;
+  location: 'database.query.collection';
+  value: string;
+  canonical: string;
+};
+
+export const findPathConfigCollectionAliasIssues = (
+  pathConfig: Pick<PathConfig, 'nodes'>
+): AiPathsCollectionAliasIssue[] =>
+  (pathConfig.nodes ?? []).flatMap((node: AiNode): AiPathsCollectionAliasIssue[] => {
+    const databaseConfig = node.config?.database;
+    if (!databaseConfig || typeof databaseConfig !== 'object') return [];
+    const query = databaseConfig.query;
+    if (!query || typeof query.collection !== 'string') return [];
+    const canonical = canonicalizeAiPathsCollectionName(query.collection);
+    if (canonical === query.collection) return [];
+    return [
+      {
+        nodeId: node.id,
+        location: 'database.query.collection',
+        value: query.collection,
+        canonical,
+      },
+    ];
+  });
+
 const migrateNodeCollections = (node: AiNode): { node: AiNode; changed: boolean } => {
   if (!node.config) return { node, changed: false };
 

@@ -1,4 +1,4 @@
-import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import type { AnalyticsEvent, AnalyticsSummary } from '@/shared/contracts/analytics';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -6,9 +6,9 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 };
 
 export const sanitizeEvents = (
-  events: AnalyticsSummaryDto['recent'] | undefined
+  events: AnalyticsSummary['recent'] | undefined
 ): Record<string, unknown>[] =>
-  (events ?? []).map((event: AnalyticsEventDto) => ({
+  (events ?? []).map((event: AnalyticsEvent) => ({
     id: event.id,
     ts: event.ts,
     type: event.type,

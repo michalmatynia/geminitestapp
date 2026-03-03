@@ -1,7 +1,7 @@
 'use client';
 
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
-import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
+import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   createCreateMutationV2,

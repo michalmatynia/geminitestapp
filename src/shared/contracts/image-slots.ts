@@ -43,5 +43,3 @@ export interface ManagedImageSlotExisting {
 }
 
 export type ManagedImageSlot = ManagedImageSlotFile | ManagedImageSlotExisting | null;
-
-export type ManagedImageSlotDto = ManagedImageSlot;

@@ -4,18 +4,18 @@ import {
   ApiResponse 
 } from './base';
 import type { 
-  SettingRecordDto, 
-  SettingsScopeDto 
+  SettingRecord,
+  SettingsScope
 } from '@/shared/contracts/settings';
 
-export async function fetchSettings(scope: SettingsScopeDto): Promise<ApiResponse<SettingRecordDto[]>> {
-  return apiFetch<SettingRecordDto[]>(`/api/settings?scope=${scope}`);
+export async function fetchSettings(scope: SettingsScope): Promise<ApiResponse<SettingRecord[]>> {
+  return apiFetch<SettingRecord[]>(`/api/settings?scope=${scope}`);
 }
 
 export async function updateSetting(args: {
   key: string;
   value: string;
-  scope: SettingsScopeDto;
-}): Promise<ApiResponse<SettingRecordDto>> {
-  return apiPost<SettingRecordDto>('/api/settings', args);
+  scope: SettingsScope;
+}): Promise<ApiResponse<SettingRecord>> {
+  return apiPost<SettingRecord>('/api/settings', args);
 }

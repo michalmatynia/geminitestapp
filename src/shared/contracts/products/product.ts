@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
-import { imageFileRecordSchema, type ImageFileRecordDto as ImageFileRecord } from '../files';
+import { imageFileRecordSchema, type ImageFileRecord } from '../files';
 import { catalogSchema } from './catalogs';
 import { productTagSchema } from './tags';
 import { producerSchema } from './producers';

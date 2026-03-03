@@ -10,7 +10,7 @@ import {
   useAnalyticsInsights,
   useRunAnalyticsInsight,
 } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
-import type { AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import type { AnalyticsScope, AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 import { type AnalyticsRange } from '../api';
@@ -20,7 +20,7 @@ interface AnalyticsContextValue {
   setRange: (range: AnalyticsRange) => void;
   scope: AnalyticsScope | 'all';
   setScope: (scope: AnalyticsScope | 'all') => void;
-  summaryQuery: UseQueryResult<AnalyticsSummaryDto, Error>;
+  summaryQuery: UseQueryResult<AnalyticsSummary, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
   runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
   fromToLabel: string | null;

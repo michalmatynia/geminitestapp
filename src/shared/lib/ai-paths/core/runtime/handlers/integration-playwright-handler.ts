@@ -58,12 +58,23 @@ const pollPlaywrightRun = async (
   throw new Error('Playwright run timed out while polling.');
 };
 
+const artifactUrlFromPath = (relativePath: string): string | null => {
+  const normalized = relativePath.trim().replace(/^\/+/, '');
+  if (!normalized) return null;
+  const parts = normalized.split('/');
+  if (parts.length < 2) return null;
+  const runId = (parts[0] ?? '').trim();
+  const file = parts.slice(1).join('/').trim();
+  if (!runId || !file || file.includes('/') || file.includes('\\')) return null;
+  return `/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`;
+};
+
 const mapArtifactsWithUrls = (
   artifacts: NonNullable<PlaywrightNodeRunSnapshot['artifacts']>
 ): Array<Record<string, unknown>> =>
   artifacts.map((artifact) => ({
     ...artifact,
-    url: playwrightNodeApi.artifactUrlFromPath(artifact.path) ?? null,
+    url: artifactUrlFromPath(artifact.path) ?? null,
   }));
 
 const mapRunToOutputs = (run: PlaywrightNodeRunSnapshot): RuntimePortValues => {

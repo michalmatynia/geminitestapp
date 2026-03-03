@@ -1,5 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit/index';
 import prisma from '@/shared/lib/db/prisma';
 

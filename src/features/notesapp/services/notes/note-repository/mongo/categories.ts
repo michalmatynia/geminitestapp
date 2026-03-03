@@ -12,10 +12,10 @@ import {
   NoteDocument 
 } from '../types/mongo-note-types';
 import { 
-  NoteCategoryDto as CategoryRecord,
+  CategoryRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  CreateNoteCategoryDto as CategoryCreateInput,
-  UpdateNoteCategoryDto as CategoryUpdateInput,
+  CategoryCreateInput,
+  CategoryUpdateInput,
 } from '@/shared/contracts/notes';
 import { toCategoryResponse, buildTree } from '../mongo-note-repository-utils';
 import { Filter, UpdateFilter } from 'mongodb';

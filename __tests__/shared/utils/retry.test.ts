@@ -82,9 +82,8 @@ describe('Retry Utils', () => {
       for (let i = 0; i < 5; i++) {
         try {
           await withCircuitBreaker(op, { circuitId });
-        } catch (error) {
-          // Expected failure to trip circuit breaker
-          console.log('Expected failure during circuit breaker trip:', error);
+        } catch {
+          // Expected failure to trip circuit breaker.
         }
       }
 

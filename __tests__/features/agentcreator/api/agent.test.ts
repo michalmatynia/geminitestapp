@@ -1,6 +1,10 @@
 import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
+vi.mock('@/features/jobs/server', () => ({
+  startAgentQueue: vi.fn(),
+}));
+
 import { GET as getAgentAction } from '@/app/api/chatbot/agent/[runId]/[action]/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';
 import prisma from '@/shared/lib/db/prisma';

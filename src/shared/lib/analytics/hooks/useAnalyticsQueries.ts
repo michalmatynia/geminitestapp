@@ -3,8 +3,8 @@
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
-  AnalyticsScopeDto as AnalyticsScope,
-  AnalyticsSummaryDto,
+  AnalyticsScope,
+  AnalyticsSummary,
 } from '@/shared/contracts/analytics';
 import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -17,7 +17,7 @@ export function useAnalyticsSummary(input?: {
   range?: AnalyticsRange;
   scope?: AnalyticsScope | 'all';
   enabled?: boolean;
-}): SingleQuery<AnalyticsSummaryDto> {
+}): SingleQuery<AnalyticsSummary> {
   const range = input?.range ?? '24h';
   const scope = input?.scope ?? 'all';
   const enabled = input?.enabled ?? true;

@@ -11,7 +11,7 @@ import {
 import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
+import type { TagRecord } from '@/shared/contracts/notes';
 import {
   Button,
   useToast,

@@ -11,7 +11,13 @@ export type BaseExportProductLike = {
   id: string;
   sku?: string | null;
   categoryId?: string | null;
-  producers?: Array<{ id: string; [key: string]: unknown }>;
+  producers?: Array<{
+    id?: string;
+    producerId?: string;
+    producer_id?: string;
+    manufacturerId?: string;
+    [key: string]: unknown;
+  }>;
   tags?: Array<{ tagId?: string; id?: string }>;
   catalogs?: Array<{ catalogId: string; [key: string]: unknown }>;
   parameters?: Array<{ name?: string; id?: string; value?: unknown }>;
@@ -340,4 +346,3 @@ export const importParameterCacheResponseSchema = z.object({
 });
 
 export type ImportParameterCacheResponse = z.infer<typeof importParameterCacheResponseSchema>;
-

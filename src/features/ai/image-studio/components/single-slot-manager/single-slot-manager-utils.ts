@@ -1,4 +1,4 @@
-import type { ManagedImageSlotDto as ProductImageSlot } from '@/shared/contracts/image-slots';
+import type { ManagedImageSlot as ProductImageSlot } from '@/shared/contracts/image-slots';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
 

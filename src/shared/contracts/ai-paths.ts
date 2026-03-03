@@ -42,7 +42,7 @@ export const aiPathSchema = namedDtoSchema.extend({
   version: z.number(),
 });
 
-export type AiPathDto = z.infer<typeof aiPathSchema>;
+export type AiPath = z.infer<typeof aiPathSchema>;
 
 export const createAiPathSchema = aiPathSchema.omit({
   id: true,
@@ -50,10 +50,8 @@ export const createAiPathSchema = aiPathSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAiPathDto = z.infer<typeof createAiPathSchema>;
-export type AiPathCreateInput = CreateAiPathDto;
-export type UpdateAiPathDto = Partial<CreateAiPathDto>;
-export type AiPathUpdateInput = UpdateAiPathDto;
+export type AiPathCreateInput = z.infer<typeof createAiPathSchema>;
+export type AiPathUpdateInput = Partial<AiPathCreateInput>;
 
 /**
  * AI Path Run Record Contract
@@ -79,8 +77,7 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
     .optional(),
 });
 
-export type AiPathRunRecordDto = z.infer<typeof aiPathRunRecordSchema>;
-export type AiPathRunRecord = AiPathRunRecordDto;
+export type AiPathRunRecord = z.infer<typeof aiPathRunRecordSchema>;
 
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
@@ -88,8 +85,7 @@ export const aiPathRunDetailSchema = z.object({
   events: z.array(z.lazy(() => aiPathRunEventSchema)),
 });
 
-export type AiPathRunDetailDto = z.infer<typeof aiPathRunDetailSchema>;
-export type AiPathRunDetail = AiPathRunDetailDto;
+export type AiPathRunDetail = z.infer<typeof aiPathRunDetailSchema>;
 
 export const createAiPathRunSchema = aiPathRunSchema
   .omit({
@@ -102,9 +98,7 @@ export const createAiPathRunSchema = aiPathRunSchema
     status: aiPathRunStatusSchema.optional(),
   });
 
-export type CreateAiPathRunDto = z.infer<typeof createAiPathRunSchema>;
-export type UpdateAiPathRunDto = Partial<CreateAiPathRunDto>;
-export type AiPathRunUpdateInput = UpdateAiPathRunDto;
+export type AiPathRunUpdateInput = Partial<z.infer<typeof createAiPathRunSchema>>;
 
 export const aiPathRunUpdateSchema = aiPathRunRecordSchema.partial().omit({
   id: true,
@@ -113,7 +107,7 @@ export const aiPathRunUpdateSchema = aiPathRunRecordSchema.partial().omit({
   createdAt: true,
 });
 
-export type AiPathRunUpdateDto = z.infer<typeof aiPathRunUpdateSchema>;
+type AiPathRunUpdateRecord = z.infer<typeof aiPathRunUpdateSchema>;
 
 /**
  * AI Path Run Node Contract
@@ -134,15 +128,13 @@ export const aiPathRunNodeSchema = dtoBaseSchema.extend({
   finishedAt: z.string().nullable().optional(),
 });
 
-export type AiPathRunNodeDto = z.infer<typeof aiPathRunNodeSchema>;
-export type AiPathRunNodeRecord = AiPathRunNodeDto;
+export type AiPathRunNodeRecord = z.infer<typeof aiPathRunNodeSchema>;
 
 /**
  * AI Path Run Event Contract
  */
 export const aiPathRunEventLevelSchema = z.enum(['debug', 'info', 'warn', 'error', 'fatal']);
-export type AiPathRunEventLevelDto = z.infer<typeof aiPathRunEventLevelSchema>;
-export type AiPathRunEventLevel = AiPathRunEventLevelDto;
+export type AiPathRunEventLevel = z.infer<typeof aiPathRunEventLevelSchema>;
 
 export const aiPathRunEventSchema = z.object({
   id: z.string(),
@@ -159,8 +151,7 @@ export const aiPathRunEventSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export type AiPathRunEventDto = z.infer<typeof aiPathRunEventSchema>;
-export type AiPathRunEventRecord = AiPathRunEventDto;
+export type AiPathRunEventRecord = z.infer<typeof aiPathRunEventSchema>;
 
 export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
   id: true,
@@ -169,7 +160,7 @@ export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
   createdAt: true,
 });
 
-export type AiPathRunNodeUpdateDto = z.infer<typeof aiPathRunNodeUpdateSchema>;
+export type AiPathRunNodeUpdate = z.infer<typeof aiPathRunNodeUpdateSchema>;
 
 export const aiPathRunEventCreateInputSchema = z.object({
   runId: z.string(),
@@ -183,15 +174,14 @@ export const aiPathRunEventCreateInputSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export type AiPathRunEventCreateInputDto = z.infer<typeof aiPathRunEventCreateInputSchema>;
+export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInputSchema>;
 
 /**
  * AI Paths Composite & Domain DTOs
  */
 
 export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
-export type AiPathRuntimeAnalyticsRangeDto = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
-export type AiPathRuntimeAnalyticsRange = AiPathRuntimeAnalyticsRangeDto;
+export type AiPathRuntimeAnalyticsRange = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
 
 export const aiPathRuntimeAnalyticsSlowestSpanSchema = z.object({
   runId: z.string(),
@@ -202,10 +192,9 @@ export const aiPathRuntimeAnalyticsSlowestSpanSchema = z.object({
   durationMs: z.number(),
 });
 
-export type AiPathRuntimeAnalyticsSlowestSpanDto = z.infer<
+export type AiPathRuntimeAnalyticsSlowestSpan = z.infer<
   typeof aiPathRuntimeAnalyticsSlowestSpanSchema
 >;
-export type AiPathRuntimeAnalyticsSlowestSpan = AiPathRuntimeAnalyticsSlowestSpanDto;
 
 export const aiPathRuntimeTraceSlowNodeSchema = z.object({
   nodeId: z.string(),
@@ -216,8 +205,7 @@ export const aiPathRuntimeTraceSlowNodeSchema = z.object({
   totalDurationMs: z.number(),
 });
 
-export type AiPathRuntimeTraceSlowNodeDto = z.infer<typeof aiPathRuntimeTraceSlowNodeSchema>;
-export type AiPathRuntimeTraceSlowNode = AiPathRuntimeTraceSlowNodeDto;
+export type AiPathRuntimeTraceSlowNode = z.infer<typeof aiPathRuntimeTraceSlowNodeSchema>;
 
 export const aiPathRuntimeTraceFailedNodeSchema = z.object({
   nodeId: z.string(),
@@ -226,8 +214,7 @@ export const aiPathRuntimeTraceFailedNodeSchema = z.object({
   spanCount: z.number(),
 });
 
-export type AiPathRuntimeTraceFailedNodeDto = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
-export type AiPathRuntimeTraceFailedNode = AiPathRuntimeTraceFailedNodeDto;
+export type AiPathRuntimeTraceFailedNode = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
 
 export const aiPathRuntimeTraceAnalyticsSchema = z.object({
   source: z.enum(['none', 'db_sample']),
@@ -244,8 +231,7 @@ export const aiPathRuntimeTraceAnalyticsSchema = z.object({
   truncated: z.boolean(),
 });
 
-export type AiPathRuntimeTraceAnalyticsDto = z.infer<typeof aiPathRuntimeTraceAnalyticsSchema>;
-export type AiPathRuntimeTraceAnalytics = AiPathRuntimeTraceAnalyticsDto;
+export type AiPathRuntimeTraceAnalytics = z.infer<typeof aiPathRuntimeTraceAnalyticsSchema>;
 
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   from: z.string(),
@@ -287,8 +273,7 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   generatedAt: z.string(),
 });
 
-export type AiPathRuntimeAnalyticsSummaryDto = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
-export type AiPathRuntimeAnalyticsSummary = AiPathRuntimeAnalyticsSummaryDto;
+export type AiPathRuntimeAnalyticsSummary = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
 
 export const pathMetaSchema = z.object({
   id: z.string(),
@@ -297,16 +282,14 @@ export const pathMetaSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type PathMetaDto = z.infer<typeof pathMetaSchema>;
-export type PathMeta = PathMetaDto;
+export type PathMeta = z.infer<typeof pathMetaSchema>;
 
 export const pathUiStateSchema = z.object({
   selectedNodeId: z.string().nullable().optional(),
   configOpen: z.boolean().optional(),
 });
 
-export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
-export type PathUiState = PathUiStateDto;
+export type PathUiState = z.infer<typeof pathUiStateSchema>;
 
 export type CentralDocsSnapshotSource = {
   id: string;
@@ -428,8 +411,7 @@ export type AiPathsMaintenanceApplyResult = {
 };
 
 export const pathBlockedRunPolicySchema = z.enum(['fail_run', 'complete_with_warning']);
-export type PathBlockedRunPolicyDto = z.infer<typeof pathBlockedRunPolicySchema>;
-export type PathBlockedRunPolicy = PathBlockedRunPolicyDto;
+export type PathBlockedRunPolicy = z.infer<typeof pathBlockedRunPolicySchema>;
 
 export const pathConfigSchema = z.object({
   id: z.string(),
@@ -457,8 +439,7 @@ export const pathConfigSchema = z.object({
   uiState: pathUiStateSchema.optional(),
 });
 
-export type PathConfigDto = z.infer<typeof pathConfigSchema>;
-export type PathConfig = PathConfigDto;
+export type PathConfig = z.infer<typeof pathConfigSchema>;
 
 export const pathDebugEntrySchema = z.object({
   nodeId: z.string(),
@@ -466,8 +447,7 @@ export const pathDebugEntrySchema = z.object({
   debug: z.unknown(),
 });
 
-export type PathDebugEntryDto = z.infer<typeof pathDebugEntrySchema>;
-export type PathDebugEntry = PathDebugEntryDto;
+export type PathDebugEntry = z.infer<typeof pathDebugEntrySchema>;
 
 export const pathDebugSnapshotSchema = z.object({
   pathId: z.string(),
@@ -475,8 +455,7 @@ export const pathDebugSnapshotSchema = z.object({
   entries: z.array(pathDebugEntrySchema),
 });
 
-export type PathDebugSnapshotDto = z.infer<typeof pathDebugSnapshotSchema>;
-export type PathDebugSnapshot = PathDebugSnapshotDto;
+export type PathDebugSnapshot = z.infer<typeof pathDebugSnapshotSchema>;
 
 export const clusterPresetSchema = z.object({
   id: z.string(),
@@ -488,8 +467,7 @@ export const clusterPresetSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type ClusterPresetDto = z.infer<typeof clusterPresetSchema>;
-export type ClusterPreset = ClusterPresetDto;
+export type ClusterPreset = z.infer<typeof clusterPresetSchema>;
 
 export const dbQueryPresetSchema = z.object({
   id: z.string(),
@@ -500,8 +478,7 @@ export const dbQueryPresetSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type DbQueryPresetDto = z.infer<typeof dbQueryPresetSchema>;
-export type DbQueryPreset = DbQueryPresetDto;
+export type DbQueryPreset = z.infer<typeof dbQueryPresetSchema>;
 
 export const dbNodePresetSchema = z.object({
   id: z.string(),
@@ -512,24 +489,21 @@ export const dbNodePresetSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type DbNodePresetDto = z.infer<typeof dbNodePresetSchema>;
-export type DbNodePreset = DbNodePresetDto;
+export type DbNodePreset = z.infer<typeof dbNodePresetSchema>;
 
 export const jsonPathEntrySchema = z.object({
   path: z.string(),
   type: z.enum(['object', 'array', 'value']),
 });
 
-export type JsonPathEntryDto = z.infer<typeof jsonPathEntrySchema>;
-export type JsonPathEntry = JsonPathEntryDto;
+export type JsonPathEntry = z.infer<typeof jsonPathEntrySchema>;
 
 export const connectionValidationSchema = z.object({
   valid: z.boolean(),
   message: z.string().optional(),
 });
 
-export type ConnectionValidationDto = z.infer<typeof connectionValidationSchema>;
-export type ConnectionValidation = ConnectionValidationDto;
+export type ConnectionValidation = z.infer<typeof connectionValidationSchema>;
 
 /**
  * AI Path Run List Options Contract
@@ -546,8 +520,7 @@ export const aiPathRunEventListOptionsSchema = z.object({
   limit: z.number().optional(),
 });
 
-export type AiPathRunEventListOptionsDto = z.infer<typeof aiPathRunEventListOptionsSchema>;
-export type AiPathRunEventListOptions = AiPathRunEventListOptionsDto;
+export type AiPathRunEventListOptions = z.infer<typeof aiPathRunEventListOptionsSchema>;
 
 export type AiPathRunVisibility = 'scoped' | 'global';
 
@@ -569,8 +542,7 @@ export const aiPathRunListOptionsSchema = z.object({
   includeTotal: z.boolean().optional(),
 });
 
-export type AiPathRunListOptionsDto = z.infer<typeof aiPathRunListOptionsSchema>;
-export type AiPathRunListOptions = AiPathRunListOptionsDto;
+export type AiPathRunListOptions = z.infer<typeof aiPathRunListOptionsSchema>;
 
 export type AiPathRunQueueStatsOptions = {
   userId?: string | null;
@@ -584,8 +556,7 @@ export const aiPathRunListResultSchema = z.object({
   total: z.number(),
 });
 
-export type AiPathRunListResultDto = z.infer<typeof aiPathRunListResultSchema>;
-export type AiPathRunListResult = AiPathRunListResultDto;
+export type AiPathRunListResult = z.infer<typeof aiPathRunListResultSchema>;
 
 /**
  * Execution Contract
@@ -597,7 +568,7 @@ export const executeAiPathSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type ExecuteAiPathDto = z.infer<typeof executeAiPathSchema>;
+export type ExecuteAiPath = z.infer<typeof executeAiPathSchema>;
 
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
 
@@ -739,19 +710,19 @@ export type RuntimeProfileSnapshot = {
  * AI Path Repository Interfaces
  */
 
-export type AiPathRunCreateInput = Omit<CreateAiPathRunDto, 'status'> & {
+export type AiPathRunCreateInput = Omit<z.infer<typeof createAiPathRunSchema>, 'status'> & {
   status?: AiPathRunStatus | undefined;
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null | undefined;
   runtimeState?: Record<string, unknown> | null | undefined;
 };
 
-export type AiPathRunUpdate = AiPathRunUpdateDto & {
+export type AiPathRunUpdate = AiPathRunUpdateRecord & {
   status?: AiPathRunStatus;
   triggerContext?: Record<string, unknown> | null;
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
 };
 
-export type AiPathRunNodeUpdate = Partial<AiPathRunNodeDto> & {
+export type AiPathRunNodeUpdate = Partial<AiPathRunNodeRecord> & {
   status?: AiPathNodeStatus;
 };
 

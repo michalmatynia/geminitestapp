@@ -88,6 +88,12 @@ export type EvaluateGraphOptions = {
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
     nodeStatuses: Record<string, string>;
   }) => Promise<void> | void;
+  onToast?: (event: {
+    runId: string;
+    nodeId: string;
+    message: string;
+    options?: ToastOptions;
+  }) => Promise<void> | void;
   profile?: RuntimeProfileOptions | undefined;
   abortSignal?: AbortSignal | undefined;
   toast?: Toast | undefined;

@@ -25,6 +25,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     internalCategoryOptions,
     pendingMappings,
     expandedIds,
+    categoryTree,
     toggleExpand,
     handleFetchFromBase,
     handleSave,
@@ -134,11 +135,11 @@ export function CategoryMapperTable(): React.JSX.Element {
       isLoading={isLoading}
       variant='flat'
       columns={columns}
-      data={externalCategories as any}
+      data={categoryTree}
       expanded={expandedState}
       onExpandedChange={() => {}}
-      getRowId={(row: any) => row.id}
-      getSubRows={(row: any) => row.subRows}
+      getRowId={(row: CategoryRow) => row.id}
+      getSubRows={(row: CategoryRow) => row.subRows}
       maxHeight='60vh'
       stickyHeader
     />

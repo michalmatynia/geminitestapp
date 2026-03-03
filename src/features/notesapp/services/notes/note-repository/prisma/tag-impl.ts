@@ -1,7 +1,7 @@
 import type {
-  NoteTagDto as TagRecord,
-  CreateNoteTagDto as TagCreateInput,
-  UpdateNoteTagDto as TagUpdateInput,
+  TagRecord,
+  TagCreateInput,
+  TagUpdateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 

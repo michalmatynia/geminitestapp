@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
+import type { TagRecord } from '@/shared/contracts/notes';
 
 export interface NoteTagsData {
   selectedTagIds: string[];

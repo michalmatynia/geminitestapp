@@ -8,16 +8,14 @@ export const settingRecordSchema = z.object({
   value: z.string(),
 });
 
-export type SettingRecordDto = z.infer<typeof settingRecordSchema>;
-export type SystemSetting = SettingRecordDto;
-export type SettingRecord = SettingRecordDto;
+export type SettingRecord = z.infer<typeof settingRecordSchema>;
+export type SystemSetting = SettingRecord;
 
 /**
  * Settings Scope Contract
  */
 export const settingsScopeSchema = z.enum(['all', 'light', 'heavy']);
-export type SettingsScopeDto = z.infer<typeof settingsScopeSchema>;
-export type SettingsScope = SettingsScopeDto;
+export type SettingsScope = z.infer<typeof settingsScopeSchema>;
 
 export const upsertSettingSchema = z.object({
   key: z.string().trim().min(1),
@@ -26,7 +24,7 @@ export const upsertSettingSchema = z.object({
   mutationId: z.string().trim().min(1).max(200).optional(),
 });
 
-export type UpsertSettingDto = z.infer<typeof upsertSettingSchema>;
+export type UpsertSetting = z.infer<typeof upsertSettingSchema>;
 
 export { adminSettingsSchema, createAdminSettingsSchema } from './admin';
 export type { AdminSettings, CreateAdminSettings, UpdateAdminSettings } from './admin';

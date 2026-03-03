@@ -3,7 +3,7 @@ import 'server-only';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
  
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
@@ -38,6 +38,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   TraderaListingJobInput,
 } from '@/shared/contracts/integrations';
+export type { TraderaListingJobInput };
 
 import { 
   classifyTraderaFailure, 
@@ -98,15 +99,27 @@ export const runTraderaListing = async (
         errorCategory: 'NOT_FOUND',
       };
     }
+    const integration = await integrationRepo.getIntegrationById(connection.integrationId);
+    if (!integration) {
+      return {
+        ok: false,
+        externalListingId: null,
+        listingUrl: null,
+        expiresAt: null,
+        nextRelistAt: null,
+        error: `Integration not found: ${connection.integrationId}`,
+        errorCategory: 'NOT_FOUND',
+      };
+    }
 
     const systemSettings = await loadTraderaSystemSettings();
+    const integrationSlug = integration.slug;
+    const preferApi = toTruthyBoolean(process.env['TRADERA_PREFER_API'], false);
     const useApi =
-      isTraderaApiIntegrationSlug(connection.slug) ||
-      (isTraderaIntegrationSlug(connection.slug) &&
-        (toTruthyBoolean(process.env['TRADERA_PREFER_API']) ||
-          systemSettings.preferApiForTraderaListing));
+      isTraderaApiIntegrationSlug(integrationSlug) ||
+      (isTraderaIntegrationSlug(integrationSlug) && preferApi);
 
-    if (useApi && !isTraderaBrowserIntegrationSlug(connection.slug)) {
+    if (useApi && !isTraderaBrowserIntegrationSlug(integrationSlug)) {
       const result = await runTraderaApiListing({ listing: listing as any, connection });
       const settings = resolveEffectiveListingSettings(listing as any, connection, systemSettings);
       const expiresAt = resolveExpiry(settings.durationHours);
@@ -165,11 +178,13 @@ export const runTraderaListing = async (
     const category = classifyTraderaFailure(message);
     const userMessage = toUserFacingTraderaFailure(category, message);
 
-    void ErrorSystem.logError(`Tradera ${action} failed (${source})`, {
+    void ErrorSystem.captureException(error, {
       service: 'tradera-listing',
-      error,
       listingId,
       category,
+      action,
+      source,
+      userMessage,
     });
 
     return {

@@ -2,9 +2,11 @@ import 'server-only';
 
 import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
+  IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
+  type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
 
@@ -15,6 +17,19 @@ import type {
 
 import { executeCropStep, executeUpscaleStep } from './sequence/image-processing';
 import { executeGenerateStep } from './sequence/generation';
+
+const isSequenceOperation = (value: unknown): value is ImageStudioSequenceOperation =>
+  typeof value === 'string' &&
+  IMAGE_STUDIO_SEQUENCE_OPERATIONS.includes(value as ImageStudioSequenceOperation);
+
+const resolveFallbackOperations = (steps: unknown[]): ImageStudioSequenceOperation[] =>
+  steps
+    .map((step) => {
+      if (!step || typeof step !== 'object' || Array.isArray(step)) return null;
+      const stepRecord = step as Record<string, unknown>;
+      return stepRecord['type'];
+    })
+    .filter(isSequenceOperation);
 
 export type ImageStudioSequenceStepExecutionContext = {
   run: ImageStudioSequenceRunRecord;
@@ -110,7 +125,7 @@ export function resolveSequenceStepsForExecution(
 
   if (Array.isArray(run.request.steps) && run.request.steps.length > 0) {
     return normalizeImageStudioSequenceSteps(run.request.steps, {
-      fallbackOperations: run.request.steps.map((step) => step.type),
+      fallbackOperations: resolveFallbackOperations(run.request.steps),
     });
   }
 

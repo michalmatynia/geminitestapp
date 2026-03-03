@@ -4,9 +4,9 @@ import { z } from 'zod';
 
 import {
   notebookSchema,
-  type NotebookDto,
-  type CreateNotebookDto,
-  type UpdateNotebookDto,
+  type NotebookRecord,
+  type NotebookCreateInput,
+  type NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 import type { DeleteResponse } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -25,10 +25,10 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 export function useNotebookResource() {
   const queryKey = QUERY_KEYS.notes.notebooks();
 
-  const listQuery = createListQueryV2<NotebookDto>({
+  const listQuery = createListQueryV2<NotebookRecord>({
     queryKey,
     queryFn: async () => {
-      const data = await api.get<NotebookDto[]>('/api/notes/notebooks');
+      const data = await api.get<NotebookRecord[]>('/api/notes/notebooks');
       return z.array(notebookSchema).parse(data);
     },
     meta: {
@@ -41,8 +41,8 @@ export function useNotebookResource() {
     },
   });
 
-  const createMutation = createCreateMutationV2<NotebookDto, CreateNotebookDto>({
-    mutationFn: (payload) => api.post<NotebookDto>('/api/notes/notebooks', payload),
+  const createMutation = createCreateMutationV2<NotebookRecord, NotebookCreateInput>({
+    mutationFn: (payload) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
     mutationKey: queryKey,
     meta: {
       source: 'notes.hooks.useNotebookResource.create',
@@ -55,9 +55,12 @@ export function useNotebookResource() {
     invalidateKeys: [queryKey],
   });
 
-  const updateMutation = createUpdateMutationV2<NotebookDto, UpdateNotebookDto & { id: string }>({
+  const updateMutation = createUpdateMutationV2<
+    NotebookRecord,
+    NotebookUpdateInput & { id: string }
+  >({
     mutationFn: ({ id, ...payload }) =>
-      api.patch<NotebookDto>(`/api/notes/notebooks/${id}`, payload),
+      api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, payload),
     mutationKey: queryKey,
     meta: {
       source: 'notes.hooks.useNotebookResource.update',

@@ -14,9 +14,9 @@ import {
   CategoryDocument 
 } from '../types/mongo-note-types';
 import { 
-  NotebookDto as NotebookRecord,
-  CreateNotebookDto as NotebookCreateInput,
-  UpdateNotebookDto as NotebookUpdateInput,
+  NotebookRecord,
+  NotebookCreateInput,
+  NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 import { toNotebookResponse } from '../mongo-note-repository-utils';
 import { Filter, UpdateFilter, WithId } from 'mongodb';

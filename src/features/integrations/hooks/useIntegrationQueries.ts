@@ -16,7 +16,7 @@ import type {
   IntegrationWithConnections,
   BaseInventory,
 } from '@/shared/contracts/integrations';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {

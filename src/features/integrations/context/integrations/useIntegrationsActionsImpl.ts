@@ -34,7 +34,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 export function useIntegrationsActionsImpl(args: {
   integrations: Integration[];

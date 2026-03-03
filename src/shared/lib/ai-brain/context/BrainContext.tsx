@@ -24,7 +24,7 @@ import {
 } from '@/shared/contracts/ai-insights';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
-import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummaryDto } from '@/shared/contracts';
+import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummary } from '@/shared/contracts';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
@@ -187,7 +187,7 @@ interface BrainContextType {
   operationsRange: BrainOperationsRange;
   setOperationsRange: (range: BrainOperationsRange) => void;
   operationsOverviewQuery: SingleQuery<BrainOperationsOverviewResponse>;
-  analyticsSummaryQuery: SingleQuery<AnalyticsSummaryDto>;
+  analyticsSummaryQuery: SingleQuery<AnalyticsSummary>;
   logMetricsQuery: SingleQuery<SystemLogMetrics>;
   insightsQuery: SingleQuery<InsightsSnapshot>;
   runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary>;

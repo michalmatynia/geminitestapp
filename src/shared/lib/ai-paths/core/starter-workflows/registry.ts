@@ -1,7 +1,7 @@
 import type { AiTriggerButtonDisplay, AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
-import type { CanvasSemanticDocumentDto as CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
+import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import baseExportBlwoAsset from './assets/base-export-blwo.canvas.json';
 import descriptionInferenceLiteAsset from './assets/description-inference-lite.canvas.json';

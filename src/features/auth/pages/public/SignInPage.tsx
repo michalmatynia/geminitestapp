@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useState, Suspense } from 'react';
 
@@ -20,7 +20,30 @@ import {
   FormField,
 } from '@/shared/ui';
 
+export const resolveSignInCallbackNavigation = (
+  callbackUrl: string,
+  currentOrigin: string
+): { kind: 'router' | 'location'; href: string } | null => {
+  const trimmed = callbackUrl.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('/')) {
+    return { kind: 'router', href: trimmed };
+  }
+
+  try {
+    const parsed = new URL(trimmed, currentOrigin);
+    if (parsed.origin === currentOrigin) {
+      return { kind: 'router', href: `${parsed.pathname}${parsed.search}${parsed.hash}` };
+    }
+  } catch {
+    return { kind: 'location', href: trimmed };
+  }
+
+  return { kind: 'location', href: trimmed };
+};
+
 function SignInPageLoader(): React.JSX.Element {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
   const urlError = searchParams.get('error');
@@ -49,7 +72,15 @@ function SignInPageLoader(): React.JSX.Element {
       if (result?.error) {
         setError('Invalid email or password.');
       } else if (result?.ok) {
-        window.location.href = callbackUrl;
+        const navigationTarget = resolveSignInCallbackNavigation(
+          callbackUrl,
+          window.location.origin
+        );
+        if (navigationTarget?.kind === 'router') {
+          router.push(navigationTarget.href);
+        } else {
+          window.location.assign(navigationTarget?.href ?? callbackUrl);
+        }
       }
     } catch (err) {
       logClientError(err, { context: { source: 'SignInPage', action: 'handleSubmit', email } });

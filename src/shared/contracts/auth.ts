@@ -102,7 +102,6 @@ export const authSecurityProfileSchema = z.object({
 });
 
 export type AuthSecurityProfile = z.infer<typeof authSecurityProfileSchema>;
-export type AuthSecurityProfileDto = AuthSecurityProfile;
 
 export const authUsersResponseSchema = z.object({
   provider: z.enum(['mongodb', 'prisma']),
@@ -110,7 +109,6 @@ export const authUsersResponseSchema = z.object({
 });
 
 export type AuthUsersResponse = z.infer<typeof authUsersResponseSchema>;
-export type AuthUsersResponseDto = AuthUsersResponse;
 
 export const authUserSecurityProfileSchema = z.object({
   userId: z.string(),
@@ -173,7 +171,6 @@ export const authUserPageSettingsSchema = z.object({
 });
 
 export type AuthUserPageSettings = z.infer<typeof authUserPageSettingsSchema>;
-export type AuthUserPageSettingsDto = AuthUserPageSettings;
 
 export const authSecurityPolicySchema = z.object({
   minPasswordLength: z.number(),

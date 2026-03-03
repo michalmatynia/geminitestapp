@@ -1,7 +1,7 @@
 import type {
-  NotebookDto as NotebookRecord,
-  CreateNotebookDto as NotebookCreateInput,
-  UpdateNotebookDto as NotebookUpdateInput,
+  NotebookRecord,
+  NotebookCreateInput,
+  NotebookUpdateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 

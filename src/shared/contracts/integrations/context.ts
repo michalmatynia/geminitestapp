@@ -5,7 +5,7 @@ import type {
   CategoryMappingWithDetails,
   ExternalCategory
 } from './index';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '../playwright';
+import type { PlaywrightPersona } from '../playwright';
 import type { CatalogDto as Catalog, ProductCategoryDto } from '../products';
 
 export interface IntegrationsData {

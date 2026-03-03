@@ -7,6 +7,10 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button, TreeHeader } from '@/shared/ui';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
+type NotesTreeHeaderOperations = {
+  handleCreateFolder: (parentId?: string | null) => Promise<void>;
+};
+
 export type NotesAppTreeHeaderProps = {
   controller: MasterFolderTreeController;
   selectedFolderForCreate: string | null;
@@ -18,6 +22,7 @@ export function NotesAppTreeHeader({
   selectedFolderForCreate,
   setPanelCollapsed,
 }: NotesAppTreeHeaderProps): React.JSX.Element {
+  const notesAppContext = useNotesAppContext();
   const {
     settings,
     filters,
@@ -25,13 +30,13 @@ export function NotesAppTreeHeader({
     setIsEditing,
     setIsCreating,
     setIsFolderTreeCollapsed,
-    operations,
     undoStack,
     undoHistory,
     handleUndoFolderTree,
     handleUndoAtIndex,
     setSelectedFolderId,
-  } = useNotesAppContext();
+  } = notesAppContext;
+  const operations = notesAppContext.operations as NotesTreeHeaderOperations;
 
   const isAllNotesActive = !settings.selectedFolderId && !settings.selectedNoteId;
 

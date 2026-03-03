@@ -19,8 +19,7 @@ export const documentationModuleIdsSchema = z.enum([
   'vector-drawing',
 ]);
 
-export type DocumentationModuleIdDto = z.infer<typeof documentationModuleIdsSchema>;
-export type DocumentationModuleId = DocumentationModuleIdDto;
+export type DocumentationModuleId = z.infer<typeof documentationModuleIdsSchema>;
 
 export const DOCUMENTATION_MODULE_IDS = {
   aiPaths: 'ai-paths',
@@ -49,8 +48,7 @@ export const documentationEntrySchema = z.object({
   relatedLinks: z.array(z.string()).optional(),
 });
 
-export type DocumentationEntryDto = z.infer<typeof documentationEntrySchema>;
-export type DocumentationEntry = DocumentationEntryDto;
+export type DocumentationEntry = z.infer<typeof documentationEntrySchema>;
 
 export const documentationUiDocSchema = z.object({
   id: z.string(),
@@ -60,7 +58,6 @@ export const documentationUiDocSchema = z.object({
   relatedFunctions: z.array(z.string()),
 });
 
-export type DocumentationUiDocDto = z.infer<typeof documentationUiDocSchema>;
+export type DocumentationUiDoc = z.infer<typeof documentationUiDocSchema>;
 
-export type DocumentationEntryKeyDto = `${string}:${string}`;
-export type DocumentationEntryKey = DocumentationEntryKeyDto;
+export type DocumentationEntryKey = `${string}:${string}`;

@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-02-17T17:56:29.208Z",
+  "generatedAt": "2026-03-03T22:57:11.989Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000
   },
   "max": {
-    "source.filesOver1000": 14,
-    "source.filesOver1500": 14,
-    "source.useClientFiles": 901,
-    "source.largestFileLines": 3352,
-    "api.totalRoutes": 294,
-    "api.delegatedServerRoutes": 21,
+    "source.filesOver1000": 8,
+    "source.filesOver1500": 1,
+    "source.useClientFiles": 1329,
+    "source.largestFileLines": 2005,
+    "api.totalRoutes": 318,
+    "api.delegatedServerRoutes": 15,
     "api.routesWithoutApiHandler": 0,
     "api.routesWithoutExplicitCachePolicy": 0,
     "imports.appFeatureBarrelImports": 0,
-    "imports.appFeatureDeepImports": 394,
-    "imports.sharedToFeaturesTotalImports": 15,
-    "architecture.crossFeatureEdgePairs": 118,
+    "imports.appFeatureDeepImports": 320,
+    "imports.sharedToFeaturesTotalImports": 13,
+    "architecture.crossFeatureEdgePairs": 71,
     "runtime.setIntervalOccurrences": 22
   }
 }

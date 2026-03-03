@@ -3,8 +3,8 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 
 import type {
-  NoteFileDto as NoteFileRecord,
-  CreateNoteFileDto as NoteFileCreateInput,
+  NoteFileRecord,
+  NoteFileCreateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 

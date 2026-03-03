@@ -467,7 +467,7 @@ export function CenterPreviewInner(): React.JSX.Element {
       setVariantLoadingId(variant.id);
 
       try {
-        await loadVariantIntoCanvas({
+        const loadParams: Parameters<typeof loadVariantIntoCanvas>[0] = {
           activeRunId,
           projectId,
           queryClient,
@@ -481,7 +481,8 @@ export function CenterPreviewInner(): React.JSX.Element {
           slots,
           toast,
           variant,
-        } as any);
+        };
+        await loadVariantIntoCanvas(loadParams);
       } catch (error: unknown) {
         toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
           variant: 'error',
@@ -588,7 +589,7 @@ export function CenterPreviewInner(): React.JSX.Element {
         confirmText: 'Delete',
         isDangerous: true,
         onConfirm: async () => {
-          await deleteVariantFromCenterPreview({
+          const deleteParams: Parameters<typeof deleteVariantFromCenterPreview>[0] = {
             activeRunId,
             buildVariantDismissKeys,
             clearActiveRunError,
@@ -602,7 +603,8 @@ export function CenterPreviewInner(): React.JSX.Element {
             slots,
             toast,
             variant,
-          } as any);
+          };
+          await deleteVariantFromCenterPreview(deleteParams);
           setCompareVariantIds((prev) => [
             prev[0] === variant.id ? null : prev[0],
             prev[1] === variant.id ? null : prev[1],

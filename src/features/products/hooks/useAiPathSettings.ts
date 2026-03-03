@@ -11,7 +11,7 @@ import {
   backfillPathConfigNodeContracts,
   normalizeNodes,
 } from '@/shared/lib/ai-paths/core/normalization';
-import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
+import { findPathConfigCollectionAliasIssues } from '@/shared/lib/ai-paths/core/utils/collection-names';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
@@ -219,12 +219,13 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
 };
 
 export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
-  const migratedConfig = migratePathConfigCollections(config);
-  if (migratedConfig.changed) {
+  const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
+  if (collectionAliasIssues.length > 0) {
     throw validationError('AI Path config contains deprecated collection aliases.', {
       source: 'ai_paths.path_settings',
       reason: 'deprecated_collection_aliases',
       pathId: config.id,
+      issues: collectionAliasIssues,
     });
   }
   const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;

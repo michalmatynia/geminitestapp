@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import type { PlaywrightSettingsDto as PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export interface IntegrationsForm {
   isModalOpen: boolean;

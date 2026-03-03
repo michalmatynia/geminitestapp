@@ -11,7 +11,7 @@ import {
 import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { NotebookDto as NotebookRecord } from '@/shared/contracts/notes';
+import type { NotebookRecord } from '@/shared/contracts/notes';
 import {
   Button,
   useToast,

@@ -11,7 +11,6 @@ import type {
   ProductParameter,
   ProductParameterValue,
   CreateProductDraftDto as CreateProductDraftInput,
-  UpdateProductDraftDto as UpdateProductDraftInput,
 } from '@/shared/contracts/products';
 import { getCategoriesFlat, getParameters, getTags } from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
@@ -49,6 +48,12 @@ const normalizeIconColor = (value: string | null | undefined): string | null => 
   if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
   return trimmed.toLowerCase();
 };
+
+const readQueryData = <T,>(queries: readonly UseQueryResult<T[], Error>[]): T[] =>
+  queries.flatMap((query: UseQueryResult<T[], Error>): T[] => query.data ?? []);
+
+const hasLoadingQuery = <T,>(queries: readonly UseQueryResult<T[], Error>[]): boolean =>
+  queries.some((query: UseQueryResult<T[], Error>): boolean => query.isLoading);
 
 export function DraftCreator({
   draftId: propDraftId,
@@ -170,33 +175,31 @@ export function DraftCreator({
     }),
   });
 
+  const categoryQueryResults = categoryQueries as readonly UseQueryResult<
+    ProductCategoryDto[],
+    Error
+  >[];
+  const tagQueryResults = tagQueries as readonly UseQueryResult<ProductTag[], Error>[];
+  const parameterQueryResults = parameterQueries as readonly UseQueryResult<
+    ProductParameter[],
+    Error
+  >[];
+
   const categories = useMemo(
-    () =>
-      (categoryQueries as any[]).flatMap(
-        (query: UseQueryResult<ProductCategoryDto[], Error>): ProductCategoryDto[] => query.data || []
-      ),
-    [categoryQueries]
+    (): ProductCategoryDto[] => readQueryData(categoryQueryResults),
+    [categoryQueryResults]
   );
   const tags = useMemo(
-    () =>
-      (tagQueries as any[]).flatMap(
-        (query: UseQueryResult<ProductTag[], Error>): ProductTag[] => query.data || []
-      ),
-    [tagQueries]
+    (): ProductTag[] => readQueryData(tagQueryResults),
+    [tagQueryResults]
   );
   const parameters = useMemo(
-    () =>
-      (parameterQueries as any[]).flatMap(
-        (query: UseQueryResult<ProductParameter[], Error>): ProductParameter[] => query.data || []
-      ),
-    [parameterQueries]
+    (): ProductParameter[] => readQueryData(parameterQueryResults),
+    [parameterQueryResults]
   );
   const parametersLoading = useMemo(
-    () =>
-      (parameterQueries as any[]).some(
-        (query: UseQueryResult<ProductParameter[], Error>): boolean => query.isLoading
-      ),
-    [parameterQueries]
+    (): boolean => hasLoadingQuery(parameterQueryResults),
+    [parameterQueryResults]
   );
   const active = propActive ?? activeState;
 
@@ -386,7 +389,7 @@ export function DraftCreator({
     try {
       const normalizedIconColor = normalizeIconColor(iconColor);
       const serializedImageLinks = await serializeDraftImageLinks();
-      const input: UpdateProductDraftInput = {
+      const input: CreateProductDraftInput = {
         name: name.trim(),
         description: description.trim() || null,
         sku: sku.trim() || null,
@@ -437,9 +440,9 @@ export function DraftCreator({
       };
 
       if (draftId) {
-        await updateDraftMutation.mutateAsync({ id: draftId, data: input } as any);
+        await updateDraftMutation.mutateAsync({ id: draftId, data: input });
       } else {
-        await createDraftMutation.mutateAsync(input as CreateProductDraftInput);
+        await createDraftMutation.mutateAsync(input);
       }
 
       toast(draftId ? 'Draft updated successfully' : 'Draft created successfully', {
@@ -583,15 +586,11 @@ export function DraftCreator({
       selectedCatalogIds,
       setSelectedCatalogIds,
       categories,
-      categoryLoading: (categoryQueries as any[]).some(
-        (query: UseQueryResult<ProductCategoryDto[], Error>): boolean => query.isLoading
-      ),
+      categoryLoading: hasLoadingQuery(categoryQueryResults),
       selectedCategoryId,
       setSelectedCategoryId,
       tags,
-      tagLoading: (tagQueries as any[]).some(
-        (query: UseQueryResult<ProductTag[], Error>): boolean => query.isLoading
-      ),
+      tagLoading: hasLoadingQuery(tagQueryResults),
       selectedTagIds,
       setSelectedTagIds,
       producers,

@@ -5,7 +5,7 @@ import {
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 type UseIntegrationTabsResult = {
   activeTab: string;

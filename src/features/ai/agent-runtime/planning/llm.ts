@@ -29,6 +29,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AgentDecision,
   PlanStep,
+  PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 
 import { evaluatePlanWithLLM } from './llm-evaluation';
@@ -60,7 +61,7 @@ type BuildPlanWithLLMResult = {
   decision: AgentDecision;
   source: 'llm' | 'heuristic';
   branchSteps?: PlanStep[];
-  meta?: any;
+  meta?: PlannerMeta;
   hierarchy?: {
     goals: Array<{
       id: string;
@@ -132,7 +133,7 @@ export async function buildResumePlanReview({
       }>;
     }>;
   } | null;
-  meta?: any;
+  meta?: PlannerMeta;
 }> {
   const review = await buildAdaptivePlanReview({
     prompt,
@@ -150,6 +151,7 @@ export async function buildResumePlanReview({
 
   return {
     ...review,
+    meta: review.meta ?? undefined,
     summary: review.meta?.summary ?? null,
   };
 }

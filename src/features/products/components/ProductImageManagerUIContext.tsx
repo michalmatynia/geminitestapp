@@ -8,7 +8,7 @@ import {
 } from '@/features/products/constants';
 import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
-import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import { ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';

@@ -23,7 +23,7 @@ import {
   NoteFiltersDto as NoteFilters,
   CreateNoteDto as NoteCreateInput,
   UpdateNoteDto as NoteUpdateInput,
-  NoteFileDto as NoteFileRecord,
+  NoteFileRecord,
 } from '@/shared/contracts/notes';
 import { 
   toNoteResponse, 

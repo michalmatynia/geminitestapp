@@ -116,9 +116,15 @@ describe('findTriggerPath', () => {
   it('does not rewrite renamed legacy EN->PL translation paths for product-side loading', () => {
     const config = createDefaultPathConfig('path_translation_v2');
     config.name = 'Translation EN->PL Description + Parameters v2';
+    config.uiState = {
+      ...config.uiState,
+      selectedNodeId: 'node-dddddddddddddddddddddddd',
+    };
     config.nodes = [
       {
-        id: 'node-regex-translate-en-pl',
+        id: 'node-dddddddddddddddddddddddd',
+        instanceId: 'node-dddddddddddddddddddddddd',
+        nodeTypeId: 'nt-4a16cd5ffba5be3e872f0307',
         type: 'regex',
         title: 'Regex JSON Extract',
         description: '',
@@ -128,7 +134,9 @@ describe('findTriggerPath', () => {
         data: {},
       } as unknown as AiNode,
       {
-        id: 'node-db-update-translate-en-pl',
+        id: 'node-eeeeeeeeeeeeeeeeeeeeeeee',
+        instanceId: 'node-eeeeeeeeeeeeeeeeeeeeeeee',
+        nodeTypeId: 'nt-52deb61aa96ee2271e8693b2',
         type: 'database',
         title: 'Database Query',
         description: '',
@@ -162,8 +170,8 @@ describe('findTriggerPath', () => {
     config.edges = [
       {
         id: 'edge-legacy-regex-db',
-        from: 'node-regex-translate-en-pl',
-        to: 'node-db-update-translate-en-pl',
+        from: 'node-dddddddddddddddddddddddd',
+        to: 'node-eeeeeeeeeeeeeeeeeeeeeeee',
         fromPort: 'value',
         toPort: 'value',
       },
@@ -171,7 +179,7 @@ describe('findTriggerPath', () => {
 
     const sanitized = sanitizeLoadedPathConfig(config);
     const databaseNode = sanitized.nodes.find(
-      (node: AiNode): boolean => node.id === 'node-db-update-translate-en-pl'
+      (node: AiNode): boolean => node.id === 'node-eeeeeeeeeeeeeeeeeeeeeeee'
     );
 
     expect(databaseNode?.config?.database?.updatePayloadMode).not.toBe('custom');

@@ -11,14 +11,14 @@ import type {
   ThemeDocument,
 } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
-  NoteCategoryDto as CategoryRecord,
+  CategoryRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  NoteFileDto as NoteFileRecord,
+  NoteFileRecord,
   NoteFiltersDto as NoteFilters,
   NoteDto as NoteRecord,
-  NotebookDto as NotebookRecord,
-  NoteTagDto as TagRecord,
-  NoteThemeDto as ThemeRecord,
+  NotebookRecord,
+  TagRecord,
+  ThemeRecord,
 } from '@/shared/contracts/notes';
 
 import type { Filter, WithId } from 'mongodb';

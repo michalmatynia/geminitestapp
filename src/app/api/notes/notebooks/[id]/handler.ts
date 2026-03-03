@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { notebookUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { UpdateNotebookDto } from '@/shared/contracts/notes';
+import type { NotebookUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';
 
@@ -26,7 +26,7 @@ export async function PATCH_handler(
   }
   const notebook = await noteService.updateNotebook(
     id,
-    removeUndefined(parsed.data) as Partial<UpdateNotebookDto>
+    removeUndefined(parsed.data) as Partial<NotebookUpdateInput>
   );
   return NextResponse.json(notebook);
 }

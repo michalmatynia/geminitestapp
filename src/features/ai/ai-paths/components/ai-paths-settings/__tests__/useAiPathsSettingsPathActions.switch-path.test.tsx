@@ -224,38 +224,44 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     );
   });
 
-  it('rejects invalid persisted path configs during path switch', async () => {
+  it('recovers invalid runtime state while switching paths', async () => {
     const { input, mocks } = buildInput();
-    const oldPathId = input.activePathId as string;
     const nextPathId = 'path_invalid';
     const invalidConfig = createDefaultPathConfig(nextPathId);
-    invalidConfig.runtimeState = JSON.stringify({
-      inputs: {},
-      outputs: {},
-      runId: 'legacy-run-id',
-    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      invalidConfig.runtimeState = JSON.stringify({
+        inputs: {},
+        outputs: {},
+        runId: 'legacy-run-id',
+      });
 
-    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
-      {
-        key: `ai_paths_config_${nextPathId}`,
-        value: JSON.stringify(invalidConfig),
-      },
-    ]);
-    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([]);
+      mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+        {
+          key: `ai_paths_config_${nextPathId}`,
+          value: JSON.stringify(invalidConfig),
+        },
+      ]);
+      mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([]);
 
-    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+      const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
 
-    act(() => {
-      result.current.handleSwitchPath(nextPathId);
-    });
+      act(() => {
+        result.current.handleSwitchPath(nextPathId);
+      });
 
-    await waitFor(() => {
-      expect(mocks.setActivePathId).toHaveBeenCalledWith(oldPathId);
-    });
-    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
-    expect(mocks.toast).toHaveBeenCalledWith('Failed to load selected path. Try again in a moment.', {
-      variant: 'error',
-    });
+      await waitFor(() => {
+        expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
+      });
+      expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
+      expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
+      expect(mocks.toast).not.toHaveBeenCalledWith(
+        'Failed to load selected path. Try again in a moment.',
+        expect.anything()
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('duplicates paths with fresh canonical node ids and remapped samples', () => {

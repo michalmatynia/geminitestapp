@@ -3,10 +3,10 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 
 import type {
-  NoteCategoryDto as CategoryRecord,
+  CategoryRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  CreateNoteCategoryDto as CategoryCreateInput,
-  UpdateNoteCategoryDto as CategoryUpdateInput,
+  CategoryCreateInput,
+  CategoryUpdateInput,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 

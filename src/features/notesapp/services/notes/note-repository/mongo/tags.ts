@@ -12,9 +12,9 @@ import {
   NoteDocument 
 } from '../types/mongo-note-types';
 import { 
-  NoteTagDto as TagRecord,
-  CreateNoteTagDto as TagCreateInput,
-  UpdateNoteTagDto as TagUpdateInput,
+  TagRecord,
+  TagCreateInput,
+  TagUpdateInput,
 } from '@/shared/contracts/notes';
 import { toTagResponse } from '../mongo-note-repository-utils';
 import { Filter, UpdateFilter } from 'mongodb';

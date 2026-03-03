@@ -9,14 +9,23 @@ import { SessionProvider } from 'next-auth/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider } from '@/features/auth/context/AuthContext';
-import SignInPage from '@/features/auth/pages/public/SignInPage';
+import SignInPage, {
+  resolveSignInCallbackNavigation,
+} from '@/features/auth/pages/public/SignInPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 
 const searchParamsGetMock = vi.fn<(key: string) => string | null>();
+const routerPushMock = vi.fn<(href: string) => void>();
 
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => ({
     get: searchParamsGetMock,
+  })),
+  useRouter: vi.fn(() => ({
+    push: routerPushMock,
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
   })),
 }));
 
@@ -45,6 +54,7 @@ describe('SignInPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
+    routerPushMock.mockReset();
     searchParamsGetMock.mockImplementation((key: string) => {
       if (key === 'callbackUrl') return null;
       if (key === 'error') return null;
@@ -103,6 +113,32 @@ describe('SignInPage', () => {
         })
       );
     });
+    expect(routerPushMock).toHaveBeenCalledWith('/admin');
+  });
+
+  it('routes same-origin absolute callback URLs through the Next router', async () => {
+    const user = userEvent.setup();
+    const callbackUrl = `${window.location.origin}/admin?tab=users#section`;
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'callbackUrl') return callbackUrl;
+      return null;
+    });
+    vi.mocked(signIn).mockResolvedValue({
+      ok: true,
+      error: null,
+      status: 200,
+      url: callbackUrl,
+    });
+
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(routerPushMock).toHaveBeenCalledWith('/admin?tab=users#section');
+    });
   });
 
   it('shows error message when sign in returns an error result', async () => {
@@ -147,5 +183,31 @@ describe('SignInPage', () => {
     renderPage();
 
     expect(await screen.findByText('Invalid credentials.')).toBeInTheDocument();
+  });
+});
+
+describe('resolveSignInCallbackNavigation', () => {
+  it('normalizes same-origin absolute callback URLs into router navigation', () => {
+    expect(
+      resolveSignInCallbackNavigation(
+        'http://localhost/admin?tab=users#section',
+        'http://localhost'
+      )
+    ).toEqual({
+      kind: 'router',
+      href: '/admin?tab=users#section',
+    });
+  });
+
+  it('preserves external callback URLs for full document navigation', () => {
+    expect(
+      resolveSignInCallbackNavigation(
+        'https://accounts.example.test/continue',
+        'http://localhost'
+      )
+    ).toEqual({
+      kind: 'location',
+      href: 'https://accounts.example.test/continue',
+    });
   });
 });

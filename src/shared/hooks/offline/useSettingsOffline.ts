@@ -1,12 +1,10 @@
 import { fetchSettingsCached, invalidateSettingsCache } from '@/shared/api/settings-client';
-import type { SettingRecordDto } from '@/shared/contracts/settings';
+import type { SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-
-type SettingRecord = SettingRecordDto;
 
 export interface SettingsOfflineHookResult {
   settings: SettingRecord[] | undefined;

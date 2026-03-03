@@ -101,7 +101,7 @@ describe('handlePlaywright', () => {
     artifactUrlFromPathMock.mockReset();
     artifactUrlFromPathMock.mockImplementation(
       (relativePath: string) =>
-        `/api/ai-paths/playwright/artifact/${encodeURIComponent(relativePath)}`
+        `/api/ai-paths/playwright/${encodeURIComponent('run-100')}/artifacts/${encodeURIComponent('final.png')}`
     );
   });
 
@@ -256,7 +256,7 @@ describe('handlePlaywright', () => {
     );
     const bundle = result['bundle'] as Record<string, unknown>;
     const artifacts = bundle['artifacts'] as Array<Record<string, unknown>>;
-    expect(artifacts[0]?.['url']).toBe('/api/ai-paths/playwright/artifact/run-100%2Ffinal.png');
+    expect(artifacts[0]?.['url']).toBe('/api/ai-paths/playwright/run-100/artifacts/final.png');
   });
 
   it('reports and returns failure when enqueue fails', async () => {

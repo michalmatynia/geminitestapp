@@ -11,11 +11,11 @@ import {
   relatedNoteSchema,
 } from '@/shared/contracts/notes';
 import type {
-  NotebookDto as NotebookRecord,
-  NoteCategoryDto as CategoryRecord,
+  NotebookRecord,
+  CategoryRecord,
   NoteWithRelationsDto as NoteWithRelations,
-  NoteTagDto as TagRecord,
-  NoteThemeDto as ThemeRecord,
+  TagRecord,
+  ThemeRecord,
   RelatedNoteDto as RelatedNote,
   FetchNotesParams,
 } from '@/shared/contracts/notes';

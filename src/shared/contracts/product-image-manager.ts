@@ -1,5 +1,5 @@
-import type { ImageFileSelectionDto as ImageFileSelection } from './files';
-import type { ManagedImageSlotDto as ProductImageSlot } from './image-slots';
+import type { ImageFileSelection } from './files';
+import type { ManagedImageSlot as ProductImageSlot } from './image-slots';
 
 export interface ProductImageManagerController {
   imageSlots: (ProductImageSlot | null)[];

@@ -3,15 +3,15 @@ import 'server-only';
 import { createHash } from 'crypto';
 
 import type {
-  AnalyticsConnectionInfoDto as AnalyticsConnectionInfo,
+  AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
-  AnalyticsEventDto,
-  AnalyticsEventTypeDto as AnalyticsEventType,
+  AnalyticsEvent,
+  AnalyticsEventType,
   AnalyticsScope,
-  AnalyticsScreenDto as AnalyticsScreen,
-  AnalyticsSummaryDto,
-  AnalyticsUtmDto as AnalyticsUtm,
-  AnalyticsViewportDto as AnalyticsViewport,
+  AnalyticsScreen,
+  AnalyticsSummary,
+  AnalyticsUtm,
+  AnalyticsViewport,
 } from '@/shared/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getRedisConnection } from '@/shared/lib/queue';
@@ -163,7 +163,7 @@ const buildIpFields = (
   return { ipMasked, ipHash };
 };
 
-const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
+const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEvent => ({
   id: doc._id.toString(),
   createdAt: doc.createdAt?.toISOString() ?? doc.ts.toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? null,
@@ -300,7 +300,7 @@ export async function listAnalyticsEvents(input: {
   scope?: AnalyticsScope | undefined;
   limit: number;
   skip: number;
-}): Promise<{ events: AnalyticsEventDto[] }> {
+}): Promise<{ events: AnalyticsEvent[] }> {
   const redis = getRedisConnection();
   const version = await getAnalyticsCacheVersion();
   const cacheKey = `${ANALYTICS_CACHE_PREFIX}:events:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}:${input.limit}:${input.skip}`;
@@ -308,7 +308,7 @@ export async function listAnalyticsEvents(input: {
     const cached = await redis.get(cacheKey);
     if (cached) {
       try {
-        return JSON.parse(cached) as { events: AnalyticsEventDto[] };
+        return JSON.parse(cached) as { events: AnalyticsEvent[] };
       } catch {
         // ignore cache parse failures
       }
@@ -344,7 +344,7 @@ export async function getAnalyticsSummary(input: {
   from: Date;
   to: Date;
   scope?: AnalyticsScope | undefined;
-}): Promise<AnalyticsSummaryDto> {
+}): Promise<AnalyticsSummary> {
   const redis = getRedisConnection();
   const version = await getAnalyticsCacheVersion();
   const cacheKey = `${ANALYTICS_CACHE_PREFIX}:summary:${version}:${input.from.toISOString()}:${input.to.toISOString()}:${input.scope ?? 'all'}`;
@@ -352,7 +352,7 @@ export async function getAnalyticsSummary(input: {
     const cached = await redis.get(cacheKey);
     if (cached) {
       try {
-        return JSON.parse(cached) as AnalyticsSummaryDto;
+        return JSON.parse(cached) as AnalyticsSummary;
       } catch {
         // ignore cache parse failures
       }
@@ -462,7 +462,7 @@ export async function getAnalyticsSummary(input: {
   const finalVisitors = visitorsResult[0]?.count ?? 0;
   const finalSessions = sessionsResult[0]?.count ?? 0;
 
-  const payload: AnalyticsSummaryDto = {
+  const payload: AnalyticsSummary = {
     from: input.from.toISOString(),
     to: input.to.toISOString(),
     scope: input.scope ?? 'all',

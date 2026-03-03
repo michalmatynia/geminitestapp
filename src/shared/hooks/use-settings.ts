@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+
 import {
   fetchSettingsCached,
   fetchLiteSettingsCached,
@@ -148,8 +148,6 @@ export function useUpdateSettingsBulk(): MutationResult<
   SystemSetting[],
   Array<{ key: string; value: string }>
   > {
-  const queryClient = useQueryClient();
-
   return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
     mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (
@@ -168,9 +166,7 @@ export function useUpdateSettingsBulk(): MutationResult<
       invalidateSettingsCache();
       return responses;
     },
-    onSuccess: (): void => {
-      void invalidateAllSettings(queryClient);
-    },
+    invalidate: (queryClient) => invalidateAllSettings(queryClient),
     meta: {
       source: 'shared.hooks.useUpdateSettingsBulk',
       operation: 'update',

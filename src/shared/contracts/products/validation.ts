@@ -133,6 +133,23 @@ export type ProductValidationLaunchOperatorDto =
   | 'is_not_empty';
 export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
 
+export type FieldValidatorIssue = {
+  patternId: string;
+  message: string;
+  severity: 'error' | 'warning';
+  matchText: string;
+  index: number;
+  length: number;
+  regex: string;
+  flags: string | null;
+  replacementValue: string | null;
+  replacementApplyMode: 'replace_whole_field' | 'replace_matched_segment';
+  replacementScope: 'none' | 'global' | 'field';
+  replacementActive: boolean;
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  debounceMs: number;
+};
+
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
 export type ProductValidationPattern = ProductValidationPatternDto;
 

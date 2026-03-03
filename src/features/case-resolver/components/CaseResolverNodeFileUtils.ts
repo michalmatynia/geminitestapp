@@ -2,7 +2,19 @@ import type {
   CaseResolverFile,
   CaseResolverJoinMode,
   CaseResolverScanSlot,
+  NodeFileDocumentSearchScope,
+  NodeFileDocumentSearchRow,
+  NodeFileDocumentFolderNode,
+  NodeFileDocumentFolderTree,
 } from '@/shared/contracts/case-resolver';
+
+export type {
+  NodeFileDocumentSearchScope,
+  NodeFileDocumentSearchRow,
+  NodeFileDocumentFolderNode,
+  NodeFileDocumentFolderTree,
+};
+
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
@@ -17,33 +29,6 @@ export const NODEFILE_JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   tab: '\t',
   space: ' ',
   none: '',
-};
-
-export type NodeFileDocumentSearchScope = 'case_scope' | 'all_cases';
-
-export type NodeFileDocumentSearchRow = {
-  file: CaseResolverFile;
-  signatureLabel: string;
-  addresserLabel: string;
-  addresseeLabel: string;
-  folderPath: string;
-  folderSegments: string[];
-  searchable: string;
-};
-
-export type NodeFileDocumentFolderNode = {
-  path: string;
-  name: string;
-  parentPath: string | null;
-  depth: number;
-  directFileCount: number;
-  descendantFileCount: number;
-};
-
-export type NodeFileDocumentFolderTree = {
-  nodesByPath: Map<string, NodeFileDocumentFolderNode>;
-  childPathsByParent: Map<string | null, string[]>;
-  rootFileCount: number;
 };
 
 export const normalizeSearchText = (value: string): string =>

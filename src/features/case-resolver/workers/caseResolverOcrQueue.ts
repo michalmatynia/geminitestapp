@@ -13,8 +13,8 @@ import {
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/studio-settings';
 import {
   detectCaseResolverOcrProvider,
-  type CaseResolverOcrProvider,
 } from '@/features/case-resolver/ocr-provider';
+import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver';
 import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/ocr-runtime';
 import {
   markCaseResolverOcrJobCompleted,

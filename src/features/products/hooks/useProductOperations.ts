@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
@@ -66,15 +68,25 @@ export function useProductOperations(
     }
 
     try {
-      const products = await queryClient.fetchQuery({
-        queryKey: getProductListQueryKey({ sku }),
+      const queryKey = normalizeQueryKey(getProductListQueryKey({ sku }));
+      const products = await fetchQueryV2<ProductWithImages[]>(queryClient, {
+        queryKey,
         queryFn: async (): Promise<ProductWithImages[]> =>
           await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`, {
             timeout: SKU_LOOKUP_TIMEOUT_MS,
           }),
-      });
+        staleTime: 0,
+        meta: {
+          source: 'products.hooks.useProductOperations.validateSku',
+          operation: 'list',
+          resource: 'products.validate-sku',
+          domain: 'products',
+          queryKey,
+          tags: ['products', 'validate', 'sku'],
+        },
+      })();
 
-      if (products.some((p) => p.sku === sku)) {
+      if (products.some((p: ProductWithImages) => p.sku === sku)) {
         setActionError('SKU already exists.');
         return;
       }

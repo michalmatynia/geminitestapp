@@ -158,7 +158,7 @@ export function RunDetailDialog(): React.JSX.Element {
         let defaultCount = 0;
         let errorCount = 0;
         entriesForNode.forEach((entry: RuntimeHistoryEntry) => {
-          const outputs = (entry.outputs ?? {}) as Record<string, unknown>;
+          const outputs = (entry.outputs ?? {});
           const caseIdRaw = outputs['caseId'];
           const errorCodeRaw = outputs['errorCode'];
           if (typeof errorCodeRaw === 'string' && errorCodeRaw.length > 0) {

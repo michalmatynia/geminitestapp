@@ -706,6 +706,27 @@ export const imageStudioDetectionDetailsSchema = z.object({
 
 export type ImageStudioDetectionDetails = z.infer<typeof imageStudioDetectionDetailsSchema>;
 
+export type ImageStudioDetectionCandidate<TDetails> = {
+  detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
+  bounds: ImageStudioCenterObjectBounds;
+  confidence: number;
+  detectionDetails?: TDetails | null;
+  details?: TDetails | null;
+};
+
+export type ImageStudioDetectionCandidateScoreSummary = {
+  confidence: number;
+  area: number;
+};
+
+export type ImageStudioDetectionPolicyDecision<TDetails> = {
+  selected: ImageStudioDetectionCandidate<TDetails> | null;
+  policyVersion: string;
+  reason: string;
+  fallbackApplied: boolean;
+  candidateDetections: ImageStudioDetectionCandidateSummary;
+};
+
 /**
  * Image Analysis DTOs
  */

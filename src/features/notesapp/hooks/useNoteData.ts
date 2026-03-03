@@ -2,6 +2,7 @@
 
 import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   useCreateNote,
@@ -27,8 +28,10 @@ import {
   useNotes as useNotesQuery,
   useNoteTags as useNoteTagsQuery,
   useNoteThemes as useNoteThemesQuery,
-  type FetchNotesParams,
 } from '@/features/notesapp/api/useNoteQueries';
+import { noteKeys } from '@/shared/lib/query-key-exports';
+import { type FetchNotesParams } from '@/features/notesapp/api/useNoteQueries';
+export type { FetchNotesParams };
 import type { UseNoteDataProps } from '@/shared/contracts/notes';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
@@ -250,51 +253,51 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
-    }
-  >({
-    mutationFn: async ({
-      slotIndex,
-      file,
-      onProgress,
-    }: {
+        }
+        >({
+          mutationFn: async ({
+            slotIndex,
+            file,
+            onProgress,
+          }: {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
     }): Promise<NoteFileRecord> => {
-      if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('slotIndex', slotIndex.toString());
+            if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('slotIndex', slotIndex.toString());
 
-      const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-      const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
-        `/api/notes/${noteId}/files`,
-        {
-          formData,
-          onProgress,
-        }
-      );
-      if (!result.ok) {
-        const error = result.data as { error?: string };
-        throw new ApiError(error.error || 'Failed to upload note file', 400);
-      }
-      return result.data as NoteFileRecord;
-    },
-    mutationKey,
-    meta: {
-      source: 'notes.hooks.useCreateNoteFileMutation',
-      operation: 'upload',
-      resource: 'notes.files',
-      domain: 'notes',
-      mutationKey,
-      tags: ['notes', 'files', 'upload'],
-    },
-    invalidate: async (queryClient) => {
-      if (noteId) {
-        await invalidateNoteDetail(queryClient, noteId);
-      }
-    },
-  });
+            const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+            const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
+              `/api/notes/${noteId}/files`,
+              {
+                formData,
+                onProgress,
+              }
+            );
+            if (!result.ok) {
+              const error = result.data as { error?: string };
+              throw new ApiError(error.error || 'Failed to upload note file', 400);
+            }
+            return result.data as NoteFileRecord;
+          },
+          mutationKey,
+          meta: {
+            source: 'notes.hooks.useCreateNoteFileMutation',
+            operation: 'upload',
+            resource: 'notes.files',
+            domain: 'notes',
+            mutationKey,
+            tags: ['notes', 'files', 'upload'],
+          },
+          invalidate: async (queryClient) => {
+            if (noteId) {
+              await invalidateNoteDetail(queryClient, noteId);
+            }
+          },
+        });
 };
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
@@ -470,7 +473,7 @@ export function useNoteData({
         | NoteWithRelations[]
         | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[])
     ): void => {
-      queryClient.setQueryData(QUERY_KEYS.notes.list(toFetchNotesParams(filters)), updater);
+      queryClient.setQueryData(noteKeys.list(filters), updater);
     },
     [queryClient, filters]
   );
@@ -482,7 +485,7 @@ export function useNoteData({
         | null
         | ((prev: NotebookRecord | null | undefined) => NotebookRecord | null)
     ): void => {
-      queryClient.setQueryData(QUERY_KEYS.notes.detail(selectedNotebookId ?? ''), updater);
+      queryClient.setQueryData(noteKeys.detail(selectedNotebookId ?? ''), updater);
     },
     [queryClient, selectedNotebookId]
   );

@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext } from 'react';
 import type { CaseResolverStateValue } from '../types';
-import type { CaseMetadataDraft } from '../case-overview-draft';
 import type {
   CaseResolverGraph,
   CaseResolverRelationGraph,
@@ -10,6 +9,7 @@ import type {
   CaseResolverNodeMeta,
   CaseResolverDocumentHistoryEntry,
   CaseResolverFile,
+  CaseMetadataDraft,
 } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverCaptureProposalState,

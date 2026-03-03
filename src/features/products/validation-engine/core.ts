@@ -16,24 +16,10 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
   ProductValidationTarget,
+  FieldValidatorIssue,
 } from '@/shared/contracts/products';
 
-export type FieldValidatorIssue = {
-  patternId: string;
-  message: string;
-  severity: 'error' | 'warning';
-  matchText: string;
-  index: number;
-  length: number;
-  regex: string;
-  flags: string | null;
-  replacementValue: string | null;
-  replacementApplyMode: 'replace_whole_field' | 'replace_matched_segment';
-  replacementScope: 'none' | 'global' | 'field';
-  replacementActive: boolean;
-  postAcceptBehavior: ProductValidationPostAcceptBehavior;
-  debounceMs: number;
-};
+export type { FieldValidatorIssue };
 
 type SequenceIssueAggregate = {
   groupId: string;

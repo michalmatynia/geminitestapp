@@ -1,3 +1,5 @@
+'use client';
+
 import {
   useQueryClient,
   type QueryClient,
@@ -9,6 +11,7 @@ import { useCallback } from 'react';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface QueuedMutation {
   id: string;
@@ -16,7 +19,7 @@ interface QueuedMutation {
   queryKey: readonly unknown[];
   optimisticUpdate?: ((oldData: unknown) => unknown) | undefined;
   invalidateKeys?: readonly (readonly unknown[])[] | undefined;
-  onProcessed?: (() => void) | undefined;
+  onProcessed?: ((context: { queryClient: QueryClient }) => void) | undefined;
   timestamp: number;
 }
 
@@ -46,7 +49,7 @@ class OfflineMutationQueue {
             void queryClient.invalidateQueries({ queryKey: key });
           });
         }
-        mutation.onProcessed?.();
+        mutation.onProcessed?.({ queryClient });
       } catch (error) {
         logClientError(error, {
           context: {
@@ -69,8 +72,6 @@ class OfflineMutationQueue {
 
   private saveToStorage(): void {
     if (typeof window !== 'undefined') {
-      // NOTE: function serialization is not supported by JSON.stringify
-      // In a real app, you'd store mutation metadata and reconstruct the fn
       const payload = this.queue.map(
         ({ mutationFn: _, onProcessed: __, ...rest }: QueuedMutation) => rest
       );
@@ -87,7 +88,6 @@ class OfflineMutationQueue {
       const stored = localStorage.getItem('offline-mutation-queue');
       if (stored) {
         try {
-          // We can't really restore the function from storage this way
           const parsed = JSON.parse(stored) as QueuedMutation[];
           this.queue = parsed.filter(
             (item: QueuedMutation): boolean => typeof item?.mutationFn === 'function'
@@ -107,20 +107,42 @@ class OfflineMutationQueue {
 
 const mutationQueue = new OfflineMutationQueue();
 
-export function useOfflineMutation<TData, TError = Error, TVariables = void, TContext = unknown>(
-  mutationFn: (variables: TVariables) => Promise<TData>,
+/**
+ * Standalone function to clear the queue, used by useOfflineQueueStatus
+ */
+export function clearOfflineMutationQueue(): void {
+  mutationQueue.clear();
+}
+
+/**
+ * Standalone function to process the queue
+ */
+export async function processOfflineMutationQueue(queryClient: QueryClient): Promise<void> {
+  mutationQueue.loadFromStorage();
+  await mutationQueue.processQueue(queryClient);
+}
+
+export function useOfflineMutation<TData, TError extends Error = Error, TVariables = void, TContext = unknown>(
+  mutationFn: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>,
   options: {
     queryKey: readonly unknown[];
+    meta?: Partial<TanstackFactoryMeta>;
     extraInvalidateKeys?:
       | readonly (readonly unknown[])[]
       | ((variables: TVariables) => readonly (readonly unknown[])[]);
+    invalidate?: (
+      queryClient: QueryClient,
+      data: TData,
+      variables: TVariables,
+      context: TContext | undefined
+    ) => Promise<void> | void;
     optimisticUpdate?: (oldData: TContext | undefined, variables: TVariables) => TContext;
     successMessage?: string;
     errorMessage?: string;
     queuedMessage?: string;
     processedMessage?: string;
-    onQueued?: (variables: TVariables) => void;
-    onProcessed?: (variables: TVariables) => void;
+    onQueued?: (variables: TVariables, context: { queryClient: QueryClient }) => void;
+    onProcessed?: (variables: TVariables, context: { queryClient: QueryClient }) => void;
   }
 ): UseMutationResult<TData, TError, TVariables, TContext> {
   const queryClient = useQueryClient();
@@ -136,40 +158,38 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
     [options]
   );
 
-  return createMutationV2<TData, TVariables, TContext>({
+  const defaultMeta: TanstackFactoryMeta = {
+    source: 'shared.hooks.offline.useOfflineMutation',
+    operation: 'action',
+    resource: 'offline-mutation',
+    domain: 'global',
+    samplingRate: 0.4,
+    tags: ['shared-hook', 'offline'],
+  };
+
+  const finalMeta: TanstackFactoryMeta = {
+    ...defaultMeta,
+    ...options.meta,
+    queryKey: options.queryKey as any,
+  };
+
+  return createMutationV2<TData, TVariables, TContext, TError>({
     mutationKey,
-    meta: {
-      mutationKey,
-      operation: 'action',
-      source: 'shared.hooks.offline.useOfflineMutation',
-      resource: 'offline-mutation',
-      domain: 'global',
-      samplingRate: 0.4,
-      tags: ['shared-hook', 'offline'],
-    },
+    meta: finalMeta,
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (!isOnline) {
         const extraKeys = resolveExtraKeys(variables);
-        options.onQueued?.(variables);
-        // Queue for later execution
-        const queuedMutation: QueuedMutation = {
-          id: Date.now().toString(),
-          mutationFn: (): Promise<TData> => mutationFn(variables),
+        options.onQueued?.(variables, { queryClient });
+        mutationQueue.add({
+          id: Math.random().toString(36).slice(2, 9),
+          mutationFn: () => mutationFn(variables, { queryClient }),
           queryKey: options.queryKey,
           invalidateKeys: extraKeys,
-          onProcessed: (): void => {
-            if (options.processedMessage) {
-              toast(options.processedMessage, { variant: 'success' });
-            }
-            options.onProcessed?.(variables);
-          },
+          onProcessed: () => options.onProcessed?.(variables, { queryClient }),
           timestamp: Date.now(),
-        };
+        });
 
-        mutationQueue.add(queuedMutation);
-
-        // Apply optimistic update
         if (options.optimisticUpdate) {
           queryClient.setQueryData(options.queryKey, (old: TContext | undefined) =>
             options.optimisticUpdate!(old, variables)
@@ -182,48 +202,49 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
         return null as TData;
       }
 
-      return mutationFn(variables);
+      return mutationFn(variables, { queryClient });
     },
-    onSuccess: (_data: TData, variables: TVariables): void => {
+    onSuccess: async (data: TData, variables: TVariables, context, mutationContext): Promise<void> => {
+      const { queryClient: qc } = mutationContext;
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (isOnline && options.successMessage) {
         toast(options.successMessage, { variant: 'success' });
       }
       if (!isOnline) return;
-      void queryClient.invalidateQueries({ queryKey: options.queryKey });
+      
+      void qc.invalidateQueries({ queryKey: options.queryKey });
       const extraKeys = resolveExtraKeys(variables);
       extraKeys.forEach((key: readonly unknown[]) => {
-        void queryClient.invalidateQueries({ queryKey: key });
+        void qc.invalidateQueries({ queryKey: key });
       });
+
+      if (options.invalidate) {
+        await options.invalidate(qc, data, variables, context);
+      }
     },
     onError: (error: Error): void => {
       let message = options.errorMessage || 'An error occurred';
       if (error instanceof Error) {
-        message = options.errorMessage
-          ? `${options.errorMessage}: ${error.message}`
-          : error.message;
+        message = options.errorMessage || error.message;
       }
       toast(message, { variant: 'error' });
     },
-  }) as unknown as UseMutationResult<TData, TError, TVariables, TContext>;
+  }) as any;
 }
 
-export interface OfflineSyncHookResult {
+export function useOfflineSync(): {
   processQueue: () => Promise<void>;
-}
-
-// Hook to process queued mutations when coming online
-export function useOfflineSync(): OfflineSyncHookResult {
+  clearQueue: () => void;
+} {
   const queryClient = useQueryClient();
 
-  const processQueue = useCallback(async (): Promise<void> => {
-    mutationQueue.loadFromStorage();
-    await mutationQueue.processQueue(queryClient);
+  const processQueue = useCallback(async () => {
+    await processOfflineMutationQueue(queryClient);
   }, [queryClient]);
 
-  return { processQueue };
-}
+  const clearQueue = useCallback(() => {
+    clearOfflineMutationQueue();
+  }, []);
 
-export function clearOfflineMutationQueue(): void {
-  mutationQueue.clear();
+  return { processQueue, clearQueue };
 }

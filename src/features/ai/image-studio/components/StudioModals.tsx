@@ -60,7 +60,7 @@ export function StudioModals(): React.JSX.Element {
     handleLocalUpload,
   } = createUploadHandlers({
     applyEnvironmentReferenceDraft: () => {}, // Handled in provider for inline edit
-    clearTemporaryUpload: async (asset): Promise<void> => {
+    clearTemporaryUpload: async (asset: any): Promise<void> => {
       await deleteStagedAsset(asset).catch(() => {});
     },
     createSlots,
@@ -85,7 +85,7 @@ export function StudioModals(): React.JSX.Element {
     toSlotName,
     updateSlotMutation,
     uploadMutation,
-  });
+  } as any);
 
   const handleCreateEmptySlot = async (): Promise<void> => {
     setSlotCreateOpen(false);
@@ -122,7 +122,7 @@ export function StudioModals(): React.JSX.Element {
           slotCreateOpen,
           triggerLocalUpload,
           uploadPending: uploadMutation.isPending,
-        }}
+        } as any}
       >
         <StudioImportPanels />
       </StudioImportProvider>

@@ -23,10 +23,12 @@ export const createNotebookSchema = notebookSchema.omit({
 
 export type CreateNotebookDto = z.infer<typeof createNotebookSchema>;
 export type NotebookCreateInput = CreateNotebookDto;
+export type NotebookCreateData = CreateNotebookDto;
 
 export const updateNotebookSchema = createNotebookSchema.partial();
 export type UpdateNotebookDto = z.infer<typeof updateNotebookSchema>;
 export type NotebookUpdateInput = UpdateNotebookDto;
+export type NotebookUpdateData = UpdateNotebookDto;
 
 /**
  * Note Theme Contract
@@ -59,10 +61,12 @@ export const createNoteThemeSchema = noteThemeSchema.omit({
 
 export type CreateNoteThemeDto = z.input<typeof createNoteThemeSchema>;
 export type ThemeCreateInput = CreateNoteThemeDto;
+export type ThemeCreateData = z.infer<typeof createNoteThemeSchema>;
 
 export const updateNoteThemeSchema = createNoteThemeSchema.partial();
 export type UpdateNoteThemeDto = z.infer<typeof updateNoteThemeSchema>;
 export type ThemeUpdateInput = UpdateNoteThemeDto;
+export type ThemeUpdateData = UpdateNoteThemeDto;
 
 /**
  * Note Category Contract
@@ -88,10 +92,12 @@ export const createNoteCategorySchema = noteCategorySchema.omit({
 
 export type CreateNoteCategoryDto = z.infer<typeof createNoteCategorySchema>;
 export type CategoryCreateInput = CreateNoteCategoryDto;
+export type CategoryCreateData = CreateNoteCategoryDto;
 
 export const updateNoteCategorySchema = createNoteCategorySchema.partial();
 export type UpdateNoteCategoryDto = z.infer<typeof updateNoteCategorySchema>;
 export type CategoryUpdateInput = UpdateNoteCategoryDto;
+export type CategoryUpdateData = UpdateNoteCategoryDto;
 
 export type NoteCategoryRecordWithChildrenDto = NoteCategoryDto & {
   children: NoteCategoryRecordWithChildrenDto[];
@@ -124,10 +130,12 @@ export const createNoteTagSchema = noteTagSchema.omit({
 
 export type CreateNoteTagDto = z.infer<typeof createNoteTagSchema>;
 export type TagCreateInput = CreateNoteTagDto;
+export type TagCreateData = CreateNoteTagDto;
 
 export const updateNoteTagSchema = createNoteTagSchema.partial();
 export type UpdateNoteTagDto = z.infer<typeof updateNoteTagSchema>;
 export type TagUpdateInput = UpdateNoteTagDto;
+export type TagUpdateData = UpdateNoteTagDto;
 
 /**
  * Note File Contract
@@ -215,10 +223,12 @@ export const createNoteSchema = noteSchema
 
 export type CreateNoteDto = z.input<typeof createNoteSchema>;
 export type NoteCreateInput = CreateNoteDto;
+export type NoteCreateData = z.infer<typeof createNoteSchema>;
 
 export const updateNoteSchema = createNoteSchema.partial();
 export type UpdateNoteDto = z.infer<typeof updateNoteSchema>;
 export type NoteUpdateInput = UpdateNoteDto;
+export type NoteUpdateData = z.infer<typeof updateNoteSchema>;
 
 /**
  * Note Relations
@@ -249,6 +259,18 @@ export const noteRelationSchema = z.object({
 });
 
 export type NoteRelationDto = z.infer<typeof noteRelationSchema>;
+
+export type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNoteDto | undefined;
+};
+
+export type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNoteDto | undefined;
+};
+
+export type NoteTagWithDetails = NoteTagRelationDto & {
+  tag: NoteTagDto;
+};
 export type NoteRelationRecord = NoteRelationDto;
 
 export const relatedNoteSchema = z.object({
@@ -262,14 +284,6 @@ export const relatedNoteSchema = z.object({
 
 export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 export type RelatedNote = RelatedNoteDto;
-
-export type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote | undefined;
-};
-
-export type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote | undefined;
-};
 
 export const noteWithRelationsSchema = noteSchema.extend({
   tags: z
@@ -336,6 +350,18 @@ export const noteFiltersSchema = z.object({
 export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;
 export type NoteFilters = NoteFiltersDto;
 
+export interface FetchNotesParams {
+  notebookId?: string | undefined;
+  search?: string | undefined;
+  searchScope?: string | undefined;
+  isPinned?: boolean | undefined;
+  isArchived?: boolean | undefined;
+  isFavorite?: boolean | undefined;
+  tagIds?: string[] | undefined;
+  categoryIds?: string[] | undefined;
+  truncateContent?: boolean | undefined;
+}
+
 /**
  * Note Settings
  */
@@ -369,6 +395,44 @@ export type NoteSettings = NoteSettingsDto;
 /**
  * Note UI and Hook Types
  */
+
+export type NotesMasterNodeRef =
+  | { entity: 'folder'; id: string; nodeId: string }
+  | { entity: 'note'; id: string; nodeId: string };
+
+export type NotesExternalDropAction =
+  | {
+      type: 'relate_notes';
+      noteId: string;
+      targetNoteId: string;
+    }
+  | {
+      type: 'move_note';
+      noteId: string;
+      targetFolderId: string | null;
+    }
+  | {
+      type: 'reorder_folder_root_top';
+      folderId: string;
+      anchorFolderId: string;
+    }
+  | {
+      type: 'move_folder';
+      folderId: string;
+      targetFolderId: string | null;
+    };
+
+export type NotesMasterTreeOperations = {
+  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
+  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
+  handleReorderFolder: (
+    folderId: string,
+    targetId: string,
+    position: 'before' | 'after'
+  ) => Promise<void>;
+  handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
+  handleRenameFolder: (folderId: string, newName: string) => Promise<void>;
+};
 
 export type UndoAction =
   | {

@@ -3,8 +3,6 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { StateConfig } from '@/shared/contracts/ai-paths-core/nodes';
-
 import { parseJsonSafe, safeStringify } from '../../utils';
 
 const coerceNumber = (value: unknown, fallback: number): number => {
@@ -28,7 +26,7 @@ export const handleStateNode: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   if (node.type !== 'state') return prevOutputs;
 
-  const config = node.config?.['state'] as StateConfig | undefined;
+  const config = node.config?.['state'];
   const key = config?.key?.trim();
   const mode = config?.mode ?? 'read';
 
@@ -75,7 +73,7 @@ export const handleStateNode: NodeHandler = ({
     let next = current;
     if (next === undefined) {
       const initial =
-        config?.initialJson && config.initialJson.trim()
+        config?.initialJson?.trim()
           ? parseJsonSafe(config.initialJson)
           : undefined;
       if (initial !== undefined) {
@@ -86,7 +84,7 @@ export const handleStateNode: NodeHandler = ({
           return {
             ...prevOutputs,
             status: 'failed',
-            error: `State initial value exceeds maxValueBytes limit.`,
+            error: 'State initial value exceeds maxValueBytes limit.',
             errorCode: 'STATE_VALUE_TOO_LARGE',
           };
         }
@@ -100,7 +98,7 @@ export const handleStateNode: NodeHandler = ({
           return {
             ...prevOutputs,
             status: 'failed',
-            error: `State value exceeds maxValueBytes limit.`,
+            error: 'State value exceeds maxValueBytes limit.',
             errorCode: 'STATE_VALUE_TOO_LARGE',
           };
         }
@@ -122,7 +120,7 @@ export const handleStateNode: NodeHandler = ({
       return {
         ...prevOutputs,
         status: 'failed',
-        error: `State value exceeds maxValueBytes limit.`,
+        error: 'State value exceeds maxValueBytes limit.',
         errorCode: 'STATE_VALUE_TOO_LARGE',
       };
     }
@@ -141,7 +139,7 @@ export const handleStateNode: NodeHandler = ({
       return {
         ...prevOutputs,
         status: 'failed',
-        error: `State value exceeds maxValueBytes limit.`,
+        error: 'State value exceeds maxValueBytes limit.',
         errorCode: 'STATE_VALUE_TOO_LARGE',
       };
     }

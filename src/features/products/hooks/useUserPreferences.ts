@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type { UserPreferences as SharedUserPreferences } from '@/shared/contracts/auth';
@@ -83,19 +83,17 @@ async function updateUserPreferences(data: Partial<ProductListPreferences>): Pro
     await updateUserPreference(key as keyof ProductListPreferences, value);
   }
 }
-
 export function useUpdateUserPreferences(): UseMutationResult<
   void,
   Error,
   Partial<ProductListPreferences>
   > {
-  const queryClient = useQueryClient();
   return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(updateUserPreferences, {
     queryKey: userPreferencesQueryKey,
     onQueued: () => {
       // Handle queued state
     },
-    onProcessed: () => {
+    onProcessed: (_vars, { queryClient }) => {
       void invalidateUserPreferences(queryClient);
     },
     errorMessage: 'Failed to update preferences',

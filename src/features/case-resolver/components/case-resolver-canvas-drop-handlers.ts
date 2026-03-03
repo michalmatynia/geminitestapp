@@ -6,12 +6,13 @@ import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   resolveCaseResolverPdfExtractionTemplate,
-  type CaseResolverAssetKind,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
+  type CaseResolverDroppedAsset,
+  type CaseResolverDroppedDocument,
 } from '@/shared/contracts/case-resolver';
 
 import {
@@ -27,23 +28,6 @@ import {
   resolvePromptConfig,
   resolveTemplateConfig,
 } from './case-resolver-canvas-utils';
-
-export type CaseResolverDroppedAsset = {
-  id: string;
-  name: string;
-  kind: CaseResolverAssetKind;
-  filepath: string | null;
-  mimeType: string | null;
-  size: number | null;
-  textContent: string;
-  description: string;
-};
-
-export type CaseResolverDroppedDocument = {
-  id: string;
-  name: string;
-  folder: string;
-};
 
 type PdfExtractResponse = {
   text?: unknown;

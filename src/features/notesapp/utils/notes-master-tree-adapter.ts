@@ -1,19 +1,8 @@
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
+import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import { decodeNotesMasterNodeId, fromFolderMasterNodeId } from './master-folder-tree';
-
-export type NotesMasterTreeOperations = {
-  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
-  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
-  handleReorderFolder: (
-    folderId: string,
-    targetId: string,
-    position: 'before' | 'after'
-  ) => Promise<void>;
-  handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
-  handleRenameFolder: (folderId: string, newName: string) => Promise<void>;
-};
 
 export const resolveNotesFolderTargetForNode = (
   nodes: MasterTreeNode[],

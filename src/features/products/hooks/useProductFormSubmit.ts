@@ -1,11 +1,9 @@
 'use client';
 
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   ProductWithImages,
   ProductFormData,
@@ -19,10 +17,6 @@ import {
   isEditingProductHydrated,
   markEditingProductHydrated,
 } from './editingProductHydration';
-import {
-  getProductDetailQueryKey,
-  invalidateProductsAndDetail,
-} from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
 
 import type { BaseSyntheticEvent } from 'react';
@@ -182,70 +176,6 @@ function buildFormData(
   return formData;
 }
 
-type ProductListWithCountShape = {
-  products: ProductWithImages[];
-  total: number;
-};
-
-const patchProductInArray = (
-  products: ProductWithImages[],
-  savedProduct: ProductWithImages
-): ProductWithImages[] => {
-  let changed = false;
-  const next = products.map((item: ProductWithImages) => {
-    if (item.id !== savedProduct.id) return item;
-    changed = true;
-    return { ...item, ...savedProduct };
-  });
-  return changed ? next : products;
-};
-
-const patchProductInQueryCache = (
-  cacheValue: unknown,
-  savedProduct: ProductWithImages
-): unknown => {
-  if (Array.isArray(cacheValue)) {
-    return patchProductInArray(cacheValue as ProductWithImages[], savedProduct);
-  }
-  if (!cacheValue || typeof cacheValue !== 'object') return cacheValue;
-  if (!('products' in cacheValue)) return cacheValue;
-
-  const typed = cacheValue as ProductListWithCountShape;
-  if (!Array.isArray(typed.products)) return cacheValue;
-
-  const nextProducts = patchProductInArray(typed.products, savedProduct);
-  if (nextProducts === typed.products) return cacheValue;
-  return {
-    ...typed,
-    products: nextProducts,
-  };
-};
-
-const patchProductCaches = (queryClient: QueryClient, savedProduct: ProductWithImages): void => {
-  // Update detail caches synchronously — these are small and needed immediately.
-  queryClient.setQueryData(
-    getProductDetailQueryKey(savedProduct.id),
-    (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
-  );
-  queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
-  // Defer the list patch to the next event-loop tick so the main thread isn't
-  // blocked by iterating every cached product-list page synchronously.
-  // invalidateProductCachesInBackground will refetch the lists anyway.
-  setTimeout(() => {
-    queryClient.setQueriesData(
-      { queryKey: QUERY_KEYS.products.lists() },
-      (old: unknown) => patchProductInQueryCache(old, savedProduct)
-    );
-  }, 0);
-};
-
-const invalidateProductCachesInBackground = (
-  queryClient: QueryClient,
-  productId: string
-): void => {
-  void invalidateProductsAndDetail(queryClient, productId);
-};
-
 export function useProductFormSubmit({
   product,
   methods,
@@ -265,7 +195,6 @@ export function useProductFormSubmit({
   requireHydratedEditProduct = false,
 }: UseProductFormSubmitProps): UseProductFormSubmitResult {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { confirm, ConfirmationModal } = useConfirm();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -341,8 +270,8 @@ export function useProductFormSubmit({
           }
 
           const resolvedProduct = savedProduct as ProductWithImages;
-          patchProductCaches(queryClient, resolvedProduct);
-          invalidateProductCachesInBackground(queryClient, resolvedProduct.id);
+          // Note: Cache patching and background invalidation are now handled
+          // declaratively within the mutation's invalidate callback in useProductData.ts
 
           if (!product) {
             onSuccessRef.current?.();
@@ -390,22 +319,7 @@ export function useProductFormSubmit({
 
       await performSubmit();
     },
-    [
-      product,
-      imageSlots,
-      imageLinks,
-      imageBase64s,
-      selectedCatalogIds,
-      selectedCategoryId,
-      selectedTagIds,
-      selectedProducerIds,
-      selectedNoteIds,
-      parameterValues,
-      studioProjectId,
-      queryClient,
-      toast,
-      confirm,
-    ]
+    [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, toast, confirm]
   );
 
   const submitHandler = useCallback(

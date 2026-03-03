@@ -141,5 +141,158 @@ export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 export type CaseResolverRequestedCaseIssue = 'requested_file_missing' | 'workspace_unavailable';
 
+export type CaseResolverOcrProvider = 'ollama' | 'openai' | 'anthropic' | 'gemini';
+
 export type WorkspaceView = 'document' | 'relations';
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
+
+export type PercentileSnapshot = {
+  count: number;
+  p50: number;
+  p95: number;
+  max: number;
+};
+
+export type WorkspaceHydrationSelectionSnapshot = {
+  timestamp: string;
+  source: string | null;
+  reason: string | null;
+  hasStore: boolean | null;
+  hasHeavy: boolean | null;
+  workspaceRevision: number | null;
+};
+
+export type RequestedContextSnapshot = {
+  timestamp: string;
+  action: string;
+  requestKey: string | null;
+  requestedCaseStatus: string | null;
+  requestedCaseIssue: string | null;
+  resolvedVia: string | null;
+};
+
+export type RuntimeCounterSnapshot = {
+  selectorRecomputeCount: number;
+  contextStateTransitionCount: number;
+};
+
+export type RuntimeDurationSnapshot = {
+  treeScopeResolveMs: PercentileSnapshot;
+  caseSearchFilterMs: PercentileSnapshot;
+  editorDirtyEvalMs: PercentileSnapshot;
+};
+
+export type CaseResolverWorkspaceObservabilitySnapshot = {
+  generatedAt: string;
+  sampleSize: number;
+  actionCounts: Record<string, number>;
+  persistAttempts: number;
+  persistSuccesses: number;
+  persistConflicts: number;
+  persistFailures: number;
+  conflictRate: number;
+  saveSuccessRate: number;
+  persistDurationMs: PercentileSnapshot;
+  payloadBytes: PercentileSnapshot;
+  runtimeCounters: RuntimeCounterSnapshot;
+  runtimeDurations: RuntimeDurationSnapshot;
+  latestHydrationSelection: WorkspaceHydrationSelectionSnapshot | null;
+  latestRequestedContext: RequestedContextSnapshot | null;
+};
+
+/**
+ * Case Resolver Drag & Drop Types
+ */
+
+export type CaseResolverDropDocumentToCanvasDetail = {
+  fileId: string;
+  name: string;
+  folder: string;
+};
+
+export type CaseResolverShowDocumentInCanvasDetail = {
+  fileId: string;
+  nodeId?: string | null;
+  relatedNodeFileAssetIds?: string[];
+};
+
+export type CaseResolverTreeAssetDragPayload = {
+  source: 'case_resolver_tree';
+  entity: 'asset';
+  assetId: string;
+  assetKind: CaseResolverAssetKind;
+  name: string;
+  folder: string;
+  filepath: string | null;
+  mimeType: string | null;
+  size: number | null;
+  textContent: string;
+  description: string;
+};
+
+export type CaseResolverTreeFileDragPayload = {
+  source: 'case_resolver_tree';
+  entity: 'file';
+  fileId: string;
+  name: string;
+  folder: string;
+};
+
+export type CaseResolverTreeDragPayload =
+  | CaseResolverTreeAssetDragPayload
+  | CaseResolverTreeFileDragPayload;
+
+export type CaseResolverDroppedAsset = {
+  id: string;
+  name: string;
+  kind: CaseResolverAssetKind;
+  filepath: string | null;
+  mimeType: string | null;
+  size: number | null;
+  textContent: string;
+  description: string;
+};
+
+export type CaseResolverDroppedDocument = {
+  id: string;
+  name: string;
+  folder: string;
+};
+
+export type CaseResolverUploadedFile = {
+  id: string | null;
+  originalName: string;
+  kind: CaseResolverAssetKind;
+  filepath: string | null;
+  mimetype: string | null;
+  size: number | null;
+  folder: string;
+};
+
+export type PaletteEntry = {
+  id: string;
+  label: string;
+  description: string;
+  definition: any; // NodeDefinition | null
+  toneClassName: string;
+  Icon: any; // React.ComponentType<{ className?: string }>
+};
+
+export type FolderCaseFileStats = {
+  total: number;
+  locked: number;
+};
+
+export type CaseMetadataDraft = {
+  name: string;
+  parentCaseId: string;
+  caseStatus: 'pending' | 'completed';
+  happeningDate: string;
+  referenceCaseIds: string[];
+  tagId: string;
+  caseIdentifierId: string;
+  categoryId: string;
+};
+
+export type DocumentRelationFileTypeFilter = 'all' | 'document' | 'scanfile';
+export type DocumentRelationSortMode = 'name_asc' | 'date_desc' | 'date_asc' | 'folder_asc';

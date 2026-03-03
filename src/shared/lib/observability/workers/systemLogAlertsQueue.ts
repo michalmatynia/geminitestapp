@@ -244,24 +244,24 @@ const readContextRegistryEvidence = (value: unknown): AlertEvidenceContextRegist
 
   const refs = Array.isArray(contextRegistry['refs'])
     ? contextRegistry['refs']
-        .map((ref) => {
-          const record = asRecord(ref);
-          const id = readTrimmedString(record?.['id']);
-          const kind = readTrimmedString(record?.['kind']);
-          if (!id || !kind) return null;
+      .map((ref) => {
+        const record = asRecord(ref);
+        const id = readTrimmedString(record?.['id']);
+        const kind = readTrimmedString(record?.['kind']);
+        if (!id || !kind) return null;
 
-          return {
-            id,
-            kind,
-            ...(readTrimmedString(record?.['providerId'])
-              ? { providerId: readTrimmedString(record?.['providerId'])! }
-              : {}),
-            ...(readTrimmedString(record?.['entityType'])
-              ? { entityType: readTrimmedString(record?.['entityType'])! }
-              : {}),
-          };
-        })
-        .filter((ref): ref is AlertEvidenceContextRegistry['refs'][number] => Boolean(ref))
+        return {
+          id,
+          kind,
+          ...(readTrimmedString(record?.['providerId'])
+            ? { providerId: readTrimmedString(record?.['providerId'])! }
+            : {}),
+          ...(readTrimmedString(record?.['entityType'])
+            ? { entityType: readTrimmedString(record?.['entityType'])! }
+            : {}),
+        };
+      })
+      .filter((ref): ref is AlertEvidenceContextRegistry['refs'][number] => Boolean(ref))
     : [];
 
   if (refs.length === 0) return null;
@@ -315,7 +315,7 @@ const listAlertEvidenceLogs = async (
     id: row.id,
     level: (row.level === 'warn' || row.level === 'info' || row.level === 'error'
       ? row.level
-      : 'error') as 'error' | 'info' | 'warn',
+      : 'error'),
     message: row.message,
     category: row.category ?? null,
     source: row.source ?? null,
@@ -532,7 +532,7 @@ const evaluatePerSourceErrorSpikes = async (): Promise<void> => {
   });
 
   for (const row of groups) {
-    const source = row.source as string | null;
+    const source = row.source;
     if (!source) continue;
     const count = row._count._all ?? 0;
     if (count < SYSTEM_LOG_ALERT_PER_SOURCE_MIN_ERRORS) continue;
@@ -582,7 +582,7 @@ type SupportedAlertCondition = {
 const parseAlertCondition = (alert: Alert): SupportedAlertCondition | null => {
   const raw = alert.condition ?? {};
   if (typeof raw !== 'object' || raw === null) return null;
-  const c = raw as Record<string, unknown>;
+  const c = raw;
   const toNumber = (value: unknown): number | undefined => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value === 'string' && value.trim()) {

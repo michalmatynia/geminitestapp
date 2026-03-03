@@ -2,7 +2,6 @@
 
 import {
   SaveIcon,
-  ShieldCheckIcon,
   SlidersHorizontalIcon,
   ArchiveIcon,
   ClipboardListIcon,

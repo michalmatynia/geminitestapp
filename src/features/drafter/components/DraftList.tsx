@@ -6,12 +6,24 @@ import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDra
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductDraftDto } from '@/shared/contracts/products';
-import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge, Badge } from '@/shared/ui';
+import {
+  Button,
+  ListPanel,
+  useToast,
+  SimpleSettingsList,
+  StatusBadge,
+  Badge,
+  type SimpleSettingsListItem,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useDrafterContext } from '../context/DrafterContext';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+interface DraftListItem extends SimpleSettingsListItem {
+  original: ProductDraftDto;
+}
 
 const resolveDraftIconColor = (draft: ProductDraftDto): string | undefined => {
   if (draft.iconColorMode !== 'custom') return undefined;
@@ -66,8 +78,8 @@ export function DraftList(): React.JSX.Element {
         isDangerous={true}
         loading={!!deleting}
       />
-      <SimpleSettingsList
-        items={drafts.map((draft: ProductDraftDto) => ({
+      <SimpleSettingsList<DraftListItem>
+        items={drafts.map((draft: ProductDraftDto): DraftListItem => ({
           id: draft.id,
           title: (
             <div className='flex items-center gap-3'>
@@ -86,7 +98,7 @@ export function DraftList(): React.JSX.Element {
           icon:
             draft.icon &&
             ((): React.JSX.Element | null => {
-              const IconComponent = ICON_LIBRARY_MAP[draft.icon];
+              const IconComponent = ICON_LIBRARY_MAP[draft.icon!];
               const iconColor = resolveDraftIconColor(draft);
               return IconComponent ? (
                 <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
@@ -101,7 +113,7 @@ export function DraftList(): React.JSX.Element {
         }))}
         isLoading={loading}
         emptyMessage='No drafts yet. Create your first product template to speed up product creation.'
-        renderActions={(item) => (
+        renderActions={(item: DraftListItem) => (
           <div className='flex items-center gap-2'>
             <Button
               onClick={() => openCreator(item.original.id)}
@@ -114,8 +126,8 @@ export function DraftList(): React.JSX.Element {
             </Button>
           </div>
         )}
-        onDelete={(item) => setDraftToDelete(item.original.id)}
-        renderCustomContent={(item) => (
+        onDelete={(item: DraftListItem) => setDraftToDelete(item.original.id)}
+        renderCustomContent={(item: DraftListItem) => (
           <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
             {item.original.sku && (
               <Badge variant='neutral' className='font-normal'>

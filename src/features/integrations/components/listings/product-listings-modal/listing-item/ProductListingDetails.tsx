@@ -6,7 +6,7 @@ import type {
   ProductListingWithDetails,
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
-import { StatusBadge, Card, PropertyRow, Hint } from '@/shared/ui';
+import { StatusBadge, Card, MetadataItem, Hint } from '@/shared/ui';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
@@ -55,32 +55,33 @@ export function ProductListingDetails({
       </div>
 
       <div className='grid gap-y-1.5'>
-        <PropertyRow label='Account' value={listing.connection.name} />
+        <MetadataItem label='Account' value={listing.connection.name} variant='minimal' />
         {listing.externalListingId && (
-          <PropertyRow label='External ID' value={listing.externalListingId} mono />
+          <MetadataItem label='External ID' value={listing.externalListingId} mono variant='minimal' />
         )}
         {listing.inventoryId && (
-          <PropertyRow label='Inventory ID' value={listing.inventoryId} mono />
+          <MetadataItem label='Inventory ID' value={listing.inventoryId} mono variant='minimal' />
         )}
 
         <div className='mt-1 pt-2 border-t border-white/5 space-y-1'>
-          <PropertyRow label='Last export' value={formatTimestamp(listing.listedAt)} variant='subtle' />
+          <MetadataItem label='Last export' value={formatTimestamp(listing.listedAt)} variant='subtle' />
           {isTraderaListing && (
             <>
-              <PropertyRow label='Expires' value={formatTimestamp(listing.expiresAt)} variant='subtle' />
-              <PropertyRow label='Next relist' value={formatTimestamp(listing.nextRelistAt)} variant='subtle' />
-              <PropertyRow label='Relist attempts' value={String(listing.relistAttempts ?? 0)} variant='subtle' />
+              <MetadataItem label='Expires' value={formatTimestamp(listing.expiresAt)} variant='subtle' />
+              <MetadataItem label='Next relist' value={formatTimestamp(listing.nextRelistAt)} variant='subtle' />
+              <MetadataItem label='Relist attempts' value={String(listing.relistAttempts ?? 0)} variant='subtle' />
             </>
           )}
-          <PropertyRow label='Created' value={formatTimestamp(listing.createdAt)} variant='subtle' />
+          <MetadataItem label='Created' value={formatTimestamp(listing.createdAt)} variant='subtle' />
           {listing.failureReason ? (
-            <PropertyRow
+            <MetadataItem
               label='Failure'
               value={listing.failureReason}
               valueClassName='text-red-400 font-medium'
+              variant='minimal'
             />
           ) : null}
-          {isBaseListing && <PropertyRow label='Exported fields' value={getExportFieldsLabel()} variant='subtle' />}
+          {isBaseListing && <MetadataItem label='Exported fields' value={getExportFieldsLabel()} variant='subtle' />}
         </div>
       </div>
 
@@ -116,13 +117,13 @@ export function ProductListingDetails({
                       <StatusBadge status={event.status ?? 'success'} size='sm' />
                     </div>
                     <div className='grid gap-1 px-1'>
-                      <PropertyRow label='Inventory' value={formatListValue(event.inventoryId)} variant='subtle' />
-                      <PropertyRow label='Template' value={formatListValue(event.templateId)} variant='subtle' />
-                      <PropertyRow label='Warehouse' value={formatListValue(event.warehouseId)} variant='subtle' />
+                      <MetadataItem label='Inventory' value={formatListValue(event.inventoryId)} variant='subtle' />
+                      <MetadataItem label='Template' value={formatListValue(event.templateId)} variant='subtle' />
+                      <MetadataItem label='Warehouse' value={formatListValue(event.warehouseId)} variant='subtle' />
                       {event.externalListingId && (
-                        <PropertyRow label='External ID' value={event.externalListingId} mono variant='subtle' />
+                        <MetadataItem label='External ID' value={event.externalListingId} mono variant='subtle' />
                       )}
-                      <PropertyRow
+                      <MetadataItem
                         label='Fields'
                         value={event.fields && event.fields.length > 0 ? event.fields.join(', ') : '—'}
                         variant='subtle'

@@ -7,7 +7,6 @@ import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import {
   Button,
   MetadataItem,
-  PropertyRow,
   Hint,
   Breadcrumbs,
   StatusBadge,
@@ -16,6 +15,8 @@ import {
   ListPanel,
   Card,
 } from '@/shared/ui';
+
+import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
 import { AgentRunsProvider, useAgentRunsContext } from '../context/AgentRunsContext';
@@ -43,7 +44,7 @@ function AgentRunsContent(): React.JSX.Element {
         headerClassName='mb-8'
         refresh={{
           onRefresh: () => {
-            queryClient.invalidateQueries().catch(() => {});
+            void invalidateAgentRuns(queryClient);
             refetchAgentRuns();
           },
           isRefreshing: isAgentRunsFetching,
@@ -83,10 +84,11 @@ function AgentRunsContent(): React.JSX.Element {
                   </div>
 
                   <div className='space-y-1'>
-                    <PropertyRow label='Model' value={job.model || 'Default'} />
-                    <PropertyRow
+                    <MetadataItem label='Model' value={job.model || 'Default'} variant='minimal' />
+                    <MetadataItem
                       label='Created'
                       value={job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}
+                      variant='minimal'
                     />
                   </div>
 

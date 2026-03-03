@@ -3,7 +3,7 @@ import React, { type ReactNode } from 'react';
 import { cn } from '@/shared/utils';
 
 interface MetadataItemProps {
-  label: string;
+  label: ReactNode;
   value?: ReactNode | undefined;
   children?: ReactNode | undefined;
   icon?: ReactNode | undefined;
@@ -12,7 +12,7 @@ interface MetadataItemProps {
   labelClassName?: string | undefined;
   valueClassName?: string | undefined;
   mono?: boolean | undefined;
-  variant?: 'card' | 'minimal' | undefined;
+  variant?: 'card' | 'minimal' | 'subtle' | undefined;
 }
 
 export function MetadataItem({
@@ -28,18 +28,28 @@ export function MetadataItem({
   variant = 'card',
 }: MetadataItemProps): React.JSX.Element {
   const content = children ?? value ?? '—';
+  const isStringLabel = typeof label === 'string';
 
-  if (variant === 'minimal') {
+  if (variant === 'minimal' || variant === 'subtle') {
+    const isSubtle = variant === 'subtle';
     return (
-      <div className={cn('flex items-center gap-2 text-[11px]', className)}>
+      <div
+        className={cn(
+          'flex items-center gap-2 text-[11px]',
+          isSubtle ? 'opacity-80' : '',
+          className
+        )}
+      >
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
         <span
           className={cn(
-            'uppercase font-bold tracking-wider text-gray-500 shrink-0',
+            'uppercase tracking-wider text-gray-500 shrink-0',
+            isSubtle ? 'font-medium' : 'font-bold',
             labelClassName
           )}
         >
-          {label}:
+          {label}
+          {isStringLabel ? ':' : ''}
         </span>
         <div
           className={cn(

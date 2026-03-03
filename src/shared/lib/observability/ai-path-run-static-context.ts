@@ -218,8 +218,8 @@ export const buildAiPathRunStaticContext = async (
       runWarningCount: readNumber(preflightItems.find((item) => item['label'] === 'runWarningCount')?.['value']),
       samples: Array.isArray(preflightItems.find((item) => item['label'] === 'samples')?.['value'])
         ? (preflightItems.find((item) => item['label'] === 'samples')?.['value'] as unknown[])
-            .map((value) => readTrimmedString(value))
-            .filter((value): value is string => Boolean(value))
+          .map((value) => readTrimmedString(value))
+          .filter((value): value is string => Boolean(value))
         : [],
     },
     registry: {

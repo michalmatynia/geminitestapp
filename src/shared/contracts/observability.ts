@@ -349,3 +349,9 @@ export const clientErrorPayloadSchema = z.object({
 });
 
 export type ClientErrorPayloadDto = z.infer<typeof clientErrorPayloadSchema>;
+
+export type SystemLogRuntimeContextHydrationResult = {
+  staticContextPatch: Record<string, unknown>;
+  analysisContextPatch?: Record<string, unknown> | null;
+  adapterMeta?: Record<string, unknown> | null;
+};

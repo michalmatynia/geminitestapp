@@ -100,6 +100,11 @@ export function CategoryMapperTable(): React.JSX.Element {
     );
   }
 
+  const expandedState = useMemo(
+    () => Object.fromEntries(Array.from(expandedIds).map((id) => [id, true])),
+    [expandedIds]
+  );
+
   return (
     <StandardDataTablePanel
       title='Marketplace Categories'
@@ -129,11 +134,11 @@ export function CategoryMapperTable(): React.JSX.Element {
       isLoading={isLoading}
       variant='flat'
       columns={columns}
-      data={externalCategories}
-      expanded={expandedIds}
+      data={externalCategories as any}
+      expanded={expandedState}
       onExpandedChange={() => {}}
-      getRowId={(row) => row.id}
-      getSubRows={(row) => row.subRows}
+      getRowId={(row: any) => row.id}
+      getSubRows={(row: any) => row.subRows}
       maxHeight='60vh'
       stickyHeader
     />

@@ -14,8 +14,8 @@ const createListItemId = (): string =>
 const cloneLogicalConditions = (conditions: PromptExploderListItem['logicalConditions']) =>
   Array.isArray(conditions)
     ? conditions.map((condition) => ({
-        ...condition,
-      }))
+      ...condition,
+    }))
     : [];
 
 const cloneListItem = (item: PromptExploderListItem): PromptExploderListItem => ({

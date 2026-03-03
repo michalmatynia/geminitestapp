@@ -5,13 +5,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector } from '@/shared/lib/icons';
-import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
 import type {
   ProductCategoryDto,
   ProductTag,
   ProductParameter,
   ProductParameterValue,
-} from '@/features/products';
+  CreateProductDraftDto as CreateProductDraftInput,
+  UpdateProductDraftDto as UpdateProductDraftInput,
+} from '@/shared/contracts/products';
 import { getCategoriesFlat, getParameters, getTags } from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
 import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
@@ -22,7 +23,7 @@ import { type ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import { createMultiQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
+import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast, LoadingState, Card } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -171,28 +172,28 @@ export function DraftCreator({
 
   const categories = useMemo(
     () =>
-      (categoryQueries as UseQueryResult<ProductCategoryDto[], Error>[]).flatMap(
+      (categoryQueries as any[]).flatMap(
         (query: UseQueryResult<ProductCategoryDto[], Error>): ProductCategoryDto[] => query.data || []
       ),
     [categoryQueries]
   );
   const tags = useMemo(
     () =>
-      (tagQueries as UseQueryResult<ProductTag[], Error>[]).flatMap(
+      (tagQueries as any[]).flatMap(
         (query: UseQueryResult<ProductTag[], Error>): ProductTag[] => query.data || []
       ),
     [tagQueries]
   );
   const parameters = useMemo(
     () =>
-      (parameterQueries as UseQueryResult<ProductParameter[], Error>[]).flatMap(
+      (parameterQueries as any[]).flatMap(
         (query: UseQueryResult<ProductParameter[], Error>): ProductParameter[] => query.data || []
       ),
     [parameterQueries]
   );
   const parametersLoading = useMemo(
     () =>
-      (parameterQueries as UseQueryResult<ProductParameter[], Error>[]).some(
+      (parameterQueries as any[]).some(
         (query: UseQueryResult<ProductParameter[], Error>): boolean => query.isLoading
       ),
     [parameterQueries]
@@ -436,7 +437,7 @@ export function DraftCreator({
       };
 
       if (draftId) {
-        await updateDraftMutation.mutateAsync({ id: draftId, input });
+        await updateDraftMutation.mutateAsync({ id: draftId, data: input } as any);
       } else {
         await createDraftMutation.mutateAsync(input as CreateProductDraftInput);
       }
@@ -582,14 +583,14 @@ export function DraftCreator({
       selectedCatalogIds,
       setSelectedCatalogIds,
       categories,
-      categoryLoading: (categoryQueries as UseQueryResult<ProductCategoryDto[], Error>[]).some(
+      categoryLoading: (categoryQueries as any[]).some(
         (query: UseQueryResult<ProductCategoryDto[], Error>): boolean => query.isLoading
       ),
       selectedCategoryId,
       setSelectedCategoryId,
       tags,
-      tagLoading: (tagQueries as UseQueryResult<ProductTag[], Error>[]).some(
-        (query) => query.isLoading
+      tagLoading: (tagQueries as any[]).some(
+        (query: UseQueryResult<ProductTag[], Error>): boolean => query.isLoading
       ),
       selectedTagIds,
       setSelectedTagIds,
@@ -667,9 +668,9 @@ export function DraftCreator({
 
   if (draftQuery.isLoading) {
     return (
-      <div className='rounded-lg bg-card p-6'>
-        <p className='text-sm text-gray-400'>Loading draft...</p>
-      </div>
+      <Card variant='subtle' padding='lg' className='flex items-center justify-center min-h-[400px]'>
+        <LoadingState message='Loading draft configuration...' />
+      </Card>
     );
   }
 

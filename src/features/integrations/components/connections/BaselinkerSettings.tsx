@@ -13,7 +13,7 @@ import {
   EmptyState,
   FormActions,
   useToast,
-  PropertyRow,
+  MetadataItem,
   Card,
   Hint,
 } from '@/shared/ui';
@@ -70,9 +70,9 @@ export function BaselinkerSettings(): React.JSX.Element {
                 <span className='text-sm font-medium text-white'>Connection status</span>
                 <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
               </div>
-              <PropertyRow label='Last verified' value={baseTokenUpdatedAt} />
+              <MetadataItem label='Last verified' value={baseTokenUpdatedAt} variant='minimal' />
               {activeConnection.baseLastInventoryId && (
-                <PropertyRow label='Last inventory' value={activeConnection.baseLastInventoryId} />
+                <MetadataItem label='Last inventory' value={activeConnection.baseLastInventoryId} variant='minimal' />
               )}
               <div className='pt-2'>
                 <Button
@@ -141,7 +141,7 @@ export function BaselinkerSettings(): React.JSX.Element {
                 size='sm'
               />
               {defaultExportConnectionId ? (
-                <PropertyRow
+                <MetadataItem
                   label='Active Default ID'
                   value={defaultExportConnectionId}
                   mono

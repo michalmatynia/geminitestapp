@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import type { CaseMetadataDraft } from '../case-overview-draft';
 
 import type {
   CaseResolverAssetFile,
@@ -14,6 +13,7 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverTag,
   CaseResolverWorkspace,
+  CaseMetadataDraft,
 } from '@/shared/contracts/case-resolver';
 
 type CaseResolverAssetPatch = Partial<

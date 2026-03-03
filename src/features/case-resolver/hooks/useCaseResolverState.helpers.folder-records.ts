@@ -185,7 +185,7 @@ export const resolveCaseContainerIdForFolderPath = ({
   for (let index = segments.length; index >= 1; index -= 1) {
     const ancestorPath = segments.slice(0, index).join('/');
     const ownerCaseIds = ownerCaseIdsByPath.get(ancestorPath);
-    if (!ownerCaseIds || ownerCaseIds.size !== 1) continue;
+    if (ownerCaseIds?.size !== 1) continue;
     const ownerCaseId = Array.from(ownerCaseIds)[0] ?? null;
     if (!ownerCaseId) continue;
     if (filesById.get(ownerCaseId)?.fileType !== 'case') continue;

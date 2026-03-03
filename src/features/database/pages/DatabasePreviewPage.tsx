@@ -3,8 +3,6 @@
 import {
   BoxesIcon,
   BracesIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
   DatabaseIcon,
   FileTextIcon,
   HashIcon,

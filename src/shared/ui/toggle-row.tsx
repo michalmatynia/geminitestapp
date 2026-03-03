@@ -8,6 +8,7 @@ import { Card } from './card';
 import { Checkbox } from './checkbox';
 import { Label } from './label';
 import { Switch } from './switch';
+import { StatusToggle } from './status-toggle';
 
 interface ToggleRowProps {
   label: ReactNode;
@@ -15,12 +16,17 @@ interface ToggleRowProps {
   icon?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
-  type?: 'checkbox' | 'switch';
+  type?: 'checkbox' | 'switch' | 'status';
   disabled?: boolean;
   className?: string;
   labelClassName?: string;
   id?: string;
   children?: ReactNode;
+  enabledLabel?: string;
+  disabledLabel?: string;
+  enabledVariant?: 'emerald' | 'cyan' | 'blue';
+  disabledVariant?: 'red' | 'slate' | 'gray';
+  controlWrapper?: (control: ReactNode) => ReactNode;
 }
 
 export function ToggleRow({
@@ -35,10 +41,50 @@ export function ToggleRow({
   labelClassName,
   id,
   children,
+  enabledLabel,
+  disabledLabel,
+  enabledVariant,
+  disabledVariant,
+  controlWrapper,
 }: ToggleRowProps): React.JSX.Element {
   const generatedId = id || React.useId();
 
-  const Control = type === 'switch' ? Switch : Checkbox;
+  const renderControl = () => {
+    let control: ReactNode;
+    if (type === 'switch') {
+      control = (
+        <Switch
+          id={generatedId}
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          disabled={disabled}
+        />
+      );
+    } else if (type === 'status') {
+      control = (
+        <StatusToggle
+          enabled={checked}
+          onToggle={onCheckedChange}
+          disabled={disabled}
+          enabledLabel={enabledLabel}
+          disabledLabel={disabledLabel}
+          enabledVariant={enabledVariant}
+          disabledVariant={disabledVariant}
+        />
+      );
+    } else {
+      control = (
+        <Checkbox
+          id={generatedId}
+          checked={checked}
+          onCheckedChange={(val: boolean | 'indeterminate') => onCheckedChange(val === true)}
+          disabled={disabled}
+        />
+      );
+    }
+
+    return controlWrapper ? controlWrapper(control) : control;
+  };
 
   return (
     <Card
@@ -51,7 +97,7 @@ export function ToggleRow({
       )}
     >
       {children}
-      <div id={id} className='relative z-10 flex-1 space-y-0.5'>
+      <div className='relative z-10 flex-1 space-y-0.5'>
         <div className='flex items-center gap-1.5'>
           {icon ? <span className='shrink-0'>{icon}</span> : null}
           <Label
@@ -63,14 +109,7 @@ export function ToggleRow({
         </div>
         {description && <p className='text-[11px] text-gray-500 leading-tight'>{description}</p>}
       </div>
-      <Control
-        id={generatedId}
-        checked={checked}
-        onCheckedChange={(val: boolean | 'indeterminate') =>
-          onCheckedChange(type === 'switch' ? Boolean(val) : val === true)
-        }
-        disabled={disabled}
-      />
+      {renderControl()}
     </Card>
   );
 }

@@ -8,7 +8,7 @@ import {
   FormSection,
   CopyButton,
   Alert,
-  PropertyRow,
+  MetadataItem,
   StatusBadge,
 } from '@/shared/ui';
 
@@ -70,14 +70,14 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
         ) : null}
         {rule ? (
           <div className='flex flex-wrap gap-4 items-center pt-1'>
-            <PropertyRow label='Severity'>
+            <MetadataItem label='Severity' variant='minimal'>
               <StatusBadge
                 status={formatSeverityLabel(rule.severity)}
                 variant={severityToVariant(rule.severity)}
                 size='sm'
               />
-            </PropertyRow>
-            <PropertyRow label='Enabled' value={rule.enabled ? 'Yes' : 'No'} />
+            </MetadataItem>
+            <MetadataItem label='Enabled' value={rule.enabled ? 'Yes' : 'No'} variant='minimal' />
           </div>
         ) : null}
       </div>

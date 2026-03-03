@@ -1,15 +1,12 @@
 import type {
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   NoteRecord,
+  NotesMasterNodeRef,
 } from '@/shared/contracts/notes';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const FOLDER_NODE_PREFIX = 'folder:';
 const NOTE_NODE_PREFIX = 'note:';
-
-export type NotesMasterNodeRef =
-  | { entity: 'folder'; id: string; nodeId: string }
-  | { entity: 'note'; id: string; nodeId: string };
 
 export const toFolderMasterNodeId = (folderId: string): string =>
   `${FOLDER_NODE_PREFIX}${folderId}`;

@@ -8,7 +8,7 @@ import {
   EmptyState,
   FormActions,
   ToggleRow,
-  PropertyRow,
+  MetadataItem,
   Card,
 } from '@/shared/ui';
 
@@ -60,7 +60,7 @@ export function AllegroSettings(): React.JSX.Element {
                 <span className='text-sm font-medium text-white'>Authorization status</span>
                 <StatusBadge status={allegroConnected ? 'Connected' : 'Not connected'} />
               </div>
-              <PropertyRow label='Expires' value={allegroExpiresAt} />
+              <MetadataItem label='Expires' value={allegroExpiresAt} variant='minimal' />
             </Card>
 
             <FormActions

@@ -4,7 +4,13 @@ import React, { createContext, useContext } from 'react';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
-export type StudioUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
+export type StudioUploadMode =
+  | 'create'
+  | 'replace'
+  | 'temporary-object'
+  | 'environment'
+  | 'assets'
+  | 'slot';
 
 export interface StudioImportContextValue {
   driveImportMode: StudioUploadMode;

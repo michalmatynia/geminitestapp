@@ -1,9 +1,4 @@
-import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import type { ListingJob, ProductJob, ListingRow } from '@/shared/contracts/integrations';
 import type { JobRowData } from '@/shared/contracts/jobs';
 
-export type { JobRowData, ListingJob, ProductJob };
-
-export type ListingRow = {
-  job: ProductJob;
-  listing: ListingJob;
-};
+export type { JobRowData, ListingJob, ProductJob, ListingRow };

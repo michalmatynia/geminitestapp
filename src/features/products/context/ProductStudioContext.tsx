@@ -16,18 +16,20 @@ import { useProductFormImages } from '../ProductFormImageContext';
 import { useProductFormStudio } from '../ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
-  studioKeys,
   useStudioProjects,
 } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import {
+  useSendToStudioMutation,
+  useAcceptVariantMutation,
+  useRotateImageSlotMutation,
+} from '../hooks/useProductStudioMutations';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
-import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequenceReadiness,
-  ProductWithImagesDto as ProductWithImages,
 } from '@/shared/contracts/products';
 
 // --- Types ---
@@ -206,8 +208,11 @@ export function ProductStudioProvider({
   );
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const settingsStore = useSettingsStore();
+
+  const sendToStudioMutation = useSendToStudioMutation();
+  const acceptVariantMutation = useAcceptVariantMutation();
+  const rotateImageSlotMutation = useRotateImageSlotMutation();
 
   const configuredDefaultStudioProjectId =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
@@ -221,9 +226,6 @@ export function ProductStudioProvider({
   const [studioActionError, setStudioActionError] = useState<string | null>(null);
   const [selectedVariantSlotId, setSelectedVariantSlotId] = useState<string | null>(null);
   const [openingInImageStudio, setOpeningInImageStudio] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [accepting, setAccepting] = useState(false);
-  const [rotatingDirection, setRotatingDirection] = useState<'left' | 'right' | null>(null);
   const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
   const [auditEntries, setAuditEntries] = useState<ProductStudioAuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -354,33 +356,25 @@ export function ProductStudioProvider({
 
   const handleSendToStudio = async () => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
-    setSending(true);
     setStudioActionError(null);
     const baselineIds = (variantsData?.variants ?? [])
       .map((s) => s.id)
       .filter((id): id is string => !!id);
     try {
-      const result = await api.post<{
-        runId: string;
-        runKind: 'generation' | 'sequence';
-        runStatus: ProductStudioContextValue['runStatus'];
-        expectedOutputs: number;
-      }>(`/api/products/${encodeURIComponent(product.id)}/studio/send`, {
+      const result = await sendToStudioMutation.mutateAsync({
+        productId: product.id,
         imageSlotIndex: selectedImageIndex,
         projectId: studioProjectId,
       });
       setActiveRunId(result.runId);
       setActiveRunBaselineVariantIds(baselineIds);
-      setRunStatus(result.runStatus);
+      setRunStatus(result.runStatus as any);
       setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs ?? 0)));
       toast('Image sent to Studio.', { variant: 'success' });
-      void invalidateImageStudioSlots(queryClient, studioProjectId);
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
       setStudioActionError(error instanceof Error ? error.message : 'Failed to send.');
-    } finally {
-      setSending(false);
     }
   };
 
@@ -407,25 +401,19 @@ export function ProductStudioProvider({
 
   const handleAcceptVariant = async () => {
     if (!product?.id || !studioProjectId || !selectedVariantSlotId) return;
-    setAccepting(true);
     try {
-      const response = await api.post<{ product: ProductWithImages }>(
-        `/api/products/${encodeURIComponent(product.id)}/studio/accept`,
-        {
-          imageSlotIndex: selectedImageIndex,
-          generationSlotId: selectedVariantSlotId,
-          projectId: studioProjectId,
-        }
-      );
+      const response = await acceptVariantMutation.mutateAsync({
+        productId: product.id,
+        imageSlotIndex: selectedImageIndex!,
+        generationSlotId: selectedVariantSlotId,
+        projectId: studioProjectId,
+      });
       refreshImagesFromProduct(response.product);
-      void invalidateProductsAndCounts(queryClient);
       toast('Variant accepted.', { variant: 'success' });
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to accept.', { variant: 'error' });
-    } finally {
-      setAccepting(false);
     }
   };
 
@@ -451,23 +439,17 @@ export function ProductStudioProvider({
 
   const handleRotateImageSlot = async (direction: 'left' | 'right') => {
     if (!product?.id || selectedImageIndex === null) return;
-    setRotatingDirection(direction);
     try {
-      const response = await api.post<{ product: ProductWithImages }>(
-        `/api/products/${encodeURIComponent(product.id)}/studio/rotate`,
-        {
-          imageSlotIndex: selectedImageIndex,
-          direction,
-        }
-      );
+      const response = await rotateImageSlotMutation.mutateAsync({
+        productId: product.id,
+        imageSlotIndex: selectedImageIndex,
+        direction,
+      });
       refreshImagesFromProduct(response.product);
-      void invalidateProductsAndCounts(queryClient);
       await refreshVariants();
       toast('Image rotated.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to rotate.', { variant: 'error' });
-    } finally {
-      setRotatingDirection(null);
     }
   };
 
@@ -537,10 +519,12 @@ export function ProductStudioProvider({
     handleDeleteVariant,
     handleRotateImageSlot,
     refreshVariants,
-    sending,
-    accepting,
+    sending: sendToStudioMutation.isPending,
+    accepting: acceptVariantMutation.isPending,
     openingInImageStudio,
-    rotatingDirection,
+    rotatingDirection: rotateImageSlotMutation.isPending
+      ? rotateImageSlotMutation.variables?.direction ?? null
+      : null,
     deletingVariantId,
     studioActionError,
   };

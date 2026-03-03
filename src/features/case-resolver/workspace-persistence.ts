@@ -328,7 +328,7 @@ const readCaseResolverNodeFileSnapshotStorageMode = (
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
     return null;
   }
-  const candidate = (metadata as Record<string, unknown>)[
+  const candidate = (metadata)[
     CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
   ];
   return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : null;

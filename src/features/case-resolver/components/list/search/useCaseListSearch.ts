@@ -1,25 +1,18 @@
 import { useMemo } from 'react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  type CaseResolverFile,
+  type CaseListSearchMatchedFile,
+  type CaseListSearchEntry,
+} from '@/shared/contracts/case-resolver';
+
+export type { CaseListSearchMatchedFile, CaseListSearchEntry };
 
 import {
   normalizeSearchText,
   resolveSearchableDocumentContent,
   resolveIdentifierSearchLabel,
 } from '../../CaseResolverNodeFileUtils';
-
-export type CaseListSearchMatchedFile = {
-  file: CaseResolverFile;
-  folderPath: string;
-  signatureLabel: string;
-};
-
-export type CaseListSearchEntry = {
-  caseFile: CaseResolverFile;
-  signatureLabel: string;
-  caseMatched: boolean;
-  matchedFiles: CaseListSearchMatchedFile[];
-};
 
 export function useCaseListSearch(
   workspaceFiles: CaseResolverFile[],

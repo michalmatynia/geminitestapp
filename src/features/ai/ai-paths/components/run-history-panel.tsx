@@ -107,7 +107,7 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (!run?.meta || typeof run.meta !== 'object') {
       return { durationMs: null as number | null, iterations: null as number | null };
     }
-    const rawTrace = (run.meta as Record<string, unknown>)['runtimeTrace'] as
+    const rawTrace = (run.meta)['runtimeTrace'] as
       | RuntimeTraceMeta
       | undefined;
     const duration =
@@ -123,7 +123,7 @@ export function RunHistoryPanel(): React.JSX.Element {
 
   const getRuntimeFingerprint = (run: AiPathRunRecord | null): string | null => {
     if (!run?.meta || typeof run.meta !== 'object') return null;
-    const raw = (run.meta as Record<string, unknown>)['runtimeFingerprint'];
+    const raw = (run.meta)['runtimeFingerprint'];
     if (typeof raw !== 'string') return null;
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;

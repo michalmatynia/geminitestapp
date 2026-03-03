@@ -1,17 +1,7 @@
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseMetadataDraft } from '@/shared/contracts/case-resolver';
+export type { CaseMetadataDraft };
 
 const NONE_OPTION_VALUE = '__none__';
-
-export type CaseMetadataDraft = {
-  name: string;
-  parentCaseId: string;
-  caseStatus: 'pending' | 'completed';
-  happeningDate: string;
-  referenceCaseIds: string[];
-  tagId: string;
-  caseIdentifierId: string;
-  categoryId: string;
-};
 
 export const buildCaseMetadataDraft = (
   caseFile: CaseResolverFile | null

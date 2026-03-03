@@ -1,15 +1,10 @@
-import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver';
-import { inferCaseResolverAssetKind, normalizeFolderPath } from '../settings';
+import type {
+  CaseResolverAssetKind,
+  CaseResolverUploadedFile,
+} from '@/shared/contracts/case-resolver';
 
-export type CaseResolverUploadedFile = {
-  id: string | null;
-  originalName: string;
-  kind: CaseResolverAssetKind;
-  filepath: string | null;
-  mimetype: string | null;
-  size: number | null;
-  folder: string;
-};
+export type { CaseResolverUploadedFile };
+import { inferCaseResolverAssetKind, normalizeFolderPath } from '../settings';
 
 export const normalizeUploadedCaseResolverFile = (
   payload: unknown,

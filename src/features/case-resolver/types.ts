@@ -197,7 +197,7 @@ export type CaseResolverStateValue = {
     onConfirm?: () => void | Promise<void>;
     onCancel?: () => void;
   }) => void;
-  ConfirmationModal: React.ComponentType;
-  PromptInputModal: React.ComponentType;
+  ConfirmationModal: any;
+  PromptInputModal: any;
   filemakerDatabase: FilemakerDatabase;
 };

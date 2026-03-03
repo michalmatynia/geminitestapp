@@ -3,7 +3,6 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { SubgraphConfig } from '@/shared/contracts/ai-paths-core/nodes';
 
 export const handleSubgraphNode: NodeHandler = ({
   node,
@@ -11,7 +10,7 @@ export const handleSubgraphNode: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   if (node.type !== 'subgraph') return prevOutputs;
 
-  const config = node.config?.['subgraph'] as SubgraphConfig | undefined;
+  const config = node.config?.['subgraph'];
 
   return {
     ...prevOutputs,

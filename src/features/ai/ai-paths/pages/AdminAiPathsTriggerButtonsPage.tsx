@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { MousePointer2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -24,7 +23,6 @@ import {
   createListQueryV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   AppModal,
@@ -186,7 +184,6 @@ const extractTriggerButtonPathUsageMap = (
 
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const router = useRouter();
 
   const [editorOpen, setEditorOpen] = useState(false);
@@ -210,7 +207,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       source: 'ai.ai-paths.pages.trigger-buttons.list',
       operation: 'list',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
     },
   });
@@ -240,24 +237,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       source: 'ai.ai-paths.pages.trigger-buttons.create',
       operation: 'create',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (created: AiTriggerButtonDto): Promise<void> => {
-      queryClient.setQueryData(
-        QUERY_KEYS.ai.aiPaths.triggerButtons(),
-        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] => {
-          const items = Array.isArray(current) ? current : [];
-          const existingIndex = items.findIndex(
-            (item: AiTriggerButtonDto) => item.id === created.id
-          );
-          if (existingIndex === -1) return [...items, created];
-          const next = items.slice();
-          next[existingIndex] = created;
-          return next;
-        }
-      );
-      await invalidateAiPathTriggerButtons(queryClient);
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
+    onSuccess: () => {
       toast('Trigger button created.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -301,24 +285,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       source: 'ai.ai-paths.pages.trigger-buttons.update',
       operation: 'update',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (updated: AiTriggerButtonDto): Promise<void> => {
-      queryClient.setQueryData(
-        QUERY_KEYS.ai.aiPaths.triggerButtons(),
-        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] => {
-          const items = Array.isArray(current) ? current : [];
-          const existingIndex = items.findIndex(
-            (item: AiTriggerButtonDto) => item.id === updated.id
-          );
-          if (existingIndex === -1) return [...items, updated];
-          const next = items.slice();
-          next[existingIndex] = updated;
-          return next;
-        }
-      );
-      await invalidateAiPathTriggerButtons(queryClient);
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
+    onSuccess: () => {
       toast('Trigger button updated.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -333,7 +304,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const deleteMutation: UseMutationResult<void, Error, string> = createDeleteMutationV2({
+  const deleteMutation = createDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
       const result = await triggerButtonsApi.remove(id);
@@ -343,18 +314,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       source: 'ai.ai-paths.pages.trigger-buttons.delete',
       operation: 'delete',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (_data: void, deletedId: string): Promise<void> => {
-      queryClient.setQueryData(
-        QUERY_KEYS.ai.aiPaths.triggerButtons(),
-        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] =>
-          Array.isArray(current)
-            ? current.filter((item: AiTriggerButtonDto): boolean => item.id !== deletedId)
-            : []
-      );
-      await invalidateAiPathTriggerButtons(queryClient);
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
+    onSuccess: () => {
       toast('Trigger button deleted.', { variant: 'success' });
       setButtonToDelete(null);
     },
@@ -368,35 +332,34 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation: UseMutationResult<AiTriggerButtonDto[], Error, string[]> =
-    createUpdateMutationV2({
-      mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
-      mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
-        const result = await triggerButtonsApi.reorder(orderedIds);
-        if (!result.ok) throw new Error(result.error);
-        return Array.isArray(result.data) ? result.data : [];
-      },
-      meta: {
-        source: 'ai.ai-paths.pages.trigger-buttons.reorder',
-        operation: 'update',
-        resource: 'ai-paths.trigger-buttons.order',
-        domain: 'global',
-        tags: ['ai-paths', 'trigger-buttons'],
-      },
-      onSuccess: (data: AiTriggerButtonDto[]): void => {
-        queryClient.setQueryData(QUERY_KEYS.ai.aiPaths.triggerButtons(), data);
-        toast('Trigger button order updated.', { variant: 'success' });
-      },
-      onError: (error: unknown): void => {
-        logClientError(error, {
-          context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'reorderTriggerButtons' },
-        });
-        toast(error instanceof Error ? error.message : 'Failed to reorder trigger buttons.', {
-          variant: 'error',
-        });
-        void triggerButtonsQuery.refetch();
-      },
-    });
+  const reorderMutation = createUpdateMutationV2<AiTriggerButtonDto[], string[]>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
+    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
+      const result = await triggerButtonsApi.reorder(orderedIds);
+      if (!result.ok) throw new Error(result.error);
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.reorder',
+      operation: 'update',
+      resource: 'ai-paths.trigger-buttons.order',
+      domain: 'ai_paths',
+      tags: ['ai-paths', 'trigger-buttons'],
+    },
+    invalidateKeys: [QUERY_KEYS.ai.aiPaths.triggerButtons()],
+    onSuccess: () => {
+      toast('Trigger button order updated.', { variant: 'success' });
+    },
+    onError: (error: unknown): void => {
+      logClientError(error, {
+        context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'reorderTriggerButtons' },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to reorder trigger buttons.', {
+        variant: 'error',
+      });
+      void triggerButtonsQuery.refetch();
+    },
+  });
 
   const openCreate = (): void => {
     setDraft(normalizeDraft(null));

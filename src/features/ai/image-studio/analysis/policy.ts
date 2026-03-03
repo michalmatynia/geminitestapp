@@ -1,6 +1,8 @@
 import type {
   ImageStudioCenterDetectionMode,
-  ImageStudioCenterObjectBounds,
+  ImageStudioDetectionCandidate,
+  ImageStudioDetectionCandidateScoreSummary,
+  ImageStudioDetectionPolicyDecision,
 } from '@/shared/contracts/image-studio';
 
 export const IMAGE_STUDIO_LAYOUT_POLICY_VERSION = 'v2';
@@ -57,34 +59,6 @@ const AUTO_CONFIDENCE_DELTA = IMAGE_STUDIO_LAYOUT_POLICY_CONFIG.autoConfidenceDe
 const WHITE_AUTO_AREA_RATIO_BIAS = IMAGE_STUDIO_LAYOUT_POLICY_CONFIG.whiteAutoAreaRatioBias;
 const WHITE_CONFIDENCE_FLOOR = IMAGE_STUDIO_LAYOUT_POLICY_CONFIG.whiteConfidenceFloor;
 const ALPHA_CONFIDENCE_FLOOR = IMAGE_STUDIO_LAYOUT_POLICY_CONFIG.alphaConfidenceFloor;
-
-type DetectionUsed = Exclude<ImageStudioCenterDetectionMode, 'auto'>;
-
-export type ImageStudioDetectionCandidate<TDetails> = {
-  detectionUsed: DetectionUsed;
-  bounds: ImageStudioCenterObjectBounds;
-  confidence: number;
-  detectionDetails?: TDetails | null;
-  details?: TDetails | null;
-};
-
-export type ImageStudioDetectionCandidateScoreSummary = {
-  confidence: number;
-  area: number;
-};
-
-export type ImageStudioDetectionCandidateSummary = {
-  alpha_bbox: ImageStudioDetectionCandidateScoreSummary | null;
-  white_bg_first_colored_pixel: ImageStudioDetectionCandidateScoreSummary | null;
-};
-
-export type ImageStudioDetectionPolicyDecision<TDetails> = {
-  selected: ImageStudioDetectionCandidate<TDetails> | null;
-  policyVersion: string;
-  reason: string;
-  fallbackApplied: boolean;
-  candidateDetections: ImageStudioDetectionCandidateSummary;
-};
 
 const toCandidateSummary = <TDetails>(
   candidate: ImageStudioDetectionCandidate<TDetails> | null

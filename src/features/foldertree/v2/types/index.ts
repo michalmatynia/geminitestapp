@@ -4,7 +4,10 @@ import type {
   MasterFolderTreePersistOperation,
   MasterTreeCanDropResultDto,
   MasterFolderTreeUndoEntry,
-  MasterFolderTreePersistContext,
+  MasterFolderTreeTransaction,
+  MasterFolderTreeAppliedTransaction,
+  MasterFolderTreePreparedTransaction,
+  MasterFolderTreeAdapterV3,
 } from '@/shared/contracts/master-folder-tree';
 import type {
   MasterTreeDropPosition,
@@ -13,53 +16,11 @@ import type {
 } from '@/shared/utils/master-folder-tree-contract';
 
 export type FolderTreePersistOperationV3 = MasterFolderTreePersistOperation;
+export type FolderTreeTransaction = MasterFolderTreeTransaction;
+export type FolderTreePreparedTransaction = MasterFolderTreePreparedTransaction;
+export type FolderTreeAppliedTransaction = MasterFolderTreeAppliedTransaction;
 
-export type FolderTreeTransaction = {
-  id: string;
-  instanceId?: string | undefined;
-  version: number;
-  createdAt: number;
-  operation: FolderTreePersistOperationV3;
-  previousNodes: MasterTreeNode[];
-  nextNodes: MasterTreeNode[];
-};
-
-export type FolderTreePreparedTransaction = {
-  tx: FolderTreeTransaction;
-  preparedAt: number;
-  context?: Record<string, unknown> | undefined;
-};
-
-export type FolderTreeAppliedTransaction = {
-  tx: FolderTreeTransaction;
-  appliedAt: number;
-  nodes?: MasterTreeNode[] | undefined;
-  version?: number | undefined;
-  metadata?: Record<string, unknown> | undefined;
-};
-
-export interface MasterFolderTreeAdapterV3 {
-  fetchState?: (instanceId?: string) => Promise<{
-    nodes: MasterTreeNode[];
-    version?: number | undefined;
-  }>;
-  loadNodes?: () => Promise<MasterTreeNode[]>;
-  prepare?: (tx: FolderTreeTransaction) => Promise<FolderTreePreparedTransaction>;
-  apply: (
-    tx: FolderTreeTransaction,
-    prepared: FolderTreePreparedTransaction
-  ) => Promise<FolderTreeAppliedTransaction | void>;
-  commit?: (tx: FolderTreeTransaction, applied: FolderTreeAppliedTransaction) => Promise<void>;
-  rollback?: (
-    tx: FolderTreeTransaction,
-    stage: 'prepare' | 'apply' | 'commit',
-    reason: unknown
-  ) => Promise<void>;
-  applyOperation?: (
-    operation: FolderTreePersistOperationV3,
-    context: MasterFolderTreePersistContext
-  ) => Promise<MasterTreeNode[] | void>;
-}
+export type { MasterFolderTreeAdapterV3 };
 
 export type FolderTreeState = {
   nodes: MasterTreeNode[];

@@ -2,10 +2,6 @@ import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import {
-  type StudioSlotsResponse,
-  type ImageStudioSlotRecord,
-} from '@/shared/contracts/image-studio';
-import {
   buildCenterRequestId,
   layoutCanvasImageObject,
   centerCanvasImageObjectWhiteBg,
@@ -20,7 +16,6 @@ import {
   type ImageStudioCenterResponse,
   type ImageStudioCenterMode,
 } from '../../../contracts/center';
-import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
@@ -154,13 +149,7 @@ export function useCenterAndScaleHandlers(
       if (normalizedProjectId) {
         setCenterStatus('persisting');
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-        queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
-          slots: [
-            response.slot,
-            ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id),
-          ],
-        });
+        await fetchProjectSlots(normalizedProjectId);
       }
 
       setWorkingSlotId(response.slot.id);

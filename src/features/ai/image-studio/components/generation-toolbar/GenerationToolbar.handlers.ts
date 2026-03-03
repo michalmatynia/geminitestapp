@@ -6,11 +6,14 @@ import {
 } from './GenerationToolbar.types';
 import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
 import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { api } from '@/shared/lib/api-client';
 
 import { useCropHandlers } from './handlers/useCropHandlers';
 import { useUpscaleHandlers } from './handlers/useUpscaleHandlers';
 import { useCenterAndScaleHandlers } from './handlers/useCenterAndScaleHandlers';
 import { useAnalysisHandlers } from './handlers/useAnalysisHandlers';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 export function useGenerationToolbarHandlers(
   state: GenerationToolbarState
@@ -19,9 +22,20 @@ export function useGenerationToolbarHandlers(
 
   const fetchProjectSlots = useCallback(
     async (id: string): Promise<ImageStudioSlotRecord[]> => {
-      const data = await queryClient.fetchQuery<{ slots: ImageStudioSlotRecord[] }>({
-        queryKey: studioKeys.slots(id),
-      });
+      const data = await fetchQueryV2<{ slots: ImageStudioSlotRecord[] }>(queryClient, {
+        queryKey: normalizeQueryKey(studioKeys.slots(id)),
+        queryFn: () =>
+          api.get<{ slots: ImageStudioSlotRecord[] }>(`/api/image-studio/projects/${id}/slots`),
+        staleTime: 0,
+        meta: {
+          source: 'imageStudio.toolbar.handlers.fetchProjectSlots',
+          operation: 'list',
+          resource: 'image-studio.slots',
+          domain: 'image_studio',
+          queryKey: normalizeQueryKey(studioKeys.slots(id)),
+          tags: ['image-studio', 'slots', 'fetch'],
+        },
+      })();
       return data?.slots ?? [];
     },
     [queryClient]

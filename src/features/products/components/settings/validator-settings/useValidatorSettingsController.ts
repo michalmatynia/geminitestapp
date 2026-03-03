@@ -1,5 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
+
 import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -33,7 +34,6 @@ import type {
   SequenceGroupDraft,
   PatternFormData,
 } from '@/shared/contracts/products';
-import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
 import { buildFormDataFromPattern } from './controller-form-utils';
@@ -135,9 +135,7 @@ export function useValidatorSettingsController() {
     setGroupDrafts,
     createPattern,
     updatePattern,
-    invalidateConfig: async () => {
-      await invalidateValidatorConfig(queryClient);
-    },
+    queryClient,
     notifySuccess: (msg) => {
       toast(msg, { variant: 'success' });
     },

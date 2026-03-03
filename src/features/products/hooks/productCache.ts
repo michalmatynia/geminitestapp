@@ -1,7 +1,11 @@
-/**
- * Compatibility layer for product cache management.
- * Unified helpers are now defined in src/shared/lib/query-invalidation.ts
- */
+import * as invalidation from '@/shared/lib/query-invalidation';
+
+export const invalidateProducts = invalidation.invalidateProducts;
+export const invalidateProductsAndCounts = invalidation.invalidateProductsAndCounts;
+export const invalidateProductsAndDetail = invalidation.invalidateProductsAndDetail;
+export const invalidateProductsCountsAndDetail = invalidation.invalidateProductsCountsAndDetail;
+export const invalidateProductMetadata = invalidation.invalidateProductMetadata;
+export const invalidateImageStudioSlots = invalidation.invalidateImageStudioSlots;
+export const refetchProductsAndCounts = invalidation.refetchProductsAndCounts;
 
 export * from '@/shared/lib/product-query-keys';
-export * from '@/shared/lib/query-invalidation';

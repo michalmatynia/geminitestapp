@@ -230,7 +230,7 @@ const resolveExecutionSummary = (
   const operationRaw = record?.['operation'];
   const operation =
     operationRaw === 'center_object' || operationRaw === 'generate'
-      ? (operationRaw as 'center_object' | 'generate')
+      ? (operationRaw)
       : 'generate';
   const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';
 

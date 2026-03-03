@@ -22,27 +22,18 @@ import type {
   NoteTagDto as TagRecord,
   NoteThemeDto as ThemeRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  NoteTagRelationDto as NoteTagRecord,
-  NoteRelationDto,
-  RelatedNoteDto as RelatedNote,
+  NoteRelationWithSource,
+  NoteRelationWithTarget,
+  NoteTagWithDetails,
 } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-type NoteRelationWithSource = NoteRelationDto & {
-  sourceNote?: RelatedNote | undefined;
-};
-
-type NoteRelationWithTarget = NoteRelationDto & {
-  targetNote?: RelatedNote | undefined;
-};
-
-type NoteTagWithDetails = NoteTagRecord & { tag: TagRecord };
 
 export interface NotesAppContextValue {
   settings: NoteSettings;

@@ -3,7 +3,7 @@
 import { Layers } from 'lucide-react';
 import React from 'react';
 
-import { StatusBadge, PropertyRow } from '@/shared/ui';
+import { StatusBadge, MetadataItem } from '@/shared/ui';
 
 import { useViewer3D } from '../context/Viewer3DContext';
 
@@ -23,9 +23,9 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
       <div className='flex items-center gap-4'>
         <div className='flex items-center gap-2'>
           <Layers className='h-4 w-4 text-gray-500' />
-          <PropertyRow label='Env' value={environment} valueClassName='text-gray-300' />
+          <MetadataItem label='Env' value={environment} valueClassName='text-gray-300' variant='minimal' />
         </div>
-        <PropertyRow label='Light' value={lighting} valueClassName='text-gray-300' />
+        <MetadataItem label='Light' value={lighting} valueClassName='text-gray-300' variant='minimal' />
       </div>
       <div className='flex items-center gap-2'>
         {enableBloom && <StatusBadge status='Bloom' variant='info' />}

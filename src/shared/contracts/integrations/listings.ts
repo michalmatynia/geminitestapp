@@ -140,6 +140,17 @@ export const createProductListingSchema = z.object({
 export type CreateProductListing = z.infer<typeof createProductListingSchema>;
 
 /**
+ * Product Listing Badges DTOs
+ */
+
+export type MarketplaceBadgeEntry = {
+  base?: string;
+  tradera?: string;
+};
+
+export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
+
+/**
  * Category Mapping DTOs
  */
 

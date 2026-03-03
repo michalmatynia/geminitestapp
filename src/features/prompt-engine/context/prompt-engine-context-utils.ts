@@ -10,8 +10,8 @@ import {
   IMAGE_STUDIO_SCOPE_SET,
 } from '@/shared/contracts/prompt-engine';
 
-export type { RuleDraft, RulePatch };
 export { DEFAULT_SEQUENCE_STEP };
+export type { RuleDraft, RulePatch };
 
 export const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): RuleDraft => ({
   uid,

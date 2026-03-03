@@ -1,4 +1,6 @@
 import { classifyError } from '@/shared/errors/error-classifier';
+import { ApiError } from '@/shared/lib/api-client';
+import { z } from 'zod';
 import type {
   TanstackCriticality,
   TanstackEntityKind,
@@ -9,6 +11,7 @@ import type {
   TanstackTelemetryEvent,
 } from '@/shared/lib/tanstack-factory-v2.types';
 import { getTraceId } from '@/shared/utils/observability/trace';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { QueryKey } from '@tanstack/react-query';
 
@@ -230,6 +233,7 @@ export const resolveTanstackFactoryMeta = (
     key,
     criticality: safeMeta.criticality ?? 'normal',
     samplingRate: clampSamplingRate(safeMeta.samplingRate),
+    logError: safeMeta.logError !== false,
     domain: safeMeta.domain ?? 'global',
     tags: sanitizeTags(safeMeta.tags),
   };
@@ -257,6 +261,7 @@ export const getTanstackFactoryMetaFromBag = (
       criticality: (storedMeta['criticality'] as TanstackCriticality | undefined) ?? 'normal',
       samplingRate:
         typeof storedMeta['samplingRate'] === 'number' ? storedMeta['samplingRate'] : undefined,
+      logError: typeof storedMeta['logError'] === 'boolean' ? storedMeta['logError'] : undefined,
       domain: (storedMeta['domain'] as TanstackFactoryMeta['domain'] | undefined) ?? 'global',
       tags: Array.isArray(storedMeta['tags'])
         ? storedMeta['tags'].filter((tag): tag is string => typeof tag === 'string')
@@ -382,7 +387,27 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
   const errorMessage = input.error instanceof Error ? input.error.message : undefined;
   const statusCode = input.statusCode ?? extractStatusCode(input.error);
   const category = input.error ? classifyError(input.error) : undefined;
-  const context = sanitizeContext(input.context);
+
+  // Extend error context with detailed info if available
+  const errorContext: Record<string, unknown> = {};
+  if (input.error instanceof ApiError) {
+    errorContext['apiStatus'] = input.error.status;
+    errorContext['apiErrorId'] = input.error.errorId;
+    if (input.error.payload) {
+      errorContext['apiPayload'] = input.error.payload;
+    }
+  } else if (input.error instanceof z.ZodError) {
+    errorContext['zodIssues'] = input.error.issues.map((issue) => ({
+      path: issue.path.join('.'),
+      message: issue.message,
+      code: issue.code,
+    }));
+  }
+
+  const context = sanitizeContext({
+    ...errorContext,
+    ...(input.context ?? {}),
+  });
   const tags = sanitizeTags([...resolvedMeta.tags, ...(input.tags ?? [])]);
 
   const event: TanstackTelemetryEvent = {
@@ -412,6 +437,24 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
 
   if (shouldDropAsDuplicate(event)) {
     return false;
+  }
+
+  // Centrally log error if stage is 'error' and logError is enabled
+  if (input.stage === 'error' && resolvedMeta.logError && input.error) {
+    logClientError(input.error, {
+      context: {
+        telemetryId: event.id,
+        traceId: event.traceId,
+        source: event.source,
+        operation: event.operation,
+        resource: event.resource,
+        category: event.category,
+        domain: event.domain,
+        key: event.key,
+        attempt: event.attempt,
+        ...context,
+      },
+    });
   }
 
   queuedEvents.push(event);

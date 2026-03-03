@@ -247,6 +247,11 @@ export const productJobSchema = z.object({
 
 export type ProductJob = z.infer<typeof productJobSchema>;
 
+export type ListingRow = {
+  job: ProductJob;
+  listing: ListingJob;
+};
+
 export const exportJobDetailSchema = z.object({
   job: productJobSchema,
   listing: listingJobSchema,

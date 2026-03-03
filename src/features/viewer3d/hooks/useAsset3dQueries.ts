@@ -17,8 +17,14 @@ import {
   createDeleteMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateAsset3d, invalidateAsset3dDetail } from '@/shared/lib/query-invalidation';
-export { invalidateAsset3d, invalidateAsset3dDetail };
+import {
+  invalidateAsset3d as sharedInvalidateAsset3d,
+  invalidateAsset3dDetail as sharedInvalidateAsset3dDetail,
+} from '@/shared/lib/query-invalidation';
+
+export const invalidateAsset3d = sharedInvalidateAsset3d;
+export const invalidateAsset3dDetail = sharedInvalidateAsset3dDetail;
+
 import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
 
 export { asset3dKeys };

@@ -22,6 +22,7 @@ import {
   FormSection,
   Card,
   EmptyState,
+  ToggleRow,
 } from '@/shared/ui';
 
 import {
@@ -121,37 +122,34 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         label='Validation Controls'
         description='`Validator` enables all validation rules. `Formatter` auto-applies only rules configured for formatter mode.'
       >
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            type='button'
-            onClick={(): void => {
-              const next = !validatorEnabled;
-              setValidatorEnabled(next);
-              if (!next) {
-                setFormatterEnabled(false);
-              }
+        <div className='grid gap-3 md:grid-cols-2'>
+          <ToggleRow
+            label='Validator'
+            checked={validatorEnabled}
+            onCheckedChange={(checked) => {
+              setValidatorEnabled(checked);
+              if (!checked) setFormatterEnabled(false);
             }}
-            className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
-              validatorEnabled
-                ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
-                : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-            }`}
-          >
-            Validator {validatorEnabled ? 'ON' : 'OFF'}
-          </Button>
-          {validatorEnabled ? (
-            <Button
-              type='button'
-              onClick={(): void => setFormatterEnabled(!formatterEnabled)}
-              className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-                formatterEnabled
-                  ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                  : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-              }`}
-            >
-              Formatter {formatterEnabled ? 'ON' : 'OFF'}
-            </Button>
-          ) : null}
+            type='status'
+            className='bg-gray-900/70 border-border'
+            enabledLabel='ENABLED'
+            disabledLabel='DISABLED'
+            enabledVariant='cyan'
+            disabledVariant='slate'
+          />
+          {validatorEnabled && (
+            <ToggleRow
+              label='Formatter'
+              checked={formatterEnabled}
+              onCheckedChange={setFormatterEnabled}
+              type='status'
+              className='bg-gray-900/70 border-border'
+              enabledLabel='ACTIVE'
+              disabledLabel='OFF'
+              enabledVariant='emerald'
+              disabledVariant='slate'
+            />
+          )}
         </div>
       </FormField>
 
@@ -269,7 +267,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
 
   return (
     <FormSection title='Default Product Values' className='p-4'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+      <div className='space-y-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <FormField label='SKU' id='sku'>
           <Input
             id='sku'
@@ -369,7 +368,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
         </FormField>
       </div>
 
-      <div className='grid grid-cols-3 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <FormField label='Name (English)' id='nameEn'>
           <Input
             id='nameEn'
@@ -396,7 +395,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
         </FormField>
       </div>
 
-      <div className='grid grid-cols-3 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <FormField label='Description (English)' id='descEn'>
           <Textarea
             id='descEn'
@@ -431,8 +430,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           />
         </FormField>
       </div>
-    </FormSection>
-  );
+    </div>
+  </FormSection>
+);
 }
 
 export function DraftCreatorPricingSupplierSection(): React.JSX.Element {

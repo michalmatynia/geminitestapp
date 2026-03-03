@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Alert, StatusBadge, PropertyRow, Card } from '@/shared/ui';
+import { Alert, StatusBadge, MetadataItem, Card } from '@/shared/ui';
 
 import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
@@ -47,7 +47,7 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
             }
             variant={promptEngineSettings.promptValidation.enabled ? 'success' : 'warning'}
           />
-          <PropertyRow
+          <MetadataItem
             label='Source'
             value={isUsingDefaults ? 'defaults' : 'saved settings'}
             variant='subtle'

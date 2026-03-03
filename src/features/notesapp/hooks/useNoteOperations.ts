@@ -6,18 +6,13 @@ import type { UndoAction } from '@/shared/contracts/notes';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  NoteRelationDto,
-  RelatedNoteDto as RelatedNote,
+  NoteRelationWithTarget,
 } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
-
-type NoteRelationWithTarget = NoteRelationDto & {
-  targetNote?: RelatedNote | undefined;
-};
 
 import {
   useCreateCategoryMutation,

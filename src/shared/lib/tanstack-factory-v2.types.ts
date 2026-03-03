@@ -51,6 +51,7 @@ export type TanstackFactoryMeta = {
   mutationKey?: QueryKey | undefined;
   criticality?: TanstackCriticality | undefined;
   samplingRate?: number | undefined;
+  logError?: boolean | undefined;
   tags?: string[] | undefined;
 };
 
@@ -61,6 +62,7 @@ export type TanstackFactoryMetaResolved = {
   key: QueryKey | undefined;
   criticality: TanstackCriticality;
   samplingRate: number;
+  logError: boolean;
   domain: TanstackFactoryDomain;
   tags: string[];
 };

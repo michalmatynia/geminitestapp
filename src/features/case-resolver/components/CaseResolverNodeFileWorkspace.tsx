@@ -1,6 +1,6 @@
 'use client';
 
-import { FileCode2, Save, Settings2 } from 'lucide-react';
+import { FileCode2, Save, Settings2, Copy } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
@@ -10,7 +10,7 @@ import {
   type CaseResolverAssetFile,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
-import { Button, EmptyState, Card } from '@/shared/ui';
+import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
@@ -48,6 +48,7 @@ type ResolvedNodeFileSnapshotState = {
 };
 
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
+  const { toast } = useToast();
   const {
     nodes,
     selectedNodeId,
@@ -169,6 +170,11 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     setConfigOpen(false);
   }, [configOpen, setConfigOpen, setIsNodeInspectorOpen]);
 
+  const handleCopyNodeId = useCallback((id: string) => {
+    void navigator.clipboard.writeText(id);
+    toast('Node ID copied.', { variant: 'success' });
+  }, [toast]);
+
   return (
     <div className='flex h-full min-h-0 w-full gap-4'>
       <Card
@@ -199,8 +205,16 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
               Open Inspector
             </Button>
           </div>
-          <div className='text-xs text-gray-400'>
-            {hasPendingSnapshotChanges ? 'Unsaved changes' : 'All changes saved'}
+          <div className='flex items-center gap-2'>
+            {hasPendingSnapshotChanges ? (
+              <Badge variant='warning' className='h-5 px-1.5 text-[10px] uppercase font-bold'>
+                Unsaved changes
+              </Badge>
+            ) : (
+              <Badge variant='outline' className='h-5 px-1.5 text-[10px] uppercase font-bold text-gray-500'>
+                All changes saved
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -235,32 +249,49 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
             <span className='text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
               Added Nodes
             </span>
-            <span className='text-[10px] text-gray-500'>{orderedNodes.length}</span>
+            {orderedNodes.length > 0 && (
+              <Badge variant='outline' className='text-[10px] h-4 px-1'>
+                {orderedNodes.length}
+              </Badge>
+            )}
           </div>
           {orderedNodes.length === 0 ? (
             <div className='rounded border border-dashed border-border/40 px-2 py-1.5 text-xs text-gray-500'>
               No nodes on this canvas yet.
             </div>
           ) : (
-            <div className='flex max-h-24 flex-wrap gap-1.5 overflow-y-auto pr-1'>
+            <div className='flex max-h-24 flex-wrap gap-1.5 overflow-y-auto pr-1 custom-scrollbar'>
               {orderedNodes.map((node) => {
                 const isSelected = selectedNodeId === node.id;
                 return (
-                  <button
-                    key={node.id}
-                    type='button'
-                    onClick={() => selectNode(node.id)}
-                    className={
-                      isSelected
-                        ? 'inline-flex max-w-full items-center gap-2 rounded border border-cyan-500/50 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-100'
-                        : 'inline-flex max-w-full items-center gap-2 rounded border border-border/50 bg-card/50 px-2 py-1 text-xs text-gray-300 transition-colors hover:border-border hover:bg-card/70'
-                    }
-                  >
-                    <span className='max-w-[200px] truncate'>{node.title || 'Untitled Node'}</span>
-                    <span className='rounded bg-card/70 px-1 py-0.5 text-[10px] uppercase tracking-wide text-gray-500'>
-                      {node.type}
-                    </span>
-                  </button>
+                  <div key={node.id} className='relative group/node'>
+                    <Chip
+                      active={isSelected}
+                      onClick={() => selectNode(node.id)}
+                      label={
+                        <div className='flex items-center gap-2 max-w-[240px]'>
+                          <span className='truncate'>{node.title || 'Untitled Node'}</span>
+                          <span className='rounded bg-black/30 px-1 text-[9px] uppercase tracking-wide opacity-60'>
+                            {node.type}
+                          </span>
+                        </div>
+                      }
+                      className='pr-1'
+                    />
+                    <Tooltip content='Copy Node ID' side='top'>
+                      <Button
+                        variant='ghost'
+                        size='xs'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyNodeId(node.id);
+                        }}
+                        className='absolute -top-1.5 -right-1.5 h-4 w-4 p-0 rounded-full bg-card border border-border/60 opacity-0 group-hover/node:opacity-100 transition-opacity'
+                      >
+                        <Copy size={8} />
+                      </Button>
+                    </Tooltip>
+                  </div>
                 );
               })}
             </div>
@@ -361,7 +392,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       updated: CaseResolverNodeFileSnapshot,
       options?: NodeFileSnapshotPersistOptions
     ): Promise<boolean> => {
-      if (!selectedAsset || selectedAsset.kind !== 'node_file') return false;
+      if (selectedAsset?.kind !== 'node_file') return false;
       const didPersistSnapshot = await persistCaseResolverNodeFileSnapshot({
         assetId: selectedAsset.id,
         snapshot: updated,

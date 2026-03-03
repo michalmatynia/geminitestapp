@@ -5,13 +5,15 @@ import {
   type ErrorCategory,
   type SuggestedAction,
 } from '@/shared/contracts/observability';
+import { ApiError } from '@/shared/lib/api-client';
 
 const ERROR_PATTERNS = [
   [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.NETWORK],
   [
-    /auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i,
+    /auth|login|permission|access|unauthorized|forbidden|jwt|session/i,
     ERROR_CATEGORY.AUTH,
   ],
+  [/not found/i, ERROR_CATEGORY.VALIDATION],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
   [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
   [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
@@ -23,6 +25,15 @@ const ERROR_PATTERNS = [
 export function classifyError(error: unknown): ErrorCategory {
   if (error instanceof z.ZodError) {
     return ERROR_CATEGORY.VALIDATION;
+  }
+
+  if (error instanceof ApiError) {
+    if (error.category && Object.values(ERROR_CATEGORY).includes(error.category as any)) {
+      return error.category as ErrorCategory;
+    }
+    if (error.status === 401 || error.status === 403) return ERROR_CATEGORY.AUTH;
+    if (error.status === 404 || error.status === 400) return ERROR_CATEGORY.VALIDATION;
+    if (error.status >= 500) return ERROR_CATEGORY.SYSTEM;
   }
 
   const message = error instanceof Error ? error.message : String(error);

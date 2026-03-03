@@ -13,7 +13,7 @@ import {
   Breadcrumbs,
   FormActions,
   Hint,
-  PropertyRow,
+  MetadataItem,
   Tooltip,
 } from '@/shared/ui';
 
@@ -199,8 +199,8 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
             <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-card/40 p-3'>
               <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
               <div className='space-y-1.5'>
-                <PropertyRow label='Position' value={position} valueClassName='capitalize' mono />
-                <PropertyRow
+                <MetadataItem label='Position' value={position} valueClassName='capitalize' mono variant='minimal' />
+                <MetadataItem
                   label='Accent'
                   icon={
                     <span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />
@@ -208,6 +208,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                   value={accent}
                   valueClassName='capitalize'
                   mono
+                  variant='minimal'
                 />
               </div>
             </FormSection>

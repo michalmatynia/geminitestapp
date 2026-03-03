@@ -19,7 +19,7 @@ import {
   Breadcrumbs,
   FormActions,
   LoadingState,
-  PropertyRow,
+  MetadataItem,
   Hint,
 } from '@/shared/ui';
 
@@ -135,9 +135,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
             </FormSection>
 
             <FormSection variant='subtle-compact' className='p-4 text-xs text-gray-300 space-y-2'>
-              <PropertyRow label='Selected' value={current.id} mono />
-              <PropertyRow label='Heading' value={current.heading} mono />
-              <PropertyRow label='Body' value={current.body} mono />
+              <MetadataItem label='Selected' value={current.id} mono variant='minimal' />
+              <MetadataItem label='Heading' value={current.heading} mono variant='minimal' />
+              <MetadataItem label='Body' value={current.body} mono variant='minimal' />
             </FormSection>
 
             <Hint

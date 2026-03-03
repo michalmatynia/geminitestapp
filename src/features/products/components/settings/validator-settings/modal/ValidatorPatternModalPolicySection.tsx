@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MultiSelect, SelectSimple, StatusToggle, FormField } from '@/shared/ui';
+import { MultiSelect, SelectSimple, FormField, ToggleRow } from '@/shared/ui';
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {
   DENY_BEHAVIOR_OVERRIDE_OPTIONS,
@@ -75,80 +75,75 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
         />
       </FormField>
 
-      <div className='space-y-2'>
-        <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
-          <span className='text-xs text-gray-300'>Pattern enabled</span>
-          <StatusToggle
-            enabled={formData.enabled}
-            onToggle={() =>
-              setFormData((prev: PatternFormData) => ({
+      <div className='space-y-2 pt-2'>
+        <ToggleRow
+          label='Pattern enabled'
+          checked={formData.enabled}
+          onCheckedChange={(enabled) =>
+            setFormData((prev: PatternFormData) => ({ ...prev, enabled }))
+          }
+          type='status'
+          className='bg-gray-900/70 border-border'
+          labelClassName='text-xs text-gray-300'
+        />
+
+        <ToggleRow
+          label='Replacer enabled'
+          checked={formData.replacementEnabled}
+          onCheckedChange={(replacementEnabled) =>
+            setFormData((prev: PatternFormData) => {
+              return {
                 ...prev,
-                enabled: !prev.enabled,
-              }))
-            }
-          />
-        </div>
+                replacementEnabled,
+                replacementAutoApply: replacementEnabled ? prev.replacementAutoApply : false,
+              };
+            })
+          }
+          type='status'
+          className='bg-gray-900/70 border-border'
+          labelClassName='text-xs text-gray-300'
+          controlWrapper={(control) => (
+            <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
+              {control}
+            </ValidatorDocTooltip>
+          )}
+        />
 
-        <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
-          <span className='text-xs text-gray-300'>Replacer enabled</span>
-          <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
-            <StatusToggle
-              enabled={formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => {
-                  const nextReplacementEnabled = !prev.replacementEnabled;
-                  return {
-                    ...prev,
-                    replacementEnabled: nextReplacementEnabled,
-                    replacementAutoApply: nextReplacementEnabled
-                      ? prev.replacementAutoApply
-                      : false,
-                  };
-                })
-              }
-            />
-          </ValidatorDocTooltip>
-        </div>
+        <ToggleRow
+          label='Auto-apply replacer'
+          description='OFF keeps it as a proposal only.'
+          checked={formData.replacementAutoApply}
+          onCheckedChange={(replacementAutoApply) =>
+            setFormData((prev: PatternFormData) => ({ ...prev, replacementAutoApply }))
+          }
+          disabled={!formData.replacementEnabled}
+          type='status'
+          className='bg-gray-900/70 border-border'
+          labelClassName='text-xs text-gray-300'
+          controlWrapper={(control) => (
+            <ValidatorDocTooltip docId='validator.modal.replacement.autoApply'>
+              {control}
+            </ValidatorDocTooltip>
+          )}
+        />
 
-        <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
-          <div>
-            <span className='text-xs text-gray-300'>Auto-apply replacer</span>
-            <p className='text-[11px] text-gray-500'>OFF keeps it as a proposal only.</p>
-          </div>
-          <ValidatorDocTooltip docId='validator.modal.replacement.autoApply'>
-            <StatusToggle
-              enabled={formData.replacementAutoApply}
-              disabled={!formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  replacementAutoApply: !prev.replacementAutoApply,
-                }))
-              }
-            />
-          </ValidatorDocTooltip>
-        </div>
-
-        <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
-          <div>
-            <span className='text-xs text-gray-300'>Skip same-value proposals</span>
-            <p className='text-[11px] text-gray-500'>
-              Hide replacement proposals when replacement equals current value.
-            </p>
-          </div>
-          <ValidatorDocTooltip docId='validator.modal.replacement.skipNoop'>
-            <StatusToggle
-              enabled={formData.skipNoopReplacementProposal}
-              disabled={!formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  skipNoopReplacementProposal: !prev.skipNoopReplacementProposal,
-                }))
-              }
-            />
-          </ValidatorDocTooltip>
-        </div>
+        <ToggleRow
+          label='Skip same-value proposals'
+          description='Hide replacement proposals when replacement equals current value.'
+          checked={formData.skipNoopReplacementProposal}
+          onCheckedChange={(skipNoopReplacementProposal) =>
+            setFormData((prev: PatternFormData) => ({ ...prev, skipNoopReplacementProposal }))
+          }
+          disabled={!formData.replacementEnabled}
+          type='status'
+          className='bg-gray-900/70 border-border'
+          labelClassName='text-xs text-gray-300'
+          controlWrapper={(control) => (
+            <ValidatorDocTooltip docId='validator.modal.replacement.skipNoop'>
+              {control}
+            </ValidatorDocTooltip>
+          )}
+        />
       </div>
     </div>
   );

@@ -29,7 +29,6 @@ import {
 import {
   emitCaseResolverDropDocumentToCanvas,
   emitCaseResolverShowDocumentInCanvas,
-  type CaseResolverTreeDragPayload,
 } from '../drag';
 import {
   decodeCaseResolverMasterNodeId,
@@ -45,6 +44,8 @@ import {
 } from './CaseResolverFolderTree.helpers';
 import { CaseResolverTreeHeader } from './CaseResolverTreeHeader';
 import { CaseResolverTreeNode } from './CaseResolverTreeNode';
+
+import type { CaseResolverTreeDragPayload } from '@/shared/contracts/case-resolver';
 
 type PendingNodeCanvasAction = {
   kind: 'drop' | 'show';

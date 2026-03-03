@@ -34,11 +34,13 @@ import {
 } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
+import type {
+  AdminNavNodeEntry,
+  FlattenedCustomNode,
+} from '@/shared/contracts/admin';
 import {
   AdminMenuSettingsProvider,
   useAdminMenuSettings,
-  type AdminNavNodeEntry,
-  type FlattenedCustomNode,
 } from '../context/AdminMenuSettingsContext';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];

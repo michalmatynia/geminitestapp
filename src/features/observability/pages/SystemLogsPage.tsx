@@ -46,7 +46,6 @@ import {
   Tooltip,
   CopyButton,
   Hint,
-  PropertyRow,
   Card,
   type StatusVariant,
   LoadingState,
@@ -180,17 +179,17 @@ const readContextDocument = (value: unknown): ContextDocumentDisplay | null => {
     status: readRecordString(record?.['status']),
     tags: Array.isArray(record?.['tags'])
       ? record['tags']
-          .map((tag) => readRecordString(tag))
-          .filter((tag): tag is string => Boolean(tag))
-          .slice(0, 6)
+        .map((tag) => readRecordString(tag))
+        .filter((tag): tag is string => Boolean(tag))
+        .slice(0, 6)
       : [],
     facts: factsRecord
       ? Object.entries(factsRecord)
-          .map(([key, rawValue]) => {
-            const value = toDisplayValue(rawValue);
-            return value ? { label: key, value } : null;
-          })
-          .filter((entry): entry is AiPathRunDisplayModel => Boolean(entry))
+        .map(([key, rawValue]) => {
+          const value = toDisplayValue(rawValue);
+          return value ? { label: key, value } : null;
+        })
+        .filter((entry): entry is AiPathRunDisplayModel => Boolean(entry))
       : [],
     sections: sections
       .map((section): ContextDocumentSectionDisplay | null => {
@@ -360,7 +359,7 @@ function ContextDocumentCard({
                 >
                   <div className='flex flex-wrap gap-2 text-[11px] text-gray-200/90'>
                     {Object.entries(item).map(([key, value]) => (
-                      <PropertyRow
+                      <MetadataItem
                         key={`${document.id}-${section.id ?? section.title}-${index}-${key}`}
                         label={key}
                         value={value}
@@ -686,21 +685,21 @@ function LogMetrics(): React.JSX.Element {
               Retention Period
             </Hint>
             <div className='space-y-1'>
-              <PropertyRow
+              <MetadataItem
                 label='Total Logs'
                 value={metrics.total}
                 mono
                 valueClassName='text-white'
                 variant='subtle'
               />
-              <PropertyRow
+              <MetadataItem
                 label='Last 24h'
                 value={metrics.last24Hours}
                 mono
                 valueClassName='text-white'
                 variant='subtle'
               />
-              <PropertyRow
+              <MetadataItem
                 label='Last 7d'
                 value={metrics.last7Days}
                 mono
@@ -714,7 +713,7 @@ function LogMetrics(): React.JSX.Element {
               Level Distribution
             </Hint>
             <div className='space-y-1'>
-              <PropertyRow
+              <MetadataItem
                 label='Errors'
                 value={levels.error}
                 mono
@@ -722,7 +721,7 @@ function LogMetrics(): React.JSX.Element {
                 valueClassName='text-rose-300'
                 variant='subtle'
               />
-              <PropertyRow
+              <MetadataItem
                 label='Warnings'
                 value={levels.warn}
                 mono
@@ -730,7 +729,7 @@ function LogMetrics(): React.JSX.Element {
                 valueClassName='text-amber-300'
                 variant='subtle'
               />
-              <PropertyRow
+              <MetadataItem
                 label='Info'
                 value={levels.info}
                 mono
@@ -751,7 +750,7 @@ function LogMetrics(): React.JSX.Element {
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
                   {metrics.topSources.map((item: { source: string; count: number }) => (
-                    <PropertyRow
+                    <MetadataItem
                       key={item.source}
                       label={
                         <StatusBadge
@@ -777,7 +776,7 @@ function LogMetrics(): React.JSX.Element {
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
                   {metrics.topPaths.map((item: { path: string; count: number }) => (
-                    <PropertyRow
+                    <MetadataItem
                       key={item.path}
                       label={
                         <StatusBadge

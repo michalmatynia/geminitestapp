@@ -1,6 +1,11 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import {
+  invalidateAiPathRuns,
+  invalidateImageStudioSlots,
+} from '@/shared/lib/query-invalidation';
 
 import { wait, type VariantThumbnailInfo } from './preview-utils';
 import { resolveVariantSlotIdForCenterPreview } from './variant-thumbnails';
@@ -73,6 +78,10 @@ type DeleteVariantApiResponse = {
   warnings: string[];
 };
 
+type StudioSlotsResponse = {
+  slots: ImageStudioSlotRecord[];
+};
+
 const toTemporaryUpload = (variant: VariantThumbnailInfo): TemporaryUpload | null => {
   if (!variant.output) return null;
   return {
@@ -143,13 +152,7 @@ const dismissVariantFromUi = (
 };
 
 const refreshGenerationQueries = (queryClient: QueryClient): void => {
-  void queryClient.invalidateQueries({
-    predicate: (query) =>
-      Array.isArray(query.queryKey) &&
-      query.queryKey[0] === studioKeys.all[0] &&
-      query.queryKey[1] === 'list' &&
-      query.queryKey[2] === 'runs',
-  });
+  void invalidateAiPathRuns(queryClient);
 };
 
 const collectSourceParentSlotIds = (slot: ImageStudioSlotRecord | null): string[] => {
@@ -257,14 +260,23 @@ export const deleteVariantFromCenterPreview = async ({
       queryClient,
       refreshSlots: async (): Promise<void> => {
         if (!projectId) return;
-        const response = await api.get<{ slots?: ImageStudioSlotRecord[] }>(
-          `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
-          {
-            cache: 'no-store',
-            logError: false,
-          }
-        );
-        queryClient.setQueryData(studioKeys.slots(projectId), response);
+        await fetchQueryV2<StudioSlotsResponse>(queryClient, {
+          queryKey: studioKeys.slots(projectId),
+          queryFn: () =>
+            api.get<StudioSlotsResponse>(
+              `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+              { cache: 'no-store', logError: false }
+            ),
+          staleTime: 0,
+          meta: {
+            source: 'imageStudio.centerPreview.refreshSlots',
+            operation: 'list',
+            resource: 'image-studio.slots',
+            domain: 'image_studio',
+            queryKey: studioKeys.slots(projectId),
+            tags: ['image-studio', 'slots', 'fetch'],
+          },
+        })();
       },
       rootVariantSourceSlotId,
       slots,
@@ -340,14 +352,23 @@ export const deleteVariantFromCenterPreview = async ({
     );
     refreshGenerationQueries(queryClient);
     try {
-      const refreshed = await api.get<{ slots?: ImageStudioSlotRecord[] }>(
-        `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
-        {
-          cache: 'no-store',
-          logError: false,
-        }
-      );
-      queryClient.setQueryData(studioKeys.slots(projectId), refreshed);
+      const refreshed = await fetchQueryV2<StudioSlotsResponse>(queryClient, {
+        queryKey: studioKeys.slots(projectId),
+        queryFn: () =>
+          api.get<StudioSlotsResponse>(
+            `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+            { cache: 'no-store', logError: false }
+          ),
+        staleTime: 0,
+        meta: {
+          source: 'imageStudio.centerPreview.deleteVariant.refetch',
+          operation: 'list',
+          resource: 'image-studio.slots',
+          domain: 'image_studio',
+          queryKey: studioKeys.slots(projectId),
+          tags: ['image-studio', 'slots', 'fetch'],
+        },
+      })();
       const refreshedSlots = Array.isArray(refreshed?.slots) ? refreshed.slots : [];
       const refreshedIdSet = new Set(
         refreshedSlots.map((slot) => slot.id?.trim() ?? '').filter(Boolean)
@@ -360,10 +381,9 @@ export const deleteVariantFromCenterPreview = async ({
         setSelectedSlotId(nextFocusSlotId);
       }
     } catch {
-      // Best-effort cache refresh, fall back to invalidate/refetch below.
+      // Best-effort cache refresh, fall back to invalidate below.
     }
-    await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-    await queryClient.refetchQueries({ queryKey: studioKeys.slots(projectId), type: 'active' });
+    void invalidateImageStudioSlots(queryClient, projectId);
   } catch (error: unknown) {
     toast(error instanceof Error ? error.message : 'Failed to delete variant.', {
       variant: 'error',

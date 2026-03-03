@@ -1,59 +1,13 @@
-import type { CaseResolverWorkspaceDebugEvent } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverWorkspaceDebugEvent,
+  CaseResolverWorkspaceObservabilitySnapshot,
+  PercentileSnapshot,
+  WorkspaceHydrationSelectionSnapshot,
+  RequestedContextSnapshot,
+  RuntimeCounterSnapshot,
+  RuntimeDurationSnapshot,
+} from '@/shared/contracts/case-resolver';
 import { readCaseResolverWorkspaceDebugEvents } from './workspace-persistence';
-
-type PercentileSnapshot = {
-  count: number;
-  p50: number;
-  p95: number;
-  max: number;
-};
-
-type WorkspaceHydrationSelectionSnapshot = {
-  timestamp: string;
-  source: string | null;
-  reason: string | null;
-  hasStore: boolean | null;
-  hasHeavy: boolean | null;
-  workspaceRevision: number | null;
-};
-
-type RequestedContextSnapshot = {
-  timestamp: string;
-  action: string;
-  requestKey: string | null;
-  requestedCaseStatus: string | null;
-  requestedCaseIssue: string | null;
-  resolvedVia: string | null;
-};
-
-type RuntimeCounterSnapshot = {
-  selectorRecomputeCount: number;
-  contextStateTransitionCount: number;
-};
-
-type RuntimeDurationSnapshot = {
-  treeScopeResolveMs: PercentileSnapshot;
-  caseSearchFilterMs: PercentileSnapshot;
-  editorDirtyEvalMs: PercentileSnapshot;
-};
-
-export type CaseResolverWorkspaceObservabilitySnapshot = {
-  generatedAt: string;
-  sampleSize: number;
-  actionCounts: Record<string, number>;
-  persistAttempts: number;
-  persistSuccesses: number;
-  persistConflicts: number;
-  persistFailures: number;
-  conflictRate: number;
-  saveSuccessRate: number;
-  persistDurationMs: PercentileSnapshot;
-  payloadBytes: PercentileSnapshot;
-  runtimeCounters: RuntimeCounterSnapshot;
-  runtimeDurations: RuntimeDurationSnapshot;
-  latestHydrationSelection: WorkspaceHydrationSelectionSnapshot | null;
-  latestRequestedContext: RequestedContextSnapshot | null;
-};
 
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;

@@ -62,7 +62,17 @@ export function useProductsCount(filters: UseProductsFilters, options: UseProduc
 export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
   return useOfflineMutation((formData: FormData) => createProduct(formData), {
     queryKey: productsAllQueryKey,
+    meta: {
+      source: 'products.hooks.useCreateProductMutation',
+      operation: 'create',
+      resource: 'products',
+      domain: 'products',
+      tags: ['products', 'create'],
+    },
     extraInvalidateKeys: [productsCountsQueryKey],
+    invalidate: async (queryClient) => {
+      await invalidateProductsAndCounts(queryClient);
+    },
     queuedMessage: 'Product creation queued in runtime queue.',
     processedMessage: 'Queued product creation completed.',
     errorMessage: 'Failed to create product',
@@ -177,11 +187,49 @@ export function useUpdateProductMutation(): UseMutationResult<
     },
     {
       queryKey: productsListsQueryKey,
+      meta: {
+        source: 'products.hooks.useUpdateProductMutation',
+        operation: 'update',
+        resource: 'products',
+        domain: 'products',
+        tags: ['products', 'update'],
+      },
       extraInvalidateKeys: (variables: {
         id: string;
         data: Partial<ProductWithImages> | FormData;
         originalSku?: string | null;
       }) => [productsCountsQueryKey, getProductDetailQueryKey(variables.id)],
+      invalidate: async (queryClient, savedProduct) => {
+        if (!savedProduct) return;
+        // Synchronously patch the detail caches
+        queryClient.setQueryData(
+          getProductDetailQueryKey(savedProduct.id),
+          (old: ProductWithImages | undefined) => (old ? { ...old, ...savedProduct } : savedProduct)
+        );
+        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
+        // Patch lists in the background
+        setTimeout(() => {
+          queryClient.setQueriesData(
+            { queryKey: QUERY_KEYS.products.lists() },
+            (old: any) => {
+              if (Array.isArray(old)) {
+                return old.map((p: any) => (p.id === savedProduct.id ? { ...p, ...savedProduct } : p));
+              }
+              if (old?.products && Array.isArray(old.products)) {
+                return {
+                  ...old,
+                  products: old.products.map((p: any) =>
+                    p.id === savedProduct.id ? { ...p, ...savedProduct } : p
+                  ),
+                };
+              }
+              return old;
+            }
+          );
+        }, 0);
+        
+        await invalidateProductsAndDetail(queryClient, savedProduct.id);
+      },
       queuedMessage: 'Product update queued in runtime queue.',
       processedMessage: 'Queued product update completed.',
       errorMessage: 'Failed to update product',
@@ -207,6 +255,13 @@ export function useDeleteProductMutation(): UseMutationResult<
   > {
   return useOfflineMutation((id: string) => deleteProduct(id) as Promise<DeleteResponse>, {
     queryKey: productsAllQueryKey,
+    meta: {
+      source: 'products.hooks.useDeleteProductMutation',
+      operation: 'delete',
+      resource: 'products',
+      domain: 'products',
+      tags: ['products', 'delete'],
+    },
     extraInvalidateKeys: [productsCountsQueryKey],
     queuedMessage: 'Product deletion queued in runtime queue.',
     processedMessage: 'Queued product deletion completed.',
@@ -232,6 +287,13 @@ export function useBulkDeleteProductsMutation(): UseMutationResult<
     },
     {
       queryKey: productsAllQueryKey,
+      meta: {
+        source: 'products.hooks.useBulkDeleteProductsMutation',
+        operation: 'delete',
+        resource: 'products.bulk',
+        domain: 'products',
+        tags: ['products', 'bulk-delete'],
+      },
       extraInvalidateKeys: [productsCountsQueryKey],
       queuedMessage: 'Product deletion queued in runtime queue.',
       processedMessage: 'Queued product deletion completed.',

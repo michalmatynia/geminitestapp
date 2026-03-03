@@ -12,13 +12,14 @@ import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { AppModal, Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { getMarketplaceButtonClass } from '../product-column-utils';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
-const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
 const oneClickExportInFlight = new Set<string>();
 
@@ -65,21 +66,35 @@ export function BaseQuickExportButton({
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
     try {
       const [preferredConnection, defaultInventory] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: integrationSelectionQueryKeys.defaultConnection,
-          queryFn: fetchPreferredBaseConnection,
+        fetchQueryV2<{ connectionId?: string | null }>(queryClient, {
+          queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
+          queryFn: () => fetchPreferredBaseConnection(),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        }),
-        queryClient.fetchQuery({
-          queryKey: defaultExportInventoryQueryKey,
+          meta: {
+            source: 'products.columns.buttons.BaseQuickExport.resolveContext.preferredConnection',
+            operation: 'detail',
+            resource: 'integrations.default-connection',
+            domain: 'integrations',
+            queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
+            tags: ['integrations', 'default-connection', 'fetch'],
+          },
+        })(),
+        fetchQueryV2<{ inventoryId?: string | null }>(queryClient, {
+          queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
           queryFn: () =>
             api.get<{ inventoryId?: string | null }>(
               '/api/integrations/exports/base/default-inventory'
             ),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-          gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-        }),
+          meta: {
+            source: 'products.columns.buttons.BaseQuickExport.resolveContext.defaultInventory',
+            operation: 'detail',
+            resource: 'integrations.default-inventory',
+            domain: 'integrations',
+            queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
+            tags: ['integrations', 'default-inventory', 'fetch'],
+          },
+        })(),
       ]);
 
       const connectionId = preferredConnection?.connectionId?.trim() || '';

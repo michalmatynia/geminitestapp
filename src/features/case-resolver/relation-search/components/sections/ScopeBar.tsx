@@ -5,7 +5,6 @@ import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
 import { SelectSimple, Tooltip, SegmentedControl, Chip } from '@/shared/ui';
 import {
   useDocumentRelationSearchContext,
-  type ResultHeight,
 } from '../../context/DocumentRelationSearchContext';
 import {
   type DocumentRelationFileTypeFilter,
@@ -57,7 +56,7 @@ export function ScopeBar({
         ]}
         value={documentSearchScope}
         onChange={(v) => {
-          setDocumentSearchScope(v as typeof documentSearchScope);
+          setDocumentSearchScope(v);
           if (v === 'case_scope') setSelectedDrillCaseId(null);
         }}
       />
@@ -113,7 +112,7 @@ export function ScopeBar({
           { value: 'expanded', label: '', icon: ListPlus },
         ]}
         value={resultHeight}
-        onChange={(v) => setResultHeight(v as ResultHeight)}
+        onChange={(v) => setResultHeight(v)}
         activeClassName='text-cyan-300'
       />
     </div>

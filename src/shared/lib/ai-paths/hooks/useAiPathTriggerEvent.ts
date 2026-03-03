@@ -44,6 +44,7 @@ import {
   optimisticallyInsertAiPathRunInQueueCache,
   invalidateProductsCountsAndDetail,
   invalidateProductsAndCounts,
+  invalidateIntegrationJobs,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
@@ -944,7 +945,7 @@ export function useAiPathTriggerEvent(): {
         } else {
           void invalidateProductsAndCounts(queryClient);
         }
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.productAi('all') });
+        void invalidateIntegrationJobs(queryClient);
       };
       const scheduleQueuedProductRefresh = (productId?: string | null): void => {
         invalidateProductQueries(productId);

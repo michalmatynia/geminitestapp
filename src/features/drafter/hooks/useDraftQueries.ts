@@ -14,22 +14,28 @@ import {
   createUpdateMutationV2,
   createDeleteMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { invalidateDraftDetail, invalidateDrafts } from '@/shared/lib/query-invalidation';
-import { draftKeys } from '@/shared/lib/query-key-exports';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export { draftKeys };
+const draftKeys = QUERY_KEYS.drafter;
 
-export function useDraftQueries(): ListQuery<ProductDraftDto> {
-  const queryKey = draftKeys.lists();
-  return createListQueryV2({
+export {
+  draftKeys,
+  useDrafts as useDraftQueries,
+  useCreateDraftMutation as useCreateDraft,
+  useUpdateDraftMutation as useUpdateDraft,
+  useDeleteDraftMutation as useDeleteDraft,
+};
+
+export function useDrafts(notebookId?: string): ListQuery<ProductDraftDto> {
+  const queryKey = draftKeys.list(notebookId ?? 'all');
+  return createListQueryV2<ProductDraftDto>({
     queryKey,
-    queryFn: () => api.get<ProductDraftDto[]>('/api/drafts', { cache: 'no-store' }),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
-    refetchOnReconnect: 'always',
+    queryFn: () =>
+      api.get<ProductDraftDto[]>('/api/drafts', {
+        params: notebookId ? { notebookId } : undefined,
+      }),
     meta: {
-      source: 'drafter.hooks.useDraftQueries',
+      source: 'drafter.hooks.useDrafts',
       operation: 'list',
       resource: 'drafts',
       domain: 'drafter',
@@ -40,112 +46,70 @@ export function useDraftQueries(): ListQuery<ProductDraftDto> {
 }
 
 export function useDraft(id: string | null): SingleQuery<ProductDraftDto> {
-  return createSingleQueryV2({
-    queryKey: (resolvedId) => draftKeys.detail(resolvedId),
-    queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${id}`, { cache: 'no-store' }),
+  const queryKey = draftKeys.detail(id ?? 'none');
+  return createSingleQueryV2<ProductDraftDto>({
     id,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
-    refetchOnReconnect: 'always',
+    queryKey: (noteId) => draftKeys.detail(noteId),
+    queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${id}`),
+    enabled: !!id,
     meta: {
       source: 'drafter.hooks.useDraft',
       operation: 'detail',
       resource: 'drafts.detail',
       domain: 'drafter',
+      queryKey,
       tags: ['drafts', 'detail'],
     },
   });
 }
 
-export function useCreateDraft(): MutationResult<ProductDraftDto, CreateProductDraftDto> {
-  return createCreateMutationV2({
-    mutationFn: (input: CreateProductDraftDto) => api.post<ProductDraftDto>('/api/drafts', input),
-    mutationKey: draftKeys.lists(),
+export function useCreateDraftMutation(): MutationResult<ProductDraftDto, CreateProductDraftDto> {
+  return createCreateMutationV2<ProductDraftDto, CreateProductDraftDto>({
+    mutationFn: (data) => api.post<ProductDraftDto>('/api/drafts', data),
     meta: {
-      source: 'drafter.hooks.useCreateDraft',
+      source: 'drafter.hooks.useCreateDraftMutation',
       operation: 'create',
       resource: 'drafts',
       domain: 'drafter',
-      mutationKey: draftKeys.lists(),
       tags: ['drafts', 'create'],
     },
-    invalidate: async (queryClient, created) => {
-      queryClient.setQueryData<ProductDraftDto[]>(
-        draftKeys.lists(),
-        (current: ProductDraftDto[] | undefined) => {
-          if (!current) return [created];
-          return [created, ...current];
-        }
-      );
-      queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(created.id), created);
-      return invalidateDrafts(queryClient);
-    },
+    invalidateKeys: [draftKeys.lists()],
   });
 }
 
-export function useUpdateDraft(): MutationResult<
+export function useUpdateDraftMutation(): MutationResult<
   ProductDraftDto,
-  { id: string; input: UpdateProductDraftDto }
+  { id: string; data: UpdateProductDraftDto }
   > {
-  return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftDto }) =>
-      api.put<ProductDraftDto>(`/api/drafts/${id}`, input),
-    mutationKey: draftKeys.lists(),
+  return createUpdateMutationV2<ProductDraftDto, { id: string; data: UpdateProductDraftDto }>({
+    mutationFn: ({ id, data }) => api.put<ProductDraftDto>(`/api/drafts/${id}`, data),
     meta: {
-      source: 'drafter.hooks.useUpdateDraft',
+      source: 'drafter.hooks.useUpdateDraftMutation',
       operation: 'update',
       resource: 'drafts',
       domain: 'drafter',
-      mutationKey: draftKeys.lists(),
       tags: ['drafts', 'update'],
     },
-    invalidate: async (queryClient, data) => {
-      queryClient.setQueryData<ProductDraftDto[]>(
-        draftKeys.lists(),
-        (current: ProductDraftDto[] | undefined) => {
-          if (!current) return [data];
-          const next = current.map((draft: ProductDraftDto) =>
-            draft.id === data.id ? { ...draft, ...data } : draft
-          );
-          if (next.some((draft: ProductDraftDto) => draft.id === data.id)) {
-            return next;
-          }
-          return [data, ...next];
-        }
-      );
-      queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(data.id), data);
-      void invalidateDrafts(queryClient);
-      return invalidateDraftDetail(queryClient, data.id);
+    invalidate: (queryClient, data) => {
+      queryClient.setQueryData(draftKeys.detail(data.id), data);
+      void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
     },
   });
 }
 
-export function useDeleteDraft(): MutationResult<string, string> {
-  return createDeleteMutationV2({
-    mutationFn: async (id: string): Promise<string> => {
-      await api.delete(`/api/drafts/${id}`);
-      return id;
-    },
-    mutationKey: draftKeys.lists(),
+export function useDeleteDraftMutation(): MutationResult<void, string> {
+  return createDeleteMutationV2<void, string>({
+    mutationFn: (id) => api.delete<void>(`/api/drafts/${id}`),
     meta: {
-      source: 'drafter.hooks.useDeleteDraft',
+      source: 'drafter.hooks.useDeleteDraftMutation',
       operation: 'delete',
       resource: 'drafts',
       domain: 'drafter',
-      mutationKey: draftKeys.lists(),
       tags: ['drafts', 'delete'],
     },
-    invalidate: async (queryClient, deletedId) => {
-      queryClient.setQueryData<ProductDraftDto[]>(
-        draftKeys.lists(),
-        (current: ProductDraftDto[] | undefined) => {
-          if (!current) return current;
-          return current.filter((draft: ProductDraftDto) => draft.id !== deletedId);
-        }
-      );
-      void invalidateDrafts(queryClient);
+    invalidate: (queryClient, _, deletedId) => {
       queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
+      void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
     },
   });
 }

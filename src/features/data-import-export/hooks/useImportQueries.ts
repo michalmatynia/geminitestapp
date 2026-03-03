@@ -186,32 +186,7 @@ export function useTemplateMutation(
       mutationKey,
       tags: ['import-export', 'templates', scope, 'save'],
     },
-    invalidate: async (queryClient, result, variables) => {
-      queryClient.setQueryData<Template[]>(
-        importExportKeys.templates(scope),
-        (previous: Template[] | undefined): Template[] => {
-          const current = previous ?? [];
-          if (variables.isDelete) {
-            return id ? current.filter((template: Template) => template.id !== id) : current;
-          }
-          if (!result || typeof result !== 'object') return current;
-          const maybeTemplate = result as Partial<Template>;
-          const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
-          if (!templateId) return current;
-          const nextTemplate = result as Template;
-          const existingIndex = current.findIndex(
-            (template: Template) => template.id === templateId
-          );
-          if (existingIndex === -1) {
-            return [nextTemplate, ...current];
-          }
-          return current.map((template: Template, index: number) =>
-            index === existingIndex ? nextTemplate : template
-          );
-        }
-      );
-      await queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
-    },
+    invalidateKeys: [importExportKeys.templates(scope)],
   });
 }
 

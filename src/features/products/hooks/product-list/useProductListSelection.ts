@@ -6,6 +6,7 @@ import { getProducts } from '@/features/products/api';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProductData';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 import type { ProductWithImages, ProductFilters } from '@/shared/contracts/products';
@@ -50,10 +51,6 @@ export function useProductListSelection({
     });
     setRowSelection(newSelection);
   }, [data, rowSelection]);
-
-import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
-
-// ... other imports ...
 
   const handleSelectAllGlobal = useCallback(
     async (filters: ProductFilters) => {

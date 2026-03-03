@@ -67,7 +67,6 @@ export * from './Hint';
 export * from './ActionMenu';
 export * from './ExternalLink';
 export * from './Breadcrumbs';
-export * from './PropertyRow';
 export * from './toggle-row';
 export * from './PageLayout';
 export * from './FormModal';

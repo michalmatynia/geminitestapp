@@ -1,12 +1,8 @@
-export type SystemLogStaticContextEnvelope = {
-  staticContext: Record<string, unknown>;
-};
+import type { SystemLogRuntimeContextHydrationResult } from '@/shared/contracts/observability';
 
-export type SystemLogRuntimeContextHydrationResult = {
-  staticContextPatch: Record<string, unknown>;
-  analysisContextPatch?: Record<string, unknown> | null;
-  adapterMeta?: Record<string, unknown> | null;
-};
+export type { SystemLogRuntimeContextHydrationResult };
+
+export type SystemLogStaticContextEnvelope = Record<string, unknown>;
 
 export type SystemLogRuntimeContextAdapter = {
   id: string;

@@ -3,18 +3,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useMemo } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
+import {
+  type MarketplaceBadgeEntry,
+  type ListingBadgesPayload,
+} from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 
 import { listingBadgesQueryKey } from './listingCache';
-
-type MarketplaceBadgeEntry = {
-  base?: string;
-  tradera?: string;
-};
-type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};

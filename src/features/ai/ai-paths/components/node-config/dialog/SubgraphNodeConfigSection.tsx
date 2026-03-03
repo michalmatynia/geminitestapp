@@ -18,14 +18,14 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
 
   const handleFieldChange =
     (field: keyof SubgraphConfig) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-      updateSelectedNodeConfig({
-        subgraph: {
-          ...subgraphConfig,
-          [field]: event.target.value,
-        },
-      });
-    };
+      (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+        updateSelectedNodeConfig({
+          subgraph: {
+            ...subgraphConfig,
+            [field]: event.target.value,
+          },
+        });
+      };
 
   return (
     <div className='space-y-4'>
@@ -67,7 +67,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
         <Label className='text-xs text-gray-400'>Input mapping JSON (optional)</Label>
         <Textarea
           className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-gray-100'
-          placeholder={`{\n  "value": "subgraphInput",\n  "context": "subgraphContext"\n}`}
+          placeholder={'{\n  "value": "subgraphInput",\n  "context": "subgraphContext"\n}'}
           value={subgraphConfig.inputMappingJson ?? ''}
           onChange={handleFieldChange('inputMappingJson')}
         />
@@ -80,7 +80,7 @@ export function SubgraphNodeConfigSection(): React.JSX.Element | null {
         <Label className='text-xs text-gray-400'>Output mapping JSON (optional)</Label>
         <Textarea
           className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-gray-100'
-          placeholder={`{\n  "subgraphResult": "value"\n}`}
+          placeholder={'{\n  "subgraphResult": "value"\n}'}
           value={subgraphConfig.outputMappingJson ?? ''}
           onChange={handleFieldChange('outputMappingJson')}
         />

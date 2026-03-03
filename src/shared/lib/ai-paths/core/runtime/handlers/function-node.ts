@@ -107,7 +107,7 @@ export const handleFunctionNode: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   if (node.type !== 'function') return prevOutputs;
 
-  const config = node.config?.['function'] as FunctionConfig | undefined;
+  const config = node.config?.['function'];
   const script = config?.script?.trim();
   if (!script) {
     return {
@@ -152,7 +152,7 @@ export const handleFunctionNode: NodeHandler = ({
 
   let fn: (inputs: RuntimePortValues, context: Record<string, unknown>) => unknown;
   try {
-    // eslint-disable-next-line no-new-func
+     
     fn = new Function(
       'inputs',
       'context',
@@ -188,10 +188,10 @@ export const handleFunctionNode: NodeHandler = ({
     let outputs: RuntimePortValues =
       result !== null && typeof result === 'object' && !Array.isArray(result)
         ? (result as RuntimePortValues)
-        : { value: result as unknown };
+        : { value: result };
 
     const primaryValue =
-      (outputs['value'] as unknown) !== undefined ? (outputs['value'] as unknown) : (result as unknown);
+      (outputs['value']) !== undefined ? (outputs['value']) : (result);
 
     if (config?.expectedType) {
       const actualTag = resolveTypeTag(primaryValue);
@@ -245,11 +245,11 @@ export const handleFunctionNode: NodeHandler = ({
       errorRaw:
         error instanceof Error
           ? {
-              name: error.name,
-              message: error.message,
-              stack: error.stack,
-              logs: logs.length > 0 ? logs : undefined,
-            }
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            logs: logs.length > 0 ? logs : undefined,
+          }
           : undefined,
     };
   }

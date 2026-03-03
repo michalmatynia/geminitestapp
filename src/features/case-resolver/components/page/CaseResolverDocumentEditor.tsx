@@ -30,12 +30,18 @@ import {
   Card,
   FormField,
   Input,
-  SelectSimple,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  MetadataItem,
+  Tooltip,
+  useToast,
+  SelectSimple,
+  EmptyState,
+  FormSection,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
 import { CaseResolverPartySelectField } from './CaseResolverPartySelectField';
 import { DocumentRelationSearchPanel } from '../../relation-search';
@@ -74,6 +80,7 @@ function LinkedFileTypeIcon({ fileType }: { fileType: string }): React.JSX.Eleme
 }
 
 export function CaseResolverDocumentEditor(): React.JSX.Element | null {
+  const { toast } = useToast();
   const contextValue = useCaseResolverViewContext();
   const {
     state,
@@ -134,14 +141,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
   const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
 
-  const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
   const promptTransferStatus =
     captureApplyDiagnostics?.status ?? (pendingPromptExploderPayload ? 'pending' : 'idle');
   const promptTransferStatusLabel = resolvePromptExploderTransferStatusLabel(
     promptTransferStatus as PromptExploderTransferUiStatus
   );
-
-  const showPromptExploderApplyAction = canApplyPendingPromptOutput;
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
 
@@ -149,22 +153,20 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
       <div className='flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-4'>
         <div className='flex min-w-0 flex-1 items-center gap-3'>
-          <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              size='sm'
-              onClick={handleSaveFileEditor}
-              disabled={!isEditorSaveEnabled || isEditingDocumentLocked}
-              className={`h-9 min-w-[120px] rounded-md border shadow-sm transition-all ${
-                isEditorSaveEnabled
-                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                  : 'border-border/60 text-gray-500 hover:bg-transparent'
-              }`}
-            >
-              <Save className='mr-2 size-4' />
-              Update
-            </Button>
-          </div>
+          <Button
+            type='button'
+            size='sm'
+            onClick={handleSaveFileEditor}
+            disabled={!isEditorSaveEnabled || isEditingDocumentLocked}
+            className={`h-9 min-w-[120px] rounded-md border shadow-sm transition-all ${
+              isEditorSaveEnabled
+                ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                : 'border-border/60 text-gray-500 hover:bg-transparent'
+            }`}
+          >
+            <Save className='mr-2 size-4' />
+            Update
+          </Button>
           <div className='h-6 w-px bg-border/40' />
           <div className='min-w-0 flex-1'>
             <div className='flex items-center gap-2 text-[10px] uppercase tracking-wider text-gray-500'>
@@ -174,7 +176,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
             </div>
 
             {isRenamingName ? (
-              <input
+              <Input
                 ref={nameInputRef}
                 autoFocus
                 value={nameInputValue}
@@ -193,22 +195,23 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     setIsRenamingName(false);
                   }
                 }}
-                className='w-full rounded border border-border/60 bg-card/30 px-1.5 py-0.5 text-sm font-semibold text-gray-100 outline-none focus:border-blue-500/60 focus:ring-0'
+                className='h-7 w-full border-blue-500/60 bg-card/30 text-sm font-semibold'
               />
             ) : (
-              <button
-                type='button'
+              <Button
+                variant='ghost'
+                size='xs'
                 disabled={isEditingDocumentLocked}
                 onClick={() => {
                   setNameInputValue(draft.name);
                   setIsRenamingName(true);
                 }}
-                className='group flex min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-white/5 disabled:pointer-events-none'
+                className='h-7 group flex min-w-0 items-center justify-start gap-1.5 px-1 py-0.5 text-left hover:bg-white/5'
                 title='Click to rename'
               >
                 <span className='truncate text-sm font-semibold text-gray-100'>{draft.name}</span>
                 <Pencil className='size-3 shrink-0 text-gray-600 opacity-0 transition-opacity group-hover:opacity-100' />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -313,7 +316,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
         <div className='flex-1 overflow-auto mt-4'>
           <TabsContent value='document' className='m-0 space-y-6'>
             <div className='flex flex-col gap-6'>
-              {showPromptExploderApplyAction && (
+              {pendingPromptExploderPayload && (
                 <Card className='border-blue-500/30 bg-blue-500/5 p-4'>
                   <div className='flex items-center justify-between gap-4'>
                     <div className='flex items-center gap-3'>
@@ -421,29 +424,26 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               />
 
               <div className='flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/40'>
-                <div className='flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-gray-500'>
-                  <div className='flex items-center gap-2'>
-                    <span className='uppercase tracking-wider opacity-60'>Created:</span>
-                    <span className='text-gray-300'>{createdAtLabel}</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <span className='uppercase tracking-wider opacity-60'>Modified:</span>
-                    <span className='text-gray-300'>{updatedAtLabel}</span>
-                  </div>
+                <div className='flex flex-wrap items-center gap-x-6 gap-y-2'>
+                  <MetadataItem variant='minimal' label='Created' value={createdAtLabel} />
+                  <MetadataItem variant='minimal' label='Modified' value={updatedAtLabel} />
                 </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  className='h-8 gap-2 px-2 text-[11px] text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                  onClick={() => {
-                    void handleCopyDraftFileId();
-                  }}
-                >
-                  <span className='opacity-60'>ID:</span>
-                  <span className='font-mono'>{editingDocumentDraft.id}</span>
-                  <Copy className='size-3 opacity-60' />
-                </Button>
+                <Tooltip content='Copy Document ID' side='top'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-8 gap-2 px-2 text-[11px] text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    onClick={() => {
+                      void handleCopyDraftFileId();
+                      toast('Document ID copied.', { variant: 'success' });
+                    }}
+                  >
+                    <span className='opacity-60'>ID:</span>
+                    <span className='font-mono'>{editingDocumentDraft.id.slice(0, 8)}...</span>
+                    <Copy className='size-3 opacity-60' />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
           </TabsContent>
@@ -463,30 +463,33 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   Linked Documents
                 </div>
                 {relatedFiles.length > 0 && (
-                  <span className='rounded-full border border-border/40 bg-card/60 px-2 py-0.5 text-[10px] text-gray-500'>
+                  <Badge variant='outline' className='bg-card/60 px-2 py-0.5 text-[10px]'>
                     {relatedFiles.length}
-                  </span>
+                  </Badge>
                 )}
               </div>
               {relatedFiles.length === 0 ? (
-                <div className='rounded border border-dashed border-border/40 p-8 text-center text-xs text-gray-500'>
-                  No related documents linked yet.
-                </div>
+                <EmptyState
+                  variant='compact'
+                  title='No related documents'
+                  description='Use the search above to find and link documents.'
+                  className='py-12 border-dashed'
+                />
               ) : (
                 <div className='grid gap-2'>
                   {relatedFiles.map((file) => {
                     const dateLabel = formatShortDate(file.documentDate?.isoDate);
                     return (
-                      <div
+                      <Card
                         key={file.id}
-                        className='flex items-start gap-3 rounded border border-border/60 bg-card/20 px-3 py-2'
+                        variant='subtle'
+                        padding='sm'
+                        className='flex items-start gap-3 border-border/60 bg-card/20'
                       >
-                        {/* Type icon */}
                         <div className='mt-0.5 shrink-0'>
                           <LinkedFileTypeIcon fileType={file.fileType} />
                         </div>
 
-                        {/* Name + meta row */}
                         <div className='min-w-0 flex-1'>
                           <div className='flex items-center gap-1.5'>
                             <span className='truncate text-xs font-medium text-gray-200'>
@@ -496,38 +499,31 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                               <Lock className='size-3 shrink-0 text-amber-400/70' />
                             )}
                           </div>
-                          <div className='mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-500'>
-                            {file.fileType && (
-                              <span
-                                className={
-                                  file.fileType === 'document'
-                                    ? 'text-blue-400/70'
-                                    : file.fileType === 'scanfile'
-                                      ? 'text-amber-400/70'
-                                      : 'text-gray-500'
-                                }
-                              >
-                                {file.fileType}
-                              </span>
-                            )}
-                            {dateLabel && <span>{dateLabel}</span>}
-                            {file.folder && (
-                              <span className='truncate opacity-70'>{file.folder}</span>
-                            )}
+                          <div className='mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5'>
+                            <MetadataItem
+                              variant='subtle'
+                              label='Type'
+                              value={file.fileType}
+                              valueClassName={cn(
+                                file.fileType === 'document' && 'text-blue-400/70',
+                                file.fileType === 'scanfile' && 'text-amber-400/70'
+                              )}
+                            />
+                            {dateLabel && <MetadataItem variant='subtle' label='Date' value={dateLabel} />}
+                            {file.folder && <MetadataItem variant='subtle' label='Folder' value={file.folder} />}
                           </div>
                         </div>
 
-                        {/* Unlink button */}
                         <Button
                           variant='ghost'
                           size='sm'
-                          className='mt-0.5 h-7 w-7 shrink-0 p-0 text-gray-500 hover:text-red-400'
+                          className='mt-0.5 h-7 w-7 shrink-0 p-0 text-gray-500 hover:text-red-400 hover:bg-red-500/10'
                           onClick={() => handleUnlinkRelatedFile(editingDocumentDraft.id, file.id)}
                           disabled={isEditingDocumentLocked}
                         >
                           <X className='size-4' />
                         </Button>
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>
@@ -536,41 +532,43 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
           </TabsContent>
 
           <TabsContent value='metadata' className='m-0'>
-            <div className='grid gap-6 lg:grid-cols-2'>
-              <FormField label='Document Tag'>
-                <SelectSimple
-                  value={editingDocumentDraft.tagId ?? '__none__'}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })
-                  }
-                  options={caseTagOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-              <FormField label='Case Identifier'>
-                <SelectSimple
-                  value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })
-                  }
-                  options={caseIdentifierOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-              <FormField label='Category'>
-                <SelectSimple
-                  value={editingDocumentDraft.categoryId ?? '__none__'}
-                  onValueChange={(v) =>
-                    updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })
-                  }
-                  options={caseCategoryOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-            </div>
+            <FormSection title='Document Metadata' className='p-6'>
+              <div className='grid gap-6 lg:grid-cols-2'>
+                <FormField label='Document Tag'>
+                  <SelectSimple
+                    value={editingDocumentDraft.tagId ?? '__none__'}
+                    onValueChange={(v) =>
+                      updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })
+                    }
+                    options={caseTagOptions}
+                    disabled={isEditingDocumentLocked}
+                    triggerClassName='bg-card/20 border-border/60'
+                  />
+                </FormField>
+                <FormField label='Case Identifier'>
+                  <SelectSimple
+                    value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
+                    onValueChange={(v) =>
+                      updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })
+                    }
+                    options={caseIdentifierOptions}
+                    disabled={isEditingDocumentLocked}
+                    triggerClassName='bg-card/20 border-border/60'
+                  />
+                </FormField>
+                <FormField label='Category'>
+                  <SelectSimple
+                    value={editingDocumentDraft.categoryId ?? '__none__'}
+                    onValueChange={(v) =>
+                      updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })
+                    }
+                    options={caseCategoryOptions}
+                    disabled={isEditingDocumentLocked}
+                    triggerClassName='bg-card/20 border-border/60'
+                  />
+                </FormField>
+              </div>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value='revisions' className='m-0'>

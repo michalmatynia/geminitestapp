@@ -35,44 +35,45 @@ const sanitizeRuntimeDocument = (value: unknown): ContextRuntimeDocument | null 
     status: typeof record['status'] === 'string' ? record['status'] : null,
     tags: Array.isArray(record['tags'])
       ? record['tags']
-          .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
-          .slice(0, MAX_AI_TAGS)
+        .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+        .slice(0, MAX_AI_TAGS)
       : [],
     relatedNodeIds: Array.isArray(record['relatedNodeIds'])
       ? record['relatedNodeIds']
-          .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
-          .slice(0, MAX_AI_NODES)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+        .slice(0, MAX_AI_NODES)
       : [],
     timestamps: asRecord(record['timestamps']) ?? undefined,
     facts: asRecord(record['facts']) ?? undefined,
     sections: Array.isArray(record['sections'])
       ? record['sections']
-          .map((section) => {
-            const sectionRecord = asRecord(section);
-            if (!sectionRecord || typeof sectionRecord['title'] !== 'string') return null;
-            const items = Array.isArray(sectionRecord['items'])
-              ? sectionRecord['items']
-                  .filter((item): item is Record<string, unknown> => Boolean(asRecord(item)))
-                  .slice(0, MAX_AI_SECTION_ITEMS)
-              : undefined;
+        .map((section) => {
+          const sectionRecord = asRecord(section);
+          if (!sectionRecord || typeof sectionRecord['title'] !== 'string') return null;
+          const items = Array.isArray(sectionRecord['items'])
+            ? sectionRecord['items']
+              .filter((item): item is Record<string, unknown> => Boolean(asRecord(item)))
+              .slice(0, MAX_AI_SECTION_ITEMS)
+            : undefined;
 
-            return {
-              ...(typeof sectionRecord['id'] === 'string' ? { id: sectionRecord['id'] } : {}),
-              kind: (sectionRecord['kind'] === 'facts' ||
-              sectionRecord['kind'] === 'items' ||
-              sectionRecord['kind'] === 'events' ||
-              sectionRecord['kind'] === 'text'
-                ? sectionRecord['kind']
-                : 'items') as 'text' | 'items' | 'events' | 'facts',
-              title: sectionRecord['title'],
-              ...(typeof sectionRecord['summary'] === 'string'
-                ? { summary: sectionRecord['summary'] }
-                : {}),
-              ...(typeof sectionRecord['text'] === 'string' ? { text: sectionRecord['text'] } : {}),
-              ...(items ? { items } : {}),
-            };
-          })
-          .filter((section): section is NonNullable<typeof section> => Boolean(section))
+          const kindRaw = sectionRecord['kind'];
+          const kind: 'text' | 'items' | 'events' | 'facts' =
+            kindRaw === 'facts' || kindRaw === 'items' || kindRaw === 'events' || kindRaw === 'text'
+              ? kindRaw
+              : 'items';
+
+          return {
+            ...(typeof sectionRecord['id'] === 'string' ? { id: sectionRecord['id'] } : {}),
+            kind,
+            title: sectionRecord['title'],
+            ...(typeof sectionRecord['summary'] === 'string'
+              ? { summary: sectionRecord['summary'] }
+              : {}),
+            ...(typeof sectionRecord['text'] === 'string' ? { text: sectionRecord['text'] } : {}),
+            ...(items ? { items } : {}),
+          };
+        })
+        .filter((section): section is NonNullable<typeof section> => Boolean(section))
       : undefined,
     provenance: asRecord(record['provenance']) ?? undefined,
   };
@@ -98,25 +99,25 @@ const sanitizeContextNode = (value: unknown): ContextNode | null => {
     description: typeof record['description'] === 'string' ? record['description'] : '',
     tags: Array.isArray(record['tags'])
       ? record['tags']
-          .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
-          .slice(0, MAX_AI_TAGS)
+        .filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+        .slice(0, MAX_AI_TAGS)
       : [],
     owner: typeof record['owner'] === 'string' ? record['owner'] : undefined,
     relationships: Array.isArray(record['relationships'])
       ? record['relationships']
-          .filter(
-            (
-              relationship
-            ): relationship is NonNullable<ContextNode['relationships']>[number] => {
-              const relationshipRecord = asRecord(relationship);
-              return Boolean(
-                relationshipRecord &&
+        .filter(
+          (
+            relationship
+          ): relationship is NonNullable<ContextNode['relationships']>[number] => {
+            const relationshipRecord = asRecord(relationship);
+            return Boolean(
+              relationshipRecord &&
                   typeof relationshipRecord['type'] === 'string' &&
                   typeof relationshipRecord['targetId'] === 'string'
-              );
-            }
-          )
-          .slice(0, MAX_AI_NODES)
+            );
+          }
+        )
+        .slice(0, MAX_AI_NODES)
       : undefined,
     permissions: {
       readScopes: [],
@@ -143,42 +144,42 @@ const sanitizeContextRegistryEnvelope = (
 
   const refs = Array.isArray(record['refs'])
     ? record['refs']
-        .map((ref) => {
-          const refRecord = asRecord(ref);
-          if (
-            !refRecord ||
+      .map((ref) => {
+        const refRecord = asRecord(ref);
+        if (
+          !refRecord ||
             typeof refRecord['id'] !== 'string' ||
             (refRecord['kind'] !== 'static_node' && refRecord['kind'] !== 'runtime_document')
-          ) {
-            return null;
-          }
+        ) {
+          return null;
+        }
 
-          return {
-            id: refRecord['id'],
-            kind: refRecord['kind'],
-            ...(typeof refRecord['providerId'] === 'string'
-              ? { providerId: refRecord['providerId'] }
-              : {}),
-            ...(typeof refRecord['entityType'] === 'string'
-              ? { entityType: refRecord['entityType'] }
-              : {}),
-          } satisfies ContextRegistryRef;
-        })
-        .filter((ref): ref is ContextRegistryRef => Boolean(ref))
+        return {
+          id: refRecord['id'],
+          kind: refRecord['kind'],
+          ...(typeof refRecord['providerId'] === 'string'
+            ? { providerId: refRecord['providerId'] }
+            : {}),
+          ...(typeof refRecord['entityType'] === 'string'
+            ? { entityType: refRecord['entityType'] }
+            : {}),
+        } satisfies ContextRegistryRef;
+      })
+      .filter((ref): ref is ContextRegistryRef => Boolean(ref))
     : [];
 
   const resolvedRecord = asRecord(record['resolved']);
   const documents = Array.isArray(resolvedRecord?.['documents'])
     ? resolvedRecord['documents']
-        .map((document) => sanitizeRuntimeDocument(document))
-        .filter((document): document is ContextRuntimeDocument => Boolean(document))
-        .slice(0, MAX_AI_DOCUMENTS)
+      .map((document) => sanitizeRuntimeDocument(document))
+      .filter((document): document is ContextRuntimeDocument => Boolean(document))
+      .slice(0, MAX_AI_DOCUMENTS)
     : [];
   const nodes = Array.isArray(resolvedRecord?.['nodes'])
     ? resolvedRecord['nodes']
-        .map((node) => sanitizeContextNode(node))
-        .filter((node): node is ContextNode => Boolean(node))
-        .slice(0, MAX_AI_NODES)
+      .map((node) => sanitizeContextNode(node))
+      .filter((node): node is ContextNode => Boolean(node))
+      .slice(0, MAX_AI_NODES)
     : [];
 
   return {
@@ -187,19 +188,19 @@ const sanitizeContextRegistryEnvelope = (
       typeof record['engineVersion'] === 'string' ? record['engineVersion'] : 'unknown',
     ...(resolvedRecord
       ? {
-          resolved: {
-            refs,
-            nodes,
-            documents,
-            truncated: Boolean(resolvedRecord['truncated']),
-            engineVersion:
+        resolved: {
+          refs,
+          nodes,
+          documents,
+          truncated: Boolean(resolvedRecord['truncated']),
+          engineVersion:
               typeof resolvedRecord['engineVersion'] === 'string'
                 ? resolvedRecord['engineVersion']
                 : typeof record['engineVersion'] === 'string'
                   ? record['engineVersion']
                   : 'unknown',
-          },
-        }
+        },
+      }
       : {}),
   };
 };
@@ -227,9 +228,9 @@ const sanitizeAlertEvidence = (value: unknown): Record<string, unknown> | null =
 
   const samples = Array.isArray(record['samples'])
     ? record['samples']
-        .map((sample) => sanitizeAlertEvidenceSample(sample))
-        .filter((sample): sample is Record<string, unknown> => Boolean(sample))
-        .slice(0, MAX_ALERT_EVIDENCE_SAMPLES)
+      .map((sample) => sanitizeAlertEvidenceSample(sample))
+      .filter((sample): sample is Record<string, unknown> => Boolean(sample))
+      .slice(0, MAX_ALERT_EVIDENCE_SAMPLES)
     : [];
   const lastObservedLog = sanitizeAlertEvidenceSample(record['lastObservedLog']);
 
@@ -264,10 +265,10 @@ export const sanitizeSystemLogForAi = async (
     context:
       fingerprint !== undefined || contextRegistry || alertEvidence
         ? {
-            ...(fingerprint !== undefined ? { fingerprint } : {}),
-            ...(contextRegistry ? { contextRegistry } : {}),
-            ...(alertEvidence ? { alertEvidence } : {}),
-          }
+          ...(fingerprint !== undefined ? { fingerprint } : {}),
+          ...(contextRegistry ? { contextRegistry } : {}),
+          ...(alertEvidence ? { alertEvidence } : {}),
+        }
         : null,
   };
 };

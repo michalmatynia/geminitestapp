@@ -641,6 +641,13 @@ export const settingsBackfillResultSchema = z.object({
 
 export type SettingsBackfillResult = z.infer<typeof settingsBackfillResultSchema>;
 
+export interface SyncCollectionResult {
+  sourceCount: number;
+  targetDeleted: number;
+  targetInserted: number;
+  warnings?: string[];
+}
+
 export const settingsBackfillRequestSchema = z.object({
   dryRun: z.boolean().optional(),
   limit: z.number().int().min(1).max(5000).optional(),

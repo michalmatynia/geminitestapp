@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import {
-  type StudioSlotsResponse,
   type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
 import { CROP_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
@@ -18,7 +17,6 @@ import {
   type CropCanvasContext,
   type CropRect,
 } from '../GenerationToolbarImageUtils';
-import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
@@ -161,13 +159,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: Generati
       if (normalizedProjectId) {
         setCropStatus('persisting');
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-        queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
-          slots: [
-            response.slot,
-            ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id),
-          ],
-        });
+        await fetchProjectSlots(normalizedProjectId);
       }
 
       setWorkingSlotId(response.slot.id);

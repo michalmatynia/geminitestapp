@@ -1,24 +1,14 @@
 import { Brain, Sparkles } from 'lucide-react';
 
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import { type NodeDefinition } from '@/shared/contracts/case-resolver';
+import {
+  type NodeDefinition,
+  type PaletteEntry,
+  type FolderCaseFileStats,
+} from '@/shared/contracts/case-resolver';
+
+export type { PaletteEntry, FolderCaseFileStats };
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-
-import type React from 'react';
-
-export type PaletteEntry = {
-  id: string;
-  label: string;
-  description: string;
-  definition: NodeDefinition | null;
-  toneClassName: string;
-  Icon: React.ComponentType<{ className?: string }>;
-};
-
-export type FolderCaseFileStats = {
-  total: number;
-  locked: number;
-};
 
 const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null;
 const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model') ?? null;

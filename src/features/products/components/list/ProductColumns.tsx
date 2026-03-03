@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+
 import { ArrowUpDown, Download } from 'lucide-react';
 
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
@@ -12,10 +12,6 @@ import {
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
-import {
-  getProductDetailQueryKey,
-  productsListsQueryKey,
-} from '@/features/products/hooks/productCache';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   calculatePriceForCurrency,
@@ -23,6 +19,7 @@ import {
 } from '@/shared/lib/products/utils/priceCalculation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
+import { useQueryClient } from '@tanstack/react-query';
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -299,7 +296,6 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
       const { currencyCode, priceGroups } = useProductListActionsContext();
-      const queryClient = useQueryClient();
 
       const {
         price: displayPrice,
@@ -337,24 +333,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
             value={product.price}
             productId={product.id}
             field='price'
-            onUpdate={(nextValue: number): void => {
-              queryClient.setQueriesData(
-                { queryKey: productsListsQueryKey },
-                (old: ProductWithImages[] | undefined) => {
-                  if (!Array.isArray(old)) return old;
-                  let changed = false;
-                  const next = old.map((item: ProductWithImages) => {
-                    if (item.id !== product.id) return item;
-                    changed = true;
-                    return { ...item, price: nextValue };
-                  });
-                  return changed ? next : old;
-                }
-              );
-              queryClient.setQueriesData(
-                { queryKey: getProductDetailQueryKey(product.id) },
-                (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
-              );
+            onUpdate={(): void => {
+              // Now handled optimistically by useUpdateProductField mutation
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
@@ -377,31 +357,14 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const queryClient = useQueryClient();
 
       return (
         <EditableCell
           value={product.stock}
           productId={product.id}
           field='stock'
-          onUpdate={(nextValue: number): void => {
-            queryClient.setQueriesData(
-              { queryKey: productsListsQueryKey },
-              (old: ProductWithImages[] | undefined) => {
-                if (!Array.isArray(old)) return old;
-                let changed = false;
-                const next = old.map((item: ProductWithImages) => {
-                  if (item.id !== product.id) return item;
-                  changed = true;
-                  return { ...item, stock: nextValue };
-                });
-                return changed ? next : old;
-              }
-            );
-            queryClient.setQueriesData(
-              { queryKey: getProductDetailQueryKey(product.id) },
-              (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
-            );
+          onUpdate={(): void => {
+            // Now handled optimistically by useUpdateProductField mutation
           }}
         />
       );
@@ -430,6 +393,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         traderaBadgeIds,
         traderaBadgeStatuses,
       } = useProductListActionsContext();
+
       const queryClient = useQueryClient();
 
       if (!handleClick) return null;

@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
+import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
 
 interface QuerySchedulerConfig {
   priority: 'high' | 'medium' | 'low';
@@ -19,7 +20,7 @@ export function useQueryScheduler(): {
   ) => void;
   cancelScheduledQuery: (id: string) => void;
   clearAllScheduled: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
   const scheduledQueries = useRef<
     Map<
@@ -29,9 +30,9 @@ export function useQueryScheduler(): {
         queryFn: () => Promise<unknown>;
         config: QuerySchedulerConfig;
         timeout?: NodeJS.Timeout;
-          }
-          >
-          >(new Map());
+      }
+    >
+  >(new Map());
 
   const scheduleQuery = useCallback(
     (
@@ -47,12 +48,22 @@ export function useQueryScheduler(): {
       }
 
       const delay =
-        config.delay ||
-        (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
+        config.delay || (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
 
       const timeout = setTimeout((): void => {
         if (!config.condition || config.condition()) {
-          void queryClient.prefetchQuery({ queryKey, queryFn });
+          void prefetchQueryV2(queryClient, {
+            queryKey,
+            queryFn,
+            meta: {
+              source: 'shared.hooks.useQueryScheduler.scheduleQuery',
+              operation: 'list',
+              resource: 'scheduled-query',
+              domain: 'global',
+              queryKey,
+              tags: ['scheduler', 'scheduled'],
+            },
+          })();
         }
         scheduledQueries.current.delete(id);
       }, delay);
@@ -113,7 +124,18 @@ export function useBackgroundQueries(
       const intervalId = setInterval((): void => {
         // Only run if page is visible and online
         if (!document.hidden && navigator.onLine) {
-          void queryClient.prefetchQuery({ queryKey, queryFn });
+          void prefetchQueryV2(queryClient, {
+            queryKey,
+            queryFn,
+            meta: {
+              source: 'shared.hooks.useQueryScheduler.backgroundQuery',
+              operation: 'list',
+              resource: 'background-query',
+              domain: 'global',
+              queryKey,
+              tags: ['scheduler', 'background'],
+            },
+          })();
         }
       }, interval);
 

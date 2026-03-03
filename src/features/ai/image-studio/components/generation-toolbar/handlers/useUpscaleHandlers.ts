@@ -2,12 +2,10 @@ import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import {
-  type StudioSlotsResponse,
   type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
 import { UPSCALE_REQUEST_TIMEOUT_MS } from '../GenerationToolbar.utils';
 import { loadImageElement } from '../GenerationToolbarImageUtils';
-import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
   type GenerationToolbarHelpers,
@@ -80,13 +78,7 @@ export function useUpscaleHandlers(
       if (normalizedProjectId) {
         setUpscaleStatus('persisting');
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-        queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
-          slots: [
-            response.slot,
-            ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id),
-          ],
-        });
+        await fetchProjectSlots(normalizedProjectId);
       }
 
       setWorkingSlotId(response.slot.id);

@@ -24,6 +24,14 @@ export const validatorPatternListSchema = dtoBaseSchema.extend({
 export type ValidatorPatternList = z.infer<typeof validatorPatternListSchema>;
 export type ValidatorPatternListDto = ValidatorPatternList;
 
+export type ValidatorListNodeMetadata = {
+  listId: string;
+  scope: string;
+  deletionLocked: boolean;
+  description: string;
+  updatedAt: string | null;
+};
+
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {

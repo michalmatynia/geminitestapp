@@ -1,46 +1,11 @@
-export type AgentToolRequest = {
-  name: 'playwright';
-  input: {
-    prompt?: string;
-    browser?: string;
-    runId?: string;
-    runHeadless?: boolean;
-    stepId?: string;
-    stepLabel?: string;
-  };
-};
+import type {
+  PlaywrightToolRequest as AgentToolRequest,
+  ToolOutput,
+  AgentToolResultV2 as AgentToolResult,
+  FailureRecoveryPlan,
+} from '@/shared/contracts/agent-runtime';
 
-export type ToolOutput = {
-  url?: string;
-  domText?: string;
-  snapshotId?: string | null;
-  logCount?: number | null;
-  extractedNames?: string[];
-  extractedTotal?: number;
-  extractedItems?: string[];
-  extractionType?: 'product_names' | 'emails';
-  extractionPlan?: unknown;
-  cloudflareDetected?: boolean;
-};
-
-export type AgentToolResult = {
-  ok: boolean;
-  output?: ToolOutput;
-  error?: string;
-  errorId?: string;
-};
-
-export type FailureRecoveryPlan = {
-  reason: string | null;
-  selectors: string[];
-  listingUrls: string[];
-  clickSelector: string | null;
-  loginUrl: string | null;
-  usernameSelector: string | null;
-  passwordSelector: string | null;
-  submitSelector: string | null;
-  notes: string | null;
-};
+export type { AgentToolRequest, ToolOutput, AgentToolResult, FailureRecoveryPlan };
 
 export type ToolLlmContext = {
   model: string;

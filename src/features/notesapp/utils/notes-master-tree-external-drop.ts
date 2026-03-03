@@ -3,6 +3,7 @@ import {
   resolveRootTopReorderAnchor,
   type MasterTreeRootDropZone,
 } from '@/features/foldertree/v2';
+import type { NotesExternalDropAction } from '@/shared/contracts/notes';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import {
@@ -12,28 +13,6 @@ import {
   isNoteMasterNodeId,
 } from './master-folder-tree';
 import { resolveNotesFolderTargetForNode } from './notes-master-tree-adapter';
-
-export type NotesExternalDropAction =
-  | {
-      type: 'relate_notes';
-      noteId: string;
-      targetNoteId: string;
-    }
-  | {
-      type: 'move_note';
-      noteId: string;
-      targetFolderId: string | null;
-    }
-  | {
-      type: 'reorder_folder_root_top';
-      folderId: string;
-      anchorFolderId: string;
-    }
-  | {
-      type: 'move_folder';
-      folderId: string;
-      targetFolderId: string | null;
-    };
 
 export const canDropNotesNode = ({
   draggedNodeId,

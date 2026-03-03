@@ -7,16 +7,12 @@ import {
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import {
-  type CaseResolverDocumentDateProposal,
-  type CaseResolverDocumentFormatVersion,
   type CaseResolverDocumentHistoryEntry,
   type CaseResolverDocumentVersion,
   type CaseResolverEditorType,
   type CaseResolverFile,
-  type CaseResolverFileType,
-  type CaseResolverGraph,
-  type CaseResolverPartyReference,
   type CaseResolverScanSlot,
+  type CreateCaseResolverFileInput,
 } from '@/shared/contracts/case-resolver';
 import { DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT } from './settings.constants';
 import {
@@ -265,49 +261,6 @@ export const normalizeCaseResolverScanSlots = (
 
   return slots;
 };
-
-export interface CreateCaseResolverFileInput {
-  id: string;
-  workspaceId?: string;
-  version?: CaseResolverDocumentVersion;
-  fileType?: CaseResolverFileType | null | undefined;
-  name: string;
-  caseStatus?: 'pending' | 'completed' | null | undefined;
-  caseTreeOrder?: number | null | undefined;
-  folder?: string;
-  parentCaseId?: string | null | undefined;
-  referenceCaseIds?: string[] | null | undefined;
-  relatedFileIds?: string[] | null | undefined;
-  documentDate?: CaseResolverDocumentDateProposal | string | null | undefined;
-  documentCity?: string | null | undefined;
-  happeningDate?: string | null | undefined;
-  originalDocumentContent?: string | null | undefined;
-  explodedDocumentContent?: string | null | undefined;
-  activeDocumentVersion?: CaseResolverDocumentVersion | null | undefined;
-  documentContent?: string | null | undefined;
-  editorType?: CaseResolverEditorType | null | undefined;
-  documentContentFormatVersion?: CaseResolverDocumentFormatVersion | number | null | undefined;
-  documentContentVersion?: number | null | undefined;
-  documentContentMarkdown?: string | null | undefined;
-  documentContentHtml?: string | null | undefined;
-  documentContentPlainText?: string | null | undefined;
-  documentHistory?: CaseResolverDocumentHistoryEntry[] | null | undefined;
-  documentConversionWarnings?: string[] | null | undefined;
-  lastContentConversionAt?: string | null | undefined;
-  scanSlots?: CaseResolverScanSlot[] | null | undefined;
-  scanOcrModel?: string | null | undefined;
-  scanOcrPrompt?: string | null | undefined;
-  isSent?: boolean | null | undefined;
-  isLocked?: boolean | null | undefined;
-  graph?: Partial<CaseResolverGraph> | null;
-  addresser?: CaseResolverPartyReference | null | undefined;
-  addressee?: CaseResolverPartyReference | null | undefined;
-  tagId?: string | null | undefined;
-  caseIdentifierId?: string | null | undefined;
-  categoryId?: string | null | undefined;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}
 
 export const createCaseResolverFile = (input: CreateCaseResolverFileInput): CaseResolverFile => {
   const now = new Date().toISOString();

@@ -100,9 +100,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       logs,
     },
     {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     }
   );
 }

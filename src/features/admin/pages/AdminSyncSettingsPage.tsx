@@ -18,7 +18,6 @@ import {
   Breadcrumbs,
   FormActions,
   MetadataItem,
-  PropertyRow,
   Hint,
   Card,
   SimpleSettingsList,
@@ -190,16 +189,18 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             padding='md'
             className='border-border bg-muted/20 space-y-2'
           >
-            <PropertyRow
+            <MetadataItem
               label='Status'
               value={syncStatus.isOnline ? 'Online' : 'Offline'}
               valueClassName={syncStatus.isOnline ? 'text-emerald-300' : 'text-rose-300'}
+              variant='minimal'
             />
-            <PropertyRow
+            <MetadataItem
               label='Last sync'
               value={syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}
+              variant='minimal'
             />
-            <PropertyRow label='Active interval' value={`${syncStatus.intervalSeconds}s`} />
+            <MetadataItem label='Active interval' value={`${syncStatus.intervalSeconds}s`} variant='minimal' />
           </Card>
         </FormSection>
 

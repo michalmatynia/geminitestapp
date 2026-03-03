@@ -370,6 +370,13 @@ export const QUERY_KEYS = {
     details: () => [...QUERY_KEYS.drafts.all, 'detail'] as const,
     detail: (id: string) => [...QUERY_KEYS.drafts.details(), id] as const,
   },
+  drafter: {
+    all: ['drafter'] as const,
+    lists: () => [...QUERY_KEYS.drafter.all, 'list'] as const,
+    list: (filters: unknown) => [...QUERY_KEYS.drafter.lists(), { filters }] as const,
+    details: () => [...QUERY_KEYS.drafter.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.drafter.details(), id] as const,
+  },
   analytics: {
     all: ['analytics'] as const,
     summary: (range: string, scope: string) =>

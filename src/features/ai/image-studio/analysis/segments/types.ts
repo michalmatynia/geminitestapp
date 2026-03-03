@@ -1,8 +1,4 @@
 import {
-  type ImageStudioDetectionCandidateSummary,
-  type ImageStudioDetectionPolicyDecision,
-} from '@/features/ai/image-studio/analysis/policy';
-import {
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterLayoutConfig,
   type ImageStudioCenterObjectBounds,
@@ -16,6 +12,9 @@ import {
   type ImageStudioAutoScalePlan,
   type ImageStudioAutoScaleAnalysis,
   type ImageStudioDetectionDetails,
+  type ImageStudioNormalizedCenterLayout as NormalizedImageStudioAnalysisLayoutConfig,
+  type ImageStudioDetectionCandidateSummary,
+  type ImageStudioDetectionPolicyDecision,
 } from '@/shared/contracts/image-studio';
 
 export type {
@@ -34,17 +33,5 @@ export type {
   ImageStudioAutoScalePlan,
   ImageStudioAutoScaleAnalysis,
   ImageStudioDetectionDetails,
-};
-
-export type NormalizedImageStudioAnalysisLayoutConfig = {
-  paddingPercent: number;
-  paddingXPercent: number;
-  paddingYPercent: number;
-  fillMissingCanvasWhite: boolean;
-  targetCanvasWidth: number | null;
-  targetCanvasHeight: number | null;
-  whiteThreshold: number;
-  chromaThreshold: number;
-  shadowPolicy: ImageStudioCenterShadowPolicy;
-  detection: ImageStudioCenterDetectionMode;
+  NormalizedImageStudioAnalysisLayoutConfig,
 };

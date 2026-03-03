@@ -9,7 +9,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import type { AdminMenuCustomNode, AdminNavLeaf } from '@/shared/contracts/admin';
+import type {
+  AdminMenuCustomNode,
+  AdminNavLeaf,
+  AdminNavNodeEntry,
+  FlattenedCustomNode,
+} from '@/shared/contracts/admin';
 import {
   NavItem,
   buildAdminMenuFromCustomNav,
@@ -31,24 +36,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
-
-// ── Types ───────────────────────────────────────────────────────────────────
-
-export type AdminNavNodeEntry = {
-  id: string;
-  label: string;
-  href?: string;
-  parents: string[];
-  item: NavItem;
-};
-
-export type FlattenedCustomNode = {
-  node: AdminMenuCustomNode;
-  path: number[];
-  depth: number;
-  index: number;
-  siblingCount: number;
-};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -1,4 +1,5 @@
-export type CaseResolverOcrProvider = 'ollama' | 'openai' | 'anthropic' | 'gemini';
+import type { CaseResolverOcrProvider } from '@/shared/contracts/case-resolver';
+export type { CaseResolverOcrProvider };
 
 const isOpenAiModelId = (modelName: string): boolean => {
   const modelLower = modelName.toLowerCase();

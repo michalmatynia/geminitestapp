@@ -1,12 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Db, ObjectId } from 'mongodb';
+import type { SyncCollectionResult } from '@/shared/contracts/database';
 
-export interface SyncCollectionResult {
-  sourceCount: number;
-  targetDeleted: number;
-  targetInserted: number;
-  warnings?: string[];
-}
+export type { SyncCollectionResult };
 
 export interface SyncHandlerContext {
   mongo: Db;

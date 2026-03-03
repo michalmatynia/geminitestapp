@@ -5,6 +5,8 @@ import type {
   CaseResolverFile,
   CaseResolverIdentifier,
   CaseResolverWorkspace,
+  DocumentRelationFileTypeFilter,
+  DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
 import {
   collectScopedCaseIds,
@@ -18,9 +20,6 @@ import {
   type NodeFileDocumentFolderNode,
   type NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
-
-export type DocumentRelationFileTypeFilter = 'all' | 'document' | 'scanfile';
-export type DocumentRelationSortMode = 'name_asc' | 'date_desc' | 'date_asc' | 'folder_asc';
 
 export type UseDocumentRelationSearchProps = {
   workspace: CaseResolverWorkspace;

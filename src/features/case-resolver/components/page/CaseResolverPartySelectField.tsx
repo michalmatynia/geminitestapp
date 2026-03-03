@@ -3,7 +3,7 @@
 import React from 'react';
 import { Building2, User, X } from 'lucide-react';
 
-import { SelectSimple } from '@/shared/ui';
+import { SelectSimple, SegmentedControl, Button } from '@/shared/ui';
 
 type PartyKindFilter = 'all' | 'person' | 'organization';
 
@@ -43,46 +43,17 @@ export function CaseResolverPartySelectField({
       {/* Label row + kind filter toggle */}
       <div className='flex items-center justify-between gap-2'>
         <span className='text-xs text-gray-400'>{label}</span>
-        <div className='flex items-center gap-0.5 rounded border border-border/40 bg-card/30 p-0.5'>
-          <button
-            type='button'
-            onClick={() => setFilter('all')}
-            disabled={disabled}
-            className={`h-5 rounded px-1.5 text-[10px] font-medium transition-colors disabled:pointer-events-none ${
-              filter === 'all'
-                ? 'bg-blue-600/30 text-blue-300'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            All
-          </button>
-          <button
-            type='button'
-            onClick={() => setFilter('person')}
-            disabled={disabled}
-            className={`flex h-5 items-center gap-0.5 rounded px-1.5 text-[10px] font-medium transition-colors disabled:pointer-events-none ${
-              filter === 'person'
-                ? 'bg-blue-600/30 text-blue-300'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            <User className='size-3' />
-            Person
-          </button>
-          <button
-            type='button'
-            onClick={() => setFilter('organization')}
-            disabled={disabled}
-            className={`flex h-5 items-center gap-0.5 rounded px-1.5 text-[10px] font-medium transition-colors disabled:pointer-events-none ${
-              filter === 'organization'
-                ? 'bg-blue-600/30 text-blue-300'
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
-          >
-            <Building2 className='size-3' />
-            Org
-          </button>
-        </div>
+        <SegmentedControl
+          size='xs'
+          value={filter}
+          onChange={(v) => setFilter(v as PartyKindFilter)}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'person', label: 'Person', icon: User },
+            { value: 'organization', label: 'Org', icon: Building2 },
+          ]}
+          className='bg-card/20 border-border/40'
+        />
       </div>
 
       {/* Dropdown */}
@@ -97,16 +68,17 @@ export function CaseResolverPartySelectField({
 
       {/* Clear button — only when a real value is set */}
       {hasValue && !disabled ? (
-        <button
-          type='button'
+        <Button
+          variant='ghost'
+          size='xs'
           onClick={() => onValueChange('')}
-          className='flex items-center gap-1 self-start text-[10px] text-gray-500 transition-colors hover:text-red-400'
+          className='h-5 self-start px-1 text-[10px] text-gray-500 hover:text-red-400 hover:bg-transparent'
         >
-          <X className='size-3' />
+          <X className='mr-1 size-3' />
           Clear
-        </button>
+        </Button>
       ) : (
-        <div className='h-3.5' />
+        <div className='h-5' />
       )}
     </div>
   );

@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -36,6 +35,7 @@ import { useProductListQueueStatus } from './product-list/useProductListQueueSta
 import { useProductListCategories } from './product-list/useProductListCategories';
 import { useProductListFilters } from './product-list/useProductListFilters';
 import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
+import { useCreateFromDraft } from './useCreateFromDraft';
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -53,7 +53,6 @@ export function useProductListState(): ProductListContextType & {
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const settingsStore = useSettingsStore();
 
   const productImageBaseUrl =
@@ -259,6 +258,11 @@ export function useProductListState(): ProductListContextType & {
     refreshListingBadges,
   } = modals;
 
+  const { handleCreateFromDraft } = useCreateFromDraft({
+    setCreateDraft,
+    handleOpenCreateFromDraft,
+  });
+
   const urlSync = useProductListUrlSync();
   const { clearProductEditorQueryParams } = urlSync;
 
@@ -357,44 +361,7 @@ export function useProductListState(): ProductListContextType & {
   return useMemo(
     () => ({
       onCreateProduct: handleOpenCreate,
-      onCreateFromDraft: (draftId: string) => {
-        const run = async (): Promise<void> => {
-          try {
-            const { draftKeys } = await import('@/features/drafter/hooks/useDraftQueries');
-            const { normalizeQueryKey } = await import('@/shared/lib/query-key-utils');
-            const { api } = await import('@/shared/lib/api-client');
-            const { fetchQueryV2 } = await import('@/shared/lib/query-factories-v2');
-            const draft = await fetchQueryV2<ProductDraftDto>(queryClient, {
-              queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
-              queryFn: () =>
-                api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
-                  timeout: 30_000,
-                }),
-              staleTime: 5 * 60 * 1000,
-              meta: {
-                source: 'products.hooks.useProductListState.onCreateFromDraft',
-                operation: 'detail',
-                resource: 'drafts.detail',
-                domain: 'drafter',
-                queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
-                tags: ['drafts', 'detail', 'fetch'],
-              },
-            })();
-            setCreateDraft(draft);
-            handleOpenCreateFromDraft(draft);
-            toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
-          } catch (error) {
-            const { logClientError } = await import(
-              '@/shared/utils/observability/client-error-logger'
-            );
-            logClientError(error, {
-              context: { source: 'useProductListState', action: 'createFromDraft', draftId },
-            });
-            toast('Failed to load draft template', { variant: 'error' });
-          }
-        };
-        void run();
-      },
+      onCreateFromDraft: handleCreateFromDraft,
       activeDrafts,
       page,
       totalPages,
@@ -576,6 +543,7 @@ export function useProductListState(): ProductListContextType & {
       handleCloseMassList,
       handleConfirmSingleDelete,
       handleCreateSuccess,
+      handleCreateFromDraft,
       handleEditSave,
       handleEditSuccess,
       handleListProductSuccess,
@@ -649,7 +617,6 @@ export function useProductListState(): ProductListContextType & {
       totalPages,
       traderaBadgeIds,
       traderaBadgeStatuses,
-      handleOpenCreateFromDraft,
       setCreateDraft,
       handleOpenCreateModal,
       setEditingProduct,

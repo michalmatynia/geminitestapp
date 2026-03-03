@@ -174,7 +174,7 @@ export type MutationFactoryV2Config<TData, TVariables, TError = Error, TContext 
   UseMutationOptions<TData, TError, TVariables, TContext>,
   'mutationFn' | 'meta'
 > & {
-  mutationFn: (variables: TVariables) => Promise<TData>;
+  mutationFn: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
   transformError?: (error: unknown) => TError;
@@ -852,10 +852,11 @@ export function createSaveMutationV2<
   TData,
   TVariables extends { id?: string | null },
   TContext = unknown,
->(config: SaveMutationFactoryV2Config<TData, TVariables, Error, TContext>): MutationResult<TData, TVariables> {
+  TError = Error,
+>(config: SaveMutationFactoryV2Config<TData, TVariables, TError, TContext>): MutationResult<TData, TVariables, TError> {
   const { createFn, updateFn, ...rest } = config;
 
-  return createMutationV2<TData, TVariables, TContext>({
+  return createMutationV2<TData, TVariables, TContext, TError>({
     ...rest,
     mutationFn: (variables: TVariables) => {
       if (variables.id) {
@@ -866,9 +867,9 @@ export function createSaveMutationV2<
   });
 }
 
-export function createMutationV2<TData, TVariables, TContext = unknown>(
-  config: MutationFactoryV2Config<TData, TVariables, Error, TContext>
-): MutationResult<TData, TVariables> {
+export function createMutationV2<TData, TVariables, TContext = unknown, TError = Error>(
+  config: MutationFactoryV2Config<TData, TVariables, TError, TContext>
+): MutationResult<TData, TVariables, TError> {
   const {
     mutationFn,
     meta,
@@ -932,9 +933,8 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
       });
 
       try {
-        const data = await mutationFn(variables);
-        emitFactoryTelemetry({
-          entity: 'mutation',
+        const data = await mutationFn(variables, { queryClient });
+        emitFactoryTelemetry({          entity: 'mutation',
           stage: 'success',
           meta: telemetryMeta,
           key: normalizedMutationKey,

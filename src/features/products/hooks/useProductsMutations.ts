@@ -1,5 +1,7 @@
 'use client';
 
+
+import { useQueryClient } from '@tanstack/react-query';
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
@@ -16,6 +18,7 @@ import { delay } from '@/shared/utils';
 import {
   invalidateProductsAndCounts,
   invalidateProductsAndDetail,
+  getProductDetailQueryKey,
 } from './productCache';
 
 interface UpdateProductPayload {
@@ -172,9 +175,62 @@ export function useUpdateProductField(): UpdateMutation<
   void,
   { id: string; field: string; value: unknown }
   > {
-  return createUpdateMutationV2({
+  const queryClient = useQueryClient();
+
+  return createUpdateMutationV2<
+    void,
+    { id: string; field: string; value: unknown },
+    { previousLists: unknown; previousDetail: unknown }
+  >({
     mutationFn: async ({ id, field, value }): Promise<void> => {
       await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
+    },
+    onMutate: async ({ id, field, value }) => {
+      // Optimistically update the list and detail caches
+      const listKey = QUERY_KEYS.products.lists();
+      const detailKey = getProductDetailQueryKey(id);
+
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: listKey }),
+        queryClient.cancelQueries({ queryKey: detailKey }),
+      ]);
+
+      // Snapshot the previous values
+      const previousLists = queryClient.getQueryData(listKey);
+      const previousDetail = queryClient.getQueryData(detailKey);
+
+      // Optimistically update lists
+      queryClient.setQueriesData(
+        { queryKey: listKey },
+        (old: any) => {
+          if (!old) return old;
+          if (Array.isArray(old)) {
+            return old.map((p: any) => (p.id === id ? { ...p, [field]: value } : p));
+          }
+          if (old.items && Array.isArray(old.items)) {
+            return {
+              ...old,
+              items: old.items.map((p: any) => (p.id === id ? { ...p, [field]: value } : p)),
+            };
+          }
+          return old;
+        }
+      );
+
+      // Optimistically update detail
+      queryClient.setQueryData(detailKey, (old: any) => (old ? { ...old, [field]: value } : old));
+
+      return { previousLists, previousDetail };
+    },
+    onError: (_err, { id }, context) => {
+      // Rollback on error
+      if (context?.previousLists) {
+        queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, context.previousLists);
+      }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(getProductDetailQueryKey(id), context.previousDetail);
+      }
     },
     mutationKey: QUERY_KEYS.products.all,
     meta: {

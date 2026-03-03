@@ -83,24 +83,25 @@ export type PagedQuery<T> = UseQueryResult<ListResponse<T>, Error>;
 export type CreateMutation<
   T,
   TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
-> = UseMutationResult<T, Error, TInput>;
-export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<
+  TError = Error,
+> = UseMutationResult<T, TError, TInput>;
+export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }, TError = Error> = UseMutationResult<
   T,
-  Error,
+  TError,
   TInput
 >;
-export type DeleteMutation<TResponse = void, TInput = string> = UseMutationResult<
+export type DeleteMutation<TResponse = void, TInput = string, TError = Error> = UseMutationResult<
   TResponse,
-  Error,
+  TError,
   TInput
 >;
-export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }> = UseMutationResult<
+export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }, TError = Error> = UseMutationResult<
   T,
-  Error,
+  TError,
   TInput
 >;
-export type MutationResult<TResponse, TInput> = UseMutationResult<TResponse, Error, TInput>;
-export type VoidMutation<TInput> = UseMutationResult<void, Error, TInput>;
+export type MutationResult<TResponse, TInput, TError = Error> = UseMutationResult<TResponse, TError, TInput>;
+export type VoidMutation<TInput, TError = Error> = UseMutationResult<void, TError, TInput>;
 
 /**
  * API Handler Types

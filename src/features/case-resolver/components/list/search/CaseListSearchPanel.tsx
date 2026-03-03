@@ -188,7 +188,7 @@ function CaseAccordionRow({
 
       {isExpanded && hasFiles ? (
         <div className='mt-0.5 space-y-0.5'>
-          {matchedFiles.map((matched) => (
+          {matchedFiles.map((matched: CaseListSearchMatchedFile) => (
             <FileSubRow
               key={matched.file.id}
               matched={matched}

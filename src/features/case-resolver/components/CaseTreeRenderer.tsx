@@ -12,8 +12,19 @@ import {
   Lock,
   Folder,
   Star,
+  Copy,
 } from 'lucide-react';
-import { Button, Badge, Card, FormField, Input, SelectSimple } from '@/shared/ui';
+import {
+  Button,
+  Badge,
+  Card,
+  FormField,
+  Input,
+  SelectSimple,
+  MetadataItem,
+  Tooltip,
+  useToast,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { buildCaseResolverCaseHref } from './list/case-list-utils';
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
@@ -29,6 +40,7 @@ export function CaseTreeRenderer({
   depth?: number;
 }): React.JSX.Element {
   const router = useRouter();
+  const { toast } = useToast();
   const {
     collapsedCaseIds,
     handleToggleCaseCollapse,
@@ -76,6 +88,7 @@ export function CaseTreeRenderer({
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return;
     try {
       await navigator.clipboard.writeText(caseId);
+      toast('Case ID copied to clipboard.', { variant: 'success' });
     } catch {
       // ignore
     }
@@ -191,11 +204,12 @@ export function CaseTreeRenderer({
               ) : (
                 <div className='flex flex-wrap items-start justify-between gap-4'>
                   <div className='flex min-w-0 flex-1 items-start gap-3'>
-                    <button
-                      type='button'
+                    <Button
+                      variant='ghost'
+                      size='sm'
                       onClick={() => handleToggleCaseCollapse(file.id)}
                       className={cn(
-                        'mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors hover:bg-white/10',
+                        'mt-1 h-5 w-5 shrink-0 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300',
                         !hasChildren && 'pointer-events-none opacity-0'
                       )}
                     >
@@ -204,7 +218,7 @@ export function CaseTreeRenderer({
                       ) : (
                         <ChevronDown className='size-3.5' />
                       )}
-                    </button>
+                    </Button>
 
                     <div className='min-w-0 flex-1 space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
@@ -213,34 +227,43 @@ export function CaseTreeRenderer({
                         {tag && (
                           <Badge
                             variant='outline'
-                            className='bg-blue-500/5 text-blue-300 border-blue-500/20'
+                            className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px]'
                           >
                             {tag.label}
                           </Badge>
                         )}
                       </div>
-                      <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500'>
+                      <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
                         {file.folder && (
-                          <div className='flex items-center gap-1.5'>
-                            <Folder className='size-3' />
-                            <span>{file.folder}</span>
-                          </div>
+                          <MetadataItem
+                            variant='minimal'
+                            label='Folder'
+                            icon={<Folder className='size-3' />}
+                            value={file.folder}
+                          />
                         )}
                         {identifier && (
                           <button
                             type='button'
                             onClick={() => handleFilterByCaseIdentifier(identifier.id)}
-                            className='flex items-center gap-1.5 hover:text-cyan-300'
+                            className='group/ident'
                           >
-                            <Star className='size-3 text-amber-400' />
-                            <span>{caseIdentifierPathById.get(identifier.id)}</span>
+                            <MetadataItem
+                              variant='minimal'
+                              label='ID'
+                              icon={<Star className='size-3 text-amber-400' />}
+                              value={caseIdentifierPathById.get(identifier.id)}
+                              valueClassName='group-hover/ident:text-cyan-300'
+                            />
                           </button>
                         )}
                         {category && (
-                          <div className='flex items-center gap-1.5'>
-                            <div className='size-1.5 rounded-full bg-emerald-500/50' />
-                            <span>{caseCategoryPathById.get(category.id)}</span>
-                          </div>
+                          <MetadataItem
+                            variant='minimal'
+                            label='Category'
+                            value={caseCategoryPathById.get(category.id)}
+                            icon={<div className='size-1.5 rounded-full bg-emerald-500/50' />}
+                          />
                         )}
                       </div>
                     </div>
@@ -282,15 +305,17 @@ export function CaseTreeRenderer({
                   </div>
                 </div>
               )}
-              <button
-                type='button'
-                onClick={() => {
-                  void handleCopyCaseId(file.id);
-                }}
-                className='absolute bottom-2 right-2 rounded border border-border/60 bg-black/20 px-2 py-0.5 font-mono text-[10px] text-gray-300 opacity-0 transition-all hover:bg-black/40 group-hover:opacity-100'
-              >
-                ID: {file.id}
-              </button>
+              <Tooltip content='Copy Case ID' side='left'>
+                <Button
+                  variant='ghost'
+                  size='xs'
+                  onClick={() => void handleCopyCaseId(file.id)}
+                  className='absolute bottom-2 right-2 h-5 gap-1.5 border border-border/60 bg-black/20 px-2 font-mono text-[9px] text-gray-400 opacity-0 transition-all hover:bg-black/40 group-hover:opacity-100'
+                >
+                  {file.id.slice(0, 8)}...
+                  <Copy className='size-2.5 opacity-60' />
+                </Button>
+              </Tooltip>
             </Card>
             {hasChildren && !isCollapsed && (
               <CaseTreeRenderer nodes={node.children} depth={depth + 1} />

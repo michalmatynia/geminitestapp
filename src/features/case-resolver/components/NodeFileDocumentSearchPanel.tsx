@@ -1,10 +1,9 @@
 'use client';
 
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
-import { Button, SelectSimple, SearchInput, DataTable } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, SelectSimple, SearchInput, DataTable, SegmentedControl, Chip } from '@/shared/ui';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
@@ -157,35 +156,23 @@ export function NodeFileDocumentSearchPanel({
   return (
     <div className='shrink-0 border-b border-border/60 bg-card/30'>
       <div className='flex items-center gap-2 px-3 py-2'>
-        <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
-          <button
-            type='button'
-            onClick={() => {
-              setDocumentSearchScope('case_scope');
-              setSelectedDrillCaseId(null);
-            }}
-            className={cn(
-              'rounded px-3 py-1 text-xs font-medium transition-colors',
-              isCurrentCase ? 'bg-cyan-500/20 text-cyan-200' : 'text-gray-400 hover:text-gray-200'
-            )}
-          >
-            Current Case
-          </button>
-          <button
-            type='button'
-            onClick={() => setDocumentSearchScope('all_cases')}
-            className={cn(
-              'rounded px-3 py-1 text-xs font-medium transition-colors',
-              isAllCases ? 'bg-cyan-500/20 text-cyan-200' : 'text-gray-400 hover:text-gray-200'
-            )}
-          >
-            All Cases
-          </button>
-        </div>
+        <SegmentedControl
+          size='xs'
+          value={documentSearchScope}
+          onChange={(v) => {
+            setDocumentSearchScope(v as typeof documentSearchScope);
+            setSelectedDrillCaseId(null);
+          }}
+          options={[
+            { value: 'case_scope', label: 'Current Case' },
+            { value: 'all_cases', label: 'All Cases' },
+          ]}
+          className='bg-card/40'
+        />
 
         <div className='flex-1' />
 
-        <Button onClick={onExplanatoryClick} variant='success' size='sm'>
+        <Button onClick={onExplanatoryClick} variant='success' size='xs' className='h-8'>
           <Sparkles className='mr-1 size-3.5' />
           Explanatory Node
         </Button>
@@ -207,16 +194,17 @@ export function NodeFileDocumentSearchPanel({
           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
         />
 
-        <Button variant='outline' size='sm' onClick={onNodeInspectorClick}>
+        <Button variant='outline' size='xs' className='h-8' onClick={onNodeInspectorClick}>
           Node Inspector
         </Button>
       </div>
 
       <div className='flex items-center gap-2 border-t border-border/40 px-3 py-1.5'>
         {isDrillMode && (
-          <button
-            type='button'
-            className='flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-cyan-300 transition-colors hover:bg-card/60 hover:text-cyan-100'
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 flex shrink-0 items-center gap-1 text-cyan-300 hover:text-cyan-100 hover:bg-card/60'
             onClick={() => {
               setSelectedDrillCaseId(null);
               setDocumentSearchQuery('');
@@ -225,7 +213,7 @@ export function NodeFileDocumentSearchPanel({
           >
             <ArrowLeft className='size-3' />
             {drillSignatureLabel}
-          </button>
+          </Button>
         )}
 
         <div className='min-w-0 flex-1'>
@@ -251,17 +239,13 @@ export function NodeFileDocumentSearchPanel({
         </div>
 
         {showDocTable && selectedSearchFolderPath && (
-          <div className='flex shrink-0 items-center gap-1 rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200'>
-            <span className='max-w-[120px] truncate'>{selectedSearchFolderPath}</span>
-            <button
-              type='button'
-              className='ml-1 text-cyan-400 hover:text-cyan-100'
-              onClick={() => setSelectedSearchFolderPath(null)}
-              aria-label='Clear folder filter'
-            >
-              ×
-            </button>
-          </div>
+          <Chip
+            active
+            label={selectedSearchFolderPath}
+            onClick={() => setSelectedSearchFolderPath(null)}
+            icon={X}
+            className='max-w-[150px]'
+          />
         )}
 
         {showDocTable && (
@@ -272,35 +256,22 @@ export function NodeFileDocumentSearchPanel({
       </div>
 
       {showDocTable && currentFolderPaths.length > 0 && (
-        <div className='flex items-center gap-1.5 overflow-x-auto px-3 pb-1.5'>
-          <button
-            type='button'
+        <div className='flex items-center gap-1.5 overflow-x-auto px-3 pb-1.5 custom-scrollbar'>
+          <Chip
+            label='All'
+            active={selectedSearchFolderPath === null}
             onClick={() => setSelectedSearchFolderPath(null)}
-            className={cn(
-              'shrink-0 rounded border px-2 py-0.5 text-xs transition-colors',
-              selectedSearchFolderPath === null
-                ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200'
-                : 'border-border/50 text-gray-400 hover:border-border hover:text-gray-200'
-            )}
-          >
-            All
-          </button>
+          />
           {currentFolderPaths.map((path: string) => (
-            <button
+            <Chip
               key={path}
-              type='button'
+              label={path.split('/').pop() ?? path}
+              active={selectedSearchFolderPath === path}
               onClick={() =>
                 setSelectedSearchFolderPath(selectedSearchFolderPath === path ? null : path)
               }
-              className={cn(
-                'shrink-0 rounded border px-2 py-0.5 text-xs transition-colors',
-                selectedSearchFolderPath === path
-                  ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200'
-                  : 'border-border/50 text-gray-400 hover:border-border hover:text-gray-200'
-              )}
-            >
-              {path.split('/').pop() ?? path}
-            </button>
+              className='shrink-0'
+            />
           ))}
         </div>
       )}

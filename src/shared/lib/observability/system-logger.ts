@@ -43,7 +43,7 @@ const forwardToCentralizedLogging = async (payload: CentralLogPayload): Promise<
     });
   } catch (error) {
     // Last‑chance fallback: avoid throwing from logger
-    // eslint-disable-next-line no-console
+     
     console.error('[system-logger] Failed to forward log to centralized sink', error);
   }
 };

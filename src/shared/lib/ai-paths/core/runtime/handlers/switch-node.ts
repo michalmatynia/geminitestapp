@@ -3,7 +3,6 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { SwitchConfig } from '@/shared/contracts/ai-paths-core/nodes';
 
 export const handleSwitchNode: NodeHandler = ({
   node,
@@ -12,8 +11,8 @@ export const handleSwitchNode: NodeHandler = ({
 }: NodeHandlerContext): RuntimePortValues => {
   if (node.type !== 'switch') return prevOutputs;
 
-  const config = node.config?.['switch'] as SwitchConfig | undefined;
-  const inputPort = (config?.inputPort && config.inputPort.trim()) || 'value';
+  const config = node.config?.['switch'];
+  const inputPort = (config?.inputPort?.trim()) || 'value';
   const cases = config?.cases ?? [];
 
   const rawValue = nodeInputs[inputPort];

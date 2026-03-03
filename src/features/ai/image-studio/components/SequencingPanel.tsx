@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
@@ -251,18 +252,26 @@ export function SequencingPanel(): React.JSX.Element {
         for (let attempt = 0; attempt < SLOT_RESOLUTION_ATTEMPTS; attempt += 1) {
           let cachedSlots: ImageStudioSlotRecord[] = [];
           try {
-            const fresh = await api.get<StudioSlotsResponse>(
-              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
-              { cache: 'no-store', logError: false }
-            );
-            queryClient.setQueryData(studioKeys.slots(normalizedProjectId), fresh);
+            const fresh = await fetchQueryV2<StudioSlotsResponse>(queryClient, {
+              queryKey: studioKeys.slots(normalizedProjectId),
+              queryFn: () =>
+                api.get<StudioSlotsResponse>(
+                  `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+                  { cache: 'no-store', logError: false }
+                ),
+              staleTime: 0,
+              meta: {
+                source: 'imageStudio.sequencing.resolveTerminalSlot',
+                operation: 'list',
+                resource: 'image-studio.slots',
+                domain: 'image_studio',
+                queryKey: studioKeys.slots(normalizedProjectId),
+                tags: ['image-studio', 'slots', 'fetch'],
+              },
+            })();
             cachedSlots = Array.isArray(fresh?.slots) ? fresh.slots : [];
           } catch {
             await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-            await queryClient.refetchQueries({
-              queryKey: studioKeys.slots(normalizedProjectId),
-              type: 'all',
-            });
             const cached = queryClient.getQueryData<StudioSlotsResponse>(
               studioKeys.slots(normalizedProjectId)
             );
@@ -671,13 +680,23 @@ export function SequencingPanel(): React.JSX.Element {
       const normalizedProjectId = projectId.trim();
       if (normalizedProjectId) {
         try {
-          const fresh = await api.get<StudioSlotsResponse>(
-            `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
-            { cache: 'no-store', logError: false }
-          );
-          if (!cancelled) {
-            queryClient.setQueryData(studioKeys.slots(normalizedProjectId), fresh);
-          }
+          await fetchQueryV2<StudioSlotsResponse>(queryClient, {
+            queryKey: studioKeys.slots(normalizedProjectId),
+            queryFn: () =>
+              api.get<StudioSlotsResponse>(
+                `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+                { cache: 'no-store', logError: false }
+              ),
+            staleTime: 0,
+            meta: {
+              source: 'imageStudio.sequencing.syncTerminalSlot',
+              operation: 'list',
+              resource: 'image-studio.slots',
+              domain: 'image_studio',
+              queryKey: studioKeys.slots(normalizedProjectId),
+              tags: ['image-studio', 'slots', 'fetch', 'sync'],
+            },
+          })();
         } catch {
           // Best effort
         }

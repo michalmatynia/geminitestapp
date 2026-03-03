@@ -9,7 +9,17 @@ import type {
   AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
-import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
+import {
+  Button,
+  SectionHeader,
+  Textarea,
+  useToast,
+  FormSection,
+  FormField,
+  LoadingState,
+  EmptyState,
+  Card,
+} from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
@@ -82,9 +92,14 @@ export function AgentTeachingChatPage(): React.JSX.Element {
       <div className='grid gap-6 lg:grid-cols-3'>
         <FormSection title='Learner Agents' className='p-4 lg:col-span-1 space-y-4'>
           {loadingAgents ? (
-            <div className='text-sm text-gray-400'>Loading agents…</div>
+            <LoadingState message='Loading agents…' className='py-8' size='sm' />
           ) : agents.length === 0 ? (
-            <div className='text-sm text-gray-400'>No learner agents yet. Create one first.</div>
+            <EmptyState
+              variant='compact'
+              title='No agents'
+              description='Create a learner agent first.'
+              className='py-8'
+            />
           ) : (
             <div className='space-y-2'>
               {agents.map((agent: AgentTeachingAgentRecord) => (
@@ -167,8 +182,10 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                 type='button'
                 onClick={() => void handleSend()}
                 disabled={sending || !selectedAgentId || !input.trim()}
+                loading={sending}
+                loadingText='Thinking…'
               >
-                {sending ? 'Thinking…' : 'Send'}
+                Send
               </Button>
             </div>
           </FormField>
@@ -181,9 +198,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             ) : (
               <div className='mt-2 space-y-2'>
                 {lastSources.map((src: AgentTeachingChatSource) => (
-                  <div
+                  <Card
                     key={src.documentId}
-                    className='rounded-md border border-border bg-card/50 p-2'
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='bg-card/50'
                   >
                     <div className='flex items-center justify-between gap-2'>
                       <div className='text-xs text-gray-300'>
@@ -199,7 +218,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                     <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
                       {src.text}
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}

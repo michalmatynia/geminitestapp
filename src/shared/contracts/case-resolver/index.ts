@@ -19,6 +19,7 @@ import {
   type CaseResolverJoinMode,
   type CaseResolverFileType,
   type CaseResolverDocumentVersion,
+  type CaseResolverDocumentFormatVersion,
   type CaseResolverEditorType,
   type CaseResolverPdfExtractionPresetId,
   type CaseResolverAssetKind,
@@ -939,6 +940,93 @@ export interface CaseResolverCompileResult {
     }
   >;
   warnings: string[];
+}
+
+/**
+ * Case Resolver Node File Search Types
+ */
+
+export type NodeFileDocumentSearchScope = 'case_scope' | 'all_cases';
+
+export type NodeFileDocumentSearchRow = {
+  file: CaseResolverFile;
+  signatureLabel: string;
+  addresserLabel: string;
+  addresseeLabel: string;
+  folderPath: string;
+  folderSegments: string[];
+  searchable: string;
+};
+
+export type NodeFileDocumentFolderNode = {
+  path: string;
+  name: string;
+  parentPath: string | null;
+  depth: number;
+  directFileCount: number;
+  descendantFileCount: number;
+};
+
+export type NodeFileDocumentFolderTree = {
+  nodesByPath: Map<string, NodeFileDocumentFolderNode>;
+  childPathsByParent: Map<string | null, string[]>;
+  rootFileCount: number;
+};
+
+export type CaseListSearchMatchedFile = {
+  file: CaseResolverFile;
+  folderPath: string;
+  signatureLabel: string;
+};
+
+export type CaseListSearchEntry = {
+  caseFile: CaseResolverFile;
+  signatureLabel: string;
+  caseMatched: boolean;
+  matchedFiles: CaseListSearchMatchedFile[];
+};
+
+export interface CreateCaseResolverFileInput {
+  id: string;
+  workspaceId?: string;
+  version?: CaseResolverDocumentVersion;
+  fileType?: CaseResolverFileType | null | undefined;
+  name: string;
+  caseStatus?: 'pending' | 'completed' | null | undefined;
+  caseTreeOrder?: number | null | undefined;
+  folder?: string;
+  parentCaseId?: string | null | undefined;
+  referenceCaseIds?: string[] | null | undefined;
+  relatedFileIds?: string[] | null | undefined;
+  documentDate?: CaseResolverDocumentDateProposal | string | null | undefined;
+  documentCity?: string | null | undefined;
+  happeningDate?: string | null | undefined;
+  originalDocumentContent?: string | null | undefined;
+  explodedDocumentContent?: string | null | undefined;
+  activeDocumentVersion?: CaseResolverDocumentVersion | null | undefined;
+  documentContent?: string | null | undefined;
+  editorType?: CaseResolverEditorType | null | undefined;
+  documentContentFormatVersion?: CaseResolverDocumentFormatVersion | number | null | undefined;
+  documentContentVersion?: number | null | undefined;
+  documentContentMarkdown?: string | null | undefined;
+  documentContentHtml?: string | null | undefined;
+  documentContentPlainText?: string | null | undefined;
+  documentHistory?: CaseResolverDocumentHistoryEntry[] | null | undefined;
+  documentConversionWarnings?: string[] | null | undefined;
+  lastContentConversionAt?: string | null | undefined;
+  scanSlots?: CaseResolverScanSlot[] | null | undefined;
+  scanOcrModel?: string | null | undefined;
+  scanOcrPrompt?: string | null | undefined;
+  isSent?: boolean | null | undefined;
+  isLocked?: boolean | null | undefined;
+  graph?: Partial<CaseResolverGraph> | null;
+  addresser?: CaseResolverPartyReference | null | undefined;
+  addressee?: CaseResolverPartyReference | null | undefined;
+  tagId?: string | null | undefined;
+  caseIdentifierId?: string | null | undefined;
+  categoryId?: string | null | undefined;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
 }
 
 /**

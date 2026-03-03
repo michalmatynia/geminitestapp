@@ -157,6 +157,26 @@ export const adminNavLeafSchema = z.object({
 export type AdminNavLeaf = z.infer<typeof adminNavLeafSchema>;
 
 /**
+ * Admin Navigation Entry DTOs
+ */
+
+export type AdminNavNodeEntry = {
+  id: string;
+  label: string;
+  href?: string | undefined;
+  parents: string[];
+  item: AdminNavItem;
+};
+
+export type FlattenedCustomNode = {
+  node: AdminMenuCustomNode;
+  path: number[];
+  depth: number;
+  index: number;
+  siblingCount: number;
+};
+
+/**
  * Admin Layout DTOs
  */
 

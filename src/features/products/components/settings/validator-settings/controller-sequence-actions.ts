@@ -7,6 +7,8 @@ import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/vali
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
+import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
+import type { QueryClient } from '@tanstack/react-query';
 
 import {
   buildLatestFieldRecipe,
@@ -42,7 +44,7 @@ type SequenceActionInput = {
   ) => void;
   createPattern: CreatePatternMutation;
   updatePattern: UpdatePatternMutation;
-  invalidateConfig: () => Promise<void>;
+  queryClient: QueryClient;
   notifySuccess: (message: string) => void;
   notifyError: (message: string) => void;
   notifyInfo: (message: string) => void;
@@ -77,7 +79,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
     setGroupDrafts,
     createPattern,
     updatePattern,
-    invalidateConfig,
+    queryClient,
     notifySuccess,
     notifyError,
     notifyInfo,
@@ -453,7 +455,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         {},
         { logError: false }
       );
-      await invalidateConfig();
+      void invalidateValidatorConfig(queryClient);
       const createdCount = (templateResult.outcomes ?? []).filter(
         (item) => item.action === 'created'
       ).length;
@@ -518,7 +520,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         {},
         { logError: false }
       );
-      await invalidateConfig();
+      void invalidateValidatorConfig(queryClient);
       const createdCount = (templateResult.outcomes ?? []).filter(
         (item) => item.action === 'created'
       ).length;

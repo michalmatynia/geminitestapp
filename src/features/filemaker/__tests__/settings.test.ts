@@ -40,43 +40,154 @@ import {
 } from '@/features/filemaker/settings';
 import { parseFilemakerPhoneValidationRulesFromPromptSettings } from '@/features/filemaker/filemaker-settings.validation';
 
+const createPersonRecord = (overrides: Record<string, unknown> = {}) => ({
+  id: 'p-1',
+  firstName: 'Jane',
+  lastName: 'Smith',
+  addressId: '',
+  street: '',
+  streetNumber: '',
+  city: '',
+  postalCode: '',
+  country: '',
+  countryId: '',
+  nip: '',
+  regon: '',
+  phoneNumbers: [],
+  ...overrides,
+});
+
+const createOrganizationRecord = (overrides: Record<string, unknown> = {}) => ({
+  id: 'o-1',
+  name: 'Beta Ltd',
+  addressId: '',
+  street: '',
+  streetNumber: '',
+  city: '',
+  postalCode: '',
+  country: '',
+  countryId: '',
+  ...overrides,
+});
+
+const createEventRecord = (overrides: Record<string, unknown> = {}) => ({
+  id: 'ev-1',
+  eventName: 'Expo 2026',
+  addressId: '',
+  street: '',
+  streetNumber: '',
+  city: '',
+  postalCode: '',
+  country: '',
+  countryId: '',
+  ...overrides,
+});
+
+const emptyCanonicalRelations = {
+  events: [],
+  addresses: [],
+  addressLinks: [],
+  phoneNumbers: [],
+  phoneNumberLinks: [],
+  emails: [],
+  emailLinks: [],
+  eventOrganizationLinks: [],
+};
+
 describe('filemaker settings', () => {
   it('normalizes and deduplicates database entries', () => {
     const raw = JSON.stringify({
-      version: 1,
+      version: 2,
       persons: [
         {
           id: 'p-1',
           firstName: 'John',
           lastName: 'Doe',
-          street: 'Main Street 1',
-          city: 'Warsaw',
-          postalCode: '00-001',
-          country: 'Poland',
+          addressId: 'a-1',
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
           nip: '123',
           regon: '456',
-          phoneNumbers: ['+48 123 456 789', '+48 123 456 789', ''],
+          phoneNumbers: [],
         },
         {
           id: 'p-1',
           firstName: 'Duplicate',
           lastName: 'Person',
-          street: 'Other Street 5',
-          city: 'Krakow',
-          postalCode: '30-001',
-          country: 'Poland',
+          addressId: '',
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
+          nip: '',
+          regon: '',
+          phoneNumbers: [],
         },
       ],
       organizations: [
         {
           id: 'o-1',
           name: 'Acme Corp',
-          street: 'Business Road 2',
+          addressId: 'a-2',
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
+        },
+      ],
+      events: [],
+      addresses: [
+        {
+          id: 'a-1',
+          street: 'Main Street',
+          streetNumber: '1',
+          city: 'Warsaw',
+          postalCode: '00-001',
+          country: 'Poland',
+          countryId: 'country-pl',
+        },
+        {
+          id: 'a-2',
+          street: 'Business Road',
+          streetNumber: '2',
           city: 'Gdansk',
           postalCode: '80-001',
           country: 'Poland',
+          countryId: 'country-pl',
         },
       ],
+      addressLinks: [
+        {
+          id: 'l-1',
+          ownerKind: 'person',
+          ownerId: 'p-1',
+          addressId: 'a-1',
+          isDefault: true,
+        },
+        {
+          id: 'l-2',
+          ownerKind: 'organization',
+          ownerId: 'o-1',
+          addressId: 'a-2',
+          isDefault: true,
+        },
+      ],
+      phoneNumbers: [
+        { id: 'ph-1', phoneNumber: '+48 123 456 789' },
+        { id: 'ph-duplicate', phoneNumber: '+48123456789' },
+      ],
+      phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
+      emails: [],
+      emailLinks: [],
+      eventOrganizationLinks: [],
     });
 
     const database = parseFilemakerDatabase(raw);
@@ -89,8 +200,8 @@ describe('filemaker settings', () => {
     expect(database.phoneNumberLinks).toHaveLength(1);
     expect(database.persons[0]?.city).toBe('Warsaw');
     expect(database.organizations[0]?.country).toBe('Poland');
-    expect(database.persons[0]?.addressId).toBe('person-address-p-1');
-    expect(database.organizations[0]?.addressId).toBe('organization-address-o-1');
+    expect(database.persons[0]?.addressId).toBe('a-1');
+    expect(database.organizations[0]?.addressId).toBe('a-2');
     expect(getFilemakerAddressById(database, database.persons[0]?.addressId)?.country).toBe(
       'Poland'
     );
@@ -178,16 +289,19 @@ describe('filemaker settings', () => {
   it('builds party labels and options', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({
-        version: 1,
+        version: 2,
         persons: [
           {
             id: 'p-1',
             firstName: 'Jane',
             lastName: 'Smith',
-            street: 'Street 9',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
+            addressId: '',
+            street: '',
+            streetNumber: '',
+            city: '',
+            postalCode: '',
+            country: '',
+            countryId: '',
             nip: '',
             regon: '',
             phoneNumbers: [],
@@ -197,12 +311,23 @@ describe('filemaker settings', () => {
           {
             id: 'o-1',
             name: 'Beta Ltd',
-            street: 'Org Avenue 10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
+            addressId: '',
+            street: '',
+            streetNumber: '',
+            city: '',
+            postalCode: '',
+            country: '',
+            countryId: '',
           },
         ],
+        events: [],
+        addresses: [],
+        addressLinks: [],
+        phoneNumbers: [],
+        phoneNumberLinks: [],
+        emails: [],
+        emailLinks: [],
+        eventOrganizationLinks: [],
       })
     );
 
@@ -214,75 +339,63 @@ describe('filemaker settings', () => {
     );
   });
 
-  it('ignores deprecated fullAddress payloads', () => {
-    const database = parseFilemakerDatabase(
-      JSON.stringify({
-        version: 1,
-        persons: [
-          {
-            id: 'p-deprecated',
-            firstName: 'Deprecated',
-            lastName: 'Person',
-            fullAddress: 'Main Street 1, Warsaw, 00-003, Poland',
-          },
-        ],
-        organizations: [
-          {
-            id: 'o-deprecated',
-            name: 'Deprecated Org',
-            fullAddress: 'Business Road 2, Gdynia, 81-001, Poland',
-          },
-        ],
-      })
-    );
+  it('rejects legacy version 1 database payloads', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 1,
+          persons: [],
+          organizations: [],
+          events: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker database payloads are no longer supported/);
+  });
 
-    expect(database.persons[0]?.street).toBe('');
-    expect(database.persons[0]?.streetNumber).toBe('');
-    expect(database.persons[0]?.city).toBe('');
-    expect(database.persons[0]?.postalCode).toBe('');
-    expect(database.persons[0]?.country).toBe('');
-    expect(database.organizations[0]?.street).toBe('');
-    expect(database.organizations[0]?.streetNumber).toBe('');
-    expect(database.organizations[0]?.city).toBe('');
-    expect(database.organizations[0]?.postalCode).toBe('');
-    expect(database.organizations[0]?.country).toBe('');
-    expect(database.addresses).toHaveLength(0);
+  it('rejects deprecated fullAddress payloads', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            {
+              id: 'p-deprecated',
+              firstName: 'Deprecated',
+              lastName: 'Person',
+              addressId: '',
+              street: '',
+              streetNumber: '',
+              city: '',
+              postalCode: '',
+              country: '',
+              countryId: '',
+              nip: '',
+              regon: '',
+              phoneNumbers: [],
+              fullAddress: 'Main Street 1, Warsaw, 00-003, Poland',
+            },
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker fullAddress payloads are no longer supported/);
   });
 
   it('normalizes email records and email links', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
-        organizations: [
-          {
-            id: 'o-1',
-            name: 'Beta Ltd',
-            street: 'Org Avenue',
-            streetNumber: '10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-o-1',
-          },
-        ],
+        persons: [createPersonRecord()],
+        organizations: [createOrganizationRecord()],
+        ...emptyCanonicalRelations,
         emails: [
           { id: 'e-1', email: 'JANE@EXAMPLE.COM', status: 'active' },
           { id: 'e-2', email: 'jane@example.com', status: 'inactive' },
@@ -309,24 +422,9 @@ describe('filemaker settings', () => {
     const baseDatabase = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
+        persons: [createPersonRecord()],
         organizations: [],
+        ...emptyCanonicalRelations,
         emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
       })
     );
@@ -367,37 +465,9 @@ describe('filemaker settings', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: ['+48 123 456 789', '+48123456789'],
-          },
-        ],
-        organizations: [
-          {
-            id: 'o-1',
-            name: 'Beta Ltd',
-            street: 'Org Avenue',
-            streetNumber: '10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-o-1',
-            phoneNumbers: ['(555) 555-5555'],
-          },
-        ],
+        persons: [createPersonRecord()],
+        organizations: [createOrganizationRecord()],
+        ...emptyCanonicalRelations,
         phoneNumbers: [
           { id: 'ph-1', phoneNumber: '+1 (555) 555-5555' },
           { id: 'ph-2', phoneNumber: '+15555555555' },
@@ -425,36 +495,9 @@ describe('filemaker settings', () => {
     const baseDatabase = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
-        organizations: [
-          {
-            id: 'o-1',
-            name: 'Beta Ltd',
-            street: 'Org Avenue',
-            streetNumber: '10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-o-1',
-          },
-        ],
+        persons: [createPersonRecord()],
+        organizations: [createOrganizationRecord()],
+        ...emptyCanonicalRelations,
         phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48123456789' }],
         phoneNumberLinks: [],
       })
@@ -508,23 +551,7 @@ describe('filemaker settings', () => {
     const baseDatabase = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'a-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
+        persons: [createPersonRecord({ addressId: 'a-1' })],
         organizations: [],
         events: [],
         addresses: [
@@ -547,6 +574,20 @@ describe('filemaker settings', () => {
             countryId: 'country-pl',
           },
         ],
+        addressLinks: [
+          {
+            id: 'l-1',
+            ownerKind: 'person',
+            ownerId: 'p-1',
+            addressId: 'a-1',
+            isDefault: true,
+          },
+        ],
+        phoneNumbers: [],
+        phoneNumberLinks: [],
+        emails: [],
+        emailLinks: [],
+        eventOrganizationLinks: [],
       })
     );
 
@@ -580,36 +621,9 @@ describe('filemaker settings', () => {
       JSON.stringify({
         version: 2,
         persons: [],
-        organizations: [
-          {
-            id: 'o-1',
-            name: 'Beta Ltd',
-            street: 'Org Avenue',
-            streetNumber: '10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-o-1',
-          },
-        ],
-        events: [
-          {
-            id: 'ev-1',
-            eventName: 'Expo 2026',
-            street: 'Event Street',
-            streetNumber: '7',
-            city: 'Gdansk',
-            postalCode: '80-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-ev-1',
-          },
-          {
-            id: 'ev-1',
-            eventName: 'Duplicate',
-          },
-        ],
+        organizations: [createOrganizationRecord()],
+        ...emptyCanonicalRelations,
+        events: [createEventRecord(), createEventRecord({ id: 'ev-1', eventName: 'Duplicate' })],
         eventOrganizationLinks: [
           { id: 'eol-1', eventId: 'ev-1', organizationId: 'o-1' },
           { id: 'eol-2', eventId: 'ev-1', organizationId: 'o-1' },
@@ -630,32 +644,9 @@ describe('filemaker settings', () => {
       JSON.stringify({
         version: 2,
         persons: [],
-        organizations: [
-          {
-            id: 'o-1',
-            name: 'Beta Ltd',
-            street: 'Org Avenue',
-            streetNumber: '10',
-            city: 'Poznan',
-            postalCode: '60-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-o-1',
-          },
-        ],
-        events: [
-          {
-            id: 'ev-1',
-            eventName: 'Expo 2026',
-            street: 'Event Street',
-            streetNumber: '7',
-            city: 'Gdansk',
-            postalCode: '80-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-ev-1',
-          },
-        ],
+        organizations: [createOrganizationRecord()],
+        ...emptyCanonicalRelations,
+        events: [createEventRecord()],
         eventOrganizationLinks: [],
       })
     );
@@ -787,24 +778,9 @@ describe('filemaker settings', () => {
     const baseDatabase = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
+        persons: [createPersonRecord()],
         organizations: [],
+        ...emptyCanonicalRelations,
         emails: [{ id: 'e-1', email: 'existing@example.com', status: 'active' }],
         emailLinks: [],
       })
@@ -842,24 +818,9 @@ describe('filemaker settings', () => {
     const baseDatabase = parseFilemakerDatabase(
       JSON.stringify({
         version: 2,
-        persons: [
-          {
-            id: 'p-1',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            street: 'Street 9',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-002',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
-        ],
+        persons: [createPersonRecord()],
         organizations: [],
+        ...emptyCanonicalRelations,
         phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48111222333' }],
         phoneNumberLinks: [],
       })
@@ -899,23 +860,14 @@ describe('filemaker settings', () => {
       JSON.stringify({
         version: 2,
         persons: [
-          {
+          createPersonRecord({
             id: 'p-2',
             firstName: 'Ada',
             lastName: 'Nowak',
-            street: 'Street 10',
-            streetNumber: '2',
-            city: 'Gdynia',
-            postalCode: '81-001',
-            country: 'Poland',
-            countryId: 'country-pl',
-            addressId: 'addr-p-2',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
+          }),
         ],
         organizations: [],
+        ...emptyCanonicalRelations,
         emails: [],
         emailLinks: [],
       })

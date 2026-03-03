@@ -19,6 +19,7 @@ import {
   normalizeString,
   toIdToken,
 } from './filemaker-settings.helpers';
+import { validationError } from '@/shared/errors/app-error';
 import {
   createFilemakerAddress,
   createFilemakerAddressLink,
@@ -67,11 +68,6 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   emailLinks: [],
   eventOrganizationLinks: [],
 });
-
-const defaultAddressIdForEntity = (
-  kind: 'person' | 'organization' | 'event',
-  entityId: string
-): string => `${kind}-address-${entityId}`;
 
 const defaultAddressLinkIdForValues = (
   ownerKind: FilemakerAddressOwnerKind,
@@ -135,126 +131,26 @@ const hasAnyAddressData = (value: {
     value.countryId
   );
 
-const attachAddressToPerson = (
-  person: FilemakerPerson,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerPerson => {
-  const addressId =
-    normalizeString(person.addressId) || defaultAddressIdForEntity('person', person.id);
-  const existing = addressesById.get(addressId);
-  const fromPerson = createFilemakerAddress({
-    id: addressId,
-    street: person.street,
-    streetNumber: person.streetNumber,
-    city: person.city,
-    postalCode: person.postalCode,
-    country: person.country,
-    countryId: person.countryId,
-    createdAt: existing?.createdAt ?? person.createdAt,
-    updatedAt: person.updatedAt,
-  });
-  if (hasAnyAddressData(fromPerson)) {
-    addressesById.set(addressId, fromPerson);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...person,
-      addressId,
-    };
-  }
-  return {
-    ...person,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
+const hasDeprecatedFullAddress = (value: Record<string, unknown>): boolean =>
+  Boolean(normalizeString(value['fullAddress']));
 
-const attachAddressToOrganization = (
-  organization: FilemakerOrganization,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerOrganization => {
-  const addressId =
-    normalizeString(organization.addressId) ||
-    defaultAddressIdForEntity('organization', organization.id);
-  const existing = addressesById.get(addressId);
-  const fromOrganization = createFilemakerAddress({
-    id: addressId,
-    street: organization.street,
-    streetNumber: organization.streetNumber,
-    city: organization.city,
-    postalCode: organization.postalCode,
-    country: organization.country,
-    countryId: organization.countryId,
-    createdAt: existing?.createdAt ?? organization.createdAt,
-    updatedAt: organization.updatedAt,
+const hasInlineAddressFields = (value: Record<string, unknown>): boolean =>
+  hasAnyAddressData({
+    street: normalizeString(value['street']),
+    streetNumber: normalizeString(value['streetNumber']),
+    city: normalizeString(value['city']),
+    postalCode: normalizeString(value['postalCode']),
+    country: normalizeString(value['country']),
+    countryId: normalizeString(value['countryId']),
   });
-  if (hasAnyAddressData(fromOrganization)) {
-    addressesById.set(addressId, fromOrganization);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...organization,
-      addressId,
-    };
-  }
-  return {
-    ...organization,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
 
-const attachAddressToEvent = (
-  event: FilemakerEvent,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerEvent => {
-  const addressId =
-    normalizeString(event.addressId) || defaultAddressIdForEntity('event', event.id);
-  const existing = addressesById.get(addressId);
-  const fromEvent = createFilemakerAddress({
-    id: addressId,
-    street: event.street,
-    streetNumber: event.streetNumber,
-    city: event.city,
-    postalCode: event.postalCode,
-    country: event.country,
-    countryId: event.countryId,
-    createdAt: existing?.createdAt ?? event.createdAt,
-    updatedAt: event.updatedAt,
-  });
-  if (hasAnyAddressData(fromEvent)) {
-    addressesById.set(addressId, fromEvent);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...event,
-      addressId,
-    };
-  }
-  return {
-    ...event,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
+const getRecordList = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value)
+    ? value.filter(
+      (entry: unknown): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+    )
+    : [];
 
 const isPartyPresent = (
   personIds: Set<string>,
@@ -288,6 +184,54 @@ export const normalizeFilemakerDatabase = (
   }
 
   const valueRecord = value as Record<string, unknown>;
+  if (Object.keys(valueRecord).length === 0) {
+    return createDefaultFilemakerDatabase();
+  }
+  if (valueRecord['version'] !== 2) {
+    throw validationError('Legacy Filemaker database payloads are no longer supported.', {
+      version: valueRecord['version'] ?? null,
+    });
+  }
+
+  const rawPersons = getRecordList(valueRecord['persons']);
+  const rawOrganizations = getRecordList(valueRecord['organizations']);
+  const rawEvents = getRecordList(valueRecord['events']);
+  const hasAddressLinksArray = Array.isArray(valueRecord['addressLinks']);
+  const hasPhoneNumberLinksArray = Array.isArray(valueRecord['phoneNumberLinks']);
+  const rawAddressLinks = getRecordList(valueRecord['addressLinks']);
+  const rawPhoneNumberLinks = getRecordList(valueRecord['phoneNumberLinks']);
+  const rawEmailLinks = getRecordList(valueRecord['emailLinks']);
+
+  if ([...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)) {
+    throw validationError('Legacy Filemaker fullAddress payloads are no longer supported.');
+  }
+
+  if (
+    !hasAddressLinksArray &&
+    [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)
+  ) {
+    throw validationError(
+      'Legacy Filemaker inline address payloads are no longer supported without addressLinks.'
+    );
+  }
+
+  if (
+    !hasPhoneNumberLinksArray &&
+    rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
+  ) {
+    throw validationError(
+      'Legacy Filemaker inline person phoneNumbers payloads are no longer supported without phoneNumberLinks.'
+    );
+  }
+
+  if (
+    !hasPhoneNumberLinksArray &&
+    rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
+  ) {
+    throw validationError(
+      'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported without phoneNumberLinks.'
+    );
+  }
 
   const rawAddresses: unknown[] = Array.isArray(valueRecord['addresses'])
     ? (valueRecord['addresses'] as unknown[])
@@ -317,15 +261,8 @@ export const normalizeFilemakerDatabase = (
       );
     });
 
-  const rawPersons: unknown[] = Array.isArray(valueRecord['persons'])
-    ? (valueRecord['persons'] as unknown[])
-    : [];
   const personIds = new Set<string>();
   const persons: FilemakerPerson[] = rawPersons
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
     .map((entry: Record<string, unknown>): FilemakerPerson | null => {
       const id = normalizeString(entry['id']);
       if (!id || personIds.has(id)) return null;
@@ -348,18 +285,10 @@ export const normalizeFilemakerDatabase = (
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerPerson | null): entry is FilemakerPerson => Boolean(entry))
-    .map((entry: FilemakerPerson) => attachAddressToPerson(entry, addressesById));
+    .filter((entry: FilemakerPerson | null): entry is FilemakerPerson => Boolean(entry));
 
-  const rawOrganizations: unknown[] = Array.isArray(valueRecord['organizations'])
-    ? (valueRecord['organizations'] as unknown[])
-    : [];
   const organizationIds = new Set<string>();
   const organizations: FilemakerOrganization[] = rawOrganizations
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
     .map((entry: Record<string, unknown>): FilemakerOrganization | null => {
       const id = normalizeString(entry['id']);
       if (!id || organizationIds.has(id)) return null;
@@ -378,18 +307,10 @@ export const normalizeFilemakerDatabase = (
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization => Boolean(entry))
-    .map((entry: FilemakerOrganization) => attachAddressToOrganization(entry, addressesById));
+    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization => Boolean(entry));
 
-  const rawEvents: unknown[] = Array.isArray(valueRecord['events'])
-    ? (valueRecord['events'] as unknown[])
-    : [];
   const eventIds = new Set<string>();
   const events: FilemakerEvent[] = rawEvents
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
     .map((entry: Record<string, unknown>): FilemakerEvent | null => {
       const id = normalizeString(entry['id']);
       if (!id || eventIds.has(id)) return null;
@@ -408,67 +329,10 @@ export const normalizeFilemakerDatabase = (
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerEvent | null): entry is FilemakerEvent => Boolean(entry))
-    .map((entry: FilemakerEvent) => attachAddressToEvent(entry, addressesById));
+    .filter((entry: FilemakerEvent | null): entry is FilemakerEvent => Boolean(entry));
 
-  const legacyAddressLinks: Array<{
-    id: string;
-    ownerKind: FilemakerAddressOwnerKind;
-    ownerId: string;
-    addressId: string;
-    isDefault: boolean;
-    createdAt?: string | null | undefined;
-    updatedAt?: string | null | undefined;
-  }> = [];
-
-  persons.forEach((person: FilemakerPerson): void => {
-    const addressId = normalizeString(person.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('person', person.id, addressId),
-      ownerKind: 'person',
-      ownerId: person.id,
-      addressId,
-      isDefault: true,
-      createdAt: person.createdAt,
-      updatedAt: person.updatedAt,
-    });
-  });
-
-  organizations.forEach((organization: FilemakerOrganization): void => {
-    const addressId = normalizeString(organization.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('organization', organization.id, addressId),
-      ownerKind: 'organization',
-      ownerId: organization.id,
-      addressId,
-      isDefault: true,
-      createdAt: organization.createdAt,
-      updatedAt: organization.updatedAt,
-    });
-  });
-
-  events.forEach((event: FilemakerEvent): void => {
-    const addressId = normalizeString(event.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('event', event.id, addressId),
-      ownerKind: 'event',
-      ownerId: event.id,
-      addressId,
-      isDefault: true,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-    });
-  });
-
-  const rawAddressLinks: unknown[] = Array.isArray(valueRecord['addressLinks'])
-    ? (valueRecord['addressLinks'] as unknown[])
-    : [];
   const addressLinkIds = new Set<string>();
   const addressRelationKeys = new Set<string>();
-  const ownersWithRawLinks = new Set<string>();
   const groupedAddressLinks = new Map<string, FilemakerAddressLink[]>();
 
   const pushAddressLink = (
@@ -480,8 +344,7 @@ export const normalizeFilemakerDatabase = (
       isDefault?: unknown;
       createdAt?: string | null | undefined;
       updatedAt?: string | null | undefined;
-    },
-    source: 'raw' | 'legacy'
+    }
   ): void => {
     const ownerKindRaw = normalizeString(input.ownerKind).toLowerCase();
     if (ownerKindRaw !== 'person' && ownerKindRaw !== 'organization' && ownerKindRaw !== 'event') {
@@ -497,8 +360,6 @@ export const normalizeFilemakerDatabase = (
     }
 
     const ownerKey = `${ownerKind}:${ownerId}`;
-    if (source === 'legacy' && ownersWithRawLinks.has(ownerKey)) return;
-
     const relationKey = `${ownerKind}:${ownerId}:${addressId}`;
     if (addressRelationKeys.has(relationKey)) return;
 
@@ -506,9 +367,6 @@ export const normalizeFilemakerDatabase = (
     const id = ensureUniqueId(normalizeString(input.id) || baseId, addressLinkIds, baseId);
     addressLinkIds.add(id);
     addressRelationKeys.add(relationKey);
-    if (source === 'raw') {
-      ownersWithRawLinks.add(ownerKey);
-    }
 
     const link = createFilemakerAddressLink({
       id,
@@ -524,28 +382,16 @@ export const normalizeFilemakerDatabase = (
     groupedAddressLinks.set(ownerKey, list);
   };
 
-  rawAddressLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      pushAddressLink(
-        {
-          id: entry['id'],
-          ownerKind: entry['ownerKind'],
-          ownerId: entry['ownerId'],
-          addressId: entry['addressId'],
-          isDefault: entry['isDefault'],
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        },
-        'raw'
-      );
+  rawAddressLinks.forEach((entry: Record<string, unknown>) => {
+    pushAddressLink({
+      id: entry['id'],
+      ownerKind: entry['ownerKind'],
+      ownerId: entry['ownerId'],
+      addressId: entry['addressId'],
+      isDefault: entry['isDefault'],
+      createdAt: normalizeString(entry['createdAt']) || undefined,
+      updatedAt: normalizeString(entry['updatedAt']) || undefined,
     });
-
-  legacyAddressLinks.forEach((entry) => {
-    pushAddressLink(entry, 'legacy');
   });
 
   const addressLinks: FilemakerAddressLink[] = [];
@@ -568,13 +414,18 @@ export const normalizeFilemakerDatabase = (
   });
 
   const resolvedPersons = persons.map((person: FilemakerPerson): FilemakerPerson => {
-    const defaultAddressId =
-      defaultAddressIdByOwner.get(`person:${person.id}`) ?? normalizeString(person.addressId);
+    const defaultAddressId = defaultAddressIdByOwner.get(`person:${person.id}`) ?? '';
     const resolvedAddress = addressesById.get(defaultAddressId);
     if (!resolvedAddress) {
       return {
         ...person,
         addressId: defaultAddressId,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
       };
     }
     return {
@@ -591,14 +442,18 @@ export const normalizeFilemakerDatabase = (
 
   const resolvedOrganizations = organizations.map(
     (organization: FilemakerOrganization): FilemakerOrganization => {
-      const defaultAddressId =
-        defaultAddressIdByOwner.get(`organization:${organization.id}`) ??
-        normalizeString(organization.addressId);
+      const defaultAddressId = defaultAddressIdByOwner.get(`organization:${organization.id}`) ?? '';
       const resolvedAddress = addressesById.get(defaultAddressId);
       if (!resolvedAddress) {
         return {
           ...organization,
           addressId: defaultAddressId,
+          street: '',
+          streetNumber: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          countryId: '',
         };
       }
       return {
@@ -615,13 +470,18 @@ export const normalizeFilemakerDatabase = (
   );
 
   const resolvedEvents = events.map((event: FilemakerEvent): FilemakerEvent => {
-    const defaultAddressId =
-      defaultAddressIdByOwner.get(`event:${event.id}`) ?? normalizeString(event.addressId);
+    const defaultAddressId = defaultAddressIdByOwner.get(`event:${event.id}`) ?? '';
     const resolvedAddress = addressesById.get(defaultAddressId);
     if (!resolvedAddress) {
       return {
         ...event,
         addressId: defaultAddressId,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
       };
     }
     return {
@@ -684,13 +544,8 @@ export const normalizeFilemakerDatabase = (
     ensurePhoneNumberId({ phoneNumber: entry });
   });
 
-  const hasRawPhoneNumberLinks = Array.isArray(valueRecord['phoneNumberLinks']);
-  const rawPhoneNumberLinks: unknown[] = hasRawPhoneNumberLinks
-    ? (valueRecord['phoneNumberLinks'] as unknown[])
-    : [];
   const phoneNumberLinkIds = new Set<string>();
   const phoneNumberRelationKeys = new Set<string>();
-  const partiesWithRawPhoneLinks = new Set<string>();
   const phoneNumberLinks: FilemakerPhoneNumberLink[] = [];
 
   const pushPhoneNumberLink = (
@@ -701,8 +556,7 @@ export const normalizeFilemakerDatabase = (
       id?: unknown;
       createdAt?: string | null | undefined;
       updatedAt?: string | null | undefined;
-    },
-    source: 'raw' | 'legacy'
+    }
   ): void => {
     const phoneNumberId = normalizeString(input.phoneNumberId);
     if (!phoneNumberId || !phoneNumberIds.has(phoneNumberId)) return;
@@ -716,9 +570,6 @@ export const normalizeFilemakerDatabase = (
       return;
     }
 
-    const partyKey = `${partyKind}:${partyId}`;
-    if (source === 'legacy' && partiesWithRawPhoneLinks.has(partyKey)) return;
-
     const relationKey = `${phoneNumberId}:${partyKind}:${partyId}`;
     if (phoneNumberRelationKeys.has(relationKey)) return;
 
@@ -726,9 +577,6 @@ export const normalizeFilemakerDatabase = (
     const id = ensureUniqueId(normalizeString(input.id) || baseId, phoneNumberLinkIds, baseId);
     phoneNumberLinkIds.add(id);
     phoneNumberRelationKeys.add(relationKey);
-    if (source === 'raw') {
-      partiesWithRawPhoneLinks.add(partyKey);
-    }
     phoneNumberLinks.push(
       createFilemakerPhoneNumberLink({
         id,
@@ -741,70 +589,16 @@ export const normalizeFilemakerDatabase = (
     );
   };
 
-  rawPhoneNumberLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      pushPhoneNumberLink(
-        {
-          phoneNumberId: entry['phoneNumberId'],
-          partyKind: entry['partyKind'],
-          partyId: entry['partyId'],
-          id: entry['id'],
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        },
-        'raw'
-      );
+  rawPhoneNumberLinks.forEach((entry: Record<string, unknown>) => {
+    pushPhoneNumberLink({
+      phoneNumberId: entry['phoneNumberId'],
+      partyKind: entry['partyKind'],
+      partyId: entry['partyId'],
+      id: entry['id'],
+      createdAt: normalizeString(entry['createdAt']) || undefined,
+      updatedAt: normalizeString(entry['updatedAt']) || undefined,
     });
-
-  if (!hasRawPhoneNumberLinks) {
-    resolvedPersons.forEach((person: FilemakerPerson): void => {
-      person.phoneNumbers.forEach((legacyPhoneNumber: string): void => {
-        const phoneNumberId = ensurePhoneNumberId({
-          phoneNumber: legacyPhoneNumber,
-          createdAt: person.createdAt,
-          updatedAt: person.updatedAt,
-        });
-        if (!phoneNumberId) return;
-        pushPhoneNumberLink(
-          {
-            phoneNumberId,
-            partyKind: 'person',
-            partyId: person.id,
-          },
-          'legacy'
-        );
-      });
-    });
-
-    rawOrganizations
-      .filter(
-        (entry: unknown): entry is Record<string, unknown> =>
-          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-      )
-      .forEach((entry: Record<string, unknown>): void => {
-        const organizationId = normalizeString(entry['id']);
-        if (!organizationId || !organizationIds.has(organizationId)) return;
-
-        normalizePhoneNumbers(entry['phoneNumbers']).forEach((legacyPhoneNumber: string): void => {
-          const phoneNumberId = ensurePhoneNumberId({
-            phoneNumber: legacyPhoneNumber,
-          });
-          if (!phoneNumberId) return;
-          pushPhoneNumberLink(
-            {
-              phoneNumberId,
-              partyKind: 'organization',
-              partyId: organizationId,
-            },
-            'legacy'
-          );
-        });
-      });
-  }
+  });
 
   const phoneNumberById = new Map<string, string>();
   phoneNumbers.forEach((entry: FilemakerPhoneNumber): void => {
@@ -866,11 +660,8 @@ export const normalizeFilemakerDatabase = (
       );
     });
 
-  const hasRawEmailLinks = Array.isArray(valueRecord['emailLinks']);
-  const rawEmailLinks: unknown[] = hasRawEmailLinks ? (valueRecord['emailLinks'] as unknown[]) : [];
   const emailLinkIds = new Set<string>();
   const emailRelationKeys = new Set<string>();
-  const partiesWithRawEmailLinks = new Set<string>();
   const emailLinks: FilemakerEmailLink[] = [];
 
   const pushEmailLink = (
@@ -881,8 +672,7 @@ export const normalizeFilemakerDatabase = (
       id?: unknown;
       createdAt?: string | null | undefined;
       updatedAt?: string | null | undefined;
-    },
-    source: 'raw' | 'legacy'
+    }
   ): void => {
     const emailId = normalizeString(input.emailId);
     if (!emailId || !emailIds.has(emailId)) return;
@@ -896,9 +686,6 @@ export const normalizeFilemakerDatabase = (
       return;
     }
 
-    const partyKey = `${partyKind}:${partyId}`;
-    if (source === 'legacy' && partiesWithRawEmailLinks.has(partyKey)) return;
-
     const relationKey = `${emailId}:${partyKind}:${partyId}`;
     if (emailRelationKeys.has(relationKey)) return;
 
@@ -906,9 +693,6 @@ export const normalizeFilemakerDatabase = (
     const id = ensureUniqueId(normalizeString(input.id) || baseId, emailLinkIds, baseId);
     emailLinkIds.add(id);
     emailRelationKeys.add(relationKey);
-    if (source === 'raw') {
-      partiesWithRawEmailLinks.add(partyKey);
-    }
     emailLinks.push(
       createFilemakerEmailLink({
         id,
@@ -921,24 +705,16 @@ export const normalizeFilemakerDatabase = (
     );
   };
 
-  rawEmailLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      pushEmailLink(
-        {
-          emailId: entry['emailId'],
-          partyKind: entry['partyKind'],
-          partyId: entry['partyId'],
-          id: entry['id'],
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        },
-        'raw'
-      );
+  rawEmailLinks.forEach((entry: Record<string, unknown>) => {
+    pushEmailLink({
+      emailId: entry['emailId'],
+      partyKind: entry['partyKind'],
+      partyId: entry['partyId'],
+      id: entry['id'],
+      createdAt: normalizeString(entry['createdAt']) || undefined,
+      updatedAt: normalizeString(entry['updatedAt']) || undefined,
     });
+  });
 
   const rawEventOrganizationLinks: unknown[] = Array.isArray(valueRecord['eventOrganizationLinks'])
     ? (valueRecord['eventOrganizationLinks'] as unknown[])

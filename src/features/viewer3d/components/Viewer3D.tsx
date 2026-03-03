@@ -115,10 +115,15 @@ function Loader(): React.JSX.Element {
   );
 }
 
-function AutoRotateGroup({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const context = useOptionalViewer3D();
-  const autoRotate = context?.autoRotate ?? true;
-  const autoRotateSpeed = context?.autoRotateSpeed ?? 2;
+function AutoRotateGroup({
+  children,
+  autoRotate,
+  autoRotateSpeed,
+}: {
+  children: React.ReactNode;
+  autoRotate: boolean;
+  autoRotateSpeed: number;
+}): React.JSX.Element {
   const ref = useRef<THREE.Group>(null);
   useFrame((_state: RootState, delta: number) => {
     if (!autoRotate || !ref.current) return;
@@ -134,6 +139,7 @@ function Model3D({
   position,
   rotation,
   scale,
+  enableShadows,
 }: {
   url: string;
   onLoad?: () => void;
@@ -141,9 +147,8 @@ function Model3D({
   position?: [number, number, number];
   rotation?: [number, number, number];
   scale?: number | [number, number, number];
+  enableShadows: boolean;
 }): React.JSX.Element | null {
-  const context = useOptionalViewer3D();
-  const enableShadows = context?.enableShadows ?? true;
   const replacedTextureRef = useRef(false);
   const { scene } = useGLTF(url, true, true, (loader: { manager: THREE.LoadingManager }) => {
     loader.manager.setURLModifier((resourceUrl: string) => {
@@ -218,9 +223,7 @@ function Model3D({
 }
 
 // Ground plane with realistic shadows
-function Ground(): React.JSX.Element | null {
-  const context = useOptionalViewer3D();
-  const showGround = context?.showGround ?? false;
+function Ground({ showGround }: { showGround: boolean }): React.JSX.Element | null {
   if (!showGround) return null;
 
   return (
@@ -232,10 +235,13 @@ function Ground(): React.JSX.Element | null {
 }
 
 // Scene lighting setup
-function SceneLighting(): React.JSX.Element {
-  const context = useOptionalViewer3D();
-  const preset = context?.lighting ?? 'studio';
-  const intensity = context?.lightIntensity ?? 1;
+function SceneLighting({
+  preset,
+  intensity,
+}: {
+  preset: LightingPreset;
+  intensity: number;
+}): React.JSX.Element {
   const lightConfigs = {
     studio: {
       ambient: 0.4,
@@ -301,64 +307,14 @@ export interface Viewer3DProps {
   modelUrl: string;
   /** Grouped visual settings (optional, overrides context) */
   settings?: Viewer3DSettings;
-  /** Background color */
-  backgroundColor?: string;
-  /** Enable dithering post-processing effect */
-  enableDithering?: boolean;
-  /** Dithering intensity (0-2, default 1) */
-  ditheringIntensity?: number;
-  /** Enable ordered dithering shader */
-  enableOrderedDithering?: boolean;
-  /** Dither grid size (2-12, default 4) */
-  orderedDitheringGridSize?: number;
-  /** Dither pixel size ratio (0.5-3, default 1) */
-  orderedDitheringPixelSizeRatio?: number;
-  /** Dither grayscale only */
-  orderedDitheringGrayscaleOnly?: boolean;
-  /** Dither invert colors */
-  orderedDitheringInvertColor?: boolean;
-  /** Dither luminance method (0=Average, 1=Rec.601, 2=Rec.709, 3=Max) */
-  orderedDitheringLuminanceMethod?: number;
-  /** Enable pixelation (pixel art effect) */
-  enablePixelation?: boolean;
-  /** Pixel size in screen pixels (1-32, default 6) */
-  pixelSize?: number;
   /** Container class name */
   className?: string;
   /** Callback when model loads */
   onLoad?: () => void;
   /** Callback on load error */
   onError?: (error: Error) => void;
-  /** Enable auto-rotation */
-  autoRotate?: boolean;
-  /** Auto-rotation speed */
-  autoRotateSpeed?: number;
-  /** Environment preset for HDR lighting */
-  environment?: EnvironmentPreset;
-  /** Lighting preset */
-  lighting?: LightingPreset;
-  /** Light intensity multiplier */
-  lightIntensity?: number;
-  /** Enable shadows */
-  enableShadows?: boolean;
-  /** Enable bloom effect */
-  enableBloom?: boolean;
-  /** Bloom intensity */
-  bloomIntensity?: number;
-  /** Enable tone mapping */
-  enableToneMapping?: boolean;
-  /** Tone mapping exposure */
-  exposure?: number;
-  /** Show ground plane */
-  showGround?: boolean;
-  /** Enable contact shadows */
-  enableContactShadows?: boolean;
-  /** Enable vignette effect */
-  enableVignette?: boolean;
   /** Auto-fit camera to model */
   autoFit?: boolean;
-  /** Enable anti-aliasing */
-  enableAntiAliasing?: boolean;
   /** Use presentation controls (drag to rotate) */
   presentationMode?: boolean;
   /** Allow user interaction (orbit/pan/zoom) */
@@ -397,35 +353,10 @@ function ScreenshotCapture({
 export function Viewer3D({
   modelUrl,
   settings: propSettings,
-  backgroundColor: propBackgroundColor,
-  enableDithering: propEnableDithering,
-  ditheringIntensity: propDitheringIntensity,
-  enableOrderedDithering: propEnableOrderedDithering,
-  orderedDitheringGridSize: propOrderedDitheringGridSize,
-  orderedDitheringPixelSizeRatio: propOrderedDitheringPixelSizeRatio,
-  orderedDitheringGrayscaleOnly: propOrderedDitheringGrayscaleOnly,
-  orderedDitheringInvertColor: propOrderedDitheringInvertColor,
-  orderedDitheringLuminanceMethod: propOrderedDitheringLuminanceMethod,
-  enablePixelation: propEnablePixelation,
-  pixelSize: propPixelSize,
   className,
   onLoad,
   onError,
-  autoRotate: propAutoRotate,
-  autoRotateSpeed: propAutoRotateSpeed,
-  environment: propEnvironment,
-  lighting: _propLighting,
-  lightIntensity: _propLightIntensity,
-  enableShadows: propEnableShadows,
-  enableBloom: propEnableBloom,
-  bloomIntensity: propBloomIntensity,
-  enableToneMapping: propEnableToneMapping,
-  exposure: propExposure,
-  showGround: _propShowGround,
-  enableContactShadows: propEnableContactShadows,
-  enableVignette: propEnableVignette,
   autoFit = true,
-  enableAntiAliasing: propEnableAntiAliasing,
   presentationMode = false,
   allowUserControls = true,
   modelPosition,
@@ -435,66 +366,42 @@ export function Viewer3D({
 }: Viewer3DProps): React.JSX.Element {
   const context = useOptionalViewer3D();
 
-  // Helper to resolve value from prop (legacy), grouped settings (new), or context
   const getSetting = <K extends keyof Viewer3DSettings>(
     key: K,
-    legacyProp: Viewer3DSettings[K] | undefined,
     defaultValue: Required<Viewer3DSettings>[K]
   ): Required<Viewer3DSettings>[K] => {
     if (propSettings?.[key] !== undefined)
       return propSettings[key] as Required<Viewer3DSettings>[K];
-    if (legacyProp !== undefined) return legacyProp as Required<Viewer3DSettings>[K];
     if (context?.[key as keyof typeof context] !== undefined)
       return context[key as keyof typeof context] as Required<Viewer3DSettings>[K];
     return defaultValue;
   };
 
-  const backgroundColor = getSetting('backgroundColor', propBackgroundColor, '#1a1a2e');
-  const enableDithering = getSetting('enableDithering', propEnableDithering, false);
-  const ditheringIntensity = getSetting('ditheringIntensity', propDitheringIntensity, 1.0);
-  const enableOrderedDithering = getSetting(
-    'enableOrderedDithering',
-    propEnableOrderedDithering,
-    false
-  );
-  const orderedDitheringGridSize = getSetting(
-    'orderedDitheringGridSize',
-    propOrderedDitheringGridSize,
-    4
-  );
-  const orderedDitheringPixelSizeRatio = getSetting(
-    'orderedDitheringPixelSizeRatio',
-    propOrderedDitheringPixelSizeRatio,
-    1
-  );
-  const orderedDitheringGrayscaleOnly = getSetting(
-    'orderedDitheringGrayscaleOnly',
-    propOrderedDitheringGrayscaleOnly,
-    false
-  );
-  const orderedDitheringInvertColor = getSetting(
-    'orderedDitheringInvertColor',
-    propOrderedDitheringInvertColor,
-    false
-  );
-  const orderedDitheringLuminanceMethod = getSetting(
-    'orderedDitheringLuminanceMethod',
-    propOrderedDitheringLuminanceMethod,
-    1
-  );
-  const enablePixelation = getSetting('enablePixelation', propEnablePixelation, false);
-  const pixelSize = getSetting('pixelSize', propPixelSize, 6);
-  const enableBloom = getSetting('enableBloom', propEnableBloom, false);
-  const bloomIntensity = getSetting('bloomIntensity', propBloomIntensity, 0.5);
-  const enableToneMapping = getSetting('enableToneMapping', propEnableToneMapping, true);
-  const exposure = getSetting('exposure', propExposure, 1);
-  const enableVignette = getSetting('enableVignette', propEnableVignette, false);
-  const enableAntiAliasing = getSetting('enableAntiAliasing', propEnableAntiAliasing, true);
-  const enableShadows = getSetting('enableShadows', propEnableShadows, true);
-  const environment = getSetting('environment', propEnvironment, 'studio' as EnvironmentPreset);
-  const enableContactShadows = getSetting('enableContactShadows', propEnableContactShadows, true);
-  const autoRotate = getSetting('autoRotate', propAutoRotate, true);
-  const autoRotateSpeed = getSetting('autoRotateSpeed', propAutoRotateSpeed, 2);
+  const backgroundColor = getSetting('backgroundColor', '#1a1a2e');
+  const enableDithering = getSetting('enableDithering', false);
+  const ditheringIntensity = getSetting('ditheringIntensity', 1.0);
+  const enableOrderedDithering = getSetting('enableOrderedDithering', false);
+  const orderedDitheringGridSize = getSetting('orderedDitheringGridSize', 4);
+  const orderedDitheringPixelSizeRatio = getSetting('orderedDitheringPixelSizeRatio', 1);
+  const orderedDitheringGrayscaleOnly = getSetting('orderedDitheringGrayscaleOnly', false);
+  const orderedDitheringInvertColor = getSetting('orderedDitheringInvertColor', false);
+  const orderedDitheringLuminanceMethod = getSetting('orderedDitheringLuminanceMethod', 1);
+  const enablePixelation = getSetting('enablePixelation', false);
+  const pixelSize = getSetting('pixelSize', 6);
+  const enableBloom = getSetting('enableBloom', false);
+  const bloomIntensity = getSetting('bloomIntensity', 0.5);
+  const enableToneMapping = getSetting('enableToneMapping', true);
+  const exposure = getSetting('exposure', 1);
+  const enableVignette = getSetting('enableVignette', false);
+  const enableAntiAliasing = getSetting('enableAntiAliasing', true);
+  const enableShadows = getSetting('enableShadows', true);
+  const environment = getSetting('environment', 'studio' as EnvironmentPreset);
+  const lighting = getSetting('lighting', 'studio' as LightingPreset);
+  const lightIntensity = getSetting('lightIntensity', 1);
+  const showGround = getSetting('showGround', false);
+  const enableContactShadows = getSetting('enableContactShadows', true);
+  const autoRotate = getSetting('autoRotate', true);
+  const autoRotateSpeed = getSetting('autoRotateSpeed', 2);
 
   const hasPostProcessing =
     enableDithering ||
@@ -560,7 +467,7 @@ export function Viewer3D({
 
   const modelNode = (
     <Model3DErrorBoundary {...(onError && { onError })}>
-      <AutoRotateGroup>
+      <AutoRotateGroup autoRotate={autoRotate} autoRotateSpeed={autoRotateSpeed}>
         <Model3D
           url={modelUrl}
           {...(onLoad && { onLoad })}
@@ -568,6 +475,7 @@ export function Viewer3D({
           {...(modelPosition && { position: modelPosition })}
           {...(modelRotation && { rotation: modelRotation })}
           {...(modelScale && { scale: modelScale })}
+          enableShadows={enableShadows}
         />
       </AutoRotateGroup>
     </Model3DErrorBoundary>
@@ -601,7 +509,7 @@ export function Viewer3D({
         {}
 
         {/* Lighting */}
-        <SceneLighting />
+        <SceneLighting preset={lighting} intensity={lightIntensity} />
 
         {/* HDR Environment */}
         {environment !== 'none' && environment !== 'gym' && (
@@ -623,7 +531,7 @@ export function Viewer3D({
           )}
 
           {/* Ground and shadows */}
-          <Ground />
+          <Ground showGround={showGround} />
 
           {enableContactShadows && (
             <ContactShadows

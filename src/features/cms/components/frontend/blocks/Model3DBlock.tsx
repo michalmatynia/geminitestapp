@@ -50,19 +50,21 @@ export function Model3DBlock(): React.ReactNode {
     <div className='w-full' style={{ height: `${Math.max(120, height)}px` }}>
       <Viewer3D
         modelUrl={modelUrl}
-        backgroundColor={backgroundColor}
-        autoRotate={autoRotate}
-        autoRotateSpeed={autoRotateSpeed}
-        environment={environment}
-        lighting={lighting}
-        lightIntensity={lightIntensity}
-        enableShadows={enableShadows}
-        enableBloom={enableBloom}
-        bloomIntensity={bloomIntensity}
-        exposure={exposure}
-        showGround={showGround}
-        enableContactShadows={enableContactShadows}
-        enableVignette={enableVignette}
+        settings={{
+          backgroundColor,
+          autoRotate,
+          autoRotateSpeed,
+          environment,
+          lighting,
+          lightIntensity,
+          enableShadows,
+          enableBloom,
+          bloomIntensity,
+          exposure,
+          showGround,
+          enableContactShadows,
+          enableVignette,
+        }}
         autoFit={autoFit}
         presentationMode={presentationMode}
         allowUserControls={false}

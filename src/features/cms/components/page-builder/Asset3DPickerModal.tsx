@@ -165,19 +165,21 @@ export function Asset3DPickerModal({
                 <div className='mt-2 h-56'>
                   <Viewer3D
                     modelUrl={`/api/assets3d/${previewAsset.id}/file`}
-                    backgroundColor='#111827'
-                    autoRotate
-                    autoRotateSpeed={2}
-                    environment='studio'
-                    lighting='studio'
-                    lightIntensity={1}
-                    enableShadows
-                    enableBloom={false}
-                    bloomIntensity={0.5}
-                    exposure={1}
-                    showGround={false}
-                    enableContactShadows
-                    enableVignette={false}
+                    settings={{
+                      backgroundColor: '#111827',
+                      autoRotate: true,
+                      autoRotateSpeed: 2,
+                      environment: 'studio',
+                      lighting: 'studio',
+                      lightIntensity: 1,
+                      enableShadows: true,
+                      enableBloom: false,
+                      bloomIntensity: 0.5,
+                      exposure: 1,
+                      showGround: false,
+                      enableContactShadows: true,
+                      enableVignette: false,
+                    }}
                     autoFit
                     presentationMode={false}
                     className='h-full w-full'

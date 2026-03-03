@@ -436,10 +436,10 @@ export function useStateBridgeRuntime({
   useEffect(() => {
     actions.setRunControlHandlers({
       ...(handleFireTrigger !== undefined && {
-        fireTrigger: (node, event) => handleFireTrigger(node, event),
+        fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => handleFireTrigger(node, event),
       }),
       ...(handleFireTriggerPersistent !== undefined && {
-        fireTriggerPersistent: (node, event) => handleFireTriggerPersistent(node, event),
+        fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => handleFireTriggerPersistent(node, event),
       }),
       ...(handlePauseActiveRun !== undefined && { pauseActiveRun: handlePauseActiveRun }),
       ...(handleResumeActiveRun !== undefined && { resumeActiveRun: handleResumeActiveRun }),
@@ -461,18 +461,18 @@ export function useStateBridgeRuntime({
   useEffect(() => {
     actions.setRuntimeNodeConfigHandlers({
       ...(handleFetchParserSample !== undefined && {
-        fetchParserSample: (nodeId, entityType, entityId) =>
+        fetchParserSample: (nodeId: string, entityType: string, entityId: string) =>
           handleFetchParserSample(nodeId, entityType, entityId),
       }),
       ...(handleFetchUpdaterSample !== undefined && {
-        fetchUpdaterSample: (nodeId, entityType, entityId, options) =>
+        fetchUpdaterSample: (nodeId: string, entityType: string, entityId: string, options?: { notify?: boolean }) =>
           handleFetchUpdaterSample(nodeId, entityType, entityId, options),
       }),
       ...(handleRunSimulation !== undefined && {
-        runSimulation: (node, triggerEvent) => handleRunSimulation(node, triggerEvent),
+        runSimulation: (node: AiNode, triggerEvent?: string) => handleRunSimulation(node, triggerEvent),
       }),
       ...(handleSendToAi !== undefined && {
-        sendToAi: (nodeId, prompt) => handleSendToAi(nodeId, prompt),
+        sendToAi: (nodeId: string, prompt: string) => handleSendToAi(nodeId, prompt),
       }),
     });
   }, [

@@ -4,6 +4,8 @@ import { PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import {
   Button,
   ActionMenu,
@@ -207,7 +209,15 @@ export function ProductImageSlot({ index }: ProductImageSlotProps) {
                 <div className='absolute bottom-0 left-0 flex items-center rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400 overflow-hidden'>
                   <span className='px-1.5 py-0.5'>{index + 1}</span>
                   {displayUrl ? (
-                    <Tooltip content='Open full preview in new tab' side='top'>
+                    <Tooltip
+                      content={
+                        getDocumentationTooltip(
+                          DOCUMENTATION_MODULE_IDS.products,
+                          'product_open_full_preview'
+                        ) ?? 'Open full preview in new tab'
+                      }
+                      side='top'
+                    >
                       <Button
                         variant='ghost'
                         size='xs'

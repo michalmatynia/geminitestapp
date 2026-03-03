@@ -35,28 +35,6 @@ export interface UseChatbotLogicReturn {
   agentRunHeadless: boolean;
   setAgentRunHeadless: (headless: boolean) => void;
 
-  // Agent Detail Models
-  agentMemoryValidationModel: string | null;
-  setAgentMemoryValidationModel: (model: string | null) => void;
-  agentPlannerModel: string | null;
-  setAgentPlannerModel: (model: string | null) => void;
-  agentSelfCheckModel: string | null;
-  setAgentSelfCheckModel: (model: string | null) => void;
-  agentExtractionValidationModel: string | null;
-  setAgentExtractionValidationModel: (model: string | null) => void;
-  agentToolRouterModel: string | null;
-  setAgentToolRouterModel: (model: string | null) => void;
-  agentLoopGuardModel: string | null;
-  setAgentLoopGuardModel: (model: string | null) => void;
-  agentApprovalGateModel: string | null;
-  setAgentApprovalGateModel: (model: string | null) => void;
-  agentMemorySummarizationModel: string | null;
-  setAgentMemorySummarizationModel: (model: string | null) => void;
-  agentSelectorInferenceModel: string | null;
-  setAgentSelectorInferenceModel: (model: string | null) => void;
-  agentOutputNormalizationModel: string | null;
-  setAgentOutputNormalizationModel: (model: string | null) => void;
-
   // Agent Detail Settings
   agentMaxSteps: number;
   setAgentMaxSteps: (steps: number) => void;

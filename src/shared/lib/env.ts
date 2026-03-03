@@ -58,6 +58,17 @@ const envSchema = z.object({
   DEBUG_SETTINGS: z.coerce.boolean().default(false),
   ENABLE_RATE_LIMITS: z.coerce.boolean().default(true),
   DISABLE_RATE_LIMITS: z.coerce.boolean().default(false),
+
+  // OpenTelemetry
+  OTEL_ENABLED: z.coerce.boolean().optional(),
+  OTEL_SERVICE_NAME: z.string().optional(),
+  OTEL_SERVICE_VERSION: z.string().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.string().optional(),
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: z.string().optional(),
+  OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
+  OTEL_TRACES_SAMPLER: z.string().optional(),
+  OTEL_TRACES_SAMPLER_ARG: z.string().optional(),
 });
 
 /**

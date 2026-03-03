@@ -1,51 +1,71 @@
-import type {
-  CaseResolverAssetFile,
-  CaseResolverNodeFileSnapshot,
-  CaseResolverWorkspace,
-  CaseResolverWorkspaceMetadata,
-  PersistCaseResolverWorkspaceResult,
-  PersistCaseResolverWorkspaceSuccess as _PersistCaseResolverWorkspaceSuccess,
-  PersistCaseResolverWorkspaceConflict as _PersistCaseResolverWorkspaceConflict,
-  PersistCaseResolverWorkspaceFailure as _PersistCaseResolverWorkspaceFailure,
-  CaseResolverWorkspaceFetchAttemptProfile,
-  CaseResolverWorkspaceRecordFetchResult,
-  CaseResolverWorkspaceDebugEvent,
-  CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
+import {
+  type CaseResolverWorkspace,
+  type CaseResolverWorkspaceMetadata,
+  type PersistCaseResolverWorkspaceResult,
+  type CaseResolverWorkspaceFetchAttemptProfile,
+  type CaseResolverWorkspaceRecordFetchResult,
+  type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
 } from '@/shared/contracts/case-resolver';
 
 import {
-  CASE_RESOLVER_WORKSPACE_KEY,
-  parseNodeFileSnapshot,
-  serializeNodeFileSnapshot,
   getCaseResolverWorkspaceNormalizationDiagnostics,
   normalizeCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from './settings';
 
-const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
-const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
-const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
-const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY = '__caseResolverWorkspaceNavigationCache';
-const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS = 2 * 60 * 1000;
-const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
-const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
-export const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY =
-  'nodeFileSnapshotStorage';
-const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
-const CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT = 150;
-const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
-const CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT = 120;
-const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
+import {
+  readPositiveIntegerEnv,
+  formatByteCount,
+  computeCaseResolverConflictRetryDelayMs,
+  createCaseResolverWorkspaceMutationId,
+  getCaseResolverWorkspaceRevision,
+  stampCaseResolverWorkspaceMutation,
+  safeParseJson,
+} from './utils/workspace-persistence-utils';
 
-const readPositiveIntegerEnv = (key: string, fallback: number): number => {
-  const value = process.env[key];
-  if (!value) return fallback;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  const normalized = Math.floor(parsed);
-  if (normalized <= 0) return fallback;
-  return normalized;
+import {
+  logCaseResolverWorkspaceEvent,
+} from './workspace-observability';
+
+import {
+  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
+} from './utils/workspace-navigation-cache';
+
+import {
+  CASE_RESOLVER_WORKSPACE_KEY,
+  readWorkspaceMetadata,
+  resolveWorkspaceRecordFromSettingsPayload,
+  buildWorkspaceRecordFetchAttempts,
+  type SettingsRecordLike,
+  type WorkspaceMetadataLike,
+} from './utils/workspace-settings-persistence-helpers';
+
+import {
+  fetchSettingsPayloadWithTimeout,
+  fetchCaseResolverNodeFileSnapshotText,
+  fetchCaseResolverNodeFileSnapshot,
+  persistCaseResolverNodeFileSnapshot,
+  deleteCaseResolverNodeFileSnapshot,
+  readCaseResolverNodeFileSnapshotStorageMode,
+} from './node-file-persistence';
+
+export {
+  createCaseResolverWorkspaceMutationId,
+  getCaseResolverWorkspaceRevision,
+  stampCaseResolverWorkspaceMutation,
+  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
+  computeCaseResolverConflictRetryDelayMs,
+  fetchCaseResolverNodeFileSnapshotText,
+  fetchCaseResolverNodeFileSnapshot,
+  persistCaseResolverNodeFileSnapshot,
+  deleteCaseResolverNodeFileSnapshot,
 };
+
+const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
+const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
+const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
 
 const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES = readPositiveIntegerEnv(
   'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES',
@@ -56,110 +76,11 @@ const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS = readPositiveIntegerEnv(
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT
 );
 
-type SettingsRecordLike = {
-  key?: unknown;
-  value?: unknown;
-  conflict?: unknown;
-  idempotent?: unknown;
-  currentRevision?: unknown;
-};
-
-type WorkspaceMetadataLike = {
-  key?: unknown;
-  revision?: unknown;
-  lastMutationId?: unknown;
-  exists?: unknown;
-};
-
-type WorkspaceSettingsPayloadLike = {
-  settings?: unknown;
-  key?: unknown;
-  value?: unknown;
-};
-
-type CaseResolverWorkspaceNavigationCache = {
-  workspace: CaseResolverWorkspace;
-  cachedAtMs: number;
-};
-
 type PersistWorkspaceInput = {
   workspace: CaseResolverWorkspace;
   expectedRevision: number;
   mutationId: string;
   source: string;
-};
-
-const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {
-  const scope = globalThis as typeof globalThis & {
-    [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
-  };
-  if (!Array.isArray(scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY])) {
-    scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] = [];
-  }
-  return scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] ?? [];
-};
-
-const writeDebugBuffer = (events: CaseResolverWorkspaceDebugEvent[]): void => {
-  const scope = globalThis as typeof globalThis & {
-    [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
-  };
-  scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] = events;
-};
-
-const readNavigationCache = (): CaseResolverWorkspaceNavigationCache | null => {
-  const scope = globalThis as typeof globalThis & {
-    [CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY]?: CaseResolverWorkspaceNavigationCache;
-  };
-  const cache = scope[CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY];
-  if (!cache || typeof cache !== 'object') return null;
-  if (
-    !cache.workspace ||
-    typeof cache.cachedAtMs !== 'number' ||
-    !Number.isFinite(cache.cachedAtMs)
-  ) {
-    return null;
-  }
-  if (Date.now() - cache.cachedAtMs > CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS) {
-    return null;
-  }
-  return cache;
-};
-
-export const primeCaseResolverNavigationWorkspace = (workspace: CaseResolverWorkspace): void => {
-  const scope = globalThis as typeof globalThis & {
-    [CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY]?: CaseResolverWorkspaceNavigationCache;
-  };
-  scope[CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY] = {
-    workspace,
-    cachedAtMs: Date.now(),
-  };
-};
-
-export const readCaseResolverNavigationWorkspace = (): CaseResolverWorkspace | null => {
-  const cache = readNavigationCache();
-  return cache?.workspace ?? null;
-};
-
-const safeParseJson = <T>(value: string): T | null => {
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
-};
-
-const formatByteCount = (value: number): string => {
-  if (!Number.isFinite(value) || value <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let normalized = value;
-  let unitIndex = 0;
-  while (normalized >= 1024 && unitIndex < units.length - 1) {
-    normalized /= 1024;
-    unitIndex += 1;
-  }
-  const rounded =
-    normalized >= 10 || unitIndex === 0 ? normalized.toFixed(0) : normalized.toFixed(1);
-  return `${rounded} ${units[unitIndex]}`;
 };
 
 export const getCaseResolverWorkspaceMaxPayloadBytes = (): number =>
@@ -168,389 +89,12 @@ export const getCaseResolverWorkspaceMaxPayloadBytes = (): number =>
 export const isCaseResolverWorkspacePayloadTooLarge = (payloadBytes: number): boolean =>
   Number.isFinite(payloadBytes) && payloadBytes > CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
 
-export const computeCaseResolverConflictRetryDelayMs = (
-  attempt: number,
-  options?: {
-    baseDelayMs?: number;
-    maxDelayMs?: number;
-    jitterMs?: number;
-  }
-): number => {
-  const normalizedAttempt = Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1;
-  const baseDelayMs =
-    Number.isFinite(options?.baseDelayMs) && (options?.baseDelayMs ?? 0) > 0
-      ? Math.floor(options?.baseDelayMs ?? 0)
-      : CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT;
-  const maxDelayMs =
-    Number.isFinite(options?.maxDelayMs) && (options?.maxDelayMs ?? 0) > 0
-      ? Math.max(baseDelayMs, Math.floor(options?.maxDelayMs ?? baseDelayMs))
-      : CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT;
-  const jitterMs =
-    Number.isFinite(options?.jitterMs) && (options?.jitterMs ?? 0) >= 0
-      ? Math.floor(options?.jitterMs ?? 0)
-      : CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT;
-
-  const exponentialDelay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, normalizedAttempt - 1));
-  const jitter = jitterMs > 0 ? Math.floor(Math.random() * (jitterMs + 1)) : 0;
-  return exponentialDelay + jitter;
-};
-
-export const createCaseResolverWorkspaceMutationId = (
-  prefix = 'case-resolver-workspace'
-): string => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}-${Date.now()}`;
-};
-
-export const getCaseResolverWorkspaceRevision = (workspace: {
-  workspaceRevision?: unknown;
-}): number => {
-  const candidate = workspace.workspaceRevision;
-  if (typeof candidate !== 'number' || !Number.isFinite(candidate)) return 0;
-  if (candidate <= 0) return 0;
-  return Math.floor(candidate);
-};
-
-export const stampCaseResolverWorkspaceMutation = (
-  workspace: CaseResolverWorkspace,
-  input: {
-    baseRevision: number;
-    mutationId: string;
-    timestamp?: string;
-    normalizeWorkspace?: boolean;
-  }
-): CaseResolverWorkspace => {
-  const baseWorkspace =
-    input.normalizeWorkspace === false ? workspace : normalizeCaseResolverWorkspace(workspace);
-  const baseRevision =
-    typeof input.baseRevision === 'number' && Number.isFinite(input.baseRevision)
-      ? Math.max(0, Math.floor(input.baseRevision))
-      : 0;
-  const nextRevision = Math.max(getCaseResolverWorkspaceRevision(baseWorkspace), baseRevision + 1);
-  return {
-    ...baseWorkspace,
-    workspaceRevision: nextRevision,
-    lastMutationId: input.mutationId.trim() || null,
-    lastMutationAt: (input.timestamp ?? new Date().toISOString()).trim(),
-  };
-};
-
-export const logCaseResolverWorkspaceEvent = (
-  event: Omit<CaseResolverWorkspaceDebugEvent, 'id' | 'timestamp'>
-): void => {
-  const entry: CaseResolverWorkspaceDebugEvent = {
-    id: createCaseResolverWorkspaceMutationId('workspace-debug'),
-    timestamp: new Date().toISOString(),
-    ...event,
-  };
-  const nextEvents = [...readDebugBuffer(), entry].slice(-CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT);
-  writeDebugBuffer(nextEvents);
-  if (typeof window !== 'undefined') {
-    // Defer notification so debug-panel state updates never run inside another component render.
-    window.setTimeout(() => {
-      window.dispatchEvent(new CustomEvent(CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME));
-    }, 0);
-  }
-};
-
-export const readCaseResolverWorkspaceDebugEvents = (): CaseResolverWorkspaceDebugEvent[] => [
-  ...readDebugBuffer(),
-];
-
-export const getCaseResolverWorkspaceDebugEventName = (): string =>
-  CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME;
-
 const readWorkspaceFromSettingRecord = (
   record: SettingsRecordLike | null,
   fallback: string
 ): CaseResolverWorkspace => {
   const rawValue = typeof record?.value === 'string' ? record.value : fallback;
   return parseCaseResolverWorkspace(rawValue);
-};
-
-const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecordLike[] => {
-  if (Array.isArray(payload)) {
-    return payload.filter(
-      (entry: unknown): entry is SettingsRecordLike => Boolean(entry) && typeof entry === 'object'
-    );
-  }
-  if (!payload || typeof payload !== 'object') return [];
-  const payloadRecord = payload as WorkspaceSettingsPayloadLike;
-  if (Array.isArray(payloadRecord.settings)) {
-    return payloadRecord.settings.filter(
-      (entry: unknown): entry is SettingsRecordLike => Boolean(entry) && typeof entry === 'object'
-    );
-  }
-  if (typeof payloadRecord.key === 'string' && typeof payloadRecord.value === 'string') {
-    return [payloadRecord as SettingsRecordLike];
-  }
-  return [];
-};
-
-const resolveWorkspaceRecordFromSettingsPayload = (payload: unknown): SettingsRecordLike | null => {
-  const records = readSettingsRecordsFromPayload(payload);
-  return (
-    records.find(
-      (entry: SettingsRecordLike): boolean =>
-        entry?.key === CASE_RESOLVER_WORKSPACE_KEY && typeof entry?.value === 'string'
-    ) ?? null
-  );
-};
-
-const resolveSettingRecordFromSettingsPayload = (
-  payload: unknown,
-  key: string
-): SettingsRecordLike | null => {
-  const records = readSettingsRecordsFromPayload(payload);
-  return (
-    records.find(
-      (entry: SettingsRecordLike): boolean => entry?.key === key && typeof entry?.value === 'string'
-    ) ?? null
-  );
-};
-
-export const buildCaseResolverNodeFileSnapshotKey = (assetId: string): string =>
-  `${CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX}${assetId.trim()}`;
-
-const readCaseResolverNodeFileSnapshotStorageMode = (
-  asset: Pick<CaseResolverAssetFile, 'metadata'>
-): string | null => {
-  const metadata = asset.metadata;
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return null;
-  }
-  const candidate = (metadata)[
-    CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
-  ];
-  return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : null;
-};
-
-const fetchSettingsPayloadWithTimeout = async (input: {
-  url: string;
-  timeoutMs: number;
-}): Promise<Response> => {
-  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller
-    ? setTimeout((): void => {
-      controller.abort();
-    }, input.timeoutMs)
-    : null;
-  try {
-    return await fetch(input.url, {
-      method: 'GET',
-      cache: 'no-store',
-      ...(controller ? { signal: controller.signal } : {}),
-    });
-  } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-  }
-};
-
-const buildSettingRecordFetchAttempts = ({
-  key,
-  strategy,
-  fresh,
-}: {
-  key: string;
-  strategy: 'light_then_heavy' | 'light_only' | 'heavy_only';
-  fresh: boolean;
-}): Array<{ scope: 'light' | 'heavy'; key: string; url: string }> => {
-  const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
-  const attempts: Array<{ scope: 'light' | 'heavy'; key: string; url: string }> = [];
-  attemptScopes.forEach((scope): void => {
-    if (fresh) {
-      attempts.push({
-        scope,
-        key: `${scope}_fresh_key`,
-        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(key)}`,
-      });
-    }
-    attempts.push({
-      scope,
-      key: `${scope}_cached_key`,
-      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(key)}`,
-    });
-  });
-  return attempts;
-};
-
-const fetchSettingRecordValue = async ({
-  key,
-  source,
-  strategy = 'light_then_heavy',
-  fresh = true,
-  timeoutMs = CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-}: {
-  key: string;
-  source: string;
-  strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
-  fresh?: boolean;
-  timeoutMs?: number;
-}): Promise<string | null> => {
-  const attempts = buildSettingRecordFetchAttempts({ key, strategy, fresh });
-  for (const attempt of attempts) {
-    try {
-      const response = await fetchSettingsPayloadWithTimeout({
-        url: attempt.url,
-        timeoutMs,
-      });
-      if (!response.ok) continue;
-      const payload = (await response.json()) as unknown;
-      const record = resolveSettingRecordFromSettingsPayload(payload, key);
-      if (!record || typeof record.value !== 'string') continue;
-      return record.value;
-    } catch (error: unknown) {
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'node_file_snapshot_fetch_failed',
-        message: `key=${key} attempt=${attempt.key} ${error instanceof Error ? error.message : 'unknown_error'}`,
-      });
-    }
-  }
-  return null;
-};
-
-const persistSettingValue = async ({
-  key,
-  value,
-  source,
-}: {
-  key: string;
-  value: string;
-  source: string;
-}): Promise<boolean> => {
-  try {
-    const response = await fetch('/api/settings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key,
-        value,
-      }),
-    });
-    if (!response.ok) {
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'node_file_snapshot_persist_failed',
-        message: `key=${key} status=${response.status}`,
-      });
-      return false;
-    }
-    return true;
-  } catch (error: unknown) {
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'node_file_snapshot_persist_failed',
-      message: `key=${key} ${error instanceof Error ? error.message : 'unknown_error'}`,
-    });
-    return false;
-  }
-};
-
-export const fetchCaseResolverNodeFileSnapshotText = async (
-  assetId: string,
-  source = 'node_file_workspace_load'
-): Promise<string | null> => {
-  const normalizedAssetId = assetId.trim();
-  if (!normalizedAssetId) return null;
-  const key = buildCaseResolverNodeFileSnapshotKey(normalizedAssetId);
-  const value = await fetchSettingRecordValue({
-    key,
-    source,
-  });
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return null;
-  }
-  return value;
-};
-
-export const fetchCaseResolverNodeFileSnapshot = async (
-  assetId: string,
-  source = 'node_file_workspace_load'
-): Promise<CaseResolverNodeFileSnapshot | null> => {
-  const rawValue = await fetchCaseResolverNodeFileSnapshotText(assetId, source);
-  if (rawValue === null) return null;
-  try {
-    return parseNodeFileSnapshot(rawValue);
-  } catch (error: unknown) {
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'node_file_snapshot_validation_failed',
-      message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
-    });
-    throw error;
-  }
-};
-
-const persistCaseResolverNodeFileSnapshotText = async ({
-  assetId,
-  textContent,
-  source,
-}: {
-  assetId: string;
-  textContent: string;
-  source: string;
-}): Promise<boolean> => {
-  const normalizedAssetId = assetId.trim();
-  if (!normalizedAssetId) return false;
-  return persistSettingValue({
-    key: buildCaseResolverNodeFileSnapshotKey(normalizedAssetId),
-    value: textContent,
-    source,
-  });
-};
-
-export const persistCaseResolverNodeFileSnapshot = async ({
-  assetId,
-  snapshot,
-  source = 'node_file_manual_save',
-}: {
-  assetId: string;
-  snapshot: CaseResolverNodeFileSnapshot;
-  source?: string;
-}): Promise<boolean> =>
-  persistCaseResolverNodeFileSnapshotText({
-    assetId,
-    textContent: serializeNodeFileSnapshot(snapshot),
-    source,
-  });
-
-export const deleteCaseResolverNodeFileSnapshot = async (
-  assetId: string,
-  source = 'node_file_delete'
-): Promise<boolean> =>
-  persistCaseResolverNodeFileSnapshotText({
-    assetId,
-    textContent: '',
-    source,
-  });
-
-const readWorkspaceMetadata = (
-  payload: WorkspaceMetadataLike | null
-): CaseResolverWorkspaceMetadata => {
-  const revisionRaw = payload?.revision;
-  const revision =
-    typeof revisionRaw === 'number' && Number.isFinite(revisionRaw) && revisionRaw > 0
-      ? Math.floor(revisionRaw)
-      : 0;
-  const lastMutationIdRaw = payload?.lastMutationId;
-  const lastMutationId =
-    typeof lastMutationIdRaw === 'string' && lastMutationIdRaw.trim().length > 0
-      ? lastMutationIdRaw
-      : null;
-  const exists = payload?.exists !== false;
-  return {
-    revision,
-    lastMutationId,
-    exists,
-  };
 };
 
 export const fetchCaseResolverWorkspaceMetadata = async (
@@ -617,68 +161,6 @@ export const fetchCaseResolverWorkspaceRecord = async (
 ): Promise<CaseResolverWorkspace | null> => {
   const result = await fetchCaseResolverWorkspaceRecordDetailed(source, options);
   return result.status === 'resolved' ? result.workspace : null;
-};
-
-const buildWorkspaceRecordFetchAttempts = ({
-  strategy,
-  fresh,
-  attemptProfile,
-}: {
-  strategy: 'light_then_heavy' | 'light_only' | 'heavy_only';
-  fresh: boolean;
-  attemptProfile: CaseResolverWorkspaceFetchAttemptProfile;
-}): Array<{ key: string; url: string; scope: 'light' | 'heavy' }> => {
-  const attemptScopes: Array<'light' | 'heavy'> =
-    strategy === 'heavy_only' ? ['heavy'] : strategy === 'light_only' ? ['light'] : ['light', 'heavy'];
-  if (!fresh) {
-    return attemptScopes.map((scope) => ({
-      key: `${scope}_cached_key`,
-      scope,
-      url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-    }));
-  }
-
-  if (attemptProfile === 'context_fast' && strategy === 'light_then_heavy') {
-    return [
-      {
-        key: 'light_fresh_key',
-        scope: 'light',
-        url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'heavy_fresh_key',
-        scope: 'heavy',
-        url: `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'light_cached_key',
-        scope: 'light',
-        url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: 'heavy_cached_key',
-        scope: 'heavy',
-        url: `/api/settings?scope=heavy&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-    ];
-  }
-
-  const attempts: Array<{ key: string; url: string; scope: 'light' | 'heavy' }> = [];
-  attemptScopes.forEach((scope): void => {
-    attempts.push(
-      {
-        key: `${scope}_fresh_key`,
-        scope,
-        url: `/api/settings?scope=${scope}&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      },
-      {
-        key: `${scope}_cached_key`,
-        scope,
-        url: `/api/settings?scope=${scope}&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      }
-    );
-  });
-  return attempts;
 };
 
 export const fetchCaseResolverWorkspaceRecordDetailed = async (
@@ -855,13 +337,6 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
   return await fetchCaseResolverWorkspaceRecord(source, { fresh: true });
 };
 
-/**
- * Single conditional HTTP request that replaces the old two-step waterfall
- * (metadata pre-flight → full workspace fetch). The server compares the stored
- * revision against `currentRevision` and returns the full workspace only when
- * it has advanced. On a cache hit the response is a small JSON object with
- * `upToDate: true` — no workspace data is transferred.
- */
 export const fetchCaseResolverWorkspaceIfStale = async (
   source: string,
   currentRevision: number
@@ -886,7 +361,6 @@ export const fetchCaseResolverWorkspaceIfStale = async (
       return { updated: false, revision: normalizedRevision };
     }
     const payload = (await response.json()) as unknown;
-    // Server signals the client revision is current — no data transfer needed
     if (
       payload !== null &&
       typeof payload === 'object' &&
@@ -907,7 +381,6 @@ export const fetchCaseResolverWorkspaceIfStale = async (
       });
       return { updated: false, revision };
     }
-    // Server returned updated workspace payload
     const workspaceRecord = resolveWorkspaceRecordFromSettingsPayload(payload);
     if (!workspaceRecord) {
       logCaseResolverWorkspaceEvent({
@@ -990,12 +463,6 @@ const findInlineNodeFileSnapshotAssetIds = (workspace: CaseResolverWorkspace): s
     .map((asset) => asset.id);
 };
 
-/**
- * Strip re-derivable content fields before persisting to reduce payload size.
- * For `document` files we keep html as the canonical source and omit markdown/plaintext.
- * For `scanfile` files we keep markdown as canonical and omit duplicated html/plain/version mirrors.
- * History entries are compacted with the same per-file strategy.
- */
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {

@@ -1,24 +1,28 @@
 'use client';
 
 import {
-  ArrowDown,
-  ArrowUp,
-  ChevronLeft,
+  ArrowDownToLine,
+  ChevronDown,
   ChevronRight,
-  GripVertical,
+  FolderPlus,
+  Link2,
+  Menu,
   Plus,
   Star,
   Trash2,
-  Menu,
 } from 'lucide-react';
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
-  ADMIN_MENU_COLOR_MAP,
-  ADMIN_MENU_COLORS,
-  type NavItem,
-} from '@/features/admin/components/Menu';
-import type { AdminNavLeaf } from '@/shared/contracts/admin';
+  FolderTreeViewportV2,
+  useMasterFolderTreeShell,
+  type FolderTreeViewportRenderNodeInput,
+} from '@/features/foldertree/v2';
+import type {
+  MasterFolderTreeAdapterV3,
+  MasterFolderTreeTransaction,
+} from '@/shared/contracts/master-folder-tree';
+import type { AdminNavLeaf, AdminNavNodeEntry } from '@/shared/contracts/admin';
 import {
   Button,
   Checkbox,
@@ -31,17 +35,21 @@ import {
   StatusBadge,
   PanelHeader,
   ToggleRow,
+  FolderTreePanel,
 } from '@/shared/ui';
-import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
+import { cn } from '@/shared/utils';
 
-import type {
-  AdminNavNodeEntry,
-  FlattenedCustomNode,
-} from '@/shared/contracts/admin';
+import {
+  ADMIN_MENU_COLOR_MAP,
+  ADMIN_MENU_COLORS,
+  type NavItem,
+} from '@/features/admin/components/Menu';
 import {
   AdminMenuSettingsProvider,
   useAdminMenuSettings,
 } from '../context/AdminMenuSettingsContext';
+
+const TREE_INSTANCE = 'prompt_exploder_hierarchy';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
 
@@ -94,7 +102,7 @@ function FavoritesSection(): React.JSX.Element {
                           disabled={index === 0}
                           onClick={() => moveFavorite(id, 'up')}
                         >
-                          <ArrowUp className='size-3' />
+                          ↑
                         </Button>
                         <Button
                           type='button'
@@ -104,7 +112,7 @@ function FavoritesSection(): React.JSX.Element {
                           disabled={index === favoritesList.length - 1}
                           onClick={() => moveFavorite(id, 'down')}
                         >
-                          <ArrowDown className='size-3' />
+                          ↓
                         </Button>
                         <Button
                           type='button'
@@ -222,18 +230,14 @@ function MenuBuilderSection(): React.JSX.Element {
     customEnabled,
     setCustomEnabled,
     handleAddRootNode,
-    flattenedCustomNav,
-    libraryItemMap,
-    draggedPath,
-    setDraggedPath,
-    dragOver,
-    setDragOver,
-    moveCustomNodeTo,
-    updateCustomLabel,
-    updateCustomHref,
-    indentCustomNode,
-    outdentCustomNode,
-    removeCustomNode,
+    addCustomChildNode,
+    removeCustomNodeById,
+    updateCustomNodeLabelById,
+    updateCustomNodeHrefById,
+    updateCustomNodeSemanticById,
+    replaceCustomNavFromMasterNodes,
+    layoutMasterNodes,
+    layoutNodeStateById,
     libraryQuery,
     setLibraryQuery,
     filteredLibraryItems,
@@ -242,13 +246,139 @@ function MenuBuilderSection(): React.JSX.Element {
     handleReset,
   } = useAdminMenuSettings();
 
-  const isSamePath = (a: number[], b: number[]): boolean =>
-    a.length === b.length && a.every((value: number, index: number) => value === b[index]);
+  const replaceCustomNavFromMasterNodesRef = useRef(replaceCustomNavFromMasterNodes);
+  useEffect(() => {
+    replaceCustomNavFromMasterNodesRef.current = replaceCustomNavFromMasterNodes;
+  }, [replaceCustomNavFromMasterNodes]);
+
+  const adapter = useMemo<MasterFolderTreeAdapterV3>(
+    () => ({
+      prepare: async (tx: MasterFolderTreeTransaction) => ({ tx, preparedAt: Date.now() }),
+      apply: async (tx: MasterFolderTreeTransaction) => {
+        replaceCustomNavFromMasterNodesRef.current(tx.nextNodes);
+        return {
+          tx,
+          appliedAt: Date.now(),
+        };
+      },
+      commit: async () => {},
+      rollback: async () => {},
+    }),
+    []
+  );
+
+  const {
+    appearance: { rootDropUi },
+    controller,
+    viewport: { scrollToNodeRef },
+  } = useMasterFolderTreeShell({
+    instance: TREE_INSTANCE,
+    nodes: layoutMasterNodes,
+    adapter,
+  });
+
+  const selectedNodeId = controller.selectedNodeId;
+  const selectedNode = selectedNodeId ? layoutNodeStateById.get(selectedNodeId) ?? null : null;
+  const selectedNodeSemantic = selectedNode?.semantic ?? 'group';
+
+  const handleAddRoot = useCallback(
+    (kind: 'link' | 'group'): void => {
+      const nodeId = handleAddRootNode(kind);
+      controller.selectNode(nodeId);
+      controller.expandToNode?.(nodeId);
+      controller.scrollToNode?.(nodeId);
+    },
+    [controller, handleAddRootNode]
+  );
+
+  const handleAddChild = useCallback(
+    (kind: 'link' | 'group'): void => {
+      if (!selectedNodeId) return;
+      const nodeId = addCustomChildNode(selectedNodeId, kind);
+      if (!nodeId) return;
+      controller.expandNode(selectedNodeId);
+      controller.selectNode(nodeId);
+      controller.expandToNode?.(nodeId);
+      controller.scrollToNode?.(nodeId);
+    },
+    [addCustomChildNode, controller, selectedNodeId]
+  );
+
+  const renderLayoutNode = useCallback(
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
+      const nodeState = layoutNodeStateById.get(input.node.id);
+      const semantic = nodeState?.semantic ?? 'group';
+      const isBuiltIn = nodeState?.isBuiltIn ?? false;
+      const stateClassName = input.isSelected
+        ? 'bg-blue-600/30 text-white ring-1 ring-blue-400/40'
+        : input.dropPosition === 'before'
+          ? 'bg-blue-500/10 text-gray-100 ring-1 ring-blue-500/40'
+          : input.dropPosition === 'after'
+            ? 'bg-cyan-500/10 text-gray-100 ring-1 ring-cyan-500/40'
+            : 'text-gray-300 hover:bg-muted/40';
+
+      return (
+        <div
+          className={cn(
+            'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs transition',
+            stateClassName,
+            input.isDragging && 'opacity-50'
+          )}
+          style={{ paddingLeft: `${input.depth * 16 + 8}px` }}
+          onClick={input.select}
+          role='button'
+          tabIndex={0}
+          onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            input.select();
+          }}
+        >
+          {input.hasChildren ? (
+            <button
+              type='button'
+              className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/50'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.preventDefault();
+                event.stopPropagation();
+                input.toggleExpand();
+              }}
+              aria-label={input.isExpanded ? 'Collapse node' : 'Expand node'}
+            >
+              {input.isExpanded ? (
+                <ChevronDown className='size-3.5 text-gray-400' />
+              ) : (
+                <ChevronRight className='size-3.5 text-gray-400' />
+              )}
+            </button>
+          ) : (
+            <span className='inline-flex size-4 items-center justify-center text-gray-500'>•</span>
+          )}
+
+          <span className='min-w-0 flex-1 truncate'>{input.node.name}</span>
+
+          <StatusBadge
+            status={semantic === 'link' ? 'Link' : 'Group'}
+            variant='info'
+            size='sm'
+            className='font-bold'
+          />
+          <StatusBadge
+            status={isBuiltIn ? 'Built-in' : 'Custom'}
+            variant={isBuiltIn ? 'warning' : 'success'}
+            size='sm'
+            className='font-bold'
+          />
+        </div>
+      );
+    },
+    [layoutNodeStateById]
+  );
 
   return (
     <FormSection
       title='Menu Builder'
-      description='Create hierarchies, reorder items, and add custom links.'
+      description='Manage menu hierarchy with the Master folder tree runtime.'
       className='mt-6 p-6'
       variant='subtle'
     >
@@ -268,18 +398,60 @@ function MenuBuilderSection(): React.JSX.Element {
       ) : null}
 
       <div className='flex flex-wrap items-center gap-2'>
-        <Button type='button' size='sm' onClick={() => handleAddRootNode('link')}>
+        <Button type='button' size='sm' onClick={() => handleAddRoot('link')}>
           <Plus className='mr-2 size-4' />
-          Add link
+          Add root link
+        </Button>
+        <Button type='button' variant='outline' size='sm' onClick={() => handleAddRoot('group')}>
+          <FolderPlus className='mr-2 size-4' />
+          Add root group
         </Button>
         <Button
           type='button'
           variant='outline'
           size='sm'
-          onClick={() => handleAddRootNode('group')}
+          disabled={!selectedNodeId}
+          onClick={() => handleAddChild('link')}
         >
-          <Plus className='mr-2 size-4' />
-          Add group
+          <Link2 className='mr-2 size-4' />
+          Add child link
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          disabled={!selectedNodeId}
+          onClick={() => handleAddChild('group')}
+        >
+          <FolderPlus className='mr-2 size-4' />
+          Add child group
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          disabled={!selectedNodeId}
+          onClick={() => {
+            if (!selectedNodeId) return;
+            removeCustomNodeById(selectedNodeId);
+            controller.selectNode(null);
+          }}
+        >
+          <Trash2 className='mr-2 size-4' />
+          Remove selected
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          disabled={!selectedNodeId}
+          onClick={() => {
+            if (!selectedNodeId) return;
+            void controller.dropNodeToRoot(selectedNodeId);
+          }}
+        >
+          <ArrowDownToLine className='mr-2 size-4' />
+          Move selected to root
         </Button>
         <Button type='button' variant='outline' size='sm' onClick={() => handleReset()}>
           Restore default layout
@@ -287,176 +459,96 @@ function MenuBuilderSection(): React.JSX.Element {
       </div>
 
       <div className='mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
-        <div>
-          <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
-          <p className='mt-1 text-[11px] text-gray-500'>
-            Drag the grip to reorder. Use indent/outdent to nest items.
-          </p>
-          {flattenedCustomNav.length === 0 ? (
-            <p className='mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400'>
-              No items yet. Add links or groups to start building your menu.
+        <div className='space-y-4'>
+          <div>
+            <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
+            <p className='mt-1 text-[11px] text-gray-500'>
+              Drag and drop nodes to reorder or nest them. Built-in items are read-only.
             </p>
-          ) : (
-            <div className='mt-3 space-y-2'>
-              {flattenedCustomNav.map((entry: FlattenedCustomNode, index: number) => {
-                const { node, path, depth } = entry;
-                const baseEntry = libraryItemMap.get(node.id);
-                const isBuiltIn = Boolean(baseEntry);
-                const labelValue = node.label ?? baseEntry?.label ?? 'Untitled';
-                const hrefValue = node.href ?? baseEntry?.href ?? '';
-                const canIndent = index > 0;
-                const canOutdent = path.length > 1;
-                const isDragging = draggedPath ? isSamePath(draggedPath, path) : false;
-                const isDragTarget = dragOver ? isSamePath(dragOver.path, path) : false;
-                return (
-                  <div
-                    key={node.id}
-                    className={cn(
-                      'relative flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2',
-                      isDragging && 'opacity-50'
-                    )}
-                    onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-                      event.preventDefault();
-                      const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-                      const position =
-                        event.clientY < rect.top + rect.height / 2 ? 'above' : 'below';
-                      setDragOver({ path, position });
-                    }}
-                    onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-                      event.preventDefault();
-                      const raw = getFirstDragValue(event.dataTransfer, [
-                        DRAG_KEYS.ADMIN_MENU_PATH,
-                        DRAG_KEYS.TEXT,
-                      ]);
-                      let dragged: number[] | null = draggedPath;
-                      if (raw) {
-                        try {
-                          const parsed = JSON.parse(raw) as unknown;
-                          if (
-                            Array.isArray(parsed) &&
-                            parsed.every((val: unknown) => Number.isInteger(val))
-                          ) {
-                            dragged = parsed as number[];
-                          }
-                        } catch {
-                          // ignore
-                        }
-                      }
-                      if (!dragged || !dragOver) {
-                        setDragOver(null);
-                        return;
-                      }
-                      moveCustomNodeTo(dragged, path, dragOver.position);
-                      setDragOver(null);
-                      setDraggedPath(null);
-                    }}
-                    onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-                      if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                      setDragOver((prev: { path: number[]; position: 'above' | 'below' } | null) =>
-                        prev && isSamePath(prev.path, path) ? null : prev
-                      );
-                    }}
-                  >
-                    {isDragTarget && dragOver?.position === 'above' ? (
-                      <div className='pointer-events-none absolute -top-1 left-2 right-2 h-0.5 rounded-full bg-blue-500' />
-                    ) : null}
-                    {isDragTarget && dragOver?.position === 'below' ? (
-                      <div className='pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-blue-500' />
-                    ) : null}
-                    <div
-                      className='flex min-w-0 flex-1 flex-wrap items-center gap-2'
-                      style={{ paddingLeft: depth * 16 }}
-                    >
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        className='grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200 p-0'
-                        draggable
-                        onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
-                          const payload = JSON.stringify(path);
-                          setDragData(
-                            event.dataTransfer,
-                            { [DRAG_KEYS.ADMIN_MENU_PATH]: payload },
-                            { text: payload, effectAllowed: 'move' }
-                          );
-                          setDraggedPath(path);
-                        }}
-                        onDragEnd={(): void => {
-                          setDraggedPath(null);
-                          setDragOver(null);
-                        }}
-                        title='Drag to reorder'
-                      >
-                        <GripVertical className='size-4' />
-                      </Button>
-                      <div className='min-w-[160px] flex-1'>
-                        <Input
-                          value={labelValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                            updateCustomLabel(path, event.target.value)
-                          }
-                          placeholder='Label'
-                          className='h-8 bg-gray-900/40 text-xs'
-                          disabled={isBuiltIn}
-                        />
-                      </div>
-                      <div className='min-w-[180px] flex-1'>
-                        <Input
-                          value={hrefValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                            updateCustomHref(path, event.target.value)
-                          }
-                          placeholder='/admin/...'
-                          className='h-8 bg-gray-900/40 text-xs'
-                          disabled={isBuiltIn}
-                        />
-                      </div>
-                      <StatusBadge
-                        status={isBuiltIn ? 'Built-in' : 'Custom'}
-                        variant={isBuiltIn ? 'info' : 'success'}
-                        size='sm'
-                        className='font-bold'
-                      />
-                    </div>
-                    <div className='flex items-center gap-1'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-8 w-8 p-0'
-                        disabled={!canIndent}
-                        onClick={() => indentCustomNode(path)}
-                        title='Indent'
-                      >
-                        <ChevronRight className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-8 w-8 p-0'
-                        disabled={!canOutdent}
-                        onClick={() => outdentCustomNode(path)}
-                        title='Outdent'
-                      >
-                        <ChevronLeft className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
-                        onClick={() => removeCustomNode(path)}
-                        title='Remove'
-                      >
-                        <Trash2 className='size-3' />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          </div>
+
+          <FolderTreePanel
+            masterInstance={TREE_INSTANCE}
+            className='h-[340px] rounded-md border border-border/60 bg-card/30 p-2'
+          >
+            <FolderTreeViewportV2
+              controller={controller}
+              scrollToNodeRef={scrollToNodeRef}
+              rootDropUi={rootDropUi}
+              renderNode={renderLayoutNode}
+              emptyLabel='No menu items yet. Add links or groups to start building your menu.'
+            />
+          </FolderTreePanel>
+
+          {selectedNodeId && selectedNode ? (
+            <FormSection
+              title='Selected Item'
+              description='Edit properties for the currently selected menu node.'
+              variant='subtle'
+              className='p-4'
+              actions={
+                <StatusBadge
+                  status={selectedNode.isBuiltIn ? 'Built-in' : 'Custom'}
+                  variant={selectedNode.isBuiltIn ? 'warning' : 'success'}
+                  size='sm'
+                  className='font-bold'
+                />
+              }
+            >
+              <div className='grid gap-3 md:grid-cols-2'>
+                <FormField label='Label'>
+                  <Input
+                    value={selectedNode.label}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updateCustomNodeLabelById(selectedNodeId, event.target.value)
+                    }
+                    className='h-8 bg-gray-900/40 text-xs'
+                    disabled={selectedNode.isBuiltIn}
+                  />
+                </FormField>
+
+                <FormField label='Type'>
+                  <SelectSimple
+                    size='sm'
+                    value={selectedNodeSemantic}
+                    options={[
+                      { value: 'group', label: 'Group' },
+                      { value: 'link', label: 'Link' },
+                    ]}
+                    onValueChange={(value: string) =>
+                      updateCustomNodeSemanticById(
+                        selectedNodeId,
+                        value === 'link' ? 'link' : 'group'
+                      )
+                    }
+                    disabled={selectedNode.isBuiltIn}
+                    triggerClassName='h-8 text-xs'
+                  />
+                </FormField>
+              </div>
+
+              {selectedNodeSemantic === 'link' ? (
+                <FormField label='Href' className='mt-3'>
+                  <Input
+                    value={selectedNode.href ?? ''}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updateCustomNodeHrefById(selectedNodeId, event.target.value)
+                    }
+                    placeholder='/admin/...'
+                    className='h-8 bg-gray-900/40 text-xs'
+                    disabled={selectedNode.isBuiltIn}
+                  />
+                </FormField>
+              ) : null}
+
+              {selectedNode.isBuiltIn ? (
+                <p className='mt-3 text-[11px] text-amber-200/80'>
+                  Built-in node metadata is locked. You can still move or remove this node from the
+                  custom layout.
+                </p>
+              ) : null}
+            </FormSection>
+          ) : null}
         </div>
 
         <div>

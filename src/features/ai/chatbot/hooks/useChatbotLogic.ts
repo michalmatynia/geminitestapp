@@ -5,11 +5,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import type {
-  ChatMessageDto as ChatMessage,
-  CreateChatbotSettingsDto as ChatbotSettingsPayload,
-  ChatbotDebugStateDto as ChatbotDebugState,
-  ChatbotSessionDto as ChatSession,
+import {
+  parseChatbotSettingsPayload,
+  type ChatMessageDto as ChatMessage,
+  type CreateChatbotSettingsDto as ChatbotSettingsPayload,
+  type ChatbotDebugStateDto as ChatbotDebugState,
+  type ChatbotSessionDto as ChatSession,
 } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -49,26 +50,6 @@ export interface UseChatbotLogicReturn {
   setAgentIgnoreRobotsTxt: (ignore: boolean) => void;
   agentRequireHumanApproval: boolean;
   setAgentRequireHumanApproval: (require: boolean) => void;
-  agentMemoryValidationModel: string | null;
-  setAgentMemoryValidationModel: (model: string | null) => void;
-  agentPlannerModel: string | null;
-  setAgentPlannerModel: (model: string | null) => void;
-  agentSelfCheckModel: string | null;
-  setAgentSelfCheckModel: (model: string | null) => void;
-  agentExtractionValidationModel: string | null;
-  setAgentExtractionValidationModel: (model: string | null) => void;
-  agentToolRouterModel: string | null;
-  setAgentToolRouterModel: (model: string | null) => void;
-  agentLoopGuardModel: string | null;
-  setAgentLoopGuardModel: (model: string | null) => void;
-  agentApprovalGateModel: string | null;
-  setAgentApprovalGateModel: (model: string | null) => void;
-  agentMemorySummarizationModel: string | null;
-  setAgentMemorySummarizationModel: (model: string | null) => void;
-  agentSelectorInferenceModel: string | null;
-  setAgentSelectorInferenceModel: (model: string | null) => void;
-  agentOutputNormalizationModel: string | null;
-  setAgentOutputNormalizationModel: (model: string | null) => void;
   agentMaxSteps: number;
   setAgentMaxSteps: (steps: number) => void;
   agentMaxStepAttempts: number;
@@ -134,26 +115,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentIgnoreRobotsTxt,
     agentRequireHumanApproval,
     setAgentRequireHumanApproval,
-    agentMemoryValidationModel,
-    setAgentMemoryValidationModel,
-    agentPlannerModel,
-    setAgentPlannerModel,
-    agentSelfCheckModel,
-    setAgentSelfCheckModel,
-    agentExtractionValidationModel,
-    setAgentExtractionValidationModel,
-    agentToolRouterModel,
-    setAgentToolRouterModel,
-    agentLoopGuardModel,
-    setAgentLoopGuardModel,
-    agentApprovalGateModel,
-    setAgentApprovalGateModel,
-    agentMemorySummarizationModel,
-    setAgentMemorySummarizationModel,
-    agentSelectorInferenceModel,
-    setAgentSelectorInferenceModel,
-    agentOutputNormalizationModel,
-    setAgentOutputNormalizationModel,
     agentMaxSteps,
     setAgentMaxSteps,
     agentMaxStepAttempts,
@@ -223,16 +184,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       runHeadless: agentRunHeadless,
       ignoreRobotsTxt: agentIgnoreRobotsTxt,
       requireHumanApproval: agentRequireHumanApproval,
-      memoryValidationModel: agentMemoryValidationModel ?? '',
-      plannerModel: agentPlannerModel ?? '',
-      selfCheckModel: agentSelfCheckModel ?? '',
-      extractionValidationModel: agentExtractionValidationModel ?? '',
-      toolRouterModel: agentToolRouterModel ?? '',
-      loopGuardModel: agentLoopGuardModel ?? '',
-      approvalGateModel: agentApprovalGateModel ?? '',
-      memorySummarizationModel: agentMemorySummarizationModel ?? '',
-      selectorInferenceModel: agentSelectorInferenceModel ?? '',
-      outputNormalizationModel: agentOutputNormalizationModel ?? '',
       maxSteps: agentMaxSteps,
       maxStepAttempts: agentMaxStepAttempts,
       maxReplanCalls: agentMaxReplanCalls,
@@ -254,16 +205,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       agentRunHeadless,
       agentIgnoreRobotsTxt,
       agentRequireHumanApproval,
-      agentMemoryValidationModel,
-      agentPlannerModel,
-      agentSelfCheckModel,
-      agentExtractionValidationModel,
-      agentToolRouterModel,
-      agentLoopGuardModel,
-      agentApprovalGateModel,
-      agentMemorySummarizationModel,
-      agentSelectorInferenceModel,
-      agentOutputNormalizationModel,
       agentMaxSteps,
       agentMaxStepAttempts,
       agentMaxReplanCalls,
@@ -354,10 +295,8 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const loadChatbotSettings = useCallback(async (): Promise<void> => {
     try {
       const data = await chatbotApi.fetchChatbotSettings(CHATBOT_SETTINGS_KEY, 5000);
-      if (!data.settings?.settings) {
-        throw new Error('No chatbot settings saved.');
-      }
-      const stored = data.settings.settings as Partial<ChatbotSettingsPayload>;
+      if (!data.settings?.settings) return;
+      const stored = parseChatbotSettingsPayload(data.settings.settings);
       const resolved: ChatbotSettingsPayload = {
         ...DEFAULT_CHATBOT_SETTINGS,
         ...stored,
@@ -383,16 +322,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setAgentRunHeadless(Boolean(resolved.runHeadless));
       setAgentIgnoreRobotsTxt(Boolean(resolved.ignoreRobotsTxt));
       setAgentRequireHumanApproval(Boolean(resolved.requireHumanApproval));
-      setAgentMemoryValidationModel(resolved.memoryValidationModel ?? '');
-      setAgentPlannerModel(resolved.plannerModel ?? '');
-      setAgentSelfCheckModel(resolved.selfCheckModel ?? '');
-      setAgentExtractionValidationModel(resolved.extractionValidationModel ?? '');
-      setAgentToolRouterModel(resolved.toolRouterModel ?? '');
-      setAgentLoopGuardModel(resolved.loopGuardModel ?? '');
-      setAgentApprovalGateModel(resolved.approvalGateModel ?? '');
-      setAgentMemorySummarizationModel(resolved.memorySummarizationModel ?? '');
-      setAgentSelectorInferenceModel(resolved.selectorInferenceModel ?? '');
-      setAgentOutputNormalizationModel(resolved.outputNormalizationModel ?? '');
       setAgentMaxSteps(resolved.maxSteps ?? 10);
       setAgentMaxStepAttempts(resolved.maxStepAttempts ?? 3);
       setAgentMaxReplanCalls(resolved.maxReplanCalls ?? 3);
@@ -404,10 +333,20 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
 
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
-    } catch {
-      // Fallback to local storage or defaults
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          source: 'useChatbotLogic.loadChatbotSettings',
+          key: CHATBOT_SETTINGS_KEY,
+        },
+      });
+      toast(
+        error instanceof Error ? error.message : 'Invalid chatbot settings payload.',
+        { variant: 'error' }
+      );
     }
   }, [
+    toast,
     setWebSearchEnabled,
     setUseGlobalContext,
     setUseLocalContext,
@@ -419,15 +358,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentRunHeadless,
     setAgentIgnoreRobotsTxt,
     setAgentRequireHumanApproval,
-    setAgentMemoryValidationModel,
-    setAgentPlannerModel,
-    setAgentSelfCheckModel,
-    setAgentExtractionValidationModel,
-    setAgentLoopGuardModel,
-    setAgentApprovalGateModel,
-    setAgentMemorySummarizationModel,
-    setAgentSelectorInferenceModel,
-    setAgentOutputNormalizationModel,
     setAgentMaxSteps,
     setAgentMaxStepAttempts,
     setAgentMaxReplanCalls,
@@ -546,26 +476,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentIgnoreRobotsTxt: setAgentIgnoreRobotsTxt,
     agentRequireHumanApproval: agentRequireHumanApproval ?? false,
     setAgentRequireHumanApproval: setAgentRequireHumanApproval,
-    agentMemoryValidationModel: agentMemoryValidationModel ?? null,
-    setAgentMemoryValidationModel: setAgentMemoryValidationModel,
-    agentPlannerModel: agentPlannerModel ?? null,
-    setAgentPlannerModel: setAgentPlannerModel,
-    agentSelfCheckModel: agentSelfCheckModel ?? null,
-    setAgentSelfCheckModel: setAgentSelfCheckModel,
-    agentExtractionValidationModel: agentExtractionValidationModel ?? null,
-    setAgentExtractionValidationModel: setAgentExtractionValidationModel,
-    agentToolRouterModel: agentToolRouterModel ?? null,
-    setAgentToolRouterModel: setAgentToolRouterModel,
-    agentLoopGuardModel: agentLoopGuardModel ?? null,
-    setAgentLoopGuardModel: setAgentLoopGuardModel,
-    agentApprovalGateModel: agentApprovalGateModel ?? null,
-    setAgentApprovalGateModel: setAgentApprovalGateModel,
-    agentMemorySummarizationModel: agentMemorySummarizationModel ?? null,
-    setAgentMemorySummarizationModel: setAgentMemorySummarizationModel,
-    agentSelectorInferenceModel: agentSelectorInferenceModel ?? null,
-    setAgentSelectorInferenceModel: setAgentSelectorInferenceModel,
-    agentOutputNormalizationModel: agentOutputNormalizationModel ?? null,
-    setAgentOutputNormalizationModel: setAgentOutputNormalizationModel,
     agentMaxSteps: agentMaxSteps ?? 10,
     setAgentMaxSteps: setAgentMaxSteps,
     agentMaxStepAttempts: agentMaxStepAttempts ?? 3,

@@ -1,10 +1,8 @@
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import {
   getAutoSeedStarterWorkflowEntries,
   materializeStarterWorkflowPathConfig,
-  upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 
 import {
@@ -12,20 +10,8 @@ import {
   AI_PATHS_INDEX_KEY,
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
-  type ParsedPathMeta,
 } from './settings-store.constants';
 import { parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
-
-const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
-
-const parsePathConfigRecord = (raw: string): PathConfig | null => {
-  try {
-    const parsed = JSON.parse(raw) as PathConfig;
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-};
 
 const toTriggerButtonRecord = (
   preset: {
@@ -72,24 +58,11 @@ export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecor
     const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${defaultPathId}`;
     const existingConfig = records.find((record) => record.key === configKey);
     const hasConfig = Boolean(existingConfig);
-    const parsedConfig = existingConfig ? parsePathConfigRecord(existingConfig.value) : null;
-    const pendingConfigRefresh = parsedConfig
-      ? (() => {
-        const upgraded = upgradeStarterWorkflowPathConfig(parsedConfig);
-        return upgraded.changed && upgraded.resolution?.entry.templateId === entry.templateId;
-      })()
-      : false;
     const hasIndexMeta = metas.some((meta) => meta.id === defaultPathId);
     const missingButtons = (entry.triggerButtonPresets ?? []).some(
       (preset) => !triggerButtons.some((button) => button.id === preset.id)
     );
-    return (
-      count +
-      Number(!hasConfig) +
-      Number(pendingConfigRefresh) +
-      Number(!hasIndexMeta) +
-      Number(missingButtons)
-    );
+    return count + Number(!hasConfig) + Number(!hasIndexMeta) + Number(missingButtons);
   }, 0);
 };
 
@@ -146,17 +119,6 @@ export const ensureStarterWorkflowDefaults = (
         affectedCount += 1;
       }
     } else if (existingConfig) {
-      const parsed = parsePathConfigRecord(existingConfig.value);
-      if (parsed) {
-        const upgraded = upgradeStarterWorkflowPathConfig(parsed);
-        if (upgraded.changed && upgraded.resolution?.entry.templateId === entry.templateId) {
-          existingConfig.value = JSON.stringify({
-            ...upgraded.config,
-            updatedAt: now,
-          });
-          affectedCount += 1;
-        }
-      }
       if (!nextMetas.some((meta) => meta.id === defaultPathId)) {
         const meta = parsePathConfigMeta(defaultPathId, existingConfig.value);
         if (meta) {
@@ -183,63 +145,5 @@ export const ensureStarterWorkflowDefaults = (
 
   indexEntry.value = JSON.stringify(nextMetas);
   triggerButtonsEntry.value = serializeAiTriggerButtonsRaw(nextButtons);
-  return { nextRecords, affectedCount };
-};
-
-export const countPendingLegacyStarterWorkflowMigrations = (
-  records: AiPathsSettingRecord[]
-): number =>
-  records.reduce((count, entry) => {
-    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
-    const parsed = parsePathConfigRecord(entry.value);
-    if (!parsed) return count;
-    return upgradeStarterWorkflowPathConfig(parsed).changed ? count + 1 : count;
-  }, 0);
-
-const mergeUpdatedIndexMetas = (
-  metas: ParsedPathMeta[],
-  updatedConfigs: Array<{ id: string; raw: string }>
-): ParsedPathMeta[] => {
-  if (updatedConfigs.length === 0) return metas;
-  return metas.map((meta) => {
-    const updated = updatedConfigs.find((entry) => entry.id === meta.id);
-    if (!updated) return meta;
-    return parsePathConfigMeta(meta.id, updated.raw) ?? meta;
-  });
-};
-
-export const migrateLegacyStarterWorkflows = (
-  records: AiPathsSettingRecord[]
-): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
-  const nextRecords = records.map((entry) => ({ ...entry }));
-  let affectedCount = 0;
-  const updatedConfigs: Array<{ id: string; raw: string }> = [];
-
-  nextRecords.forEach((entry) => {
-    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
-    const parsed = parsePathConfigRecord(entry.value);
-    if (!parsed) return;
-    const upgraded = upgradeStarterWorkflowPathConfig(parsed);
-    if (!upgraded.changed) return;
-    entry.value = JSON.stringify({
-      ...upgraded.config,
-      updatedAt: new Date().toISOString(),
-    });
-    updatedConfigs.push({
-      id: normalizeText(upgraded.config.id),
-      raw: entry.value,
-    });
-    affectedCount += 1;
-  });
-
-  if (updatedConfigs.length > 0) {
-    const indexEntry = nextRecords.find((entry) => entry.key === AI_PATHS_INDEX_KEY);
-    if (indexEntry) {
-      indexEntry.value = JSON.stringify(
-        mergeUpdatedIndexMetas(parsePathMetas(indexEntry.value), updatedConfigs)
-      );
-    }
-  }
-
   return { nextRecords, affectedCount };
 };

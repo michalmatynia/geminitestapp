@@ -85,16 +85,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     runHeadless?: boolean;
     ignoreRobotsTxt?: boolean;
     requireHumanApproval?: boolean;
-    memoryValidationModel?: string;
-    plannerModel?: string;
-    selfCheckModel?: string;
-    extractionValidationModel?: string;
-    toolRouterModel?: string;
-    loopGuardModel?: string;
-    approvalGateModel?: string;
-    memorySummarizationModel?: string;
-    selectorInferenceModel?: string;
-    outputNormalizationModel?: string;
     planSettings?: {
       maxSteps?: number;
       maxStepAttempts?: number;
@@ -164,17 +154,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const hasPreferenceOverrides =
     body.ignoreRobotsTxt !== undefined ||
-    body.requireHumanApproval !== undefined ||
-    Boolean(body.memoryValidationModel?.trim()) ||
-    Boolean(body.plannerModel?.trim()) ||
-    Boolean(body.selfCheckModel?.trim()) ||
-    Boolean(body.extractionValidationModel?.trim()) ||
-    Boolean(body.toolRouterModel?.trim()) ||
-    Boolean(body.loopGuardModel?.trim()) ||
-    Boolean(body.approvalGateModel?.trim()) ||
-    Boolean(body.memorySummarizationModel?.trim()) ||
-    Boolean(body.selectorInferenceModel?.trim()) ||
-    Boolean(body.outputNormalizationModel?.trim());
+    body.requireHumanApproval !== undefined;
   const shouldAttachPlanState = Boolean(planSettings || hasPreferenceOverrides);
 
   const run = await prisma.chatbotAgentRun.create({
@@ -193,44 +173,6 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
             preferences: {
               ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
               requireHumanApproval: Boolean(body.requireHumanApproval),
-              ...(body.memoryValidationModel?.trim()
-                ? {
-                  memoryValidationModel: body.memoryValidationModel.trim(),
-                }
-                : {}),
-              ...(body.plannerModel?.trim() ? { plannerModel: body.plannerModel.trim() } : {}),
-              ...(body.selfCheckModel?.trim()
-                ? { selfCheckModel: body.selfCheckModel.trim() }
-                : {}),
-              ...(body.extractionValidationModel?.trim()
-                ? {
-                  extractionValidationModel: body.extractionValidationModel.trim(),
-                }
-                : {}),
-              ...(body.toolRouterModel?.trim()
-                ? { toolRouterModel: body.toolRouterModel.trim() }
-                : {}),
-              ...(body.loopGuardModel?.trim()
-                ? { loopGuardModel: body.loopGuardModel.trim() }
-                : {}),
-              ...(body.approvalGateModel?.trim()
-                ? { approvalGateModel: body.approvalGateModel.trim() }
-                : {}),
-              ...(body.memorySummarizationModel?.trim()
-                ? {
-                  memorySummarizationModel: body.memorySummarizationModel.trim(),
-                }
-                : {}),
-              ...(body.selectorInferenceModel?.trim()
-                ? {
-                  selectorInferenceModel: body.selectorInferenceModel.trim(),
-                }
-                : {}),
-              ...(body.outputNormalizationModel?.trim()
-                ? {
-                  outputNormalizationModel: body.outputNormalizationModel.trim(),
-                }
-                : {}),
             },
           },
         }

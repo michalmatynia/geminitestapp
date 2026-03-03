@@ -34,8 +34,6 @@ export type StarterWorkflowTriggerPreset = {
 export type StarterWorkflowLineage = {
   starterKey: string;
   templateVersion: number;
-  legacyPathIds: string[];
-  legacyNames: string[];
   canonicalGraphHashes: string[];
 };
 
@@ -58,7 +56,7 @@ export type AiPathsStarterProvenance = {
 
 export type StarterWorkflowResolution = {
   entry: AiPathTemplateRegistryEntry;
-  matchedBy: 'provenance' | 'legacy_path_id' | 'legacy_name' | 'canonical_hash';
+  matchedBy: 'provenance' | 'canonical_hash';
 };
 
 export type StarterWorkflowUpgradeResult = {
@@ -169,281 +167,7 @@ export const computeStarterWorkflowGraphHash = (config: Pick<PathConfig, 'nodes'
   return hashString(JSON.stringify(sortObjectDeep({ nodes, edges })));
 };
 
-const LEGACY_TRANSLATION_SINGLE_REGEX_GRAPH: Pick<PathConfig, 'nodes' | 'edges'> = {
-  nodes: [
-    {
-      id: 'node-regex-translate-en-pl',
-      type: 'regex',
-      inputs: ['value', 'prompt', 'regexCallback'],
-      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-db-update-translate-en-pl',
-      type: 'database',
-      inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
-      outputs: ['result', 'bundle'],
-      config: {
-        database: {
-          operation: 'update',
-          entityType: 'product',
-          updatePayloadMode: 'mapping',
-          updateTemplate: '',
-          query: {
-            provider: 'auto',
-            collection: 'products',
-            mode: 'custom',
-            preset: 'by_id',
-            field: 'id',
-            idType: 'string',
-            queryTemplate: '{"id":"{{entityId}}"}',
-            limit: 1,
-            sort: '',
-            projection: '',
-            single: true,
-          },
-          mappings: [
-            {
-              sourcePath: 'description_pl',
-              sourcePort: 'value',
-              targetPath: 'description_pl',
-            },
-            {
-              sourcePath: 'parameters',
-              sourcePort: 'value',
-              targetPath: 'parameters',
-            },
-          ],
-        },
-      },
-    } as PathConfig['nodes'][number],
-  ],
-  edges: [
-    {
-      id: 'edge-description',
-      from: 'node-regex-translate-en-pl',
-      to: 'node-db-update-translate-en-pl',
-      fromPort: 'value',
-      toPort: 'value',
-    } as PathConfig['edges'][number],
-  ],
-};
-
-const LEGACY_TRANSLATION_SPLIT_PARAMS_GRAPH: Pick<PathConfig, 'nodes' | 'edges'> = {
-  nodes: [
-    ...LEGACY_TRANSLATION_SINGLE_REGEX_GRAPH.nodes,
-    {
-      id: 'node-regex-params-translate-en-pl',
-      type: 'regex',
-      inputs: ['value', 'prompt', 'regexCallback'],
-      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
-    } as PathConfig['nodes'][number],
-  ],
-  edges: [
-    ...LEGACY_TRANSLATION_SINGLE_REGEX_GRAPH.edges,
-    {
-      id: 'edge-params',
-      from: 'node-regex-params-translate-en-pl',
-      to: 'node-db-update-translate-en-pl',
-      fromPort: 'value',
-      toPort: 'value',
-    } as PathConfig['edges'][number],
-  ],
-};
-
-const LEGACY_TRANSLATION_FULL_GRAPH: Pick<PathConfig, 'nodes' | 'edges'> = {
-  nodes: [
-    {
-      id: 'node-trigger-translate-en-pl',
-      type: 'trigger',
-      inputs: ['context'],
-      outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-context-translate-en-pl',
-      type: 'context',
-      inputs: ['context'],
-      outputs: ['context', 'entityId', 'entityType', 'entityJson'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-parser-translate-en-pl',
-      type: 'parser',
-      inputs: ['entityJson', 'context'],
-      outputs: ['bundle'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-prompt-translate-en-pl',
-      type: 'prompt',
-      inputs: ['bundle', 'title', 'images', 'result', 'entityId'],
-      outputs: ['prompt', 'images'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-model-translate-en-pl',
-      type: 'model',
-      inputs: ['prompt', 'images', 'context'],
-      outputs: ['result', 'jobId'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-regex-translate-en-pl',
-      type: 'regex',
-      inputs: ['value', 'prompt', 'regexCallback'],
-      outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-db-update-translate-en-pl',
-      type: 'database',
-      inputs: [
-        'entityId',
-        'entityType',
-        'productId',
-        'context',
-        'query',
-        'value',
-        'bundle',
-        'result',
-        'content_en',
-        'queryCallback',
-        'schema',
-        'aiQuery',
-      ],
-      outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
-      config: {
-        runtime: {
-          waitForInputs: true,
-        },
-        database: {
-          operation: 'update',
-          entityType: 'product',
-          updatePayloadMode: 'mapping',
-          updateTemplate: '',
-          query: {
-            provider: 'auto',
-            collection: 'products',
-            mode: 'custom',
-            preset: 'by_id',
-            field: 'id',
-            idType: 'string',
-            queryTemplate: '{"id":"{{entityId}}"}',
-            limit: 1,
-            sort: '',
-            projection: '',
-            single: true,
-          },
-        },
-      },
-    } as PathConfig['nodes'][number],
-    {
-      id: 'node-view-translate-en-pl',
-      type: 'viewer',
-      inputs: ['result', 'value', 'bundle'],
-      outputs: [],
-    } as unknown as PathConfig['nodes'][number],
-    {
-      id: 'node-f2qfiiyi',
-      type: 'simulation',
-      inputs: ['trigger'],
-      outputs: ['context', 'entityId', 'entityType', 'productId'],
-    } as PathConfig['nodes'][number],
-  ],
-  edges: [
-    {
-      id: 'edge-tr-pl-01',
-      from: 'node-trigger-translate-en-pl',
-      to: 'node-context-translate-en-pl',
-      fromPort: 'context',
-      toPort: 'context',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-02',
-      from: 'node-context-translate-en-pl',
-      to: 'node-parser-translate-en-pl',
-      fromPort: 'entityJson',
-      toPort: 'entityJson',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-03',
-      from: 'node-parser-translate-en-pl',
-      to: 'node-prompt-translate-en-pl',
-      fromPort: 'bundle',
-      toPort: 'bundle',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-04',
-      from: 'node-prompt-translate-en-pl',
-      to: 'node-model-translate-en-pl',
-      fromPort: 'prompt',
-      toPort: 'prompt',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-05',
-      from: 'node-model-translate-en-pl',
-      to: 'node-regex-translate-en-pl',
-      fromPort: 'result',
-      toPort: 'value',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-06',
-      from: 'node-regex-translate-en-pl',
-      to: 'node-db-update-translate-en-pl',
-      fromPort: 'value',
-      toPort: 'value',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-07',
-      from: 'node-context-translate-en-pl',
-      to: 'node-db-update-translate-en-pl',
-      fromPort: 'entityId',
-      toPort: 'entityId',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-08',
-      from: 'node-context-translate-en-pl',
-      to: 'node-db-update-translate-en-pl',
-      fromPort: 'entityType',
-      toPort: 'entityType',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-09',
-      from: 'node-regex-translate-en-pl',
-      to: 'node-view-translate-en-pl',
-      fromPort: 'value',
-      toPort: 'value',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-10',
-      from: 'node-db-update-translate-en-pl',
-      to: 'node-view-translate-en-pl',
-      fromPort: 'result',
-      toPort: 'result',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-tr-pl-11',
-      from: 'node-parser-translate-en-pl',
-      to: 'node-view-translate-en-pl',
-      fromPort: 'bundle',
-      toPort: 'bundle',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-trigger-simulation',
-      from: 'node-trigger-translate-en-pl',
-      to: 'node-f2qfiiyi',
-      fromPort: 'trigger',
-      toPort: 'trigger',
-    } as PathConfig['edges'][number],
-    {
-      id: 'edge-simulation-trigger',
-      from: 'node-f2qfiiyi',
-      to: 'node-trigger-translate-en-pl',
-      fromPort: 'context',
-      toPort: 'context',
-    } as PathConfig['edges'][number],
-  ],
-};
-
-const LEGACY_TRANSLATION_GRAPH_HASHES = [
-  computeStarterWorkflowGraphHash(LEGACY_TRANSLATION_SINGLE_REGEX_GRAPH),
-  computeStarterWorkflowGraphHash(LEGACY_TRANSLATION_SPLIT_PARAMS_GRAPH),
-  computeStarterWorkflowGraphHash(LEGACY_TRANSLATION_FULL_GRAPH),
-];
+const TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES: string[] = [];
 
 const buildTriggerDisplay = (label: string): AiTriggerButtonDisplay => ({
   label,
@@ -550,8 +274,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'parameter_inference',
       templateVersion: 12,
-      legacyPathIds: ['path_syr8f4'],
-      legacyNames: ['Parameter Inference'],
       canonicalGraphHashes: [],
     },
   },
@@ -583,8 +305,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'description_inference_lite',
       templateVersion: 4,
-      legacyPathIds: ['path_descv3lite'],
-      legacyNames: ['Description Inference v3 Lite'],
       canonicalGraphHashes: [],
     },
   },
@@ -615,8 +335,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'base_export_blwo',
       templateVersion: 2,
-      legacyPathIds: ['path_base_export_blwo_v1'],
-      legacyNames: ['Base Export Workflow (BLWo)'],
       canonicalGraphHashes: [],
     },
   },
@@ -635,9 +353,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'translation_en_pl',
       templateVersion: 2,
-      legacyPathIds: ['path_96708d'],
-      legacyNames: ['Translation EN->PL Description + Parameters'],
-      canonicalGraphHashes: LEGACY_TRANSLATION_GRAPH_HASHES,
+      canonicalGraphHashes: TRANSLATION_EN_PL_ADDITIONAL_GRAPH_HASHES,
     },
   },
   {
@@ -649,8 +365,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'gemma_vision_object_analyser_model',
       templateVersion: 1,
-      legacyPathIds: [],
-      legacyNames: ['Gemma Vision Object Analyser'],
       canonicalGraphHashes: [],
     },
   },
@@ -663,8 +377,6 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'gemma_vision_object_analyser_api',
       templateVersion: 1,
-      legacyPathIds: [],
-      legacyNames: ['Gemma Vision Analyser (Custom API)'],
       canonicalGraphHashes: [],
     },
   },
@@ -964,26 +676,6 @@ export const resolveStarterWorkflowForPathConfig = (
     );
     if (entryByStarterKey) {
       return { entry: entryByStarterKey, matchedBy: 'provenance' };
-    }
-  }
-  const pathId = normalizeText(config.id);
-  if (pathId) {
-    const entryByLegacyPathId = STARTER_WORKFLOW_REGISTRY.find((entry) =>
-      entry.starterLineage.legacyPathIds.some((legacyPathId) => normalizeText(legacyPathId) === pathId)
-    );
-    if (entryByLegacyPathId) {
-      return { entry: entryByLegacyPathId, matchedBy: 'legacy_path_id' };
-    }
-  }
-  const normalizedName = normalizeTextLower(config.name);
-  if (normalizedName) {
-    const entryByLegacyName = STARTER_WORKFLOW_REGISTRY.find((entry) =>
-      entry.starterLineage.legacyNames.some(
-        (legacyName) => normalizeTextLower(legacyName) === normalizedName
-      )
-    );
-    if (entryByLegacyName) {
-      return { entry: entryByLegacyName, matchedBy: 'legacy_name' };
     }
   }
   const graphHash = computeStarterWorkflowGraphHash(config);

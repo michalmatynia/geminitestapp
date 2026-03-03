@@ -1,7 +1,8 @@
 import React, { ReactNode } from 'react';
+import { type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/shared/utils';
-import { Badge } from './badge';
+import { Badge, badgeVariants } from './badge';
 
 export type StatusVariant =
   | 'pending'
@@ -76,12 +77,12 @@ export function StatusBadge({
   title,
   onClick,
 }: StatusBadgeProps): React.JSX.Element {
-  const resolvedVariant = variant || statusToVariant(status);
+  const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] = variant || statusToVariant(status);
   const displayLabel = (label || status).trim();
 
   return (
     <Badge
-      variant={resolvedVariant as any}
+      variant={resolvedVariant}
       className={cn(
         'gap-1 uppercase tracking-wider',
         size === 'sm' ? 'text-[9px] px-1 py-0 h-4' : 'text-[10px] px-2 py-0.5 h-5',

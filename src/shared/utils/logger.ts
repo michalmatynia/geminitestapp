@@ -1,4 +1,5 @@
 import { getRequestContext } from '@/shared/lib/observability/request-context';
+import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
 
 /**
  * Simple logger utility to provide a consistent interface for logging.
@@ -51,6 +52,7 @@ const normalizeContext = (
   context?: Record<string, unknown>
 ): Record<string, unknown> => {
   const requestContext = getRequestContext();
+  const otelContext = getActiveOtelContextAttributes();
   const normalized: Record<string, unknown> = {
     ...(context ?? {}),
   };
@@ -85,6 +87,26 @@ const normalizeContext = (
     (typeof normalized['userId'] !== 'string' || normalized['userId'].trim().length === 0)
   ) {
     normalized['userId'] = requestContext.userId;
+  }
+  if (
+    otelContext.otelTraceId &&
+    (typeof normalized['otelTraceId'] !== 'string' ||
+      normalized['otelTraceId'].trim().length === 0)
+  ) {
+    normalized['otelTraceId'] = otelContext.otelTraceId;
+  }
+  if (
+    otelContext.otelSpanId &&
+    (typeof normalized['otelSpanId'] !== 'string' || normalized['otelSpanId'].trim().length === 0)
+  ) {
+    normalized['otelSpanId'] = otelContext.otelSpanId;
+  }
+  if (
+    otelContext.otelTraceFlags &&
+    (typeof normalized['otelTraceFlags'] !== 'string' ||
+      normalized['otelTraceFlags'].trim().length === 0)
+  ) {
+    normalized['otelTraceFlags'] = otelContext.otelTraceFlags;
   }
 
   return normalized;

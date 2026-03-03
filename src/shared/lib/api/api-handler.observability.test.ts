@@ -1,23 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { apiHandler } from '@/shared/lib/api/api-handler';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+const getActiveOtelContextAttributesMock = vi.fn(() => ({}));
+const mockedLogSystemEvent = vi.fn().mockResolvedValue(undefined);
+
+vi.mock('@/shared/lib/observability/otel-context', () => ({
+  getActiveOtelContextAttributes: getActiveOtelContextAttributesMock,
+}));
+
+const loadApiHandler = async () => {
+  vi.unmock('@/shared/lib/api/api-handler');
+  vi.doMock('@/shared/lib/observability/system-logger', () => ({
+    logSystemEvent: mockedLogSystemEvent,
+    getErrorFingerprint: vi.fn(() => 'test-fingerprint'),
+  }));
+  const { apiHandler } = await import('@/shared/lib/api/api-handler');
+  return { apiHandler, mockedLogSystemEvent };
+};
 
 describe('apiHandler observability propagation', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
+    mockedLogSystemEvent.mockClear();
+    getActiveOtelContextAttributesMock.mockReturnValue({});
     process.env['NODE_ENV'] = 'development';
     delete process.env['ENABLE_RATE_LIMITS'];
   });
 
   it('uses incoming x-trace-id and echoes correlation headers', async () => {
-    const mockedLogSystemEvent = vi.mocked(logSystemEvent);
+    const { apiHandler, mockedLogSystemEvent } = await loadApiHandler();
+    getActiveOtelContextAttributesMock.mockReturnValue({
+      otelTraceId: 'otel-trace-1',
+      otelSpanId: 'otel-span-1',
+      otelTraceFlags: '01',
+    });
+
+    let observedCtx:
+      | {
+          requestId: string;
+          traceId: string;
+          correlationId: string;
+        }
+      | undefined;
     const handler = apiHandler(
       async (_request, ctx) => {
-        expect(ctx.requestId).toBe('req-1');
-        expect(ctx.traceId).toBe('trace-abc');
-        expect(ctx.correlationId).toBe('corr-1');
+        observedCtx = {
+          requestId: ctx.requestId,
+          traceId: ctx.traceId,
+          correlationId: ctx.correlationId,
+        };
         return NextResponse.json({ ok: true }, { status: 200 });
       },
       {
@@ -27,7 +59,7 @@ describe('apiHandler observability propagation', () => {
     );
 
     const response = await handler(
-      new NextRequest('http://localhost/api/test', {
+      new NextRequest('/api/test', {
         method: 'GET',
         headers: new Headers({
           'x-request-id': 'req-1',
@@ -37,6 +69,12 @@ describe('apiHandler observability propagation', () => {
       })
     );
 
+    expect(response.status).toBe(200);
+    expect(observedCtx).toEqual({
+      requestId: 'req-1',
+      traceId: 'trace-abc',
+      correlationId: 'corr-1',
+    });
     expect(response.headers.get('x-request-id')).toBe('req-1');
     expect(response.headers.get('x-trace-id')).toBe('trace-abc');
     expect(response.headers.get('x-correlation-id')).toBe('corr-1');
@@ -45,17 +83,23 @@ describe('apiHandler observability propagation', () => {
       expect(mockedLogSystemEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           source: 'observability.logs.GET',
-          service: 'observability.logs',
           requestId: 'req-1',
           traceId: 'trace-abc',
           correlationId: 'corr-1',
+          service: 'observability.logs',
+          level: 'info',
+          context: expect.objectContaining({
+            otelTraceId: 'otel-trace-1',
+            otelSpanId: 'otel-span-1',
+            otelTraceFlags: '01',
+          }),
         })
       );
     });
   });
 
   it('generates trace id fallback and skips fast success logs by default', async () => {
-    const mockedLogSystemEvent = vi.mocked(logSystemEvent);
+    const { apiHandler, mockedLogSystemEvent } = await loadApiHandler();
     const handler = apiHandler(
       async () => NextResponse.json({ ok: true }, { status: 200 }),
       {
@@ -64,7 +108,7 @@ describe('apiHandler observability propagation', () => {
     );
 
     const response = await handler(
-      new NextRequest('http://localhost/api/test', {
+      new NextRequest('/api/test', {
         method: 'GET',
         headers: new Headers({
           'x-request-id': 'req-fallback',
@@ -72,6 +116,7 @@ describe('apiHandler observability propagation', () => {
       })
     );
 
+    expect(response.status).toBe(200);
     const generatedTraceId = response.headers.get('x-trace-id');
     expect(response.headers.get('x-request-id')).toBe('req-fallback');
     expect(response.headers.get('x-correlation-id')).toBe('req-fallback');

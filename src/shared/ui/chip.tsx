@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import { type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/utils';
-import { Badge } from './badge';
+import { Badge, badgeVariants } from './badge';
 
 export interface ChipProps {
   label: React.ReactNode;
@@ -35,7 +36,7 @@ export function Chip({
   };
 
   // Map Chip variants to Badge variants
-  const badgeVariant = active
+  const badgeVariant: VariantProps<typeof badgeVariants>['variant'] = active
     ? (variant === 'default' ? 'secondary' : variant === 'emerald' ? 'success' : variant)
     : 'outline';
 
@@ -49,7 +50,7 @@ export function Chip({
       )}
     >
       <Badge
-        variant={badgeVariant as any}
+        variant={badgeVariant}
         className={cn(
           'flex items-center gap-1.5 transition-all duration-200 border cursor-pointer',
           sizeStyles[size],

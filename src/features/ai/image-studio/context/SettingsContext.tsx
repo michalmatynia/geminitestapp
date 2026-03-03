@@ -262,7 +262,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 export function useSettingsState(): SettingsState {
   const ctx = useContext(SettingsStateContext);
   if (!ctx) throw new Error('useSettingsState must be used within a SettingsProvider');
-  if (ctx.settingsValidationError) throw ctx.settingsValidationError;
   return ctx;
 }
 

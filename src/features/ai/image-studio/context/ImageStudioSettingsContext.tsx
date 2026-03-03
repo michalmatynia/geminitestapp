@@ -4,6 +4,7 @@ import React, {
   createContext,
   useContext,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -128,9 +129,12 @@ export function ImageStudioSettingsProvider({
     hydrationSignature,
   });
 
-  if (settingsHydrationError) {
-    throw settingsHydrationError;
-  }
+  useEffect(() => {
+    if (!settingsHydrationError) return;
+    toast(`${settingsHydrationError.message} Using defaults until you save updated settings.`, {
+      variant: 'error',
+    });
+  }, [settingsHydrationError, toast]);
 
   const handleRefresh = useCallback(async (): Promise<void> => {
     hydratedSignatureRef.current = null;

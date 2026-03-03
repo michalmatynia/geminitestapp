@@ -1191,7 +1191,7 @@ export function getSystemLogAlertsQueueStatus(): {
   workerStarted: boolean;
   schedulerRegistered: boolean;
   startupTickQueued: boolean;
-} {
+  } {
   return {
     enabled: shouldCheckAlerts(),
     workerStarted: queueState.workerStarted,

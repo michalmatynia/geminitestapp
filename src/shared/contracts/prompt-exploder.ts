@@ -1061,6 +1061,12 @@ export type ApplyBenchmarkSuggestionsResult = {
   invalidSegmentTitles: string[];
 };
 
+export type BenchmarkSuggestionPreparation = {
+  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
+  validSuggestions: PromptExploderBenchmarkSuggestion[];
+  invalidSegmentTitles: string[];
+};
+
 export type PromptExploderPatternPackResult = {
   nextSettings: PromptEngineSettings;
   addedRuleIds: string[];

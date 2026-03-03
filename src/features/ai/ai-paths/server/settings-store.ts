@@ -6,7 +6,6 @@ import {
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceApplyResult,
-  type AiPathsMaintenanceRequestedActionId,
   type AiPathsMaintenanceReport,
   type AiPathsSettingRecord,
   type ParsedPathMeta,
@@ -201,7 +200,7 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
 }
 
 export const runAiPathsMaintenance = async (
-  actionIds?: AiPathsMaintenanceRequestedActionId[]
+  actionIds?: AiPathsMaintenanceActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {
   const allSettings = await getAllAiPathsSettings();
   const report = buildAiPathsMaintenanceReport(allSettings);
@@ -237,7 +236,7 @@ export const inspectAiPathsSettingsMaintenance = async (): Promise<AiPathsMainte
 };
 
 export const applyAiPathsSettingsMaintenance = async (
-  actionIds?: AiPathsMaintenanceRequestedActionId[]
+  actionIds?: AiPathsMaintenanceActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {
   return runAiPathsMaintenance(actionIds);
 };

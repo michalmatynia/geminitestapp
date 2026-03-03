@@ -1,14 +1,14 @@
 'use client';
 
 import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { SectionInstance } from '@/shared/contracts/cms';
 import { Button, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { BlockNodeItem, SectionDropTarget } from './';
+import { BlockNodeItem } from './';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { TreeSectionProvider } from './TreeSectionContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
@@ -16,7 +16,6 @@ import { SectionPicker } from './SectionPicker';
 
 export function SectionNodeItem({
   section,
-  sectionIndex,
 }: {
   section: SectionInstance;
   sectionIndex: number;
@@ -25,13 +24,10 @@ export function SectionNodeItem({
     startSectionMasterDrag,
     endSectionMasterDrag,
     draggedMasterSectionId,
-    sectionActions,
-    blockActions,
     onSelect,
     selectedNodeId,
   } = useComponentTreePanelContext();
-  const { expandedIds, toggleExpanded } = useTreeActions();
-  const [isHovered, setIsHovered] = useState(false);
+  const { expandedIds, sectionActions, blockActions } = useTreeActions();
 
   const isExpanded = expandedIds.has(section.id);
   const isSelected = selectedNodeId === section.id;
@@ -58,8 +54,6 @@ export function SectionNodeItem({
           'group mb-1 flex flex-col transition-all',
           isDragging ? 'opacity-40 grayscale' : 'opacity-100'
         )}
-        onMouseEnter={(): void => setIsHovered(true)}
-        onMouseLeave={(): void => setIsHovered(false)}
       >
         <div
           className={cn(
@@ -98,7 +92,7 @@ export function SectionNodeItem({
               size='sm'
               onClick={(e: React.MouseEvent): void => {
                 e.stopPropagation();
-                sectionActions.toggleHidden(section.id);
+                sectionActions.toggleVisibility(section.id, !isHidden);
               }}
               className='size-7 p-0 text-gray-500 hover:text-gray-200'
               title={isHidden ? 'Show section' : 'Hide section'}

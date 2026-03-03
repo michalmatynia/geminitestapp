@@ -462,7 +462,7 @@ describe('evaluateRunPreflight', () => {
     ).toBe(false);
   });
 
-  it('unblocks renamed legacy EN->PL starter graphs after generic starter migration', () => {
+  it('does not auto-upgrade renamed legacy EN->PL starter graphs', () => {
     const legacy = buildLegacyTranslationPreflightGraph();
 
     const before = evaluateRunPreflight({
@@ -497,10 +497,8 @@ describe('evaluateRunPreflight', () => {
     expect(before.shouldBlock).toBe(true);
     expect(before.dependencyReport?.errors ?? 0).toBeGreaterThan(0);
 
-    expect(upgraded.changed).toBe(true);
-    expect(upgraded.resolution?.matchedBy).toBe('canonical_hash');
-    expect(after.dependencyReport?.errors ?? 0).toBeLessThanOrEqual(
-      before.dependencyReport?.errors ?? 0
-    );
+    expect(upgraded.changed).toBe(false);
+    expect(upgraded.resolution).toBeNull();
+    expect(after.dependencyReport?.errors ?? 0).toBe(before.dependencyReport?.errors ?? 0);
   });
 });

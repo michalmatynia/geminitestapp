@@ -9,6 +9,8 @@ import type { BlockInstance } from '@/shared/contracts/cms';
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
+import { Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps

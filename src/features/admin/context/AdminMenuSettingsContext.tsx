@@ -9,16 +9,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import type {
-  AdminMenuCustomNode,
-  AdminNavLeaf,
-  AdminNavNodeEntry,
-  FlattenedCustomNode,
-} from '@/shared/contracts/admin';
+
 import {
-  NavItem,
+  buildAdminMenuLayoutMasterNodes,
+  rebuildAdminMenuCustomNavFromMasterNodes,
+  createAdminMenuLayoutFallbackMap,
+  readAdminMenuLayoutMetadata,
+  type AdminMenuLayoutNodeSemantic,
+} from '@/features/admin/pages/admin-menu-layout-master-tree';
+import {
   buildAdminMenuFromCustomNav,
   buildAdminNav,
+  type NavItem,
   adminNavToCustomNav,
   flattenAdminNav,
   getAdminMenuSections,
@@ -32,12 +34,16 @@ import {
   parseAdminMenuBoolean,
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import type {
+  AdminMenuCustomNode,
+  AdminNavLeaf,
+  AdminNavNodeEntry,
+} from '@/shared/contracts/admin';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
-import { internalError } from '@/shared/errors/app-error';
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 const createCustomId = (): string =>
   `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -54,23 +60,6 @@ const cloneCustomNav = (items: AdminMenuCustomNode[]): AdminMenuCustomNode[] => 
     return globalThis.structuredClone(items);
   }
   return JSON.parse(JSON.stringify(items)) as AdminMenuCustomNode[];
-};
-
-const flattenCustomNav = (
-  items: AdminMenuCustomNode[],
-  depth = 0,
-  pathPrefix: number[] = []
-): FlattenedCustomNode[] => {
-  const entries: FlattenedCustomNode[] = [];
-  items.forEach((node: AdminMenuCustomNode, index: number) => {
-    const path = [...pathPrefix, index];
-    entries.push({ node, path, depth, index, siblingCount: items.length });
-    const children = node.children;
-    if (children && children.length > 0) {
-      entries.push(...flattenCustomNav(children, depth + 1, path));
-    }
-  });
-  return entries;
 };
 
 const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNavNodeEntry[] => {
@@ -105,32 +94,6 @@ const collectCustomIds = (
   return ids;
 };
 
-const getNodeAtPath = (
-  items: AdminMenuCustomNode[],
-  path: number[]
-): AdminMenuCustomNode | null => {
-  let current: AdminMenuCustomNode | null = null;
-  let cursor: AdminMenuCustomNode[] = items;
-  for (const index of path) {
-    current = cursor[index] ?? null;
-    if (!current) return null;
-    cursor = current.children ?? [];
-  }
-  return current;
-};
-
-const getParentAtPath = (
-  items: AdminMenuCustomNode[],
-  path: number[]
-): { parent: AdminMenuCustomNode[]; index: number } | null => {
-  if (path.length === 0) return null;
-  const parentPath = path.slice(0, -1);
-  const parentNode = parentPath.length ? getNodeAtPath(items, parentPath) : null;
-  const parent = parentPath.length ? (parentNode?.children ?? null) : items;
-  if (!parent) return null;
-  return { parent, index: path[path.length - 1] as number };
-};
-
 const stripUsedIds = (
   node: AdminMenuCustomNode,
   usedIds: Set<string>
@@ -156,26 +119,151 @@ const normalize = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// ── Context ──────────────────────────────────────────────────────────────────
+const updateNodeById = (
+  items: AdminMenuCustomNode[],
+  nodeId: string,
+  updater: (node: AdminMenuCustomNode) => AdminMenuCustomNode
+): { next: AdminMenuCustomNode[]; updated: boolean } => {
+  const walk = (
+    nodes: AdminMenuCustomNode[]
+  ): { next: AdminMenuCustomNode[]; updated: boolean } => {
+    let updated = false;
+    const nextNodes = nodes.map((node: AdminMenuCustomNode) => {
+      if (node.id === nodeId) {
+        updated = true;
+        return updater(node);
+      }
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        const childResult = walk(node.children);
+        if (childResult.updated) {
+          updated = true;
+          return {
+            ...node,
+            children: childResult.next,
+          };
+        }
+      }
+      return node;
+    });
+
+    return { next: updated ? nextNodes : nodes, updated };
+  };
+
+  return walk(items);
+};
+
+const insertChildNodeById = (
+  items: AdminMenuCustomNode[],
+  parentId: string,
+  nodeToInsert: AdminMenuCustomNode
+): { next: AdminMenuCustomNode[]; inserted: boolean } => {
+  const walk = (
+    nodes: AdminMenuCustomNode[]
+  ): { next: AdminMenuCustomNode[]; inserted: boolean } => {
+    let inserted = false;
+    const nextNodes = nodes.map((node: AdminMenuCustomNode) => {
+      if (node.id === parentId) {
+        inserted = true;
+        return {
+          ...node,
+          children: [...(node.children ?? []), nodeToInsert],
+        };
+      }
+
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        const childResult = walk(node.children);
+        if (childResult.inserted) {
+          inserted = true;
+          return {
+            ...node,
+            children: childResult.next,
+          };
+        }
+      }
+
+      return node;
+    });
+
+    return { next: inserted ? nextNodes : nodes, inserted };
+  };
+
+  return walk(items);
+};
+
+const removeNodeById = (
+  items: AdminMenuCustomNode[],
+  nodeId: string
+): { next: AdminMenuCustomNode[]; removed: boolean } => {
+  const walk = (
+    nodes: AdminMenuCustomNode[]
+  ): { next: AdminMenuCustomNode[]; removed: boolean } => {
+    let removed = false;
+    const nextNodes: AdminMenuCustomNode[] = [];
+
+    nodes.forEach((node: AdminMenuCustomNode) => {
+      if (node.id === nodeId) {
+        removed = true;
+        return;
+      }
+
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        const childResult = walk(node.children);
+        if (childResult.removed) {
+          removed = true;
+          nextNodes.push({
+            ...node,
+            ...(childResult.next.length > 0 ? { children: childResult.next } : {}),
+          });
+          return;
+        }
+      }
+
+      nextNodes.push(node);
+    });
+
+    return { next: removed ? nextNodes : nodes, removed };
+  };
+
+  return walk(items);
+};
+
+const findNodeById = (
+  items: AdminMenuCustomNode[],
+  nodeId: string
+): AdminMenuCustomNode | null => {
+  for (const node of items) {
+    if (node.id === nodeId) return node;
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      const nested = findNodeById(node.children, nodeId);
+      if (nested) return nested;
+    }
+  }
+  return null;
+};
+
+export type AdminMenuLayoutNodeState = {
+  id: string;
+  label: string;
+  semantic: AdminMenuLayoutNodeSemantic;
+  href: string | null;
+  isBuiltIn: boolean;
+};
 
 export interface AdminMenuSettingsContextValue {
-  // State
   favorites: string[];
   sectionColors: Record<string, string>;
   customEnabled: boolean;
   customNav: AdminMenuCustomNode[];
   query: string;
   libraryQuery: string;
-  draggedPath: number[] | null;
-  dragOver: { path: number[]; position: 'above' | 'below' } | null;
 
-  // Derived
   sections: Array<{ id: string; label: string }>;
   flattened: AdminNavLeaf[];
   favoritesSet: Set<string>;
   favoritesList: (AdminNavLeaf | undefined)[];
   filteredItems: AdminNavLeaf[];
-  flattenedCustomNav: FlattenedCustomNode[];
+  layoutMasterNodes: MasterTreeNode[];
+  layoutNodeStateById: Map<string, AdminMenuLayoutNodeState>;
   libraryItems: AdminNavNodeEntry[];
   libraryItemMap: Map<string, AdminNavNodeEntry>;
   customIds: Set<string>;
@@ -184,26 +272,20 @@ export interface AdminMenuSettingsContextValue {
   isDefaultState: boolean;
   isSaving: boolean;
 
-  // Actions
   setQuery: (q: string) => void;
   setLibraryQuery: (q: string) => void;
   setCustomEnabled: (enabled: boolean) => void;
-  setDraggedPath: React.Dispatch<React.SetStateAction<number[] | null>>;
-  setDragOver: React.Dispatch<
-    React.SetStateAction<{ path: number[]; position: 'above' | 'below' } | null>
-  >;
   handleToggleFavorite: (id: string, checked: boolean) => void;
   moveFavorite: (id: string, direction: 'up' | 'down') => void;
   updateSectionColor: (sectionId: string, value: string) => void;
-  moveCustomNodeTo: (dragged: number[], target: number[], position: 'above' | 'below') => void;
-  updateCustomLabel: (path: number[], value: string) => void;
-  updateCustomHref: (path: number[], value: string) => void;
-  handleAddRootNode: (kind: 'link' | 'group') => void;
-  addCustomNodeAt: (kind: 'link' | 'group', parentPath?: number[]) => void;
+  handleAddRootNode: (kind: 'link' | 'group') => string;
+  addCustomChildNode: (parentId: string, kind: 'link' | 'group') => string | null;
+  removeCustomNodeById: (nodeId: string) => void;
+  updateCustomNodeLabelById: (nodeId: string, value: string) => void;
+  updateCustomNodeHrefById: (nodeId: string, value: string) => void;
+  updateCustomNodeSemanticById: (nodeId: string, semantic: AdminMenuLayoutNodeSemantic) => void;
+  replaceCustomNavFromMasterNodes: (nextNodes: MasterTreeNode[]) => void;
   addBuiltInNode: (entry: AdminNavNodeEntry) => void;
-  removeCustomNode: (path: number[]) => void;
-  indentCustomNode: (path: number[]) => void;
-  outdentCustomNode: (path: number[]) => void;
   handleSave: () => Promise<void>;
   handleReset: () => void;
 }
@@ -225,10 +307,6 @@ export function AdminMenuSettingsProvider({
   const [customEnabled, setCustomEnabled] = useState(false);
   const [customNav, setCustomNav] = useState<AdminMenuCustomNode[]>([]);
   const [libraryQuery, setLibraryQuery] = useState('');
-  const [draggedPath, setDraggedPath] = useState<number[] | null>(null);
-  const [dragOver, setDragOver] = useState<{ path: number[]; position: 'above' | 'below' } | null>(
-    null
-  );
 
   const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     event.preventDefault();
@@ -329,13 +407,39 @@ export function AdminMenuSettingsProvider({
     return items.sort((a: AdminNavLeaf, b: AdminNavLeaf) => a.label.localeCompare(b.label));
   }, [flattened, query]);
 
-  const flattenedCustomNav = useMemo(() => flattenCustomNav(customNav), [customNav]);
   const libraryItems = useMemo(() => flattenAdminNavNodes(baseNav), [baseNav]);
   const libraryItemMap = useMemo(
     () => new Map(libraryItems.map((item: AdminNavNodeEntry) => [item.id, item])),
     [libraryItems]
   );
+
+  const layoutMasterNodes = useMemo(
+    () => buildAdminMenuLayoutMasterNodes(customNav, libraryItemMap),
+    [customNav, libraryItemMap]
+  );
+
+  const layoutNodeStateById = useMemo(() => {
+    const map = new Map<string, AdminMenuLayoutNodeState>();
+
+    layoutMasterNodes.forEach((node: MasterTreeNode) => {
+      const metadata = readAdminMenuLayoutMetadata(node);
+      const base = libraryItemMap.get(node.id);
+      const href = metadata?.href ?? (typeof base?.href === 'string' ? base.href : null);
+
+      map.set(node.id, {
+        id: node.id,
+        label: node.name,
+        semantic: metadata?.semantic ?? (href ? 'link' : 'group'),
+        href,
+        isBuiltIn: metadata?.isBuiltIn ?? libraryItemMap.has(node.id),
+      });
+    });
+
+    return map;
+  }, [layoutMasterNodes, libraryItemMap]);
+
   const customIds = useMemo(() => collectCustomIds(customNav), [customNav]);
+
   const filteredLibraryItems = useMemo(() => {
     const normalizedQuery = normalize(libraryQuery);
     const items = libraryItems.filter((item: AdminNavNodeEntry) => {
@@ -421,89 +525,117 @@ export function AdminMenuSettingsProvider({
     });
   }, []);
 
-  const isSamePath = (a: number[], b: number[]): boolean =>
-    a.length === b.length && a.every((value: number, index: number) => value === b[index]);
-  const isPathPrefix = (parent: number[], child: number[]): boolean =>
-    parent.length <= child.length &&
-    parent.every((value: number, index: number) => value === child[index]);
+  const handleAddRootNode = useCallback((kind: 'link' | 'group'): string => {
+    const node = createCustomNode(kind);
+    setCustomEnabled(true);
+    setCustomNav((prev: AdminMenuCustomNode[]) => [node, ...prev]);
+    return node.id;
+  }, []);
 
-  const moveCustomNodeTo = useCallback(
-    (dragged: number[], target: number[], position: 'above' | 'below'): void => {
-      if (isSamePath(dragged, target)) return;
+  const addCustomChildNode = useCallback(
+    (parentId: string, kind: 'link' | 'group'): string | null => {
+      if (!parentId) return null;
+      if (!findNodeById(customNav, parentId)) return null;
+      const node = createCustomNode(kind);
+      setCustomEnabled(true);
       setCustomNav((prev: AdminMenuCustomNode[]) => {
-        const next = cloneCustomNav(prev);
-        const draggedInfo = getParentAtPath(next, dragged);
-        const targetInfo = getParentAtPath(next, target);
-        if (!draggedInfo || !targetInfo) return prev;
-        const targetParentPath = target.slice(0, -1);
-        if (isPathPrefix(dragged, targetParentPath)) return prev;
-        const [node] = draggedInfo.parent.splice(draggedInfo.index, 1);
-        if (!node) return prev;
-
-        let insertIndex = position === 'above' ? targetInfo.index : targetInfo.index + 1;
-        if (draggedInfo.parent === targetInfo.parent && draggedInfo.index < insertIndex) {
-          insertIndex -= 1;
-        }
-        targetInfo.parent.splice(insertIndex, 0, node);
-        return next;
+        const result = insertChildNodeById(prev, parentId, node);
+        return result.inserted ? result.next : prev;
       });
+
+      return node.id;
     },
-    []
+    [customNav]
   );
 
-  const updateCustomLabel = useCallback((path: number[], value: string): void => {
+  const removeCustomNodeById = useCallback((nodeId: string): void => {
+    if (!nodeId) return;
     setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info) return prev;
-      const node = info.parent[info.index];
-      if (!node) return prev;
-      node.label = value;
-      return next;
+      const result = removeNodeById(prev, nodeId);
+      return result.removed ? result.next : prev;
     });
   }, []);
 
-  const updateCustomHref = useCallback((path: number[], value: string): void => {
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info) return prev;
-      const node = info.parent[info.index];
-      if (!node) return prev;
-      if (value.trim().length === 0) {
-        delete node.href;
-      } else {
-        node.href = value;
-      }
-      return next;
-    });
-  }, []);
-
-  const addCustomNodeAt = useCallback((kind: 'link' | 'group', parentPath?: number[]): void => {
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const node = createCustomNode(kind);
-      if (!parentPath || parentPath.length === 0) {
-        next.unshift(node);
-        return next;
-      }
-      const parentNode = getNodeAtPath(next, parentPath);
-      if (!parentNode) return prev;
-      if (!parentNode.children) parentNode.children = [];
-      parentNode.children.push(node);
-      return next;
-    });
-  }, []);
-
-  const handleAddRootNode = useCallback(
-    (kind: 'link' | 'group'): void => {
-      setCustomEnabled(true);
-      addCustomNodeAt(kind);
+  const updateCustomNodeLabelById = useCallback(
+    (nodeId: string, value: string): void => {
+      if (!nodeId || libraryItemMap.has(nodeId)) return;
+      setCustomNav((prev: AdminMenuCustomNode[]) => {
+        const result = updateNodeById(prev, nodeId, (node) => ({
+          ...node,
+          label: value,
+        }));
+        return result.updated ? result.next : prev;
+      });
     },
-    [addCustomNodeAt]
+    [libraryItemMap]
+  );
+
+  const updateCustomNodeHrefById = useCallback(
+    (nodeId: string, value: string): void => {
+      if (!nodeId || libraryItemMap.has(nodeId)) return;
+      const nextHref = value.trim();
+
+      setCustomNav((prev: AdminMenuCustomNode[]) => {
+        const result = updateNodeById(prev, nodeId, (node) => {
+          if (nextHref.length === 0) {
+            const { href: _href, ...rest } = node;
+            return rest;
+          }
+          return {
+            ...node,
+            href: nextHref,
+          };
+        });
+        return result.updated ? result.next : prev;
+      });
+    },
+    [libraryItemMap]
+  );
+
+  const updateCustomNodeSemanticById = useCallback(
+    (nodeId: string, semantic: AdminMenuLayoutNodeSemantic): void => {
+      if (!nodeId || libraryItemMap.has(nodeId)) return;
+
+      setCustomNav((prev: AdminMenuCustomNode[]) => {
+        const target = findNodeById(prev, nodeId);
+        if (!target) return prev;
+        const base = libraryItemMap.get(nodeId);
+
+        const result = updateNodeById(prev, nodeId, (node) => {
+          if (semantic === 'group') {
+            const { href: _href, ...rest } = node;
+            return rest;
+          }
+
+          const hrefCandidate =
+            node.href?.trim() || base?.href?.trim() || target.href?.trim() || '/admin';
+
+          return {
+            ...node,
+            href: hrefCandidate,
+          };
+        });
+
+        return result.updated ? result.next : prev;
+      });
+    },
+    [libraryItemMap]
+  );
+
+  const replaceCustomNavFromMasterNodes = useCallback(
+    (nextNodes: MasterTreeNode[]): void => {
+      setCustomEnabled(true);
+      setCustomNav((prev: AdminMenuCustomNode[]) => {
+        const fallbackNodes = buildAdminMenuLayoutMasterNodes(prev, libraryItemMap);
+        const fallbackById = createAdminMenuLayoutFallbackMap(fallbackNodes);
+        return rebuildAdminMenuCustomNavFromMasterNodes(nextNodes, fallbackById);
+      });
+    },
+    [libraryItemMap]
   );
 
   const addBuiltInNode = useCallback((entry: AdminNavNodeEntry): void => {
+    setCustomEnabled(true);
     setCustomNav((prev: AdminMenuCustomNode[]) => {
       const next = cloneCustomNav(prev);
       const usedIds = collectCustomIds(next);
@@ -512,46 +644,6 @@ export function AdminMenuSettingsProvider({
       const cleaned = stripUsedIds(node, usedIds);
       if (!cleaned) return prev;
       next.push(cleaned);
-      return next;
-    });
-  }, []);
-
-  const removeCustomNode = useCallback((path: number[]): void => {
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info) return prev;
-      info.parent.splice(info.index, 1);
-      return next;
-    });
-  }, []);
-
-  const indentCustomNode = useCallback((path: number[]): void => {
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info || info.index === 0) return prev;
-      const [node] = info.parent.splice(info.index, 1);
-      const newParent = info.parent[info.index - 1];
-      if (!newParent || !node) return prev;
-      if (!newParent.children) newParent.children = [];
-      newParent.children.push(node);
-      return next;
-    });
-  }, []);
-
-  const outdentCustomNode = useCallback((path: number[]): void => {
-    if (path.length < 2) return;
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const info = getParentAtPath(next, path);
-      if (!info) return prev;
-      const parentPath = path.slice(0, -1);
-      const parentInfo = getParentAtPath(next, parentPath);
-      if (!parentInfo) return prev;
-      const [node] = info.parent.splice(info.index, 1);
-      if (!node) return prev;
-      parentInfo.parent.splice(parentInfo.index + 1, 0, node);
       return next;
     });
   }, []);
@@ -606,14 +698,13 @@ export function AdminMenuSettingsProvider({
       customNav,
       query,
       libraryQuery,
-      draggedPath,
-      dragOver,
       sections,
       flattened,
       favoritesSet,
       favoritesList,
       filteredItems,
-      flattenedCustomNav,
+      layoutMasterNodes,
+      layoutNodeStateById,
       libraryItems,
       libraryItemMap,
       customIds,
@@ -624,20 +715,17 @@ export function AdminMenuSettingsProvider({
       setQuery,
       setLibraryQuery,
       setCustomEnabled,
-      setDraggedPath,
-      setDragOver,
       handleToggleFavorite,
       moveFavorite,
       updateSectionColor,
-      moveCustomNodeTo,
-      updateCustomLabel,
-      updateCustomHref,
       handleAddRootNode,
-      addCustomNodeAt,
+      addCustomChildNode,
+      removeCustomNodeById,
+      updateCustomNodeLabelById,
+      updateCustomNodeHrefById,
+      updateCustomNodeSemanticById,
+      replaceCustomNavFromMasterNodes,
       addBuiltInNode,
-      removeCustomNode,
-      indentCustomNode,
-      outdentCustomNode,
       handleSave,
       handleReset,
     }),
@@ -648,14 +736,13 @@ export function AdminMenuSettingsProvider({
       customNav,
       query,
       libraryQuery,
-      draggedPath,
-      dragOver,
       sections,
       flattened,
       favoritesSet,
       favoritesList,
       filteredItems,
-      flattenedCustomNav,
+      layoutMasterNodes,
+      layoutNodeStateById,
       libraryItems,
       libraryItemMap,
       customIds,
@@ -666,15 +753,14 @@ export function AdminMenuSettingsProvider({
       handleToggleFavorite,
       moveFavorite,
       updateSectionColor,
-      moveCustomNodeTo,
-      updateCustomLabel,
-      updateCustomHref,
       handleAddRootNode,
-      addCustomNodeAt,
+      addCustomChildNode,
+      removeCustomNodeById,
+      updateCustomNodeLabelById,
+      updateCustomNodeHrefById,
+      updateCustomNodeSemanticById,
+      replaceCustomNavFromMasterNodes,
       addBuiltInNode,
-      removeCustomNode,
-      indentCustomNode,
-      outdentCustomNode,
       handleSave,
       handleReset,
     ]

@@ -168,14 +168,6 @@ export type AdminNavNodeEntry = {
   item: AdminNavItem;
 };
 
-export type FlattenedCustomNode = {
-  node: AdminMenuCustomNode;
-  path: number[];
-  depth: number;
-  index: number;
-  siblingCount: number;
-};
-
 /**
  * Admin Layout DTOs
  */

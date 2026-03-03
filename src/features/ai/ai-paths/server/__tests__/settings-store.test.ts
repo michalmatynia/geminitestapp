@@ -148,7 +148,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toThrowError(/Invalid trigger button settings payload/i);
   });
 
-  it('refreshes stale seeded starter configs through legacy lineage matching when provenance is missing', () => {
+  it('does not rewrite existing starter configs without explicit upgrade actions', () => {
     const template = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!template) throw new Error('Missing starter_parameter_inference template');
 
@@ -160,57 +160,33 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       ...stale,
       extensions: {},
     };
-    const initial = [
+    const fullySeeded = ensureStarterWorkflowDefaults([
       {
         key: AI_PATHS_INDEX_KEY,
-        value: JSON.stringify([
-          {
-            id: 'path_syr8f4',
-            name: stale.name,
-            createdAt: '2026-03-03T10:00:00.000Z',
-            updatedAt: '2026-03-03T10:00:00.000Z',
-          },
-        ]),
+        value: '[]',
       },
       {
         key: AI_PATHS_TRIGGER_BUTTONS_KEY,
-        value: JSON.stringify([
-          {
-            id: '0ef40981-7ac6-416e-9205-7200289f851c',
-            name: 'Infer Parameters',
-            pathId: 'path_syr8f4',
-            locations: ['product_modal'],
-            mode: 'click',
-            display: 'icon_label',
-            enabled: true,
-            sortIndex: 20,
-            createdAt: '2026-03-03T10:00:00.000Z',
-            updatedAt: '2026-03-03T10:00:00.000Z',
-          },
-        ]),
+        value: '[]',
       },
-      {
-        key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`,
-        value: JSON.stringify(staleWithoutProvenance),
-      },
-    ];
+    ]).nextRecords;
+    const initial = fullySeeded.map((record) =>
+      record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`
+        ? { ...record, value: JSON.stringify(staleWithoutProvenance) }
+        : record
+    );
 
-    expect(countPendingStarterWorkflowDefaults(initial)).toBeGreaterThan(0);
+    expect(countPendingStarterWorkflowDefaults(initial)).toBe(0);
 
     const refreshed = ensureStarterWorkflowDefaults(initial);
-    expect(refreshed.affectedCount).toBeGreaterThan(0);
+    expect(refreshed.affectedCount).toBe(0);
 
     const configRecord = refreshed.nextRecords.find(
       (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`
     );
     if (!configRecord) throw new Error('Expected path_syr8f4 config record');
     const parsed = JSON.parse(configRecord.value) as Record<string, unknown>;
-    const starterExtension = (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'];
-    expect(starterExtension).toEqual(
-      expect.objectContaining({
-        starterKey: 'parameter_inference',
-        templateId: 'starter_parameter_inference',
-      })
-    );
+    const starterExtension = (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'] ?? null;
+    expect(starterExtension).toBeNull();
   });
 });

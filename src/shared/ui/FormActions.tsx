@@ -1,10 +1,11 @@
 'use client';
 
 import React from 'react';
+import { type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/shared/utils';
 
-import { Button } from './button';
+import { Button, buttonVariants } from './button';
 
 interface FormActionsProps {
   onCancel?: (() => void) | undefined;
@@ -14,15 +15,8 @@ interface FormActionsProps {
   isSaving?: boolean | undefined;
   isDisabled?: boolean | undefined;
   className?: string | undefined;
-  saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | undefined;
-  cancelVariant?:
-    | 'default'
-    | 'destructive'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'link'
-    | undefined;
+  saveVariant?: VariantProps<typeof buttonVariants>['variant'];
+  cancelVariant?: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: React.ReactNode | undefined;
   children?: React.ReactNode | undefined;
   size?: 'default' | 'sm' | 'lg' | 'xs';

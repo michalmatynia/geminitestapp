@@ -147,16 +147,14 @@ describe('starter workflow registry', () => {
     );
   });
 
-  it('upgrades renamed legacy translation variants through canonical hash matching', () => {
+  it('does not upgrade renamed legacy translation variants', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildLegacyTranslationPathConfig());
 
-    expect(upgraded.resolution?.matchedBy).toBe('canonical_hash');
-    expect(upgraded.changed).toBe(true);
-    const updateNode = upgraded.config.nodes.find((node) => node.id === 'node-db-update-translate-en-pl');
-    expect(updateNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(upgraded.resolution).toBeNull();
+    expect(upgraded.changed).toBe(false);
   });
 
-  it('upgrades starter descendants when canonical starter provenance is present', () => {
+  it('does not overlay non-canonical graphs even when starter provenance is present', () => {
     const legacy = buildLegacyTranslationPathConfig({
       includeParamsRegex: true,
       paramsEdgeToPort: 'value',
@@ -175,10 +173,8 @@ describe('starter workflow registry', () => {
       }) as PathConfig
     );
 
-    expect(upgraded.changed).toBe(true);
+    expect(upgraded.changed).toBe(false);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
-    const updateNode = upgraded.config.nodes.find((node) => node.id === 'node-db-update-translate-en-pl');
-    expect(updateNode?.config?.database?.updatePayloadMode).toBe('custom');
   });
 
   it('does not upgrade divergent graphs that no longer match starter fingerprints', () => {
@@ -204,7 +200,7 @@ describe('starter workflow registry', () => {
     expect(upgraded.changed).toBe(false);
   });
 
-  it('does not resolve weak legacy-name matches with unrelated graphs', () => {
+  it('does not resolve unrelated graphs by historical starter names', () => {
     const unrelated = {
       id: 'path_unrelated_named_like_starter',
       version: 1,
@@ -229,7 +225,7 @@ describe('starter workflow registry', () => {
 
     const upgraded = upgradeStarterWorkflowPathConfig(unrelated);
 
-    expect(upgraded.resolution?.matchedBy).toBe('legacy_name');
+    expect(upgraded.resolution).toBeNull();
     expect(upgraded.changed).toBe(false);
   });
 });

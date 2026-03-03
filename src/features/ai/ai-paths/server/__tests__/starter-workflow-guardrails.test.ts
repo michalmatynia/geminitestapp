@@ -124,6 +124,7 @@ describe('starter workflow guardrails', () => {
     ]);
 
     const deprecatedActionIds = new Set([
+      'migrate_legacy_starter_workflows',
       'ensure_parameter_inference_defaults',
       'ensure_description_inference_defaults',
       'ensure_base_export_defaults',

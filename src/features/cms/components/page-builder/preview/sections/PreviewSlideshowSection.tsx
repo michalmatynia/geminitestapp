@@ -12,7 +12,8 @@ import { usePreviewEditor } from '@/features/cms/components/page-builder/preview
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { normalizeSlideshowAnimationType } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState, Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 export function PreviewSlideshowSection() {
   const { colorSchemes } = useCmsPageContext();

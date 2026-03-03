@@ -1,9 +1,11 @@
 'use client';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
+import { type VariantProps } from 'class-variance-authority';
 
 import { AppModal } from './app-modal';
 import { FormActions } from './FormActions';
+import { buttonVariants } from './button';
 
 import type { ReactNode } from 'react';
 
@@ -21,7 +23,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
   hasUnsavedChanges?: boolean;
   saveText?: string;
   cancelText?: string;
-  saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  saveVariant?: VariantProps<typeof buttonVariants>['variant'];
   saveIcon?: ReactNode;
   showSaveButton?: boolean;
   showCancelButton?: boolean;
@@ -92,7 +94,7 @@ export function FormModal({
             <FormActions
               onSave={handleSave}
               saveText={saveText}
-              saveVariant={resolvedSaveVariant as any}
+              saveVariant={resolvedSaveVariant}
               saveIcon={saveIcon}
               isSaving={isSaving}
               isDisabled={isSaveButtonDisabled}

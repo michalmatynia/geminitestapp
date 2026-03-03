@@ -20,6 +20,7 @@ import {
 } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
+import { getActiveOtelContextAttributes } from '@/shared/lib/observability/otel-context';
 import { runWithContext } from '@/shared/lib/observability/request-context';
 import {
   CSRF_COOKIE_NAME,
@@ -280,92 +281,94 @@ export function apiHandler(
         userId: context.userId ?? null,
       },
       async () => {
-      try {
-        enforceCsrf(request, options);
+        try {
+          enforceCsrf(request, options);
 
-        let rateLimitHeaders: Record<string, string> | undefined;
-        const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-        if (rateKey && shouldEnforceRateLimit()) {
-          const rateResult = await enforceRateLimit(request, rateKey);
-          rateLimitHeaders = rateResult.headers;
-          context.rateLimitHeaders = rateLimitHeaders;
-        }
-        if (options.parseJsonBody) {
-          const parsed = await parseJsonBody(request, {
-            maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
-            schema: options.bodySchema,
-          });
-          context.body = parsed.body;
-        }
-
-        if (options.querySchema) {
-          const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-          const validation = options.querySchema.safeParse(queryParams);
-          if (!validation.success) {
-            throw validationError('Query validation failed', {
-              issues: validation.error.flatten(),
-            });
+          let rateLimitHeaders: Record<string, string> | undefined;
+          const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+          if (rateKey && shouldEnforceRateLimit()) {
+            const rateResult = await enforceRateLimit(request, rateKey);
+            rateLimitHeaders = rateResult.headers;
+            context.rateLimitHeaders = rateLimitHeaders;
           }
-          context.query = validation.data;
-        }
+          if (options.parseJsonBody) {
+            const parsed = await parseJsonBody(request, {
+              maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+              schema: options.bodySchema,
+            });
+            context.body = parsed.body;
+          }
 
-        const response = await handler(request, context);
+          if (options.querySchema) {
+            const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+            const validation = options.querySchema.safeParse(queryParams);
+            if (!validation.success) {
+              throw validationError('Query validation failed', {
+                issues: validation.error.flatten(),
+              });
+            }
+            context.query = validation.data;
+          }
 
-        const durationMs = context.getElapsedMs();
-        const successPolicy = resolveSuccessLoggingPolicy(options);
-        const slowSuccessThresholdMs =
+          const response = await handler(request, context);
+
+          const durationMs = context.getElapsedMs();
+          const successPolicy = resolveSuccessLoggingPolicy(options);
+          const slowSuccessThresholdMs =
           options.slowSuccessThresholdMs ?? DEFAULT_SLOW_SUCCESS_THRESHOLD_MS;
-        const shouldLogSuccess =
+          const shouldLogSuccess =
           successPolicy === 'all' ||
           (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
 
-        if (shouldLogSuccess) {
-          void logSystemEvent({
-            level: options.successLogLevel ?? 'info',
-            message: `${options.source} completed successfully`,
-            source: options.source,
-            service,
-            request,
-            requestId,
-            traceId,
-            correlationId,
-            statusCode: response.status,
-            context: {
-              durationMs,
-              successPolicy,
-              slowSuccessThresholdMs,
-            },
-          });
-        }
+          if (shouldLogSuccess) {
+            const otelContext = getActiveOtelContextAttributes();
+            void logSystemEvent({
+              level: options.successLogLevel ?? 'info',
+              message: `${options.source} completed successfully`,
+              source: options.source,
+              service,
+              request,
+              requestId,
+              traceId,
+              correlationId,
+              statusCode: response.status,
+              context: {
+                durationMs,
+                successPolicy,
+                slowSuccessThresholdMs,
+                ...otelContext,
+              },
+            });
+          }
 
-        // Add request ID to response headers for client-side tracking
-        if (!response.headers.has('x-request-id')) {
-          response.headers.set('x-request-id', requestId);
+          // Add request ID to response headers for client-side tracking
+          if (!response.headers.has('x-request-id')) {
+            response.headers.set('x-request-id', requestId);
+          }
+          if (!response.headers.has('x-trace-id')) {
+            response.headers.set('x-trace-id', traceId);
+          }
+          if (!response.headers.has('x-correlation-id')) {
+            response.headers.set('x-correlation-id', correlationId);
+          }
+          if (context.rateLimitHeaders) {
+            Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+              response.headers.set(key, value);
+            });
+          }
+          applySecurityHeaders(response);
+          applyDefaultCacheHeaders(response, request.method, options.cacheControl);
+          return response;
+        } catch (error) {
+          const response = await createErrorResponseWithTiming(error, request, context, options);
+          if (context.rateLimitHeaders) {
+            Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
+              response.headers.set(key, value);
+            });
+          }
+          applySecurityHeaders(response);
+          return response;
         }
-        if (!response.headers.has('x-trace-id')) {
-          response.headers.set('x-trace-id', traceId);
-        }
-        if (!response.headers.has('x-correlation-id')) {
-          response.headers.set('x-correlation-id', correlationId);
-        }
-        if (context.rateLimitHeaders) {
-          Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        applySecurityHeaders(response);
-        applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-        return response;
-      } catch (error) {
-        const response = await createErrorResponseWithTiming(error, request, context, options);
-        if (context.rateLimitHeaders) {
-          Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        applySecurityHeaders(response);
-        return response;
-      }
       }
     );
   };
@@ -472,6 +475,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
             (successPolicy === 'slow' && durationMs >= slowSuccessThresholdMs);
 
           if (shouldLogSuccess) {
+            const otelContext = getActiveOtelContextAttributes();
             void logSystemEvent({
               level: options.successLogLevel ?? 'info',
               message: `${options.source} completed successfully`,
@@ -487,6 +491,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
                 successPolicy,
                 slowSuccessThresholdMs,
                 params,
+                ...otelContext,
               },
             });
           }
@@ -606,6 +611,7 @@ async function createErrorResponseWithTiming(
   const queryKeys = getQueryKeys(request);
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
   const service = options.service?.trim() || resolveServiceFromSource(options.source);
+  const otelContext = getActiveOtelContextAttributes();
 
   // Log the error with full context
   void logSystemEvent({
@@ -629,6 +635,7 @@ async function createErrorResponseWithTiming(
       method: request.method,
       traceId: context.traceId,
       correlationId: context.correlationId,
+      ...otelContext,
       service,
       expected: resolved.expected,
       critical: resolved.critical,

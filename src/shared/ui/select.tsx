@@ -19,9 +19,15 @@ type NativeSelectContextValue = {
 
 const NativeSelectContext = React.createContext<NativeSelectContextValue | null>(null);
 
+export const shouldUseNativeSelectMode = (pathname: string | null | undefined): boolean =>
+  Boolean(
+    pathname &&
+      (pathname.startsWith('/admin/image-studio') || pathname.startsWith('/admin/ai-paths/queue'))
+  );
+
 const useNativeSelectMode = (): boolean => {
   const pathname = usePathname();
-  return pathname ? pathname.startsWith('/admin/image-studio') : false;
+  return shouldUseNativeSelectMode(pathname);
 };
 
 const getNodeText = (node: React.ReactNode): string => {

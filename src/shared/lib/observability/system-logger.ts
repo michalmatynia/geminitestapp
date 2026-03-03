@@ -4,6 +4,8 @@ import type {
 } from '@/shared/contracts/observability';
 
 import { isSensitiveKey, REDACTED_VALUE, redactSensitiveText, truncateString } from './log-redaction';
+import { emitOtelLogRecord } from './otel-log-bridge';
+import { getActiveOtelContextAttributes } from './otel-context';
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
@@ -438,6 +440,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
   try {
     const errorInfo = input.error ? normalizeErrorInfo(input.error) : null;
     const requestInfo = extractRequestInfo(input.request);
+    const activeOtelContext = getActiveOtelContextAttributes();
 
     // Auto-classify error if it exists and category is missing
     const explicitCategory =
@@ -503,6 +506,26 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         ? input.context['parentSpanId'].trim()
         : null) ??
       null;
+    const otelTraceId =
+      (typeof input.context?.['otelTraceId'] === 'string' &&
+      input.context['otelTraceId'].trim().length > 0
+        ? input.context['otelTraceId'].trim()
+        : null) ??
+      activeOtelContext.otelTraceId ??
+      null;
+    const otelSpanId =
+      (typeof input.context?.['otelSpanId'] === 'string' && input.context['otelSpanId'].trim().length > 0
+        ? input.context['otelSpanId'].trim()
+        : null) ??
+      activeOtelContext.otelSpanId ??
+      null;
+    const otelTraceFlags =
+      (typeof input.context?.['otelTraceFlags'] === 'string' &&
+      input.context['otelTraceFlags'].trim().length > 0
+        ? input.context['otelTraceFlags'].trim()
+        : null) ??
+      activeOtelContext.otelTraceFlags ??
+      null;
 
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
@@ -525,6 +548,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       ...(correlationId ? { correlationId } : {}),
       ...(spanId ? { spanId } : {}),
       ...(parentSpanId ? { parentSpanId } : {}),
+      ...(otelTraceId ? { otelTraceId } : {}),
+      ...(otelSpanId ? { otelSpanId } : {}),
+      ...(otelTraceFlags ? { otelTraceFlags } : {}),
       ...(fingerprint ? { fingerprint } : {}),
     };
 
@@ -565,6 +591,26 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
             enrichmentError
           );
         }
+
+        emitOtelLogRecord({
+          level: input.level ?? 'info',
+          message: input.message,
+          source: input.source ?? null,
+          service: service ?? null,
+          category: category ?? null,
+          context: hydratedContext,
+          stack: errorInfo?.stack ?? null,
+          path: input.request?.url ? requestInfo.path ?? null : null,
+          method: requestInfo.method ?? null,
+          statusCode: input.statusCode ?? null,
+          requestId: input.requestId ?? requestInfo.requestId ?? null,
+          traceId,
+          correlationId,
+          spanId,
+          parentSpanId,
+          userId: input.userId ?? null,
+        });
+
         const forwardPromise = forwardToCentralizedLogging({
           level: input.level ?? 'info',
           message: input.message,

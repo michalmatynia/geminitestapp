@@ -7,6 +7,7 @@ import { useDragState } from '../../../hooks/useDragStateContext';
 import { SectionPicker } from './SectionPicker';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 
 export function ZoneFooterNode({
   zone,
@@ -23,6 +24,7 @@ export function ZoneFooterNode({
     treeRootDropLabel,
     moveSectionByMaster,
   } = useComponentTreePanelContext();
+  const { sectionActions } = useTreeActions();
   const { activeDrag } = useDragState();
   const [isDropTarget, setIsDropTarget] = useState(false);
 
@@ -40,7 +42,7 @@ export function ZoneFooterNode({
           onDrop={(e: React.DragEvent): void => {
             e.preventDefault();
             setIsDropTarget(false);
-            if (activeDrag.type === 'section') {
+            if (activeDrag?.type === 'section') {
               void moveSectionByMaster(activeDrag.id, zone, sectionCount);
             }
           }}
@@ -72,10 +74,3 @@ export function ZoneFooterNode({
     </>
   );
 }
-
-// Mock sectionActions for now as it was implicitly used in original file
-const sectionActions = {
-  add: (type: string, zone: string) => {
-    console.log('Add section', type, zone);
-  },
-};

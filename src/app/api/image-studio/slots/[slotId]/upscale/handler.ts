@@ -335,7 +335,7 @@ const readUpscaleMetadataFromSlot = (
     metadata?.['upscale'] &&
     typeof metadata['upscale'] === 'object' &&
     !Array.isArray(metadata['upscale'])
-      ? (metadata['upscale'] as Record<string, unknown>)
+      ? (metadata['upscale'])
       : null;
 
   const effectiveModeRaw =

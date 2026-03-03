@@ -7,7 +7,53 @@ import type {
   RuntimeCounterSnapshot,
   RuntimeDurationSnapshot,
 } from '@/shared/contracts/case-resolver';
-import { readCaseResolverWorkspaceDebugEvents } from './workspace-persistence';
+import { createCaseResolverWorkspaceMutationId } from './utils/workspace-persistence-utils';
+
+const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
+const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
+const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
+
+const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {
+  const scope = globalThis as typeof globalThis & {
+    [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
+  };
+  if (!Array.isArray(scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY])) {
+    scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] = [];
+  }
+  return scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] ?? [];
+};
+
+const writeDebugBuffer = (events: CaseResolverWorkspaceDebugEvent[]): void => {
+  const scope = globalThis as typeof globalThis & {
+    [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
+  };
+  scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] = events;
+};
+
+export const logCaseResolverWorkspaceEvent = (
+  event: Omit<CaseResolverWorkspaceDebugEvent, 'id' | 'timestamp'>
+): void => {
+  const entry: CaseResolverWorkspaceDebugEvent = {
+    id: createCaseResolverWorkspaceMutationId('workspace-debug'),
+    timestamp: new Date().toISOString(),
+    ...event,
+  };
+  const nextEvents = [...readDebugBuffer(), entry].slice(-CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT);
+  writeDebugBuffer(nextEvents);
+  if (typeof window !== 'undefined') {
+    // Defer notification so debug-panel state updates never run inside another component render.
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME));
+    }, 0);
+  }
+};
+
+export const readCaseResolverWorkspaceDebugEvents = (): CaseResolverWorkspaceDebugEvent[] => [
+  ...readDebugBuffer(),
+];
+
+export const getCaseResolverWorkspaceDebugEventName = (): string =>
+  CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME;
 
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;

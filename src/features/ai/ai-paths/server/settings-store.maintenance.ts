@@ -2,12 +2,10 @@ import {
   AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
-  AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES,
   AI_PATHS_MAINTENANCE_ACTION_IDS,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceActionReport,
   type AiPathsMaintenanceReport,
-  type AiPathsMaintenanceRequestedActionId,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
 import { compactPathConfigValue } from './settings-store.compaction';
@@ -21,10 +19,8 @@ import {
   upgradeRuntimeInputContractsConfig,
 } from './settings-store-runtime-input-contracts';
 import {
-  countPendingLegacyStarterWorkflowMigrations,
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
-  migrateLegacyStarterWorkflows,
 } from './starter-workflows-settings';
 
 export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[]): number => {
@@ -102,22 +98,14 @@ export const repairPathIndexFromConfigs = (records: AiPathsSettingRecord[]): str
 
 export const resolveRequestedMaintenanceActionIds = (
   report: AiPathsMaintenanceReport,
-  requestedIds: AiPathsMaintenanceRequestedActionId[] | undefined
+  requestedIds: AiPathsMaintenanceActionId[] | undefined
 ): AiPathsMaintenanceActionId[] => {
   if (!requestedIds || requestedIds.length === 0) {
     return report.actions.filter((a) => a.status === 'pending').map((a) => a.id);
   }
   const allowed = new Set<string>(AI_PATHS_MAINTENANCE_ACTION_IDS);
   const normalized = requestedIds
-    .map((id): AiPathsMaintenanceActionId | null => {
-      if (allowed.has(id)) {
-        return id as AiPathsMaintenanceActionId;
-      }
-      const mapped = AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES[
-        id as keyof typeof AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES
-      ];
-      return mapped && allowed.has(mapped) ? mapped : null;
-    })
+    .map((id): AiPathsMaintenanceActionId | null => (allowed.has(id) ? id : null))
     .filter((id): id is AiPathsMaintenanceActionId => Boolean(id));
   return Array.from(new Set(normalized));
 };
@@ -161,19 +149,6 @@ export const buildAiPathsMaintenanceReport = (
       blocking: false,
       status: 'pending',
       affectedRecords: starterDefaultsCount,
-    });
-  }
-
-  const legacyStarterMigrationCount = countPendingLegacyStarterWorkflowMigrations(records);
-  if (legacyStarterMigrationCount > 0) {
-    actions.push({
-      id: 'migrate_legacy_starter_workflows',
-      title: 'Migrate Legacy Starter Workflows',
-      description:
-        `Migrate ${legacyStarterMigrationCount} starter workflow config(s) to the current semantic asset overlay and starter provenance format.`,
-      blocking: true,
-      status: 'pending',
-      affectedRecords: legacyStarterMigrationCount,
     });
   }
 
@@ -281,13 +256,6 @@ export const runMaintenanceAction = (args: {
       break;
     }
 
-    case 'migrate_legacy_starter_workflows': {
-      const result = migrateLegacyStarterWorkflows(args.records);
-      nextRecords.push(...result.nextRecords);
-      affectedCount = result.affectedCount;
-      break;
-    }
-
     case 'repair_path_index': {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
@@ -306,7 +274,7 @@ export const runMaintenanceAction = (args: {
     }
 
     default:
-      nextRecords.push(...args.records);
+      throw new Error(`Unknown AI Paths maintenance action: ${args.actionId}`);
   }
 
   return {
@@ -327,7 +295,6 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
-      'migrate_legacy_starter_workflows',
       'upgrade_runtime_input_contracts',
       'upgrade_server_execution_mode',
     ] as AiPathsMaintenanceActionId[]

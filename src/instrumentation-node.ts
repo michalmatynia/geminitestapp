@@ -79,6 +79,9 @@ export async function registerNodeInstrumentation() {
   const { validateDatabaseConfig } = await import('@/shared/lib/env');
   validateDatabaseConfig();
 
+  const { initializeNodeOtel } = await import('@/shared/lib/observability/otel-node');
+  await initializeNodeOtel();
+
   // Register centralized logging handler for shared logger
   const { registerLogHandler } = await import('@/shared/utils/logger');
   const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');

@@ -401,25 +401,11 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
   'ensure_starter_workflow_defaults',
-  'migrate_legacy_starter_workflows',
   'upgrade_runtime_input_contracts',
   'upgrade_server_execution_mode',
 ] as const;
 
 export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
-
-export const AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES = {
-  ensure_parameter_inference_defaults: 'ensure_starter_workflow_defaults',
-  ensure_description_inference_defaults: 'ensure_starter_workflow_defaults',
-  ensure_base_export_defaults: 'ensure_starter_workflow_defaults',
-  upgrade_translation_en_pl: 'migrate_legacy_starter_workflows',
-} as const;
-
-export type AiPathsMaintenanceActionAliasId = keyof typeof AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES;
-
-export type AiPathsMaintenanceRequestedActionId =
-  | AiPathsMaintenanceActionId
-  | AiPathsMaintenanceActionAliasId;
 
 export type AiPathsMaintenanceActionReport = {
   id: AiPathsMaintenanceActionId;

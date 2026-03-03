@@ -4,9 +4,6 @@ import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 
 import { useChatbotLogic, UseChatbotLogicReturn } from '../hooks/useChatbotLogic';
 import type {
-  ChatMessageDto as ChatMessage,
-  ChatbotDebugStateDto as ChatbotDebugState,
-  ChatbotSessionDto as ChatSession,
   ChatbotMessagesData,
   ChatbotSettingsData,
   ChatbotSessionsData,

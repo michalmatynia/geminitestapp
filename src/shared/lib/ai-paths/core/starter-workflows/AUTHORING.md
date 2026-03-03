@@ -14,7 +14,7 @@ Rules:
 - Do not add workflow-specific server seed modules (`settings-store-<workflow>.ts`).
 - Do not add workflow-specific runtime sanitizers or upgrader hooks keyed by workflow id/name.
 
-Compatibility policy:
+Forward-only policy:
 
-- Legacy shipped workflow upgrades must be implemented in generic starter migration logic.
-- Deprecated maintenance action ids may be accepted as aliases temporarily, but maintenance reports must emit generic action ids only.
+- Do not add starter workflow migration logic for historical graph/id/name shapes.
+- Persisted starter configs must already use canonical shapes or fail validation paths that consume them.

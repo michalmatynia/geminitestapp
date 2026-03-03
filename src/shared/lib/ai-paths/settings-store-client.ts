@@ -5,19 +5,16 @@ import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
-  AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceActionReport,
   type AiPathsMaintenanceReport,
   type AiPathsMaintenanceApplyResult,
-  type AiPathsMaintenanceRequestedActionId,
 } from '@/shared/contracts/ai-paths';
 
 export type AiPathsSettingRecord = SettingRecordDto;
 export { AI_PATHS_MAINTENANCE_ACTION_IDS };
 export type {
   AiPathsMaintenanceActionId,
-  AiPathsMaintenanceRequestedActionId,
   AiPathsMaintenanceActionReport,
   AiPathsMaintenanceReport,
   AiPathsMaintenanceApplyResult,
@@ -32,10 +29,6 @@ const AI_PATHS_SETTINGS_SELECTIVE_REQUEST_TIMEOUT_MS = 8_000;
 const AI_PATHS_SETTINGS_WRITE_TIMEOUT_MS = 90_000;
 const AI_PATHS_SETTINGS_MAX_QUERY_KEYS = 500;
 const AI_PATHS_SETTINGS_MAX_KEY_LENGTH = 200;
-const AI_PATHS_MAINTENANCE_REQUESTED_ACTION_IDS = new Set<string>([
-  ...AI_PATHS_MAINTENANCE_ACTION_IDS,
-  ...Object.keys(AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES),
-]);
 
 let aiPathsSettingsCache: AiPathsSettingRecord[] | null = null;
 let aiPathsSettingsFetchedAt = 0;
@@ -68,12 +61,6 @@ const dispatchAiPathsSettingsUpdatedEvent = (): void => {
 const isAiPathsMaintenanceActionId = (value: unknown): value is AiPathsMaintenanceActionId =>
   typeof value === 'string' &&
   (AI_PATHS_MAINTENANCE_ACTION_IDS as readonly string[]).includes(value);
-
-const isAiPathsMaintenanceRequestedActionId = (
-  value: unknown
-): value is AiPathsMaintenanceRequestedActionId =>
-  typeof value === 'string' &&
-  AI_PATHS_MAINTENANCE_REQUESTED_ACTION_IDS.has(value);
 
 const normalizeAiPathsMaintenanceAction = (
   value: unknown
@@ -544,18 +531,10 @@ export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanc
 };
 
 export const applyAiPathsMaintenanceActions = async (
-  actionIds?: AiPathsMaintenanceRequestedActionId[]
+  actionIds?: AiPathsMaintenanceActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {
   const normalizedActionIds =
-    actionIds && actionIds.length > 0
-      ? Array.from(
-        new Set(
-          actionIds.filter((actionId): actionId is AiPathsMaintenanceRequestedActionId =>
-            isAiPathsMaintenanceRequestedActionId(actionId)
-          )
-        )
-      )
-      : undefined;
+    actionIds && actionIds.length > 0 ? Array.from(new Set(actionIds)) : undefined;
   let data: unknown;
   try {
     data = await api.post<unknown>('/api/ai-paths/settings/maintenance', {

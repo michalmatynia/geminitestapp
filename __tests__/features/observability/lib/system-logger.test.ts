@@ -7,6 +7,7 @@ vi.unmock('@/shared/lib/observability/system-logger');
 
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
+import { emitOtelLogRecord } from '@/shared/lib/observability/otel-log-bridge';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
 import { hydrateLogRuntimeContext } from '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context';
 import {
@@ -27,6 +28,10 @@ vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
 
 vi.mock('@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context', () => ({
   hydrateLogRuntimeContext: vi.fn().mockImplementation(async (context) => context),
+}));
+
+vi.mock('@/shared/lib/observability/otel-log-bridge', () => ({
+  emitOtelLogRecord: vi.fn(),
 }));
 
 describe('system-logger', () => {
@@ -112,6 +117,38 @@ describe('system-logger', () => {
           expect.objectContaining({
             level: 'info',
             message: 'Hello',
+          })
+        );
+      });
+    });
+
+    it('should emit an OpenTelemetry log record with correlation attributes', async () => {
+      await logSystemEvent({
+        level: 'warn',
+        message: 'Telemetry bridge event',
+        source: 'observability.logs',
+        context: {
+          requestId: 'req-1',
+          traceId: 'trace-1',
+          correlationId: 'corr-1',
+          otelTraceId: 'otel-trace-1',
+          otelSpanId: 'otel-span-1',
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(emitOtelLogRecord).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'warn',
+            message: 'Telemetry bridge event',
+            source: 'observability.logs',
+            context: expect.objectContaining({
+              requestId: 'req-1',
+              traceId: 'trace-1',
+              correlationId: 'corr-1',
+              otelTraceId: 'otel-trace-1',
+              otelSpanId: 'otel-span-1',
+            }),
           })
         );
       });

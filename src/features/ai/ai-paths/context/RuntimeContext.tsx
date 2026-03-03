@@ -21,12 +21,19 @@ import type {
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-export type {
+import type {
   LastErrorInfo,
   RuntimeRunStatus,
   RuntimeControlHandlers,
   RuntimeNodeConfigHandlers,
 } from '@/shared/contracts/ai-paths';
+
+export type {
+  LastErrorInfo,
+  RuntimeRunStatus,
+  RuntimeControlHandlers,
+  RuntimeNodeConfigHandlers,
+};
 
 // ---------------------------------------------------------------------------
 // Context Value

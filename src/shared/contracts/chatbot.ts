@@ -37,16 +37,6 @@ export const chatbotSettingsSchema = z.object({
   runHeadless: z.boolean().optional(),
   ignoreRobotsTxt: z.boolean().optional(),
   requireHumanApproval: z.boolean().optional(),
-  memoryValidationModel: z.string().nullable().optional(),
-  plannerModel: z.string().nullable().optional(),
-  selfCheckModel: z.string().nullable().optional(),
-  extractionValidationModel: z.string().nullable().optional(),
-  toolRouterModel: z.string().nullable().optional(),
-  loopGuardModel: z.string().nullable().optional(),
-  approvalGateModel: z.string().nullable().optional(),
-  memorySummarizationModel: z.string().nullable().optional(),
-  selectorInferenceModel: z.string().nullable().optional(),
-  outputNormalizationModel: z.string().nullable().optional(),
   maxSteps: z.number().optional(),
   maxStepAttempts: z.number().optional(),
   maxReplanCalls: z.number().optional(),
@@ -64,6 +54,66 @@ export const createChatbotSettingsSchema = chatbotSettingsSchema.partial();
 export type CreateChatbotSettingsDto = z.infer<typeof createChatbotSettingsSchema>;
 export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
 export type UpdateChatbotSettingsDto = CreateChatbotSettingsDto;
+
+const DEPRECATED_CHATBOT_AGENT_MODEL_KEYS = [
+  'memoryValidationModel',
+  'plannerModel',
+  'selfCheckModel',
+  'extractionValidationModel',
+  'toolRouterModel',
+  'loopGuardModel',
+  'approvalGateModel',
+  'memorySummarizationModel',
+  'selectorInferenceModel',
+  'outputNormalizationModel',
+] as const;
+
+export class ChatbotSettingsValidationError extends Error {
+  code: 'invalid_shape' | 'deprecated_agent_model_keys';
+  deprecatedKeys: string[];
+
+  constructor(args: {
+    code: 'invalid_shape' | 'deprecated_agent_model_keys';
+    message: string;
+    deprecatedKeys?: string[];
+  }) {
+    super(args.message);
+    this.name = 'ChatbotSettingsValidationError';
+    this.code = args.code;
+    this.deprecatedKeys = args.deprecatedKeys ?? [];
+  }
+}
+
+export const parseChatbotSettingsPayload = (input: unknown): ChatbotSettingsPayload => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw new ChatbotSettingsValidationError({
+      code: 'invalid_shape',
+      message: 'Chatbot settings payload must be a JSON object.',
+    });
+  }
+
+  const record = input as Record<string, unknown>;
+  const deprecatedKeys = DEPRECATED_CHATBOT_AGENT_MODEL_KEYS.filter(
+    (key: string): boolean => key in record
+  );
+  if (deprecatedKeys.length > 0) {
+    throw new ChatbotSettingsValidationError({
+      code: 'deprecated_agent_model_keys',
+      message: `Chatbot settings contain deprecated agent model snapshot keys: ${deprecatedKeys.join(', ')}.`,
+      deprecatedKeys,
+    });
+  }
+
+  const parsed = chatbotSettingsSchema.strict().safeParse(record);
+  if (!parsed.success) {
+    throw new ChatbotSettingsValidationError({
+      code: 'invalid_shape',
+      message: 'Chatbot settings failed validation.',
+    });
+  }
+
+  return parsed.data;
+};
 
 /**
  * Chat Message Contract
@@ -501,16 +551,6 @@ export const agentSettingsPayloadSchema = z.object({
   runHeadless: z.boolean().optional(),
   ignoreRobotsTxt: z.boolean().optional(),
   requireHumanApproval: z.boolean().optional(),
-  memoryValidationModel: z.string().nullable().optional(),
-  plannerModel: z.string().nullable().optional(),
-  selfCheckModel: z.string().nullable().optional(),
-  extractionValidationModel: z.string().nullable().optional(),
-  toolRouterModel: z.string().nullable().optional(),
-  loopGuardModel: z.string().nullable().optional(),
-  approvalGateModel: z.string().nullable().optional(),
-  memorySummarizationModel: z.string().nullable().optional(),
-  selectorInferenceModel: z.string().nullable().optional(),
-  outputNormalizationModel: z.string().nullable().optional(),
   maxSteps: z.number().optional(),
   maxStepAttempts: z.number().optional(),
   maxReplanCalls: z.number().optional(),
@@ -529,16 +569,6 @@ export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
   runHeadless: true,
   ignoreRobotsTxt: false,
   requireHumanApproval: false,
-  memoryValidationModel: '',
-  plannerModel: '',
-  selfCheckModel: '',
-  extractionValidationModel: '',
-  toolRouterModel: '',
-  loopGuardModel: '',
-  approvalGateModel: '',
-  memorySummarizationModel: '',
-  selectorInferenceModel: '',
-  outputNormalizationModel: '',
   maxSteps: 12,
   maxStepAttempts: 2,
   maxReplanCalls: 2,

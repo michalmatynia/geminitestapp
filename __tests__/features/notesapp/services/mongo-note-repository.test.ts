@@ -58,7 +58,15 @@ describe('Mongo Note Repository', () => {
     });
 
     it('returns existing notebook if found', async () => {
-      mockCollection.toArray.mockResolvedValue([{ _id: 'n1', id: 'n1', name: 'Existing' }]);
+      mockCollection.toArray.mockResolvedValue([
+        {
+          _id: 'n1',
+          id: 'n1',
+          name: 'Existing',
+          createdAt: '2026-03-01T00:00:00.000Z',
+          updatedAt: '2026-03-01T00:00:00.000Z',
+        },
+      ]);
 
       const notebook = await mongoNoteRepository.getOrCreateDefaultNotebook();
       expect(notebook.name).toBe('Existing');
@@ -112,7 +120,15 @@ describe('Mongo Note Repository', () => {
 
     it('gets all notes with filters', async () => {
       mockCollection.toArray
-        .mockResolvedValueOnce([{ _id: 'default-n', id: 'default-n' }]) // For getOrCreateDefault
+        .mockResolvedValueOnce([
+          {
+            _id: 'default-n',
+            id: 'default-n',
+            name: 'Default',
+            createdAt: '2026-03-01T00:00:00.000Z',
+            updatedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ]) // For getOrCreateDefault
         .mockResolvedValueOnce([
           {
             _id: 'note-1',
@@ -175,12 +191,35 @@ describe('Mongo Note Repository', () => {
 
     it('gets category tree', async () => {
       mockCollection.toArray
-        .mockResolvedValueOnce([{ _id: 'default-n', id: 'default-n' }]) // For getOrCreateDefault
         .mockResolvedValueOnce([
-          { _id: 'c1', id: 'c1', name: 'Parent', parentId: null },
-          { _id: 'c2', id: 'c2', name: 'Child', parentId: 'c1' },
-        ]) // For categories
-        .mockResolvedValueOnce([]); // For notes
+          {
+            _id: 'default-n',
+            id: 'default-n',
+            name: 'Default',
+            createdAt: '2026-03-01T00:00:00.000Z',
+            updatedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ]) // For getOrCreateDefault
+        .mockResolvedValueOnce([
+          {
+            _id: 'c1',
+            id: 'c1',
+            name: 'Parent',
+            parentId: null,
+            notebookId: 'default-n',
+            createdAt: '2026-03-01T00:00:00.000Z',
+            updatedAt: '2026-03-01T00:00:00.000Z',
+          },
+          {
+            _id: 'c2',
+            id: 'c2',
+            name: 'Child',
+            parentId: 'c1',
+            notebookId: 'default-n',
+            createdAt: '2026-03-01T00:00:00.000Z',
+            updatedAt: '2026-03-01T00:00:00.000Z',
+          },
+        ]); // For categories
 
       const tree = await mongoNoteRepository.getCategoryTree();
 

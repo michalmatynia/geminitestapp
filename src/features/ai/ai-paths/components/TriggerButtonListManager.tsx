@@ -4,13 +4,13 @@ import { GripVertical, Trash2, Edit, RefreshCw } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import { AiTriggerButtonDto } from '@/shared/contracts/ai-trigger-buttons';
+import type { AiTriggerButtonRecord as StoredAiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { Button, StatusBadge, Switch, StandardDataTablePanel } from '@/shared/ui';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 // Define the record type for clarity as it's used extensively
-export type AiTriggerButtonRecord = AiTriggerButtonDto & {
+export type AiTriggerButtonRecord = StoredAiTriggerButtonRecord & {
   usedPaths?: Array<{
     id: string;
     name: string;

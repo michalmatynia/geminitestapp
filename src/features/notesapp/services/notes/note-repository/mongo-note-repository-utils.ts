@@ -12,10 +12,10 @@ import type {
 } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
   CategoryRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
   NoteFileRecord,
-  NoteFiltersDto as NoteFilters,
-  NoteDto as NoteRecord,
+  NoteFilters,
+  NoteRecord,
   NotebookRecord,
   TagRecord,
   ThemeRecord,

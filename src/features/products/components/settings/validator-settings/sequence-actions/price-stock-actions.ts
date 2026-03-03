@@ -1,5 +1,3 @@
-'use client';
-
  
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
@@ -24,7 +22,7 @@ import {
 import type { 
   CreatePatternMutation, 
   UpdatePatternMutation 
-} from '../types';
+} from './types';
 
 export const handleCreateLatestPriceStockSequence = async (args: {
   patterns: ProductValidationPattern[];

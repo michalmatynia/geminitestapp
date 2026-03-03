@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
-import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import {
   Alert,
   Button,

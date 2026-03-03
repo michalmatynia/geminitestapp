@@ -91,7 +91,7 @@ All domain-specific types, interfaces, and Zod schemas MUST be located in `src/s
 ✅ **Good:** Import from contracts
 
 ```typescript
-import type { ProductDto } from '@/shared/contracts/products';
+import type { ProductRecord } from '@/shared/contracts/products';
 ```
 
 ❌ **Avoid:** Local type definitions for domain objects
@@ -137,7 +137,7 @@ When using query and mutation factories (`createListQueryV2`, `createMutationV2`
 ✅ **Good:** Typed success callbacks
 
 ```typescript
-invalidate: async (queryClient, data: ProductDto) => {
+invalidate: async (queryClient, data: ProductRecord) => {
   await invalidateProductDetail(queryClient, data.id);
 }
 ```

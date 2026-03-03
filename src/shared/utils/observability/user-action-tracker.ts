@@ -1,5 +1,3 @@
-'use client';
-
 type UserAction = {
   type: string;
   target: string;

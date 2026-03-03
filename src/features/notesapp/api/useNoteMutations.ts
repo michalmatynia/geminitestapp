@@ -1,9 +1,9 @@
 'use client';
 
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
-  CreateNoteDto as NoteCreateInput,
-  UpdateNoteDto as NoteUpdateInput,
+  NoteWithRelations,
+  NoteCreateInput,
+  NoteUpdateInput,
   CategoryRecord,
   CategoryCreateInput,
   CategoryUpdateInput,

@@ -10,14 +10,83 @@ process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
 process.env['MONGODB_DB'] = 'test';
 
 const THREE_DUPLICATE_IMPORT_WARNING = 'THREE.WARNING: Multiple instances of Three.js being imported.';
+const QUIET_TEST_LOG_PATTERNS = [
+  'Activity:',
+  'completed successfully',
+  '[system] [timing]',
+  'Resolved provider:',
+  'enqueuePathRun timing',
+  '[mock-prompt] returning prompt for value:',
+  '[image-studio] delete ',
+  'Updated CMS page:',
+  'Deleted CMS page:',
+  '[queue:',
+  '[ai-paths-service]',
+];
+const QUIET_TEST_LOG_SERVICES = new Set([
+  'export-template-repository',
+  'products.advanced-filter.mongo',
+  'products.advanced-filter.prisma',
+]);
+const originalConsoleLog = console.log.bind(console);
+const originalConsoleInfo = console.info.bind(console);
 const originalConsoleWarn = console.warn.bind(console);
+const originalConsoleError = console.error.bind(console);
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const shouldSuppressStructuredTestLog = (args: unknown[]): boolean => {
+  const [firstArg, secondArg] = args;
+  const message = typeof firstArg === 'string' ? firstArg : '';
+
+  if (message.includes(THREE_DUPLICATE_IMPORT_WARNING)) {
+    return true;
+  }
+
+  if (QUIET_TEST_LOG_PATTERNS.some((pattern: string): boolean => message.includes(pattern))) {
+    return true;
+  }
+
+  if (!isObjectRecord(secondArg)) {
+    return false;
+  }
+
+  if (secondArg['expected'] === true) {
+    return true;
+  }
+
+  const service =
+    typeof secondArg['service'] === 'string' ? String(secondArg['service']).trim() : '';
+  return QUIET_TEST_LOG_SERVICES.has(service);
+};
+
+console.log = (...args: unknown[]): void => {
+  if (shouldSuppressStructuredTestLog(args)) {
+    return;
+  }
+  originalConsoleLog(...args);
+};
+
+console.info = (...args: unknown[]): void => {
+  if (shouldSuppressStructuredTestLog(args)) {
+    return;
+  }
+  originalConsoleInfo(...args);
+};
 
 console.warn = (...args: unknown[]): void => {
-  const [firstArg] = args;
-  if (typeof firstArg === 'string' && firstArg.includes(THREE_DUPLICATE_IMPORT_WARNING)) {
+  if (shouldSuppressStructuredTestLog(args)) {
     return;
   }
   originalConsoleWarn(...args);
+};
+
+console.error = (...args: unknown[]): void => {
+  if (shouldSuppressStructuredTestLog(args)) {
+    return;
+  }
+  originalConsoleError(...args);
 };
 
 // Define mock models inside vi.mock factory to avoid hoisting issues
@@ -640,6 +709,9 @@ afterEach(async () => {
 
 afterAll(() => {
   // Clean up and stop the server after all tests complete
+  console.log = originalConsoleLog;
+  console.info = originalConsoleInfo;
   console.warn = originalConsoleWarn;
+  console.error = originalConsoleError;
   server.close();
 });

@@ -21,8 +21,7 @@ export const languageSchema = namedDtoSchema.extend({
   isActive: z.boolean(),
 });
 
-export type LanguageDto = z.infer<typeof languageSchema>;
-export type LanguageRecord = LanguageDto;
+export type LanguageRecord = z.infer<typeof languageSchema>;
 
 export const countrySchema = namedDtoSchema.extend({
   code: z.string(),
@@ -34,8 +33,7 @@ export const countrySchema = namedDtoSchema.extend({
   updatedAt: z.string().optional(),
 });
 
-export type CountryDto = z.infer<typeof countrySchema>;
-export type CountryRecord = CountryDto;
+export type CountryRecord = z.infer<typeof countrySchema>;
 
 export const currencySchema = namedDtoSchema.extend({
   code: z.string(),
@@ -47,9 +45,8 @@ export const currencySchema = namedDtoSchema.extend({
   updatedAt: z.string().optional(),
 });
 
-export type CurrencyDto = z.infer<typeof currencySchema>;
-export type CurrencyRecord = CurrencyDto;
-export type CurrencyOption = CurrencyDto;
+export type CurrencyRecord = z.infer<typeof currencySchema>;
+export type CurrencyOption = CurrencyRecord;
 
 export const translationSchema = dtoBaseSchema.extend({
   languageId: z.string(),
@@ -58,7 +55,7 @@ export const translationSchema = dtoBaseSchema.extend({
   namespace: z.string().optional(),
 });
 
-export type TranslationDto = z.infer<typeof translationSchema>;
+export type TranslationRecord = z.infer<typeof translationSchema>;
 
 export const createLanguageSchema = languageSchema.omit({
   id: true,
@@ -66,8 +63,8 @@ export const createLanguageSchema = languageSchema.omit({
   updatedAt: true,
 });
 
-export type CreateLanguageDto = z.infer<typeof createLanguageSchema>;
-export type UpdateLanguageDto = Partial<CreateLanguageDto>;
+export type LanguageCreateInput = z.infer<typeof createLanguageSchema>;
+export type LanguageUpdateInput = Partial<LanguageCreateInput>;
 
 export const createCountrySchema = countrySchema.omit({
   id: true,
@@ -75,8 +72,8 @@ export const createCountrySchema = countrySchema.omit({
   updatedAt: true,
 });
 
-export type CreateCountryDto = z.infer<typeof createCountrySchema>;
-export type UpdateCountryDto = Partial<CreateCountryDto>;
+export type CountryCreateInput = z.infer<typeof createCountrySchema>;
+export type CountryUpdateInput = Partial<CountryCreateInput>;
 
 export const createCurrencySchema = currencySchema.omit({
   id: true,
@@ -84,15 +81,15 @@ export const createCurrencySchema = currencySchema.omit({
   updatedAt: true,
 });
 
-export type CreateCurrencyDto = z.infer<typeof createCurrencySchema>;
-export type UpdateCurrencyDto = Partial<CreateCurrencyDto>;
+export type CurrencyCreateInput = z.infer<typeof createCurrencySchema>;
+export type CurrencyUpdateInput = Partial<CurrencyCreateInput>;
 
 export type CurrencyRepository = {
   listCurrencies(): Promise<CurrencyRecord[]>;
   getCurrencyById(id: string): Promise<CurrencyRecord | null>;
   getCurrencyByCode(code: string): Promise<CurrencyRecord | null>;
-  createCurrency(data: CreateCurrencyDto): Promise<CurrencyRecord>;
-  updateCurrency(id: string, data: UpdateCurrencyDto): Promise<CurrencyRecord>;
+  createCurrency(data: CurrencyCreateInput): Promise<CurrencyRecord>;
+  updateCurrency(id: string, data: CurrencyUpdateInput): Promise<CurrencyRecord>;
   deleteCurrency(id: string): Promise<void>;
   isCurrencyInUse(id: string): Promise<boolean>;
   ensureDefaultCurrencies(): Promise<void>;
@@ -104,8 +101,8 @@ export const createTranslationSchema = translationSchema.omit({
   updatedAt: true,
 });
 
-export type CreateTranslationDto = z.infer<typeof createTranslationSchema>;
-export type UpdateTranslationDto = Partial<CreateTranslationDto>;
+export type TranslationCreateInput = z.infer<typeof createTranslationSchema>;
+export type TranslationUpdateInput = Partial<TranslationCreateInput>;
 
 /**
  * Composite DTOs
@@ -120,17 +117,15 @@ export const countryWithCurrenciesSchema = countrySchema.extend({
   ),
 });
 
-export type CountryWithCurrenciesDto = z.infer<typeof countryWithCurrenciesSchema>;
-export type CountryWithCurrencies = CountryWithCurrenciesDto;
-export type CountryOption = CountryWithCurrenciesDto;
+export type CountryWithCurrencies = z.infer<typeof countryWithCurrenciesSchema>;
+export type CountryOption = CountryWithCurrencies;
 
 export const languageWithCountriesSchema = languageSchema.extend({
   countries: z.array(countrySchema),
 });
 
-export type LanguageWithCountriesDto = z.infer<typeof languageWithCountriesSchema>;
-export type LanguageWithCountries = LanguageWithCountriesDto;
-export type Language = LanguageWithCountriesDto;
+export type LanguageWithCountries = z.infer<typeof languageWithCountriesSchema>;
+export type Language = LanguageWithCountries;
 
 /**
  * Persistence Inputs

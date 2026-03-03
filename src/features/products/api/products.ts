@@ -2,7 +2,7 @@ import {
   type ProductWithImages,
   type ProductsPagedResult,
 } from '@/shared/contracts/products/product';
-import { type ProductFilterDto } from '@/shared/contracts/products/filters';
+import { type ProductFilter } from '@/shared/contracts/products/filters';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 const PRODUCT_READ_TIMEOUT_MS = 60_000;
@@ -10,7 +10,7 @@ const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 
 // This function fetches a list of products from the API.
 export async function getProducts(
-  filters: ProductFilterDto,
+  filters: ProductFilter,
   signal?: AbortSignal
 ): Promise<ProductWithImages[]> {
   const options: ApiClientOptions = {
@@ -26,7 +26,7 @@ export async function getProducts(
 }
 
 export async function countProducts(
-  filters: ProductFilterDto,
+  filters: ProductFilter,
   signal?: AbortSignal
 ): Promise<number> {
   try {
@@ -50,7 +50,7 @@ export async function countProducts(
  * Prefer this over calling getProducts() and countProducts() separately.
  */
 export async function getProductsWithCount(
-  filters: ProductFilterDto,
+  filters: ProductFilter,
   signal?: AbortSignal
 ): Promise<ProductsPagedResult> {
   const options: ApiClientOptions = {

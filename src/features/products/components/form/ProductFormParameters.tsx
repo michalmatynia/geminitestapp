@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
-import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
   Alert,

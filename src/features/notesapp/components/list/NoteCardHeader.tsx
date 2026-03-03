@@ -4,7 +4,7 @@ import React from 'react';
 import { Pin, Star } from 'lucide-react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
+import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { Button, CopyButton, Badge } from '@/shared/ui';
 
 export type NoteCardHeaderProps = {

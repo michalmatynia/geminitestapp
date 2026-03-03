@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getParameterRepository } from '@/features/products/server';
 import type {
-  ProductCategoryDto as ProductCategory,
-  ProductParameterDto as ProductParameter,
+  ProductCategory,
+  ProductParameter,
 } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';

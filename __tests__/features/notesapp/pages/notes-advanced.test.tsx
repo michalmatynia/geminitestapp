@@ -161,8 +161,9 @@ describe('Notes Advanced UI', () => {
     const appleNote = await screen.findByRole('heading', { name: 'Apple' });
     await user.click(appleNote);
 
-    // Use findByText to wait for the detail view to render
-    expect(await screen.findByText('First note', {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Apple' }, { timeout: 3000 })
+    ).toBeInTheDocument();
 
     const editBtn = await screen.findByRole('button', { name: 'Edit' });
     await user.click(editBtn);
@@ -176,6 +177,9 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('heading', { name: 'Apple' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Apple' }, { timeout: 3000 })
+    ).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
 
     const titleInput = screen.getByPlaceholderText('Enter note title');
@@ -195,6 +199,9 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('heading', { name: 'Banana' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Banana' }, { timeout: 3000 })
+    ).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
 
     const deleteBtn = screen.getByRole('button', { name: 'Delete' });
@@ -227,8 +234,6 @@ describe('Notes Advanced UI', () => {
     await user.click(favBtn);
 
     // Check if it's now Unfavorite note
-    expect(
-      await within(appleCard as HTMLElement).findByRole('button', { name: /Unfavorite note/i })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Unfavorite note/i })).toBeInTheDocument();
   });
 });

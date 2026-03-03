@@ -43,11 +43,11 @@ import {
 import type {
   ParameterRepository,
   ProductParameter,
-  ProductDto as ProductRecord,
-  ProductWithImagesDto as ProductWithImages,
-  ProductParameterValueDto as ProductParameterValue,
-  CreateProductDto as ProductCreateInput,
-  UpdateProductDto as ProductUpdateInput,
+  ProductRecord,
+  ProductWithImages,
+  ProductParameterValue,
+  CreateProduct as ProductCreateInput,
+  UpdateProduct as ProductUpdateInput,
 } from '@/shared/contracts/products';
 
 export const resolveProducerAndTagLookups = async (

@@ -1,8 +1,8 @@
-'use client';
+import 'server-only';
 
  
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
+ 
  
  
  

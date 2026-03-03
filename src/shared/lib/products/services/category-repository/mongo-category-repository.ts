@@ -2,8 +2,8 @@ import { ObjectId } from 'mongodb';
 
 import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
 import type {
-  CreateProductCategoryDto,
-  UpdateProductCategoryDto,
+  ProductCategoryCreateInput,
+  ProductCategoryUpdateInput,
 } from '@/shared/contracts/products';
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
@@ -294,7 +294,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     };
   },
 
-  async createCategory(data: CreateProductCategoryDto): Promise<ProductCategory> {
+  async createCategory(data: ProductCategoryCreateInput): Promise<ProductCategory> {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ProductCategoryDoc, '_id'> = {
@@ -321,7 +321,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     return created;
   },
 
-  async updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory> {
+  async updateCategory(id: string, data: ProductCategoryUpdateInput): Promise<ProductCategory> {
     const db = await getMongoDb();
     const current = await db.collection<ProductCategoryDoc>(COLLECTION).findOne(buildIdFilter(id));
     if (!current) {

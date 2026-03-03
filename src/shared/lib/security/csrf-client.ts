@@ -1,5 +1,3 @@
-'use client';
-
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
 export const CSRF_HEADER_FALLBACK = 'x-xsrf-token';

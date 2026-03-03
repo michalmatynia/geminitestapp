@@ -14,18 +14,16 @@ export const productCategorySchema = namedDtoSchema.extend({
   sortIndex: z.number().nullable().optional(),
 });
 
-export type ProductCategoryDto = z.infer<typeof productCategorySchema>;
-export type ProductCategory = ProductCategoryDto;
+export type ProductCategory = z.infer<typeof productCategorySchema>;
 
 /**
  * Product Category With Children Contract
  */
-export interface ProductCategoryWithChildrenDto extends ProductCategoryDto {
-  children: ProductCategoryWithChildrenDto[];
+export interface ProductCategoryWithChildren extends ProductCategory {
+  children: ProductCategoryWithChildren[];
 }
-export type ProductCategoryWithChildren = ProductCategoryWithChildrenDto;
 
-export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildrenDto> =
+export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildren> =
   productCategorySchema.extend({
     children: z.array(z.lazy(() => productCategoryWithChildrenSchema)),
   });
@@ -36,10 +34,8 @@ export const createProductCategorySchema = productCategorySchema.omit({
   updatedAt: true,
 });
 
-export type CreateProductCategoryDto = z.infer<typeof createProductCategorySchema>;
-export type ProductCategoryCreateInput = CreateProductCategoryDto;
-export type UpdateProductCategoryDto = Partial<CreateProductCategoryDto>;
-export type ProductCategoryUpdateInput = UpdateProductCategoryDto;
+export type ProductCategoryCreateInput = z.infer<typeof createProductCategorySchema>;
+export type ProductCategoryUpdateInput = Partial<ProductCategoryCreateInput>;
 
 export const productCategoryFiltersSchema = z.object({
   catalogId: z.string().optional(),
@@ -47,7 +43,7 @@ export const productCategoryFiltersSchema = z.object({
   search: z.string().optional(),
 });
 
-export type ProductCategoryFiltersDto = z.infer<typeof productCategoryFiltersSchema>;
+export type ProductCategoryFilters = z.infer<typeof productCategoryFiltersSchema>;
 
 /**
  * Product Category Reorder Contract
@@ -60,4 +56,4 @@ export const reorderProductCategorySchema = z.object({
   catalogId: z.string().trim().optional(),
 });
 
-export type ReorderProductCategoryDto = z.infer<typeof reorderProductCategorySchema>;
+export type ReorderProductCategory = z.infer<typeof reorderProductCategorySchema>;

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { imageFileService } from '@/features/files/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

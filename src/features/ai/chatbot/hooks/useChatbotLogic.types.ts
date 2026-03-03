@@ -1,5 +1,4 @@
-'use client';
-
+import type * as React from 'react';
 import type {
   ChatMessageDto as ChatMessage,
   ChatbotDebugStateDto as ChatbotDebugState,

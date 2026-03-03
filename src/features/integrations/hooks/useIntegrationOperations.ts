@@ -7,7 +7,7 @@ import {
   type MarketplaceBadgeEntry,
   type ListingBadgesPayload,
 } from '@/shared/contracts/integrations';
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';

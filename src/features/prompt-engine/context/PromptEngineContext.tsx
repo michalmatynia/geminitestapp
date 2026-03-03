@@ -4,11 +4,17 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
+} from '../settings';
+import { 
+  parsePromptEngineSettings, 
+  defaultPromptEngineSettings 
 } from '../settings';
 
 import {
@@ -63,6 +69,8 @@ export function PromptEngineProvider({
   lockedScope,
 }: PromptEngineProviderProps): React.JSX.Element {
   const settingsQuery = useSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
   const pageContext = useOptionalPromptEngineValidationPageContext();
   
   const config = usePromptEngineConfigImpl({
@@ -103,8 +111,16 @@ export function PromptEngineProvider({
     activeExploderSubTab: config.activeExploderSubTab,
   });
 
+  const promptEngineSettings = useMemo(
+    () => parsePromptEngineSettings(rawSettings),
+    [rawSettings]
+  );
+
+  const isUsingDefaults = !rawSettings;
+
   const configValue = useMemo<PromptEngineConfig>(
     () => ({
+      promptEngineSettings,
       patternTab: config.patternTab,
       setPatternTab: config.setPatternTab,
       exploderSubTab: config.exploderSubTab,
@@ -113,8 +129,10 @@ export function PromptEngineProvider({
       activeExploderSubTab: config.activeExploderSubTab,
       patternTabLocked: config.patternTabLocked,
       exploderSubTabLocked: config.exploderSubTabLocked,
+      scopeLocked: config.scopeLocked,
+      isUsingDefaults,
     }),
-    [config]
+    [config, promptEngineSettings, isUsingDefaults]
   );
 
   const filtersValue = useMemo<PromptEngineFilters>(
@@ -141,14 +159,18 @@ export function PromptEngineProvider({
       isDirty: data.isDirty,
       learnedDirty: data.learnedDirty,
       saveError: data.saveError,
+      isLoading: settingsQuery.isLoading && data.drafts.length === 0,
       isInitialLoading: settingsQuery.isLoading && data.drafts.length === 0,
       isRefreshing: settingsQuery.isRefetching,
+      isSaving: updateSetting.isPending,
     }),
-    [data, filtering, settingsQuery.isLoading, settingsQuery.isRefetching]
+    [data, filtering, settingsQuery.isLoading, settingsQuery.isRefetching, updateSetting.isPending]
   );
 
   const actionsValue = useMemo<PromptEngineActions>(
     () => ({
+      setPatternTab: config.setPatternTab,
+      setExploderSubTab: config.setExploderSubTab,
       handleRuleTextChange: actions.handleRuleTextChange,
       handlePatchRule: actions.handlePatchRule,
       handleToggleRuleEnabled: actions.handleToggleRuleEnabled,
@@ -167,8 +189,17 @@ export function PromptEngineProvider({
       handleImport: actions.handleImport,
       handleImportLearned: actions.handleImportLearned,
       handleSave: actions.handleSave,
+      handleCopy: async (value: string, label: string) => {
+        try {
+          await navigator.clipboard.writeText(value);
+          toast(`${label} copied to clipboard`, { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'PromptEngineContext', action: 'handleCopy' } });
+          toast('Failed to copy to clipboard', { variant: 'error' });
+        }
+      },
     }),
-    [actions]
+    [config.setPatternTab, config.setExploderSubTab, actions, toast]
   );
 
   const aggregatedValue = useMemo<PromptEngineContextValue>(

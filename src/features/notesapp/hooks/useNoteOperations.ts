@@ -4,8 +4,8 @@ import { useCallback } from 'react';
 import type { UseNoteOperationsProps } from '@/shared/contracts/notes';
 import type { UndoAction } from '@/shared/contracts/notes';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteWithRelations,
+  CategoryWithChildren,
   NoteRelationWithTarget,
 } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';

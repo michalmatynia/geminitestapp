@@ -182,7 +182,7 @@ export function createInfiniteQueryV2<
 }
 
 export function createMultiQueryV2<
-  TQueries extends readonly QueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TQueries extends readonly QueryDescriptorV2<any, any, any, any>[],
   TCombine = MultiQueryResultsV2<TQueries>,
 >(config: MultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;
@@ -245,7 +245,7 @@ export function createSuspenseInfiniteQueryV2<
 }
 
 export function createSuspenseMultiQueryV2<
-  TQueries extends readonly SuspenseQueryDescriptorV2<unknown, unknown, unknown, QueryKey>[],
+  TQueries extends readonly SuspenseQueryDescriptorV2<any, any, any, any>[],
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 >(config: SuspenseMultiQueryConfigV2<TQueries, TCombine>): TCombine {
   const { queries, combine } = config;

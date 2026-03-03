@@ -1,34 +1,44 @@
- 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
- 
-
 import { randomUUID } from 'crypto';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { 
-  TagDocument, 
-  NoteDocument 
-} from '../types/mongo-note-types';
-import { 
+import type { Filter, UpdateFilter } from 'mongodb';
+
+import type { TagDocument, NoteDocument } from '../../types/mongo-note-types';
+import type {
   TagRecord,
   TagCreateInput,
   TagUpdateInput,
 } from '@/shared/contracts/notes';
-import { toTagResponse } from '../mongo-note-repository-utils';
-import { Filter, UpdateFilter } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const tagCollectionName = 'tags';
 const noteCollectionName = 'notes';
 
-export const mongoTagImpl = {
+const toTagRecord = (doc: TagDocument): TagRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  color: doc.color ?? null,
+  notebookId: doc.notebookId ?? null,
+  createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
+  updatedAt:
+    typeof doc.updatedAt === 'string'
+      ? doc.updatedAt
+      : doc.updatedAt?.toISOString() ?? null,
+});
+
+type MongoTagImpl = {
+  getAllTags: (notebookId: string) => Promise<TagRecord[]>;
+  getTagById: (id: string) => Promise<TagRecord | null>;
+  createTag: (data: TagCreateInput) => Promise<TagRecord>;
+  updateTag: (id: string, data: TagUpdateInput) => Promise<TagRecord>;
+  deleteTag: (id: string) => Promise<void>;
+};
+
+export const mongoTagImpl: MongoTagImpl = {
   async getAllTags(notebookId: string): Promise<TagRecord[]> {
     const db = await getMongoDb();
     const collection = db.collection<TagDocument>(tagCollectionName);
     const docs = await collection.find({ notebookId }).sort({ name: 1 }).toArray();
-    return docs.map(toTagResponse);
+    return docs.map((doc) => toTagRecord(doc));
   },
 
   async getTagById(id: string): Promise<TagRecord | null> {
@@ -37,7 +47,7 @@ export const mongoTagImpl = {
     const doc = await collection.findOne({
       $or: [{ id }, { _id: id }],
     } as Filter<TagDocument>);
-    return doc ? toTagResponse(doc) : null;
+    return doc ? toTagRecord(doc) : null;
   },
 
   async createTag(data: TagCreateInput): Promise<TagRecord> {
@@ -55,7 +65,7 @@ export const mongoTagImpl = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toTagResponse(doc);
+    return toTagRecord(doc);
   },
 
   async updateTag(id: string, data: TagUpdateInput): Promise<TagRecord> {
@@ -77,7 +87,7 @@ export const mongoTagImpl = {
     if (!result) throw notFoundError('Tag not found');
 
     // Update embedded tags in notes
-    const tag = toTagResponse(result);
+    const tag = toTagRecord(result);
     await db.collection<NoteDocument>(noteCollectionName).updateMany(
       { 'tags.tagId': tag.id } as Filter<NoteDocument>,
       { $set: { 'tags.$.tag': tag } } as UpdateFilter<NoteDocument>

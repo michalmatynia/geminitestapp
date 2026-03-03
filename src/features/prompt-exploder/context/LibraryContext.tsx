@@ -31,7 +31,6 @@ import {
 } from '../segmentation-library';
 import {
   type PromptExploderSegmentationRecord,
-  type CaptureSegmentationRecordReason,
   type CaptureSegmentationRecordResult,
 } from '@/shared/contracts/prompt-exploder';
 import { useBenchmarkActions } from './hooks/useBenchmark';
@@ -315,6 +314,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     async (): Promise<CaptureSegmentationRecordResult> => {
       if (!promptText.trim()) {
         return {
+          ok: false,
           captured: false,
           persisted: false,
           reason: 'missing_prompt',
@@ -322,6 +322,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       }
       if (!documentState) {
         return {
+          ok: false,
           captured: false,
           persisted: false,
           reason: 'missing_document',
@@ -338,6 +339,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       });
       if (!nextRecord) {
         return {
+          ok: false,
           captured: false,
           persisted: false,
           reason: 'missing_document',
@@ -354,6 +356,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
           setSelectedSegmentationRecordId(nextRecord.id);
         }
         return {
+          ok: true,
           captured: true,
           persisted,
           ...(persisted
@@ -370,6 +373,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
           { variant: 'warning' }
         );
         return {
+          ok: false,
           captured: true,
           persisted: false,
           reason: 'persist_failed',

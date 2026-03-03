@@ -24,8 +24,8 @@ import { useLibraryActions, useLibraryState } from '../context/hooks/useLibrary'
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
 import {
   buildPromptExploderSegmentationOutline,
-  type PromptExploderSegmentationRecord,
 } from '../segmentation-library';
+import type { PromptExploderSegmentationRecord } from '@/shared/contracts/prompt-exploder';
 
 type SegmentationListItem = {
   id: string;

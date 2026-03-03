@@ -1,5 +1,3 @@
-'use client';
-
 import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 

@@ -9,17 +9,19 @@ import type {
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 
+import type { PromptExploderSegmentationReturnTarget } from '@/shared/contracts/prompt-exploder';
+
 export interface SettingsRuntimeState {
   activeValidationScope: PromptExploderRuntimeValidationScope;
   activeValidationRuleStack: PromptExploderValidationRuleStack;
-  runtimeSelection: PromptValidationOrchestrationResult;
-  runtimeGuardrailIssue: string | null;
   scopedRules: PromptValidationRule[];
   effectiveRules: PromptValidationRule[];
   runtimeValidationRules: PromptValidationRule[];
   effectiveLearnedTemplates: PromptExploderLearnedTemplate[];
   runtimeLearnedTemplates: PromptExploderLearnedTemplate[];
-  templateMergeThreshold: number;
+  runtimeGuardrailIssue: string | null;
+  returnTarget: PromptExploderSegmentationReturnTarget;
+  applyToDrafts: boolean;
 }
 
 export const SettingsRuntimeContext = createContext<SettingsRuntimeState | null>(null);

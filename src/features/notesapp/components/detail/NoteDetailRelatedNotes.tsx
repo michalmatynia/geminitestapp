@@ -6,13 +6,13 @@ import { X } from 'lucide-react';
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
-import type { RelatedNoteDto as RelatedNote, NoteRelationDto } from '@/shared/contracts/notes';
+import type { RelatedNote, NoteRelationRecord } from '@/shared/contracts/notes';
 
-type NoteRelationWithTarget = NoteRelationDto & {
+type NoteRelationWithTarget = NoteRelationRecord & {
   targetNote?: RelatedNote | undefined;
 };
 
-type NoteRelationWithSource = NoteRelationDto & {
+type NoteRelationWithSource = NoteRelationRecord & {
   sourceNote?: RelatedNote | undefined;
 };
 

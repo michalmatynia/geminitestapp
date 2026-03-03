@@ -10,6 +10,7 @@ import {
   useMasterFolderTreeShell,
 } from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import { FolderTreePanel } from '@/shared/ui';
 import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
@@ -30,16 +31,23 @@ import {
 import { NotesAppTreeHeader } from './tree/NotesAppTreeHeader';
 import { NotesAppTreeNode } from './tree/NotesAppTreeNode';
 
+type NotesAppFolderTreeOperations = NotesMasterTreeOperations & {
+  handleRelateNotes: (sourceNoteId: string, targetNoteId: string) => Promise<void>;
+};
+
+type NotesAppFolderTreeDropInput = Parameters<typeof handleMasterTreeDrop>[0]['input'];
+
 export function NotesAppFolderTree(): React.JSX.Element {
+  const notesAppContext = useNotesAppContext();
   const {
     folderTree,
     selectedNote,
     isFolderTreeCollapsed,
     setIsFolderTreeCollapsed,
     draggedNoteId,
-    operations,
     selectedFolderId,
-  } = useNotesAppContext();
+  } = notesAppContext;
+  const operations = notesAppContext.operations as NotesAppFolderTreeOperations;
   const hasInitializedCollapseSyncRef = useRef(false);
 
   const masterNodes = useMemo(
@@ -154,7 +162,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
             });
           }}
           onNodeDrop={async (
-            { draggedNodeId, targetId, position, rootDropZone },
+            { draggedNodeId, targetId, position, rootDropZone }: NotesAppFolderTreeDropInput,
             ctlr
           ): Promise<void> => {
             await handleMasterTreeDrop({

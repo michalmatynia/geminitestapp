@@ -4,8 +4,8 @@ import type {
   ExtractedBaseParameter,
 } from '@/shared/contracts/integrations';
 import type {
-  ProductParameterDto as ProductParameter,
-  ProductParameterValueDto as ProductParameterValue,
+  ProductParameter,
+  ProductParameterValue,
 } from '@/shared/contracts/products';
 
 import { extractBaseParameters } from './extractor';

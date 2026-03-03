@@ -2,8 +2,8 @@ import { Prisma, ProductCategory as PrismaProductCategory } from '@prisma/client
 
 import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
 import type {
-  CreateProductCategoryDto,
-  UpdateProductCategoryDto,
+  ProductCategoryCreateInput,
+  ProductCategoryUpdateInput,
 } from '@/shared/contracts/products';
 import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
@@ -192,7 +192,7 @@ export const prismaCategoryRepository: CategoryRepository = {
     return category ? toCategoryWithChildrenDomain(category) : null;
   },
 
-  async createCategory(data: CreateProductCategoryDto): Promise<ProductCategory> {
+  async createCategory(data: ProductCategoryCreateInput): Promise<ProductCategory> {
     const parentId = data.parentId ?? null;
     return prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<ProductCategory> => {
       const category = await tx.productCategory.create({
@@ -217,7 +217,7 @@ export const prismaCategoryRepository: CategoryRepository = {
     });
   },
 
-  async updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory> {
+  async updateCategory(id: string, data: ProductCategoryUpdateInput): Promise<ProductCategory> {
     return prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<ProductCategory> => {
       const current = await tx.productCategory.findUnique({
         where: { id },

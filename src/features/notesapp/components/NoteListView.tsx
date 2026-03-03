@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
+  NoteWithRelations,
   ThemeRecord,
 } from '@/shared/contracts/notes';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';

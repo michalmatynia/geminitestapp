@@ -5,7 +5,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '../../../api';
+import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '@/shared/lib/ai-paths/api';
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
 import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type InfiniteData,
   type QueryFunctionContext,
@@ -202,46 +200,49 @@ export type SingleQueryConfigV2<
 };
 
 export type MultiQueryConfigV2<
-  TQueries extends readonly unknown[],
+  TQueries extends readonly any[],
   TCombine = MultiQueryResultsV2<TQueries>,
 > = {
-  queries: {
-    [K in keyof TQueries]: TQueries[K] extends QueryDescriptorV2<infer TQueryFnData, infer TError, infer TData, infer TQueryKey>
-      ? QueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
-      : never;
-  };
+  queries: TQueries;
   combine?: (results: MultiQueryResultsV2<TQueries>) => TCombine;
 };
 
-export type MultiQueryResultsV2<TQueries extends readonly unknown[]> = {
+export type MultiQueryResultsV2<
+  TQueries extends readonly any[],
+> = {
   [K in keyof TQueries]: TQueries[K] extends QueryDescriptorV2<
-    unknown,
+    any,
     infer TError,
     infer TData,
-    QueryKey
+    any
   >
+    ? UseQueryResult<TData, TError>
+    : TQueries[K] extends BaseQueryFactoryV2Config<
+        any,
+        infer TError,
+        infer TData,
+        any
+      >
     ? UseQueryResult<TData, TError>
     : never;
 };
 
 export type SuspenseMultiQueryConfigV2<
-  TQueries extends readonly unknown[],
+  TQueries extends readonly any[],
   TCombine = SuspenseMultiQueryResultsV2<TQueries>,
 > = {
-  queries: {
-    [K in keyof TQueries]: TQueries[K] extends SuspenseQueryDescriptorV2<infer TQueryFnData, infer TError, infer TData, infer TQueryKey>
-      ? SuspenseQueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
-      : never;
-  };
+  queries: TQueries;
   combine?: (results: SuspenseMultiQueryResultsV2<TQueries>) => TCombine;
 };
 
-export type SuspenseMultiQueryResultsV2<TQueries extends readonly unknown[]> = {
+export type SuspenseMultiQueryResultsV2<
+  TQueries extends readonly any[],
+> = {
   [K in keyof TQueries]: TQueries[K] extends SuspenseQueryDescriptorV2<
-    unknown,
+    any,
     infer TError,
     infer TData,
-    QueryKey
+    any
   >
     ? UseSuspenseQueryResult<TData, TError>
     : never;

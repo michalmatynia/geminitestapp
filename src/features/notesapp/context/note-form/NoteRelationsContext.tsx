@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
+import type { NoteWithRelations } from '@/shared/contracts/notes';
 
 export interface RelatedNoteItem {
   id: string;

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
+ 
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { randomUUID } from 'crypto';
@@ -16,13 +16,13 @@ import {
   NoteCategoryEmbedded, 
   NoteRelationFromEmbedded, 
   NoteRelationToEmbedded 
-} from '../types/mongo-note-types';
+} from '../../types/mongo-note-types';
 import { 
-  NoteDto as NoteRecord,
-  NoteWithRelationsDto as NoteWithRelations,
-  NoteFiltersDto as NoteFilters,
-  CreateNoteDto as NoteCreateInput,
-  UpdateNoteDto as NoteUpdateInput,
+  NoteRecord,
+  NoteWithRelations,
+  NoteFilters,
+  NoteCreateInput,
+  NoteUpdateInput,
   NoteFileRecord,
 } from '@/shared/contracts/notes';
 import { 

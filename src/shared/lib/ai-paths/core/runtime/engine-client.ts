@@ -1,5 +1,3 @@
-'use client';
-
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimeState, NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 

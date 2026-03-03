@@ -58,6 +58,25 @@ export function SectionNodeItem({
     !isNestedSameParent &&
     !isNestingDescendant;
 
+  const resolveInsideDropSectionId = React.useCallback(
+    (dataTransfer: DataTransfer): string | null => {
+      const sectionDrag = readSectionDragData(dataTransfer, {
+        id: draggedSectionId,
+        type: drag.section.type,
+        zone: drag.section.zone,
+        index: drag.section.index,
+      });
+      const dragSectionId = sectionDrag.id;
+      if (!dragSectionId || dragSectionId === section.id) return null;
+      if (isDescendant(allSections, dragSectionId, section.id)) return null;
+
+      const dragSection = allSections.find((candidate) => candidate.id === dragSectionId);
+      if (dragSection?.parentSectionId === section.id) return null;
+      return dragSectionId;
+    },
+    [allSections, drag.section.index, drag.section.type, drag.section.zone, draggedSectionId, section.id]
+  );
+
   const SectionIcon: LucideIcon = Box;
   const rootRows = section.blocks.filter((block) => block.type === 'Row');
   const rowIndexById = new Map<string, number>();
@@ -97,13 +116,16 @@ export function SectionNodeItem({
         index: sectionIndex,
       });
       setMasterTreeDragNodeData(event.dataTransfer, toCmsSectionNodeId(section.id), section.id);
-      startSectionDrag({
-        id: section.id,
-        type: section.type,
-        zone: section.zone,
-        index: sectionIndex,
-      });
-      startSectionMasterDrag(section.id);
+      // Defer state updates to avoid cancelling the browser drag session.
+      setTimeout(() => {
+        startSectionDrag({
+          id: section.id,
+          type: section.type,
+          zone: section.zone,
+          index: sectionIndex,
+        });
+        startSectionMasterDrag(section.id);
+      }, 0);
     },
     [section.id, section.type, section.zone, sectionIndex, startSectionDrag, startSectionMasterDrag]
   );
@@ -137,49 +159,6 @@ export function SectionNodeItem({
           data-cms-section-id={section.id}
           data-cms-section-zone={section.zone}
           draggable
-          onDragOver={(event: React.DragEvent): void => {
-            const sectionDrag = readSectionDragData(event.dataTransfer, {
-              id: draggedSectionId,
-              type: drag.section.type,
-              zone: drag.section.zone,
-              index: drag.section.index,
-            });
-            const dragSectionId = sectionDrag.id;
-            if (!dragSectionId || dragSectionId === section.id) return;
-            if (isDescendant(allSections, dragSectionId, section.id)) return;
-            const dragSection = allSections.find((candidate) => candidate.id === dragSectionId);
-            if (dragSection?.parentSectionId === section.id) return;
-            event.preventDefault();
-            event.stopPropagation();
-            setIsInsideDropOver(true);
-          }}
-          onDragLeave={(event: React.DragEvent): void => {
-            if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-            setIsInsideDropOver(false);
-          }}
-          onDrop={(event: React.DragEvent): void => {
-            event.preventDefault();
-            event.stopPropagation();
-            setIsInsideDropOver(false);
-
-            const sectionDrag = readSectionDragData(event.dataTransfer, {
-              id: draggedSectionId,
-              type: drag.section.type,
-              zone: drag.section.zone,
-              index: drag.section.index,
-            });
-            const dragSectionId = sectionDrag.id;
-            if (!dragSectionId || dragSectionId === section.id) return;
-            if (isDescendant(allSections, dragSectionId, section.id)) return;
-            const dragSection = allSections.find((candidate) => candidate.id === dragSectionId);
-            if (dragSection?.parentSectionId === section.id) return;
-
-            void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(
-              () => {
-                endSectionDrag();
-              }
-            );
-          }}
           className={cn(
             'flex items-center gap-2 rounded-md border py-1.5 pl-1 pr-2 transition',
             isInsideDropOver
@@ -272,6 +251,31 @@ export function SectionNodeItem({
           <div
             data-cms-section-drop-target='inside'
             data-cms-section-parent-id={section.id}
+            onDragOver={(event: React.DragEvent): void => {
+              const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
+              if (!dragSectionId) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setIsInsideDropOver(true);
+            }}
+            onDragLeave={(event: React.DragEvent): void => {
+              if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+              setIsInsideDropOver(false);
+            }}
+            onDrop={(event: React.DragEvent): void => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsInsideDropOver(false);
+
+              const dragSectionId = resolveInsideDropSectionId(event.dataTransfer);
+              if (!dragSectionId) return;
+
+              void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(
+                () => {
+                  endSectionDrag();
+                }
+              );
+            }}
             className={cn(
               'mt-1 rounded border border-dashed px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition',
               isInsideDropOver

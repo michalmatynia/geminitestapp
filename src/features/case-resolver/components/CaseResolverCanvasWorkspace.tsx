@@ -94,14 +94,15 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
   const selectedPromptMeta = selectedNodeMeta;
   const selectedPromptSourceFile = null;
+  const selectedNodeMetaValue = selectedNodeMeta ?? DEFAULT_CASE_RESOLVER_NODE_META;
   const selectedPromptTemplate = useMemo(() => {
     if (!selectedNode) return '';
     const config = resolvePromptConfig(selectedNode);
     return config.template ?? '';
   }, [selectedNode]);
   const selectedPromptInputText = useMemo(
-    () => (selectedNode ? renderPromptNodeTextPreview(selectedNode, selectedNodeMeta!) : ''),
-    [selectedNode, selectedNodeMeta]
+    () => (selectedNode ? renderPromptNodeTextPreview(selectedNode, selectedNodeMetaValue) : ''),
+    [selectedNode, selectedNodeMetaValue]
   );
 
   const updateSelectedPromptTemplate = useCallback((_template: string): void => {
@@ -113,7 +114,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       if (!selectedNodeId || !activeFile?.graph) return;
       const nextMeta = {
         ...normalizedNodeMeta,
-        [selectedNodeId]: { ...selectedNodeMeta, ...patch },
+        [selectedNodeId]: { ...selectedNodeMetaValue, ...patch },
       };
       const { nodes, edges, ...rest } = activeFile.graph;
       const nextGraph: CaseResolverGraph = {
@@ -124,7 +125,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       };
       onGraphChange(nextGraph);
     },
-    [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMeta, onGraphChange]
+    [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMetaValue, onGraphChange]
   );
 
   const selectedEdgeJoinMode = useMemo(

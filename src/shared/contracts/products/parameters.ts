@@ -14,7 +14,7 @@ export const productParameterSelectorTypeSchema = z.enum([
   'checklist',
 ]);
 
-export type ProductParameterSelectorTypeDto = z.infer<typeof productParameterSelectorTypeSchema>;
+export type ProductParameterSelectorType = z.infer<typeof productParameterSelectorTypeSchema>;
 
 export const productParameterSchema = namedDtoSchema.extend({
   catalogId: z.string(),
@@ -25,8 +25,7 @@ export const productParameterSchema = namedDtoSchema.extend({
   optionLabels: z.array(z.string()),
 });
 
-export type ProductParameterDto = z.infer<typeof productParameterSchema>;
-export type ProductParameter = ProductParameterDto;
+export type ProductParameter = z.infer<typeof productParameterSchema>;
 
 export const createProductParameterSchema = productParameterSchema.omit({
   id: true,
@@ -34,10 +33,8 @@ export const createProductParameterSchema = productParameterSchema.omit({
   updatedAt: true,
 });
 
-export type CreateProductParameterDto = z.infer<typeof createProductParameterSchema>;
-export type ProductParameterCreateInput = CreateProductParameterDto;
-export type UpdateProductParameterDto = Partial<CreateProductParameterDto>;
-export type ProductParameterUpdateInput = UpdateProductParameterDto;
+export type ProductParameterCreateInput = z.infer<typeof createProductParameterSchema>;
+export type ProductParameterUpdateInput = Partial<ProductParameterCreateInput>;
 
 /**
  * Simple Product Parameter (for flattened settings)
@@ -57,13 +54,11 @@ export const productSimpleParameterSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type ProductSimpleParameterDto = z.infer<typeof productSimpleParameterSchema>;
-export type ProductSimpleParameter = ProductSimpleParameterDto;
+export type ProductSimpleParameter = z.infer<typeof productSimpleParameterSchema>;
 
 export const productSimpleParameterValueSchema = z.object({
   parameterId: z.string(),
   value: z.string(),
 });
 
-export type ProductSimpleParameterValueDto = z.infer<typeof productSimpleParameterValueSchema>;
-export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;
+export type ProductSimpleParameterValue = z.infer<typeof productSimpleParameterValueSchema>;

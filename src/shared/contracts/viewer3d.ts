@@ -143,8 +143,7 @@ export const viewer3DStateSchema = z.object({
   backgroundColor: z.string(),
 });
 
-export type Viewer3DStateDto = z.infer<typeof viewer3DStateSchema>;
-export type Viewer3DState = Viewer3DStateDto;
+export type Viewer3DState = z.infer<typeof viewer3DStateSchema>;
 
 export type Viewer3DTransform = {
   position?: [number, number, number];

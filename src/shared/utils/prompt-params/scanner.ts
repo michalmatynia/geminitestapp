@@ -1,5 +1,3 @@
-'use client';
-
 export type ScanState = {
   inSingle: boolean;
   inDouble: boolean;

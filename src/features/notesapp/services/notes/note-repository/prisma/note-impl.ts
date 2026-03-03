@@ -1,10 +1,10 @@
 import 'server-only';
 
 import type {
-  NoteFiltersDto as NoteFilters,
-  NoteWithRelationsDto as NoteWithRelations,
-  CreateNoteDto as NoteCreateInput,
-  UpdateNoteDto as NoteUpdateInput,
+  NoteFilters,
+  NoteWithRelations,
+  NoteCreateInput,
+  NoteUpdateInput,
   NoteEditorType,
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';

@@ -797,8 +797,11 @@ export function useAiPathTriggerEvent(): {
       notifyAiPathRunEnqueued();
 
       if (args.entityType === 'product') {
-        void invalidateProductsCountsAndDetail(queryClient);
-        void invalidateProductsAndCounts(queryClient);
+        if (args.entityId) {
+          void invalidateProductsCountsAndDetail(queryClient, args.entityId);
+        } else {
+          void invalidateProductsAndCounts(queryClient);
+        }
       }
       if (args.entityType === 'note') {
         void invalidateNotes(queryClient);

@@ -2,17 +2,17 @@ import 'server-only';
 
 import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
-  NoteFiltersDto as NoteFilters,
-  CreateNoteDto as NoteCreateInput,
-  UpdateNoteDto as NoteUpdateInput,
+  NoteWithRelations,
+  NoteFilters,
+  NoteCreateInput,
+  NoteUpdateInput,
   TagCreateInput,
   TagUpdateInput,
   CategoryCreateInput,
   CategoryUpdateInput,
   TagRecord,
   CategoryRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,

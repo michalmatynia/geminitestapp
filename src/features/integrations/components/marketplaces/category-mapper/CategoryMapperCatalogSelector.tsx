@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
-import type { CatalogDto as Catalog } from '@/shared/contracts/products';
+import type { CatalogRecord } from '@/shared/contracts/products';
 import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { Label } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
@@ -16,7 +16,7 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
     () => [
       {
         label: 'Available Catalogs',
-        options: catalogs.map((catalog: Catalog) => ({
+        options: catalogs.map((catalog: CatalogRecord) => ({
           key: catalog.id,
           label: catalog.name,
         })),

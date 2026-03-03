@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { FormSection, SearchInput, LoadingState, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

@@ -3,7 +3,7 @@
 import { type UseQueryResult } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import type { ProductDto, ProductCategoryDto, ProductTagDto } from '@/shared/contracts/products';
+import type { ProductRecord, ProductCategory, ProductTag } from '@/shared/contracts/products';
 import { useAdaptiveQuery } from '@/shared/hooks/query/useSmartCache';
 import { useNormalizedQuery, useComposedQuery } from '@/shared/hooks/useQueryComposition';
 import { useQueryScheduler, useBackgroundQueries } from '@/shared/hooks/useQueryScheduler';
@@ -18,10 +18,10 @@ interface ProductStats {
 }
 
 interface EnhancedProductsQueryResult {
-  products: ReturnType<typeof useNormalizedQuery<ProductDto>>;
-  stats: ReturnType<typeof useComposedQuery<ProductDto[], ProductStats>>;
-  selectById: (id: string) => ProductDto | undefined;
-  selectMany: (ids: string[]) => ProductDto[];
+  products: ReturnType<typeof useNormalizedQuery<ProductRecord>>;
+  stats: ReturnType<typeof useComposedQuery<ProductRecord[], ProductStats>>;
+  selectById: (id: string) => ProductRecord | undefined;
+  selectMany: (ids: string[]) => ProductRecord[];
 }
 
 // Enhanced product queries with normalization and composition
@@ -29,10 +29,10 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const scheduler = useQueryScheduler();
 
   // Normalized products query
-  const productsQuery = useNormalizedQuery<ProductDto>(
+  const productsQuery = useNormalizedQuery<ProductRecord>(
     productKeys.enhanced(),
-    async (): Promise<ProductDto[]> => {
-      return await api.get<ProductDto[]>('/api/products');
+    async (): Promise<ProductRecord[]> => {
+      return await api.get<ProductRecord[]>('/api/products');
     }
   );
 
@@ -40,18 +40,19 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const productStats = useComposedQuery(
     {
       queryKey: productKeys.enhanced(),
-      queryFn: async (): Promise<ProductDto[]> => {
-        return await api.get<ProductDto[]>('/api/products');
+      queryFn: async (): Promise<ProductRecord[]> => {
+        return await api.get<ProductRecord[]>('/api/products');
       },
     },
     (
-      products: ProductDto[]
+      products: ProductRecord[]
     ): { total: number; published: number; categories: number; avgPrice: number } => ({
       total: products.length,
-      published: products.filter((p: ProductDto) => p.published).length,
-      categories: [...new Set(products.map((p: ProductDto) => p.categoryId))].length,
+      published: products.filter((p: ProductRecord) => p.published).length,
+      categories: [...new Set(products.map((p: ProductRecord) => p.categoryId))].length,
       avgPrice:
-        products.reduce((sum: number, p: ProductDto) => sum + (p.price || 0), 0) / products.length,
+        products.reduce((sum: number, p: ProductRecord) => sum + (p.price || 0), 0) /
+        products.length,
     })
   );
 
@@ -60,13 +61,13 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     scheduler.scheduleQuery(
       'product-categories',
       productKeys.categoriesAll(),
-      async (): Promise<ProductCategoryDto[]> => {
+      async (): Promise<ProductCategory[]> => {
         type Catalog = { id: string };
         const catalogs = await api.get<Catalog[]>('/api/catalogs');
         const catalogId =
           Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];
-        return await api.get<ProductCategoryDto[]>(
+        return await api.get<ProductCategory[]>(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
         );
       },
@@ -76,8 +77,8 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     scheduler.scheduleQuery(
       'product-tags',
       productKeys.tagsAll(),
-      async (): Promise<ProductTagDto[]> => {
-        return await api.get<ProductTagDto[]>('/api/products/tags');
+      async (): Promise<ProductTag[]> => {
+        return await api.get<ProductTag[]>('/api/products/tags');
       },
       { priority: 'low', delay: 5000 }
     );

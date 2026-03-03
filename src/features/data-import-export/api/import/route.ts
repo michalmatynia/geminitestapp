@@ -5,7 +5,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { CreateProductDto } from '@/shared/contracts/products';
+import type { CreateProduct } from '@/shared/contracts/products';
 
 interface CsvRow {
   [key: string]: string;
@@ -27,7 +27,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   let successful = 0;
   let failed = 0;
   const errors: Array<{ sku: string; error: string }> = [];
-  const pendingBatch: CreateProductDto[] = [];
+  const pendingBatch: CreateProduct[] = [];
 
   const flushBatch = async (): Promise<void> => {
     if (pendingBatch.length === 0) return;
@@ -74,7 +74,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       description_pl: `${row['PL']}`,
       catalogId: 'default',
       published: true,
-    } as unknown as CreateProductDto;
+    } as unknown as CreateProduct;
 
     pendingBatch.push(productData);
     if (pendingBatch.length >= CHUNK_SIZE) {

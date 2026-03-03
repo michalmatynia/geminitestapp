@@ -34,14 +34,14 @@ import { type FetchNotesParams } from '@/features/notesapp/api/useNoteQueries';
 export type { FetchNotesParams };
 import type { UseNoteDataProps } from '@/shared/contracts/notes';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
-  NoteFiltersDto as NoteFilters,
+  NoteWithRelations,
+  NoteFilters,
   NotebookRecord,
   TagRecord,
   CategoryRecord,
   ThemeRecord,
-  CreateNoteDto as NoteCreateInput,
-  UpdateNoteDto as NoteUpdateInput,
+  NoteCreateInput,
+  NoteUpdateInput,
   NotebookCreateInput,
   NotebookUpdateInput,
   TagCreateInput,
@@ -51,7 +51,7 @@ import type {
   ThemeCreateInput,
   ThemeUpdateInput,
   NoteFileRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
 } from '@/shared/contracts/notes';
 import type { DeleteResponse } from '@/shared/contracts/ui';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';

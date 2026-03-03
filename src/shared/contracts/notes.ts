@@ -90,13 +90,13 @@ export const updateNoteCategorySchema = createNoteCategorySchema.partial();
 export type CategoryUpdateInput = z.infer<typeof updateNoteCategorySchema>;
 export type CategoryUpdateData = CategoryUpdateInput;
 
-export type NoteCategoryRecordWithChildrenDto = CategoryRecord & {
-  children: NoteCategoryRecordWithChildrenDto[];
+export type CategoryWithChildren = CategoryRecord & {
+  children: CategoryWithChildren[];
   notes?: NoteRecord[] | undefined;
   _count?: { notes: number };
 };
 
-export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> =
+export const noteCategoryRecordWithChildrenSchema: z.ZodType<CategoryWithChildren> =
   noteCategorySchema.extend({
     children: z.array(z.lazy(() => noteCategoryRecordWithChildrenSchema)),
   });
@@ -150,11 +150,6 @@ export const createNoteFileSchema = noteFileSchema.omit({
 
 export type NoteFileCreateInput = z.infer<typeof createNoteFileSchema>;
 
-export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
-  notes?: NoteRecord[] | undefined;
-  _count?: { notes: number };
-};
-
 /**
  * Note Contract
  */
@@ -193,8 +188,7 @@ export const noteSchema = dtoBaseSchema.extend({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type NoteDto = z.infer<typeof noteSchema>;
-export type NoteRecord = NoteDto;
+export type NoteRecord = z.infer<typeof noteSchema>;
 
 export const createNoteSchema = noteSchema
   .omit({
@@ -207,13 +201,11 @@ export const createNoteSchema = noteSchema
     notebookId: z.string().nullable().optional(),
   });
 
-export type CreateNoteDto = z.input<typeof createNoteSchema>;
-export type NoteCreateInput = CreateNoteDto;
+export type NoteCreateInput = z.input<typeof createNoteSchema>;
 export type NoteCreateData = z.infer<typeof createNoteSchema>;
 
 export const updateNoteSchema = createNoteSchema.partial();
-export type UpdateNoteDto = z.infer<typeof updateNoteSchema>;
-export type NoteUpdateInput = UpdateNoteDto;
+export type NoteUpdateInput = z.infer<typeof updateNoteSchema>;
 export type NoteUpdateData = z.infer<typeof updateNoteSchema>;
 
 /**
@@ -225,8 +217,7 @@ export const noteTagRelationSchema = z.object({
   assignedAt: z.string(),
 });
 
-export type NoteTagRelationDto = z.infer<typeof noteTagRelationSchema>;
-export type NoteTagRecord = NoteTagRelationDto;
+export type NoteTagRecord = z.infer<typeof noteTagRelationSchema>;
 
 export const noteCategoryRelationSchema = z.object({
   noteId: z.string(),
@@ -234,8 +225,7 @@ export const noteCategoryRelationSchema = z.object({
   assignedAt: z.string(),
 });
 
-export type NoteCategoryRelationDto = z.infer<typeof noteCategoryRelationSchema>;
-export type NoteCategoryRecord = NoteCategoryRelationDto;
+export type NoteCategoryRecord = z.infer<typeof noteCategoryRelationSchema>;
 
 export const noteRelationSchema = z.object({
   sourceNoteId: z.string(),
@@ -244,20 +234,19 @@ export const noteRelationSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type NoteRelationDto = z.infer<typeof noteRelationSchema>;
+export type NoteRelationRecord = z.infer<typeof noteRelationSchema>;
 
-export type NoteRelationWithSource = NoteRelationDto & {
-  sourceNote?: RelatedNoteDto | undefined;
+export type NoteRelationWithSource = NoteRelationRecord & {
+  sourceNote?: RelatedNote | undefined;
 };
 
-export type NoteRelationWithTarget = NoteRelationDto & {
-  targetNote?: RelatedNoteDto | undefined;
+export type NoteRelationWithTarget = NoteRelationRecord & {
+  targetNote?: RelatedNote | undefined;
 };
 
-export type NoteTagWithDetails = NoteTagRelationDto & {
+export type NoteTagWithDetails = NoteTagRecord & {
   tag: TagRecord;
 };
-export type NoteRelationRecord = NoteRelationDto;
 
 export const relatedNoteSchema = z.object({
   id: z.string(),
@@ -268,8 +257,7 @@ export const relatedNoteSchema = z.object({
   content: z.string().optional(),
 });
 
-export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
-export type RelatedNote = RelatedNoteDto;
+export type RelatedNote = z.infer<typeof relatedNoteSchema>;
 
 export const noteWithRelationsSchema = noteSchema.extend({
   tags: z
@@ -313,8 +301,7 @@ export const noteWithRelationsSchema = noteSchema.extend({
     .optional(),
 });
 
-export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
-export type NoteWithRelations = NoteWithRelationsDto;
+export type NoteWithRelations = z.infer<typeof noteWithRelationsSchema>;
 
 export const noteFiltersSchema = z.object({
   notebookId: z.string().nullable().optional(),
@@ -333,8 +320,7 @@ export const noteFiltersSchema = z.object({
   categoryIds: z.array(z.string()).optional(),
 });
 
-export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;
-export type NoteFilters = NoteFiltersDto;
+export type NoteFilters = z.infer<typeof noteFiltersSchema>;
 
 export interface FetchNotesParams {
   notebookId?: string | undefined;
@@ -375,8 +361,7 @@ export const noteSettingsSchema = z.object({
   autoformatOnPaste: z.boolean().default(true),
 });
 
-export type NoteSettingsDto = z.infer<typeof noteSettingsSchema>;
-export type NoteSettings = NoteSettingsDto;
+export type NoteSettings = z.infer<typeof noteSettingsSchema>;
 
 /**
  * Note UI and Hook Types
@@ -505,8 +490,8 @@ export interface NoteRepository {
   // Notes
   getAll(filters: NoteFilters): Promise<NoteWithRelations[]>;
   getById(id: string): Promise<NoteWithRelations | null>;
-  create(data: CreateNoteDto): Promise<NoteWithRelations>;
-  update(id: string, data: UpdateNoteDto): Promise<NoteWithRelations | null>;
+  create(data: NoteCreateInput): Promise<NoteWithRelations>;
+  update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null>;
   syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void>;
   delete(id: string): Promise<boolean>;
 
@@ -520,7 +505,7 @@ export interface NoteRepository {
   // Categories
   getAllCategories(notebookId?: string | null): Promise<CategoryRecord[]>;
   getCategoryById(id: string): Promise<CategoryRecord | null>;
-  getCategoryTree(notebookId?: string | null): Promise<NoteCategoryRecordWithChildrenDto[]>;
+  getCategoryTree(notebookId?: string | null): Promise<CategoryWithChildren[]>;
   createCategory(data: CategoryCreateInput): Promise<CategoryRecord>;
   updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null>;
   deleteCategory(id: string, recursive?: boolean): Promise<boolean>;

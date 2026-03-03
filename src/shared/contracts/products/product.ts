@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from '../base';
-import { imageFileRecordSchema, type ImageFileRecord } from '../files';
+import { imageFileRecordSchema } from '../files';
 import { catalogSchema } from './catalogs';
 import { productTagSchema } from './tags';
 import { producerSchema } from './producers';
@@ -11,8 +11,7 @@ export const productCurrencySchema = namedDtoSchema.extend({
   symbol: z.string().nullable(),
 });
 
-export type ProductCurrencyDto = z.infer<typeof productCurrencySchema>;
-export type ProductCurrencyRecord = ProductCurrencyDto;
+export type ProductCurrencyRecord = z.infer<typeof productCurrencySchema>;
 
 /**
  * Price Group With Details Contract
@@ -22,8 +21,7 @@ export const priceGroupWithDetailsSchema = priceGroupSchema.extend({
   currencyCode: z.string(),
 });
 
-export type PriceGroupWithDetailsDto = z.infer<typeof priceGroupWithDetailsSchema>;
-export type PriceGroupWithDetails = PriceGroupWithDetailsDto;
+export type PriceGroupWithDetails = z.infer<typeof priceGroupWithDetailsSchema>;
 
 /**
  * Price Group For Calculation Contract
@@ -41,8 +39,7 @@ export const priceGroupForCalculationSchema = z.object({
   currencyCode: z.string().optional(),
 });
 
-export type PriceGroupForCalculationDto = z.infer<typeof priceGroupForCalculationSchema>;
-export type PriceGroupForCalculation = PriceGroupForCalculationDto;
+export type PriceGroupForCalculation = z.infer<typeof priceGroupForCalculationSchema>;
 
 /**
  * Product Image Contract
@@ -54,10 +51,10 @@ export const productImageSchema = z.object({
   imageFile: imageFileRecordSchema.optional(),
 });
 
-export type ProductImageDto = z.infer<typeof productImageSchema>;
+export type ProductImage = z.infer<typeof productImageSchema>;
 
 /**
- * Product Image Record Contract (Domain-specific DTO)
+ * Product Image Record Contract
  */
 export const productImageRecordSchema = productImageSchema
   .omit({
@@ -67,14 +64,7 @@ export const productImageRecordSchema = productImageSchema
     imageFile: imageFileRecordSchema,
   });
 
-export interface ProductImageRecordDto {
-  productId: string;
-  imageFileId: string;
-  assignedAt: string;
-  imageFile: ImageFileRecord;
-}
-
-export type ProductImageRecord = ProductImageRecordDto;
+export type ProductImageRecord = z.infer<typeof productImageRecordSchema>;
 
 /**
  * Product Catalog Contract
@@ -86,17 +76,16 @@ export const productCatalogSchema = z.object({
   catalog: z.lazy(() => catalogSchema).optional(),
 });
 
-export type ProductCatalogDto = z.infer<typeof productCatalogSchema>;
+export type ProductCatalog = z.infer<typeof productCatalogSchema>;
 
 /**
- * Product Catalog Record Contract (Domain-specific DTO)
+ * Product Catalog Record Contract
  */
 export const productCatalogRecordSchema = productCatalogSchema.extend({
   catalog: catalogSchema,
 });
 
-export type ProductCatalogRecordDto = z.infer<typeof productCatalogRecordSchema>;
-export type ProductCatalogRecord = ProductCatalogRecordDto;
+export type ProductCatalogRecord = z.infer<typeof productCatalogRecordSchema>;
 
 /**
  * Product Tag Relation Contract
@@ -108,7 +97,7 @@ export const productTagRelationSchema = z.object({
   tag: z.lazy(() => productTagSchema).optional(),
 });
 
-export type ProductTagRelationDto = z.infer<typeof productTagRelationSchema>;
+export type ProductTagRelation = z.infer<typeof productTagRelationSchema>;
 
 /**
  * Product Producer Relation Contract
@@ -120,7 +109,7 @@ export const productProducerRelationSchema = z.object({
   producer: z.lazy(() => producerSchema).optional(),
 });
 
-export type ProductProducerRelationDto = z.infer<typeof productProducerRelationSchema>;
+export type ProductProducerRelation = z.infer<typeof productProducerRelationSchema>;
 
 /**
  * Product Parameter Value Contract
@@ -131,8 +120,7 @@ export const productParameterValueSchema = z.object({
   valuesByLanguage: z.record(z.string(), z.string()).optional(),
 });
 
-export type ProductParameterValueDto = z.infer<typeof productParameterValueSchema>;
-export type ProductParameterValue = ProductParameterValueDto;
+export type ProductParameterValue = z.infer<typeof productParameterValueSchema>;
 
 /**
  * Product Contract
@@ -174,9 +162,8 @@ export const productSchema = dtoBaseSchema.extend({
   noteIds: z.array(z.string()).optional(),
 });
 
-export type ProductDto = z.infer<typeof productSchema>;
-export type ProductRecord = ProductDto;
-export type Product = ProductDto;
+export type ProductRecord = z.infer<typeof productSchema>;
+export type Product = ProductRecord;
 
 /**
  * Product With Images Contract
@@ -187,14 +174,13 @@ export const productWithImagesSchema = productSchema.extend({
   tags: z.array(productTagRelationSchema).default([]),
   producers: z.array(productProducerRelationSchema).default([]),
 });
-export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
-export type ProductWithImages = ProductWithImagesDto;
+export type ProductWithImages = z.infer<typeof productWithImagesSchema>;
 
 export const productBulkImagesBase64RequestSchema = z.object({
   productIds: z.array(z.string().min(1)).min(1),
 });
 
-export type ProductBulkImagesBase64RequestDto = z.infer<
+export type ProductBulkImagesBase64Request = z.infer<
   typeof productBulkImagesBase64RequestSchema
 >;
 

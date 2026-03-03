@@ -1,35 +1,77 @@
- 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
- 
-
 import { randomUUID } from 'crypto';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { 
-  CategoryDocument, 
-  NoteDocument 
-} from '../types/mongo-note-types';
-import { 
+import type { Filter, UpdateFilter } from 'mongodb';
+
+import type { CategoryDocument, NoteDocument } from '../../types/mongo-note-types';
+import type {
   CategoryRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
   CategoryCreateInput,
   CategoryUpdateInput,
 } from '@/shared/contracts/notes';
-import { toCategoryResponse, buildTree } from '../mongo-note-repository-utils';
-import { Filter, UpdateFilter } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const categoryCollectionName = 'categories';
 const noteCollectionName = 'notes';
 
-export const mongoCategoryImpl = {
+const toCategoryRecord = (doc: CategoryDocument): CategoryRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  description: doc.description ?? null,
+  color: doc.color ?? null,
+  parentId: doc.parentId ?? null,
+  notebookId: doc.notebookId ?? null,
+  themeId: doc.themeId ?? null,
+  sortIndex: doc.sortIndex ?? null,
+  createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
+  updatedAt:
+    typeof doc.updatedAt === 'string'
+      ? doc.updatedAt
+      : doc.updatedAt?.toISOString() ?? null,
+});
+
+const buildCategoryTree = (categories: CategoryRecord[]): CategoryWithChildren[] => {
+  const categoryMap: Record<string, CategoryWithChildren> = {};
+  categories.forEach((category) => {
+    categoryMap[category.id] = { ...category, children: [], notes: [] };
+  });
+
+  const rootCategories: CategoryWithChildren[] = [];
+  categories.forEach((category) => {
+    const current = categoryMap[category.id];
+    if (!current) return;
+    if (!category.parentId) {
+      rootCategories.push(current);
+      return;
+    }
+
+    const parent = categoryMap[category.parentId];
+    if (parent) {
+      parent.children.push(current);
+      return;
+    }
+
+    rootCategories.push(current);
+  });
+
+  return rootCategories;
+};
+
+type MongoCategoryImpl = {
+  getAllCategories: (notebookId: string) => Promise<CategoryRecord[]>;
+  getCategoryById: (id: string) => Promise<CategoryRecord | null>;
+  getCategoryTree: (notebookId: string) => Promise<CategoryWithChildren[]>;
+  createCategory: (data: CategoryCreateInput) => Promise<CategoryRecord>;
+  updateCategory: (id: string, data: CategoryUpdateInput) => Promise<CategoryRecord>;
+  deleteCategory: (id: string) => Promise<void>;
+};
+
+export const mongoCategoryImpl: MongoCategoryImpl = {
   async getAllCategories(notebookId: string): Promise<CategoryRecord[]> {
     const db = await getMongoDb();
     const collection = db.collection<CategoryDocument>(categoryCollectionName);
     const docs = await collection.find({ notebookId }).sort({ name: 1 }).toArray();
-    return docs.map(toCategoryResponse);
+    return docs.map((doc) => toCategoryRecord(doc));
   },
 
   async getCategoryById(id: string): Promise<CategoryRecord | null> {
@@ -38,12 +80,12 @@ export const mongoCategoryImpl = {
     const doc = await collection.findOne({
       $or: [{ id }, { _id: id }],
     } as Filter<CategoryDocument>);
-    return doc ? toCategoryResponse(doc) : null;
+    return doc ? toCategoryRecord(doc) : null;
   },
 
   async getCategoryTree(notebookId: string): Promise<CategoryWithChildren[]> {
     const categories = await mongoCategoryImpl.getAllCategories(notebookId);
-    return buildTree(categories);
+    return buildCategoryTree(categories);
   },
 
   async createCategory(data: CategoryCreateInput): Promise<CategoryRecord> {
@@ -62,7 +104,7 @@ export const mongoCategoryImpl = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toCategoryResponse(doc);
+    return toCategoryRecord(doc);
   },
 
   async updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord> {
@@ -84,7 +126,7 @@ export const mongoCategoryImpl = {
     );
     if (!result) throw notFoundError('Category not found');
 
-    const category = toCategoryResponse(result);
+    const category = toCategoryRecord(result);
     await db.collection<NoteDocument>(noteCollectionName).updateMany(
       { 'categories.categoryId': category.id } as Filter<NoteDocument>,
       { $set: { 'categories.$.category': category } } as UpdateFilter<NoteDocument>

@@ -1,5 +1,5 @@
 import type {
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
   NoteRecord,
   NotesMasterNodeRef,
 } from '@/shared/contracts/notes';

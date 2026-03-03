@@ -1,10 +1,33 @@
 import { randomUUID } from 'crypto';
-import type { Filter, WithId } from 'mongodb';
+import type { Filter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ThemeDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type { ThemeRecord, ThemeCreateInput, ThemeUpdateInput } from '@/shared/contracts/notes';
-import { toThemeResponse } from '../mongo-note-repository-utils';
 import { themeCollectionName } from './common';
+
+const toThemeRecord = (doc: ThemeDocument): ThemeRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  description: doc.description ?? null,
+  isDefault: doc.isDefault ?? false,
+  notebookId: doc.notebookId ?? null,
+  textColor: doc.textColor ?? '#e5e7eb',
+  backgroundColor: doc.backgroundColor ?? '#111827',
+  markdownHeadingColor: doc.markdownHeadingColor ?? '#ffffff',
+  markdownLinkColor: doc.markdownLinkColor ?? '#60a5fa',
+  markdownCodeBackground: doc.markdownCodeBackground ?? '#1f2937',
+  markdownCodeText: doc.markdownCodeText ?? '#e5e7eb',
+  relatedNoteBorderWidth: doc.relatedNoteBorderWidth ?? 1,
+  relatedNoteBorderColor: doc.relatedNoteBorderColor ?? '#374151',
+  relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor ?? '#1f2937',
+  relatedNoteTextColor: doc.relatedNoteTextColor ?? '#e5e7eb',
+  themeData: doc.themeData ?? {},
+  createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
+  updatedAt:
+    typeof doc.updatedAt === 'string'
+      ? doc.updatedAt
+      : doc.updatedAt?.toISOString() ?? null,
+});
 
 export const mongoThemeImpl = {
   async getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]> {
@@ -15,7 +38,7 @@ export const mongoThemeImpl = {
       .find(filter as Filter<ThemeDocument>)
       .sort({ name: 1 })
       .toArray();
-    return docs.map(toThemeResponse);
+    return docs.map((doc) => toThemeRecord(doc));
   },
 
   async getThemeById(id: string): Promise<ThemeRecord | null> {
@@ -24,7 +47,7 @@ export const mongoThemeImpl = {
     const doc = await collection.findOne({
       $or: [{ id }, { _id: id }],
     } as Filter<ThemeDocument>);
-    return doc ? toThemeResponse(doc) : null;
+    return doc ? toThemeRecord(doc) : null;
   },
 
   async createTheme(data: ThemeCreateInput): Promise<ThemeRecord> {
@@ -54,7 +77,7 @@ export const mongoThemeImpl = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toThemeResponse(doc as WithId<ThemeDocument>);
+    return toThemeRecord(doc);
   },
 
   async updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> {
@@ -71,7 +94,7 @@ export const mongoThemeImpl = {
       },
       { returnDocument: 'after' }
     );
-    return result ? toThemeResponse(result) : null;
+    return result ? toThemeRecord(result) : null;
   },
 
   async deleteTheme(id: string): Promise<boolean> {

@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 import type {
   CategoryRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CategoryWithChildren,
   CategoryCreateInput,
   CategoryUpdateInput,
 } from '@/shared/contracts/notes';

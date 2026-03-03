@@ -3,7 +3,7 @@ import 'server-only';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type {
-  CatalogDto as CatalogRecord,
+  CatalogRecord,
   ProductMigrationDirectionDto as MigrationDirection,
   ProductMigrationBatchResultDto as MigrationBatchResult,
 } from '@/shared/contracts/products';

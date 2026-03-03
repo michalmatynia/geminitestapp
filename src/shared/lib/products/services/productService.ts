@@ -30,8 +30,8 @@ import type {
   ProductRecord,
   ProductFilters,
   ProductRepository,
-  CreateProductDto,
-  ProductCreateInputDto,
+  CreateProduct,
+  ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { withRetry } from '@/shared/utils/retry';
@@ -355,14 +355,14 @@ async function createProduct(
 }
 
 async function bulkCreateProducts(
-  data: CreateProductDto[],
+  data: CreateProduct[],
   options?: { provider?: ProductDbProvider; userId?: string }
 ): Promise<number> {
   if (data.length === 0) return 0;
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  const validatedData: ProductCreateInputDto[] = [];
+  const validatedData: ProductCreateInput[] = [];
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {

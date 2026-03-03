@@ -38,7 +38,7 @@ export const mongoProductAssociationsImpl = {
     const fallbackAssignedAt =
       doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date().toISOString();
 
-    const parsedEntries = doc.images.reduce<any[]>((acc, rawImage: any) => {
+    const parsedEntries = doc.images.reduce<ProductImageRecord[]>((acc, rawImage: any) => {
       if (!rawImage || typeof rawImage !== 'object') return acc;
       let assignedAt = fallbackAssignedAt;
       if (rawImage.assignedAt instanceof Date) {
@@ -56,23 +56,20 @@ export const mongoProductAssociationsImpl = {
     }, []);
 
     const missingImageFileIds = parsedEntries
-      .filter((e) => !e.imageFile)
-      .map((e) => e.imageFileId);
+      .filter((e: ProductImageRecord) => !e.imageFile)
+      .map((e: ProductImageRecord) => e.imageFileId);
 
     if (missingImageFileIds.length > 0) {
-      const imageFiles =
-        'findImageFilesByIds' in mongoImageFileRepository
-          ? await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds)
-          : await (mongoImageFileRepository as any).getByIds(missingImageFileIds);
-      const imageFileMap = new Map(imageFiles.map((f) => [f.id, f]));
-      parsedEntries.forEach((entry) => {
+      const imageFiles = await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds);
+      const imageFileMap = new Map(imageFiles.map((f: any) => [f.id, f]));
+      parsedEntries.forEach((entry: ProductImageRecord) => {
         if (!entry.imageFile) {
           entry.imageFile = imageFileMap.get(entry.imageFileId);
         }
       });
     }
 
-    return parsedEntries.filter((e) => !!e.imageFile) as ProductImageRecord[];
+    return parsedEntries.filter((e: ProductImageRecord) => !!e.imageFile) as ProductImageRecord[];
   },
 
   async addProductImages(productId: string, imageFileIds: string[], getCollection: () => Promise<any>) {
@@ -80,10 +77,10 @@ export const mongoProductAssociationsImpl = {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;
 
-    const imageFiles = await mongoImageFileRepository.getByIds(normalizedIds);
+    const imageFiles = await mongoImageFileRepository.findImageFilesByIds(normalizedIds);
     const now = new Date().toISOString();
 
-    const newImages = imageFiles.map((file) => ({
+    const newImages = imageFiles.map((file: any) => ({
       productId,
       imageFileId: file.id,
       assignedAt: now,
@@ -102,10 +99,10 @@ export const mongoProductAssociationsImpl = {
   async replaceProductImages(productId: string, imageFileIds: string[], getCollection: () => Promise<any>) {
     const collection = await getCollection();
     const normalizedIds = normalizeImageFileIds(imageFileIds);
-    const imageFiles = await mongoImageFileRepository.getByIds(normalizedIds);
+    const imageFiles = await mongoImageFileRepository.findImageFilesByIds(normalizedIds);
     const now = new Date().toISOString();
 
-    const newImages = imageFiles.map((file) => ({
+    const newImages = imageFiles.map((file: any) => ({
       productId,
       imageFileId: file.id,
       assignedAt: now,
@@ -138,10 +135,10 @@ export const mongoProductAssociationsImpl = {
 
   async replaceProductCatalogs(productId: string, catalogIds: string[], getCollection: () => Promise<any>) {
     const collection = await getCollection();
-    const catalogs = await mongoCatalogRepository.getByIds(catalogIds);
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
-    const newCatalogs = catalogs.map((c) => ({
+    const newCatalogs = catalogs.map((c: any) => ({
       productId,
       catalogId: c.id,
       assignedAt: now,
@@ -175,7 +172,7 @@ export const mongoProductAssociationsImpl = {
       .toArray();
     const now = new Date().toISOString();
 
-    const newTags = tags.map((t) => ({
+    const newTags = tags.map((t: any) => ({
       productId,
       tagId: resolveLookupDocumentId(t),
       assignedAt: now,
@@ -198,7 +195,7 @@ export const mongoProductAssociationsImpl = {
       .toArray();
     const now = new Date().toISOString();
 
-    const newProducers = producers.map((p) => ({
+    const newProducers = producers.map((p: any) => ({
       productId,
       producerId: resolveLookupDocumentId(p),
       assignedAt: now,
@@ -224,7 +221,7 @@ export const mongoProductAssociationsImpl = {
 
   async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[], getCollection: () => Promise<any>) {
     const collection = await getCollection();
-    const catalogs = await mongoCatalogRepository.getByIds(catalogIds);
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
     const bulkOps = productIds.map((pid) => ({
@@ -232,7 +229,7 @@ export const mongoProductAssociationsImpl = {
         filter: buildProductIdFilter(pid),
         update: {
           $set: {
-            catalogs: catalogs.map((c) => ({
+            catalogs: catalogs.map((c: any) => ({
               productId: pid,
               catalogId: c.id,
               assignedAt: now,
@@ -251,7 +248,7 @@ export const mongoProductAssociationsImpl = {
 
   async bulkAddProductCatalogs(productIds: string[], catalogIds: string[], getCollection: () => Promise<any>) {
     const collection = await getCollection();
-    const catalogs = await mongoCatalogRepository.getByIds(catalogIds);
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(catalogIds);
     const now = new Date().toISOString();
 
     const bulkOps = productIds.map((pid) => ({
@@ -260,7 +257,7 @@ export const mongoProductAssociationsImpl = {
         update: {
           $addToSet: {
             catalogs: {
-              $each: catalogs.map((c) => ({
+              $each: catalogs.map((c: any) => ({
                 productId: pid,
                 catalogId: c.id,
                 assignedAt: now,
@@ -296,4 +293,5 @@ export const mongoProductAssociationsImpl = {
       await collection.bulkWrite(bulkOps as any);
     }
   },
+};
 };

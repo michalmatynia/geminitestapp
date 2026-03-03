@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 import {
   type CreateProductInput,
-  type ProductCreateInputDto,
+  type ProductCreateInput,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
@@ -238,7 +238,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     }
   },
 
-  bulkCreateProducts: async (data: ProductCreateInputDto[]) => {
+  bulkCreateProducts: async (data: ProductCreateInput[]) => {
     if (data.length === 0) return 0;
     const cleanData = data.map((item) => {
       const { categoryId: _cat, id, ...rest } = item;
@@ -633,7 +633,7 @@ export const prismaProductRepository: ProductRepository = {
     return createTransactionalRepository(prisma).createProduct(data);
   },
 
-  async bulkCreateProducts(data: ProductCreateInputDto[]) {
+  async bulkCreateProducts(data: ProductCreateInput[]) {
     return createTransactionalRepository(prisma).bulkCreateProducts(data);
   },
 

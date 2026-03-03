@@ -10,11 +10,11 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 
-import { agentApi, learnerAgentsApi, settingsApi } from '../../../api';
+import { agentApi, learnerAgentsApi, settingsApi } from '@/shared/lib/ai-paths/api';
 import { coerceInput, formatRuntimeValue, hashRuntimeValue, parseJsonSafe } from '../../utils';
 import { buildPromptOutput, coercePayloadObject } from '../utils';
 
-import type { AgentEnqueuePayload } from '../../../api';
+import type { AgentEnqueuePayload } from '@/shared/lib/ai-paths/api';
 
 type AgentRunRecord = {
   id?: string;

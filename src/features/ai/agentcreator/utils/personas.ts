@@ -1,5 +1,3 @@
-'use client';
-
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   DEFAULT_AGENT_PERSONA_SETTINGS,

@@ -15,8 +15,8 @@ import {
   ProductWithImages,
   ProductRepository,
   ProductRecord,
-  ProductCreateInputDto,
-  ProductUpdateInputDto,
+  ProductCreateInput,
+  ProductUpdateInput,
   ProductImageRecord,
 } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -108,11 +108,11 @@ export const mongoProductRepository: ProductRepository = {
     return mongoProductReadImpl.findProductsByBaseIds(baseIds, getProductCollection);
   },
 
-  async createProduct(data: ProductCreateInputDto): Promise<ProductRecord> {
+  async createProduct(data: ProductCreateInput): Promise<ProductRecord> {
     return mongoProductWriteImpl.createProduct(data, getProductCollection);
   },
 
-  async updateProduct(id: string, data: ProductUpdateInputDto): Promise<ProductRecord | null> {
+  async updateProduct(id: string, data: ProductUpdateInput): Promise<ProductRecord | null> {
     return mongoProductWriteImpl.updateProduct(id, data, getProductCollection);
   },
 
@@ -120,7 +120,7 @@ export const mongoProductRepository: ProductRepository = {
     return mongoProductWriteImpl.deleteProduct(id, getProductCollection);
   },
 
-  async bulkCreateProducts(data: ProductCreateInputDto[]): Promise<number> {
+  async bulkCreateProducts(data: ProductCreateInput[]): Promise<number> {
     return mongoProductWriteImpl.bulkCreateProducts(data, (d: any) => this.createProduct(d));
   },
 

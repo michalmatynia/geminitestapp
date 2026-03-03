@@ -7,6 +7,15 @@ import { describe, it, expect, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
+vi.mock('@/shared/lib/observability/system-logger', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/shared/lib/observability/system-logger')>();
+  return {
+    ...actual,
+    logSystemEvent: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 import { DELETE } from '@/app/api/files/[id]/route';
 import { GET } from '@/app/api/files/route';
 import { createMockProduct } from '@/shared/lib/products/utils/productUtils';

@@ -107,9 +107,8 @@ export const productCreateInputSchema = z.object({
   parameters: optionalParameterValuesFromFormSchema,
 });
 
-export type ProductCreateInputDto = z.infer<typeof productCreateInputSchema>;
-export type CreateProductInput = ProductCreateInputDto;
-export type ProductCreateInput = ProductCreateInputDto;
+export type CreateProductInput = z.infer<typeof productCreateInputSchema>;
+export type ProductCreateInput = CreateProductInput;
 
 export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
   sku: z.preprocess((value: unknown): unknown => {
@@ -121,9 +120,8 @@ export const productUpdateInputSchema = productCreateInputSchema.partial().exten
   }, z.string().min(1).nullable().optional()),
 });
 
-export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
-export type UpdateProductInput = ProductUpdateInputDto;
-export type ProductUpdateInput = ProductUpdateInputDto;
+export type UpdateProductInput = z.infer<typeof productUpdateInputSchema>;
+export type ProductUpdateInput = UpdateProductInput;
 
 export const createProductSchema = productSchema.omit({
   id: true,
@@ -131,12 +129,11 @@ export const createProductSchema = productSchema.omit({
   updatedAt: true,
 });
 
-export type CreateProductDto = z.infer<typeof createProductSchema>;
-export type CreateProduct = CreateProductDto;
+export type CreateProduct = z.infer<typeof createProductSchema>;
 
 export const updateProductSchema = createProductSchema.partial();
 
-export type UpdateProductDto = z.infer<typeof updateProductSchema>;
+export type UpdateProduct = z.infer<typeof updateProductSchema>;
 
 /**
  * Product Domain Enums & DTOs

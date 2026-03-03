@@ -1,5 +1,3 @@
-'use client';
-
 import { isObjectRecord } from '../object-utils';
 import { ParamLeaf } from '@/shared/contracts/prompt-engine';
 

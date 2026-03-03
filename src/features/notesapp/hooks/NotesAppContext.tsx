@@ -17,7 +17,7 @@ import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/shared/contracts/notes';
 import type { NotesAppContextValue } from '@/shared/contracts/notes';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
+  NoteWithRelations,
   TagRecord,
   NoteRelationWithSource,
   NoteRelationWithTarget,

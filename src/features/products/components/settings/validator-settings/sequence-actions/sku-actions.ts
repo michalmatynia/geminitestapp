@@ -1,5 +1,3 @@
-'use client';
-
  
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
@@ -18,7 +16,7 @@ import {
   createSequenceGroupId,
   getPatternSequence,
 } from '../helpers';
-import type { CreatePatternMutation } from '../types';
+import type { CreatePatternMutation } from './types';
 
 export const handleCreateSkuAutoIncrementSequence = async (args: {
   patterns: ProductValidationPattern[];

@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Utility functions for AI generation in the CMS inspector.
  */

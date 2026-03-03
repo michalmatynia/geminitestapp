@@ -11,8 +11,8 @@ import {
   toProductResponse 
 } from '../mongo-product-repository-mappers';
 import { 
-  ProductCreateInputDto, 
-  ProductUpdateInputDto, 
+  ProductCreateInput, 
+  ProductUpdateInput, 
   ProductRecord 
 } from '@/shared/contracts/products';
 import { 
@@ -21,7 +21,7 @@ import {
 } from '../mongo-product-repository.helpers';
 
 export const mongoProductWriteImpl = {
-  async createProduct(data: ProductCreateInputDto, getCollection: () => Promise<any>): Promise<ProductRecord> {
+  async createProduct(data: ProductCreateInput, getCollection: () => Promise<any>): Promise<ProductRecord> {
     const collection = await getCollection();
     const id = data.id || randomUUID();
     const now = new Date();
@@ -81,7 +81,7 @@ export const mongoProductWriteImpl = {
 
   async updateProduct(
     id: string,
-    data: ProductUpdateInputDto,
+    data: ProductUpdateInput,
     getCollection: () => Promise<any>
   ): Promise<ProductRecord | null> {
     const collection = await getCollection();
@@ -162,7 +162,7 @@ export const mongoProductWriteImpl = {
     return toProductResponse(doc);
   },
 
-  async bulkCreateProducts(data: ProductCreateInputDto[], createProduct: (d: any) => Promise<any>): Promise<number> {
+  async bulkCreateProducts(data: ProductCreateInput[], createProduct: (d: any) => Promise<any>): Promise<number> {
     if (data.length === 0) return 0;
     let count = 0;
     for (const item of data) {

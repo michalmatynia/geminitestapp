@@ -45,7 +45,7 @@ export function useBaseComSettings(
       getActiveExportTemplateQueryOptions(),
       getDefaultExportInventoryQueryOptions(),
       getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
-    ] as any[],
+    ] as const,
   });
 
   const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;

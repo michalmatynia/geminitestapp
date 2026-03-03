@@ -19,6 +19,15 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   getMongoDb: mocks.getMongoDb,
 }));
 
+vi.mock('@/shared/utils/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    log: vi.fn(),
+  },
+}));
+
 import { mongoProductRepository } from '@/shared/lib/products/services/product-repository/mongo-product-repository';
 import { invalidateMongoBaseExportLookupContextCache } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 

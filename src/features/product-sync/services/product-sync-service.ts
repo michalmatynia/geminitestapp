@@ -33,7 +33,7 @@ import type {
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
 import type {
-  ProductWithImagesDto as ProductWithImages,
+  ProductWithImages,
   UpdateProductInput,
 } from '@/shared/contracts/products';
 

@@ -13,10 +13,10 @@ import {
 import type {
   NotebookRecord,
   CategoryRecord,
-  NoteWithRelationsDto as NoteWithRelations,
+  NoteWithRelations,
   TagRecord,
   ThemeRecord,
-  RelatedNoteDto as RelatedNote,
+  RelatedNote,
   FetchNotesParams,
 } from '@/shared/contracts/notes';
 export type { FetchNotesParams };

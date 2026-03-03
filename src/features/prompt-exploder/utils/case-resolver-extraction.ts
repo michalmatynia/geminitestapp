@@ -1,5 +1,3 @@
-'use client';
-
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import type {

@@ -1,7 +1,7 @@
 import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import { dbApi, ApiResponse } from '../../../api';
+import { dbApi, ApiResponse } from '@/shared/lib/ai-paths/api';
 import { parseJsonSafe } from '../../utils';
 
 import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';

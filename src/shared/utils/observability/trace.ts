@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Simple client-side tracing utility to correlate client requests with server logs.
  */

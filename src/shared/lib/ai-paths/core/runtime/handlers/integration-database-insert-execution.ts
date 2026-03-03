@@ -5,7 +5,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import { dbApi, entityApi, ApiResponse } from '../../../api';
+import { dbApi, entityApi, ApiResponse } from '@/shared/lib/ai-paths/api';
 import { buildDbQueryPayload, buildFormData } from '../utils';
 import {
   evaluateWriteOutcome,

@@ -11,7 +11,7 @@ import {
   resolveObjectPathValue,
   toRecord,
 } from './database-parameter-inference';
-import { entityApi } from '../../../api';
+import { entityApi } from '@/shared/lib/ai-paths/api';
 import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,

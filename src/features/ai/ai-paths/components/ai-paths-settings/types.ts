@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import type * as React from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type {
   AiNode,

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 import type { AiNode, Edge } from './ai-paths-core';
+import type { ToastOptions } from './ui';
 
 /**
  * AI Path Node Status
@@ -494,7 +495,7 @@ export const MAX_RUNTIME_EVENTS = 300;
 export const LOCAL_RUN_STEP_CHUNK = 5;
 export const AI_PATHS_ENTITY_STALE_MS = 30000;
 
-export type ToastFn = (message: string, options?: Record<string, unknown>) => void;
+export type ToastFn = (message: string, options?: ToastOptions) => void;
 
 /**
  * AI Path Execution Node Handler Types
@@ -520,6 +521,8 @@ export interface NodeHandlerContext {
   triggerContext?: Record<string, unknown> | null | undefined;
   deferPoll?: boolean | undefined;
   skipAiJobs?: boolean | undefined;
+  isDryRun?: boolean | undefined;
+  sideEffectDecision?: 'executed' | 'skipped_policy' | undefined;
   now: string;
   abortSignal?: AbortSignal | undefined;
   allOutputs: Record<string, Record<string, unknown>>;
@@ -560,6 +563,7 @@ export interface NodeHandlerContext {
   };
   variables: Record<string, unknown>;
   setVariable: (key: string, value: unknown) => void;
+  [key: string]: unknown;
 }
 
 export type NodeHandler = (

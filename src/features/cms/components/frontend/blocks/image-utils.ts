@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import type * as React from 'react';
 
 export function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
   if (typeof value !== 'number' || Number.isNaN(value)) return fallback;

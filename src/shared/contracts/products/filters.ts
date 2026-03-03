@@ -17,8 +17,7 @@ export const productAdvancedFilterFieldSchema = z.enum([
   'createdAt',
 ]);
 
-export type ProductAdvancedFilterFieldDto = z.infer<typeof productAdvancedFilterFieldSchema>;
-export type ProductAdvancedFilterField = ProductAdvancedFilterFieldDto;
+export type ProductAdvancedFilterField = z.infer<typeof productAdvancedFilterFieldSchema>;
 
 export const productAdvancedFilterOperatorSchema = z.enum([
   'contains',
@@ -35,15 +34,13 @@ export const productAdvancedFilterOperatorSchema = z.enum([
   'isNotEmpty',
 ]);
 
-export type ProductAdvancedFilterOperatorDto = z.infer<typeof productAdvancedFilterOperatorSchema>;
-export type ProductAdvancedFilterOperator = ProductAdvancedFilterOperatorDto;
+export type ProductAdvancedFilterOperator = z.infer<typeof productAdvancedFilterOperatorSchema>;
 
 export const productAdvancedFilterCombinatorSchema = z.enum(['and', 'or']);
 
-export type ProductAdvancedFilterCombinatorDto = z.infer<
+export type ProductAdvancedFilterCombinator = z.infer<
   typeof productAdvancedFilterCombinatorSchema
 >;
-export type ProductAdvancedFilterCombinator = ProductAdvancedFilterCombinatorDto;
 
 export const PRODUCT_ADVANCED_FILTER_MAX_DEPTH = 5;
 export const PRODUCT_ADVANCED_FILTER_MAX_RULES = 40;
@@ -92,22 +89,19 @@ export const productAdvancedFilterConditionSchema = z.object({
   valueTo: productAdvancedFilterValueSchema.optional(),
 });
 
-export type ProductAdvancedFilterConditionDto = z.infer<
+export type ProductAdvancedFilterCondition = z.infer<
   typeof productAdvancedFilterConditionSchema
 >;
-export type ProductAdvancedFilterCondition = ProductAdvancedFilterConditionDto;
 
-export interface ProductAdvancedFilterGroupDto {
+export interface ProductAdvancedFilterGroup {
   type: 'group';
   id: string;
   combinator: ProductAdvancedFilterCombinator;
   not: boolean;
-  rules: Array<ProductAdvancedFilterConditionDto | ProductAdvancedFilterGroupDto>;
+  rules: Array<ProductAdvancedFilterCondition | ProductAdvancedFilterGroup>;
 }
 
-export type ProductAdvancedFilterGroup = ProductAdvancedFilterGroupDto;
-
-const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroupDto> = z.object({
+const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroup> = z.object({
   type: z.literal('group'),
   id: z.string().trim().min(1),
   combinator: productAdvancedFilterCombinatorSchema,
@@ -122,10 +116,9 @@ const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroup
     .min(1),
 });
 
-export type ProductAdvancedFilterRuleDto =
-  | ProductAdvancedFilterConditionDto
-  | ProductAdvancedFilterGroupDto;
-export type ProductAdvancedFilterRule = ProductAdvancedFilterRuleDto;
+export type ProductAdvancedFilterRule =
+  | ProductAdvancedFilterCondition
+  | ProductAdvancedFilterGroup;
 
 const PRODUCT_ADVANCED_STRING_FIELDS = new Set<ProductAdvancedFilterField>([
   'id',
@@ -183,7 +176,7 @@ const validateAdvancedFilterScalarValue = (
 };
 
 const validateAdvancedFilterCondition = (
-  condition: ProductAdvancedFilterConditionDto,
+  condition: ProductAdvancedFilterCondition,
   path: Array<string | number>,
   ctx: z.RefinementCtx
 ): void => {
@@ -306,15 +299,15 @@ export type ProductAdvancedFilterMetrics = {
 };
 
 export const getProductAdvancedFilterMetrics = (
-  root: ProductAdvancedFilterGroupDto
+  root: ProductAdvancedFilterGroup
 ): ProductAdvancedFilterMetrics => {
   let depth = 1;
   let rules = 0;
   let setItems = 0;
 
-  const walk = (group: ProductAdvancedFilterGroupDto, currentDepth: number): void => {
+  const walk = (group: ProductAdvancedFilterGroup, currentDepth: number): void => {
     depth = Math.max(depth, currentDepth);
-    group.rules.forEach((rule: ProductAdvancedFilterRuleDto) => {
+    group.rules.forEach((rule: ProductAdvancedFilterRule) => {
       rules += 1;
       if (
         rule.type === 'condition' &&
@@ -333,8 +326,8 @@ export const getProductAdvancedFilterMetrics = (
   return { depth, rules, setItems };
 };
 
-export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGroupDto> =
-  productAdvancedFilterGroupBaseSchema.superRefine((group: ProductAdvancedFilterGroupDto, ctx) => {
+export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGroup> =
+  productAdvancedFilterGroupBaseSchema.superRefine((group: ProductAdvancedFilterGroup, ctx) => {
     const metrics = getProductAdvancedFilterMetrics(group);
     if (metrics.depth > PRODUCT_ADVANCED_FILTER_MAX_DEPTH) {
       ctx.addIssue({
@@ -352,10 +345,10 @@ export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGr
     }
 
     const walk = (
-      nestedGroup: ProductAdvancedFilterGroupDto,
+      nestedGroup: ProductAdvancedFilterGroup,
       path: Array<string | number>
     ): void => {
-      nestedGroup.rules.forEach((rule: ProductAdvancedFilterRuleDto, index: number) => {
+      nestedGroup.rules.forEach((rule: ProductAdvancedFilterRule, index: number) => {
         const nextPath = [...path, 'rules', index];
         if (rule.type === 'condition') {
           validateAdvancedFilterCondition(rule, nextPath, ctx);
@@ -376,8 +369,7 @@ export const productAdvancedFilterPresetSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type ProductAdvancedFilterPresetDto = z.infer<typeof productAdvancedFilterPresetSchema>;
-export type ProductAdvancedFilterPreset = ProductAdvancedFilterPresetDto;
+export type ProductAdvancedFilterPreset = z.infer<typeof productAdvancedFilterPresetSchema>;
 
 export const productAdvancedFilterPresetBundleSchema = z.object({
   version: z.literal(1),
@@ -385,10 +377,9 @@ export const productAdvancedFilterPresetBundleSchema = z.object({
   presets: z.array(productAdvancedFilterPresetSchema),
 });
 
-export type ProductAdvancedFilterPresetBundleDto = z.infer<
+export type ProductAdvancedFilterPresetBundle = z.infer<
   typeof productAdvancedFilterPresetBundleSchema
 >;
-export type ProductAdvancedFilterPresetBundle = ProductAdvancedFilterPresetBundleDto;
 
 export const productListPreferencesSchema = z.object({
   nameLocale: z.enum(['name_en', 'name_pl', 'name_de']),
@@ -402,15 +393,14 @@ export const productListPreferencesSchema = z.object({
   appliedAdvancedFilterPresetId: z.string().nullable(),
 });
 
-export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSchema>;
+export type ProductListPreferences = z.infer<typeof productListPreferencesSchema>;
 
 /**
  * Product Filter Contract
  */
 export const productStockOperatorSchema = z.enum(['gt', 'gte', 'lt', 'lte', 'eq']);
 
-export type ProductStockOperatorDto = z.infer<typeof productStockOperatorSchema>;
-export type ProductStockOperator = ProductStockOperatorDto;
+export type ProductStockOperator = z.infer<typeof productStockOperatorSchema>;
 
 const getAdvancedFilterPayloadValidationError = (value: string): string | null => {
   try {
@@ -482,7 +472,7 @@ export const productFilterSchema = commonListQuerySchema.extend({
   }, z.boolean().optional()),
 });
 
-export type ProductFilterDto = z.infer<typeof productFilterSchema>;
+export type ProductFilter = z.infer<typeof productFilterSchema>;
 export type ProductFilterInput = z.input<typeof productFilterSchema>;
 
 /**

@@ -12,13 +12,13 @@ import React, {
 } from 'react';
 
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
+  NoteWithRelations,
   TagRecord,
   NoteFileRecord,
   ThemeRecord,
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
-  RelatedNoteDto as RelatedNote,
-  NoteRelationDto,
+  CategoryWithChildren,
+  RelatedNote,
+  NoteRelationRecord,
 } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
@@ -229,7 +229,7 @@ export function NoteFormProvider({
         content: '',
       })),
       ...(note.relationsFrom ?? [])
-        .map((rel: NoteRelationDto & { targetNote?: RelatedNote }) =>
+        .map((rel: NoteRelationRecord & { targetNote?: RelatedNote }) =>
           rel.targetNote
             ? {
               id: rel.targetNote.id,
@@ -241,7 +241,7 @@ export function NoteFormProvider({
         )
         .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
       ...(note.relationsTo ?? [])
-        .map((rel: NoteRelationDto & { sourceNote?: RelatedNote }) =>
+        .map((rel: NoteRelationRecord & { sourceNote?: RelatedNote }) =>
           rel.sourceNote
             ? {
               id: rel.sourceNote.id,

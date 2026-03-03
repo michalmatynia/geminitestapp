@@ -1,6 +1,4 @@
-'use client';
-
-import React from 'react';
+import type * as React from 'react';
 
 export const getPointerCaptureTarget = (
   event: React.PointerEvent<HTMLElement>

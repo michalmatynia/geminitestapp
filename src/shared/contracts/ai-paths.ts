@@ -722,12 +722,6 @@ export type AiPathRunUpdate = AiPathRunUpdateRecord & {
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
 };
 
-export type AiPathRunNodeUpdate = Partial<AiPathRunNodeRecord> & {
-  status?: AiPathNodeStatus;
-};
-
-export type AiPathRunEventCreateInput = z.infer<typeof aiPathRunEventCreateInputSchema>;
-
 export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
   updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;

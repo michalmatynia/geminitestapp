@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { noteUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { UpdateNoteDto as NoteUpdateInput } from '@/shared/contracts/notes';
+import type { NoteUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { removeUndefined } from '@/shared/utils';

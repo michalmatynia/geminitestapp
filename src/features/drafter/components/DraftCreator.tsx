@@ -6,7 +6,7 @@ import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hoo
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector } from '@/shared/lib/icons';
 import type {
-  ProductCategoryDto,
+  ProductCategory,
   ProductTag,
   ProductParameter,
   ProductParameterValue,
@@ -176,7 +176,7 @@ export function DraftCreator({
   });
 
   const categoryQueryResults = categoryQueries as readonly UseQueryResult<
-    ProductCategoryDto[],
+    ProductCategory[],
     Error
   >[];
   const tagQueryResults = tagQueries as readonly UseQueryResult<ProductTag[], Error>[];
@@ -186,7 +186,7 @@ export function DraftCreator({
   >[];
 
   const categories = useMemo(
-    (): ProductCategoryDto[] => readQueryData(categoryQueryResults),
+    (): ProductCategory[] => readQueryData(categoryQueryResults),
     [categoryQueryResults]
   );
   const tags = useMemo(

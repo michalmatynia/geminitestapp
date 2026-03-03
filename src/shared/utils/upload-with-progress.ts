@@ -1,5 +1,3 @@
-'use client';
-
 import {
   CSRF_HEADER_NAME,
   CSRF_SAFE_METHODS,

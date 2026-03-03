@@ -5,12 +5,23 @@ import type { ValidatorPatternList } from '@/shared/contracts/validator';
 import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import { parsePromptExploderSettings } from '../../settings';
 
+import type { 
+  PromptExploderRuntimeValidationScope, 
+  PromptExploderValidationRuleStack,
+  PromptExploderSegmentationLibraryState 
+} from '@/shared/contracts/prompt-exploder';
+
 export interface SettingsCoreState {
-  settingsMap: Map<string, string>;
-  validatorPatternLists: ValidatorPatternList[];
   promptSettings: PromptEngineSettings;
   promptExploderSettings: ReturnType<typeof parsePromptExploderSettings>;
-  isBusy: boolean;
+  promptExploderSettingsValidationError: any;
+  validatorPatternLists: ValidatorPatternList[];
+  incomingBridgeSource: string | null;
+  activeValidationScope: PromptExploderRuntimeValidationScope;
+  activeValidationRuleStack: PromptExploderValidationRuleStack;
+  segmentationLibrary: PromptExploderSegmentationLibraryState;
+  isInitialLoading: boolean;
+  isRefreshing: boolean;
 }
 
 export const SettingsCoreContext = createContext<SettingsCoreState | null>(null);

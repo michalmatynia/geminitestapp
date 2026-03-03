@@ -1,5 +1,3 @@
-'use client';
-
 import type { DbSchemaSnapshot } from '@/shared/contracts/ai-paths';
 import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 

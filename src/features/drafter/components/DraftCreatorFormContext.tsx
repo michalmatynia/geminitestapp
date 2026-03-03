@@ -7,7 +7,7 @@ import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   CatalogRecord,
   Producer,
-  ProductCategoryDto,
+  ProductCategory,
   ProductParameter,
   ProductParameterValue,
   ProductTag,
@@ -101,7 +101,7 @@ export interface DraftCreatorMetadata {
   catalogs: CatalogRecord[];
   selectedCatalogIds: string[];
   setSelectedCatalogIds: (nextIds: string[]) => void;
-  categories: ProductCategoryDto[];
+  categories: ProductCategory[];
   categoryLoading: boolean;
   selectedCategoryId: string | null;
   setSelectedCategoryId: (nextId: string | null) => void;

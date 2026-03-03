@@ -151,30 +151,30 @@ export function useCatalogSync(
     ] as const,
   });
 
-  const catalogsQuery = results[0];
-  const priceGroupsQuery = results[1];
-  const languagesQuery = results[2];
-  const currenciesQuery = results[3];
+  const catalogsQuery = results[0]!;
+  const priceGroupsQuery = results[1]!;
+  const languagesQuery = results[2]!;
+  const currenciesQuery = results[3]!;
 
   // Log errors
   useEffect(() => {
     if (catalogsQuery.error) {
-      logClientError(catalogsQuery.error, {
+      logClientError(catalogsQuery.error as Error, {
         context: { source: 'useCatalogSync', action: 'fetchCatalogs' },
       });
     }
     if (priceGroupsQuery.error) {
-      logClientError(priceGroupsQuery.error, {
+      logClientError(priceGroupsQuery.error as Error, {
         context: { source: 'useCatalogSync', action: 'fetchPriceGroups' },
       });
     }
     if (languagesQuery.error) {
-      logClientError(languagesQuery.error, {
+      logClientError(languagesQuery.error as Error, {
         context: { source: 'useCatalogSync', action: 'fetchLanguages' },
       });
     }
     if (currenciesQuery.error) {
-      logClientError(currenciesQuery.error, {
+      logClientError(currenciesQuery.error as Error, {
         context: { source: 'useCatalogSync', action: 'fetchCurrencies' },
       });
     }
@@ -337,7 +337,7 @@ export function useCatalogSync(
   return {
     catalogs,
     catalogsLoading: catalogsQuery.isLoading,
-    catalogsError: catalogsQuery.error ? catalogsQuery.error.message : null,
+    catalogsError: catalogsQuery.error ? (catalogsQuery.error as Error).message : null,
     currencyCode,
     setCurrencyCode: handleSetCurrencyCode,
     currencyOptions,

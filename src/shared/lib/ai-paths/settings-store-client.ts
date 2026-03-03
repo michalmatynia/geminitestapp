@@ -1,5 +1,3 @@
-'use client';
-
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { SettingRecord } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';

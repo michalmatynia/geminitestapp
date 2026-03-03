@@ -22,7 +22,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
-import type { CatalogDto as Catalog, ProductCategoryDto } from '@/shared/contracts/products';
+import type { CatalogRecord, ProductCategory } from '@/shared/contracts/products';
 import type { 
   InternalCategoryOption,
   CategoryMapperData,
@@ -97,19 +97,19 @@ const normalizeParentExternalId = (value: string | null | undefined): string | n
 };
 
 const buildInternalCategoryOptions = (
-  categories: ProductCategoryDto[]
+  categories: ProductCategory[]
 ): InternalCategoryOption[] => {
   if (categories.length === 0) return [];
 
-  const byId = new Map<string, ProductCategoryDto>(
-    categories.map((category: ProductCategoryDto): [string, ProductCategoryDto] => [
+  const byId = new Map<string, ProductCategory>(
+    categories.map((category: ProductCategory): [string, ProductCategory] => [
       category.id,
       category,
     ])
   );
-  const childrenByParentId = new Map<string | null, ProductCategoryDto[]>();
+  const childrenByParentId = new Map<string | null, ProductCategory[]>();
 
-  const pushChild = (parentId: string | null, category: ProductCategoryDto): void => {
+  const pushChild = (parentId: string | null, category: ProductCategory): void => {
     const current = childrenByParentId.get(parentId) ?? [];
     current.push(category);
     childrenByParentId.set(parentId, current);
@@ -125,7 +125,7 @@ const buildInternalCategoryOptions = (
   }
 
   for (const [, children] of childrenByParentId) {
-    children.sort((a: ProductCategoryDto, b: ProductCategoryDto): number =>
+    children.sort((a: ProductCategory, b: ProductCategory): number =>
       a.name.localeCompare(b.name)
     );
   }
@@ -151,8 +151,8 @@ const buildInternalCategoryOptions = (
   visit(null, 0, []);
 
   const unvisited = categories
-    .filter((category: ProductCategoryDto): boolean => !visited.has(category.id))
-    .sort((a: ProductCategoryDto, b: ProductCategoryDto): number => a.name.localeCompare(b.name));
+    .filter((category: ProductCategory): boolean => !visited.has(category.id))
+    .sort((a: ProductCategory, b: ProductCategory): number => a.name.localeCompare(b.name));
 
   for (const category of unvisited) {
     if (visited.has(category.id)) continue;
@@ -187,7 +187,7 @@ export function CategoryMapperProvider({
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (!selectedCatalogId && catalogs.length > 0 && !hasInitializedCatalog.current) {
-      const defaultCatalog = catalogs.find((c: Catalog) => c.isDefault) ?? catalogs[0];
+      const defaultCatalog = catalogs.find((c: CatalogRecord) => c.isDefault) ?? catalogs[0];
       if (defaultCatalog) {
         timer = setTimeout(() => {
           setSelectedCatalogId(defaultCatalog.id);

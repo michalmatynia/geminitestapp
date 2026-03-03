@@ -7,6 +7,7 @@ import {
   RuntimeHistoryEntry,
   RuntimePortValues,
   NodeHandlerContext,
+  ToastFn,
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
 

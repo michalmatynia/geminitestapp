@@ -1,4 +1,4 @@
-'use client';
+import 'server-only';
 
 import { randomUUID } from 'crypto';
 import { RETENTION_MS } from './config';

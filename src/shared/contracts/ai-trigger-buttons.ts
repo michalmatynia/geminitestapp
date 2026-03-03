@@ -63,8 +63,7 @@ export const aiTriggerButtonSchema = dtoBaseSchema.extend({
   sortIndex: z.number(),
 }).strict();
 
-export type AiTriggerButtonDto = z.infer<typeof aiTriggerButtonSchema>;
-export type AiTriggerButtonRecord = AiTriggerButtonDto;
+export type AiTriggerButtonRecord = z.infer<typeof aiTriggerButtonSchema>;
 
 export const createAiTriggerButtonSchema = aiTriggerButtonSchema.omit({
   id: true,
@@ -72,8 +71,8 @@ export const createAiTriggerButtonSchema = aiTriggerButtonSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAiTriggerButtonDto = z.infer<typeof createAiTriggerButtonSchema>;
-export type UpdateAiTriggerButtonDto = Partial<CreateAiTriggerButtonDto>;
+export type AiTriggerButtonCreateInput = z.infer<typeof createAiTriggerButtonSchema>;
+export type AiTriggerButtonUpdateInput = Partial<AiTriggerButtonCreateInput>;
 
 // ---------------------------------------------------------------------------
 // Validation Schemas (moved from features to shared contracts)
@@ -169,6 +168,9 @@ export type FireAiPathTriggerEventArgs = {
         completedNodes: number;
         totalNodes: number;
         node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
+        error?: string | null | undefined;
+        level?: 'info' | 'warn' | 'error' | 'debug' | undefined;
+        message?: string | null | undefined;
       }) => void)
     | undefined;
 };

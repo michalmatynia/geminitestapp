@@ -18,7 +18,7 @@ import {
 } from '@/features/observability/hooks/useLogQueries';
 import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   SystemLogLevelDto as SystemLogLevel,

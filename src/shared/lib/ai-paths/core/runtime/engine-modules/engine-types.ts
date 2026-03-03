@@ -27,6 +27,7 @@ export type EvaluateGraphOptions = {
   strictFlowMode?: boolean | undefined;
   deferPoll?: boolean | undefined;
   skipAiJobs?: boolean | undefined;
+  isManualExecution?: boolean | undefined;
   skipNodeIds?: string[] | undefined;
   seedOutputs?: Record<string, RuntimePortValues> | undefined;
   seedHashes?: Record<string, string> | undefined;

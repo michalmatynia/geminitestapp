@@ -6,7 +6,7 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema, CollectionSchemaDto } from '@/shared/contracts/database';
 
-import { dbApi, type ApiResponse } from '../../../api';
+import { dbApi, type ApiResponse } from '@/shared/lib/ai-paths/api';
 
 import type { SchemaResponse } from '../../../api/client';
 

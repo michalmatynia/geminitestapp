@@ -1,5 +1,3 @@
-'use client';
-
 import type { SettingRecord, SettingsScope } from '@/shared/contracts/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

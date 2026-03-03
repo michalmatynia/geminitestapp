@@ -1,13 +1,30 @@
 import { randomUUID } from 'crypto';
-import type { Filter, WithId } from 'mongodb';
+import type { Filter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { NoteFileDocument } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
   NoteFileRecord,
   NoteFileCreateInput,
 } from '@/shared/contracts/notes';
-import { toNoteFileResponse } from '../mongo-note-repository-utils';
 import { noteFileCollectionName } from './common';
+
+const toNoteFileRecord = (doc: NoteFileDocument): NoteFileRecord => ({
+  id: doc.id ?? doc._id,
+  noteId: doc.noteId,
+  slotIndex: doc.slotIndex,
+  filename: doc.filename,
+  filepath: doc.filepath,
+  mimetype: doc.mimetype,
+  size: doc.size,
+  width: doc.width ?? null,
+  height: doc.height ?? null,
+  createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
+  updatedAt:
+    typeof doc.updatedAt === 'string'
+      ? doc.updatedAt
+      : doc.updatedAt?.toISOString() ??
+        (typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString()),
+});
 
 export const mongoFileImpl = {
   async createNoteFile(_data: NoteFileCreateInput): Promise<NoteFileRecord> {
@@ -34,7 +51,7 @@ export const mongoFileImpl = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toNoteFileResponse(doc as WithId<NoteFileDocument>);
+    return toNoteFileRecord(doc);
   },
 
   async getNoteFiles(_noteId: string): Promise<NoteFileRecord[]> {
@@ -44,7 +61,7 @@ export const mongoFileImpl = {
       .find({ noteId: _noteId } as Filter<NoteFileDocument>)
       .sort({ slotIndex: 1 })
       .toArray();
-    return docs.map(toNoteFileResponse);
+    return docs.map((doc) => toNoteFileRecord(doc));
   },
 
   async deleteNoteFile(_noteId: string, _slotIndex: number): Promise<boolean> {

@@ -6,7 +6,7 @@ import React from 'react';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type {
   TagRecord,
-  NoteWithRelationsDto as NoteWithRelations,
+  NoteWithRelations,
 } from '@/shared/contracts/notes';
 import {
   Button,

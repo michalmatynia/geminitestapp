@@ -17,9 +17,9 @@ import { type AiBrainCapabilityKey } from '@/shared/lib/ai-brain/settings';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 import type {
-  AiInsightRecordDto as AiInsightRecord,
-  AiInsightSourceDto as AiInsightSource,
-  AiInsightTypeDto as AiInsightType,
+  AiInsightRecord,
+  AiInsightSource,
+  AiInsightType,
 } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';

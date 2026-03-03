@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo } from 'react';
 
-import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,
   ProductCategory,

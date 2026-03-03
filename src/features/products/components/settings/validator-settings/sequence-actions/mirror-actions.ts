@@ -1,5 +1,3 @@
-'use client';
-
  
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
@@ -24,7 +22,7 @@ import {
   getPatternSequence,
   isNameSecondSegmentDimensionPattern,
 } from '../helpers';
-import type { CreatePatternMutation, UpdatePatternMutation } from '../types';
+import type { CreatePatternMutation, UpdatePatternMutation } from './types';
 
 export const createNameSecondSegmentDimensionPattern = async (args: {
   target: 'size_length' | 'length';

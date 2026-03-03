@@ -13,7 +13,7 @@ import {
 } from '@/shared/contracts/integrations';
 
 export type { ImageExportLogger, ImageBase64Mode, ImageTransformOptions };
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =
   process.env['NEXT_PUBLIC_APP_URL'] ||

@@ -4,20 +4,20 @@ import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
-  NoteWithRelationsDto as NoteWithRelations,
-  RelatedNoteDto as RelatedNote,
-  NoteRelationDto,
+  NoteWithRelations,
+  RelatedNote,
+  NoteRelationRecord,
 } from '@/shared/contracts/notes';
 import { Breadcrumbs } from '@/shared/ui';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string };
 
-type NoteRelationWithTarget = NoteRelationDto & {
+type NoteRelationWithTarget = NoteRelationRecord & {
   targetNote?: RelatedNote | undefined;
 };
 
-type NoteRelationWithSource = NoteRelationDto & {
+type NoteRelationWithSource = NoteRelationRecord & {
   sourceNote?: RelatedNote | undefined;
 };
 

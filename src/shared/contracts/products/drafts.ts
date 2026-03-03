@@ -5,27 +5,27 @@ import type { ImageFileRecord } from '../files';
 import type { ManagedImageSlot } from '../image-slots';
 import { productParameterValueSchema } from './product';
 import type { ProductRecord, ProductWithImages, ProductImageRecord } from './product';
-import type { ProductCreateInputDto, ProductUpdateInputDto } from './io';
-import type { CatalogCreateInputDto, CatalogUpdateInputDto, CatalogRecord } from './catalogs';
+import type { ProductCreateInput, ProductUpdateInput } from './io';
+import type { CatalogCreateInput, CatalogUpdateInput, CatalogRecord } from './catalogs';
 import type {
-  ProductCategoryFiltersDto,
+  ProductCategoryFilters,
   ProductCategory,
   ProductCategoryWithChildren,
-  CreateProductCategoryDto,
-  UpdateProductCategoryDto,
+  ProductCategoryCreateInput,
+  ProductCategoryUpdateInput,
 } from './categories';
 import type {
   ProductParameter,
-  CreateProductParameterDto,
-  UpdateProductParameterDto,
+  ProductParameterCreateInput,
+  ProductParameterUpdateInput,
 } from './parameters';
 import type { Producer } from './producers';
-import type { ProductFilterDto, ProductStockOperator, ProductListPreferencesDto } from './filters';
+import type { ProductFilter, ProductStockOperator, ProductListPreferences } from './filters';
 import type {
-  ProductTagFiltersDto,
+  ProductTagFilters,
   ProductTag,
-  ProductTagCreateInputDto,
-  ProductTagUpdateInputDto,
+  ProductTagCreateInput,
+  ProductTagUpdateInput,
 } from './tags';
 import type {
   ProductValidationPatternFormDataDto,
@@ -120,9 +120,6 @@ export type UpdateProductDraftInput = UpdateProductDraftDto;
  * Product Repository Interfaces
  */
 
-export type CatalogCreateInput = CatalogCreateInputDto;
-export type CatalogUpdateInput = CatalogUpdateInputDto;
-
 export type CatalogRepository = {
   listCatalogs(): Promise<CatalogRecord[]>;
   getCatalogById(id: string): Promise<CatalogRecord | null>;
@@ -133,15 +130,15 @@ export type CatalogRepository = {
   setDefaultCatalog(id: string): Promise<void>;
 };
 
-export type CategoryFilters = ProductCategoryFiltersDto;
+export type CategoryFilters = ProductCategoryFilters;
 
 export type CategoryRepository = {
   listCategories(filters: CategoryFilters): Promise<ProductCategory[]>;
   getCategoryTree(catalogId?: string): Promise<ProductCategoryWithChildren[]>;
   getCategoryById(id: string): Promise<ProductCategory | null>;
   getCategoryWithChildren(id: string): Promise<ProductCategoryWithChildren | null>;
-  createCategory(data: CreateProductCategoryDto): Promise<ProductCategory>;
-  updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory>;
+  createCategory(data: ProductCategoryCreateInput): Promise<ProductCategory>;
+  updateCategory(id: string, data: ProductCategoryUpdateInput): Promise<ProductCategory>;
   deleteCategory(id: string): Promise<void>;
   findByName(
     catalogId: string,
@@ -152,8 +149,8 @@ export type CategoryRepository = {
 };
 
 export type ParameterFilters = { search?: string; catalogId?: string };
-export type ParameterCreateInput = CreateProductParameterDto;
-export type ParameterUpdateInput = UpdateProductParameterDto;
+export type ParameterCreateInput = ProductParameterCreateInput;
+export type ParameterUpdateInput = ProductParameterUpdateInput;
 
 export type ParameterRepository = {
   listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
@@ -178,7 +175,7 @@ export type ProducerRepository = {
   findByName(name: string): Promise<Producer | null>;
 };
 
-export type ProductFilters = Partial<ProductFilterDto> & {
+export type ProductFilters = Partial<ProductFilter> & {
   ids?: string[] | undefined;
   excludeIds?: string[] | undefined;
   tagIds?: string[] | undefined;
@@ -212,9 +209,9 @@ export type TransactionalProductRepository = {
   getProductsBySkus(skus: string[]): Promise<ProductRecord[]>;
   findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
   findProductsByBaseIds(baseIds: string[]): Promise<ProductRecord[]>;
-  createProduct(data: ProductCreateInputDto): Promise<ProductRecord>;
-  bulkCreateProducts(data: ProductCreateInputDto[]): Promise<number>;
-  updateProduct(id: string, data: ProductUpdateInputDto): Promise<ProductRecord | null>;
+  createProduct(data: ProductCreateInput): Promise<ProductRecord>;
+  bulkCreateProducts(data: ProductCreateInput[]): Promise<number>;
+  updateProduct(id: string, data: ProductUpdateInput): Promise<ProductRecord | null>;
   deleteProduct(id: string): Promise<ProductRecord | null>;
   duplicateProduct(id: string, sku: string): Promise<ProductRecord | null>;
   getProductImages(productId: string): Promise<ProductImageRecord[]>;
@@ -240,13 +237,13 @@ export type ProductRepository = TransactionalProductRepository & {
   ) => Promise<T>;
 };
 
-export type TagFilters = ProductTagFiltersDto;
+export type TagFilters = ProductTagFilters;
 
 export type TagRepository = {
   listTags(filters: TagFilters): Promise<ProductTag[]>;
   getTagById(id: string): Promise<ProductTag | null>;
-  createTag(data: ProductTagCreateInputDto): Promise<ProductTag>;
-  updateTag(id: string, data: ProductTagUpdateInputDto): Promise<ProductTag>;
+  createTag(data: ProductTagCreateInput): Promise<ProductTag>;
+  updateTag(id: string, data: ProductTagUpdateInput): Promise<ProductTag>;
   deleteTag(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductTag | null>;
 };
@@ -389,9 +386,7 @@ export type DebugInfo = {
   timestamp: string;
 };
 
-export type ProductFormData = ProductCreateInputDto;
-
-export type ProductListPreferences = ProductListPreferencesDto;
+export type ProductFormData = ProductCreateInput;
 
 export type ProductImageSlot = ManagedImageSlot;
 

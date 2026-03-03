@@ -6,7 +6,7 @@ import type {
   ExternalCategory
 } from './index';
 import type { PlaywrightPersona } from '../playwright';
-import type { CatalogDto as Catalog, ProductCategoryDto } from '../products';
+import type { CatalogRecord, ProductCategory } from '../products';
 
 export interface IntegrationsData {
   integrations: Integration[];
@@ -25,11 +25,11 @@ export interface InternalCategoryOption {
 }
 
 export interface CategoryMapperData {
-  catalogs: Catalog[];
+  catalogs: CatalogRecord[];
   catalogsLoading: boolean;
   selectedCatalogId: string | null;
   setSelectedCatalogId: (id: string | null) => void;
-  internalCategories: ProductCategoryDto[];
+  internalCategories: ProductCategory[];
   internalCategoriesLoading: boolean;
   internalCategoryOptions: InternalCategoryOption[];
   externalCategories: ExternalCategory[];

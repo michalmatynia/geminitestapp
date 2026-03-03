@@ -1,5 +1,3 @@
-'use client';
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -20,7 +18,7 @@ import {
   sortRuleDraftsBySequence,
   DEFAULT_SEQUENCE_STEP,
 } from '../helpers';
-import type { UpdatePatternMutation } from '../types';
+import type { UpdatePatternMutation } from './types';
 
 export const handleSaveSequenceGroup = async (args: {
   groupId: string;

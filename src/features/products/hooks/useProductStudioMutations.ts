@@ -9,7 +9,7 @@ import {
   invalidateProductsAndCounts,
   invalidateImageStudioSlots,
 } from './productCache';
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 export function useSendToStudioMutation() {
   return createCreateMutationV2<

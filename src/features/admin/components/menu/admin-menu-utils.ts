@@ -1,5 +1,3 @@
-'use client';
-
 import type { AdminNavItem, AdminMenuCustomNode, AdminNavLeaf } from '@/shared/contracts/admin';
 
 export type NavItem = Omit<AdminNavItem, 'children'> & {

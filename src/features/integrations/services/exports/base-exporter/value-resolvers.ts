@@ -5,7 +5,7 @@
  
  
 
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { ImageExportLogger } from '../base-exporter-images';
 import { 
   toStringValue, 

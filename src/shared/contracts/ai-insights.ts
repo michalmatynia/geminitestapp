@@ -18,8 +18,7 @@ export const aiInsightTypeSchema = z.enum([
   'logs',
 ]);
 
-export type AiInsightTypeDto = z.infer<typeof aiInsightTypeSchema>;
-export type AiInsightType = AiInsightTypeDto;
+export type AiInsightType = z.infer<typeof aiInsightTypeSchema>;
 
 export const aiInsightStatusSchema = z.enum([
   'new',
@@ -31,8 +30,7 @@ export const aiInsightStatusSchema = z.enum([
   'error',
 ]);
 
-export type AiInsightStatusDto = z.infer<typeof aiInsightStatusSchema>;
-export type AiInsightStatus = AiInsightStatusDto;
+export type AiInsightStatus = z.infer<typeof aiInsightStatusSchema>;
 
 export const aiInsightSourceSchema = z.enum([
   'system',
@@ -42,8 +40,7 @@ export const aiInsightSourceSchema = z.enum([
   'scheduled',
 ]);
 
-export type AiInsightSourceDto = z.infer<typeof aiInsightSourceSchema>;
-export type AiInsightSource = AiInsightSourceDto;
+export type AiInsightSource = z.infer<typeof aiInsightSourceSchema>;
 
 export const aiInsightModelConfigSchema = z.object({
   modelId: z.string(),
@@ -51,8 +48,7 @@ export const aiInsightModelConfigSchema = z.object({
   maxTokens: z.number().optional(),
 });
 
-export type AiInsightModelConfigDto = z.infer<typeof aiInsightModelConfigSchema>;
-export type AiInsightModelConfig = AiInsightModelConfigDto;
+export type AiInsightModelConfig = z.infer<typeof aiInsightModelConfigSchema>;
 
 export const aiInsightRecordSchema = namedDtoSchema.extend({
   type: aiInsightTypeSchema,
@@ -67,8 +63,7 @@ export const aiInsightRecordSchema = namedDtoSchema.extend({
   recommendations: z.array(z.string()).optional(),
 });
 
-export type AiInsightRecordDto = z.infer<typeof aiInsightRecordSchema>;
-export type AiInsightRecord = AiInsightRecordDto;
+export type AiInsightRecord = z.infer<typeof aiInsightRecordSchema>;
 
 export const aiInsightNotificationSchema = z.object({
   id: z.string().optional(),
@@ -83,11 +78,10 @@ export const aiInsightNotificationSchema = z.object({
   recommendations: z.array(z.string()).optional(),
 });
 
-export type AiInsightNotificationDto = z.infer<typeof aiInsightNotificationSchema>;
-export type AiInsightNotification = AiInsightNotificationDto;
+export type AiInsightNotification = z.infer<typeof aiInsightNotificationSchema>;
 
-export interface AiInsightNotificationsResponseDto {
-  notifications: AiInsightNotificationDto[];
+export interface AiInsightNotificationsResponse {
+  notifications: AiInsightNotification[];
   total: number;
   unreadCount: number;
 }

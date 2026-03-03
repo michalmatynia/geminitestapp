@@ -1,25 +1,18 @@
- 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
- 
- 
- 
-
 import { randomUUID } from 'crypto';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { 
-  NotebookDocument, 
-  NoteDocument, 
-  TagDocument, 
-  CategoryDocument 
-} from '../types/mongo-note-types';
-import { 
+import type { Filter, UpdateFilter } from 'mongodb';
+
+import type {
+  NotebookDocument,
+  NoteDocument,
+  TagDocument,
+  CategoryDocument,
+} from '../../types/mongo-note-types';
+import type {
   NotebookRecord,
   NotebookCreateInput,
   NotebookUpdateInput,
 } from '@/shared/contracts/notes';
-import { toNotebookResponse } from '../mongo-note-repository-utils';
-import { Filter, UpdateFilter, WithId } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 
 const notebookCollectionName = 'notebooks';
@@ -27,15 +20,37 @@ const noteCollectionName = 'notes';
 const tagCollectionName = 'tags';
 const categoryCollectionName = 'categories';
 
-export const mongoNotebookImpl = {
+const toNotebookRecord = (doc: NotebookDocument): NotebookRecord => ({
+  id: doc.id ?? doc._id,
+  name: doc.name,
+  description: doc.description ?? null,
+  color: doc.color ?? null,
+  defaultThemeId: doc.defaultThemeId ?? null,
+  createdAt: typeof doc.createdAt === 'string' ? doc.createdAt : doc.createdAt.toISOString(),
+  updatedAt:
+    typeof doc.updatedAt === 'string'
+      ? doc.updatedAt
+      : doc.updatedAt?.toISOString() ?? null,
+});
+
+type MongoNotebookImpl = {
+  getOrCreateDefaultNotebook: () => Promise<NotebookRecord>;
+  getAllNotebooks: () => Promise<NotebookRecord[]>;
+  getNotebookById: (id: string) => Promise<NotebookRecord | null>;
+  createNotebook: (data: NotebookCreateInput) => Promise<NotebookRecord>;
+  updateNotebook: (id: string, data: NotebookUpdateInput) => Promise<NotebookRecord>;
+  deleteNotebook: (id: string) => Promise<void>;
+};
+
+export const mongoNotebookImpl: MongoNotebookImpl = {
   async getOrCreateDefaultNotebook(): Promise<NotebookRecord> {
     const db = await getMongoDb();
     const collection = db.collection<NotebookDocument>(notebookCollectionName);
     const existing = await collection.find({}).sort({ createdAt: 1 }).limit(1).toArray();
     const notebook = existing[0]
-      ? toNotebookResponse(existing[0])
-      : toNotebookResponse(
-        await (async (): Promise<WithId<NotebookDocument>> => {
+      ? toNotebookRecord(existing[0])
+      : toNotebookRecord(
+        await (async (): Promise<NotebookDocument> => {
           const id = randomUUID();
           const now = new Date();
           const doc: NotebookDocument = {
@@ -81,7 +96,7 @@ export const mongoNotebookImpl = {
     const db = await getMongoDb();
     const collection = db.collection<NotebookDocument>(notebookCollectionName);
     const docs = await collection.find({}).sort({ name: 1 }).toArray();
-    return docs.map(toNotebookResponse);
+    return docs.map((doc) => toNotebookRecord(doc));
   },
 
   async getNotebookById(id: string): Promise<NotebookRecord | null> {
@@ -90,7 +105,7 @@ export const mongoNotebookImpl = {
     const doc = await collection.findOne({
       $or: [{ id }, { _id: id }],
     } as Filter<NotebookDocument>);
-    return doc ? toNotebookResponse(doc) : null;
+    return doc ? toNotebookRecord(doc) : null;
   },
 
   async createNotebook(data: NotebookCreateInput): Promise<NotebookRecord> {
@@ -108,7 +123,7 @@ export const mongoNotebookImpl = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toNotebookResponse(doc);
+    return toNotebookRecord(doc);
   },
 
   async updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord> {
@@ -129,7 +144,7 @@ export const mongoNotebookImpl = {
       { returnDocument: 'after' }
     );
     if (!result) throw notFoundError('Notebook not found');
-    return toNotebookResponse(result);
+    return toNotebookRecord(result);
   },
 
   async deleteNotebook(id: string): Promise<void> {

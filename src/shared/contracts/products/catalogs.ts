@@ -12,9 +12,8 @@ export const catalogSchema = namedDtoSchema.extend({
   priceGroupIds: z.array(z.string()),
 });
 
-export type CatalogDto = z.infer<typeof catalogSchema>;
-export type Catalog = CatalogDto;
-export type CatalogRecord = CatalogDto;
+export type Catalog = z.infer<typeof catalogSchema>;
+export type CatalogRecord = Catalog;
 
 export const createCatalogSchema = catalogSchema
   .omit({
@@ -29,11 +28,11 @@ export const createCatalogSchema = catalogSchema
     priceGroupIds: z.array(z.string()).optional(),
   });
 
-export type CatalogCreateInputDto = z.infer<typeof createCatalogSchema>;
+export type CatalogCreateInput = z.infer<typeof createCatalogSchema>;
 
 export const updateCatalogSchema = createCatalogSchema.partial();
 
-export type CatalogUpdateInputDto = z.infer<typeof updateCatalogSchema>;
+export type CatalogUpdateInput = z.infer<typeof updateCatalogSchema>;
 
 /**
  * Price Group Contract
@@ -51,9 +50,8 @@ export const priceGroupSchema = namedDtoSchema.extend({
   addToPrice: z.number(),
 });
 
-export type PriceGroupDto = z.infer<typeof priceGroupSchema>;
-export type PriceGroup = PriceGroupDto;
-export type PriceGroupRecord = PriceGroupDto;
+export type PriceGroup = z.infer<typeof priceGroupSchema>;
+export type PriceGroupRecord = PriceGroup;
 
 export const createPriceGroupSchema = priceGroupSchema.omit({
   id: true,
@@ -61,7 +59,5 @@ export const createPriceGroupSchema = priceGroupSchema.omit({
   updatedAt: true,
 });
 
-export type CreatePriceGroupDto = z.infer<typeof createPriceGroupSchema>;
-export type PriceGroupCreateInput = CreatePriceGroupDto;
-export type UpdatePriceGroupDto = Partial<CreatePriceGroupDto>;
-export type PriceGroupUpdateInput = UpdatePriceGroupDto;
+export type PriceGroupCreateInput = z.infer<typeof createPriceGroupSchema>;
+export type PriceGroupUpdateInput = Partial<PriceGroupCreateInput>;

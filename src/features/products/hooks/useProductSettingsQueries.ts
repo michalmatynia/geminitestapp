@@ -8,7 +8,7 @@ import {
 import {
   type ProductCategory,
   type ProductCategoryWithChildren,
-  type ReorderProductCategoryDto as ReorderCategoryPayload,
+  type ReorderProductCategory as ReorderCategoryPayload,
 } from '@/shared/contracts/products/categories';
 import {
   type ProductParameter,

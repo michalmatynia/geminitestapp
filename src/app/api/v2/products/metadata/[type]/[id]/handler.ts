@@ -5,7 +5,7 @@ import {
   getTagRepository,
   getParameterRepository,
   getProductDataProvider,
-  type ProductTagUpdateInputDto,
+  type ProductTagUpdateInput,
   type ProductParameterUpdateInput,
 } from '@/features/products/server';
 import { deleteSimpleParameter } from '@/shared/lib/products/services/simple-parameter-service';
@@ -259,7 +259,7 @@ export async function PUT_products_metadata_id_handler(
   }
   if (type === 'tags') {
     const repo = await getTagRepository();
-    const updateData = data as ProductTagUpdateInputDto;
+    const updateData = data as ProductTagUpdateInput;
     return NextResponse.json(await repo.updateTag(id, updateData));
   }
   if (type === 'parameters') {

@@ -5,7 +5,7 @@ import {
   getExportStockFallbackEnabled,
 } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ProductWithImagesDto as ProductWithImages } from '@/features/products/server';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import type { BaseFieldMapping } from '../helpers';
 
 type BuildBaseProductDataOptions = NonNullable<Parameters<typeof buildBaseProductData>[3]>;

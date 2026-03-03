@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SectionNodeItem } from '@/features/cms/components/page-builder/tree/SectionNodeItem';
@@ -155,7 +155,7 @@ describe('SectionNodeItem drag bridge', () => {
     vi.clearAllMocks();
   });
 
-  it('writes section and master-tree payloads and starts both drag channels', () => {
+  it('writes section and master-tree payloads and starts both drag channels', async () => {
     const section = createSection();
     const dataTransfer = createDataTransferStub();
     const { container } = render(<SectionNodeItem section={section} sectionIndex={2} />);
@@ -170,13 +170,15 @@ describe('SectionNodeItem drag bridge', () => {
     expect(dataTransfer.store.get(DRAG_KEYS.SECTION_INDEX)).toBe('2');
     expect(dataTransfer.store.get(MASTER_TREE_DRAG_NODE_ID)).toBe('cms-section:section-1');
 
-    expect(startSectionDragMock).toHaveBeenCalledWith({
-      id: 'section-1',
-      type: 'Hero',
-      zone: 'template',
-      index: 2,
+    await waitFor(() => {
+      expect(startSectionDragMock).toHaveBeenCalledWith({
+        id: 'section-1',
+        type: 'Hero',
+        zone: 'template',
+        index: 2,
+      });
+      expect(startSectionMasterDragMock).toHaveBeenCalledWith('section-1');
     });
-    expect(startSectionMasterDragMock).toHaveBeenCalledWith('section-1');
   });
 
   it('clears both drag channels on drag end', () => {

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   DOCUMENTATION_MODULE_IDS,
   getDocumentationEntry,

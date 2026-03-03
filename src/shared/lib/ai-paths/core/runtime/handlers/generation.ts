@@ -5,7 +5,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import { aiJobsApi, aiGenerationApi } from '../../../api';
+import { aiJobsApi, aiGenerationApi } from '@/shared/lib/ai-paths/api';
 import { generateProductAiDescription } from '../server/description-generator';
 import {
   coerceInput,

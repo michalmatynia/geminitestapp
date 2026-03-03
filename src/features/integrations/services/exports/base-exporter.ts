@@ -8,7 +8,7 @@ import type {
   ImageExportDiagnostics,
   ImageUrlDiagnostic,
 } from '@/shared/contracts/integrations';
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 import { getAllImageUrls, getProductImagesAsBase64 } from './base-exporter-images';
 import {

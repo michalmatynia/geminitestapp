@@ -1,5 +1,3 @@
-'use client';
-
 import { classifyError } from '@/shared/errors/error-classifier';
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';

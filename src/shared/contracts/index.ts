@@ -10,10 +10,13 @@ export * from './ai-paths-semantic-grammar';
 export * from './ai-paths';
 // Resolve TS2308 by re-exporting the concrete runtime types explicitly.
 export type {
+  AiPathRuntimeEvent,
   PathExecutionMode,
   PathRunMode,
   QueuedRun,
   RuntimeEventInput,
+  RuntimeHistoryEntry,
+  RuntimeHistoryLink,
   RuntimePortValues,
   RuntimeState,
   RunStatus,

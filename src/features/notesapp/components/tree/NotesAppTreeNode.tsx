@@ -10,6 +10,7 @@ import {
   fromNoteMasterNodeId,
 } from '@/features/notesapp/utils/master-folder-tree';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import type { NotesMasterTreeOperations } from '@/shared/contracts/notes';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Button, Input, Tooltip } from '@/shared/ui';
@@ -21,6 +22,13 @@ export type NotesAppTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   FolderOpenIcon: React.ComponentType<{ className?: string }>;
   FileIcon: React.ComponentType<{ className?: string }>;
   DragHandleIcon: React.ComponentType<{ className?: string }>;
+};
+
+type NotesAppTreeNodeOperations = NotesMasterTreeOperations & {
+  handleCreateFolder: (parentId?: string | null) => Promise<void>;
+  handleDuplicateNote: (noteId: string) => Promise<void>;
+  handleDeleteFolder: (folderId: string) => Promise<void>;
+  handleDeleteNoteFromTree: (noteId: string) => Promise<void>;
 };
 
 export function NotesAppTreeNode({
@@ -39,14 +47,15 @@ export function NotesAppTreeNode({
   FileIcon,
   DragHandleIcon,
 }: NotesAppTreeNodeProps): React.JSX.Element {
+  const notesAppContext = useNotesAppContext();
   const {
     setSelectedFolderId,
     setSelectedNote,
     setIsEditing,
     setIsCreating,
     handleSelectNoteFromTree,
-    operations,
-  } = useNotesAppContext();
+  } = notesAppContext;
+  const operations = notesAppContext.operations as NotesAppTreeNodeOperations;
 
   const folderId = fromFolderMasterNodeId(node.id);
   const noteId = fromNoteMasterNodeId(node.id);

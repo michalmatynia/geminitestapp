@@ -100,7 +100,7 @@ export function useIntegrationSelection(
 
   const loading = Boolean(integrationsQuery?.isPending && !integrationsData);
   const integrations = useMemo((): IntegrationWithConnections[] => {
-    const data = integrationsData ?? [];
+    const data = (integrationsData as IntegrationWithConnections[] | undefined) ?? [];
     return Array.isArray(data)
       ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0)
       : [];

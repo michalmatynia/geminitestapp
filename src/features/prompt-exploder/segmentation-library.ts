@@ -1,18 +1,15 @@
 import { z } from 'zod';
 
 import {
-  promptExploderDocumentSchema,
   promptExploderSegmentationRecordSchema,
   type PromptExploderDocument,
   type PromptExploderSegment,
   type PromptExploderSubsection,
   type PromptExploderSegmentationRecord,
   type PromptExploderSegmentationReturnTarget,
-  type PromptExploderSegmentationAnalysisRecord,
   type PromptExploderSegmentationAnalysisContext,
   type PromptExploderSegmentationOutline,
   type PromptExploderSegmentationSegmentOutline,
-  type PromptExploderSegmentationStats,
   type PromptExploderSegmentationSubsectionOutline,
 } from '@/shared/contracts/prompt-exploder';
 

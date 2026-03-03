@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getCatalogRepository,
   getProductDataProvider,
-  type CatalogUpdateInputDto,
+  type CatalogUpdateInput,
 } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -38,7 +38,7 @@ export async function PUT_products_entity_handler(
     const provider = await getProductDataProvider();
     const repo = await getCatalogRepository(provider);
     return NextResponse.json(
-      await repo.updateCatalog(id, data as unknown as CatalogUpdateInputDto)
+      await repo.updateCatalog(id, data as unknown as CatalogUpdateInput)
     );
   }
 

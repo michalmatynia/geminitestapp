@@ -1,7 +1,7 @@
 'use client';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/shared/lib/analytics/api';
-import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   AnalyticsScope,
   AnalyticsSummary,

@@ -251,8 +251,9 @@ describe('SectionNodeItem tree behavior', () => {
       index: 0,
     });
 
-    fireEvent.dragOver(screen.getByText('Hero'), { dataTransfer });
-    fireEvent.drop(screen.getByText('Hero'), { dataTransfer });
+    const insideDropTarget = screen.getByText('Drop inside to nest');
+    fireEvent.dragOver(insideDropTarget, { dataTransfer });
+    fireEvent.drop(insideDropTarget, { dataTransfer });
 
     expect(moveSectionByMasterMock).toHaveBeenCalledWith(
       'source-section',
@@ -263,5 +264,35 @@ describe('SectionNodeItem tree behavior', () => {
     await waitFor(() => {
       expect(endSectionDragMock).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('does not nest when dropping on the section row', () => {
+    const targetSection = createSection({ id: 'target-section', zone: 'header' });
+    const sourceSection = createSection({ id: 'source-section', zone: 'template' });
+    pageBuilderStateRef.current.sections = [targetSection, sourceSection];
+    dragStateRef.current.section = {
+      id: 'source-section',
+      type: 'Hero',
+      zone: 'template',
+      index: 0,
+    };
+
+    const { container } = render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
+
+    const dataTransfer = createDataTransferStub();
+    setSectionDragData(dataTransfer as unknown as DataTransfer, {
+      id: 'source-section',
+      type: 'Hero',
+      zone: 'template',
+      index: 0,
+    });
+
+    const sectionRow = container.querySelector('[data-cms-section-row="true"]');
+    expect(sectionRow).not.toBeNull();
+
+    fireEvent.dragOver(sectionRow as Element, { dataTransfer });
+    fireEvent.drop(sectionRow as Element, { dataTransfer });
+
+    expect(moveSectionByMasterMock).not.toHaveBeenCalled();
   });
 });

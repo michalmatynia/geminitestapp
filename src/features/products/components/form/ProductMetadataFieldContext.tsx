@@ -5,7 +5,7 @@ import React from 'react';
 import type {
   CatalogRecord,
   Producer,
-  ProductCategoryDto,
+  ProductCategory,
   ProductTag,
 } from '@/shared/contracts/products';
 
@@ -14,7 +14,7 @@ export type ProductMetadataFieldContextValue = {
   selectedCatalogIds?: string[];
   onCatalogsChange?: (nextIds: string[]) => void;
   catalogsLoading?: boolean;
-  categories?: ProductCategoryDto[];
+  categories?: ProductCategory[];
   selectedCategoryId?: string | null;
   onCategoryChange?: (nextId: string | null) => void;
   categoriesLoading?: boolean;

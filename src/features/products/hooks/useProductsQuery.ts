@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import { type ProductWithImages, productSchema } from '@/shared/contracts/products/product';
-import { type ProductFilterDto as UseProductsFilters } from '@/shared/contracts/products/filters';
+import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
 
 export type { UseProductsFilters };
 

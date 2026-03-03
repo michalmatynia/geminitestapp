@@ -1,7 +1,6 @@
  
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import { type Edge as AiEdge } from '@/shared/contracts/ai-paths';
-import { type AiNode, type NodeDefinition } from '@/shared/contracts/case-resolver';
+import { type Edge as AiEdge, type AiNode, type NodeDefinition } from '@/shared/contracts/ai-paths';
 import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,

@@ -12,10 +12,7 @@ import {
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  AiTriggerButtonLocation,
-  AiTriggerButtonDto,
-} from '@/shared/contracts/ai-trigger-buttons';
+import type { AiTriggerButtonLocation } from '@/shared/contracts/ai-trigger-buttons';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -80,10 +77,10 @@ const DISPLAY_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 const toDisplayMode = (
-  record: Pick<AiTriggerButtonDto, 'display'> | null | undefined
+  record: Pick<AiTriggerButtonRecord, 'display'> | null | undefined
 ): 'icon' | 'icon_label' => (record?.display.showLabel === false ? 'icon' : 'icon_label');
 
-const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft => ({
+const normalizeDraft = (record?: AiTriggerButtonRecord | null): TriggerButtonDraft => ({
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? '',
   iconId: record?.iconId ?? null,
@@ -189,12 +186,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [iconLibraryOpen, setIconLibraryOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
-  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonDto | null>(null);
+  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonRecord | null>(null);
   const aiPathsSettingsQuery = useAiPathsSettingsQuery();
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto>({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async (): Promise<AiTriggerButtonDto[]> => {
+    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
@@ -226,9 +223,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }
   }, [triggerButtonsQuery.error, toast]);
 
-  const createMutation = createCreateMutationV2<AiTriggerButtonDto, AiTriggerButtonCreatePayload>({
+  const createMutation = createCreateMutationV2<
+    AiTriggerButtonRecord,
+    AiTriggerButtonCreatePayload
+  >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.create'),
-    mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonDto> => {
+    mutationFn: async (
+      payload: AiTriggerButtonCreatePayload
+    ): Promise<AiTriggerButtonRecord> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
@@ -256,7 +258,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   });
 
   const updateMutation = createUpdateMutationV2<
-    AiTriggerButtonDto,
+    AiTriggerButtonRecord,
     {
       id: string;
       input: AiTriggerButtonCreatePayload;
@@ -269,7 +271,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }: {
       id: string;
       input: AiTriggerButtonCreatePayload;
-    }): Promise<AiTriggerButtonDto> => {
+    }): Promise<AiTriggerButtonRecord> => {
       const result = await triggerButtonsApi.update(id, {
         name: input.name,
         iconId: input.iconId,
@@ -332,9 +334,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = createUpdateMutationV2<AiTriggerButtonDto[], string[]>({
+  const reorderMutation = createUpdateMutationV2<AiTriggerButtonRecord[], string[]>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
-    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
+    mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.reorder(orderedIds);
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
@@ -367,7 +369,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     setEditorOpen(true);
   };
 
-  const handleEdit = useCallback((record: AiTriggerButtonDto): void => {
+  const handleEdit = useCallback((record: AiTriggerButtonRecord): void => {
     setDraft(normalizeDraft(record));
     setIconLibraryOpen(false);
     setEditorOpen(true);
@@ -382,7 +384,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const handleDeleteRequest = useCallback(
     (id: string): void => {
       const list = triggerButtonsQuery.data ?? [];
-      const btn = list.find((b: AiTriggerButtonDto) => b.id === id);
+      const btn = list.find((b: AiTriggerButtonRecord) => b.id === id);
       if (btn) setButtonToDelete(btn);
     },
     [triggerButtonsQuery.data]
@@ -654,15 +656,16 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const rows: AiTriggerButtonRecord[] = useMemo((): AiTriggerButtonRecord[] => {
     const list = triggerButtonsQuery.data ?? [];
     return list.map(
-      (btn: AiTriggerButtonDto): AiTriggerButtonRecord => ({
-        ...btn,
-        usedPaths: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
-          (entry: TriggerButtonPathUsage) => ({
-            id: entry.id,
-            name: entry.name,
-          })
-        ),
-      })
+      (btn: AiTriggerButtonRecord): AiTriggerButtonRecord =>
+        ({
+          ...btn,
+          usedPaths: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
+            (entry: TriggerButtonPathUsage) => ({
+              id: entry.id,
+              name: entry.name,
+            })
+          ),
+        } as AiTriggerButtonRecord)
     );
   }, [triggerButtonsQuery.data, triggerButtonPathUsageMap]);
 

@@ -5,7 +5,7 @@ import {
   getInternationalizationProvider,
   ensureInternationalizationDefaults,
 } from '@/features/internationalization/server';
-import { type CreateCurrencyDto } from '@/shared/contracts/internationalization';
+import { type CurrencyCreateInput } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -235,7 +235,7 @@ export async function POST_intl_handler(
     const name = readString(data, 'name');
     if (!code || !name) throw badRequestError('Code and name are required');
 
-    const payload: CreateCurrencyDto = {
+    const payload: CurrencyCreateInput = {
       code: code.toUpperCase(),
       name,
       symbol: readString(data, 'symbol') ?? null,

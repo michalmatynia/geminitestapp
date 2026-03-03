@@ -9,8 +9,7 @@ export const productTagSchema = namedDtoSchema.extend({
   catalogId: z.string(),
 });
 
-export type ProductTagDto = z.infer<typeof productTagSchema>;
-export type ProductTag = ProductTagDto;
+export type ProductTag = z.infer<typeof productTagSchema>;
 
 export const createProductTagSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -18,7 +17,7 @@ export const createProductTagSchema = z.object({
   catalogId: z.string().min(1, 'Catalog ID is required'),
 });
 
-export type ProductTagCreateInputDto = z.infer<typeof createProductTagSchema>;
+export type ProductTagCreateInput = z.infer<typeof createProductTagSchema>;
 
 export const updateProductTagSchema = z.object({
   name: z.string().min(1).optional(),
@@ -26,11 +25,11 @@ export const updateProductTagSchema = z.object({
   catalogId: z.string().min(1).optional(),
 });
 
-export type ProductTagUpdateInputDto = z.infer<typeof updateProductTagSchema>;
+export type ProductTagUpdateInput = z.infer<typeof updateProductTagSchema>;
 
 export const productTagFiltersSchema = z.object({
   catalogId: z.string().optional(),
   search: z.string().optional(),
 });
 
-export type ProductTagFiltersDto = z.infer<typeof productTagFiltersSchema>;
+export type ProductTagFilters = z.infer<typeof productTagFiltersSchema>;

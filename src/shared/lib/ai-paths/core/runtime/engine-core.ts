@@ -466,8 +466,6 @@ export async function evaluateGraphInternal(
             const entries = history.get(node.id) ?? [];
             entries.push({
               timestamp: new Date().toISOString(),
-              runId: resolvedRunId,
-              runStartedAt: resolvedRunStartedAt,
               pathId: options.pathId ?? null,
               pathName: null,
               nodeId: node.id,
@@ -602,8 +600,6 @@ export async function evaluateGraphInternal(
               const entries = history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
-                runId: resolvedRunId,
-                runStartedAt: resolvedRunStartedAt,
                 pathId: options.pathId ?? null,
                 pathName: null,
                 nodeId: node.id,
@@ -650,7 +646,7 @@ export async function evaluateGraphInternal(
           // Final check for trigger provenance if ready
           if (
             node.id === options.triggerNodeId &&
-            node.config?.trigger?.contextMode === 'simulation_required'
+          node.config?.trigger?.contextMode === 'simulation_required'
           ) {
             if (!checkTriggerProvenance()) {
               throw new GraphExecutionError(
@@ -702,9 +698,9 @@ export async function evaluateGraphInternal(
             let sideEffectDecision: 'executed' | 'skipped_policy' = 'executed';
             if (
               sideEffectPolicy === 'per_run' &&
-              (executed as unknown as Record<string, Set<string> | undefined>)[node.type]?.has(
-                node.id
-              )
+            (executed as unknown as Record<string, Set<string> | undefined>)[node.type]?.has(
+              node.id
+            )
             ) {
               sideEffectDecision = 'skipped_policy';
             }
@@ -722,16 +718,16 @@ export async function evaluateGraphInternal(
 
             const timeoutMs = resolveNodeTimeoutMs(node);
             const resolvedEntityType =
-              readEntityTypeFromContext(nodeInputs) ??
-              pickString(triggerContext?.['entityType']) ??
-              (pickString(triggerContext?.['productId']) ? 'product' : null);
+            readEntityTypeFromContext(nodeInputs) ??
+            pickString(triggerContext?.['entityType']) ??
+            (pickString(triggerContext?.['productId']) ? 'product' : null);
             const resolvedEntityId =
-              readEntityIdFromContext(nodeInputs) ??
-              pickString(triggerContext?.['productId']) ??
-              pickString(triggerContext?.['entityId']) ??
-              null;
+            readEntityIdFromContext(nodeInputs) ??
+            pickString(triggerContext?.['productId']) ??
+            pickString(triggerContext?.['entityId']) ??
+            null;
             const fetchEntityResolver =
-              options.fetchEntityByType ?? options.fetchEntityCached ?? (async () => null);
+            options.fetchEntityByType ?? options.fetchEntityCached ?? (async () => null);
 
             const handlerContext: NodeHandlerContext = {
               node,
@@ -761,7 +757,7 @@ export async function evaluateGraphInternal(
                 }
               },
               simulationEntityType:
-                typeof resolvedEntityType === 'string' ? resolvedEntityType : null,
+              typeof resolvedEntityType === 'string' ? resolvedEntityType : null,
               simulationEntityId: typeof resolvedEntityId === 'string' ? resolvedEntityId : null,
               resolvedEntity: null,
               fallbackEntityId: null,
@@ -781,13 +777,13 @@ export async function evaluateGraphInternal(
 
             const retryConfig = node.config?.runtime?.retry;
             const retryAttempts =
-              typeof retryConfig?.attempts === 'number' && retryConfig.attempts > 1
-                ? retryConfig.attempts
-                : 1;
+            typeof retryConfig?.attempts === 'number' && retryConfig.attempts > 1
+              ? retryConfig.attempts
+              : 1;
             const retryBackoffMs =
-              typeof retryConfig?.backoffMs === 'number' && retryConfig.backoffMs > 0
-                ? retryConfig.backoffMs
-                : DEFAULT_RETRY_BACKOFF_MS;
+            typeof retryConfig?.backoffMs === 'number' && retryConfig.backoffMs > 0
+              ? retryConfig.backoffMs
+              : DEFAULT_RETRY_BACKOFF_MS;
             const result = await withRetries(
               () =>
                 withTimeout(
@@ -821,8 +817,6 @@ export async function evaluateGraphInternal(
               const entries = history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
-                runId: resolvedRunId,
-                runStartedAt: resolvedRunStartedAt,
                 pathId: options.pathId ?? null,
                 pathName: null,
                 nodeId: node.id,
@@ -883,8 +877,6 @@ export async function evaluateGraphInternal(
               const entries = history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
-                runId: resolvedRunId,
-                runStartedAt: resolvedRunStartedAt,
                 pathId: options.pathId ?? null,
                 pathName: null,
                 nodeId: node.id,

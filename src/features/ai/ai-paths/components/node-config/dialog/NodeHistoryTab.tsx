@@ -44,9 +44,10 @@ export function NodeHistoryTab(): React.JSX.Element | null {
       <RunHistoryEntries
         entries={history}
         emptyMessage='No history yet. Run the path to capture inputs/outputs for this node.'
-        onReplayFromEntry={(entry): void => {
-          if (!entry.runId) return;
-          void handleResumeRun(entry.runId, 'replay').catch(() => {});
+        onReplayFromEntry={(): void => {
+          const currentRunId = runtimeState.currentRun?.id;
+          if (!currentRunId) return;
+          void handleResumeRun(currentRunId, 'replay').catch(() => {});
         }}
       />
     </div>

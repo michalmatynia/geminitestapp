@@ -55,10 +55,10 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     incrementLoadNonce,
     handleClearConnectorData,
     handleClearHistory,
+    handleDeleteSelectedNode,
     isPathActive,
     handleTogglePathActive,
     hasHistory,
-    selectedNodeIds,
     selectionScopeMode,
     setSelectionScopeMode,
     dataContractReport,
@@ -68,7 +68,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const isRightSidebarCollapsed = false;
   const setIsFocusMode = onFocusModeChange ?? (() => undefined);
 
-  const { selectionToolMode } = useSelectionState();
+  const {
+    selectionToolMode,
+    selectedNodeIds: selectedNodeIdsCtx,
+    selectedEdgeId: selectedEdgeIdCtx,
+  } = useSelectionState();
   const { setSelectionToolMode } = useSelectionActions();
 
   const notify = toast ?? (() => undefined);
@@ -91,7 +95,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const validationWarn = Boolean(validationPreflightReport?.shouldWarn);
   const validationScore = validationPreflightReport?.score ?? 0;
   const validationFailedRules = validationPreflightReport?.failedRules ?? 0;
-  const selectedCount = Array.isArray(selectedNodeIds) ? selectedNodeIds.length : 0;
+  const selectedCount = selectedNodeIdsCtx.length;
+  const removeSelection = handleDeleteSelectedNode ?? (() => undefined);
+  const canDeleteSelection = selectedCount > 0 || Boolean(selectedEdgeIdCtx);
   const scopeMode = selectionScopeMode === 'wiring' ? 'wiring' : 'portion';
   const setScopeMode = setSelectionScopeMode ?? (() => undefined);
   const docsTooltipsOn = Boolean(docsTooltipsEnabled);
@@ -305,6 +311,21 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     className='font-medium'
                     title='Selected nodes count'
                   />
+                  <Button
+                    data-doc-id='canvas_remove_selected'
+                    type='button'
+                    variant='destructive'
+                    className='rounded-md text-sm'
+                    onClick={removeSelection}
+                    disabled={!canDeleteSelection}
+                    title={
+                      canDeleteSelection
+                        ? 'Delete selected nodes or selected edge'
+                        : 'Select at least one node or edge to delete'
+                    }
+                  >
+                    Remove Selected
+                  </Button>
                   {selectionToolMode === 'select' ? (
                     <div className='text-[11px] text-gray-400'>
                       {scopeMode === 'wiring'

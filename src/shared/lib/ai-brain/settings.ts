@@ -18,7 +18,6 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
-  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
   entriesToCatalogArrays,
   sanitizeCatalogEntries,
@@ -441,23 +440,7 @@ export const parseBrainProviderCatalog = (
     });
   }
 
-  const entries = sanitizeCatalogEntries(result.data.entries ?? []);
-  if (entries.length === 0) {
-    const legacyPools = BRAIN_CATALOG_POOL_VALUES.filter(
-      (pool: AiBrainCatalogPool): boolean => result.data[pool].length > 0
-    );
-    if (legacyPools.length > 0) {
-      throw validationError(
-        'Legacy AI Brain provider catalog pool arrays are no longer supported without canonical entries.',
-        {
-          source: 'ai_brain.provider_catalog',
-          reason: 'deprecated_pool_arrays',
-          pools: legacyPools,
-        }
-      );
-    }
-  }
-
+  const entries = sanitizeCatalogEntries(catalogToEntries(result.data));
   const arrays = entriesToCatalogArrays(entries);
 
   return {

@@ -37,7 +37,17 @@ export const startAllWorkers = (options?: { excludeQueueNames?: readonly string[
       source: 'queue-registry',
       context: { queueName: name },
     });
-    queue.startWorker();
+    try {
+      queue.startWorker();
+    } catch (error) {
+      void logSystemEvent({
+        level: 'error',
+        message: `[queue-registry] Failed to start queue worker: ${name}`,
+        source: 'queue-registry',
+        error,
+        context: { queueName: name },
+      });
+    }
   }
 };
 

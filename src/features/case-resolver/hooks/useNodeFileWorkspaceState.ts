@@ -61,7 +61,7 @@ export function useNodeFileWorkspaceState({
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
   const [newNodeType, setNewNodeType] = useState<
-    'prompt' | 'model' | 'template' | 'database' | 'viewer'
+    'prompt' | 'model' | 'database' | 'viewer'
   >('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
@@ -132,7 +132,7 @@ export function useNodeFileWorkspaceState({
       incomingEdgesByNodeId.set(targetNodeId, incomingEdges);
     });
     const orderedTextNodeIds = nodes
-      .filter((node: AiNode): boolean => node.type === 'template' || node.type === 'prompt')
+      .filter((node: AiNode): boolean => node.type === 'prompt')
       .sort((left: AiNode, right: AiNode): number => left.position.y - right.position.y)
       .map((node: AiNode): string => node.id);
     return {
@@ -160,13 +160,13 @@ export function useNodeFileWorkspaceState({
       const node = graphCompileIndex.nodesById.get(normalizedNodeId);
       if (!node) return '';
 
-      if (node.type !== 'template' && node.type !== 'prompt') {
+      if (node.type !== 'prompt') {
         nodeResults[normalizedNodeId] = '';
         return '';
       }
 
       resolvingNodeIds.add(normalizedNodeId);
-      const template = node.config?.prompt?.template ?? node.config?.template?.template ?? '';
+      const template = node.config?.prompt?.template ?? '';
       const incomingEdges = graphCompileIndex.incomingEdgesByNodeId.get(normalizedNodeId) ?? [];
       const variables: Record<string, string> = {};
       incomingEdges.forEach((edge): void => {

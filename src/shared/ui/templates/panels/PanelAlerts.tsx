@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { PanelAlert } from '@/shared/contracts/ui';
-import { Alert } from '@/shared/ui/alert';
+import { Alert, AlertVariant } from '@/shared/ui/alert';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils';
 
@@ -59,7 +59,7 @@ export const PanelAlerts: React.FC<PanelAlertsProps> = ({
       {allAlerts.map((alert, index) => (
         <Alert
           key={index}
-          variant={alert.type as any}
+          variant={alert.type as AlertVariant}
           title={alert.title}
           onDismiss={alert.dismissible ? () => onDismiss?.(index) : undefined}
         >

@@ -128,7 +128,7 @@ describe('case-resolver workspace persistence', () => {
     }
   });
 
-  it('rejects deprecated inline node-file snapshots before persist', async () => {
+  it('strips deprecated inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -140,13 +140,36 @@ describe('case-resolver workspace persistence', () => {
         }),
       ],
     };
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(workspace),
+      })
+    );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    expect(() =>
-      stampCaseResolverWorkspaceMutation(workspace, { baseRevision: 0, mutationId: 'mutation-inline' })
-    ).toThrowError(/Invalid Case Resolver node-file snapshot payload/i);
-    expect(fetchMock).not.toHaveBeenCalled();
+    const mutatedWorkspace = stampCaseResolverWorkspaceMutation(workspace, {
+      baseRevision: 0,
+      mutationId: 'mutation-inline',
+    });
+    const result = await persistCaseResolverWorkspaceSnapshot({
+      workspace: mutatedWorkspace,
+      expectedRevision: 0,
+      mutationId: 'mutation-inline',
+      source: 'test',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const persistedWorkspace = JSON.parse(String(body.value)) as {
+      assets: Array<{ id: string; textContent?: string; metadata?: Record<string, unknown> }>;
+    };
+    expect(persistedWorkspace.assets[0]?.id).toBe('node-file-inline');
+    expect(persistedWorkspace.assets[0]).not.toHaveProperty('textContent');
+    expect(persistedWorkspace.assets[0]?.metadata?.[
+      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
+    ]).toBe('keyed');
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -597,7 +620,10 @@ describe('case-resolver workspace persistence', () => {
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
 
     expect(compactedMigratedNodeAsset && 'textContent' in compactedMigratedNodeAsset).toBe(false);
-    expect(compactedLegacyNodeAsset?.textContent).toContain('legacy-node');
+    expect(compactedLegacyNodeAsset && 'textContent' in compactedLegacyNodeAsset).toBe(false);
+    expect(compactedLegacyNodeAsset?.metadata?.[
+      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY
+    ]).toBe('keyed');
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

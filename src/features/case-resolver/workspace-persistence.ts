@@ -1,5 +1,6 @@
 import {
   type CaseResolverWorkspace,
+  type CaseResolverWorkspaceDebugEvent,
   type CaseResolverWorkspaceMetadata,
   type PersistCaseResolverWorkspaceResult,
   type CaseResolverWorkspaceFetchAttemptProfile,
@@ -25,6 +26,8 @@ import {
 
 import {
   logCaseResolverWorkspaceEvent,
+  getCaseResolverWorkspaceDebugEventName,
+  readCaseResolverWorkspaceDebugEvents,
 } from './workspace-observability';
 
 import {
@@ -42,6 +45,8 @@ import {
 } from './utils/workspace-settings-persistence-helpers';
 
 import {
+  buildCaseResolverNodeFileSnapshotKey,
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchSettingsPayloadWithTimeout,
   fetchCaseResolverNodeFileSnapshotText,
   fetchCaseResolverNodeFileSnapshot,
@@ -54,14 +59,20 @@ export {
   createCaseResolverWorkspaceMutationId,
   getCaseResolverWorkspaceRevision,
   stampCaseResolverWorkspaceMutation,
+  logCaseResolverWorkspaceEvent,
+  getCaseResolverWorkspaceDebugEventName,
+  readCaseResolverWorkspaceDebugEvents,
   primeCaseResolverNavigationWorkspace,
   readCaseResolverNavigationWorkspace,
   computeCaseResolverConflictRetryDelayMs,
+  buildCaseResolverNodeFileSnapshotKey,
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchCaseResolverNodeFileSnapshotText,
   fetchCaseResolverNodeFileSnapshot,
   persistCaseResolverNodeFileSnapshot,
   deleteCaseResolverNodeFileSnapshot,
 };
+export type { CaseResolverWorkspaceDebugEvent };
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
 const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
@@ -452,17 +463,6 @@ const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
   };
 };
 
-const findInlineNodeFileSnapshotAssetIds = (workspace: CaseResolverWorkspace): string[] => {
-  if (!Array.isArray(workspace.assets) || workspace.assets.length === 0) return [];
-  return workspace.assets
-    .filter((asset): boolean => {
-      if (asset.kind !== 'node_file') return false;
-      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-      return inlineText.length > 0;
-    })
-    .map((asset) => asset.id);
-};
-
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
@@ -516,14 +516,25 @@ export const compactCaseResolverWorkspaceForPersist = (
   const compactedAssets = Array.isArray(workspace.assets)
     ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
       if (asset.kind !== 'node_file') return asset;
-      const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
       const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-      const shouldStripInlineText =
-        inlineText.length === 0 ||
-        storageMode === CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
-      if (!shouldStripInlineText) return asset;
+      const existingMetadata =
+        asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
+          ? asset.metadata
+          : {};
+      const normalizedStorageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
+      const nextMetadata =
+        inlineText.length > 0 || normalizedStorageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED
+          ? {
+            ...existingMetadata,
+            [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]:
+              CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED,
+          }
+          : existingMetadata;
       const { textContent: _textContent, ...assetRest } = asset;
-      return assetRest as CaseResolverWorkspace['assets'][number];
+      return {
+        ...assetRest,
+        metadata: nextMetadata,
+      } as CaseResolverWorkspace['assets'][number];
     })
     : workspace.assets;
 
@@ -553,28 +564,21 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
     ].join(' '),
   });
-  const inlineNodeFileSnapshotAssetIds = findInlineNodeFileSnapshotAssetIds(
-    workspaceForPersistPipeline
-  );
-  if (inlineNodeFileSnapshotAssetIds.length > 0) {
-    const message = [
-      'Case Resolver workspace contains unsupported inline node-file snapshots.',
-      'Inline node-file snapshot text is no longer supported in workspace payloads.',
-      `Asset IDs: ${inlineNodeFileSnapshotAssetIds.join(', ')}.`,
-    ].join(' ');
+  const inlineNodeFileSnapshotCount = Array.isArray(workspaceForPersistPipeline.assets)
+    ? workspaceForPersistPipeline.assets.filter((asset): boolean => {
+      if (asset.kind !== 'node_file') return false;
+      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
+      return inlineText.length > 0;
+    }).length
+    : 0;
+  if (inlineNodeFileSnapshotCount > 0) {
     logCaseResolverWorkspaceEvent({
       source: input.source,
-      action: 'persist_rejected_inline_node_file_snapshots',
+      action: 'persist_inline_node_file_snapshots_stripped',
       mutationId: input.mutationId,
       workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
-      durationMs: Date.now() - startedAt,
-      message,
+      message: `count=${inlineNodeFileSnapshotCount}`,
     });
-    return {
-      ok: false,
-      conflict: false,
-      error: message,
-    };
   }
   const workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);

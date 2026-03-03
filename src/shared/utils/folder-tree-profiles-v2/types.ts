@@ -1,0 +1,83 @@
+import type {
+  FolderTreeBadgeSpec,
+  FolderTreeIconSlot,
+  FolderTreeKeyboardConfig,
+  FolderTreeMultiSelectConfig,
+  FolderTreeNestingRuleV2,
+  FolderTreePlaceholderEmphasis,
+  FolderTreePlaceholderPreset,
+  FolderTreePlaceholderStyle,
+  FolderTreeProfileV2,
+  FolderTreeSearchConfig,
+  FolderTreeSelectionBehavior,
+  MasterTreeNodeStatus,
+} from '../../contracts/master-folder-tree';
+
+export type {
+  FolderTreeBadgeSpec,
+  FolderTreeIconSlot,
+  FolderTreeKeyboardConfig,
+  FolderTreeMultiSelectConfig,
+  FolderTreeNestingRuleV2,
+  FolderTreePlaceholderEmphasis,
+  FolderTreePlaceholderPreset,
+  FolderTreePlaceholderStyle,
+  FolderTreeProfileV2,
+  FolderTreeSearchConfig,
+  FolderTreeSelectionBehavior,
+  MasterTreeNodeStatus,
+};
+
+import {
+  type MasterTreeNodeType,
+  type MasterTreeTargetType,
+} from '../master-folder-tree-contract';
+
+export const folderTreeInstanceValues = [
+  'notes',
+  'image_studio',
+  'product_categories',
+  'cms_page_builder',
+  'case_resolver',
+  'case_resolver_cases',
+  'validator_list_tree',
+  'validator_pattern_tree',
+  'prompt_exploder_segments',
+  'prompt_exploder_hierarchy',
+  'brain_catalog_tree',
+  'brain_routing_tree',
+] as const;
+
+export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
+
+export type FolderTreePlaceholderClassSet = {
+  rootIdle: string;
+  rootActive: string;
+  lineIdle: string;
+  lineActive: string;
+  badgeIdle: string;
+  badgeActive: string;
+};
+
+export type FolderTreeProfilesV2Map = Record<FolderTreeInstance, FolderTreeProfileV2>;
+
+export type FolderTreeInstanceSettingsMeta = {
+  title: string;
+  description: string;
+  fileHint: string;
+  folderHint: string;
+};
+
+export type FolderTreePersistFeedback = {
+  notifySuccess: boolean;
+  notifyError: boolean;
+  successMessage: string;
+};
+
+export type CanNestTreeNodeV2Input = {
+  profile: FolderTreeProfileV2;
+  nodeType: MasterTreeNodeType;
+  nodeKind?: string | null;
+  targetType: MasterTreeTargetType;
+  targetFolderKind?: string | null;
+};

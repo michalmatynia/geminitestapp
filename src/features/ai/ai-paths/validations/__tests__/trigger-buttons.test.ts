@@ -4,6 +4,7 @@ import {
   aiTriggerButtonCreateSchema,
   aiTriggerButtonUpdateSchema,
   parseAiTriggerButtonsRaw,
+  parseAiTriggerButtonsRawWithReport,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
 const createCanonicalStoredButton = (
@@ -23,8 +24,10 @@ const createCanonicalStoredButton = (
   ...overrides,
 });
 
-const expectStoredPayloadToThrow = (payload: unknown): void => {
-  expect(() => parseAiTriggerButtonsRaw(JSON.stringify(payload))).toThrow();
+const expectStoredPayloadToReject = (payload: unknown): void => {
+  expect(() => parseAiTriggerButtonsRaw(JSON.stringify(payload))).toThrowError(
+    'Invalid AI trigger button record payload.'
+  );
 };
 
 describe('trigger button validation', () => {
@@ -77,11 +80,11 @@ describe('trigger button validation', () => {
   it('rejects stored records with missing canonical fields', () => {
     const { enabled, ...recordWithoutEnabled } = createCanonicalStoredButton();
     void enabled;
-    expectStoredPayloadToThrow([recordWithoutEnabled]);
+    expectStoredPayloadToReject([recordWithoutEnabled]);
   });
 
   it('rejects legacy isActive when reading stored buttons', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-legacy-inactive',
         isActive: false,
@@ -105,7 +108,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects conflicting enabled/isActive flags instead of repairing them', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-conflict',
         enabled: false,
@@ -115,7 +118,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects legacy icon field instead of mapping it to iconId', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-legacy-icon',
         icon: 'sparkles',
@@ -130,7 +133,7 @@ describe('trigger button validation', () => {
     });
     const { name, ...recordWithoutName } = base;
     void name;
-    expectStoredPayloadToThrow([recordWithoutName]);
+    expectStoredPayloadToReject([recordWithoutName]);
   });
 
   it('infers display.label from canonical display mode values', () => {
@@ -162,7 +165,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects legacy label display mode', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-legacy-display',
         display: 'label',
@@ -171,7 +174,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects display object payloads', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-display-object',
         display: { label: 'Canonical Display', showLabel: false },
@@ -195,7 +198,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects non-boolean enabled values', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-enabled-string',
         enabled: 'false',
@@ -204,7 +207,7 @@ describe('trigger button validation', () => {
   });
 
   it('rejects invalid location values instead of filtering them', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-locations',
         locations: ['product_modal', 'invalid_location', 'product_modal'],
@@ -226,11 +229,40 @@ describe('trigger button validation', () => {
   });
 
   it('rejects legacy pathIds when pathId is missing', () => {
-    expectStoredPayloadToThrow([
+    expectStoredPayloadToReject([
       createCanonicalStoredButton({
         id: 'btn-path-ids',
         pathIds: ['path_one', 'path_two'],
       }),
     ]);
+  });
+
+  it('rejects mixed payloads that include invalid rows', () => {
+    expect(() =>
+      parseAiTriggerButtonsRawWithReport(
+        JSON.stringify([
+          createCanonicalStoredButton({ id: 'btn-valid', sortIndex: 0 }),
+          createCanonicalStoredButton({ id: 'btn-invalid', isActive: false }),
+        ])
+      )
+    ).toThrowError('Invalid AI trigger button record payload.');
+  });
+
+  it('rejects invalid JSON payloads', () => {
+    expect(() => parseAiTriggerButtonsRawWithReport('{"broken"')).toThrowError(
+      'Invalid AI trigger button settings payload.'
+    );
+    expect(() => parseAiTriggerButtonsRaw('{"broken"')).toThrowError(
+      'Invalid AI trigger button settings payload.'
+    );
+  });
+
+  it('rejects non-array payloads', () => {
+    expect(() => parseAiTriggerButtonsRawWithReport('{"not":"array"}')).toThrowError(
+      'Invalid AI trigger button settings payload.'
+    );
+    expect(() => parseAiTriggerButtonsRaw('{"not":"array"}')).toThrowError(
+      'Invalid AI trigger button settings payload.'
+    );
   });
 });

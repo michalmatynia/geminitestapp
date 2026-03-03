@@ -242,6 +242,64 @@ describe('sanitizePathConfig', () => {
     ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
   });
 
+  it('rejects legacy runtime identity fields nested inside runtime events', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [
+            {
+              id: 'evt-1',
+              timestamp: '2026-03-03T10:00:00.000Z',
+              type: 'status',
+              message: 'Run started.',
+              runId: 'legacy-run-id',
+            },
+          ],
+          inputs: {},
+          outputs: {},
+        })
+      )
+    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+  });
+
+  it('rejects legacy runtime identity fields nested inside runtime history entries', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [],
+          inputs: {},
+          outputs: {},
+          history: {
+            'node-1': [
+              {
+                timestamp: '2026-03-03T10:00:00.000Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                nodeId: 'node-1',
+                nodeType: 'prompt',
+                nodeTitle: 'Node 1',
+                status: 'completed',
+                iteration: 1,
+                inputs: {},
+                outputs: {},
+                inputHash: null,
+                runStartedAt: '2026-03-03T10:00:00.000Z',
+              },
+            ],
+          },
+        })
+      )
+    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+  });
+
   it('rejects legacy "cancelled" status spelling in runtime events', () => {
     expect(() =>
       parseRuntimeState(

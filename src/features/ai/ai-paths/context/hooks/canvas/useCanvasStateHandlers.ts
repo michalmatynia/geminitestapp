@@ -43,6 +43,8 @@ export function useCanvasStateHandlers(args: {
   toast: Toast;
   viewportRef: React.RefObject<HTMLDivElement>;
   nodes: AiNode[];
+  selectedNodeId: string | null;
+  selectedNodeIds: string[];
   edges: Edge[];
   setNodes: (nodes: AiNode[]) => void;
   setRuntimeState: (state: (prev: RuntimeState) => RuntimeState) => void;
@@ -131,10 +133,23 @@ export function useCanvasStateHandlers(args: {
   );
 
   const resolveActiveNodeSelectionIds = useCallback((): string[] => {
-    return args.nodes
-      .filter((node: AiNode): boolean => args.nodes.some((n) => n.id === node.id)) // Placeholder for selection logic
-      .map((node: AiNode): string => node.id);
-  }, [args.nodes]);
+    const existingNodeIds = new Set(args.nodes.map((node: AiNode): string => node.id));
+    const normalizedSelection = Array.from(
+      new Set(
+        args.selectedNodeIds
+          .map((value: string): string => value.trim())
+          .filter((value: string): boolean => value.length > 0 && existingNodeIds.has(value))
+      )
+    );
+    if (normalizedSelection.length > 0) {
+      return normalizedSelection;
+    }
+    const fallbackSelectedNodeId = args.selectedNodeId?.trim() ?? '';
+    if (fallbackSelectedNodeId && existingNodeIds.has(fallbackSelectedNodeId)) {
+      return [fallbackSelectedNodeId];
+    }
+    return [];
+  }, [args.nodes, args.selectedNodeId, args.selectedNodeIds]);
 
   const resolveNodesWithinMarquee = useCallback(
     (marquee: MarqueeSelectionState): string[] => {

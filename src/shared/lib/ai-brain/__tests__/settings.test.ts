@@ -105,19 +105,26 @@ describe('ai-brain settings helpers', () => {
     );
   });
 
-  it('rejects legacy provider catalog pool arrays when canonical entries are missing', () => {
-    expect(() =>
-      parseBrainProviderCatalog(
-        JSON.stringify({
-          modelPresets: ['gpt-4o-mini'],
-          paidModels: ['gpt-4.1'],
-          ollamaModels: ['llama3.1'],
-          agentModels: [],
-          deepthinkingAgents: [],
-          playwrightPersonas: [],
-        })
-      )
-    ).toThrowError(/Legacy AI Brain provider catalog pool arrays are no longer supported/i);
+  it('accepts legacy provider catalog pool arrays when canonical entries are missing', () => {
+    const parsed = parseBrainProviderCatalog(
+      JSON.stringify({
+        modelPresets: ['gpt-4o-mini'],
+        paidModels: ['gpt-4.1'],
+        ollamaModels: ['llama3.1'],
+        agentModels: [],
+        deepthinkingAgents: [],
+        playwrightPersonas: [],
+      })
+    );
+
+    expect(parsed.entries).toEqual([
+      { pool: 'modelPresets', value: 'gpt-4o-mini' },
+      { pool: 'paidModels', value: 'gpt-4.1' },
+      { pool: 'ollamaModels', value: 'llama3.1' },
+    ]);
+    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
+    expect(parsed.paidModels).toEqual(['gpt-4.1']);
+    expect(parsed.ollamaModels).toEqual(['llama3.1']);
   });
 
   it('treats non-empty entries as canonical and preserves entry order', () => {

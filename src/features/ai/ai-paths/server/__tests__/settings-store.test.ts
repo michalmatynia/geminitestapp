@@ -139,13 +139,13 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     ).toBe(true);
   });
 
-  it('rejects non-empty invalid trigger button payloads during starter seeding', () => {
+  it('rejects invalid trigger button payloads during starter seeding', () => {
     expect(() =>
       ensureStarterWorkflowDefaults([
         { key: AI_PATHS_INDEX_KEY, value: '[]' },
         { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '{"invalid":"shape"}' },
       ])
-    ).toThrowError(/Invalid trigger button settings payload/i);
+    ).toThrowError('Invalid AI trigger button settings payload.');
   });
 
   it('does not rewrite existing starter configs without explicit upgrade actions', () => {

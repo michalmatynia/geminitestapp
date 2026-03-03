@@ -62,7 +62,7 @@ import {
 } from './canvas/useCanvasTouchHandlers';
 
 import type { Toast } from '@/shared/contracts/ui';
-import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
@@ -86,12 +86,13 @@ export function useCanvasInteractions(args?: {
     startConnection,
     endConnection,
     setConnectingPos,
+    setLastDrop,
   } = useCanvasActions();
   const { viewportRef, canvasRef } = useCanvasRefs();
 
   // Context: Graph
   const { nodes, edges, activePathId, isPathLocked } = useGraphState();
-  const { setNodes, setEdges, removeNode } = useGraphActions();
+  const { setNodes, setEdges, updateNode, removeNode } = useGraphActions();
 
   // Context: Runtime
   const { setRuntimeState } = useRuntimeActions();
@@ -120,6 +121,8 @@ export function useCanvasInteractions(args?: {
     toast: toast as unknown as Toast,
     viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
     nodes,
+    selectedNodeId,
+    selectedNodeIds,
     edges,
     setNodes,
     setRuntimeState,
@@ -160,7 +163,7 @@ export function useCanvasInteractions(args?: {
     selectedNodeId,
     selectedNodeIds,
     setNodes,
-    updateNode: (_id: string, _data: Partial<AiNode>): void => {},
+    updateNode,
     removeNode,
     setNodeSelection,
     toggleNodeSelection,
@@ -179,8 +182,8 @@ export function useCanvasInteractions(args?: {
     viewportRef,
     canvasRef: canvasRef as unknown as React.RefObject<SVGSVGElement | null>,
     view,
-    setLastDrop: (_pos: { x: number; y: number }) => {},
-    ensureNodeVisible: (_node: AiNode) => {},
+    setLastDrop: (pos: { x: number; y: number }) => setLastDrop(pos),
+    ensureNodeVisible: nav.ensureNodeVisible,
     toast: toast,
   });
 

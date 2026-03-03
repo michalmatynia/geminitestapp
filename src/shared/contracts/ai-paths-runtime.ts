@@ -126,8 +126,6 @@ export const aiPathRuntimeEventSchema = z.object({
   kind: z.string().optional(),
   source: z.enum(['local', 'server']).optional(),
   message: z.string(),
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
   nodeId: z.string().optional(),
   nodeType: z.string().optional(),
   nodeTitle: z.string().nullable().optional(),
@@ -203,8 +201,6 @@ export type RuntimeHistoryLink = z.infer<typeof runtimeHistoryLinkSchema>;
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
-  runId: z.string().nullable(),
-  runStartedAt: z.string().nullable(),
   pathId: z.string().nullable(),
   pathName: z.string().nullable(),
   nodeId: z.string(),

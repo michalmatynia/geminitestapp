@@ -24,6 +24,7 @@ vi.mock('@/features/product-sync/workers/productSyncQueue', () => ({}));
 vi.mock('@/features/product-sync/workers/productSyncBackfillQueue', () => ({}));
 vi.mock('@/features/product-sync/workers/productSyncSchedulerQueue', () => ({ startProductSyncSchedulerQueue: vi.fn() }));
 vi.mock('@/features/case-resolver/workers/caseResolverOcrQueue', () => ({ startCaseResolverOcrQueue: vi.fn() }));
+vi.mock('@/shared/lib/observability/workers/systemLogAlertsQueue', () => ({ startSystemLogAlertsQueue: vi.fn() }));
 vi.mock('@/features/ai/insights/workers/aiInsightsQueue', () => ({ startAiInsightsQueue: vi.fn() }));
 
 describe('queue-init', () => {

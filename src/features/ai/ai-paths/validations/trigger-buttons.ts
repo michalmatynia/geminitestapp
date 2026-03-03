@@ -28,6 +28,17 @@ export type {
   AiTriggerButtonReorderPayload,
 } from '@/shared/contracts/ai-trigger-buttons';
 
+export type AiTriggerButtonParseReportReason =
+  | 'ok';
+
+export type AiTriggerButtonsRawParseReport = {
+  records: AiTriggerButtonRecord[];
+  shouldPersist: boolean;
+  canonicalRaw: string;
+  reason: AiTriggerButtonParseReportReason;
+  droppedCount: number;
+};
+
 export const buildCanonicalTriggerButtonDisplay = (
   name: string,
   mode: string = 'icon_label'
@@ -66,13 +77,40 @@ const toStoredAiTriggerButtonRecord = (
   return parsedRecord.data;
 };
 
-export const parseAiTriggerButtonsRaw = (raw: string | null): AiTriggerButtonRecord[] => {
-  if (!raw) return [];
+const toCanonicalAiTriggerButtonRecord = (
+  record: z.infer<typeof aiTriggerButtonRecordSchema>
+): AiTriggerButtonRecord => {
+  return {
+    id: record.id,
+    name: record.name,
+    iconId: record.iconId ?? null,
+    pathId: record.pathId ?? null,
+    enabled: record.enabled,
+    locations: [...record.locations],
+    mode: record.mode,
+    display: buildCanonicalTriggerButtonDisplay(record.name, record.display),
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
+    sortIndex: record.sortIndex,
+  };
+};
+
+export const parseAiTriggerButtonsRawWithReport = (raw: string | null): AiTriggerButtonsRawParseReport => {
+  if (!raw) {
+    return {
+      records: [],
+      shouldPersist: false,
+      canonicalRaw: '[]',
+      reason: 'ok',
+      droppedCount: 0,
+    };
+  }
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (error) {
-    throw validationError('Invalid trigger button settings payload.', {
+    throw validationError('Invalid AI trigger button settings payload.', {
       source: 'ai_paths.trigger_buttons',
       reason: 'invalid_json',
       cause: error instanceof Error ? error.message : 'unknown_error',
@@ -80,36 +118,36 @@ export const parseAiTriggerButtonsRaw = (raw: string | null): AiTriggerButtonRec
   }
 
   if (!Array.isArray(parsed)) {
-    throw validationError('Invalid trigger button settings payload.', {
+    throw validationError('Invalid AI trigger button settings payload.', {
       source: 'ai_paths.trigger_buttons',
       reason: 'payload_not_array',
     });
   }
 
-  return parsed.map((value: unknown, index: number): AiTriggerButtonRecord => {
+  const records = parsed.map((value: unknown, index: number): AiTriggerButtonRecord => {
     const parsedRecord = aiTriggerButtonRecordSchema.safeParse(value);
     if (!parsedRecord.success) {
-      throw validationError('Invalid trigger button record.', {
+      throw validationError('Invalid AI trigger button record payload.', {
         source: 'ai_paths.trigger_buttons',
         reason: 'record_validation_failed',
         index,
         issues: parsedRecord.error.flatten(),
       });
     }
-    return {
-      id: parsedRecord.data.id,
-      name: parsedRecord.data.name,
-      iconId: parsedRecord.data.iconId ?? null,
-      pathId: parsedRecord.data.pathId ?? null,
-      enabled: parsedRecord.data.enabled,
-      locations: [...parsedRecord.data.locations],
-      mode: parsedRecord.data.mode,
-      display: buildCanonicalTriggerButtonDisplay(parsedRecord.data.name, parsedRecord.data.display),
-      createdAt: parsedRecord.data.createdAt,
-      updatedAt: parsedRecord.data.updatedAt,
-      sortIndex: parsedRecord.data.sortIndex,
-    };
+    return toCanonicalAiTriggerButtonRecord(parsedRecord.data);
   });
+
+  return {
+    records,
+    shouldPersist: false,
+    canonicalRaw: serializeAiTriggerButtonsRaw(records),
+    reason: 'ok',
+    droppedCount: 0,
+  };
+};
+
+export const parseAiTriggerButtonsRaw = (raw: string | null): AiTriggerButtonRecord[] => {
+  return parseAiTriggerButtonsRawWithReport(raw).records;
 };
 
 export const serializeAiTriggerButtonsRaw = (records: AiTriggerButtonRecord[]): string => {

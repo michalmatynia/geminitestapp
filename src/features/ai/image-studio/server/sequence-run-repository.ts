@@ -1,11 +1,11 @@
 import 'server-only';
 
-import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   ImageStudioSequenceRunRecord,
   ImageStudioSequenceRunStatus,
   ImageStudioSequenceRunDispatchMode,
   ImageStudioSequenceRunHistoryEvent,
+  ImageStudioSequenceRunHistoryEventSource,
   ImageStudioSequenceRunRequest,
   ImageStudioSequenceMaskContext,
 } from '@/shared/contracts/image-studio';

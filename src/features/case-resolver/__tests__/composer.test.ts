@@ -48,8 +48,20 @@ describe('case-resolver composer', () => {
       createPromptNode({ id: 'd', title: 'D', template: 'Detached', x: 0, y: 120 }),
     ];
     const edges: Edge[] = [
-      createEdge({ id: 'e1', source: 'a', target: 'b' }),
-      createEdge({ id: 'e2', source: 'b', target: 'c' }),
+      createEdge({
+        id: 'e1',
+        source: 'a',
+        target: 'b',
+        sourceHandle: 'plaintextContent',
+        targetHandle: 'plaintextContent',
+      }),
+      createEdge({
+        id: 'e2',
+        source: 'b',
+        target: 'c',
+        sourceHandle: 'plaintextContent',
+        targetHandle: 'plaintextContent',
+      }),
     ];
     const graph: CaseResolverGraph = {
       nodes,

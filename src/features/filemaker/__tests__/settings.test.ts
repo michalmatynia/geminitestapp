@@ -437,7 +437,7 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
   });
 
-  it('rejects inline person email fields when canonical email links are missing', () => {
+  it('rejects inline person email fields', () => {
     expect(() =>
       parseFilemakerDatabase(
         JSON.stringify({
@@ -461,7 +461,7 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline person email payloads are no longer supported/);
   });
 
-  it('rejects inline organization email fields when canonical email links are missing', () => {
+  it('rejects inline organization email fields', () => {
     expect(() =>
       parseFilemakerDatabase(
         JSON.stringify({
@@ -483,6 +483,122 @@ describe('filemaker settings', () => {
         })
       )
     ).toThrowError(/Legacy Filemaker inline organization email payloads are no longer supported/);
+  });
+
+  it('rejects non-object phoneNumbers entries', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [createPersonRecord()],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: ['+48 111 222 333'],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Invalid Filemaker phoneNumbers entry payload/);
+  });
+
+  it('rejects inline person email fields even when canonical email links exist', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              emailAddress: 'jane@example.com',
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
+          emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'person', partyId: 'p-1' }],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline person email payloads are no longer supported/);
+  });
+
+  it('rejects inline organization email fields even when canonical email links exist', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [],
+          organizations: [
+            createOrganizationRecord({
+              primaryEmail: 'org@example.com',
+            }),
+          ],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
+          emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'organization', partyId: 'o-1' }],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline organization email payloads are no longer supported/);
+  });
+
+  it('rejects inline organization phoneNumbers even when canonical phone links exist', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [],
+          organizations: [
+            createOrganizationRecord({
+              phoneNumbers: ['+48 999 888 777'],
+            }),
+          ],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48999888777' }],
+          phoneNumberLinks: [
+            { id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'organization', partyId: 'o-1' },
+          ],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(
+      /Legacy Filemaker inline organization phoneNumbers payloads are no longer supported/
+    );
+  });
+
+  it('rejects non-array canonical collection payloads', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [createPersonRecord()],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: {},
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Invalid Filemaker phoneNumbers payload/);
   });
 
   it('normalizes email records and email links', () => {

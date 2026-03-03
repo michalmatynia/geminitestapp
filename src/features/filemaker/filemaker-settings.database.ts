@@ -158,13 +158,26 @@ const hasInlineEmailFields = (value: Record<string, unknown>): boolean => {
   return false;
 };
 
-const getRecordList = (value: unknown): Record<string, unknown>[] =>
-  Array.isArray(value)
-    ? value.filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    : [];
+const getRecordList = (key: string, value: unknown): Record<string, unknown>[] => {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    throw validationError(`Invalid Filemaker ${key} payload.`, {
+      key,
+      reason: 'not_array',
+    });
+  }
+  const invalidIndex = value.findIndex(
+    (entry: unknown): boolean => !entry || typeof entry !== 'object' || Array.isArray(entry)
+  );
+  if (invalidIndex >= 0) {
+    throw validationError(`Invalid Filemaker ${key} entry payload.`, {
+      key,
+      index: invalidIndex,
+      reason: 'entry_not_object',
+    });
+  }
+  return value as Record<string, unknown>[];
+};
 
 const isPartyPresent = (
   personIds: Set<string>,
@@ -207,12 +220,19 @@ export const normalizeFilemakerDatabase = (
     });
   }
 
-  const rawPersons = getRecordList(valueRecord['persons']);
-  const rawOrganizations = getRecordList(valueRecord['organizations']);
-  const rawEvents = getRecordList(valueRecord['events']);
-  const rawAddressLinks = getRecordList(valueRecord['addressLinks']);
-  const rawPhoneNumberLinks = getRecordList(valueRecord['phoneNumberLinks']);
-  const rawEmailLinks = getRecordList(valueRecord['emailLinks']);
+  const rawPersons = getRecordList('persons', valueRecord['persons']);
+  const rawOrganizations = getRecordList('organizations', valueRecord['organizations']);
+  const rawEvents = getRecordList('events', valueRecord['events']);
+  const rawAddresses = getRecordList('addresses', valueRecord['addresses']);
+  const rawAddressLinks = getRecordList('addressLinks', valueRecord['addressLinks']);
+  const rawPhoneNumbers = getRecordList('phoneNumbers', valueRecord['phoneNumbers']);
+  const rawPhoneNumberLinks = getRecordList('phoneNumberLinks', valueRecord['phoneNumberLinks']);
+  const rawEmails = getRecordList('emails', valueRecord['emails']);
+  const rawEmailLinks = getRecordList('emailLinks', valueRecord['emailLinks']);
+  const rawEventOrganizationLinks = getRecordList(
+    'eventOrganizationLinks',
+    valueRecord['eventOrganizationLinks']
+  );
 
   if ([...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)) {
     throw validationError('Legacy Filemaker fullAddress payloads are no longer supported.');
@@ -236,54 +256,43 @@ export const normalizeFilemakerDatabase = (
     );
   }
 
-  if (
-    rawPhoneNumberLinks.length === 0 &&
-    rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
-  ) {
+  if (rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)) {
     throw validationError(
-      'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported without phoneNumberLinks.'
+      'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported.'
     );
   }
 
-  if (rawEmailLinks.length === 0 && rawPersons.some(hasInlineEmailFields)) {
+  if (rawPersons.some(hasInlineEmailFields)) {
     throw validationError(
-      'Legacy Filemaker inline person email payloads are no longer supported without emailLinks.'
+      'Legacy Filemaker inline person email payloads are no longer supported.'
     );
   }
 
-  if (rawEmailLinks.length === 0 && rawOrganizations.some(hasInlineEmailFields)) {
+  if (rawOrganizations.some(hasInlineEmailFields)) {
     throw validationError(
-      'Legacy Filemaker inline organization email payloads are no longer supported without emailLinks.'
+      'Legacy Filemaker inline organization email payloads are no longer supported.'
     );
   }
 
-  const rawAddresses: unknown[] = Array.isArray(valueRecord['addresses'])
-    ? (valueRecord['addresses'] as unknown[])
-    : [];
   const addressesById = new Map<string, FilemakerAddress>();
-  rawAddresses
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const id = normalizeString(entry['id']);
-      if (!id || addressesById.has(id)) return;
-      addressesById.set(
+  rawAddresses.forEach((entry: Record<string, unknown>) => {
+    const id = normalizeString(entry['id']);
+    if (!id || addressesById.has(id)) return;
+    addressesById.set(
+      id,
+      createFilemakerAddress({
         id,
-        createFilemakerAddress({
-          id,
-          street: normalizeString(entry['street']),
-          streetNumber: normalizeString(entry['streetNumber']),
-          city: normalizeString(entry['city']),
-          postalCode: normalizeString(entry['postalCode']),
-          country: normalizeString(entry['country']),
-          countryId: normalizeString(entry['countryId']),
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
+        street: normalizeString(entry['street']),
+        streetNumber: normalizeString(entry['streetNumber']),
+        city: normalizeString(entry['city']),
+        postalCode: normalizeString(entry['postalCode']),
+        country: normalizeString(entry['country']),
+        countryId: normalizeString(entry['countryId']),
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
 
   const personIds = new Set<string>();
   const persons: FilemakerPerson[] = rawPersons
@@ -520,9 +529,6 @@ export const normalizeFilemakerDatabase = (
     };
   });
 
-  const rawPhoneNumbers: unknown[] = Array.isArray(valueRecord['phoneNumbers'])
-    ? (valueRecord['phoneNumbers'] as unknown[])
-    : [];
   const phoneNumbers: FilemakerPhoneNumber[] = [];
   const phoneNumberIds = new Set<string>();
   const phoneNumberIdByValue = new Map<string, string>();
@@ -554,18 +560,13 @@ export const normalizeFilemakerDatabase = (
     return id;
   };
 
-  rawPhoneNumbers.forEach((entry: unknown): void => {
-    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
-      const record = entry as Record<string, unknown>;
-      ensurePhoneNumberId({
-        phoneNumber: record['phoneNumber'],
-        id: record['id'],
-        createdAt: normalizeString(record['createdAt']) || undefined,
-        updatedAt: normalizeString(record['updatedAt']) || undefined,
-      });
-      return;
-    }
-    ensurePhoneNumberId({ phoneNumber: entry });
+  rawPhoneNumbers.forEach((record: Record<string, unknown>): void => {
+    ensurePhoneNumberId({
+      phoneNumber: record['phoneNumber'],
+      id: record['id'],
+      createdAt: normalizeString(record['createdAt']) || undefined,
+      updatedAt: normalizeString(record['updatedAt']) || undefined,
+    });
   });
 
   const phoneNumberLinkIds = new Set<string>();
@@ -648,41 +649,33 @@ export const normalizeFilemakerDatabase = (
     })
   );
 
-  const rawEmails: unknown[] = Array.isArray(valueRecord['emails'])
-    ? (valueRecord['emails'] as unknown[])
-    : [];
   const emailIds = new Set<string>();
   const emailValues = new Set<string>();
   const emails: FilemakerEmail[] = [];
 
-  rawEmails
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const normalizedEmail = normalizeString(entry['email']).toLowerCase();
-      if (!isValidEmailAddress(normalizedEmail)) return;
-      if (emailValues.has(normalizedEmail)) return;
+  rawEmails.forEach((entry: Record<string, unknown>) => {
+    const normalizedEmail = normalizeString(entry['email']).toLowerCase();
+    if (!isValidEmailAddress(normalizedEmail)) return;
+    if (emailValues.has(normalizedEmail)) return;
 
-      const id = ensureUniqueId(
-        normalizeString(entry['id']) || defaultEmailIdForValue(normalizedEmail),
-        emailIds,
-        defaultEmailIdForValue(normalizedEmail)
-      );
+    const id = ensureUniqueId(
+      normalizeString(entry['id']) || defaultEmailIdForValue(normalizedEmail),
+      emailIds,
+      defaultEmailIdForValue(normalizedEmail)
+    );
 
-      emailIds.add(id);
-      emailValues.add(normalizedEmail);
-      emails.push(
-        createFilemakerEmail({
-          id,
-          email: normalizedEmail,
-          status: normalizeEmailStatus(entry['status']),
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
+    emailIds.add(id);
+    emailValues.add(normalizedEmail);
+    emails.push(
+      createFilemakerEmail({
+        id,
+        email: normalizedEmail,
+        status: normalizeEmailStatus(entry['status']),
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
 
   const emailLinkIds = new Set<string>();
   const emailRelationKeys = new Set<string>();
@@ -740,45 +733,37 @@ export const normalizeFilemakerDatabase = (
     });
   });
 
-  const rawEventOrganizationLinks: unknown[] = Array.isArray(valueRecord['eventOrganizationLinks'])
-    ? (valueRecord['eventOrganizationLinks'] as unknown[])
-    : [];
   const eventOrganizationLinkIds = new Set<string>();
   const eventOrganizationRelationKeys = new Set<string>();
   const eventOrganizationLinks: FilemakerEventOrganizationLink[] = [];
 
-  rawEventOrganizationLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const eventId = normalizeString(entry['eventId']);
-      const organizationId = normalizeString(entry['organizationId']);
-      if (!eventId || !organizationId) return;
-      if (!eventIds.has(eventId) || !organizationIds.has(organizationId)) return;
+  rawEventOrganizationLinks.forEach((entry: Record<string, unknown>) => {
+    const eventId = normalizeString(entry['eventId']);
+    const organizationId = normalizeString(entry['organizationId']);
+    if (!eventId || !organizationId) return;
+    if (!eventIds.has(eventId) || !organizationIds.has(organizationId)) return;
 
-      const relationKey = `${eventId}:${organizationId}`;
-      if (eventOrganizationRelationKeys.has(relationKey)) return;
+    const relationKey = `${eventId}:${organizationId}`;
+    if (eventOrganizationRelationKeys.has(relationKey)) return;
 
-      const baseId = defaultEventOrganizationLinkIdForValues(eventId, organizationId);
-      const id = ensureUniqueId(
-        normalizeString(entry['id']) || baseId,
-        eventOrganizationLinkIds,
-        baseId
-      );
-      eventOrganizationLinkIds.add(id);
-      eventOrganizationRelationKeys.add(relationKey);
-      eventOrganizationLinks.push(
-        createFilemakerEventOrganizationLink({
-          id,
-          eventId,
-          organizationId,
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
+    const baseId = defaultEventOrganizationLinkIdForValues(eventId, organizationId);
+    const id = ensureUniqueId(
+      normalizeString(entry['id']) || baseId,
+      eventOrganizationLinkIds,
+      baseId
+    );
+    eventOrganizationLinkIds.add(id);
+    eventOrganizationRelationKeys.add(relationKey);
+    eventOrganizationLinks.push(
+      createFilemakerEventOrganizationLink({
+        id,
+        eventId,
+        organizationId,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
 
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
 

@@ -1140,6 +1140,7 @@ export const imageStudioRunRequestSchema = z.object({
 });
 
 export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;
+export type RunStudioPayload = ImageStudioRunRequest;
 
 export type ImageStudioGenerationExecutionMeta = {
   operation: 'generate';

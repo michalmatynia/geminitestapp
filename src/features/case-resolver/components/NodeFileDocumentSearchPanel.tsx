@@ -14,8 +14,8 @@ import { getNodeFileDocumentColumns, getNodeFileCaseColumns } from './CaseResolv
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 
 type NodeFileDocumentSearchPanelProps = {
-  newNodeType: 'prompt' | 'model' | 'template' | 'database' | 'viewer';
-  setNewNodeType: (t: 'prompt' | 'model' | 'template' | 'database' | 'viewer') => void;
+  newNodeType: 'prompt' | 'model' | 'database' | 'viewer';
+  setNewNodeType: (t: 'prompt' | 'model' | 'database' | 'viewer') => void;
   onExplanatoryClick: () => void;
   onNodeInspectorClick: () => void;
 };
@@ -181,12 +181,11 @@ export function NodeFileDocumentSearchPanel({
           size='sm'
           value={newNodeType}
           onValueChange={(val) =>
-            setNewNodeType(val as 'prompt' | 'model' | 'template' | 'database' | 'viewer')
+            setNewNodeType(val as 'prompt' | 'model' | 'database' | 'viewer')
           }
           options={[
             { value: 'prompt', label: 'Prompt Node' },
             { value: 'model', label: 'Model Node' },
-            { value: 'template', label: 'Template Node' },
             { value: 'database', label: 'Database Node' },
             { value: 'viewer', label: 'Result Viewer Node' },
           ]}

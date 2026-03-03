@@ -221,7 +221,7 @@ const isTextfieldInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_TEXTFIELD_PORT;
 
 const isPlaintextContentInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_PLAINTEXT_CONTENT_PORT || !port;
+  port === DOCUMENT_PLAINTEXT_CONTENT_PORT;
 
 const isPlainTextInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_PLAIN_TEXT_PORT;

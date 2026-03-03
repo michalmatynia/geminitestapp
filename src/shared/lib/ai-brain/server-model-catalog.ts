@@ -7,7 +7,11 @@ import type {
   BrainModelsResponse,
 } from '@/shared/contracts/ai-brain';
 
-import { AI_BRAIN_PROVIDER_CATALOG_KEY, parseBrainProviderCatalog } from './settings';
+import {
+  AI_BRAIN_PROVIDER_CATALOG_KEY,
+  defaultBrainProviderCatalog,
+  parseBrainProviderCatalog,
+} from './settings';
 import {
   inferBrainRuntimeVendor,
   normalizeBrainRuntimeModelId,
@@ -200,7 +204,18 @@ export const listBrainModels = async (
   options: ListBrainModelsOptions = {}
 ): Promise<BrainModelsResponse> => {
   const providerCatalogRaw = await readStoredSettingValue(AI_BRAIN_PROVIDER_CATALOG_KEY);
-  const providerCatalog = parseBrainProviderCatalog(providerCatalogRaw);
+  let providerCatalog = defaultBrainProviderCatalog;
+  let providerCatalogWarning: BrainModelsResponse['warning'] | undefined;
+  try {
+    providerCatalog = parseBrainProviderCatalog(providerCatalogRaw);
+  } catch {
+    providerCatalogWarning = {
+      code: 'PROVIDER_CATALOG_INVALID',
+      message:
+        'AI Brain provider catalog is invalid. Falling back to the default catalog. ' +
+        'Update the ai_brain_provider_catalog setting in Admin > Brain.',
+    };
+  }
   const liveOllamaModels = await fetchLiveOllamaModels();
 
   const modelPresets = normalizeUnique(providerCatalog.modelPresets ?? []);
@@ -236,7 +251,7 @@ export const listBrainModels = async (
     return true;
   });
 
-  const warning =
+  const ollamaWarning =
     liveOllamaModels === null
       ? {
         code: 'OLLAMA_UNAVAILABLE',
@@ -246,6 +261,15 @@ export const listBrainModels = async (
           'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
       }
       : undefined;
+
+  const warning = providerCatalogWarning
+    ? ollamaWarning
+      ? {
+        code: 'PROVIDER_CATALOG_INVALID_AND_OLLAMA_UNAVAILABLE',
+        message: `${providerCatalogWarning.message} ${ollamaWarning.message}`,
+      }
+      : providerCatalogWarning
+    : ollamaWarning;
 
   return {
     models: filteredModels,

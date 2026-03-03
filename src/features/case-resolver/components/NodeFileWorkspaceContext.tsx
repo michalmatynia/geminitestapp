@@ -25,8 +25,8 @@ export type NodeFileWorkspaceContextValue = {
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   configOpen: boolean;
-  newNodeType: 'prompt' | 'model' | 'template' | 'database' | 'viewer';
-  setNewNodeType: (type: 'prompt' | 'model' | 'template' | 'database' | 'viewer') => void;
+  newNodeType: 'prompt' | 'model' | 'database' | 'viewer';
+  setNewNodeType: (type: 'prompt' | 'model' | 'database' | 'viewer') => void;
   isSidePanelVisible: boolean;
   setIsSidePanelVisible: (visible: boolean) => void;
   isNodeInspectorOpen: boolean;

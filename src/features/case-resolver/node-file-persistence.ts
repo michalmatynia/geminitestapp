@@ -17,6 +17,10 @@ import {
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX = 'case_resolver_node_file_snapshot::';
 export const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY =
   'nodeFileSnapshotStorage';
+const LEGACY_NODE_FILE_PORT_REMAP: Record<string, string> = {
+  textfield: 'wysiwygText',
+  content: 'plaintextContent',
+};
 
 export const buildCaseResolverNodeFileSnapshotKey = (assetId: string): string =>
   `${CASE_RESOLVER_NODE_FILE_SNAPSHOT_KEY_PREFIX}${assetId.trim()}`;
@@ -166,8 +170,127 @@ export const fetchCaseResolverNodeFileSnapshot = async (
       action: 'node_file_snapshot_validation_failed',
       message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
     });
-    throw error;
+    const migratedRawValue = tryNormalizeLegacyNodeFileSnapshotRawValue(rawValue);
+    if (migratedRawValue) {
+      try {
+        const migratedSnapshot = parseNodeFileSnapshot(migratedRawValue);
+        const didPersistMigratedSnapshot = await persistCaseResolverNodeFileSnapshotText({
+          assetId,
+          textContent: migratedRawValue,
+          source: `${source}:migrate_legacy_edges`,
+        });
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: didPersistMigratedSnapshot
+            ? 'node_file_snapshot_legacy_edge_normalized'
+            : 'node_file_snapshot_legacy_edge_normalized_not_persisted',
+          message: `asset_id=${assetId}`,
+        });
+        return migratedSnapshot;
+      } catch (migrationError: unknown) {
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'node_file_snapshot_legacy_edge_normalize_failed',
+          message: `asset_id=${assetId} ${migrationError instanceof Error ? migrationError.message : 'unknown_error'}`,
+        });
+      }
+    }
+    const didPurgeInvalidSnapshot = await deleteCaseResolverNodeFileSnapshot(
+      assetId,
+      `${source}:purge_invalid_snapshot`
+    );
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'node_file_snapshot_validation_failed_fallback',
+      message: `asset_id=${assetId} purge=${didPurgeInvalidSnapshot ? 'success' : 'failed'}`,
+    });
+    return null;
   }
+};
+
+const normalizeLegacyEdgePort = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return LEGACY_NODE_FILE_PORT_REMAP[trimmed] ?? trimmed;
+};
+
+const tryNormalizeLegacyNodeFileSnapshotRawValue = (rawValue: string): string | null => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawValue) as unknown;
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return null;
+  }
+  const snapshotRecord = parsed as Record<string, unknown>;
+  if (!Array.isArray(snapshotRecord['edges'])) {
+    return null;
+  }
+
+  let didNormalizeLegacyEdge = false;
+  const normalizedEdges = (snapshotRecord['edges'] as unknown[]).map((edge: unknown): unknown => {
+    if (!edge || typeof edge !== 'object' || Array.isArray(edge)) {
+      return edge;
+    }
+    const edgeRecord = edge as Record<string, unknown>;
+    const hasLegacyKeys =
+      Object.prototype.hasOwnProperty.call(edgeRecord, 'from') ||
+      Object.prototype.hasOwnProperty.call(edgeRecord, 'to') ||
+      Object.prototype.hasOwnProperty.call(edgeRecord, 'fromPort') ||
+      Object.prototype.hasOwnProperty.call(edgeRecord, 'toPort');
+
+    const source =
+      typeof edgeRecord['source'] === 'string' && edgeRecord['source'].trim().length > 0
+        ? edgeRecord['source'].trim()
+        : typeof edgeRecord['from'] === 'string' && edgeRecord['from'].trim().length > 0
+          ? edgeRecord['from'].trim()
+          : edgeRecord['source'];
+    const target =
+      typeof edgeRecord['target'] === 'string' && edgeRecord['target'].trim().length > 0
+        ? edgeRecord['target'].trim()
+        : typeof edgeRecord['to'] === 'string' && edgeRecord['to'].trim().length > 0
+          ? edgeRecord['to'].trim()
+          : edgeRecord['target'];
+    const sourceHandle = normalizeLegacyEdgePort(
+      edgeRecord['sourceHandle'] ?? edgeRecord['fromPort'] ?? null
+    );
+    const targetHandle = normalizeLegacyEdgePort(
+      edgeRecord['targetHandle'] ?? edgeRecord['toPort'] ?? null
+    );
+
+    const normalizedEdge: Record<string, unknown> = {
+      ...edgeRecord,
+      ...(source !== undefined ? { source } : {}),
+      ...(target !== undefined ? { target } : {}),
+      ...(sourceHandle !== null ? { sourceHandle } : { sourceHandle: null }),
+      ...(targetHandle !== null ? { targetHandle } : { targetHandle: null }),
+    };
+    delete normalizedEdge['from'];
+    delete normalizedEdge['to'];
+    delete normalizedEdge['fromPort'];
+    delete normalizedEdge['toPort'];
+
+    if (
+      hasLegacyKeys ||
+      sourceHandle !== edgeRecord['sourceHandle'] ||
+      targetHandle !== edgeRecord['targetHandle']
+    ) {
+      didNormalizeLegacyEdge = true;
+    }
+    return normalizedEdge;
+  });
+
+  if (!didNormalizeLegacyEdge) {
+    return null;
+  }
+
+  return JSON.stringify({
+    ...snapshotRecord,
+    edges: normalizedEdges,
+  });
 };
 
 export const persistCaseResolverNodeFileSnapshotText = async ({

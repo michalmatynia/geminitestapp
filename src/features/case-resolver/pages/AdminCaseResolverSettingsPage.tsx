@@ -354,7 +354,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         <div className='grid gap-3 md:grid-cols-2'>
           <FormField
             label='Default Document Format'
-            description='Legacy markdown content is migrated to WYSIWYG HTML automatically.'
+            description='Only canonical WYSIWYG document format is supported.'
           >
             <SelectSimple
               value={draft.defaultDocumentFormat}

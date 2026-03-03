@@ -11,6 +11,7 @@ import {
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
+import { CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY } from '../node-file-persistence';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 
 export function useAdminCaseResolverRelationActions({
@@ -48,69 +49,6 @@ export function useAdminCaseResolverRelationActions({
         index += 1;
       }
       return `${normalizedBaseName}-${createId('dup')}`;
-    },
-    []
-  );
-
-  const buildNodeFileSnapshotText = useCallback(
-    (input: {
-      graph: CaseResolverGraph;
-      nodeId: string;
-      sourceFileId: string | null;
-      sourceFileName: string | null;
-      sourceFileType: 'document' | 'scanfile' | null;
-    }): string => {
-      const connectedEdges = input.graph.edges
-        .filter(
-          (edge): boolean => edge.source === input.nodeId || edge.target === input.nodeId
-        )
-        .sort((left, right) => left.id.localeCompare(right.id));
-      const connectedNodeIds = new Set<string>([input.nodeId]);
-      connectedEdges.forEach((edge): void => {
-        if (typeof edge.source === 'string' && edge.source.trim().length > 0) {
-          connectedNodeIds.add(edge.source);
-        }
-        if (typeof edge.target === 'string' && edge.target.trim().length > 0) {
-          connectedNodeIds.add(edge.target);
-        }
-      });
-      const snapshotNodes = input.graph.nodes.filter((node): boolean => connectedNodeIds.has(node.id));
-      const snapshotNodeMeta = Object.fromEntries(
-        Object.entries(input.graph.nodeMeta ?? {}).filter(([nodeId]): boolean =>
-          connectedNodeIds.has(nodeId)
-        )
-      );
-      const connectedEdgeIds = new Set(connectedEdges.map((edge): string => edge.id));
-      const snapshotEdgeMeta = Object.fromEntries(
-        Object.entries(input.graph.edgeMeta ?? {}).filter(([edgeId]): boolean =>
-          connectedEdgeIds.has(edgeId)
-        )
-      );
-
-      const nodeFileMeta = (() => {
-        if (!input.sourceFileId || !input.nodeId) return {};
-        return {
-          [input.nodeId]: {
-            fileId: input.sourceFileId,
-            fileType: input.sourceFileType === 'scanfile' ? 'scanfile' : 'document',
-            fileName: input.sourceFileName ?? 'Linked document',
-          },
-        };
-      })();
-
-      return JSON.stringify(
-        {
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: snapshotNodes,
-          edges: connectedEdges,
-          nodeMeta: snapshotNodeMeta,
-          edgeMeta: snapshotEdgeMeta,
-          nodeFileMeta,
-        },
-        null,
-        2
-      );
     },
     []
   );
@@ -158,20 +96,16 @@ export function useAdminCaseResolverRelationActions({
           const baseName = `${(sourceFile?.name ?? 'Document').trim() || 'Document'} Node File`;
           const name = createUniqueNodeFileAssetName(nextAssets, normalizedFolder, baseName);
           const createdAssetId = createId('asset');
-          const snapshot = buildNodeFileSnapshotText({
-            graph: nextGraph,
-            nodeId,
-            sourceFileId,
-            sourceFileName: sourceFile?.name ?? null,
-            sourceFileType: sourceFile?.fileType === 'scanfile' ? 'scanfile' : 'document',
-          });
           const createdAsset = createCaseResolverAssetFile({
             id: createdAssetId,
             name,
             folder: normalizedFolder,
             kind: 'node_file',
             sourceFileId,
-            textContent: snapshot,
+            textContent: '',
+            metadata: {
+              [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
+            },
             description: 'Auto-created from canvas document drop.',
           });
           nextAssets = [...nextAssets, createdAsset];
@@ -255,7 +189,7 @@ export function useAdminCaseResolverRelationActions({
         };
       });
     },
-    [buildNodeFileSnapshotText, createUniqueNodeFileAssetName, updateWorkspace]
+    [createUniqueNodeFileAssetName, updateWorkspace]
   );
 
   const handleRelationGraphChange = useCallback(
@@ -283,6 +217,5 @@ export function useAdminCaseResolverRelationActions({
     handleGraphChange,
     handleRelationGraphChange,
     createUniqueNodeFileAssetName,
-    buildNodeFileSnapshotText,
   };
 }

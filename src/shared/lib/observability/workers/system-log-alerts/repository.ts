@@ -4,7 +4,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { type AlertEvidenceQuery, type MongoSystemLogDoc } from './types';
 
-export const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+export const escapeRegex = (value: string): string => value.replace(new RegExp('[.*+?^${}()|[\\]\\\\]', 'g'), '\\$&');
 
 export const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   id: String(doc.id ?? doc._id ?? ''),

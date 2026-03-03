@@ -105,7 +105,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
           {/* Refresh Button */}
           {refreshable && onRefresh && (
             <RefreshButton 
-              onRefresh={handleRefresh} 
+              onRefresh={() => void handleRefresh()} 
               isRefreshing={isRefreshing} 
               label='' 
               size='icon' 

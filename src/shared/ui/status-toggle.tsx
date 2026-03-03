@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import { type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/shared/utils';
-import { Badge } from './badge';
+import { Badge, badgeVariants } from './badge';
 
 export interface StatusToggleProps {
   enabled: boolean;
@@ -33,7 +34,7 @@ export function StatusToggle({
   className,
 }: StatusToggleProps): React.JSX.Element {
   // Map StatusToggle variants to Badge variants
-  const getBadgeVariant = () => {
+  const getBadgeVariant = (): VariantProps<typeof badgeVariants>['variant'] => {
     if (enabled) {
       switch (enabledVariant) {
         case 'cyan': return 'cyan';
@@ -51,7 +52,7 @@ export function StatusToggle({
 
   return (
     <Badge
-      variant={getBadgeVariant() as any}
+      variant={getBadgeVariant()}
       onClick={disabled ? undefined : () => onToggle(!enabled)}
       className={cn(
         'cursor-pointer select-none font-bold transition-all border',

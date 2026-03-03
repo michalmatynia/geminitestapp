@@ -10,15 +10,20 @@ import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
 } from '@/features/case-resolver/settings';
-import type { AiNode, CaseResolverGraph } from '@/shared/contracts/case-resolver';
+import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  type AiNode,
+  type CaseResolverGraph,
+} from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({
   id,
   type: 'prompt',
   title: id,
   description: '',
-  inputs: ['input'],
-  outputs: ['output'],
+  inputs: [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS],
+  outputs: [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS],
   position: { x: 0, y: 0 },
   config: { prompt: { template: '' } },
   data: {},
@@ -125,19 +130,6 @@ describe('case-resolver nodefile relations', () => {
         name: 'Node 1',
         folder: '',
         kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [],
-          edges: [],
-          nodeFileMeta: {
-            n1: {
-              fileId: 'doc-1',
-              fileType: 'document',
-              fileName: 'Doc 1',
-            },
-          },
-        }),
       }),
     ];
     const graph = createGraph({
@@ -175,19 +167,6 @@ describe('case-resolver nodefile relations', () => {
         name: 'Node 1',
         folder: '',
         kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [],
-          edges: [],
-          nodeFileMeta: {
-            n1: {
-              fileId: 'doc-1',
-              fileType: 'document',
-              fileName: 'Doc 1',
-            },
-          },
-        }),
       }),
     ];
     const graph = createGraph({
@@ -201,7 +180,7 @@ describe('case-resolver nodefile relations', () => {
     expect(sanitized).toBe(graph);
   });
 
-  it('drops node-file asset mapping when snapshot does not confirm source document relation', () => {
+  it('builds document relations from canonical graph mappings across files', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -210,57 +189,17 @@ describe('case-resolver nodefile relations', () => {
         name: 'Doc 1',
         folder: '',
         parentCaseId: 'case-a',
-      }),
-      createCaseResolverFile({
-        id: 'doc-2',
-        fileType: 'document',
-        name: 'Doc 2',
-        folder: '',
-        parentCaseId: 'case-a',
-      }),
-    ];
-    const assets = [
-      createCaseResolverAssetFile({
-        id: 'node-asset-1',
-        name: 'Node 1',
-        folder: '',
-        kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [],
-          edges: [],
-          nodeFileMeta: {
-            'other-node': {
-              fileId: 'doc-2',
-              fileType: 'document',
-              fileName: 'Doc 2',
-            },
+        graph: createGraph({
+          nodeIds: ['node-1', 'node-2'],
+          documentSourceFileIdByNode: {
+            'node-1': 'doc-1',
+            'node-2': 'scan-1',
+          },
+          nodeFileAssetIdByNode: {
+            'node-1': 'node-asset-a',
+            'node-2': 'node-asset-a',
           },
         }),
-      }),
-    ];
-    const graph = createGraph({
-      nodeIds: ['n1'],
-      documentSourceFileIdByNode: { n1: 'doc-1' },
-      nodeFileAssetIdByNode: { n1: 'node-asset-1' },
-    });
-
-    const sanitized = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
-
-    expect(sanitized.documentSourceFileIdByNode).toEqual({ n1: 'doc-1' });
-    expect(sanitized.nodeFileAssetIdByNode).toEqual({});
-  });
-
-  it('builds document relations from node-file snapshot assets', () => {
-    const files = [
-      createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({
-        id: 'doc-1',
-        fileType: 'document',
-        name: 'Doc 1',
-        folder: '',
-        parentCaseId: 'case-a',
       }),
       createCaseResolverFile({
         id: 'scan-1',
@@ -276,24 +215,6 @@ describe('case-resolver nodefile relations', () => {
         name: 'Node A',
         folder: '',
         kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [],
-          edges: [],
-          nodeFileMeta: {
-            'node-1': {
-              fileId: 'doc-1',
-              fileType: 'document',
-              fileName: 'Doc 1',
-            },
-            'node-2': {
-              fileId: 'scan-1',
-              fileType: 'scanfile',
-              fileName: 'Scan 1',
-            },
-          },
-        }),
       }),
     ];
 
@@ -312,189 +233,57 @@ describe('case-resolver nodefile relations', () => {
     });
   });
 
-  it('rejects legacy snapshot relations instead of rebuilding them', () => {
-    const files = [
-      createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({
-        id: 'doc-legacy',
-        fileType: 'document',
-        name: 'Legacy Doc',
-        folder: '',
-        parentCaseId: 'case-a',
-      }),
-    ];
+  it('returns an empty relation index when no files are provided', () => {
     const assets = [
       createCaseResolverAssetFile({
-        id: 'node-asset-legacy',
-        name: 'Legacy',
+        id: 'node-asset-a',
+        name: 'Node A',
         folder: '',
         kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodeId: 'legacy-node',
-          sourceFileId: 'doc-legacy',
-          sourceFileType: 'document',
-          sourceFileName: 'Legacy Doc',
-        }),
       }),
     ];
-
-    expect(() => buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files })).toThrowError(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
-    );
-  });
-
-  it('rejects legacy snapshot bindings instead of sanitizing them into canonical metadata', () => {
-    const files = [
-      createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({
-        id: 'doc-legacy',
-        fileType: 'document',
-        name: 'Legacy Doc',
-        folder: '',
-        parentCaseId: 'case-a',
-      }),
-    ];
-    const assets = [
-      createCaseResolverAssetFile({
-        id: 'node-asset-legacy',
-        name: 'Legacy',
-        folder: '',
-        kind: 'node_file',
-        sourceFileId: 'doc-legacy',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodeId: 'legacy-node',
-          sourceFileId: 'doc-legacy',
-          sourceFileType: 'document',
-          sourceFileName: 'Legacy Doc',
-        }),
-      }),
-    ];
-
-    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrowError(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
-    );
-  });
-
-  it('removes case ownership fallback for unbound node-file snapshots', () => {
-    const files = [
-      createCaseResolverFile({
-        id: 'case-a',
-        fileType: 'case',
-        name: 'Case A',
-        folder: '',
-      }),
-      createCaseResolverFile({
-        id: 'doc-a',
-        fileType: 'document',
-        name: 'Doc A',
-        folder: '',
-        parentCaseId: 'case-a',
-      }),
-    ];
-    const assets = [
-      createCaseResolverAssetFile({
-        id: 'node-asset-manual',
-        name: 'Manual Node File',
-        folder: '',
-        kind: 'node_file',
-        sourceFileId: 'case-a',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [],
-          edges: [],
-          nodeFileMeta: {},
-        }),
-      }),
-    ];
-
-    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
-      assets,
-      files,
+    const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files: null });
+    expect(index).toEqual({
+      nodeIdsByDocumentFileId: {},
+      nodeFileAssetIdsByDocumentFileId: {},
+      documentFileIdsByNodeFileAssetId: {},
+      nodeIdsByNodeFileAssetId: {},
     });
-    expect(sanitizedAssets).toHaveLength(1);
-    const asset = sanitizedAssets[0];
-    expect(asset?.sourceFileId).toBeNull();
   });
 
-  it('preserves node and edge metadata when sanitizing canonical node-file snapshots', () => {
+  it('strips inline snapshot payloads in sanitizers and keeps relation indexing operational', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
-        id: 'doc-a',
+        id: 'doc-1',
         fileType: 'document',
-        name: 'Doc A',
+        name: 'Doc 1',
         folder: '',
         parentCaseId: 'case-a',
       }),
     ];
     const assets = [
       createCaseResolverAssetFile({
-        id: 'node-asset-meta',
-        name: 'Node Meta',
+        id: 'node-asset-inline',
+        name: 'Inline Node File',
         folder: '',
         kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodes: [createPromptNode('meta-node')],
-          edges: [
-            {
-              id: 'meta-edge',
-              source: 'meta-node',
-              target: 'meta-node',
-              sourceHandle: 'plaintextContent',
-              targetHandle: 'plaintextContent',
-            },
-          ],
-          nodeMeta: {
-            'meta-node': {
-              role: 'explanatory',
-              includeInOutput: true,
-              quoteMode: 'none',
-              surroundPrefix: '',
-              surroundSuffix: '',
-            },
-          },
-          edgeMeta: {
-            'meta-edge': {
-              joinMode: 'tab',
-            },
-          },
-          nodeFileMeta: {
-            'meta-node': {
-              fileId: 'doc-a',
-              fileType: 'document',
-              fileName: 'Doc A',
-            },
-          },
-        }),
+        textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[]}',
       }),
     ];
+    const graph = createGraph({
+      nodeIds: ['n1'],
+      documentSourceFileIdByNode: { n1: 'doc-1' },
+      nodeFileAssetIdByNode: { n1: 'node-asset-inline' },
+    });
 
+    const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files });
     const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
-    expect(sanitizedAssets).toHaveLength(1);
-    const parsedSnapshot = JSON.parse(sanitizedAssets[0]?.textContent ?? '{}') as {
-      nodeMeta?: Record<string, unknown>;
-      edgeMeta?: Record<string, unknown>;
-    };
-    expect(parsedSnapshot.nodeMeta).toEqual({
-      'meta-node': {
-        role: 'explanatory',
-        includeInOutput: true,
-        quoteMode: 'none',
-        surroundPrefix: '',
-        surroundSuffix: '',
-      },
-    });
-    expect(parsedSnapshot.edgeMeta).toEqual({
-      'meta-edge': {
-        joinMode: 'tab',
-      },
-    });
+    const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
+
+    expect(index.nodeFileAssetIdsByDocumentFileId).toEqual({});
+    expect(sanitizedAssets[0] && 'textContent' in sanitizedAssets[0]).toBe(false);
+    expect(sanitizedAssets[0]?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
+    expect(sanitizedGraph.nodeFileAssetIdByNode).toEqual({ n1: 'node-asset-inline' });
   });
 });

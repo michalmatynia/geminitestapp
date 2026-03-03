@@ -123,7 +123,7 @@ export function ConfirmModal({
             </AlertDialogCancel>
             <AlertDialogAction asChild>
               <Button
-                onClick={handleConfirm}
+                onClick={(e) => void handleConfirm(e)}
                 variant={isDangerous ? 'destructive' : 'primary'}
                 disabled={isConfirmDisabled}
                 loading={loading}

@@ -352,6 +352,9 @@ export function JobQueueProvider({
     },
   });
 
+  const refetchRuns = runsQuery.refetch;
+  const refetchQueueStatus = queueStatusQuery.refetch;
+
   const refetchQueueData = useCallback(
     (options?: {
       fresh?: boolean;
@@ -368,10 +371,10 @@ export function JobQueueProvider({
       if (options?.markBurst) {
         markBurstRefresh();
       }
-      if (includeRuns) void runsQuery.refetch();
-      if (includeQueueStatus) void queueStatusQuery.refetch();
+      if (includeRuns) void refetchRuns();
+      if (includeQueueStatus) void refetchQueueStatus();
     },
-    [markBurstRefresh, queueStatusQuery, runsQuery]
+    [markBurstRefresh, refetchQueueStatus, refetchRuns]
   );
 
   const clearRunsMutation = createDeleteMutationV2({
@@ -539,7 +542,7 @@ export function JobQueueProvider({
 
   useEffect(() => {
     if (!queueStatusQuery.data?.status) return;
-    const status = queueStatusQuery.data.status as any;
+    const status = queueStatusQuery.data.status;
     const signature = JSON.stringify({
       queuedCount: status.queuedCount ?? 0,
       activeRuns: status.activeRuns ?? 0,
@@ -558,7 +561,9 @@ export function JobQueueProvider({
         markBurst: true,
       });
     }
+    const hasSignatureChanged = previousQueueSignatureRef.current !== signature;
     previousQueueSignatureRef.current = signature;
+    if (!hasSignatureChanged) return;
     setQueueHistory((prev) => {
       const next = [
         ...prev,

@@ -141,7 +141,7 @@ export const isDocumentTextfieldPort = (port: string | null | undefined): boolea
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0];
 
 export const isDocumentPlaintextContentPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] || !port;
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
 
 export const isDocumentPlainTextPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];

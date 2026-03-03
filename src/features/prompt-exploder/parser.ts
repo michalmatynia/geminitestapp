@@ -921,6 +921,33 @@ export function explodePromptText(args: {
   };
 }
 
+export function parsePromptToDocument(args: {
+  source: string;
+  rules: PromptValidationRule[];
+  learnedTemplates?: PromptExploderLearnedTemplate[] | null;
+  manualBindings?: PromptExploderBinding[];
+  validationScope?: PromptExploderRuntimeValidationScope | null;
+  similarityThreshold?: number;
+  runtimeCacheKey?: string | null;
+  correlationId?: string | null;
+}): PromptExploderDocument {
+  const document = explodePromptText({
+    prompt: args.source,
+    validationRules: args.rules,
+    learnedTemplates: args.learnedTemplates ?? [],
+    similarityThreshold: args.similarityThreshold,
+    validationScope: args.validationScope,
+    runtimeCacheKey: args.runtimeCacheKey,
+    correlationId: args.correlationId,
+  });
+
+  if (!args.manualBindings || args.manualBindings.length === 0) {
+    return document;
+  }
+
+  return updatePromptExploderDocument(document, document.segments, args.manualBindings);
+}
+
 export function reassemblePromptSegments(segments: PromptExploderSegment[]): string {
   const rendered = segments
     .filter((segment) => segment.includeInOutput)

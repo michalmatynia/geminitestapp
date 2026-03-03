@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useJobQueueContext } from './JobQueueContext';
 import { JobQueueRunCard } from './job-queue-run-card';
@@ -17,8 +17,6 @@ export function JobQueueList(): React.JSX.Element {
     pageSize,
     setPageSize,
     runsQueryError,
-    expandedRunIds,
-    runDetails,
   } = useJobQueueContext();
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -30,10 +28,6 @@ export function JobQueueList(): React.JSX.Element {
     estimateSize: () => 140,
     overscan: 5,
   });
-
-  useEffect(() => {
-    rowVirtualizer.measure();
-  }, [rowVirtualizer, runs, expandedRunIds, runDetails]);
 
   if (runsQueryError) {
     return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { SectionInstance } from '@/shared/contracts/cms';
@@ -34,7 +34,7 @@ export function SectionNodeItem({
   const isDragging = draggedMasterSectionId === section.id;
   const isHidden = isCmsSectionHidden(section.settings['isHidden']);
 
-  const sectionIcon: LucideIcon = Box;
+  const SectionIcon: LucideIcon = Box;
 
   const dragProps = {
     draggable: true,
@@ -75,7 +75,7 @@ export function SectionNodeItem({
           </div>
 
           <div className='flex min-w-0 flex-1 items-center gap-2'>
-            <sectionIcon className={cn('size-4 shrink-0', isHidden ? 'text-gray-600' : 'text-sky-400/80')} />
+            <SectionIcon className={cn('size-4 shrink-0', isHidden ? 'text-gray-600' : 'text-sky-400/80')} />
             <span className={cn('truncate text-sm font-medium', isHidden ? 'text-gray-500 line-through' : 'text-gray-200')}>
               {section.type}
             </span>

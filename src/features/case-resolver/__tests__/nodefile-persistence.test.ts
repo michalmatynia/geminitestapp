@@ -51,7 +51,7 @@ describe('case resolver nodefile persistence', () => {
       snapshot,
       source: 'test',
     });
-    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 'test');
+    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test');
 
     expect(didPersist).toBe(true);
     expect(resolvedSnapshot).toMatchObject({
@@ -70,12 +70,85 @@ describe('case resolver nodefile persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 'test');
+    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test');
 
     expect(resolvedSnapshot).toBeNull();
   });
 
-  it('rejects invalid keyed nodefile snapshots instead of treating them as missing', async () => {
+  it('migrates legacy keyed nodefile snapshots with legacy edge keys to canonical payload', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
+          value: JSON.stringify({
+            kind: 'case_resolver_node_file_snapshot_v1',
+            source: 'manual',
+            nodes: [
+              {
+                id: 'node-a',
+                type: 'prompt',
+                title: 'Node A',
+                description: '',
+                inputs: ['wysiwygText'],
+                outputs: ['wysiwygText'],
+                position: { x: 0, y: 0 },
+                config: { prompt: { template: '' } },
+                data: {},
+                createdAt: '2026-01-01T00:00:00.000Z',
+                updatedAt: '2026-01-01T00:00:00.000Z',
+              },
+              {
+                id: 'node-b',
+                type: 'prompt',
+                title: 'Node B',
+                description: '',
+                inputs: ['plaintextContent'],
+                outputs: ['plaintextContent'],
+                position: { x: 32, y: 0 },
+                config: { prompt: { template: '' } },
+                data: {},
+                createdAt: '2026-01-01T00:00:00.000Z',
+                updatedAt: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            edges: [
+              {
+                id: 'edge-legacy',
+                from: 'node-a',
+                to: 'node-b',
+                fromPort: 'textfield',
+                toPort: 'content',
+              },
+            ],
+            nodeMeta: {},
+            edgeMeta: {},
+            nodeFileMeta: {},
+          }),
+        })
+      )
+      .mockResolvedValueOnce(toJsonResponse(200, { ok: true }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot(
+      'asset-legacy',
+      8_000,
+      'test'
+    );
+
+    expect(resolvedSnapshot?.edges[0]).toMatchObject({
+      source: 'node-a',
+      target: 'node-b',
+      sourceHandle: 'wysiwygText',
+      targetHandle: 'plaintextContent',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
+    });
+  });
+
+  it('purges invalid keyed nodefile snapshots and treats them as missing', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
@@ -89,9 +162,14 @@ describe('case resolver nodefile persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 'test')).rejects.toThrowError(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
-    );
+    const resolvedSnapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test');
+
+    expect(resolvedSnapshot).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
+      value: '',
+    });
   });
 
   it('clears keyed nodefile snapshots via blank writes', async () => {
@@ -145,7 +223,12 @@ describe('case resolver nodefile persistence', () => {
       ],
     };
 
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: 'case_resolver_workspace',
+        value: JSON.stringify(workspace),
+      })
+    );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await persistCaseResolverWorkspaceSnapshot({
@@ -155,10 +238,13 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toMatch(/unsupported inline node-file snapshots/i);
-    }
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const parsedPersistedWorkspace = JSON.parse(String(body.value)) as {
+      assets: Array<{ id: string; textContent?: string }>;
+    };
+    expect(parsedPersistedWorkspace.assets[0]?.id).toBe('asset-1');
+    expect(parsedPersistedWorkspace.assets[0]).not.toHaveProperty('textContent');
   });
 });

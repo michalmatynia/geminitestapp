@@ -7,6 +7,8 @@ import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { AiPathsProvider } from '@/features/ai/ai-paths/context';
 import {
   type AiNode,
+  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
   type CaseResolverAssetFile,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
@@ -47,6 +49,8 @@ type ResolvedNodeFileSnapshotState = {
   validationErrorMessage: string | null;
 };
 
+const NODE_FILE_SNAPSHOT_FETCH_TIMEOUT_MS = 8_000;
+
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const { toast } = useToast();
   const {
@@ -86,11 +90,11 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const onExplanatoryClick = useCallback(() => {
     const node = buildNode(
       {
-        type: 'template',
+        type: 'prompt',
         title: 'Explanatory Note',
         description: '',
-        outputs: [],
-        inputs: [],
+        outputs: [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS],
+        inputs: [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS],
       },
       resolveCanvasCenter(),
       createNodeId(),
@@ -360,6 +364,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       try {
         const keyedSnapshot = await fetchCaseResolverNodeFileSnapshot(
           selectedAssetId,
+          NODE_FILE_SNAPSHOT_FETCH_TIMEOUT_MS,
           'node_file_workspace_load'
         );
         if (isCancelled) return;

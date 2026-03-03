@@ -161,7 +161,7 @@ const sanitizeNodeFileAssetIdByNode = (
   return result;
 };
 
-const ensureDocumentPromptPorts = (
+const enforceCanonicalDocumentPromptNodes = (
   nodes: AiNode[],
   nodeMeta: Record<string, CaseResolverNodeMeta>,
   documentSourceFileIdByNode: Record<string, string>
@@ -171,7 +171,14 @@ const ensureDocumentPromptPorts = (
       nodeMeta[node.id]?.role === 'text_note' ||
       nodeMeta[node.id]?.role === 'explanatory' ||
       Boolean(documentSourceFileIdByNode[node.id]);
-    if (node.type !== 'prompt' || !isTextNode) return node;
+    if (!isTextNode) return node;
+    if (node.type !== 'prompt') {
+      throw validationError('Case Resolver text nodes must use prompt node type.', {
+        source: 'case_resolver.graph',
+        nodeId: node.id,
+        nodeType: node.type,
+      });
+    }
     const isExplanatoryNode = nodeMeta[node.id]?.role === 'explanatory';
     const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
     const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
@@ -187,12 +194,18 @@ const ensureDocumentPromptPorts = (
     const sameOutputs =
       nextOutputs.length === currentOutputs.length &&
       nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
-    if (sameInputs && sameOutputs) return node;
-    return {
-      ...node,
-      inputs: nextInputs,
-      outputs: nextOutputs,
-    };
+    if (!sameInputs || !sameOutputs) {
+      throw validationError('Case Resolver text nodes must use canonical prompt ports.', {
+        source: 'case_resolver.graph',
+        nodeId: node.id,
+        nodeType: node.type,
+        inputs: currentInputs,
+        outputs: currentOutputs,
+        expectedInputs: nextInputs,
+        expectedOutputs: nextOutputs,
+      });
+    }
+    return node;
   });
 
 const validateTextNodeEdgePorts = (
@@ -271,7 +284,11 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const sanitizedNodeMeta = sanitizeNodeMeta(
     graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
   );
-  const nodes = ensureDocumentPromptPorts(rawNodes, sanitizedNodeMeta, documentSourceFileIdByNode);
+  const nodes = enforceCanonicalDocumentPromptNodes(
+    rawNodes,
+    sanitizedNodeMeta,
+    documentSourceFileIdByNode
+  );
   const textNodeIds = new Set<string>(
     nodes
       .filter((node: AiNode): boolean => {

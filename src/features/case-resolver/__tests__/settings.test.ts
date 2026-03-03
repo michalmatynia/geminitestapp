@@ -56,6 +56,21 @@ const createTemplateNode = (id: string, template: string): AiNode => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
+const createCanonicalTextPromptNode = (
+  id: string,
+  role: 'text_note' | 'explanatory' = 'text_note'
+): AiNode => ({
+  ...createPromptNode(id),
+  inputs:
+    role === 'explanatory'
+      ? [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS]
+      : [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS],
+  outputs:
+    role === 'explanatory'
+      ? [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS]
+      : [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS],
+});
+
 describe('case-resolver settings', () => {
   it('starts with an empty workspace and no placeholder files', () => {
     const workspace = parseCaseResolverWorkspace(null);
@@ -302,7 +317,7 @@ describe('case-resolver settings', () => {
           addressee: { kind: 'invalid', id: 'x-1' },
           caseIdentifierId: '  identifier-1  ',
           graph: {
-            nodes: [createPromptNode('n1'), createPromptNode('n2')],
+            nodes: [createCanonicalTextPromptNode('n1'), createCanonicalTextPromptNode('n2')],
             edges: [],
             nodeMeta: {
               n1: {
@@ -1367,7 +1382,7 @@ describe('case-resolver settings', () => {
     expect(parseCaseResolverIdentifiers('not-json')).toEqual([]);
   });
 
-  it('adds document wysiwygText/plaintextContent/plainText ports for linked document nodes', () => {
+  it('keeps canonical document ports for linked document prompt nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1381,7 +1396,7 @@ describe('case-resolver settings', () => {
             name: 'Case Ports',
             folder: '',
             graph: {
-              nodes: [createPromptNode('doc-node'), createPromptNode('generic-node')],
+              nodes: [createCanonicalTextPromptNode('doc-node'), createPromptNode('generic-node')],
               edges: [],
               nodeMeta: {},
               edgeMeta: {},
@@ -1410,7 +1425,7 @@ describe('case-resolver settings', () => {
     );
   });
 
-  it('normalizes explanatory prompt nodes to document ports with wysiwygContent lane', () => {
+  it('keeps canonical explanatory prompt ports with wysiwygContent lane', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1424,7 +1439,7 @@ describe('case-resolver settings', () => {
             name: 'Case Explanatory Ports',
             folder: '',
             graph: {
-              nodes: [createPromptNode('explanatory-node')],
+              nodes: [createCanonicalTextPromptNode('explanatory-node', 'explanatory')],
               edges: [],
               nodeMeta: {
                 'explanatory-node': {
@@ -1453,43 +1468,76 @@ describe('case-resolver settings', () => {
     expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS);
   });
 
-  it('keeps template document nodes as template nodes', () => {
-    const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
-        workspaceRevision: 0,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
-        files: [
-          {
-            id: 'case-legacy-template',
-            name: 'Case Legacy Template',
-            folder: '',
-            graph: {
-              nodes: [createTemplateNode('legacy-doc-node', '<p>Legacy template text</p>')],
-              edges: [],
-              nodeMeta: {
-                'legacy-doc-node': {
-                  ...DEFAULT_CASE_RESOLVER_NODE_META,
-                  role: 'text_note',
-                  includeInOutput: true,
+  it('rejects non-canonical text node prompt ports', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-invalid-text-ports',
+              name: 'Case Invalid Text Ports',
+              folder: '',
+              graph: {
+                nodes: [createPromptNode('doc-node')],
+                edges: [],
+                nodeMeta: {
+                  'doc-node': {
+                    role: 'text_note',
+                    includeInOutput: true,
+                    quoteMode: 'none',
+                    surroundPrefix: '',
+                    surroundSuffix: '',
+                  },
                 },
+                edgeMeta: {},
               },
-              edgeMeta: {},
             },
-          },
-        ],
-        assets: [],
-        activeFileId: 'case-legacy-template',
-      })
-    );
+          ],
+          assets: [],
+          activeFileId: 'case-invalid-text-ports',
+        })
+      )
+    ).toThrowError(/canonical prompt ports/i);
+  });
 
-    const graph = workspace.files[0]?.graph;
-    const legacyNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'legacy-doc-node');
-
-    expect(legacyNode?.type).toBe('template');
-    expect(legacyNode?.config?.template?.template).toBe('<p>Legacy template text</p>');
+  it('rejects template text nodes in workspace graphs', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-legacy-template',
+              name: 'Case Legacy Template',
+              folder: '',
+              graph: {
+                nodes: [createTemplateNode('legacy-doc-node', '<p>Legacy template text</p>')],
+                edges: [],
+                nodeMeta: {
+                  'legacy-doc-node': {
+                    ...DEFAULT_CASE_RESOLVER_NODE_META,
+                    role: 'text_note',
+                    includeInOutput: true,
+                  },
+                },
+                edgeMeta: {},
+              },
+            },
+          ],
+          assets: [],
+          activeFileId: 'case-legacy-template',
+        })
+      )
+    ).toThrowError(/text nodes must use prompt node type/i);
   });
 
   it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {
@@ -1520,7 +1568,10 @@ describe('case-resolver settings', () => {
             folder: '',
             parentCaseId: 'case-node-map',
             graph: {
-              nodes: [createPromptNode('node-valid'), createPromptNode('node-stale')],
+              nodes: [
+                createCanonicalTextPromptNode('node-valid'),
+                createCanonicalTextPromptNode('node-stale'),
+              ],
               edges: [],
               nodeMeta: {},
               edgeMeta: {},
@@ -1686,63 +1737,64 @@ describe('case-resolver settings', () => {
     expect(second.edgeMeta).toEqual({});
   });
 
-  it('rejects legacy node-file binding snapshots when loading the workspace', () => {
-    expect(() =>
-      parseCaseResolverWorkspace(
-        JSON.stringify({
-          version: 2,
-          workspaceRevision: 0,
-          lastMutationId: null,
-          lastMutationAt: null,
-          folders: [],
-          files: [
-            {
-              id: 'case-a',
-              fileType: 'case',
-              name: 'Case A',
-              folder: '',
-              graph: {
-                nodes: [],
-                edges: [],
-                nodeMeta: {},
-                edgeMeta: {},
-              },
+  it('strips legacy inline node-file snapshots when loading the workspace', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
             },
-            {
-              id: 'doc-legacy',
-              fileType: 'document',
-              name: 'Legacy Document',
-              folder: '',
-              parentCaseId: 'case-a',
-              graph: {
-                nodes: [],
-                edges: [],
-                nodeMeta: {},
-                edgeMeta: {},
-              },
+          },
+          {
+            id: 'doc-legacy',
+            fileType: 'document',
+            name: 'Legacy Document',
+            folder: '',
+            parentCaseId: 'case-a',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
             },
-          ],
-          assets: [
-            {
-              id: 'node-file-legacy',
-              name: 'Legacy Node File',
-              folder: '',
-              kind: 'node_file',
+          },
+        ],
+        assets: [
+          {
+            id: 'node-file-legacy',
+            name: 'Legacy Node File',
+            folder: '',
+            kind: 'node_file',
+            sourceFileId: 'doc-legacy',
+            textContent: JSON.stringify({
+              kind: 'case_resolver_node_file_snapshot_v1',
+              source: 'manual',
+              nodeId: 'legacy-node',
               sourceFileId: 'doc-legacy',
-              textContent: JSON.stringify({
-                kind: 'case_resolver_node_file_snapshot_v1',
-                source: 'manual',
-                nodeId: 'legacy-node',
-                sourceFileId: 'doc-legacy',
-                sourceFileType: 'document',
-                sourceFileName: 'Legacy Document',
-              }),
-            },
-          ],
-          activeFileId: 'doc-legacy',
-        })
-      )
-    ).toThrowError(/Legacy Case Resolver node-file snapshot fields are no longer supported/i);
+              sourceFileType: 'document',
+              sourceFileName: 'Legacy Document',
+            }),
+          },
+        ],
+        activeFileId: 'doc-legacy',
+      })
+    );
+    const legacyAsset = workspace.assets.find((asset) => asset.id === 'node-file-legacy');
+    expect(legacyAsset && 'textContent' in legacyAsset).toBe(false);
+    expect(legacyAsset?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
   });
 
   it('keeps canonical text node edge ports on prompt nodes', () => {
@@ -1761,7 +1813,7 @@ describe('case-resolver settings', () => {
             graph: {
               nodes: [
                 createPromptNode('upstream'),
-                createPromptNode('doc-node'),
+                createCanonicalTextPromptNode('doc-node'),
                 createPromptNode('downstream'),
               ],
               edges: [
@@ -1821,7 +1873,7 @@ describe('case-resolver settings', () => {
               name: 'Case Edge Ports',
               folder: '',
               graph: {
-                nodes: [createPromptNode('upstream'), createPromptNode('doc-node')],
+                nodes: [createPromptNode('upstream'), createCanonicalTextPromptNode('doc-node')],
                 edges: [
                   {
                     id: 'edge-legacy-port',

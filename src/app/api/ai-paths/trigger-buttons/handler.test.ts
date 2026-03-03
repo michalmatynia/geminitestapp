@@ -62,6 +62,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     expect(response.status).toBe(200);
     expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
 
     await expect(response.json()).resolves.toEqual([
       expect.objectContaining({
@@ -88,9 +89,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual([]);
     expect(getAiPathsSettingMock).not.toHaveBeenCalled();
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 
-  it('throws when stored payload is invalid', async () => {
+  it('rejects malformed non-array stored payloads', async () => {
     getAiPathsSettingMock.mockResolvedValue('{"not":"an-array"}');
 
     await expect(
@@ -100,8 +102,54 @@ describe('ai-paths trigger-buttons GET handler', () => {
         >[0],
         {} as Parameters<typeof GET_handler>[1]
       )
-    ).rejects.toThrow('Invalid trigger button settings payload');
+    ).rejects.toThrow('Invalid AI trigger button settings payload.');
 
     expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects stored payloads that include non-canonical trigger button records', async () => {
+    getAiPathsSettingMock.mockResolvedValue(
+      JSON.stringify([
+        {
+          id: 'btn-valid',
+          name: 'Valid Button',
+          iconId: null,
+          pathId: null,
+          enabled: true,
+          locations: ['product_modal'],
+          mode: 'click',
+          display: 'icon_label',
+          createdAt: '2026-03-03T00:00:00.000Z',
+          updatedAt: '2026-03-03T00:00:00.000Z',
+          sortIndex: 0,
+        },
+        {
+          id: 'btn-invalid',
+          name: 'Invalid Button',
+          iconId: null,
+          pathId: null,
+          enabled: true,
+          locations: ['product_modal'],
+          mode: 'click',
+          display: { label: 'Legacy', showLabel: true },
+          createdAt: '2026-03-03T00:00:00.000Z',
+          updatedAt: '2026-03-03T00:00:00.000Z',
+          sortIndex: 1,
+        },
+      ])
+    );
+
+    await expect(
+      GET_handler(
+        new NextRequest('http://localhost/api/ai-paths/trigger-buttons') as Parameters<
+          typeof GET_handler
+        >[0],
+        {} as Parameters<typeof GET_handler>[1]
+      )
+    ).rejects.toThrow('Invalid AI trigger button record payload.');
+
+    expect(getAiPathsSettingMock).toHaveBeenCalledWith('ai_paths_trigger_buttons');
+    expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
   });
 });

@@ -279,6 +279,7 @@ describe('CaseResolverNodeFileWorkspace', () => {
     await waitFor(() => {
       expect(fetchCaseResolverNodeFileSnapshotMock).toHaveBeenCalledWith(
         'asset-node-file',
+        8_000,
         'node_file_workspace_load'
       );
       expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toMatchObject({
@@ -293,6 +294,7 @@ describe('CaseResolverNodeFileWorkspace', () => {
     await waitFor(() => {
       expect(fetchCaseResolverNodeFileSnapshotMock).toHaveBeenCalledWith(
         'asset-node-file',
+        8_000,
         'node_file_workspace_load'
       );
       expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toEqual(snapshot);

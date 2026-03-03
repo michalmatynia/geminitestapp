@@ -569,7 +569,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   kind: 'log',
                   level: normalizeRuntimeEventLevel(rawEvent.level),
                   message,
-                  runId: asString(rawEvent.runId) ?? runId,
                   ...(nodeId ? { nodeId } : {}),
                   ...(runtimeNode?.type ? { nodeType: runtimeNode.type } : {}),
                   ...(runtimeNode?.title || rawEvent['nodeTitle']

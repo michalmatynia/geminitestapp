@@ -6,7 +6,6 @@ import {
   NODE_WIDTH,
 } from '@/shared/lib/ai-paths/core/constants';
 import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
-import { type Edge as AiEdge } from '@/shared/contracts/ai-paths';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
@@ -86,63 +85,6 @@ export const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 export const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
-
-const normalizeTextNodeInputPort = (
-  value: string | null | undefined,
-  allowWysiwygContentPort: boolean
-): string => {
-  if (
-    value === DOCUMENT_TEXTFIELD_PORT ||
-    value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
-    value === DOCUMENT_PLAIN_TEXT_PORT ||
-    (allowWysiwygContentPort && value === DOCUMENT_WYSIWYG_CONTENT_PORT)
-  ) {
-    return value;
-  }
-  return DOCUMENT_PLAINTEXT_CONTENT_PORT;
-};
-
-const normalizeTextNodeOutputPort = (
-  value: string | null | undefined,
-  allowWysiwygContentPort: boolean
-): string => {
-  if (
-    value === DOCUMENT_TEXTFIELD_PORT ||
-    value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
-    value === DOCUMENT_PLAIN_TEXT_PORT ||
-    (allowWysiwygContentPort && value === DOCUMENT_WYSIWYG_CONTENT_PORT)
-  ) {
-    return value;
-  }
-  return DOCUMENT_PLAINTEXT_CONTENT_PORT;
-};
-
-export const normalizeEdgesForTextNode = (
-  edges: AiEdge[],
-  nodeId: string,
-  isExplanatoryNode = false
-): AiEdge[] =>
-  edges.map((edge: AiEdge): AiEdge => {
-    const from = edge.source;
-    const to = edge.target;
-    const currentFromPort = edge.sourceHandle;
-    const currentToPort = edge.targetHandle;
-
-    let nextFromPort = currentFromPort;
-    let nextToPort = currentToPort;
-    if (from === nodeId) {
-      nextFromPort = normalizeTextNodeOutputPort(currentFromPort, isExplanatoryNode);
-    }
-    if (to === nodeId) {
-      nextToPort = normalizeTextNodeInputPort(currentToPort, isExplanatoryNode);
-    }
-    if (nextFromPort === currentFromPort && nextToPort === currentToPort) return edge;
-    return {
-      ...edge,
-      sourceHandle: nextFromPort,
-      targetHandle: nextToPort,
-    };
-  });
 
 export const ensureNodeMeta = (
   nodes: AiNode[],

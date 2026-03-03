@@ -59,4 +59,18 @@ describe('parsePromptExploderSettingsResult', () => {
     expect(parsed.error?.code).toBe('invalid_shape');
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
+
+  it('rejects deprecated operationMode values in non-empty payloads', () => {
+    const payload = {
+      ...defaultPromptExploderSettings,
+      ai: {
+        operationMode: 'manual',
+      },
+    };
+
+    const parsed = parsePromptExploderSettingsResult(JSON.stringify(payload));
+
+    expect(parsed.error?.code).toBe('invalid_shape');
+    expect(parsed.settings).toEqual(defaultPromptExploderSettings);
+  });
 });

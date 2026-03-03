@@ -1,6 +1,18 @@
 import { edgeSchema, type Edge } from '@/shared/contracts/ai-paths-core/nodes';
 import { validationError } from '@/shared/errors/app-error';
 
+const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([
+  'id',
+  'source',
+  'target',
+  'sourceHandle',
+  'targetHandle',
+  'label',
+  'type',
+  'data',
+  'createdAt',
+  'updatedAt',
+]);
 const LEGACY_CASE_RESOLVER_EDGE_KEYS = new Set(['from', 'to', 'fromPort', 'toPort']);
 const LEGACY_CASE_RESOLVER_PORTS = new Set(['textfield', 'content']);
 
@@ -26,14 +38,19 @@ export const parseCanonicalCaseResolverEdge = (
   }
 
   const record = input as Record<string, unknown>;
-  const legacyKeys = Object.keys(record).filter((key: string): boolean =>
-    LEGACY_CASE_RESOLVER_EDGE_KEYS.has(key)
+  const unsupportedKeys = Object.keys(record).filter(
+    (key: string): boolean => !CANONICAL_CASE_RESOLVER_EDGE_KEYS.has(key)
   );
-  if (legacyKeys.length > 0) {
+  if (unsupportedKeys.length > 0) {
+    const legacyKeys = unsupportedKeys.filter((key: string): boolean =>
+      LEGACY_CASE_RESOLVER_EDGE_KEYS.has(key)
+    );
     throw buildInvalidCaseResolverEdgeError(
-      'Legacy Case Resolver edge fields are no longer supported.',
+      legacyKeys.length > 0
+        ? 'Legacy Case Resolver edge fields are no longer supported.'
+        : 'Case Resolver edge payload includes unsupported fields.',
       context,
-      { legacyKeys }
+      legacyKeys.length > 0 ? { legacyKeys } : { unsupportedKeys }
     );
   }
 
@@ -81,20 +98,8 @@ export const parseCanonicalCaseResolverEdge = (
     );
   }
 
-  const {
-    from: _from,
-    to: _to,
-    fromPort: _fromPort,
-    toPort: _toPort,
-    ...edgeRecord
-  } = edge as Edge & {
-    from?: unknown;
-    to?: unknown;
-    fromPort?: unknown;
-    toPort?: unknown;
-  };
   return {
-    ...edgeRecord,
+    ...edge,
     source,
     target,
     sourceHandle: sourceHandle ?? null,

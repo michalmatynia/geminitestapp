@@ -3,7 +3,7 @@ import { AlertCircle, X } from 'lucide-react';
 
 import { cn } from '@/shared/utils';
 
-type AlertVariant = 'default' | 'error' | 'warning' | 'success' | 'info';
+export type AlertVariant = 'default' | 'error' | 'warning' | 'success' | 'info';
 
 interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: AlertVariant;

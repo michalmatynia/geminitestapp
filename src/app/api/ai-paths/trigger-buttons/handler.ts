@@ -44,8 +44,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const raw = await readTriggerButtonsRaw();
-  const triggerButtons = parseAiTriggerButtonsRaw(raw);
-  return NextResponse.json(triggerButtons, {
+  const parsedButtons = parseAiTriggerButtonsRaw(raw);
+  return NextResponse.json(parsedButtons, {
     headers: {
       'Cache-Control': 'no-store',
     },

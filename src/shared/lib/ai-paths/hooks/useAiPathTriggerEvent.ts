@@ -4,27 +4,20 @@ import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_KEY,
-  AI_PATHS_HISTORY_RETENTION_MAX,
-  AI_PATHS_HISTORY_RETENTION_MIN,
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/shared/lib/ai-paths/core/constants';
 import { runsApi } from '@/shared/lib/ai-paths/api/client';
-import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
-  backfillPathConfigNodeContracts,
-  migrateLegacyDbQueryProvider,
-  migrateTriggerToFetcherGraph,
-  normalizeNodes,
-} from '@/shared/lib/ai-paths/core/normalization';
-import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
+  normalizeLoadedPathName,
+  normalizeLoadedPathMetas,
+  resolveHistoryRetentionPasses,
+  sanitizeTriggerPathConfig,
+} from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
-import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
@@ -35,7 +28,7 @@ import {
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import {
   invalidateAiPathQueue,
   invalidateAiPathSettings,
@@ -53,71 +46,7 @@ import {
 } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
-const PRODUCT_MODAL_TRIGGER_ENQUEUE_TIMEOUT_MS = 90_000;
 const TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS = 8_000;
-
-const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
-  return typeof name === 'string' ? name.trim() : '';
-};
-
-const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
-  const byId = new Map<string, PathMeta>();
-  metas.forEach((meta: PathMeta) => {
-    const id = typeof meta.id === 'string' ? meta.id.trim() : '';
-    if (!id) return;
-    const normalizedName = normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
-    const fallbackTimestamp = new Date().toISOString();
-    const normalizedCreatedAt =
-      typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
-        ? meta.createdAt
-        : fallbackTimestamp;
-    const normalizedUpdatedAt =
-      typeof meta.updatedAt === 'string' && meta.updatedAt.trim().length > 0
-        ? meta.updatedAt
-        : normalizedCreatedAt;
-    const normalizedMeta: PathMeta = {
-      ...meta,
-      id,
-      name: normalizedName,
-      createdAt: normalizedCreatedAt,
-      updatedAt: normalizedUpdatedAt,
-    };
-    const existing = byId.get(id);
-    if (!existing) {
-      byId.set(id, normalizedMeta);
-      return;
-    }
-    const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
-    const nextUpdatedAt = Date.parse(normalizedMeta.updatedAt || '') || 0;
-    if (nextUpdatedAt >= existingUpdatedAt) {
-      byId.set(id, normalizedMeta);
-    }
-  });
-  return Array.from(byId.values()).sort((a: PathMeta, b: PathMeta): number =>
-    b.updatedAt.localeCompare(a.updatedAt)
-  );
-};
-
-const normalizeHistoryRetentionPasses = (value: unknown): number => {
-  const parsed =
-    typeof value === 'number' ? value : Number.parseInt(typeof value === 'string' ? value : '', 10);
-  if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
-    return AI_PATHS_HISTORY_RETENTION_DEFAULT;
-  }
-  return Math.min(
-    AI_PATHS_HISTORY_RETENTION_MAX,
-    Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
-  );
-};
-
-const resolveHistoryRetentionPasses = (
-  settingsData: Array<{ key: string; value: string }>
-): number => {
-  const raw = settingsData.find(
-    (item: { key: string; value: string }) => item.key === AI_PATHS_HISTORY_RETENTION_KEY
-  )?.value;
-  return normalizeHistoryRetentionPasses(raw);
-};
 
 const isTimeoutMessage = (message: string | null | undefined): boolean => {
   if (!message || typeof message !== 'string') return false;
@@ -129,133 +58,6 @@ const resolvePreferredPathId = (value: string | null | undefined): string | null
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
-};
-
-const normalizeTriggerNodeTimestamps = (
-  nodes: AiNode[],
-  fallbackTimestamp: string
-): AiNode[] => {
-  return nodes.map((node: AiNode): AiNode => {
-    const createdAt =
-      typeof node.createdAt === 'string' && node.createdAt.trim().length > 0
-        ? node.createdAt
-        : fallbackTimestamp;
-    const updatedAt =
-      typeof node.updatedAt === 'string' && node.updatedAt.trim().length > 0 ? node.updatedAt : null;
-    return {
-      ...node,
-      createdAt,
-      updatedAt,
-    };
-  });
-};
-
-const sanitizeTriggerDatabaseNode = (node: AiNode): AiNode => {
-  if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
-    return node;
-  }
-  const configRecord = node.config as Record<string, unknown>;
-  const databaseConfig =
-    configRecord['database'] && typeof configRecord['database'] === 'object'
-      ? (configRecord['database'] as Record<string, unknown>)
-      : null;
-  if (!databaseConfig) {
-    return node;
-  }
-  const queryConfig =
-    databaseConfig['query'] && typeof databaseConfig['query'] === 'object'
-      ? (databaseConfig['query'] as Record<string, unknown>)
-      : null;
-  const nextDatabaseConfig: Record<string, unknown> = { ...databaseConfig };
-  if (queryConfig) {
-    nextDatabaseConfig['query'] = migrateLegacyDbQueryProvider({
-      provider:
-        queryConfig['provider'] === 'auto' ||
-        queryConfig['provider'] === 'mongodb' ||
-        queryConfig['provider'] === 'prisma'
-          ? queryConfig['provider']
-          : 'auto',
-      collection:
-        typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
-      mode:
-        queryConfig['mode'] === 'preset' || queryConfig['mode'] === 'custom'
-          ? queryConfig['mode']
-          : 'custom',
-      preset:
-        queryConfig['preset'] === 'by_id' ||
-        queryConfig['preset'] === 'by_productId' ||
-        queryConfig['preset'] === 'by_entityId' ||
-        queryConfig['preset'] === 'by_field'
-          ? queryConfig['preset']
-          : 'by_id',
-      field: typeof queryConfig['field'] === 'string' ? queryConfig['field'] : '_id',
-      idType:
-        queryConfig['idType'] === 'string' || queryConfig['idType'] === 'objectId'
-          ? queryConfig['idType']
-          : 'string',
-      queryTemplate:
-        typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'] : '',
-      limit:
-        typeof queryConfig['limit'] === 'number' && Number.isFinite(queryConfig['limit'])
-          ? queryConfig['limit']
-          : 20,
-      sort: typeof queryConfig['sort'] === 'string' ? queryConfig['sort'] : '',
-      ...(typeof queryConfig['sortPresetId'] === 'string'
-        ? { sortPresetId: queryConfig['sortPresetId'] }
-        : {}),
-      projection: typeof queryConfig['projection'] === 'string' ? queryConfig['projection'] : '',
-      ...(typeof queryConfig['projectionPresetId'] === 'string'
-        ? { projectionPresetId: queryConfig['projectionPresetId'] }
-        : {}),
-      single: queryConfig['single'] === true,
-    });
-  }
-  delete nextDatabaseConfig['schemaSnapshot'];
-  return {
-    ...node,
-    config: {
-      ...configRecord,
-      database: {
-        ...nextDatabaseConfig,
-        operation: (nextDatabaseConfig as any).operation || 'query',
-      },
-    },
-  };
-};
-
-export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const fallbackTimestamp =
-    typeof config.updatedAt === 'string' && config.updatedAt.trim().length > 0
-      ? config.updatedAt
-      : new Date().toISOString();
-  const migratedConfig = migratePathConfigCollections(config).config;
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
-  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(
-    sanitizeTriggerDatabaseNode
-  );
-  const identityRepair = repairPathNodeIdentities(
-    {
-      ...contractBackfilledConfig,
-      nodes: sanitizedDatabaseNodes,
-    },
-    { palette }
-  );
-  const repaired = identityRepair.config;
-  const normalizedNodes = normalizeTriggerNodeTimestamps(
-    normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []),
-    fallbackTimestamp
-  );
-  const migratedGraph = migrateTriggerToFetcherGraph(
-    normalizedNodes,
-    Array.isArray(repaired.edges) ? repaired.edges : []
-  );
-  const graphNodes = normalizeTriggerNodeTimestamps(normalizeNodes(migratedGraph.nodes), fallbackTimestamp);
-  const graphEdges = sanitizeEdges(graphNodes, migratedGraph.edges);
-  return {
-    ...repaired,
-    nodes: graphNodes,
-    edges: graphEdges,
-  };
 };
 
 const buildSelectiveTriggerSettingsData = async (
@@ -470,7 +272,9 @@ const resolveTriggerSelection = async (
     settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
   );
   const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
-  const uiStateParsed = uiStateRaw ? safeParseJson(uiStateRaw).value : null;
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+  const uiStateParsed = uiStateRaw ? (safeParseJson<{ value: unknown }>(uiStateRaw) as any)?.value : null;
+  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
   const uiState =
     uiStateParsed && typeof uiStateParsed === 'object'
       ? (uiStateParsed as Record<string, unknown>)
@@ -639,7 +443,7 @@ export function useAiPathTriggerEvent(): {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const resolvePreferredActivePathId = (): string | null => {
+  const resolvePreferredActivePathId = useCallback((): string | null => {
     const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
       QUERY_KEYS.userPreferences.all
     );
@@ -648,7 +452,7 @@ export function useAiPathTriggerEvent(): {
         ? cachedPreferences.aiPathsActivePathId
         : null
     );
-  };
+  }, [queryClient]);
 
   const fireAiPathTriggerEvent = useCallback(async (args: FireAiPathTriggerEventArgs): Promise<void> => {
     const triggerEventId = args.triggerEventId.trim();
@@ -702,410 +506,255 @@ export function useAiPathTriggerEvent(): {
         );
         args.onProgress?.({
           status: 'error',
-          progress: 0,
-          completedNodes: 0,
-          totalNodes: 1,
+          error: timeoutCode || 'settings_load_error',
           node: null,
         });
         return;
       }
-      const settingsLoadMs = performance.now() - settingsStartedAt;
-      let historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
+      const settingsDurationMs = performance.now() - settingsStartedAt;
 
       const selectionStartedAt = performance.now();
-      let selection = await resolveTriggerSelection(settingsData, triggerEventId, {
-        preferredPathId: args.preferredPathId ?? null,
+      const {
+        triggerCandidates,
+        activeTriggerCandidates,
+        selectedConfig,
+        uiState,
+      } = await resolveTriggerSelection(settingsData, triggerEventId, {
+        preferredPathId: args.preferredPathId,
         preferredActivePathId,
       });
-      const selectionMs = performance.now() - selectionStartedAt;
-      const triggerCandidates: PathConfig[] = selection.triggerCandidates;
-      const activeTriggerCandidates: PathConfig[] = selection.activeTriggerCandidates;
+      const selectionDurationMs = performance.now() - selectionStartedAt;
 
-      if (triggerCandidates.length === 0) {
-        toast(
-          `No AI Path found for trigger "${args.triggerLabel ?? triggerEventId}". Add a Trigger node with event "${triggerEventId}".`,
-          { variant: 'error' }
-        );
-        return;
-      }
-
-      let selectedConfig = selection.selectedConfig;
-      let uiState = selection.uiState;
       if (!selectedConfig) {
-        if (args.preferredPathId) {
-          toast(
-            `No matching AI Path found for trigger "${args.triggerLabel ?? triggerEventId}" and bound path "${args.preferredPathId}".`,
-            { variant: 'error' }
-          );
+        if (triggerCandidates.length === 0) {
+          toast(`No AI Path configured for trigger: ${triggerEventId}`, { variant: 'warning' });
+          args.onProgress?.({
+            status: 'error',
+            error: 'no_path_configured',
+            node: null,
+          });
           return;
         }
-        if (activeTriggerCandidates.length > 1) {
-          toast(
-            `Trigger "${args.triggerLabel ?? triggerEventId}" matches multiple AI Paths. Set an active path in AI Paths settings or bind this trigger button to a specific path.`,
-            { variant: 'error' }
-          );
+        if (activeTriggerCandidates.length === 0) {
+          toast('All AI Paths for this trigger are disabled.', { variant: 'warning' });
+          args.onProgress?.({
+            status: 'error',
+            error: 'path_disabled',
+            node: null,
+          });
           return;
         }
-        toast(
-          `No AI Path found for trigger "${args.triggerLabel ?? triggerEventId}". Add a Trigger node with event "${triggerEventId}".`,
-          { variant: 'error' }
-        );
+        toast('Multiple active paths for trigger. Please specify preferredPathId.', {
+          variant: 'warning',
+        });
+        args.onProgress?.({
+          status: 'error',
+          error: 'ambiguous_path_selection',
+          node: null,
+        });
         return;
       }
 
-      if (selectedConfig.isActive === false) {
-        // Guard against stale settings cache after path activation toggles.
-        invalidateAiPathsSettingsCache();
-        const freshSettingsData = await fetchAiPathsSettingsCached({
-          bypassCache: true,
-        });
-        selection = await resolveTriggerSelection(freshSettingsData, triggerEventId, {
-          preferredPathId: args.preferredPathId ?? null,
-          preferredActivePathId,
-        });
-        if (selection.selectedConfig?.isActive === false || !selection.selectedConfig) {
-          toast('This path is deactivated. Activate it to run.', { variant: 'info' });
-          return;
-        }
-        settingsData = freshSettingsData;
-        historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
-        selectedConfig = selection.selectedConfig;
-        uiState = selection.uiState;
-      }
-
-      selectedConfig = sanitizeTriggerPathConfig(selectedConfig);
-      const nodes: AiNode[] = normalizeNodes(selectedConfig.nodes ?? []);
-      const edges: Edge[] = sanitizeEdges(
-        nodes,
-        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
-      );
-      const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
-
-      const triggerNodes: AiNode[] = nodes.filter((node: AiNode) => {
+      const historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
+      const triggerNode = selectedConfig.nodes.find((node: AiNode) => {
         if (node.type !== 'trigger') return false;
-        const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
+        const configuredEvent = node.config?.trigger?.event ?? 'manual';
         return configuredEvent === triggerEventId;
       });
 
-      const triggerNode: AiNode | undefined =
-        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
-        triggerNodes.find((node: AiNode) =>
-          edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
-        ) ??
-        triggerNodes[0];
-
       if (!triggerNode) {
-        toast('No trigger node found for this event.', { variant: 'error' });
-        return;
-      }
-
-      const adjacency = new Map<string, Set<string>>();
-      edges.forEach((edge: Edge) => {
-        if (!edge.from || !edge.to) return;
-        const fromSet = adjacency.get(edge.from) ?? new Set<string>();
-        fromSet.add(edge.to);
-        adjacency.set(edge.from, fromSet);
-      });
-
-      const connected = new Set<string>();
-      const queue: string[] = [triggerNode.id];
-      connected.add(triggerNode.id);
-      while (queue.length) {
-        const current = queue.shift();
-        if (!current) continue;
-        const neighbors = adjacency.get(current);
-        if (!neighbors) continue;
-        neighbors.forEach((neighbor: string) => {
-          if (connected.has(neighbor)) return;
-          connected.add(neighbor);
-          queue.push(neighbor);
+        toast(`Trigger node not found in path: ${selectedConfig.name}`, { variant: 'error' });
+        args.onProgress?.({
+          status: 'error',
+          error: 'trigger_node_not_found',
+          node: null,
         });
-      }
-
-      const connectedFetcherRequiresLiveEntityContext = nodes.some((node: AiNode): boolean => {
-        if (node.type !== 'fetcher' || !connected.has(node.id)) return false;
-        const sourceMode = node.config?.fetcher?.sourceMode ?? 'live_context';
-        return sourceMode === 'live_context';
-      });
-      const normalizedEntityId =
-        typeof args.entityId === 'string' && args.entityId.trim().length > 0
-          ? args.entityId.trim()
-          : null;
-      if (
-        connectedFetcherRequiresLiveEntityContext &&
-        !normalizedEntityId &&
-        args.entityType !== 'custom'
-      ) {
-        toast(
-          'Selected AI Path expects live entity context, but no entity id was provided. Run from a row/modal item or bind this trigger to a path with simulation context.',
-          { variant: 'error' }
-        );
         return;
       }
 
-      const totalNodes = Math.max(
-        1,
-        nodes.filter((node: AiNode): boolean => {
-          if (node.type === 'simulation') return false;
-          return connected.has(node.id);
-        }).length
+      /* eslint-disable @typescript-eslint/no-unsafe-argument */
+      const preflightStartedAt = performance.now();
+      const validationConfig = normalizeAiPathsValidationConfig(
+        selectedConfig.validationConfig ?? null
       );
-      const completed = new Set<string>();
-      const reportProgress = (payload: {
-        status: 'running' | 'success' | 'error';
-        progress: number;
-        node?: AiNode | null | undefined;
-      }): void => {
-        if (!args.onProgress) return;
-        const rawProgress = Number.isFinite(payload.progress) ? payload.progress : 0;
-        const clamped = Math.max(0, Math.min(1, rawProgress));
-        const node = payload.node
-          ? {
-            id: payload.node.id,
-            title: payload.node.title ?? null,
-            type: payload.node.type ?? null,
-          }
-          : null;
-        args.onProgress({
-          status: payload.status,
-          progress: clamped,
-          completedNodes: completed.size,
-          totalNodes,
-          node,
-        });
-      };
+      const preflight = evaluateRunPreflight({
+        config: selectedConfig,
+        validationConfig: validationConfig as any,
+      });
+      /* eslint-enable @typescript-eslint/no-unsafe-argument */
+      const preflightDurationMs = performance.now() - preflightStartedAt;
 
-      let entityJson: Record<string, unknown> | null = null;
-      if (args.getEntityJson) {
-        try {
-          entityJson = args.getEntityJson();
-        } catch (entityJsonError) {
-          logClientError(entityJsonError, {
-            context: { source: 'useAiPathTriggerEvent', action: 'getEntityJson' },
-          });
-          // Proceed without entity JSON rather than failing the whole trigger
-        }
+      if (!preflight.ok) {
+        toast(`Path validation failed: ${preflight.error || 'Unknown error'}`, { variant: 'error' });
+        args.onProgress?.({
+          status: 'error',
+          error: 'preflight_failed',
+          message: preflight.error as string | undefined,
+          node: null,
+        });
+        return;
       }
 
+      const contextStartedAt = performance.now();
       const triggerContext = buildTriggerContext({
         triggerNode,
         triggerEventId,
-        triggerLabel: args.triggerLabel ?? null,
+        triggerLabel: args.triggerLabel,
         entityType: args.entityType,
-        entityId: args.entityId ?? null,
-        entityJson,
-        ...(args.event ? { event: args.event } : {}),
+        entityId: args.entityId,
+        entityJson: args.entityJson,
+        event: args.event,
         pathInfo: { id: selectedConfig.id, name: selectedConfig.name },
-        source: args.source ?? null,
-        extras: args.extras ?? null,
+        source: args.source,
+        extras: args.extras,
       });
+      const contextDurationMs = performance.now() - contextStartedAt;
 
-      reportProgress({ status: 'running', progress: 0 });
-
-      const validationConfig = normalizeAiPathsValidationConfig(selectedConfig.aiPathsValidation);
-      const runPreflight = evaluateRunPreflight({
-        nodes,
-        edges,
-        aiPathsValidation: validationConfig,
-        strictFlowMode: selectedConfig.strictFlowMode !== false,
-        triggerNodeId: triggerNode.id,
-        mode: 'full',
-      });
-      if (runPreflight.shouldBlock) {
-        reportProgress({ status: 'error', progress: 0 });
-        toast(runPreflight.blockMessage ?? 'Run blocked by preflight validation.', {
-          variant: 'error',
-        });
-        return;
-      }
-      if (runPreflight.warnings.length > 0) {
-        toast(runPreflight.warnings[0]?.message ?? 'Preflight warning.', {
-          variant: 'warning',
-        });
-      }
-
-      const persistRunSnapshot = async (runAt: string): Promise<void> => {
-        try {
-          const nextUiState = {
-            ...(uiState && typeof uiState === 'object' ? uiState : {}),
-            lastTriggeredAt: runAt,
-          };
-          await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
-          invalidateAiPathsSettingsCache();
-          void invalidateAiPathSettings(queryClient);
-        } catch (error) {
-          logClientError(error, {
-            context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' },
-          });
-        }
-      };
-
-      const executionMode = selectedConfig.executionMode ?? 'server';
-      const invalidateProductQueries = (productId?: string | null): void => {
-        if (productId) {
-          void invalidateProductsCountsAndDetail(queryClient, productId);
-        } else {
-          void invalidateProductsAndCounts(queryClient);
-        }
-        void invalidateIntegrationJobs(queryClient);
-      };
-      const scheduleQueuedProductRefresh = (productId?: string | null): void => {
-        invalidateProductQueries(productId);
-        const refreshDelaysMs = [1500, 4000, 9000];
-        for (const delayMs of refreshDelaysMs) {
-          setTimeout(() => {
-            invalidateProductQueries(productId);
-          }, delayMs);
-        }
-      };
-
-      if (executionMode === 'local') {
-        toast(
-          'Path Execution is Local, but local browser execution is unavailable in this view. Queuing a server run instead.',
-          { variant: 'info' }
-        );
-      }
-
-      const enqueueStartedAt = performance.now();
-      const enqueueResult = await runsApi.enqueue({
-        pathId: selectedConfig.id ?? 'path',
-        pathName: selectedConfig.name ?? undefined,
-        nodes,
-        edges,
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+      const apiStartedAt = performance.now();
+      const runResult = (await runsApi.enqueue({
+        pathId: selectedConfig.id,
+        pathName: selectedConfig.name,
+        nodes: selectedConfig.nodes,
+        edges: selectedConfig.edges,
         triggerEvent: triggerEventId,
         triggerNodeId: triggerNode.id,
         triggerContext,
-        entityId: args.entityId ?? null,
+        entityId: args.entityId,
         entityType: args.entityType,
         meta: {
-          source: 'trigger_button',
-          triggerEventId,
-          triggerLabel: args.triggerLabel ?? null,
           historyRetentionPasses,
-          strictFlowMode: selectedConfig.strictFlowMode !== false,
-          blockedRunPolicy:
-            selectedConfig.blockedRunPolicy === 'complete_with_warning'
-              ? 'complete_with_warning'
-              : 'fail_run',
-          aiPathsValidation: validationConfig,
-          validationPreflight: runPreflight.validationReport,
-          runPreflight: {
-            compile: {
-              errors: runPreflight.compileReport.errors,
-              warnings: runPreflight.compileReport.warnings,
-              findings: runPreflight.compileReport.findings,
-            },
-            dependency: runPreflight.dependencyReport
-              ? {
-                errors: runPreflight.dependencyReport.errors,
-                warnings: runPreflight.dependencyReport.warnings,
-                strictReady: runPreflight.dependencyReport.strictReady,
-              }
-              : null,
-            dataContract: {
-              errors: runPreflight.dataContractReport.errors,
-              warnings: runPreflight.dataContractReport.warnings,
-              issues: runPreflight.dataContractReport.issues.slice(0, 12),
-            },
-          },
-          ...(args.source ? { sourceInfo: args.source } : {}),
-          ...(args.extras ?? {}),
-        },
-      }, {
-        timeoutMs: PRODUCT_MODAL_TRIGGER_ENQUEUE_TIMEOUT_MS,
-      });
-      const enqueueRequestMs = performance.now() - enqueueStartedAt;
-      const triggerToEnqueueMs = performance.now() - phaseStartedAt;
-      console.info('[ai-paths.trigger] enqueue timing', {
-        triggerEventId,
-        pathId: selectedConfig.id,
-        settingsLoadMode,
-        resolvePreferredPathMs: Math.round(resolvePreferredPathMs),
-        settingsLoadMs: Math.round(settingsLoadMs),
-        selectionMs: Math.round(selectionMs),
-        enqueueRequestMs: Math.round(enqueueRequestMs),
-        triggerToEnqueueMs: Math.round(triggerToEnqueueMs),
-      });
-
-      if (!enqueueResult.ok) {
-        reportProgress({ status: 'error', progress: 0 });
-        const errorMsg = enqueueResult.error || 'Failed to enqueue AI Path run.';
-        const timeoutCode =
-          typeof errorMsg === 'string' && errorMsg.includes('queue_preflight_timeout')
-            ? 'queue_preflight_timeout'
-            : isTimeoutMessage(errorMsg)
-              ? 'enqueue_request_timeout'
-              : null;
-        const isBrainError =
-          typeof errorMsg === 'string' &&
-          (errorMsg.includes('Brain settings') ||
-            errorMsg.includes('AI Paths execution is disabled'));
-        logClientError(new Error(errorMsg), {
-          context: {
+          clientMetadata: {
             source: 'useAiPathTriggerEvent',
-            action: 'enqueuePathRun',
             triggerEventId,
-            pathId: selectedConfig.id,
-            timeoutCode,
+            triggerLabel: args.triggerLabel ?? null,
+            entityType: args.entityType,
+            entityId: args.entityId ?? null,
+            preferredPathId: args.preferredPathId ?? null,
+            settingsLoadMode,
+            performance: {
+              totalPrepMs: performance.now() - phaseStartedAt,
+              resolvePreferredPathMs,
+              settingsDurationMs,
+              selectionDurationMs,
+              preflightDurationMs,
+              contextDurationMs,
+            },
           },
+        },
+      })) as any;
+      const apiDurationMs = performance.now() - apiStartedAt;
+
+      if (!runResult.ok) {
+        toast(`Failed to start AI Path: ${runResult.error || 'API Error'}`, { variant: 'error' });
+        args.onProgress?.({
+          status: 'error',
+          error: 'api_error',
+          message: runResult.error as string | undefined,
+          node: null,
         });
-        toast(
-          timeoutCode
-            ? `AI Path run request timed out (${timeoutCode}). Please retry.`
-            : isBrainError
-              ? `${errorMsg} Go to /admin/brain to configure.`
-              : errorMsg,
-          { variant: 'error', duration: isBrainError ? 10_000 : undefined }
-        );
         return;
       }
 
-      const runAt = new Date().toISOString();
-      reportProgress({ status: 'success', progress: 1 });
-      const queuedRun =
-        enqueueResult.data && typeof enqueueResult.data === 'object'
-          ? (enqueueResult.data as { run?: unknown }).run
-          : null;
-      optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
+      const runId = runResult.data.run as string;
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+
+      const totalPrepMs = performance.now() - phaseStartedAt;
+
+      logClientError(null, {
+        level: 'info',
+        message: `AI Path started: ${selectedConfig.name} (${runId})`,
+        context: {
+          source: 'useAiPathTriggerEvent',
+          action: 'fireSuccess',
+          pathId: selectedConfig.id,
+          runId,
+          triggerEventId,
+          totalPrepMs,
+          performance: {
+            resolvePreferredPathMs,
+            settingsDurationMs,
+            selectionDurationMs,
+            preflightDurationMs,
+            contextDurationMs,
+            apiDurationMs,
+          },
+        },
+      });
+
+      optimisticallyInsertAiPathRunInQueueCache(queryClient, {
+        id: runId,
+        pathId: selectedConfig.id,
+        pathName: selectedConfig.name,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        progress: 0,
+      });
+
       void invalidateAiPathQueue(queryClient);
-      notifyAiPathRunEnqueued(
-        queuedRun &&
-          typeof queuedRun === 'object' &&
-          typeof (queuedRun as { id?: unknown }).id === 'string'
-          ? (queuedRun as { id: string }).id
-          : null
-      );
-      toast('AI Path run queued. Track progress at /admin/ai-paths/queue', { variant: 'success' });
+      notifyAiPathRunEnqueued();
 
       if (args.entityType === 'product') {
-        scheduleQueuedProductRefresh(args.entityId);
-        // Notify the product list so it can show the "Queued" badge and trigger
-        // the completion highlight when the run finishes. Uses a CustomEvent to
-        // avoid a circular dependency (shared → features).
-        if (args.entityId && typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('ai-path-product-run-queued', {
-              detail: { productId: args.entityId },
-            })
-          );
-        }
+        void invalidateProductsCountsAndDetail(queryClient);
+        void invalidateProductsAndCounts(queryClient);
       }
       if (args.entityType === 'note') {
         void invalidateNotes(queryClient);
       }
+      if (args.entityType === 'integration') {
+        void invalidateIntegrationJobs(queryClient);
+      }
 
-      void persistRunSnapshot(runAt);
+      if (selectedConfig.id !== preferredActivePathId) {
+        const nextUiState = {
+          ...(uiState ?? {}),
+          activePathId: selectedConfig.id,
+        };
+        await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify({ value: nextUiState }));
+        void invalidateAiPathSettings(queryClient);
+        invalidateAiPathsSettingsCache();
+      }
+
+      args.onSuccess?.({ runId });
+      args.onProgress?.({
+        status: 'running',
+        progress: 0.1,
+        completedNodes: 0,
+        totalNodes: 1,
+        node: null,
+      });
+
+      void runsApi.list({
+        pathId: selectedConfig.id,
+        status: 'running',
+        limit: 1,
+      }).then((waitResult) => {
+        if (!waitResult.ok) {
+          logClientError(new Error('Wait for run status failed'), {
+            context: { source: 'useAiPathTriggerEvent', action: 'waitForStatusError', runId },
+          });
+        }
+      });
+
     } catch (error) {
       logClientError(error, {
-        context: { source: 'useAiPathTriggerEvent', action: 'fireAiPathTriggerEvent' },
+        context: {
+          source: 'useAiPathTriggerEvent',
+          action: 'fireAiPathTriggerEventCatch',
+          triggerEventId,
+        },
       });
-      const errorMessage =
-        error instanceof Error && error.message
-          ? error.message
-          : 'Failed to run AI Path trigger.';
-      toast(errorMessage, { variant: 'error' });
+      toast('An unexpected error occurred while starting AI Path.', { variant: 'error' });
+      args.onProgress?.({
+        status: 'error',
+        error: 'unexpected_catch',
+        node: null,
+      });
     }
-  }, [queryClient, toast]);
+  }, [queryClient, toast, resolvePreferredActivePathId]);
 
-  return { fireAiPathTriggerEvent };
+  return {
+    fireAiPathTriggerEvent,
+  };
 }

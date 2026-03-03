@@ -5,6 +5,7 @@ import {
   ImageStudioRunRecord,
   ImageStudioRunStatus,
   ImageStudioRunHistoryEvent,
+  ImageStudioRunHistoryEventSource,
   ImageStudioRunRequest,
 } from '@/shared/contracts/image-studio';
 import type { UpdateFilter } from 'mongodb';

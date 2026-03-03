@@ -408,9 +408,6 @@ export const promptExploderOperationModeSchema = z.enum([
   'rules_only',
   'hybrid',
   'ai_assisted',
-  'manual',
-  'semi-auto',
-  'automatic',
 ]);
 export type PromptExploderOperationMode = z.infer<typeof promptExploderOperationModeSchema>;
 

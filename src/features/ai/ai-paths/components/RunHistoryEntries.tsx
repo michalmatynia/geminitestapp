@@ -96,16 +96,6 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                       +{entry.delayMs}ms delay
                   </span>
                 )}
-                {typeof entry.runId === 'string' && entry.runId && (
-                  <span className='font-mono text-[10px] text-gray-500'>
-                    {entry.runId.slice(0, 8)}…
-                  </span>
-                )}
-                {typeof entry.runStartedAt === 'string' && entry.runStartedAt && (
-                  <span className='text-[10px] text-gray-500'>
-                    run @ {new Date(entry.runStartedAt).toLocaleTimeString()}
-                  </span>
-                )}
                 <Button
                   type='button'
                   size='xs'

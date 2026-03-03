@@ -87,16 +87,43 @@ export const safeJsonStringify = (value: unknown): string => sharedSafeJsonStrin
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  const assertNoLegacyRunIdentity = (record: Record<string, unknown>): void => {
+  const assertNoLegacyRunIdentity = (
+    record: Record<string, unknown>,
+    location: string
+  ): void => {
     const deprecatedKeys = ['runId', 'runStartedAt'].filter((key: string): boolean => key in record);
     if (deprecatedKeys.length === 0) return;
     throw validationError('Legacy AI Paths runtime identity fields are no longer supported.', {
       reason: 'deprecated_runtime_identity_fields',
       keys: deprecatedKeys,
+      location,
     });
   };
+  const assertNoLegacyRuntimeIdentityFields = (parsed: Record<string, unknown>): void => {
+    assertNoLegacyRunIdentity(parsed, 'runtime_state');
+
+    const events = parsed['events'];
+    if (Array.isArray(events)) {
+      events.forEach((entry: unknown, index: number): void => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+        assertNoLegacyRunIdentity(entry as Record<string, unknown>, `events[${index}]`);
+      });
+    }
+
+    const history = parsed['history'];
+    if (!history || typeof history !== 'object' || Array.isArray(history)) return;
+    Object.entries(history as Record<string, unknown>).forEach(
+      ([nodeId, entries]: [string, unknown]): void => {
+        if (!Array.isArray(entries)) return;
+        entries.forEach((entry: unknown, index: number): void => {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+          assertNoLegacyRunIdentity(entry as Record<string, unknown>, `history.${nodeId}[${index}]`);
+        });
+      }
+    );
+  };
   const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
-    assertNoLegacyRunIdentity(parsed);
+    assertNoLegacyRuntimeIdentityFields(parsed);
     const merged = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,
@@ -227,11 +254,13 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
     const trimmed = entries.slice(-historyLimit);
     if (trimmed.length > 0) {
       history[key] = trimmed.map(
-        (entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
-          ...entry,
-          inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
-          outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
-        })
+        (entry: RuntimeHistoryEntry): RuntimeHistoryEntry => {
+          return {
+            ...entry,
+            inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
+            outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
+          } as RuntimeHistoryEntry;
+        }
       );
     }
   });

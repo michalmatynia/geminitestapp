@@ -12,7 +12,7 @@ import {
   createAgentPersonaId,
 } from '@/features/ai/agentcreator/utils/personas';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { AgentPersonaDto as AgentPersona } from '@/shared/contracts/agents';
+import type { AgentPersona } from '@/shared/contracts/agents';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
 
 export function AgentPersonasPage(): React.JSX.Element {

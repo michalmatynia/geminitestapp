@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { randomUUID } from 'crypto';
 
 import { MAX_PLAN_STEPS, MAX_STEP_ATTEMPTS } from '@/features/ai/agent-runtime/core/config';

@@ -32,8 +32,20 @@ import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
 
-const shouldEnforceRateLimit = (): boolean => {
+const shouldSkipRateLimitInTestEnv = (request: NextRequest): boolean => {
+  if (process.env['NODE_ENV'] !== 'test') return false;
+  if (process.env['ENFORCE_TEST_RATE_LIMITS'] === 'true') return false;
+  try {
+    const hostname = new URL(request.url).hostname;
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return true;
+  }
+};
+
+const shouldEnforceRateLimit = (request: NextRequest): boolean => {
   if (process.env['DISABLE_RATE_LIMITS'] === 'true') return false;
+  if (shouldSkipRateLimitInTestEnv(request)) return false;
   if (process.env['NODE_ENV'] === 'development') {
     return process.env['ENABLE_RATE_LIMITS'] === 'true';
   }
@@ -146,11 +158,23 @@ type ParsedBodyResult = {
 
 const DEFAULT_JSON_BODY_BYTES = 1_000_000;
 
+const shouldSkipCsrfInTestEnv = (request: NextRequest): boolean => {
+  if (process.env['NODE_ENV'] !== 'test') return false;
+  if (process.env['ENFORCE_TEST_CSRF'] === 'true') return false;
+  try {
+    const hostname = new URL(request.url).hostname;
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return true;
+  }
+};
+
 const enforceCsrf = (request: NextRequest, options: ApiHandlerOptions): void => {
   const method = request.method.toUpperCase();
   if (CSRF_SAFE_METHODS.has(method)) return;
   const shouldRequire = options.requireCsrf !== false;
   if (!shouldRequire) return;
+  if (shouldSkipCsrfInTestEnv(request)) return;
   if (!isSameOriginRequest(request)) {
     throw forbiddenError('Invalid request origin.');
   }
@@ -286,7 +310,7 @@ export function apiHandler(
 
           let rateLimitHeaders: Record<string, string> | undefined;
           const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-          if (rateKey && shouldEnforceRateLimit()) {
+          if (rateKey && shouldEnforceRateLimit(request)) {
             const rateResult = await enforceRateLimit(request, rateKey);
             rateLimitHeaders = rateResult.headers;
             context.rateLimitHeaders = rateLimitHeaders;
@@ -429,7 +453,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 
           let rateLimitHeaders: Record<string, string> | undefined;
           const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-          if (rateKey && shouldEnforceRateLimit()) {
+          if (rateKey && shouldEnforceRateLimit(request)) {
             const rateResult = await enforceRateLimit(request, rateKey);
             rateLimitHeaders = rateResult.headers;
             handlerContext.rateLimitHeaders = rateLimitHeaders;

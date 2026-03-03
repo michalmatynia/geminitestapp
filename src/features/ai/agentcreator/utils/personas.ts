@@ -5,18 +5,7 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
-import {
-  agentPersonaSettingsSchema,
-  type AgentPersona,
-  type AgentPersonaSettings,
-} from '@/shared/contracts/agents';
-import { isAppError, validationError } from '@/shared/errors/app-error';
-
-const DEPRECATED_AGENT_PERSONA_TOP_LEVEL_MODEL_KEYS = [
-  'modelId',
-  'temperature',
-  'maxTokens',
-] as const;
+import { type AgentPersona, type AgentPersonaSettings } from '@/shared/contracts/agents';
 
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -32,6 +21,22 @@ export const buildAgentPersonaSettings = (
   ...(settings ?? {}),
 });
 
+const toCanonicalAgentPersonaSettings = (value: unknown): AgentPersonaSettings => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return buildAgentPersonaSettings();
+  }
+
+  const raw = value as Record<string, unknown>;
+  const next: Partial<AgentPersonaSettings> = {};
+  if (typeof raw['personaId'] === 'string') {
+    next.personaId = raw['personaId'];
+  }
+  if (typeof raw['customInstructions'] === 'string') {
+    next.customInstructions = raw['customInstructions'];
+  }
+  return buildAgentPersonaSettings(next);
+};
+
 export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
   if (!Array.isArray(value)) return [];
 
@@ -46,30 +51,7 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
       const createdAt =
         typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
       const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
-      const deprecatedTopLevelKeys = DEPRECATED_AGENT_PERSONA_TOP_LEVEL_MODEL_KEYS.filter(
-        (key: string): boolean => key in raw
-      );
-      if (deprecatedTopLevelKeys.length > 0) {
-        throw validationError('Legacy Agent Persona model snapshot fields are no longer supported.', {
-          reason: 'deprecated_top_level_model_snapshot_fields',
-          personaId: id,
-          keys: deprecatedTopLevelKeys,
-        });
-      }
-      const parsedSettingsResult =
-        raw.settings === undefined
-          ? null
-          : agentPersonaSettingsSchema.safeParse(raw.settings);
-      if (parsedSettingsResult && !parsedSettingsResult.success) {
-        throw validationError('Invalid Agent Persona settings payload.', {
-          reason: 'schema_validation_failed',
-          personaId: id,
-          issues: parsedSettingsResult.error.flatten(),
-        });
-      }
-      const settings = parsedSettingsResult
-        ? buildAgentPersonaSettings(parsedSettingsResult.data)
-        : buildAgentPersonaSettings();
+      const settings = toCanonicalAgentPersonaSettings(raw.settings);
       const description = typeof raw.description === 'string' ? raw.description : null;
 
       return {
@@ -88,22 +70,9 @@ const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
   if (!rawValue?.trim()) return [];
   try {
     const parsed = JSON.parse(rawValue) as unknown;
-    if (!Array.isArray(parsed)) {
-      throw validationError('Invalid Agent Persona settings payload.', {
-        reason: 'schema_validation_failed',
-        key: AGENT_PERSONA_SETTINGS_KEY,
-      });
-    }
-    return parsed;
-  } catch (error) {
-    if (isAppError(error)) {
-      throw error;
-    }
-    throw validationError('Invalid Agent Persona settings payload.', {
-      reason: 'json_parse_failed',
-      key: AGENT_PERSONA_SETTINGS_KEY,
-      cause: error instanceof Error ? error.message : String(error),
-    });
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 };
 

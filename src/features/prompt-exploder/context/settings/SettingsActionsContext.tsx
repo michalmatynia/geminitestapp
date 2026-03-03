@@ -35,6 +35,7 @@ export interface SettingsActions {
     nextState: PromptExploderLearnedTemplate['state']
   ) => Promise<void>;
   handleDeleteTemplate: (templateId: string) => Promise<void>;
+  handleRefresh: () => Promise<void>;
   updateSetting: ReturnType<typeof useUpdateSetting>;
   updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
 }

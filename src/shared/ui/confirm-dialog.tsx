@@ -18,7 +18,6 @@ interface ConfirmDialogProps {
 
 /**
  * ConfirmDialog - A simplified wrapper for the unified ConfirmModal.
- * Maintains backward compatibility while leveraging the centralized implementation.
  */
 export function ConfirmDialog({
   open,

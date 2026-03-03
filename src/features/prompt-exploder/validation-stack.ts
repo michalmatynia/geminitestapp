@@ -25,7 +25,6 @@ const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =
 const KNOWN_STACK_SCOPE_ALIASES: Readonly<Record<string, ValidatorScope>> = {
   'prompt-exploder': PROMPT_EXPLODER_VALIDATOR_SCOPE,
   prompt_exploder: PROMPT_EXPLODER_VALIDATOR_SCOPE,
-  image_studio_prompt_exploder: PROMPT_EXPLODER_VALIDATOR_SCOPE,
   'case-resolver-prompt-exploder': CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
   case_resolver_prompt_exploder: CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
 };

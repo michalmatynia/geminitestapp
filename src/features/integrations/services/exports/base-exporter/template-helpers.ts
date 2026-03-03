@@ -1,5 +1,3 @@
-'use client';
-
 export const toStringValue = (value: unknown): string | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return value.trim() || null;

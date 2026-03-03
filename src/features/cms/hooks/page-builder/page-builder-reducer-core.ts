@@ -173,16 +173,6 @@ export function reducePageBuilderStateCore(
       };
     }
 
-    case 'REPLACE_SECTIONS':
-      return { ...state, sections: (action as any).sections };
-
-    case 'SET_SECTION_ZONE': {
-      const updatedSections = state.sections.map((s) =>
-        s.id === (action as any).sectionId ? { ...s, zone: (action as any).zone } : s
-      );
-      return { ...state, sections: updatedSections };
-    }
-
     default:
       return state;
   }

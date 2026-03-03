@@ -119,17 +119,11 @@ const normalizeEntityType = (value: unknown): string => {
 
 const edgeToNodeId = (edge: Edge): string | null => {
   if (typeof edge.to === 'string' && edge.to.trim().length > 0) return edge.to;
-  if (typeof edge.target === 'string' && edge.target.trim().length > 0) {
-    return edge.target;
-  }
   return null;
 };
 
 const edgeFromNodeId = (edge: Edge): string | null => {
   if (typeof edge.from === 'string' && edge.from.trim().length > 0) return edge.from;
-  if (typeof edge.source === 'string' && edge.source.trim().length > 0) {
-    return edge.source;
-  }
   return null;
 };
 
@@ -137,18 +131,12 @@ const edgeToPort = (edge: Edge): string | null => {
   if (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0) {
     return edge.toPort;
   }
-  if (typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0) {
-    return edge.targetHandle;
-  }
   return null;
 };
 
 const edgeFromPort = (edge: Edge): string | null => {
   if (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0) {
     return edge.fromPort;
-  }
-  if (typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0) {
-    return edge.sourceHandle;
   }
   return null;
 };

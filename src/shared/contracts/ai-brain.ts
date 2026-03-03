@@ -286,12 +286,10 @@ export const brainOperationsOverviewResponseSchema = z.object({
 });
 export type BrainOperationsOverviewResponse = z.infer<typeof brainOperationsOverviewResponseSchema>;
 
-const insightsSnapshotSchema = z.object({
+export const insightsSnapshotSchema = z.object({
   analytics: z.array(aiInsightRecordSchema).default([]),
   logs: z.array(aiInsightRecordSchema).default([]),
 });
-
-export const InsightsSnapshotSchema = insightsSnapshotSchema;
 
 export type InsightsSnapshot = z.infer<typeof insightsSnapshotSchema>;
 

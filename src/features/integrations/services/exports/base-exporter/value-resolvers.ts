@@ -1,14 +1,12 @@
-'use client';
-
  
  
  
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
  
  
 
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import { ImageExportLogger } from './base-exporter-images';
+import { ImageExportLogger } from '../base-exporter-images';
 import { 
   toStringValue, 
   toTrimmedString, 
@@ -37,7 +35,7 @@ import {
   getAllImageUrls, 
   getImageList, 
   getImageSlotUrl 
-} from './base-exporter-images';
+} from '../base-exporter-images';
 
 export const getProductValue = (
   product: ProductWithImages,

@@ -222,7 +222,7 @@ describe('folder-tree-profiles-v2', () => {
     ).toBe(false);
   });
 
-  it('old JSON without optional capability fields parses to undefined (backward compat)', () => {
+  it('JSON without optional capability fields parses to undefined capability sections', () => {
     const parsed = parseFolderTreeProfilesV2(
       JSON.stringify({
         notes: {

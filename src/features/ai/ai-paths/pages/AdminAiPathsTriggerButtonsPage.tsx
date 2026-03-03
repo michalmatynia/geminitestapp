@@ -195,7 +195,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonDto[]> => {
-      const result = await triggerButtonsApi.list();
+      const result = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },

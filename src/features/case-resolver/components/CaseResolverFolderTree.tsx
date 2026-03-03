@@ -1,7 +1,7 @@
 'use client';
 
 import { FileCode2, FileImage, FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   FolderTreeViewportV2,

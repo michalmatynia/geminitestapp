@@ -85,9 +85,9 @@ export function useAiPathsSettingsSamples({
       if (resolvedType === 'product') {
         sample = await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
           queryKey: getProductDetailQueryKey(entityId),
-          queryFn: async () => {
+          queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(entityId);
-            return result.ok ? (result.data) : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {
@@ -102,9 +102,9 @@ export function useAiPathsSettingsSamples({
       } else if (resolvedType === 'note') {
         sample = await fetchQueryV2<Record<string, unknown> | null>(queryClient, {
           queryKey: QUERY_KEYS.notes.detail(entityId),
-          queryFn: async () => {
+          queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getNote(entityId);
-            return result.ok ? (result.data) : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {

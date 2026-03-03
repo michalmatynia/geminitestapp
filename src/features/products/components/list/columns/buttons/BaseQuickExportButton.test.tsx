@@ -119,10 +119,10 @@ const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickE
 
 const setupDefaultApiMocks = (): void => {
   apiGetMock.mockImplementation((url: string) => {
-    if (url === '/api/integrations/exports/base/default-connection') {
+    if (url.startsWith('/api/integrations/exports/base/default-connection')) {
       return Promise.resolve({ connectionId: 'conn-base-1' });
     }
-    if (url === '/api/integrations/exports/base/default-inventory') {
+    if (url.startsWith('/api/integrations/exports/base/default-inventory')) {
       return Promise.resolve({ inventoryId: 'inv-main' });
     }
     if (url.startsWith('/api/integrations/exports/base/active-template')) {

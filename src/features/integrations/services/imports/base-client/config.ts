@@ -1,5 +1,3 @@
-'use client';
-
 export const DEFAULT_BASE_API_URL = 'https://api.baselinker.com/connector.php';
 export const DEFAULT_BASE_API_TIMEOUT_MS = 12000;
 export const DEFAULT_BASE_API_PRODUCT_WRITE_TIMEOUT_MS = 30000;

@@ -44,17 +44,14 @@ describe('prompt exploder validation stack resolver', () => {
     expect(resolution.stack).toBe('case-resolver-prompt-exploder');
   });
 
-  it('resolves legacy image_studio_prompt_exploder alias without fallback', () => {
-    const resolution = resolvePromptExploderValidationStack({
-      stack: 'image_studio_prompt_exploder',
-      patternLists: [],
-      strictUnknownStack: true,
-    });
-
-    expect(resolution.reason).toBe('exact_match');
-    expect(resolution.usedFallback).toBe(false);
-    expect(resolution.scope).toBe('prompt_exploder');
-    expect(resolution.stack).toBe('prompt-exploder');
+  it('rejects legacy image_studio_prompt_exploder alias in strict mode', () => {
+    expect(() =>
+      resolvePromptExploderValidationStack({
+        stack: 'image_studio_prompt_exploder',
+        patternLists: [],
+        strictUnknownStack: true,
+      })
+    ).toThrow(PromptValidationScopeResolutionError);
   });
 
   it('falls back with invalid_stack reason in non-strict mode', () => {

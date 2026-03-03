@@ -15,10 +15,6 @@ import {
   upgradeServerExecutionModeConfig,
 } from './settings-store-execution-mode-server';
 import {
-  needsRuntimeInputContractsUpgrade,
-  upgradeRuntimeInputContractsConfig,
-} from './settings-store-runtime-input-contracts';
-import {
   countPendingStarterWorkflowDefaults,
   ensureStarterWorkflowDefaults,
 } from './starter-workflows-settings';
@@ -44,16 +40,6 @@ export const countPendingServerExecutionModeUpgrades = (
   return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
     if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
     return needsServerExecutionModeConfigUpgrade(entry.value) ? count + 1 : count;
-  }, 0);
-};
-
-export const countPendingRuntimeInputContractUpgrades = (
-  records: AiPathsSettingRecord[]
-): number => {
-  if (records.length === 0) return 0;
-  return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
-    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
-    return needsRuntimeInputContractsUpgrade(entry.value) ? count + 1 : count;
   }, 0);
 };
 
@@ -152,18 +138,6 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
-  const contractUpgradeCount = countPendingRuntimeInputContractUpgrades(records);
-  if (contractUpgradeCount > 0) {
-    actions.push({
-      id: 'upgrade_runtime_input_contracts',
-      title: 'Upgrade Runtime Input Contracts',
-      description: `Migrate ${contractUpgradeCount} path(s) to the new runtime input contract format.`,
-      blocking: true,
-      status: 'pending',
-      affectedRecords: contractUpgradeCount,
-    });
-  }
-
   const serverModeUpgradeCount = countPendingServerExecutionModeUpgrades(records);
   if (serverModeUpgradeCount > 0) {
     actions.push({
@@ -210,22 +184,6 @@ export const runMaintenanceAction = (args: {
         const compacted = compactPathConfigValue(entry.value);
         if (compacted) {
           nextRecords.push({ ...entry, value: compacted });
-          affectedCount++;
-        } else {
-          nextRecords.push(entry);
-        }
-      });
-      break;
-
-    case 'upgrade_runtime_input_contracts':
-      args.records.forEach((entry: AiPathsSettingRecord) => {
-        if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) {
-          nextRecords.push(entry);
-          return;
-        }
-        const upgraded = upgradeRuntimeInputContractsConfig(entry.value);
-        if (upgraded && upgraded !== entry.value) {
-          nextRecords.push({ ...entry, value: upgraded });
           affectedCount++;
         } else {
           nextRecords.push(entry);
@@ -295,7 +253,6 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'compact_oversized_configs',
       'repair_path_index',
       'ensure_starter_workflow_defaults',
-      'upgrade_runtime_input_contracts',
       'upgrade_server_execution_mode',
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {

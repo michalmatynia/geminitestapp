@@ -2,6 +2,7 @@ export * from './base';
 export * from './connections';
 export * from './listings';
 export * from './producers';
+export * from './context';
 export {
   integrationTemplateMappingSchema,
   type IntegrationTemplateMapping,

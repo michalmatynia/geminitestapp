@@ -49,30 +49,22 @@ type SimulationArgs = {
 const resolveEdgeFromNodeId = (edge: Edge): string | null =>
   typeof edge.from === 'string' && edge.from.trim().length > 0
     ? edge.from.trim()
-    : typeof edge.source === 'string' && edge.source.trim().length > 0
-      ? edge.source.trim()
-      : null;
+    : null;
 
 const resolveEdgeToNodeId = (edge: Edge): string | null =>
   typeof edge.to === 'string' && edge.to.trim().length > 0
     ? edge.to.trim()
-    : typeof edge.target === 'string' && edge.target.trim().length > 0
-      ? edge.target.trim()
-      : null;
+    : null;
 
 const resolveEdgeFromPort = (edge: Edge): string | null =>
   typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
     ? edge.fromPort.trim()
-    : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
-      ? edge.sourceHandle.trim()
-      : null;
+    : null;
 
 const resolveEdgeToPort = (edge: Edge): string | null =>
   typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
     ? edge.toPort.trim()
-    : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
-      ? edge.targetHandle.trim()
-      : null;
+    : null;
 
 export const applySimulationPreviewToRuntimeState = (args: {
   runtimeState: RuntimeState;
@@ -125,7 +117,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
           queryKey,
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getProduct(productId);
-            return result.ok ? result.data : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: 0,
           meta: {
@@ -157,7 +149,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
           queryKey,
           queryFn: async (): Promise<Record<string, unknown> | null> => {
             const result = await entityApi.getNote(noteId);
-            return result.ok ? result.data : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: 0,
           meta: {
@@ -330,15 +322,11 @@ export function useAiPathsSimulation(args: SimulationArgs) {
           const fromNodeId =
             typeof edge.from === 'string' && edge.from.trim().length > 0
               ? edge.from
-              : typeof edge.source === 'string' && edge.source.trim().length > 0
-                ? edge.source
-                : null;
+              : null;
           const toNodeId =
             typeof edge.to === 'string' && edge.to.trim().length > 0
               ? edge.to
-              : typeof edge.target === 'string' && edge.target.trim().length > 0
-                ? edge.target
-                : null;
+              : null;
           if (!fromNodeId || !toNodeId) return;
           const fromSet = adjacency.get(fromNodeId) ?? new Set<string>();
           fromSet.add(toNodeId);

@@ -195,7 +195,7 @@ describe('inspectPathDependencies', () => {
     expect(report.strictReady).toBe(false);
   });
 
-  it('supports edges using source/target handles', () => {
+  it('ignores edges using deprecated source/target handles', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'context-1',
@@ -236,7 +236,7 @@ describe('inspectPathDependencies', () => {
     ];
 
     const report = inspectPathDependencies(nodes, edges);
-    expect(report.risks.some((risk) => risk.category === 'parser_entity_fallback')).toBe(false);
+    expect(report.risks.some((risk) => risk.category === 'parser_entity_fallback')).toBe(true);
   });
 
   it('allows scoped inspection when dependency errors are only outside trigger reachability', () => {

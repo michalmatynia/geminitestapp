@@ -48,7 +48,10 @@ export function LinkField({
         title='Select Page Link'
         subtitle='Choose a page slug to link to.'
         options={options}
-        onSelect={(opt) => onChange(opt.value)}
+        onSelect={(selected) => {
+          if (Array.isArray(selected)) return;
+          onChange(selected.value);
+        }}
         size='sm'
       />
     </div>

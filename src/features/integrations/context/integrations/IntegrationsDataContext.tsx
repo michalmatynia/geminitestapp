@@ -1,19 +1,9 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
-
-export interface IntegrationsData {
-  integrations: Integration[];
-  integrationsLoading: boolean;
-  activeIntegration: Integration | null;
-  setActiveIntegration: (integration: Integration | null) => void;
-  connections: IntegrationConnection[];
-  connectionsLoading: boolean;
-  playwrightPersonas: PlaywrightPersona[];
-  playwrightPersonasLoading: boolean;
-}
+import type { 
+  IntegrationsData 
+} from '@/shared/contracts/integrations';
 
 export const IntegrationsDataContext = createContext<IntegrationsData | null>(null);
 

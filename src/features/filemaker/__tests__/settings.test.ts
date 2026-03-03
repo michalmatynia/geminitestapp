@@ -212,21 +212,12 @@ describe('filemaker settings', () => {
       JSON.stringify({
         version: 2,
         persons: [
-          {
+          createPersonRecord({
             id: 'p-1',
             firstName: 'John',
             lastName: 'Doe',
-            street: 'Main',
-            streetNumber: '1',
-            city: 'Warsaw',
-            postalCode: '00-001',
-            country: 'Poland',
-            countryId: 'country-pl',
             addressId: 'a-1',
-            nip: '',
-            regon: '',
-            phoneNumbers: [],
-          },
+          }),
         ],
         organizations: [],
         events: [],
@@ -332,7 +323,7 @@ describe('filemaker settings', () => {
     );
 
     const options = buildFilemakerPartyOptions(database);
-    expect(options.length).toBe(3);
+    expect(options.length).toBe(2);
     expect(resolveFilemakerPartyLabel(database, { kind: 'person', id: 'p-1' })).toBe('Jane Smith');
     expect(resolveFilemakerPartyLabel(database, { kind: 'organization', id: 'o-1' })).toBe(
       'Beta Ltd'
@@ -413,6 +404,48 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
   });
 
+  it('rejects inline address fields even when canonical address links exist', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              street: 'Main Street',
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [
+            {
+              id: 'a-1',
+              street: 'Main Street',
+              streetNumber: '1',
+              city: 'Warsaw',
+              postalCode: '00-001',
+              country: 'Poland',
+              countryId: 'country-pl',
+            },
+          ],
+          addressLinks: [
+            {
+              id: 'al-1',
+              ownerKind: 'person',
+              ownerId: 'p-1',
+              addressId: 'a-1',
+              isDefault: true,
+            },
+          ],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
+  });
+
   it('rejects inline person phoneNumbers when canonical phone links are missing', () => {
     expect(() =>
       parseFilemakerDatabase(
@@ -429,6 +462,30 @@ describe('filemaker settings', () => {
           addressLinks: [],
           phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48111222333' }],
           phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
+  });
+
+  it('rejects inline person phoneNumbers even when canonical phone links exist', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              phoneNumbers: ['+48 111 222 333'],
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48111222333' }],
+          phoneNumberLinks: [{ id: 'phl-1', phoneNumberId: 'ph-1', partyKind: 'person', partyId: 'p-1' }],
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],

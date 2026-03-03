@@ -70,6 +70,8 @@ export function ConfirmModal({
   };
 
   const isConfirmDisabled = loading || (onConfirmPasswordChange !== undefined && !confirmPassword?.trim());
+  const resolvedDescription =
+    subtitle ?? (typeof message === 'string' && message.trim().length > 0 ? message : 'Confirm this action.');
 
   const sizeClasses = {
     sm: 'sm:max-w-[425px]',
@@ -83,7 +85,9 @@ export function ConfirmModal({
       <AlertDialogContent className={cn(sizeClasses)}>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          {subtitle && <AlertDialogDescription>{subtitle}</AlertDialogDescription>}
+          <AlertDialogDescription className={subtitle ? undefined : 'sr-only'}>
+            {resolvedDescription}
+          </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className='py-4 space-y-4'>

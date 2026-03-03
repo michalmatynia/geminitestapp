@@ -23,7 +23,6 @@ import {
   getValueAtMappingPath,
   migrateLegacyDbQueryProvider,
   migratePathConfigCollections,
-  migrateTriggerToFetcherGraph,
   normalizeNodes,
   parserSampleStateSchema,
   safeStringify,
@@ -292,6 +291,59 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
 const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
   value === 'query' || value === 'update' || value === 'insert' || value === 'delete';
 
+const LEGACY_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);
+
+const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
+  const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
+  if (from) return from;
+  const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';
+  return source;
+};
+
+const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
+  const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';
+  if (fromPort) return fromPort;
+  const sourceHandle =
+    typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
+  return sourceHandle;
+};
+
+const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
+  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
+
+  nodes.forEach((node: AiNode): void => {
+    if (node.type !== 'trigger') return;
+    const outputs = Array.isArray(node.outputs) ? node.outputs : [];
+    const legacyPorts = outputs.filter((port: string): boolean => LEGACY_TRIGGER_DATA_PORTS.has(port));
+    if (legacyPorts.length === 0) return;
+    throw validationError('Legacy AI Paths trigger data outputs are no longer supported.', {
+      source: 'ai_paths.path_config',
+      reason: 'deprecated_trigger_outputs',
+      nodeId: node.id,
+      outputs: legacyPorts,
+    });
+  });
+
+  edges.forEach((edgeValue: unknown, index: number): void => {
+    if (!edgeValue || typeof edgeValue !== 'object' || Array.isArray(edgeValue)) return;
+    const edge = edgeValue as Record<string, unknown>;
+    const sourceNodeId = resolveEdgeSourceNodeId(edge);
+    const sourcePort = resolveEdgeSourcePort(edge);
+    if (!sourceNodeId || !sourcePort) return;
+    const sourceNode = nodeById.get(sourceNodeId);
+    if (!sourceNode || sourceNode.type !== 'trigger') return;
+    if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
+    throw validationError('Legacy AI Paths trigger data edges are no longer supported.', {
+      source: 'ai_paths.path_config',
+      reason: 'deprecated_trigger_data_edge',
+      edgeIndex: index,
+      edgeId: typeof edge['id'] === 'string' ? edge['id'] : null,
+      sourceNodeId,
+      sourcePort,
+    });
+  });
+};
+
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const migrated = migratePathConfigCollections(config).config;
   const contractBackfilled = backfillPathConfigNodeContracts(migrated).config;
@@ -394,12 +446,10 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   }
   const repairedConfig = identityRepair.config;
   const normalizedNodes = normalizeNodes(repairedConfig.nodes);
-  const migratedTriggerGraph = migrateTriggerToFetcherGraph(
-    normalizedNodes,
-    Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
-  );
-  const graphNodes = normalizeNodes(migratedTriggerGraph.nodes);
-  const normalizedEdges = sanitizeEdges(graphNodes, migratedTriggerGraph.edges);
+  const rawEdges = Array.isArray(repairedConfig.edges) ? repairedConfig.edges : [];
+  assertNoLegacyTriggerDataGraph(normalizedNodes, rawEdges);
+  const graphNodes = normalizeNodes(normalizedNodes);
+  const normalizedEdges = sanitizeEdges(graphNodes, rawEdges);
   const uiState = repairedConfig.uiState ? { ...repairedConfig.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;

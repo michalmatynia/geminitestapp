@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { buildPlanWithLLM, evaluatePlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
+import { buildPlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
+import { evaluatePlanWithLLM } from '@/features/ai/agent-runtime/planning/llm-evaluation';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 // Mock the AI Brain client

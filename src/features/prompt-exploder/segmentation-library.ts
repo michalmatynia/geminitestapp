@@ -2,9 +2,18 @@ import { z } from 'zod';
 
 import {
   promptExploderDocumentSchema,
+  promptExploderSegmentationRecordSchema,
   type PromptExploderDocument,
   type PromptExploderSegment,
   type PromptExploderSubsection,
+  type PromptExploderSegmentationRecord,
+  type PromptExploderSegmentationReturnTarget,
+  type PromptExploderSegmentationAnalysisRecord,
+  type PromptExploderSegmentationAnalysisContext,
+  type PromptExploderSegmentationOutline,
+  type PromptExploderSegmentationSegmentOutline,
+  type PromptExploderSegmentationStats,
+  type PromptExploderSegmentationSubsectionOutline,
 } from '@/shared/contracts/prompt-exploder';
 
 import { reassemblePromptSegments } from './parser';
@@ -13,31 +22,6 @@ import { clonePromptExploderDocument } from './prompt-library';
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_KEY = 'prompt_exploder_segmentation_library';
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION = 1;
 export const PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS = 200;
-
-export const promptExploderSegmentationReturnTargetSchema = z.enum([
-  'image-studio',
-  'case-resolver',
-]);
-export type PromptExploderSegmentationReturnTarget = z.infer<
-  typeof promptExploderSegmentationReturnTargetSchema
->;
-
-export const promptExploderSegmentationRecordSchema = z.object({
-  id: z.string(),
-  sourcePrompt: z.string(),
-  sourcePromptLength: z.number().int().nonnegative(),
-  reassembledPrompt: z.string(),
-  reassembledPromptLength: z.number().int().nonnegative(),
-  documentSnapshot: promptExploderDocumentSchema,
-  segmentCount: z.number().int().nonnegative(),
-  returnTarget: promptExploderSegmentationReturnTargetSchema,
-  validationScope: z.string(),
-  validationRuleStack: z.string(),
-  capturedAt: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
 
 export const promptExploderSegmentationLibraryStateSchema = z.object({
   version: z
@@ -56,65 +40,6 @@ export const defaultPromptExploderSegmentationLibraryState: PromptExploderSegmen
     version: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION,
     records: [],
   };
-
-export type PromptExploderSegmentationSubsectionOutline = {
-  index: number;
-  id: string;
-  title: string;
-  code: string | null;
-  condition: string | null;
-  guidance: string | null;
-  itemCount: number;
-  nestedSegmentCount: number;
-};
-
-export type PromptExploderSegmentationSegmentOutline = {
-  order: number;
-  id: string;
-  type: PromptExploderSegment['type'];
-  title: string;
-  includeInOutput: boolean;
-  confidence: number;
-  matchedPatternIds: string[];
-  matchedPatternLabels: string[];
-  matchedSequenceLabels: string[];
-  validationResults: string[];
-  subsectionCount: number;
-  subsections: PromptExploderSegmentationSubsectionOutline[];
-};
-
-export type PromptExploderSegmentationStats = {
-  segmentCount: number;
-  includedSegmentCount: number;
-  averageConfidence: number;
-  typeCounts: Record<string, number>;
-};
-
-export type PromptExploderSegmentationOutline = {
-  stats: PromptExploderSegmentationStats;
-  segments: PromptExploderSegmentationSegmentOutline[];
-};
-
-export type PromptExploderSegmentationAnalysisRecord = {
-  recordId: string;
-  capturedAt: string;
-  returnTarget: PromptExploderSegmentationReturnTarget;
-  validationScope: string;
-  validationRuleStack: string;
-  sourcePrompt: string;
-  sourcePromptLength: number;
-  reassembledPrompt: string;
-  reassembledPromptLength: number;
-  stats: PromptExploderSegmentationStats;
-  segments: PromptExploderSegmentationSegmentOutline[];
-};
-
-export type PromptExploderSegmentationAnalysisContext = {
-  schemaVersion: number;
-  generatedAt: string;
-  recordCount: number;
-  records: PromptExploderSegmentationAnalysisRecord[];
-};
 
 const outlineSubsectionFromSnapshot = (
   subsection: PromptExploderSubsection,

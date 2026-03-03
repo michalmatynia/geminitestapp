@@ -33,6 +33,7 @@ import {
   linkFilemakerEventToOrganization,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
+  toPersistedFilemakerDatabase,
 } from '../settings';
 import {
   decodeRouteParam,
@@ -419,7 +420,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     try {
       await updateSetting.mutateAsync({
         key: FILEMAKER_DATABASE_KEY,
-        value: JSON.stringify(nextDatabase),
+        value: JSON.stringify(toPersistedFilemakerDatabase(nextDatabase)),
       });
       toast('Event updated.', { variant: 'success' });
       router.push('/admin/filemaker/events');

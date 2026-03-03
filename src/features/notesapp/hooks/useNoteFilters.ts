@@ -1,38 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import type { UseNoteFiltersProps } from '@/shared/contracts/notes';
+import type { UseNoteFiltersProps, UseNoteFiltersResult } from '@/shared/contracts/notes';
 import type { NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
-
-export type UseNoteFiltersResult = {
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  debouncedSearchQuery: string;
-  filterPinned: boolean | undefined;
-  setFilterPinned: (v: boolean | undefined) => void;
-  filterArchived: boolean | undefined;
-  setFilterArchived: (v: boolean | undefined) => void;
-  filterFavorite: boolean | undefined;
-  setFilterFavorite: (v: boolean | undefined) => void;
-  filterTagIds: string[];
-  setFilterTagIds: (ids: string[]) => void;
-  highlightTagId: string | null;
-  setHighlightTagId: (id: string | null) => void;
-  page: number;
-  setPage: (p: number | ((curr: number) => number)) => void;
-  pageSize: number;
-  setPageSize: (s: number) => void;
-  handleFilterByTag: (
-    tagId: string,
-    setSelectedFolderId: (id: string | null) => void,
-    setSelectedNote: (val: NoteWithRelations | null) => void,
-    setIsEditing: (val: boolean) => void
-  ) => void;
-  handleToggleFavoritesFilter: (
-    setSelectedFolderId: (id: string | null) => void,
-    setSelectedNote: (val: NoteWithRelations | null) => void,
-    setIsEditing: (val: boolean) => void
-  ) => void;
-};
 
 export function useNoteFilters({
   settings,

@@ -1,10 +1,15 @@
 import 'server-only';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { getImportTemplate } from '@/features/integrations/services/import-template-repository';
-import { fetchBaseProductIds } from '@/features/integrations/services/imports/base-client';
 import {
   buildSummaryMessage,
-  classifyBaseImportError,
   computeRetryDelayMs,
   determineBaseImportTerminalStatus,
 } from '@/features/integrations/services/imports/base-import-error-utils';
@@ -18,16 +23,16 @@ import {
   acquireBaseImportRunLease,
   heartbeatBaseImportRunLease,
   createBaseImportRun,
-  getBaseImportRun,
   getBaseImportRunDetail,
+  getBaseImportRun,
   listBaseImportRunItems,
   listBaseImportRuns,
   putBaseImportRunItems,
   recomputeBaseImportRunStats,
-  releaseBaseImportRunLease,
+  requestBaseImportRunCancellation,
   updateBaseImportRun,
-  updateBaseImportRunItem,
   updateBaseImportRunStatus,
+  releaseBaseImportRunLease,
 } from '@/features/integrations/services/imports/base-import-run-repository';
 import {
   fetchDetailsMap,
@@ -44,10 +49,7 @@ import {
   nowIso,
   resolveMode,
   shouldReuseIdempotentRun,
-  shouldFilterToUniqueOnly,
   toStringId,
-  type BaseConnectionContext,
-  type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 import { getCatalogParameterLinks } from '@/features/integrations/services/imports/parameter-import/link-map-repository';
@@ -56,131 +58,34 @@ import { getProductDataProvider } from '@/shared/lib/products/services/product-p
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { findProductListingsByProductsAndConnectionAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type {
-  BaseImportErrorCode,
-  BaseImportErrorClass,
+  BaseImportRunDetailResponse,
   BaseImportItemRecord,
   BaseImportItemStatus,
-  BaseImportPreflight,
-  BaseImportPreflightIssue,
-  BaseImportRunDetailResponse,
   BaseImportRunParams,
   BaseImportRunRecord,
+  BaseImportStartResponse,
   ProductListing,
   ProductListingRepository,
+  StartBaseImportRunInput,
 } from '@/shared/contracts/integrations';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
+import { buildPreflight } from './base-import/preflight';
+import { resolveRunItems } from './base-import/run-items';
+import { markRunItem, failRemainingItems } from './base-import/processor';
+
 export type { StartBaseImportRunInput };
 
-const markRunItem = async (
-  runId: string,
-  item: BaseImportItemRecord,
-  patch: Partial<BaseImportItemRecord>,
-  options?: { recompute?: boolean }
-): Promise<void> => {
-  await updateBaseImportRunItem(runId, item.itemId, patch);
-  if (options?.recompute !== false) {
-    await recomputeBaseImportRunStats(runId);
-  }
-};
+const BASE_IMPORT_TERMINAL_STATUSES = new Set([
+  'completed',
+  'partial_success',
+  'failed',
+  'canceled',
+]);
 
-const buildPreflight = async (
-  input: StartBaseImportRunInput,
-  connection: BaseConnectionContext
-): Promise<{ preflight: BaseImportPreflight; catalogExists: boolean; hasPriceGroup: boolean }> => {
-  const issues: BaseImportPreflightIssue[] = [];
-  const checkedAt = nowIso();
-
-  if (!input.inventoryId?.trim()) {
-    issues.push({
-      code: 'PRECHECK_FAILED',
-      severity: 'error',
-      message: 'Inventory ID is required.',
-    });
-  }
-
-  if (connection.issue) {
-    issues.push(connection.issue);
-  }
-
-  const catalogRepository = await getCatalogRepository();
-  const catalogs = await catalogRepository.listCatalogs();
-  const targetCatalog = catalogs.find((catalog) => catalog.id === input.catalogId);
-  if (!targetCatalog) {
-    issues.push({
-      code: 'MISSING_CATALOG',
-      severity: 'error',
-      message: 'Selected catalog does not exist.',
-    });
-  }
-
-  let hasPriceGroup = false;
-  if (targetCatalog) {
-    const provider = await getProductDataProvider();
-    const pricingContext = await resolvePriceGroupContext(
-      provider,
-      targetCatalog.defaultPriceGroupId
-    );
-    hasPriceGroup = Boolean(pricingContext.defaultPriceGroupId);
-    if (!hasPriceGroup) {
-      issues.push({
-        code: 'MISSING_PRICE_GROUP',
-        severity: 'error',
-        message: 'Catalog default price group is not configured.',
-      });
-    }
-  }
-
-  if (Array.isArray(input.selectedIds) && normalizeSelectedIds(input.selectedIds).length === 0) {
-    issues.push({
-      code: 'PRECHECK_FAILED',
-      severity: 'error',
-      message: 'Select at least one Base product before importing.',
-    });
-  }
-
-  return {
-    preflight: {
-      ok: issues.every((issue) => issue.severity !== 'error'),
-      issues,
-      checkedAt,
-    },
-    catalogExists: Boolean(targetCatalog),
-    hasPriceGroup,
-  };
-};
-
-const resolveRunItems = async (input: {
-  token: string;
-  inventoryId: string;
-  selectedIds?: string[];
-  limit?: number;
-  uniqueOnly: boolean;
-}): Promise<string[]> => {
-  const selected = normalizeSelectedIds(input.selectedIds);
-  let ids =
-    selected.length > 0 ? selected : await fetchBaseProductIds(input.token, input.inventoryId);
-
-  if (selected.length === 0 && typeof input.limit === 'number' && input.limit > 0) {
-    ids = ids.slice(0, input.limit);
-  }
-
-  if (!shouldFilterToUniqueOnly(input) || ids.length === 0) {
-    return ids;
-  }
-
-  const productRepository = await getProductRepository();
-  const existingProducts = await productRepository.getProducts({ page: 1, pageSize: 10_000 });
-  const existingBaseIds = new Set(
-    existingProducts
-      .map((product: ProductWithImages) => product.baseProductId?.trim())
-      .filter((value: string | undefined): value is string => Boolean(value))
-  );
-
-  return ids.filter((id: string) => !existingBaseIds.has(id));
-};
+const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', 'pending'];
 
 export const prepareBaseImportRun = async (
   input: StartBaseImportRunInput
@@ -312,38 +217,137 @@ export const prepareBaseImportRun = async (
   return recomputeBaseImportRunStats(run.id);
 };
 
-const failRemainingItems = async (input: {
-  runId: string;
-  allowedStatuses: Set<BaseImportItemStatus>;
-  code: BaseImportErrorCode;
-  errorClass: BaseImportErrorClass;
-  retryable: boolean;
-  message: string;
-}): Promise<void> => {
-  const items = await listBaseImportRunItems(input.runId);
-  const now = nowIso();
-  const toFail: BaseImportItemRecord[] = [];
+export const toStartResponse = (run: BaseImportRunRecord): BaseImportStartResponse => ({
+  runId: run.id,
+  status: run.status,
+  ...(run.preflight !== undefined ? { preflight: run.preflight ?? null } : {}),
+  queueJobId: run.queueJobId ?? null,
+  summaryMessage: run.summaryMessage ?? null,
+});
 
-  for (const item of items) {
-    if (!input.allowedStatuses.has(item.status)) continue;
-    toFail.push({
-      ...item,
-      status: 'failed',
-      action: 'failed',
-      errorCode: input.code,
-      errorClass: input.errorClass,
-      retryable: input.retryable,
-      errorMessage: input.message,
-      lastErrorAt: now,
-      nextRetryAt: null,
-      finishedAt: now,
+export const updateBaseImportRunQueueJob = async (
+  runId: string,
+  queueJobId: string | null
+): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw notFoundError('Base import run not found.', { runId });
+  }
+  const normalizedQueueJobId = queueJobId?.trim() || null;
+  return updateBaseImportRun(runId, {
+    queueJobId: normalizedQueueJobId,
+  });
+};
+
+export const resumeBaseImportRun = async (
+  runId: string,
+  statuses?: BaseImportItemStatus[]
+): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw notFoundError('Base import run not found.', { runId });
+  }
+  const resumeStatuses =
+    Array.isArray(statuses) && statuses.length > 0
+      ? statuses
+      : BASE_IMPORT_RESUME_DEFAULT_STATUSES;
+  const itemsToResume = await listBaseImportRunItems(runId, {
+    limit: 100_000,
+    statuses: resumeStatuses,
+  });
+  if (itemsToResume.length === 0) {
+    return updateBaseImportRun(runId, {
+      cancellationRequestedAt: null,
+      summaryMessage: 'No matching items found to resume.',
     });
   }
 
-  if (toFail.length > 0) {
-    await putBaseImportRunItems(toFail);
+  const now = nowIso();
+  const resetItems = itemsToResume.map(
+    (item): BaseImportItemRecord => ({
+      ...item,
+      status: 'pending',
+      action: 'pending',
+      attempt: 0,
+      error: null,
+      errorMessage: null,
+      errorCode: null,
+      errorClass: null,
+      retryable: null,
+      nextRetryAt: null,
+      lastErrorAt: null,
+      startedAt: null,
+      finishedAt: null,
+      updatedAt: now,
+    })
+  );
+  await putBaseImportRunItems(resetItems);
+  await recomputeBaseImportRunStats(runId);
+
+  return updateBaseImportRun(runId, {
+    status: 'queued',
+    queueJobId: null,
+    lockOwnerId: null,
+    lockToken: null,
+    lockExpiresAt: null,
+    lockHeartbeatAt: null,
+    cancellationRequestedAt: null,
+    startedAt: null,
+    finishedAt: null,
+    error: null,
+    errorCode: null,
+    errorClass: null,
+    summaryMessage: `Queued ${resetItems.length} item(s) for resume.`,
+  });
+};
+
+export const cancelBaseImportRun = async (runId: string): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw notFoundError('Base import run not found.', { runId });
   }
-  await recomputeBaseImportRunStats(input.runId);
+  if (BASE_IMPORT_TERMINAL_STATUSES.has(run.status)) {
+    return run;
+  }
+
+  const cancellationRequested = await requestBaseImportRunCancellation(runId);
+  if (cancellationRequested.status === 'running' && cancellationRequested.lockOwnerId) {
+    return cancellationRequested;
+  }
+
+  await failRemainingItems({
+    runId,
+    allowedStatuses: new Set<BaseImportItemStatus>(['pending', 'processing']),
+    code: 'CANCELED',
+    errorClass: 'canceled',
+    retryable: false,
+    message: 'Run canceled by user request.',
+  });
+
+  return updateBaseImportRunStatus(runId, 'canceled', {
+    queueJobId: null,
+    lockOwnerId: null,
+    lockToken: null,
+    lockExpiresAt: null,
+    lockHeartbeatAt: null,
+    summaryMessage: 'Import canceled.',
+  });
+};
+
+export const getBaseImportRunDetailOrThrow = async (
+  runId: string,
+  options?: {
+    statuses?: BaseImportItemStatus[];
+    page?: number;
+    pageSize?: number;
+    includeItems?: boolean;
+  }
+): Promise<BaseImportRunDetailResponse> => {
+  const detail = await getBaseImportRunDetail(runId, options);
+  if (!detail) {
+    throw notFoundError('Base import run not found.', { runId });
+  }
+  return detail;
 };
 
 export const processBaseImportRun = async (
@@ -419,7 +423,7 @@ export const processBaseImportRun = async (
     }
 
     await updateBaseImportRunStatus(runId, 'running', {
-      queueJobId: options?.jobId ?? run.queueJobId ?? null,
+      queueJobId: options?.jobId ?? (run as any).queueJobId ?? null,
       summaryMessage: `Processing ${initialItems.length} product(s).`,
       cancellationRequestedAt: run.cancellationRequestedAt ?? null,
     });
@@ -701,203 +705,43 @@ export const processBaseImportRun = async (
                 retryable: true,
                 lastErrorAt: now,
                 nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
-                finishedAt: now,
               },
-              { recompute: false }
+              { recompute: true }
             );
-            continue;
+          } else {
+            await markRunItem(runId, item, result, { recompute: true });
           }
-
-          await markRunItem(
-            runId,
-            item,
-            {
-              status: result.status,
-              action: result.action,
-              baseProductId: result.baseProductId ?? null,
-              sku: result.sku ?? null,
-              importedProductId: result.importedProductId ?? null,
-              payloadSnapshot: result.payloadSnapshot ?? null,
-              parameterImportSummary: result.parameterImportSummary ?? null,
-              errorCode: result.errorCode ?? null,
-              errorClass: result.errorClass ?? null,
-              errorMessage: result.errorMessage ?? null,
-              retryable: result.retryable ?? null,
-              lastErrorAt: result.errorCode ? now : null,
-              nextRetryAt: null,
-              finishedAt: now,
-            },
-            { recompute: false }
-          );
         } catch (error: unknown) {
-          const classified = classifyBaseImportError(error);
-          if (classified.retryable && attempt < maxAttempts) {
-            const delayMs = computeRetryDelayMs(attempt, classified.retryAfterMs);
-            await markRunItem(
-              runId,
-              item,
-              {
-                status: 'pending',
-                action: 'pending',
-                errorCode: classified.code,
-                errorClass: classified.errorClass,
-                retryable: true,
-                errorMessage: classified.message,
-                lastErrorAt: now,
-                nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
-                finishedAt: now,
-              },
-              { recompute: false }
-            );
-            continue;
-          }
+          const delayMs = computeRetryDelayMs(attempt);
+          const isRetryable = attempt < maxAttempts;
+          const status: BaseImportItemStatus = isRetryable ? 'pending' : 'failed';
           await markRunItem(
             runId,
             item,
             {
-              status: 'failed',
-              action: 'failed',
-              errorCode: classified.code,
-              errorClass: classified.errorClass,
-              retryable: classified.retryable,
-              errorMessage: classified.message,
+              status,
+              action: status === 'pending' ? 'pending' : 'failed',
+              errorCode: 'INTERNAL_ERROR',
+              errorClass: 'permanent',
+              errorMessage: error instanceof Error ? error.message : String(error),
+              retryable: isRetryable,
               lastErrorAt: now,
-              nextRetryAt: null,
-              finishedAt: now,
+              nextRetryAt: isRetryable ? new Date(Date.now() + delayMs).toISOString() : null,
+              finishedAt: isRetryable ? null : now,
             },
-            { recompute: false }
+            { recompute: true }
           );
         }
       }
-
-      await recomputeBaseImportRunStats(runId);
     }
 
-    const refreshed = await recomputeBaseImportRunStats(runId);
-    const pendingOrProcessing = await listBaseImportRunItems(runId, {
-      limit: 100_000,
-      statuses: ['pending', 'processing'],
-    });
-    if (pendingOrProcessing.length > 0) {
-      const pendingTerminalStatus = determineBaseImportTerminalStatus(refreshed.stats, {
-        hasPendingItems: true,
-      });
-      return updateBaseImportRunStatus(runId, pendingTerminalStatus, {
-        stats: refreshed.stats,
-        summaryMessage: 'Import paused with pending retry items. Resume run to continue.',
-      });
-    }
-
-    const terminalStatus = determineBaseImportTerminalStatus(refreshed.stats);
+    const finalStats = await recomputeBaseImportRunStats(runId);
+    const terminalStatus = determineBaseImportTerminalStatus(finalStats.stats);
     return updateBaseImportRunStatus(runId, terminalStatus, {
-      stats: refreshed.stats,
-      summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
+      finishedAt: nowIso(),
+      summaryMessage: buildSummaryMessage(finalStats.stats, Boolean(run.params.dryRun)),
     });
   } finally {
     await releaseBaseImportRunLease({ runId, ownerId });
   }
 };
-
-export const resumeBaseImportRun = async (
-  runId: string,
-  statuses: BaseImportItemStatus[] = ['failed', 'pending']
-): Promise<BaseImportRunRecord> => {
-  const run = await getBaseImportRun(runId);
-  if (!run) {
-    throw notFoundError('Base import run not found.', { runId });
-  }
-
-  const allowed = new Set<BaseImportItemStatus>(statuses);
-  const items = await listBaseImportRunItems(runId);
-  const resumeCandidates = items.filter((item) => allowed.has(item.status));
-  const resumeCount = resumeCandidates.length;
-
-  if (resumeCount === 0) {
-    throw badRequestError('No items match selected resume statuses.');
-  }
-
-  const now = nowIso();
-  for (const item of resumeCandidates) {
-    await updateBaseImportRunItem(runId, item.itemId, {
-      status: 'pending',
-      action: 'pending',
-      errorCode: null,
-      errorClass: null,
-      errorMessage: null,
-      retryable: null,
-      nextRetryAt: null,
-      lastErrorAt: null,
-      finishedAt: null,
-      startedAt: null,
-    });
-  }
-  await recomputeBaseImportRunStats(runId);
-
-  return updateBaseImportRun(runId, {
-    status: 'queued',
-    finishedAt: null,
-    cancellationRequestedAt: null,
-    lockOwnerId: null,
-    lockToken: null,
-    lockExpiresAt: null,
-    lockHeartbeatAt: null,
-    updatedAt: now,
-    summaryMessage: `Resume queued for ${resumeCount} product(s).`,
-  });
-};
-
-export const getBaseImportRunDetailOrThrow = async (
-  runId: string,
-  options?: {
-    statuses?: BaseImportItemStatus[];
-    page?: number;
-    pageSize?: number;
-    includeItems?: boolean;
-  }
-): Promise<BaseImportRunDetailResponse> => {
-  const detail = await getBaseImportRunDetail(runId, options);
-  if (!detail) {
-    throw notFoundError('Base import run not found.', { runId });
-  }
-  return detail;
-};
-
-export const updateBaseImportRunQueueJob = async (
-  runId: string,
-  queueJobId: string | null
-): Promise<BaseImportRunRecord> => {
-  return updateBaseImportRun(runId, {
-    queueJobId,
-  });
-};
-
-export const cancelBaseImportRun = async (runId: string): Promise<BaseImportRunRecord> => {
-  const run = await getBaseImportRun(runId);
-  if (!run) {
-    throw notFoundError('Base import run not found.', { runId });
-  }
-  if (run.status === 'completed' || run.status === 'partial_success' || run.status === 'failed') {
-    throw badRequestError('Run already finished and cannot be canceled.', { runId });
-  }
-  if (run.status === 'canceled') return run;
-  return updateBaseImportRun(runId, {
-    cancellationRequestedAt: run.cancellationRequestedAt ?? nowIso(),
-    summaryMessage: 'Cancellation requested. Worker will stop shortly.',
-  });
-};
-
-export const toStartResponse = (
-  run: BaseImportRunRecord
-): {
-  runId: string;
-  status: BaseImportRunRecord['status'];
-  preflight: BaseImportRunRecord['preflight'];
-  queueJobId?: string | null;
-  summaryMessage?: string | null;
-} => ({
-  runId: run.id,
-  status: run.status,
-  preflight: run.preflight,
-  queueJobId: run.queueJobId ?? null,
-  summaryMessage: run.summaryMessage ?? null,
-});

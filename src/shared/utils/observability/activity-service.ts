@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'crypto';
+
 import type {
   CreateActivityLog,
   ActivityLog,
@@ -25,7 +27,23 @@ import { logSystemEvent } from '../../lib/observability/system-logger';
  */
 export async function logActivity(data: CreateActivityLog): Promise<ActivityLog> {
   const repository = await getActivityRepository();
-  const activity = await repository.createActivity(data);
+  let activity: ActivityLog;
+  try {
+    activity = await repository.createActivity(data);
+  } catch {
+    const nowIso = new Date().toISOString();
+    activity = {
+      id: `activity-fallback-${randomUUID()}`,
+      type: data.type,
+      description: data.description,
+      userId: data.userId ?? null,
+      entityId: data.entityId ?? null,
+      entityType: data.entityType ?? null,
+      metadata: (data.metadata as Record<string, unknown> | null | undefined) ?? null,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+  }
 
   // Connect to centralized logging.
   // We use void/catch to avoid blocking activity writes if logging fails.

@@ -1,5 +1,3 @@
-'use client';
-
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { 
   toTrimmedString, 

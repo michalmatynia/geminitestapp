@@ -12,6 +12,7 @@ import {
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,
+  resolveUpscaleStrategyFromRequest,
 } from '@/features/ai/image-studio/server/upscale-utils';
 import { StudioSlotRecord, UploadedClientUpscaleImage } from './types';
 
@@ -114,23 +115,40 @@ export const readUpscaleMetadataFromSlot = (
 };
 
 export async function resolveIdempotentUpscaleSlot(args: {
+  projectId: string;
   sourceSlotId: string;
+  sourceSignature?: string | null;
   payload: ImageStudioUpscaleRequest;
   uploadedClientImage: UploadedClientUpscaleImage | null;
 }): Promise<string | null> {
-  const { sourceSlotId, payload, uploadedClientImage } = args;
+  const { projectId, sourceSlotId, sourceSignature, payload, uploadedClientImage } = args;
   const clientPayloadSignature = buildClientPayloadSignature(payload, uploadedClientImage);
-  const relationType = buildUpscaleFingerprintRelationType();
+  const strategy = resolveUpscaleStrategyFromRequest({
+    strategy: payload.strategy,
+    targetWidth: payload.targetWidth,
+    targetHeight: payload.targetHeight,
+  });
+  const normalizedSourceSignature =
+    typeof sourceSignature === 'string' && sourceSignature.trim().length > 0
+      ? sourceSignature.trim()
+      : `${sourceSlotId}|${projectId}`;
   const fingerprint = buildUpscaleFingerprint({
-    payload,
-    clientPayloadSignature,
+    sourceSignature: normalizedSourceSignature,
+    mode: payload.mode,
+    strategy,
+    scale: strategy === 'scale' ? (typeof payload.scale === 'number' ? payload.scale : 2) : null,
+    targetWidth: strategy === 'target_resolution' ? payload.targetWidth ?? null : null,
+    targetHeight: strategy === 'target_resolution' ? payload.targetHeight ?? null : null,
+    smoothingQuality: payload.mode === 'client_data_url' ? payload.smoothingQuality ?? null : null,
+    clientPayloadSignature: payload.mode === 'client_data_url' ? clientPayloadSignature : null,
   });
+  const relationType = buildUpscaleFingerprintRelationType(fingerprint);
 
-  const existingLink = await getImageStudioSlotLinkBySourceAndRelation({
+  const existingLink = await getImageStudioSlotLinkBySourceAndRelation(
+    projectId,
     sourceSlotId,
-    relationType,
-    fingerprint,
-  });
+    relationType
+  );
 
   return existingLink?.targetSlotId ?? null;
 }

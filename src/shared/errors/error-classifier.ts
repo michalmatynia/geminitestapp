@@ -5,7 +5,11 @@ import {
   type ErrorCategory,
   type SuggestedAction,
 } from '@/shared/contracts/observability';
-import { ApiError } from '@/shared/lib/api-client';
+
+type ApiErrorLike = {
+  status: number;
+  category?: string | undefined;
+};
 
 const ERROR_PATTERNS = [
   [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.NETWORK],
@@ -27,7 +31,7 @@ export function classifyError(error: unknown): ErrorCategory {
     return ERROR_CATEGORY.VALIDATION;
   }
 
-  if (error instanceof ApiError) {
+  if (isApiErrorLike(error)) {
     if (error.category && Object.values(ERROR_CATEGORY).includes(error.category as any)) {
       return error.category as ErrorCategory;
     }
@@ -51,6 +55,11 @@ export function classifyError(error: unknown): ErrorCategory {
 
   return ERROR_CATEGORY.SYSTEM;
 }
+
+const isApiErrorLike = (error: unknown): error is ApiErrorLike =>
+  Boolean(error) &&
+  typeof error === 'object' &&
+  typeof (error as { status?: unknown }).status === 'number';
 
 /**
  * Provides suggested actions based on the error category and message.

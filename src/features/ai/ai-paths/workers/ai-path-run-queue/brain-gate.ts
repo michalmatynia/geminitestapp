@@ -49,3 +49,8 @@ export const assertAiPathsEnabled = async (): Promise<void> => {
     'AI Paths is disabled in AI Brain. Enable it in /admin/brain?tab=routing before queuing runs.'
   );
 };
+
+export const clearAiPathsEnabledCache = (): void => {
+  aiPathsEnabledCache = null;
+  aiPathsEnabledInFlight = null;
+};

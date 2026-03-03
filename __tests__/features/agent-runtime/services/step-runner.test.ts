@@ -129,24 +129,22 @@ describe('Agent Runtime - Step Runner', () => {
     );
   });
 
-  it('should handle tool failure and attempt replan', async () => {
+  it('should mark steps as failed when tool execution fails', async () => {
     (toolsModule.runAgentTool as any).mockResolvedValue({
       ok: false,
       error: 'Element not found',
     });
 
-    (llmPlanning.buildPlanWithLLM as any).mockResolvedValue({
-      branchSteps: [
-        { id: 'new-step', title: 'Recovery Step', tool: 'playwright', status: 'pending' },
-      ],
-      meta: { taskType: 'web_task' },
-      source: 'llm',
-    });
-
     const result = await runPlanStepLoop(mockInput);
 
-    expect(llmPlanning.buildPlanWithLLM).toHaveBeenCalled();
-    expect(result.planSteps).toContainEqual(expect.objectContaining({ title: 'Recovery Step' }));
+    expect(llmPlanning.buildPlanWithLLM).not.toHaveBeenCalled();
+    expect(result.overallOk).toBe(false);
+    expect(result.lastError).toBe('Element not found');
+    expect(result.planSteps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'step-1', status: 'failed' }),
+      ])
+    );
   });
 
   it('should detect loops and trigger loop guard', async () => {

@@ -203,3 +203,6 @@ export function usePromptEngineContext(): PromptEngineContextValue {
   }
   return context;
 }
+
+// Preferred short hook alias used across prompt-engine components.
+export const usePromptEngine = usePromptEngineContext;

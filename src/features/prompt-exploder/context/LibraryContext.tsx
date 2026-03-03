@@ -28,26 +28,17 @@ import {
   PROMPT_EXPLODER_SEGMENTATION_LIBRARY_MAX_RECORDS,
   removePromptExploderSegmentationRecordById,
   sortPromptExploderSegmentationRecordsByCapturedAt,
-  type PromptExploderSegmentationRecord,
 } from '../segmentation-library';
+import {
+  type PromptExploderSegmentationRecord,
+  type CaptureSegmentationRecordReason,
+  type CaptureSegmentationRecordResult,
+} from '@/shared/contracts/prompt-exploder';
 import { useBenchmarkActions } from './hooks/useBenchmark';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsActions, useSettingsState } from './hooks/useSettings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
-
-export type CaptureSegmentationRecordReason =
-  | 'missing_prompt'
-  | 'missing_document'
-  | 'persist_failed'
-  | 'no_changes';
-
-export type CaptureSegmentationRecordResult = {
-  captured: boolean;
-  persisted: boolean;
-  reason?: CaptureSegmentationRecordReason;
-  recordId?: string;
-};
 
 export interface LibraryState {
   selectedLibraryItemId: string | null;

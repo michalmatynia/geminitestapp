@@ -15,7 +15,7 @@ describe('PanelHeader', () => {
   });
 
   it('renders refresh button when refreshable is true', () => {
-    render(<PanelHeader title='Test' refreshable={true} />);
+    render(<PanelHeader title='Test' refreshable={true} onRefresh={vi.fn()} />);
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThan(0);
   });
@@ -31,7 +31,9 @@ describe('PanelHeader', () => {
   });
 
   it('disables refresh button when isRefreshing is true', () => {
-    render(<PanelHeader title='Test' refreshable={true} isRefreshing={true} />);
+    render(
+      <PanelHeader title='Test' refreshable={true} isRefreshing={true} onRefresh={vi.fn()} />
+    );
     const refreshButton = screen.getAllByRole('button')[0];
     expect(refreshButton).toBeDisabled();
   });

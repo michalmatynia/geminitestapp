@@ -23,14 +23,9 @@ type NodeInputReadiness = {
   }>;
 };
 
-const resolveEdgeNodeId = (
-  primary: string | undefined,
-  fallback: string | undefined
-): string | null => {
-  const first = typeof primary === 'string' ? primary.trim() : '';
-  if (first.length > 0) return first;
-  const second = typeof fallback === 'string' ? fallback.trim() : '';
-  return second.length > 0 ? second : null;
+const resolveEdgeNodeId = (value: string | undefined): string | null => {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  return normalized.length > 0 ? normalized : null;
 };
 
 export const pickString = (val: unknown): string | undefined =>
@@ -47,26 +42,21 @@ export const readEntityIdFromContext = (context: Record<string, unknown>): strin
   pickString(context['productId']) ?? pickString(context['entityId']) ?? null;
 
 export const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.from, edge.source);
+  resolveEdgeNodeId(edge.from);
 
 export const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.to, edge.target);
+  resolveEdgeNodeId(edge.to);
 
-const resolveEdgePort = (
-  primary: string | null | undefined,
-  fallback: string | null | undefined
-): string | null => {
-  const first = typeof primary === 'string' ? normalizePortName(primary) : '';
-  if (first.length > 0) return first;
-  const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
-  return second.length > 0 ? second : null;
+const resolveEdgePort = (value: string | null | undefined): string | null => {
+  const normalized = typeof value === 'string' ? normalizePortName(value) : '';
+  return normalized.length > 0 ? normalized : null;
 };
 
 export const resolveEdgeFromPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.fromPort, edge.sourceHandle);
+  resolveEdgePort(edge.fromPort);
 
 export const resolveEdgeToPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.toPort, edge.targetHandle);
+  resolveEdgePort(edge.toPort);
 
 export const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
   const contextSource = context['contextSource'];
@@ -167,7 +157,7 @@ export const buildInputLinks = (
         nodeId: fromNodeId,
         nodeType: fromNode?.type ?? null,
         nodeTitle: fromNode?.title ?? null,
-        fromPort: edge.fromPort ?? null,
+        fromPort: resolveEdgeFromPort(edge),
         toPort,
       };
     })
@@ -195,7 +185,7 @@ export const buildOutputLinks = (
         nodeType: toNode?.type ?? null,
         nodeTitle: toNode?.title ?? null,
         fromPort,
-        toPort: edge.toPort ?? null,
+        toPort: resolveEdgeToPort(edge),
       };
     })
     .filter((link: RuntimeHistoryLink | null): link is RuntimeHistoryLink => Boolean(link));

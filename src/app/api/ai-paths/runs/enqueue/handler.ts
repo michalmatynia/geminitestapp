@@ -5,7 +5,6 @@ import { z } from 'zod';
 import {
   compileGraph,
   evaluateAiPathsValidationPreflight,
-  migrateTriggerToFetcherGraph,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   palette,
@@ -105,7 +104,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const migratedGraph = migrateTriggerToFetcherGraph(normalizeNodes(nodes), edges);
+  const normalizedNodes = normalizeNodes(nodes);
   const identityRepair = repairPathNodeIdentities(
     {
       id: rest.pathId,
@@ -113,21 +112,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       name: rest.pathName?.trim() || rest.pathId,
       description: '',
       trigger: rest.triggerEvent?.trim() || 'manual',
-      nodes: migratedGraph.nodes,
-      edges: migratedGraph.edges,
+      nodes: normalizedNodes,
+      edges,
       updatedAt: new Date().toISOString(),
     },
     { palette }
   );
-  const normalizedNodes = normalizeNodes(identityRepair.config.nodes);
-  const normalizedEdges = sanitizeEdges(normalizedNodes, identityRepair.config.edges);
+  const repairedNodes = normalizeNodes(identityRepair.config.nodes);
+  const normalizedEdges = sanitizeEdges(repairedNodes, identityRepair.config.edges);
   const metaRecord = normalizedMeta && typeof normalizedMeta === 'object' ? normalizedMeta : {};
   const validationConfig = normalizeAiPathsValidationConfig(
     (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ?? undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
   const validationReport = evaluateAiPathsValidationPreflight({
-    nodes: normalizedNodes,
+    nodes: repairedNodes,
     edges: normalizedEdges,
     config: validationConfig,
   });
@@ -155,8 +154,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const compileReport = await withTiming('compileMs', async () => {
     return nodeValidationEnabled
-      ? compileGraph(normalizedNodes, normalizedEdges)
-      : compileGraph(normalizedNodes, normalizedEdges, {
+      ? compileGraph(repairedNodes, normalizedEdges)
+      : compileGraph(repairedNodes, normalizedEdges, {
         scopeMode: 'reachable_from_roots',
         ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
       });
@@ -203,7 +202,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       userId: access.userId,
       pathId: rest.pathId,
       pathName: rest.pathName ?? null,
-      nodes: normalizedNodes,
+      nodes: repairedNodes,
       edges: normalizedEdges,
       ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
       ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),

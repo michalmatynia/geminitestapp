@@ -26,7 +26,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummaryDto } from '@/shared/contracts';
 import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
-import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
+import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import {
   useSettingsMap,

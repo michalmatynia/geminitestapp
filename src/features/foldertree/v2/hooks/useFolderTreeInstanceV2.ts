@@ -6,11 +6,13 @@ import {
   type MasterFolderTreeActionResult,
   type MasterFolderTreeController,
   type MasterFolderTreePersistOperation,
+  type MasterFolderTreeAdapterV3,
   type MasterTreeDropPositionDto,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
 import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import { validateMasterTreeNodes } from '@/shared/utils/master-folder-tree-engine';
+import { validationError } from '@/shared/errors/app-error';
 
 import {
   buildRootsV2,
@@ -51,7 +53,22 @@ export function useFolderTreeInstanceV2(
     instanceId,
   } = options;
   const maxUndoEntries = Math.max(1, maxUndoEntriesInput ?? 50);
-  const adapter = useMemo(() => options.adapter, [options.adapter]);
+  const adapter = useMemo((): MasterFolderTreeAdapterV3 | undefined => {
+    const candidate = options.adapter;
+    if (!candidate) return undefined;
+    const record = candidate as Partial<Record<'prepare' | 'apply' | 'commit' | 'rollback', unknown>>;
+    const missingMethods = (['prepare', 'apply', 'commit', 'rollback'] as const).filter(
+      (method): boolean => typeof record[method] !== 'function'
+    );
+    if (missingMethods.length > 0) {
+      throw validationError('Folder tree adapter must implement V3 transaction methods.', {
+        source: 'folder_tree.v2',
+        reason: 'invalid_adapter_shape',
+        missingMethods,
+      });
+    }
+    return candidate;
+  }, [options.adapter]);
   const txVersionRef = useRef(0);
   const runtime = useMasterFolderTreeRuntime();
   const undoRef = useRef<() => Promise<MasterFolderTreeActionResult>>(async () =>

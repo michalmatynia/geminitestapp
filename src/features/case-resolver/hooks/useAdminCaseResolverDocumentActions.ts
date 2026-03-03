@@ -453,8 +453,8 @@ export function useAdminCaseResolverDocumentActions({
       const now = new Date().toISOString();
       const currentSnapshot = createCaseResolverHistorySnapshotEntry({
         savedAt: now,
-        documentContentVersion: editingDocumentDraft.documentContentVersion,
-        activeDocumentVersion: editingDocumentDraft.activeDocumentVersion,
+        documentContentVersion: editingDocumentDraft.documentContentVersion ?? 1,
+        activeDocumentVersion: editingDocumentDraft.activeDocumentVersion ?? 'original',
         editorType: editingDocumentDraft.editorType,
         documentContent: editingDocumentDraft.documentContent,
         documentContentMarkdown: editingDocumentDraft.documentContentMarkdown,

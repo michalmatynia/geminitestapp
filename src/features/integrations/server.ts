@@ -1,5 +1,6 @@
 import 'server-only';
 
+export type { BaseProductRecord } from '@/shared/contracts/integrations';
 export * from './services/category-mapping-repository';
 export async function getCategoryMappingRepository() {
   const { categoryMappingRepository } = await import('./services/category-mapping-repository');

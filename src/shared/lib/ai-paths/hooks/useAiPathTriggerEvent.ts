@@ -17,7 +17,6 @@ import {
   resolveHistoryRetentionPasses,
   sanitizeTriggerPathConfig,
 } from '@/shared/lib/ai-paths/core/normalization/trigger-normalization';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
@@ -29,6 +28,7 @@ import {
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import { validationError } from '@/shared/errors/app-error';
 import {
   invalidateAiPathQueue,
   invalidateAiPathSettings,
@@ -144,69 +144,114 @@ const loadPathConfigsFromSettings = async (
   configs: Record<string, PathConfig>;
   settingsPathOrder: string[];
 }> => {
-  const configs: Record<string, PathConfig> = {};
-  let settingsPathOrder: string[] = [];
-  try {
-    const data =
-      settingsData ??
-      (await (async (): Promise<Array<{ key: string; value: string }> | null> => {
-        return await fetchAiPathsSettingsCached();
-      })()) ??
-      [];
-    if (!data.length) return { configs: {}, settingsPathOrder: [] };
-    const map = new Map<string, string>(
-      data.map((item: { key: string; value: string }) => [item.key, item.value])
-    );
-    const indexRaw = map.get(PATH_INDEX_KEY);
-    if (indexRaw) {
-      try {
-        const parsedIndex = JSON.parse(indexRaw) as unknown;
-        if (Array.isArray(parsedIndex)) {
-          const normalizedMetas = normalizeLoadedPathMetas(
-            parsedIndex.filter(
-              (meta: unknown): meta is PathMeta => Boolean(meta) && typeof meta === 'object'
-            )
-          );
-          settingsPathOrder = normalizedMetas
-            .map((meta: PathMeta) => meta?.id)
-            .filter(
-              (id: string | undefined): id is string => typeof id === 'string' && id.length > 0
-            );
-          normalizedMetas.forEach((meta: PathMeta) => {
-            if (!meta?.id) return;
-            const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-            if (!configRaw) {
-              configs[meta.id] = createDefaultPathConfig(meta.id);
-              return;
-            }
-            try {
-              const parsedConfig = JSON.parse(configRaw) as PathConfig;
-              const mergedConfig: PathConfig = {
-                ...createDefaultPathConfig(meta.id),
-                ...parsedConfig,
-                id: meta.id,
-                name:
-                  normalizeLoadedPathName(meta.id, parsedConfig?.name) ||
-                  normalizeLoadedPathName(meta.id, meta.name) ||
-                  `Path ${meta.id}`,
-              };
-              configs[meta.id] = sanitizeLoadedPathConfig(mergedConfig);
-            } catch {
-              configs[meta.id] = createDefaultPathConfig(meta.id);
-            }
-          });
-        }
-      } catch {
-        settingsPathOrder = [];
-      }
-    }
-    if (Object.keys(configs).length === 0) {
-      const fallback = createDefaultPathConfig('default');
-      configs[fallback.id] = fallback;
-    }
-  } catch {
+  const data =
+    settingsData ??
+    (await (async (): Promise<Array<{ key: string; value: string }> | null> => {
+      return await fetchAiPathsSettingsCached();
+    })()) ??
+    [];
+  if (!data.length) return { configs: {}, settingsPathOrder: [] };
+
+  const map = new Map<string, string>(
+    data.map((item: { key: string; value: string }) => [item.key, item.value])
+  );
+  const indexRaw = map.get(PATH_INDEX_KEY);
+  if (!indexRaw || !indexRaw.trim()) {
     return { configs: {}, settingsPathOrder: [] };
   }
+
+  let parsedIndex: unknown;
+  try {
+    parsedIndex = JSON.parse(indexRaw) as unknown;
+  } catch (error) {
+    throw validationError('Invalid AI Paths index payload.', {
+      source: 'ai_paths.trigger_payload',
+      reason: 'index_invalid_json',
+      cause: error instanceof Error ? error.message : 'unknown_error',
+    });
+  }
+  if (!Array.isArray(parsedIndex)) {
+    throw validationError('Invalid AI Paths index payload.', {
+      source: 'ai_paths.trigger_payload',
+      reason: 'index_not_array',
+    });
+  }
+
+  const metas = parsedIndex.map((meta: unknown, index: number): PathMeta => {
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+      throw validationError('Invalid AI Paths index entry.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'index_entry_not_object',
+        index,
+      });
+    }
+    return meta as PathMeta;
+  });
+  const normalizedMetas = normalizeLoadedPathMetas(metas);
+  const settingsPathOrder = normalizedMetas
+    .map((meta: PathMeta) => meta?.id)
+    .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+  const configs: Record<string, PathConfig> = {};
+
+  normalizedMetas.forEach((meta: PathMeta): void => {
+    if (!meta?.id) return;
+    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+    if (!configRaw || !configRaw.trim()) {
+      throw validationError('AI Paths index references missing config payload.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'missing_path_config',
+        pathId: meta.id,
+      });
+    }
+
+    let parsedConfig: unknown;
+    try {
+      parsedConfig = JSON.parse(configRaw) as unknown;
+    } catch (error) {
+      throw validationError('Invalid AI Path config payload.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'config_invalid_json',
+        pathId: meta.id,
+        cause: error instanceof Error ? error.message : 'unknown_error',
+      });
+    }
+    if (!parsedConfig || typeof parsedConfig !== 'object' || Array.isArray(parsedConfig)) {
+      throw validationError('Invalid AI Path config payload.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'config_not_object',
+        pathId: meta.id,
+      });
+    }
+
+    const config = parsedConfig as PathConfig;
+    const normalizedConfig = sanitizeLoadedPathConfig(config);
+    const normalizedId = typeof normalizedConfig.id === 'string' ? normalizedConfig.id.trim() : '';
+    if (!normalizedId || normalizedId !== meta.id) {
+      throw validationError('AI Path config id does not match index entry.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'config_id_mismatch',
+        expectedPathId: meta.id,
+        actualPathId: normalizedId || null,
+      });
+    }
+    const normalizedName =
+      normalizeLoadedPathName(meta.id, normalizedConfig.name) ||
+      normalizeLoadedPathName(meta.id, meta.name);
+    if (!normalizedName) {
+      throw validationError('AI Path config name is required.', {
+        source: 'ai_paths.trigger_payload',
+        reason: 'missing_path_name',
+        pathId: meta.id,
+      });
+    }
+
+    configs[meta.id] = {
+      ...normalizedConfig,
+      id: meta.id,
+      name: normalizedName,
+    };
+  });
+
   return { configs, settingsPathOrder };
 };
 
@@ -516,15 +561,40 @@ export function useAiPathTriggerEvent(): {
       const settingsDurationMs = performance.now() - settingsStartedAt;
 
       const selectionStartedAt = performance.now();
-      const {
-        triggerCandidates,
-        activeTriggerCandidates,
-        selectedConfig,
-        uiState,
-      } = await resolveTriggerSelection(settingsData, triggerEventId, {
-        preferredPathId: args.preferredPathId,
-        preferredActivePathId,
-      });
+      let triggerCandidates: PathConfig[] = [];
+      let activeTriggerCandidates: PathConfig[] = [];
+      let selectedConfig: PathConfig | null = null;
+      let uiState: Record<string, unknown> | null = null;
+      try {
+        const selection = await resolveTriggerSelection(settingsData, triggerEventId, {
+          preferredPathId: args.preferredPathId,
+          preferredActivePathId,
+        });
+        triggerCandidates = selection.triggerCandidates;
+        activeTriggerCandidates = selection.activeTriggerCandidates;
+        selectedConfig = selection.selectedConfig;
+        uiState = selection.uiState;
+      } catch (selectionError) {
+        const message =
+          selectionError instanceof Error
+            ? selectionError.message
+            : 'AI Path trigger settings are invalid.';
+        logClientError(selectionError, {
+          context: {
+            source: 'useAiPathTriggerEvent',
+            action: 'resolveTriggerSelection',
+            triggerEventId,
+          },
+        });
+        toast(message, { variant: 'error' });
+        args.onProgress?.({
+          status: 'error',
+          error: 'trigger_settings_invalid',
+          message,
+          node: null,
+        });
+        return;
+      }
       const selectionDurationMs = performance.now() - selectionStartedAt;
 
       if (!selectedConfig) {

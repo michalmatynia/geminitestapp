@@ -1,5 +1,3 @@
-'use client';
-
 import {
   AiNode,
   Edge,
@@ -7,11 +5,10 @@ import {
 import {
   RuntimeState,
   RuntimeHistoryEntry,
+  RuntimePortValues,
   NodeHandlerContext,
 } from '@/shared/contracts/ai-paths-runtime';
 import { ToastOptions } from '@/shared/contracts/ui';
-import { getProductRepository } from '@/features/products/server';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import {
   cloneValue,
@@ -134,6 +131,59 @@ export async function evaluateGraphInternal(
 
   const triggerContext = options.triggerContext ?? null;
   const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
+  const resolvedOnHalt =
+    options.onHalt ??
+    (((options as Record<string, unknown>)['control'] as
+      | { onHalt?: EvaluateGraphOptions['onHalt'] }
+      | undefined)?.onHalt ??
+      undefined);
+
+  const emitHalt = async (
+    reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'
+  ): Promise<void> => {
+    if (!resolvedOnHalt) return;
+    try {
+      const snapshot = state.buildRuntimeStateSnapshot(state.inputs);
+      await resolvedOnHalt({
+        runId: resolvedRunId,
+        reason,
+        nodeStatuses: snapshot.nodeStatuses,
+      });
+    } catch (error) {
+      void options.reportAiPathsError(error, {
+        action: 'onHalt',
+        reason,
+        runId: resolvedRunId,
+      });
+    }
+  };
+
+  const buildNodeHash = (
+    node: AiNode,
+    nodeInputs: RuntimePortValues
+  ): string | null => {
+    const cacheScope = resolveNodeCacheScope(node);
+    let cacheScopeFingerprint: Record<string, unknown> | undefined;
+
+    if (cacheScope === 'run') {
+      cacheScopeFingerprint = { runId: resolvedRunId };
+    } else if (cacheScope === 'session' || cacheScope === 'activation') {
+      const entityId =
+        pickString(triggerContext?.['entityId']) ??
+        pickString(triggerContext?.['productId']);
+      if (entityId) {
+        cacheScopeFingerprint = { entityId };
+      }
+    }
+
+    return node.type === 'database'
+      ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
+      : node.type === 'model'
+        ? buildModelInputHash(node, nodeInputs, cacheScopeFingerprint)
+        : node.type === 'prompt'
+          ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
+          : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
+  };
 
   const checkTriggerProvenance = (): boolean => {
     const simulationNodesInScope = Array.from(scopedNodeIds)
@@ -326,28 +376,7 @@ export async function evaluateGraphInternal(
           });
 
           // --- Cache Check Start ---
-          const cacheScope = resolveNodeCacheScope(node);
-          let cacheScopeFingerprint: Record<string, unknown> | undefined;
-          
-          if (cacheScope === 'run') {
-            cacheScopeFingerprint = { runId: resolvedRunId };
-          } else if (cacheScope === 'session' || cacheScope === 'activation') {
-            const entityId =
-              pickString(triggerContext?.['entityId']) ??
-              pickString(triggerContext?.['productId']);
-            if (entityId) {
-              cacheScopeFingerprint = { entityId };
-            }
-          }
-
-          const nodeHash =
-            node.type === 'database'
-              ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
-              : node.type === 'model'
-                ? buildModelInputHash(node, nodeInputs, cacheScopeFingerprint)
-                : node.type === 'prompt'
-                  ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
-                  : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
+          const nodeHash = buildNodeHash(node, nodeInputs);
 
           if (nodeHash) {
             state.nodeHashes.set(node.id, nodeHash);
@@ -485,6 +514,17 @@ export async function evaluateGraphInternal(
           stats.count += 1;
           const nodeStartedAt = nowMs();
 
+          if (options.onNodeStart) {
+            await options.onNodeStart({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              iteration,
+            });
+          }
+
           try {
             const sideEffectPolicy = node.config?.runtime?.sideEffectPolicy ?? 'per_run';
             const activationHash = buildNodeInputHash(node, nodeInputs, {
@@ -512,6 +552,10 @@ export async function evaluateGraphInternal(
               runStartedAt: resolvedRunStartedAt,
               activePathId: options.pathId ?? null,
               triggerContext,
+              triggerNodeId: options.triggerNodeId ?? undefined,
+              triggerEvent: options.triggerEvent ?? undefined,
+              deferPoll: Boolean(options.deferPoll),
+              skipAiJobs: Boolean(options.skipAiJobs),
               variables: state.variables,
               iteration,
               executed,
@@ -524,19 +568,19 @@ export async function evaluateGraphInternal(
               allOutputs: state.outputs,
               allInputs: state.inputs,
               fetchEntityCached: async (type, id) => {
-                const repo = await getProductRepository();
-                return repo.getProductById(id) as any;
+                if (typeof options.fetchEntityCached === 'function') {
+                  return options.fetchEntityCached(type, id);
+                }
+                if (typeof options.fetchEntityByType === 'function') {
+                  return options.fetchEntityByType(type, id);
+                }
+                return null;
               },
-              reportAiPathsError: (error, meta) => {
-                void logSystemEvent({
-                  level: 'error',
-                  source: 'ai-paths.engine',
-                  message: 'Node execution error',
-                  error,
-                  context: meta,
-                });
+              reportAiPathsError: (error, meta, summary) => {
+                options.reportAiPathsError(error, meta, summary);
               },
               toast: (message: string, toastOptions?: ToastOptions): void => {
+                options.toast?.(message, toastOptions);
                 if (options['onToast']) {
                   void (options['onToast'] as any)({
                     runId: resolvedRunId,
@@ -546,17 +590,26 @@ export async function evaluateGraphInternal(
                   });
                 }
               },
-              simulationEntityType: null,
-              simulationEntityId: null,
+              simulationEntityType:
+                typeof triggerContext?.['entityType'] === 'string'
+                  ? (triggerContext['entityType'])
+                  : null,
+              simulationEntityId:
+                (typeof triggerContext?.['entityId'] === 'string'
+                  ? (triggerContext['entityId'])
+                  : null) ??
+                (typeof triggerContext?.['productId'] === 'string'
+                  ? (triggerContext['productId'])
+                  : null),
               resolvedEntity: null,
               fallbackEntityId: null,
-              strictFlowMode: false,
+              strictFlowMode: Boolean(options.strictFlowMode),
               setVariable: (key, value) => {
                 state.variables[key] = value;
               },
             };
 
-            const retryPolicy = node.config?.runtime?.retry ?? {
+            const retryPolicy = (node.config?.runtime?.retry as any) ?? {
               enabled: false,
               attempts: 1,
               backoffMs: DEFAULT_RETRY_BACKOFF_MS,
@@ -570,8 +623,8 @@ export async function evaluateGraphInternal(
                   ctx.timeoutMs,
                   `Node ${node.title || node.id}`
                 ),
-              (retryPolicy['enabled'] ? (retryPolicy['attempts'] ?? 1) : 1) as any,
-              (retryPolicy['backoffMs'] ?? DEFAULT_RETRY_BACKOFF_MS) as any,
+              (retryPolicy['enabled'] ? (retryPolicy['attempts'] ?? 1) : 1),
+              (retryPolicy['backoffMs'] ?? DEFAULT_RETRY_BACKOFF_MS),
               `Node ${node.title || node.id}`,
               options.abortSignal
             );
@@ -650,6 +703,23 @@ export async function evaluateGraphInternal(
               const toNodeId = resolveEdgeToNodeId(edge);
               if (toNodeId) {
                 state.inputs[toNodeId] = collectNodeInputs(toNodeId, state.outputs, incomingEdgesByNode);
+                if (state.finishedNodes.has(toNodeId)) {
+                  const targetNode = nodeById.get(toNodeId);
+                  if (targetNode) {
+                    const targetInputs = deriveNodeInputs({
+                      node: targetNode,
+                      rawInputs: state.inputs[toNodeId] ?? {},
+                      triggerContext,
+                      checkTriggerProvenance,
+                    });
+                    const previousHash = state.nodeHashes.get(toNodeId) ?? null;
+                    const nextHash = buildNodeHash(targetNode, targetInputs);
+                    if (previousHash && nextHash && previousHash !== nextHash) {
+                      state.finishedNodes.delete(toNodeId);
+                      state.blockedNodes.delete(toNodeId);
+                    }
+                  }
+                }
               }
             });
           } catch (error) {
@@ -727,10 +797,15 @@ export async function evaluateGraphInternal(
   }
 
   if (iteration >= maxIterationsLimit && state.finishedNodes.size < scopedNodeIds.size) {
+    await emitHalt('max_iterations');
     throw new GraphExecutionError(
       `Graph execution exceeded maximum iterations (${maxIterationsLimit}).`,
       state.buildRuntimeStateSnapshot(state.inputs)
     );
+  }
+
+  if (state.blockedNodes.size > 0 && state.finishedNodes.size < scopedNodeIds.size) {
+    await emitHalt('blocked');
   }
 
   return state.buildRuntimeStateSnapshot(state.inputs);

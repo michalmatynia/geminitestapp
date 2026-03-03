@@ -1251,21 +1251,15 @@ describe('evaluateGraph', () => {
     ];
     const edges: Edge[] = [{ id: 'e1', from: 'n1', to: 'n1', fromPort: 'value', toPort: 'value' }];
 
-    const result = await evaluateGraph({
-      ...defaultOptions,
-      nodes,
-      edges,
-      seedOutputs: { n1: { value: 0 } },
-      maxIterations: 3,
-    });
-
-    // Iteration 0: outputs[n1].value=0 (seed)
-    // Iteration 1: inputs[n1].value=0, outputs[n1].value=1
-    // Iteration 2: inputs[n1].value=1, outputs[n1].value=2
-    // Iteration 3: inputs[n1].value=2, outputs[n1].value=3
-    // It should stop at 3 or 4 depending on loop logic.
-    expect(result.outputs['n1']!['value']).toBeGreaterThanOrEqual(2);
-    expect(result.outputs['n1']!['value']).toBeLessThanOrEqual(4);
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+        seedOutputs: { n1: { value: 0 } },
+        maxIterations: 3,
+      })
+    ).rejects.toThrow(/maximum iterations/i);
   });
 
   it('keeps inferred array values for database update mappings', async () => {
@@ -1359,6 +1353,9 @@ describe('evaluateGraph', () => {
   });
 
   describe('Graph Caching', () => {
+    const stableRunId = 'run-cache-graph';
+    const stableRunStartedAt = '2026-01-01T00:00:00.000Z';
+
     const triggerNode: AiNode = {
       id: 'trigger',
       type: 'trigger',
@@ -1390,6 +1387,8 @@ describe('evaluateGraph', () => {
       // First run
       const result1 = await evaluateGraph({
         ...defaultOptions,
+        runId: stableRunId,
+        runStartedAt: stableRunStartedAt,
         nodes: [triggerNode, ...nodes],
         edges: [],
       });
@@ -1401,10 +1400,10 @@ describe('evaluateGraph', () => {
       const onNodeStart = vi.fn();
       await evaluateGraph({
         ...defaultOptions,
-        runId: result1.runId as string,
-        seedRunId: result1.runId as string,
-        runStartedAt: result1.runStartedAt as string,
-        seedRunStartedAt: result1.runStartedAt as string,
+        runId: stableRunId,
+        seedRunId: stableRunId,
+        runStartedAt: stableRunStartedAt,
+        seedRunStartedAt: stableRunStartedAt,
         nodes: [triggerNode, ...nodes],
         edges: [],
         seedOutputs: result1.outputs,
@@ -1437,16 +1436,18 @@ describe('evaluateGraph', () => {
 
       const result1 = await evaluateGraph({
         ...defaultOptions,
+        runId: stableRunId,
+        runStartedAt: stableRunStartedAt,
         nodes: [triggerNode, ...nodes],
         edges: [],
       });
 
       await evaluateGraph({
         ...defaultOptions,
-        runId: result1.runId as string,
-        seedRunId: result1.runId as string,
-        runStartedAt: result1.runStartedAt as string,
-        seedRunStartedAt: result1.runStartedAt as string,
+        runId: stableRunId,
+        seedRunId: stableRunId,
+        runStartedAt: stableRunStartedAt,
+        seedRunStartedAt: stableRunStartedAt,
         nodes: [triggerNode, ...nodes],
         edges: [],
         seedOutputs: result1.outputs,

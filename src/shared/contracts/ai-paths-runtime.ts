@@ -514,6 +514,7 @@ export interface NodeHandlerContext {
   timeoutMs: number;
   runMeta?: Record<string, unknown> | null | undefined;
   activePathId: string | null;
+  iteration: number;
   triggerNodeId?: string | undefined;
   triggerEvent?: string | undefined;
   triggerContext?: Record<string, unknown> | null | undefined;

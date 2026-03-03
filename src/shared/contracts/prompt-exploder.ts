@@ -882,34 +882,40 @@ export type SegmentSelectionStrategy =
       previousId: string | null;
     };
 
-/**
- * Prompt Exploder Segmentation & Library DTOs
- */
+export type PromptExploderSegmentationReturnTarget = 'image-studio' | 'case-resolver';
 
-export type PromptExploderSegmentationRecord = {
-  id: string;
-  prompt: string;
-  segments: PromptExploderSegment[];
-  createdAt: string;
-  metadata?: Record<string, unknown>;
-};
+export const promptExploderSegmentationRecordSchema = z.object({
+  id: z.string(),
+  sourcePrompt: z.string(),
+  sourcePromptLength: z.number().int().nonnegative(),
+  reassembledPrompt: z.string(),
+  reassembledPromptLength: z.number().int().nonnegative(),
+  documentSnapshot: promptExploderDocumentSchema,
+  segmentCount: z.number().int().nonnegative(),
+  returnTarget: z.enum(['image-studio', 'case-resolver']),
+  validationScope: z.string(),
+  validationRuleStack: z.string(),
+  capturedAt: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export type PromptExploderSegmentationAnalysisRecord = {
-  segmentCount: number;
-  averageConfidence: number;
-  lowConfidenceCount: number;
-  types: PromptExploderSegmentType[];
-  matchedRules: string[];
-};
+export type PromptExploderSegmentationRecord = z.infer<typeof promptExploderSegmentationRecordSchema>;
 
 export type CaptureSegmentationRecordReason =
   | 'manual_save'
   | 'benchmark_suggestion'
   | 'auto_learning'
-  | 'rule_tuning';
+  | 'rule_tuning'
+  | 'missing_prompt'
+  | 'missing_document'
+  | 'persist_failed'
+  | 'no_changes';
 
 export type CaptureSegmentationRecordResult = {
   ok: boolean;
+  captured: boolean;
+  persisted: boolean;
   recordId?: string;
   error?: string;
   reason: CaptureSegmentationRecordReason;
@@ -918,6 +924,65 @@ export type CaptureSegmentationRecordResult = {
 /**
  * Prompt Exploder Manual Bindings DTOs
  */
+
+export type PromptExploderSegmentationAnalysisRecord = {
+  recordId: string;
+  capturedAt: string;
+  returnTarget: PromptExploderSegmentationReturnTarget;
+  validationScope: string;
+  validationRuleStack: string;
+  sourcePrompt: string;
+  sourcePromptLength: number;
+  reassembledPrompt: string;
+  reassembledPromptLength: number;
+  stats: PromptExploderSegmentationStats;
+  segments: PromptExploderSegmentationSegmentOutline[];
+};
+
+export type PromptExploderSegmentationAnalysisContext = {
+  schemaVersion: number;
+  generatedAt: string;
+  recordCount: number;
+  records: PromptExploderSegmentationAnalysisRecord[];
+};
+
+export type PromptExploderSegmentationStats = {
+  segmentCount: number;
+  includedSegmentCount: number;
+  averageConfidence: number;
+  typeCounts: Record<string, number>;
+};
+
+export type PromptExploderSegmentationOutline = {
+  stats: PromptExploderSegmentationStats;
+  segments: PromptExploderSegmentationSegmentOutline[];
+};
+
+export type PromptExploderSegmentationSegmentOutline = {
+  order: number;
+  id: string;
+  type: PromptExploderSegment['type'];
+  title: string;
+  includeInOutput: boolean;
+  confidence: number;
+  matchedPatternIds: string[];
+  matchedPatternLabels: string[];
+  matchedSequenceLabels: string[];
+  validationResults: string[];
+  subsectionCount: number;
+  subsections: PromptExploderSegmentationSubsectionOutline[];
+};
+
+export type PromptExploderSegmentationSubsectionOutline = {
+  index: number;
+  id: string;
+  title: string;
+  code: string | null;
+  condition: string | null;
+  guidance: string | null;
+  itemCount: number;
+  nestedSegmentCount: number;
+};
 
 export type ManualBindingBuildSuccess = {
   ok: true;

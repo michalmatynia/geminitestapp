@@ -20,6 +20,30 @@ const buildNode = (id: string, name: string, parentId: string | null = null): Ma
 });
 
 describe('useFolderTreeInstanceV2 external sync replace', () => {
+  it('rejects adapters that do not implement the V3 transaction contract', () => {
+    const initialNodes = [buildNode('folder-a', 'Folder A')];
+
+    expect(() =>
+      renderHook(() =>
+        useFolderTreeInstanceV2({
+          initialNodes,
+          adapter: {
+            prepare: vi.fn(async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
+              tx,
+              preparedAt: Date.now(),
+            })),
+            apply: vi.fn(async (tx: FolderTreeTransaction): Promise<FolderTreeAppliedTransaction> => ({
+              tx,
+              appliedAt: Date.now(),
+            })),
+            commit: vi.fn(async () => undefined),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any,
+        })
+      )
+    ).toThrowError(/must implement v3 transaction methods/i);
+  });
+
   it('updates nodes without adapter persistence for external_sync reason', async () => {
     const initialNodes = [buildNode('folder-a', 'Folder A')];
     const nextNodes = [buildNode('folder-b', 'Folder B')];
@@ -37,6 +61,7 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
       })
     );
     const commit = vi.fn(async () => undefined);
+    const rollback = vi.fn(async () => undefined);
 
     const { result } = renderHook(() =>
       useFolderTreeInstanceV2({
@@ -45,6 +70,7 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
           prepare,
           apply,
           commit,
+          rollback,
         },
       })
     );

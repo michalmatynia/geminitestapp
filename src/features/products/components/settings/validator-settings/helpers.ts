@@ -10,6 +10,8 @@ import type {
   SequenceGroupView,
 } from '@/shared/contracts/products';
 
+export const DEFAULT_SEQUENCE_STEP = 10;
+
 export const EMPTY_FORM: PatternFormData = {
   label: '',
   target: 'name',
@@ -327,7 +329,7 @@ export const getPatternSequence = (
   if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
     return Math.max(0, Math.floor(pattern.sequence));
   }
-  return (fallbackIndex + 1) * 10;
+  return (fallbackIndex + 1) * DEFAULT_SEQUENCE_STEP;
 };
 
 /**
@@ -363,6 +365,8 @@ export const sortPatternsBySequence = (
       return a.pattern.label.localeCompare(b.pattern.label);
     })
     .map((entry) => entry.pattern);
+
+export const sortRuleDraftsBySequence = sortPatternsBySequence;
 
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.reorderpatterns

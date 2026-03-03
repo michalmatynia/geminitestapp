@@ -19,7 +19,7 @@ describe('ConfirmModal', () => {
     );
 
     expect(screen.getAllByText('Confirm Action').length).toBeGreaterThan(0);
-    expect(screen.getByText('Are you sure?')).toBeInTheDocument();
+    expect(screen.getAllByText('Are you sure?').length).toBeGreaterThan(0);
   });
 
   it('calls onConfirm and onClose on confirm', async () => {

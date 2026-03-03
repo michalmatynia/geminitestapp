@@ -213,7 +213,7 @@ describe('ProductFilters Component', () => {
     );
 
     expect(screen.getByText('Price + Stock')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Clear applied preset Price + Stock' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Price + Stock' }));
     expect(setAdvancedFilterState).toHaveBeenCalledWith('', null);
   });
 

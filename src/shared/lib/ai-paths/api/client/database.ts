@@ -1,4 +1,5 @@
 import { 
+  apiFetch,
   apiPost, 
   ApiResponse 
 } from './base';
@@ -71,20 +72,32 @@ export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<Api
   return apiPost<T>('/api/databases/entity-update', payload);
 }
 
-export async function fetchSchema(args: {
-  provider: string;
-  collection: string;
+export async function fetchSchema(args?: {
+  provider?: string;
+  includeCounts?: boolean;
 }): Promise<ApiResponse<SchemaResponsePayloadDto>> {
-  return apiPost<SchemaResponsePayloadDto>('/api/databases/schema', args);
+  const params = new URLSearchParams();
+  if (args?.provider) params.set('provider', args.provider);
+  if (args?.includeCounts) params.set('includeCounts', 'true');
+  const query = params.toString();
+  const url = query ? `/api/databases/schema?${query}` : '/api/databases/schema';
+  return apiFetch<SchemaResponsePayloadDto>(url);
 }
 
 export async function browseDatabase(args: {
-  provider: string;
+  provider?: string;
   collection: string;
-  filter?: unknown;
-  sort?: unknown;
+  query?: string;
   limit?: number;
   skip?: number;
 }): Promise<ApiResponse<DatabaseBrowseDto>> {
-  return apiPost<DatabaseBrowseDto>('/api/databases/browse', args);
+  const params = new URLSearchParams();
+  params.set('collection', args.collection);
+  params.set('provider', args.provider ?? 'auto');
+  if (typeof args.limit === 'number') params.set('limit', String(args.limit));
+  if (typeof args.skip === 'number') params.set('skip', String(args.skip));
+  if (typeof args.query === 'string' && args.query.trim()) {
+    params.set('query', args.query.trim());
+  }
+  return apiFetch<DatabaseBrowseDto>(`/api/databases/browse?${params.toString()}`);
 }

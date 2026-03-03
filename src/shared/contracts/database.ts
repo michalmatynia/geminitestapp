@@ -719,3 +719,33 @@ export type AiQueryDto = AiQuery;
 export type DatabasePresetOptionDto = DatabasePresetOption;
 export type DatabaseEngineWorkspaceViewDto = DatabaseEngineWorkspaceView;
 export type SettingsBackfillResultDto = SettingsBackfillResult;
+
+/**
+ * Database UI Context DTOs
+ */
+
+export interface DatabaseConfig {
+  dbType: DatabaseType;
+  setDbType: (type: DatabaseType) => void;
+  mode: DatabasePreviewMode;
+  backupName?: string | undefined;
+}
+
+export interface DatabaseData {
+  tableDetails: DatabaseTableDetail[];
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => void;
+  groups: DatabasePreviewGroup[];
+  tables: DatabasePreviewTable[];
+  tableRows: DatabaseTablePreviewData[];
+  enums: DatabaseEnumInfo[];
+  databaseSize: string;
+}
+
+export interface DatabasePagination {
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+}

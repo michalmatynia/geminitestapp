@@ -18,7 +18,6 @@ const buildRecord = (id: string, name: string, sortIndex: number): AiTriggerButt
     label: name,
     showLabel: true,
   },
-  isActive: true,
   enabled: true,
   sortIndex,
   createdAt: new Date().toISOString(),

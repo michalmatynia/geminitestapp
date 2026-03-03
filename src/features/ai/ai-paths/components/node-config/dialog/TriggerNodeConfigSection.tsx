@@ -18,7 +18,7 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
   return createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: triggerButtonsQueryKey,
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.list();
+      const result = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!result.ok) return [];
       return Array.isArray(result.data) ? result.data : [];
     },

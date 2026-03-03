@@ -543,7 +543,7 @@ export interface NoteRepository {
   getAllNotebooks(): Promise<NotebookDto[]>;
   getNotebookById(id: string): Promise<NotebookDto | null>;
   createNotebook(data: CreateNotebookDto): Promise<NotebookDto>;
-  updateNotebook(id: string, data: UpdateNotebookDto): Promise<NotebookDto | null>;
+  updateNotebook(id: string, data: UpdateNotebookDto): Promise<NoteWithRelations | null>; // Fix return type
   deleteNotebook(id: string): Promise<boolean>;
   getOrCreateDefaultNotebook(): Promise<NotebookDto>;
   invalidateDefaultNotebookCache(): Promise<void>;
@@ -559,4 +559,144 @@ export interface NoteRepository {
   createNoteFile(data: CreateNoteFileDto): Promise<NoteFileDto>;
   getNoteFiles(noteId: string): Promise<NoteFileDto[]>;
   deleteNoteFile(noteId: string, slotIndex: number): Promise<boolean>;
+}
+
+/**
+ * Notes UI Context DTOs
+ */
+
+export type UseNoteFiltersResult = {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  debouncedSearchQuery: string;
+  filterPinned: boolean | undefined;
+  setFilterPinned: (v: boolean | undefined) => void;
+  filterArchived: boolean | undefined;
+  setFilterArchived: (v: boolean | undefined) => void;
+  filterFavorite: boolean | undefined;
+  setFilterFavorite: (v: boolean | undefined) => void;
+  filterTagIds: string[];
+  setFilterTagIds: (ids: string[]) => void;
+  highlightTagId: string | null;
+  setHighlightTagId: (id: string | null) => void;
+  page: number;
+  setPage: (p: number | ((curr: number) => number)) => void;
+  pageSize: number;
+  setPageSize: (s: number) => void;
+  handleFilterByTag: (
+    tagId: string,
+    setSelectedFolderId: (id: string | null) => void,
+    setSelectedNote: (val: NoteWithRelations | null) => void,
+    setIsEditing: (val: boolean) => void
+  ) => void;
+  handleToggleFavoritesFilter: (
+    setSelectedFolderId: (id: string | null) => void,
+    setSelectedNote: (val: NoteWithRelations | null) => void,
+    setIsEditing: (val: boolean) => void
+  ) => void;
+};
+
+export interface NotesAppContextValue {
+  settings: NoteSettings;
+  updateSettings: (updates: Partial<NoteSettings>) => void;
+  filters: UseNoteFiltersResult;
+  folderTree: CategoryWithChildren[];
+  tags: TagRecord[];
+  themes: ThemeRecord[];
+  loading: boolean;
+  selectedNote: NoteWithRelations | null;
+  setSelectedNote: (note: NoteWithRelations | null) => void;
+  selectedFolderId: string | null;
+  selectedNotebookId: string | null;
+  isEditing: boolean;
+  setIsEditing: (val: boolean) => void;
+  isCreating: boolean;
+  setIsCreating: (val: boolean) => void;
+  isFolderTreeCollapsed: boolean;
+  setIsFolderTreeCollapsed: (val: boolean) => void;
+  draggedNoteId: string | null;
+  setDraggedNoteId: (id: string | null) => void;
+  sortedNotes: NoteWithRelations[];
+  pagedNotes: NoteWithRelations[];
+  totalPages: number;
+  noteLayoutClassName: string;
+  availableTagsInScope: TagRecord[];
+  selectedFolderThemeId: string;
+  selectedFolderTheme: ThemeRecord | null;
+  selectedNoteTheme: ThemeRecord | null;
+  getThemeForNote: (note: NoteWithRelations) => ThemeRecord | null;
+  handleThemeChange: (themeId: string | null) => void | Promise<void>;
+  fetchTags: () => void;
+  setSelectedFolderId: (id: string | null) => void;
+  handleSelectNoteFromTree: (id: string) => Promise<void>;
+  handleToggleFavorite: (note: NoteWithRelations) => Promise<void>;
+  handleDeleteNote: () => Promise<void>;
+  handleUpdateSuccess: () => void;
+  handleCreateSuccess: () => void;
+  handleUnlinkRelatedNote: (id: string) => Promise<void>;
+  handleFilterByTag: (tagId: string) => void;
+
+  // Confirmation Modal
+  confirmation: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null;
+  setConfirmation: (
+    val: {
+      title: string;
+      message: string;
+      onConfirm: () => void | Promise<void>;
+      confirmText?: string;
+      isDangerous?: boolean;
+    } | null
+  ) => void;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
+
+  // Prompt Modal
+  prompt: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  } | null;
+  setPrompt: (
+    val: {
+      title: string;
+      message?: string;
+      label?: string;
+      defaultValue?: string;
+      placeholder?: string;
+      onConfirm: (value: string) => void | Promise<void>;
+      required?: boolean;
+    } | null
+  ) => void;
+  promptAction: (config: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  }) => void;
+
+  // Operations
+  operations: any; // ReturnType<typeof useNoteOperations>;
+  undoStack: UndoAction[];
+  undoHistory: { label: string }[];
+  handleUndoFolderTree: (count?: number) => Promise<void>;
+  handleUndoAtIndex: (index: number) => void;
+  fetchFolderTree: () => Promise<void>;
 }

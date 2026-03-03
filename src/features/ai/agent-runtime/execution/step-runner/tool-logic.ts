@@ -2,7 +2,6 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { runAgentBrowserControl, runAgentTool } from '@/features/ai/agent-runtime/tools';
 import { 
-  AgentExecutionContext, 
   PlanStep, 
   PlannerMeta 
 } from '@/shared/contracts/agent-runtime';

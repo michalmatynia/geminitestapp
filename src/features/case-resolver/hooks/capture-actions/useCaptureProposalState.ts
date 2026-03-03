@@ -3,19 +3,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
  
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { 
   CaseResolverCaptureProposalState,
-  CaseResolverCaptureAction,
   CaseResolverCaptureDocumentDateAction
 } from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { decodeFilemakerPartyReference } from '@/features/filemaker/settings';
-import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
+import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
 import { useToast } from '@/shared/ui';
 
 export function useCaptureProposalState(args: {

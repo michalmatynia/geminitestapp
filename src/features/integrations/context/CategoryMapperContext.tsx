@@ -24,12 +24,12 @@ import { useProductCategories } from '@/features/products/hooks/useCategoryQueri
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { CatalogDto as Catalog, ProductCategoryDto } from '@/shared/contracts/products';
+import type { 
+  InternalCategoryOption,
+  CategoryMapperData,
+  CategoryMapperActions,
+} from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
-
-interface InternalCategoryOption {
-  value: string;
-  label: string;
-}
 
 // --- Granular Contexts ---
 
@@ -45,21 +45,6 @@ export const useCategoryMapperConfig = () => {
   return context;
 };
 
-export interface CategoryMapperData {
-  catalogs: Catalog[];
-  catalogsLoading: boolean;
-  selectedCatalogId: string | null;
-  setSelectedCatalogId: (id: string | null) => void;
-  internalCategories: ProductCategoryDto[];
-  internalCategoriesLoading: boolean;
-  internalCategoryOptions: InternalCategoryOption[];
-  externalCategories: ExternalCategory[];
-  externalCategoriesLoading: boolean;
-  externalIds: Set<string>;
-  mappings: CategoryMappingWithDetails[];
-  mappingsLoading: boolean;
-  categoryTree: ExternalCategory[];
-}
 const DataContext = createContext<CategoryMapperData | null>(null);
 export const useCategoryMapperData = () => {
   const context = useContext(DataContext);
@@ -81,26 +66,6 @@ export const useCategoryMapperUIState = () => {
   return context;
 };
 
-export interface CategoryMapperActions {
-  handleFetchFromBase: () => Promise<void>;
-  handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
-  handleSave: () => Promise<void>;
-  getMappingForExternal: (externalCategoryId: string) => string | null;
-  fetchMutation: UseMutationResult<
-    { fetched: number; message: string },
-    Error,
-    { connectionId: string }
-  >;
-  saveMutation: UseMutationResult<
-    { upserted: number; message: string },
-    Error,
-    {
-      connectionId: string;
-      catalogId: string;
-      mappings: { externalCategoryId: string; internalCategoryId: string | null }[];
-    }
-  >;
-}
 const ActionsContext = createContext<CategoryMapperActions | null>(null);
 export const useCategoryMapperActions = () => {
   const context = useContext(ActionsContext);

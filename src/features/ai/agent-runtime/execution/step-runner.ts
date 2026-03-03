@@ -21,7 +21,6 @@ import type {
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import unknownToErrorMessage from '@/shared/utils/error-formatting';
 
 import { StepLoopInput, StepLoopResult } from './step-runner/types';
 import { maybeUpdateCheckpointBrief, CheckpointContext } from './step-runner/checkpoint-logic';
@@ -34,11 +33,9 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
     run,
     settings,
     preferences,
-    memoryValidationModel,
     memorySummarizationModel,
     plannerModel,
     loopGuardModel,
-    resolvedModel,
   } = context;
   let { planSteps, stepIndex, taskType, summaryCheckpoint } = input;
   let { memoryContext } = context;
@@ -234,8 +231,8 @@ export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopRes
       runPrompt: run.prompt,
       taskType,
       runId: run.id,
-      agentBrowser: run.agentBrowser,
-      runHeadless: run.runHeadless,
+      agentBrowser: run.agentBrowser ?? undefined,
+      runHeadless: run.runHeadless ?? undefined,
       sharedBrowser,
       sharedContext,
     });

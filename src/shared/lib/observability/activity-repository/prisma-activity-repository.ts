@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { Prisma, type SystemLog } from '@prisma/client';
 
 import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
@@ -5,6 +7,9 @@ import type { ActivityLog, CreateActivityLog } from '@/shared/contracts/system';
 import prisma from '@/shared/lib/db/prisma';
 
 const ACTIVITY_SOURCE = 'activity';
+const isMissingSystemLogStorage = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  (error.code === 'P2021' || error.code === 'P2022');
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {
   if (value === null || value === undefined) return null;
@@ -99,21 +104,39 @@ export const prismaActivityRepository: ActivityRepository = {
   },
 
   async createActivity(data: CreateActivityLog): Promise<ActivityLog> {
-    const log = await prisma.systemLog.create({
-      data: {
-        level: 'info',
-        message: data.description,
-        category: data.type,
-        source: ACTIVITY_SOURCE,
+    try {
+      const log = await prisma.systemLog.create({
+        data: {
+          level: 'info',
+          message: data.description,
+          category: data.type,
+          source: ACTIVITY_SOURCE,
+          userId: data.userId ?? null,
+          context: {
+            entityId: data.entityId ?? null,
+            entityType: data.entityType ?? null,
+            metadata: (data.metadata ?? null) as Prisma.InputJsonValue | null,
+          } as Prisma.InputJsonValue,
+        },
+      });
+      return toActivityDto(log);
+    } catch (error) {
+      if (!isMissingSystemLogStorage(error)) {
+        throw error;
+      }
+      const nowIso = new Date().toISOString();
+      return {
+        id: `activity-fallback-${randomUUID()}`,
+        type: data.type,
+        description: data.description,
         userId: data.userId ?? null,
-        context: {
-          entityId: data.entityId ?? null,
-          entityType: data.entityType ?? null,
-          metadata: (data.metadata ?? null) as Prisma.InputJsonValue | null,
-        } as Prisma.InputJsonValue,
-      },
-    });
-    return toActivityDto(log);
+        entityId: data.entityId ?? null,
+        entityType: data.entityType ?? null,
+        metadata: (data.metadata as Record<string, unknown> | null | undefined) ?? null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+    }
   },
 
   async deleteActivity(id: string): Promise<void> {

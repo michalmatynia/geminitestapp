@@ -16,10 +16,10 @@ import {
   getFilemakerEmailsForParty,
   getFilemakerEventsForOrganization,
   getFilemakerPhoneNumbersForParty,
-  normalizeFilemakerDatabase,
   parseAndUpsertFilemakerEmailsForParty,
   parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
+  toPersistedFilemakerDatabase,
 } from '../settings';
 import { decodeRouteParam } from '../pages/filemaker-page-utils';
 
@@ -139,7 +139,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       try {
         await updateSetting.mutateAsync({
           key: FILEMAKER_DATABASE_KEY,
-          value: JSON.stringify(normalizeFilemakerDatabase(next)),
+          value: JSON.stringify(toPersistedFilemakerDatabase(next)),
         });
         toast(message, { variant: 'success' });
       } catch (_error: unknown) {

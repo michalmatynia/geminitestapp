@@ -201,7 +201,7 @@ describe('Notes Advanced UI', () => {
     await user.click(deleteBtn);
 
     // Click Delete in ConfirmModal
-    const modal = await screen.findByRole('dialog');
+    const modal = await screen.findByRole('alertdialog');
     const confirmBtn = within(modal).getByRole('button', { name: 'Delete' });
     await user.click(confirmBtn);
 

@@ -5,7 +5,6 @@ import {
   withCircuitBreaker,
   type CircuitBreakerOptions,
 } from '@/shared/utils/retry';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { getTransientRecoverySettings } from './settings';
 
@@ -17,6 +16,24 @@ export type TransientRecoveryOptions = {
   fallback?: () => unknown;
   retry?: RetryOptions;
   circuit?: Omit<CircuitBreakerOptions, 'circuitId'>;
+};
+
+const logRecoveryFallbackExecuted = async (
+  source: string | undefined,
+  error: unknown
+): Promise<void> => {
+  if (typeof window !== 'undefined') return;
+  try {
+    const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
+    await logSystemEvent({
+      level: 'warn',
+      message: '[transient-recovery] fallback executed',
+      source: source ?? 'transient-recovery',
+      context: { error: error instanceof Error ? error.message : String(error) },
+    });
+  } catch {
+    // logging must never interrupt recovery fallback
+  }
 };
 
 export const isTransientError = (error: unknown): boolean => {
@@ -87,12 +104,7 @@ export async function withTransientRecovery<T>(
     return await execute();
   } catch (error) {
     if (options?.fallback && isTransientError(error)) {
-      void logSystemEvent({
-        level: 'warn',
-        message: '[transient-recovery] fallback executed',
-        source: options?.source ?? 'transient-recovery',
-        context: { error: error instanceof Error ? error.message : String(error) },
-      });
+      void logRecoveryFallbackExecuted(options?.source, error);
       return (await options.fallback()) as T;
     }
     throw error;

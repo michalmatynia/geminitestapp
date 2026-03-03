@@ -185,7 +185,7 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
   const correlationId = data.correlationId || data.jobId;
 
   try {
-    await markCaseResolverOcrJobRunning(data.jobId);
+    await markCaseResolverOcrJobRunning(data.jobId, data.filepath, { correlationId });
 
     const resolvedPath = resolveCaseResolverOcrDiskPath(data.filepath);
     const preparedInput = await prepareCaseResolverOcrInput(resolvedPath);
@@ -235,7 +235,9 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
   } catch (error) {
     const isRetryable = isRetryableCaseResolverOcrError(error);
     if (isRetryable) {
-      await markCaseResolverOcrJobQueuedForRetry(data.jobId, String(error));
+      await markCaseResolverOcrJobQueuedForRetry(data.jobId, {
+        retryableError: true,
+      });
       throw error; // Let BullMQ handle the retry
     }
 
@@ -301,7 +303,7 @@ export const startCaseResolverOcrWorker = (): void => {
 
 export const startCaseResolverOcrQueue = startCaseResolverOcrWorker;
 
-// Backward-compatible re-exports used by tests and other modules.
+// Shared OCR helpers exported for queue tests and runtime modules.
 export {
   inferCaseResolverOcrProviderFromModel,
   resolveCaseResolverOcrModel,

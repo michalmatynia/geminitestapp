@@ -26,19 +26,16 @@ const normalizeNonEmptyString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.from) ?? normalizeNonEmptyString(edge.source);
+const resolveEdgeFromNodeId = (edge: Edge): string | null => normalizeNonEmptyString(edge.from);
 
-const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.to) ?? normalizeNonEmptyString(edge.target);
+const resolveEdgeToNodeId = (edge: Edge): string | null => normalizeNonEmptyString(edge.to);
 
 const getIncomingPorts = (nodeId: string, edges: Edge[]): Set<string> => {
   const ports = new Set<string>();
   edges.forEach((edge: Edge): void => {
     const targetNodeId = resolveEdgeToNodeId(edge);
     if (targetNodeId !== nodeId) return;
-    const toPort =
-      normalizeNonEmptyString(edge.toPort) ?? normalizeNonEmptyString(edge.targetHandle);
+    const toPort = normalizeNonEmptyString(edge.toPort);
     if (!toPort) return;
     ports.add(toPort);
   });

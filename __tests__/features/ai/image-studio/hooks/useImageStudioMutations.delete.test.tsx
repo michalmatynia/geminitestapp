@@ -10,6 +10,7 @@ import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 vi.mock('@/shared/lib/api-client', () => ({
+  ApiError: class MockApiError extends Error {},
   api: {
     get: vi.fn(),
     post: vi.fn(),
@@ -103,7 +104,7 @@ describe('useDeleteStudioSlot', () => {
     expect(api.delete).toHaveBeenCalledWith(
       `/api/image-studio/slots/${encodeURIComponent('slot-root')}`,
       expect.objectContaining({
-        timeout: 120000,
+        timeout: 30000,
         params: { debug: '1' },
       })
     );

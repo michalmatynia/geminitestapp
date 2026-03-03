@@ -97,7 +97,7 @@ describe('sanitizePathConfig', () => {
     expect(sanitized.edges[0]).toMatchObject(config.edges[0] as Edge);
   });
 
-  it('migrates legacy Trigger data edges through a Fetcher node', () => {
+  it('rejects legacy trigger data ports instead of migrating them', () => {
     const config = {
       ...buildConfig([
         {
@@ -133,40 +133,9 @@ describe('sanitizePathConfig', () => {
       ],
     } as PathConfig;
 
-    const sanitized = sanitizePathConfig(config);
-    const triggerNode = sanitized.nodes.find((node: AiNode) => node.type === 'trigger');
-    const parserNode = sanitized.nodes.find((node: AiNode) => node.type === 'parser');
-    const fetcherNode = sanitized.nodes.find((node: AiNode) => node.type === 'fetcher');
-
-    expect(triggerNode?.outputs).toEqual(['trigger', 'triggerName']);
-    expect(fetcherNode).toBeDefined();
-    expect(
-      sanitized.edges.some(
-        (edge: Edge) =>
-          edge.from === triggerNode?.id &&
-          edge.to === fetcherNode?.id &&
-          edge.fromPort === 'trigger' &&
-          edge.toPort === 'trigger'
-      )
-    ).toBe(true);
-    expect(
-      sanitized.edges.some(
-        (edge: Edge) =>
-          edge.from === fetcherNode?.id &&
-          edge.to === parserNode?.id &&
-          (edge.fromPort === 'context' || edge.sourceHandle === 'context') &&
-          (edge.toPort === 'context' || edge.targetHandle === 'context')
-      )
-    ).toBe(true);
-    expect(
-      sanitized.edges.some(
-        (edge: Edge) =>
-          edge.from === fetcherNode?.id &&
-          edge.to === parserNode?.id &&
-          (edge.fromPort === 'entityId' || edge.sourceHandle === 'entityId') &&
-          (edge.toPort === 'entityId' || edge.targetHandle === 'entityId')
-      )
-    ).toBe(true);
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /Legacy AI Paths trigger data (outputs|edges) are no longer supported/i
+    );
   });
 
   it('preserves shared object-backed ports when persisting runtime state', () => {
@@ -224,7 +193,7 @@ describe('sanitizePathConfig', () => {
     expect(currentRun).not.toHaveProperty('result');
   });
 
-  it('rejects legacy runtime identity fields in persisted runtime state payloads', () => {
+  it('rejects legacy runtime identity fields', () => {
     expect(() =>
       parseRuntimeState(
         JSON.stringify({
@@ -240,6 +209,69 @@ describe('sanitizePathConfig', () => {
         })
       )
     ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+  });
+
+  it('rejects legacy runtime identity fields nested in events and history entries', () => {
+    expect(() =>
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [
+            {
+              id: 'evt-1',
+              timestamp: '2026-03-03T10:00:00.000Z',
+              type: 'status',
+              message: 'Run started.',
+              runId: 'legacy-run-id',
+            },
+          ],
+          history: {
+            'node-1': [
+              {
+                timestamp: '2026-03-03T10:00:00.000Z',
+                pathId: 'path-1',
+                pathName: 'Path 1',
+                nodeId: 'node-1',
+                nodeType: 'prompt',
+                nodeTitle: 'Node 1',
+                status: 'completed',
+                iteration: 1,
+                inputs: {},
+                outputs: {},
+                inputHash: null,
+                runStartedAt: '2026-03-03T10:00:00.000Z',
+              },
+            ],
+          },
+          inputs: {},
+          outputs: {},
+        })
+      )
+    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+  });
+
+  it('rejects path configs with legacy runtime identity fields', () => {
+    const config = {
+      ...buildConfig([]),
+      runtimeState: JSON.stringify({
+        status: 'idle',
+        nodeStatuses: {},
+        nodeOutputs: {},
+        variables: {},
+        events: [],
+        inputs: {},
+        outputs: {},
+        runId: 'legacy-run-id',
+        runStartedAt: '2026-03-03T10:00:00.000Z',
+      }),
+    } as PathConfig;
+
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /Legacy AI Paths runtime identity fields are no longer supported/i
+    );
   });
 
   it('rejects legacy runtime identity fields nested inside runtime events', () => {

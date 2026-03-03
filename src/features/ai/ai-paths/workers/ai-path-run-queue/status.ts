@@ -203,3 +203,10 @@ export const getAiPathRunQueueHotStatus = async (
     queueHotStatusInFlight = null;
   }
 };
+
+export const clearAiPathRunQueueStatusCache = (): void => {
+  queueStatusCache.clear();
+  queueStatusInFlight.clear();
+  queueHotStatusCache = null;
+  queueHotStatusInFlight = null;
+};

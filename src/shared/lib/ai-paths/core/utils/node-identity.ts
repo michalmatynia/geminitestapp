@@ -406,33 +406,20 @@ export const repairPathNodeIdentities = (
   });
 
   const repairedEdges = (pathConfig.edges ?? []).map((edge) => {
+    const { source: _legacySource, target: _legacyTarget, ...edgeWithoutLegacyEndpoints } = edge;
     const nextFrom = typeof edge.from === 'string' ? remapNodeId(edge.from) : edge.from;
     const nextTo = typeof edge.to === 'string' ? remapNodeId(edge.to) : edge.to;
-    const nextSource =
-      typeof edge.source === 'string'
-        ? remapNodeId(edge.source)
-        : typeof nextFrom === 'string'
-          ? nextFrom
-          : edge.source;
-    const nextTarget =
-      typeof edge.target === 'string'
-        ? remapNodeId(edge.target)
-        : typeof nextTo === 'string'
-          ? nextTo
-          : edge.target;
     if (
       nextFrom !== edge.from ||
       nextTo !== edge.to ||
-      nextSource !== edge.source ||
-      nextTarget !== edge.target
+      Object.prototype.hasOwnProperty.call(edge, 'source') ||
+      Object.prototype.hasOwnProperty.call(edge, 'target')
     ) {
       changed = true;
       return {
-        ...edge,
+        ...edgeWithoutLegacyEndpoints,
         ...(typeof nextFrom === 'string' ? { from: nextFrom } : {}),
         ...(typeof nextTo === 'string' ? { to: nextTo } : {}),
-        ...(typeof nextSource === 'string' ? { source: nextSource } : {}),
-        ...(typeof nextTarget === 'string' ? { target: nextTarget } : {}),
       };
     }
     return edge;

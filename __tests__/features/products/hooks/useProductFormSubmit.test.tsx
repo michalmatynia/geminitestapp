@@ -132,15 +132,7 @@ describe('useProductFormSubmit', () => {
     expect(timerDurations).not.toContain(500);
     timeoutSpy.mockRestore();
 
-    expect(mocks.queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['products', 'list'],
-    });
-    expect(mocks.queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['products', 'count'],
-    });
-    expect(mocks.queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['products', 'detail', savedProduct.id],
-    });
+    expect(mocks.queryClient.invalidateQueries).not.toHaveBeenCalled();
   });
 
   it('blocks submit when hydrated edit product is required but product is not marked hydrated', async () => {

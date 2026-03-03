@@ -228,6 +228,6 @@ describe('OperationsTab', () => {
     render(<OperationsTab />);
 
     expect(screen.getByText('Collector timeout.')).toBeInTheDocument();
-    expect(screen.getByText('unknown')).toBeInTheDocument();
+    expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
   });
 });

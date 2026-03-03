@@ -205,24 +205,12 @@ export const compileGraph = (
   });
 
   // 4. Incompatible wiring
-  const resolveNodeId = (primary?: string, fallback?: string): string | null => {
-    const first = typeof primary === 'string' ? primary.trim() : '';
-    if (first.length > 0) return first;
-    const second = typeof fallback === 'string' ? fallback.trim() : '';
-    return second.length > 0 ? second : null;
-  };
-  const resolvePort = (primary?: string | null, fallback?: string | null): string | null => {
-    const first = typeof primary === 'string' ? normalizePortName(primary) : '';
-    if (first.length > 0) return first;
-    const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
-    return second.length > 0 ? second : null;
-  };
   const compatibilityCheckedEdges = new Set<string>();
-  edges.forEach((edge, edgeIndex) => {
-    const fromId = resolveNodeId(edge.from, edge.source);
-    const toId = resolveNodeId(edge.to, edge.target);
-    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle);
-    const toPort = resolvePort(edge.toPort, edge.targetHandle);
+  normalizedEdges.forEach((edge, edgeIndex) => {
+    const fromId = typeof edge.from === 'string' ? edge.from.trim() : '';
+    const toId = typeof edge.to === 'string' ? edge.to.trim() : '';
+    const fromPort = typeof edge.fromPort === 'string' ? normalizePortName(edge.fromPort) : '';
+    const toPort = typeof edge.toPort === 'string' ? normalizePortName(edge.toPort) : '';
     if (!fromId || !toId || !fromPort || !toPort) return;
     if (!reachableNodeIds.has(fromId) || !reachableNodeIds.has(toId)) return;
     const edgeKey = edge.id || `${fromId}:${fromPort}->${toId}:${toPort}:${edgeIndex}`;

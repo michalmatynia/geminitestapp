@@ -8,24 +8,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import {
+  deriveDocumentContentSync,
+  ensureHtmlForPreview,
+  hasHtmlMarkup,
   ensureSafeDocumentHtml,
+  stripHtmlToPlainText,
+  toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFile,
-  CaseResolverScanSlot,
-  CaseResolverDocumentVersion,
   CaseResolverTag,
   CaseResolverPartyReference,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
-import type {
-  FilemakerDatabaseDto as FilemakerDatabase,
-  FilemakerOrganizationDto as FilemakerOrganization,
-  FilemakerPartyKindDto as FilemakerPartyKind,
-  FilemakerPersonDto as FilemakerPerson,
-} from '@/shared/contracts/filemaker';
-
 // Modular imports
 export {
   isLikelyImageFile,
@@ -57,6 +53,8 @@ export {
 } from './case-resolver/history';
 
 import {
+  resolveHistoryPreviewFromCandidate,
+  truncateHistoryPreview,
   normalizeHistoryEditorType,
 } from './case-resolver/history';
 
@@ -65,6 +63,362 @@ export const createId = (prefix: string): string => {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
+
+const normalizeSemanticallyEmptyCanonicalContent = (
+  canonical: ReturnType<typeof deriveDocumentContentSync>
+): ReturnType<typeof deriveDocumentContentSync> => {
+  if (canonical.plainText.trim().length > 0) return canonical;
+  if (
+    canonical.html.length === 0 &&
+    canonical.markdown.length === 0 &&
+    canonical.plainText.length === 0
+  ) {
+    return canonical;
+  }
+  return {
+    ...canonical,
+    html: '',
+    markdown: '',
+    plainText: '',
+  };
+};
+
+const normalizePartyReference = (
+  value: CaseResolverPartyReference | null | undefined
+): CaseResolverPartyReference | null => {
+  if (!value || typeof value !== 'object') return null;
+  const kind = value.kind === 'person' || value.kind === 'organization' ? value.kind : null;
+  const id = typeof value.id === 'string' ? value.id.trim() : '';
+  if (!kind || !id) return null;
+  return { kind, id };
+};
+
+const normalizeDocumentDateDraft = (
+  value: CaseResolverFile['documentDate'] | CaseResolverFileEditDraft['documentDate'] | string | null | undefined
+): CaseResolverFileEditDraft['documentDate'] => {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const isoDate = value.trim();
+    if (!isoDate) return null;
+    return {
+      isoDate,
+      source: 'text',
+      sourceLine: null,
+      cityHint: null,
+      city: null,
+      action: 'useDetectedDate',
+    };
+  }
+  return value;
+};
+
+const buildCanonicalDocumentForDraft = (
+  file: CaseResolverFile
+): ReturnType<typeof deriveDocumentContentSync> => {
+  const mode: 'markdown' | 'wysiwyg' = file.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
+  if (mode === 'markdown') {
+    const source = (() => {
+      if (typeof file.documentContentMarkdown === 'string' && file.documentContentMarkdown.trim()) {
+        return file.documentContentMarkdown;
+      }
+      if (typeof file.documentContentPlainText === 'string' && file.documentContentPlainText.trim()) {
+        return file.documentContentPlainText;
+      }
+      if (typeof file.documentContent === 'string' && file.documentContent.trim()) {
+        return hasHtmlMarkup(file.documentContent)
+          ? stripHtmlToPlainText(file.documentContent)
+          : file.documentContent;
+      }
+      if (typeof file.documentContentHtml === 'string' && file.documentContentHtml.trim()) {
+        return stripHtmlToPlainText(file.documentContentHtml);
+      }
+      return '';
+    })();
+    return normalizeSemanticallyEmptyCanonicalContent(
+      deriveDocumentContentSync({
+        mode: 'markdown',
+        value: source,
+        previousHtml: file.documentContentHtml ?? '',
+        previousMarkdown: file.documentContentMarkdown ?? '',
+      })
+    );
+  }
+
+  const htmlSource = (() => {
+    if (typeof file.documentContentHtml === 'string' && file.documentContentHtml.trim()) {
+      return file.documentContentHtml;
+    }
+    if (typeof file.documentContentMarkdown === 'string' && file.documentContentMarkdown.trim()) {
+      return ensureHtmlForPreview(file.documentContentMarkdown, 'markdown');
+    }
+    return ensureSafeDocumentHtml(file.documentContent ?? '');
+  })();
+  return normalizeSemanticallyEmptyCanonicalContent(
+    deriveDocumentContentSync({
+      mode: 'wysiwyg',
+      value: htmlSource,
+      previousHtml: file.documentContentHtml ?? '',
+      previousMarkdown: file.documentContentMarkdown ?? '',
+    })
+  );
+};
+
+export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
+  const canonical = buildCanonicalDocumentForDraft(file);
+  const activeDocumentVersion =
+    file.activeDocumentVersion === 'exploded' && !file.explodedDocumentContent?.trim()
+      ? 'original'
+      : file.activeDocumentVersion === 'exploded'
+        ? 'exploded'
+        : 'original';
+  const storedContent = toStorageDocumentValue(canonical);
+  const resolvedOriginalDocumentContent =
+    typeof file.originalDocumentContent === 'string'
+      ? file.originalDocumentContent
+      : activeDocumentVersion === 'original'
+        ? storedContent
+        : '';
+  const resolvedExplodedDocumentContent =
+    typeof file.explodedDocumentContent === 'string'
+      ? file.explodedDocumentContent
+      : activeDocumentVersion === 'exploded'
+        ? storedContent
+        : '';
+
+  return {
+    id: file.id,
+    name: file.name,
+    content: storedContent,
+    fileType: file.fileType,
+    folder: file.folder,
+    caseTreeOrder: file.caseTreeOrder,
+    parentCaseId: file.parentCaseId ?? null,
+    referenceCaseIds: [...(file.referenceCaseIds ?? [])],
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+    documentDate: normalizeDocumentDateDraft(file.documentDate),
+    documentCity: file.documentCity ?? null,
+    happeningDate: file.happeningDate ?? null,
+    isSent: file.isSent === true,
+    originalDocumentContent: resolvedOriginalDocumentContent,
+    explodedDocumentContent: resolvedExplodedDocumentContent,
+    activeDocumentVersion,
+    editorType: canonical.mode,
+    documentContentFormatVersion: 1,
+    documentContentVersion: file.documentContentVersion ?? 1,
+    baseDocumentContentVersion: file.documentContentVersion ?? 1,
+    documentContent: storedContent,
+    documentContentMarkdown: canonical.markdown,
+    documentContentHtml: canonical.html,
+    documentContentPlainText: canonical.plainText,
+    documentHistory: [...(file.documentHistory ?? [])],
+    documentConversionWarnings: [...(canonical.warnings ?? file.documentConversionWarnings ?? [])],
+    lastContentConversionAt: file.lastContentConversionAt ?? null,
+    scanSlots: [...(file.scanSlots ?? [])],
+    scanOcrModel: file.scanOcrModel ?? '',
+    scanOcrPrompt: file.scanOcrPrompt ?? '',
+    isLocked: file.isLocked === true,
+    graph: file.graph,
+    addresser: normalizePartyReference(file.addresser),
+    addressee: normalizePartyReference(file.addressee),
+    tagId: file.tagId ?? null,
+    caseIdentifierId: file.caseIdentifierId ?? null,
+    categoryId: file.categoryId ?? null,
+  };
+};
+
+export const createCaseResolverHistorySnapshotEntry = (input: {
+  savedAt: string;
+  documentContentVersion: number;
+  activeDocumentVersion: CaseResolverDocumentHistoryEntry['activeDocumentVersion'];
+  editorType:
+    | CaseResolverDocumentHistoryEntry['editorType']
+    | CaseResolverFileEditDraft['editorType']
+    | undefined;
+  documentContent: string | null | undefined;
+  documentContentMarkdown: string | null | undefined;
+  documentContentHtml: string | null | undefined;
+  documentContentPlainText: string | null | undefined;
+}): CaseResolverDocumentHistoryEntry | null => {
+  const normalizedEditorType = normalizeHistoryEditorType(input.editorType);
+  const canonical = normalizeSemanticallyEmptyCanonicalContent(
+    deriveDocumentContentSync({
+      mode: normalizedEditorType === 'markdown' || normalizedEditorType === 'code' ? 'markdown' : 'wysiwyg',
+      value:
+        normalizedEditorType === 'markdown' || normalizedEditorType === 'code'
+          ? input.documentContentMarkdown ??
+            input.documentContentPlainText ??
+            (hasHtmlMarkup(input.documentContent ?? '')
+              ? stripHtmlToPlainText(input.documentContent ?? '')
+              : (input.documentContent ?? ''))
+          : input.documentContentHtml ??
+            (typeof input.documentContentMarkdown === 'string' && input.documentContentMarkdown.trim()
+              ? ensureHtmlForPreview(input.documentContentMarkdown, 'markdown')
+              : ensureSafeDocumentHtml(input.documentContent ?? '')),
+      previousMarkdown: input.documentContentMarkdown ?? '',
+      previousHtml: input.documentContentHtml ?? '',
+    })
+  );
+
+  if (
+    canonical.plainText.trim().length === 0 &&
+    canonical.markdown.trim().length === 0 &&
+    canonical.html.trim().length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    id: createId('case-doc-history'),
+    savedAt: input.savedAt,
+    documentContentVersion: input.documentContentVersion,
+    activeDocumentVersion: input.activeDocumentVersion === 'exploded' ? 'exploded' : 'original',
+    editorType: normalizedEditorType,
+    documentContent: toStorageDocumentValue(canonical),
+    documentContentMarkdown: canonical.markdown,
+    documentContentHtml: canonical.html,
+    documentContentPlainText: canonical.plainText,
+  };
+};
+
+export const prependDraftHistorySnapshotForRevisionLoad = ({
+  draft,
+  loadedEntry,
+  savedAt,
+  historyLimit = CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+}: {
+  draft: CaseResolverFileEditDraft;
+  loadedEntry: CaseResolverDocumentHistoryEntry;
+  savedAt: string;
+  historyLimit?: number;
+}): CaseResolverDocumentHistoryEntry[] => {
+  const existingHistory = draft.documentHistory ?? [];
+  const draftComparable = toComparableHistoryPayload({
+    activeDocumentVersion: draft.activeDocumentVersion,
+    editorType: draft.editorType,
+    documentContent: draft.documentContent,
+    documentContentMarkdown: draft.documentContentMarkdown,
+    documentContentHtml: draft.documentContentHtml,
+    documentContentPlainText: draft.documentContentPlainText,
+  });
+  const loadedComparable = toComparableHistoryPayload({
+    activeDocumentVersion: loadedEntry.activeDocumentVersion,
+    editorType: loadedEntry.editorType,
+    documentContent: loadedEntry.documentContent,
+    documentContentMarkdown: loadedEntry.documentContentMarkdown,
+    documentContentHtml: loadedEntry.documentContentHtml,
+    documentContentPlainText: loadedEntry.documentContentPlainText,
+  });
+  if (areHistoryPayloadsEqual(draftComparable, loadedComparable)) {
+    return existingHistory;
+  }
+
+  const snapshot = createCaseResolverHistorySnapshotEntry({
+    savedAt,
+    documentContentVersion: draft.documentContentVersion ?? 0,
+    activeDocumentVersion: draft.activeDocumentVersion === 'exploded' ? 'exploded' : 'original',
+    editorType: draft.editorType,
+    documentContent: draft.documentContent,
+    documentContentMarkdown: draft.documentContentMarkdown,
+    documentContentHtml: draft.documentContentHtml,
+    documentContentPlainText: draft.documentContentPlainText,
+  });
+  if (!snapshot) return existingHistory;
+
+  const top = existingHistory[0];
+  if (top) {
+    const topComparable = toComparableHistoryPayload({
+      activeDocumentVersion: top.activeDocumentVersion,
+      editorType: top.editorType,
+      documentContent: top.documentContent,
+      documentContentMarkdown: top.documentContentMarkdown,
+      documentContentHtml: top.documentContentHtml,
+      documentContentPlainText: top.documentContentPlainText,
+    });
+    const snapshotComparable = toComparableHistoryPayload({
+      activeDocumentVersion: snapshot.activeDocumentVersion,
+      editorType: snapshot.editorType,
+      documentContent: snapshot.documentContent,
+      documentContentMarkdown: snapshot.documentContentMarkdown,
+      documentContentHtml: snapshot.documentContentHtml,
+      documentContentPlainText: snapshot.documentContentPlainText,
+    });
+    if (areHistoryPayloadsEqual(topComparable, snapshotComparable)) {
+      return existingHistory;
+    }
+  }
+
+  return [snapshot, ...existingHistory].slice(0, Math.max(1, historyLimit));
+};
+
+export const resolveCaseResolverHistoryEntryPreview = (
+  entry: CaseResolverDocumentHistoryEntry,
+  maxChars: number = 240
+): string => {
+  const candidates: Array<{ value: string | undefined; type: 'plainText' | 'markdown' | 'html' | 'content' }> = [
+    { value: entry.documentContentPlainText, type: 'plainText' },
+    { value: entry.documentContentMarkdown, type: 'markdown' },
+    { value: entry.documentContentHtml, type: 'html' },
+    { value: entry.documentContent, type: 'content' },
+  ];
+
+  const preview = candidates.reduce<string>((resolved, candidate) => {
+    if (resolved.length > 0) return resolved;
+    const raw = typeof candidate.value === 'string' ? candidate.value : '';
+    if (!raw.trim()) return resolved;
+    return resolveHistoryPreviewFromCandidate(raw, candidate.type);
+  }, '');
+
+  if (!preview) return '';
+  return truncateHistoryPreview(preview, maxChars);
+};
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const asHtmlParagraphs = (value: string): string =>
+  value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join('');
+
+export const buildDocumentPdfMarkup = ({
+  documentDate,
+  documentPlace,
+  addresserLabel,
+  addresseeLabel,
+  documentContent,
+}: {
+  documentDate?: string | null;
+  documentPlace?: string | null;
+  addresserLabel?: string | null;
+  addresseeLabel?: string | null;
+  documentContent?: string | null;
+}): string => {
+  const hasHtml = typeof documentContent === 'string' && hasHtmlMarkup(documentContent);
+  const content = hasHtml
+    ? ensureSafeDocumentHtml(documentContent ?? '')
+    : asHtmlParagraphs(documentContent ?? '');
+  const datePlace = [documentPlace?.trim(), documentDate?.trim()].filter(Boolean).join(', ');
+
+  return `
+    <div class="case-document">
+      ${datePlace ? `<div class="case-document__date-place">${escapeHtml(datePlace)}</div>` : ''}
+      ${addresserLabel?.trim() ? `<div class="case-document__addresser">${asHtmlParagraphs(addresserLabel)}</div>` : ''}
+      ${addresseeLabel?.trim() ? `<div class="case-document__addressee">${asHtmlParagraphs(addresseeLabel)}</div>` : ''}
+      <div class="case-document__content">${content}</div>
+    </div>
+  `.trim();
 };
 
 const hashString32 = (value: string, seed: number): number => {
@@ -123,16 +477,19 @@ export const areHistoryPayloadsEqual = (
 };
 
 export const extractPartyName = (party: CaseResolverPartyReference): string => {
-  if (party.organization) return party.organization.name;
-  if (party.person) {
-    const parts = [party.person.firstName, party.person.lastName].filter(Boolean);
-    return parts.join(' ');
-  }
-  return 'Unknown Party';
+  const normalizedName = typeof party.name === 'string' ? party.name.trim() : '';
+  if (normalizedName) return normalizedName;
+  return party.kind === 'organization' ? 'Unknown Organization' : 'Unknown Person';
+};
+
+type CaseResolverResolvedVersionContent = {
+  contentMarkdown?: string;
+  contentPlainText?: string;
+  contentHtml?: string;
 };
 
 export const extractVersionContent = (
-  version: CaseResolverDocumentVersion | undefined | null,
+  version: CaseResolverResolvedVersionContent | undefined | null,
   editorType: CaseResolverFileEditDraft['editorType']
 ): string => {
   if (!version) return '';
@@ -144,9 +501,25 @@ export const extractVersionContent = (
 export const resolveActiveVersion = (
   file: CaseResolverFile,
   activeDocumentVersion: CaseResolverFileEditDraft['activeDocumentVersion']
-): CaseResolverDocumentVersion | null => {
-  if (activeDocumentVersion === 'exploded') return file.explodedVersion ?? null;
-  return file.originalVersion ?? null;
+): CaseResolverResolvedVersionContent | null => {
+  const baseContent =
+    activeDocumentVersion === 'exploded'
+      ? file.explodedDocumentContent ?? file.documentContent
+      : file.originalDocumentContent ?? file.documentContent;
+  return {
+    contentMarkdown:
+      activeDocumentVersion === 'exploded'
+        ? file.explodedDocumentContent ?? file.documentContentMarkdown ?? baseContent
+        : file.originalDocumentContent ?? file.documentContentMarkdown ?? baseContent,
+    contentPlainText:
+      activeDocumentVersion === 'exploded'
+        ? file.explodedDocumentContent ?? file.documentContentPlainText ?? baseContent
+        : file.originalDocumentContent ?? file.documentContentPlainText ?? baseContent,
+    contentHtml:
+      activeDocumentVersion === 'exploded'
+        ? ensureSafeDocumentHtml(file.explodedDocumentContent ?? file.documentContentHtml ?? baseContent)
+        : ensureSafeDocumentHtml(file.originalDocumentContent ?? file.documentContentHtml ?? baseContent),
+  };
 };
 
 export const getTagColor = (tag: CaseResolverTag): string => {
@@ -156,8 +529,7 @@ export const getTagColor = (tag: CaseResolverTag): string => {
 };
 
 export const canEditDocument = (file: CaseResolverFile): boolean => {
-  // Logic for whether document can be edited
-  return !file.isArchived;
+  return !file.isLocked;
 };
 
 export const isHtmlContent = (content: string): boolean => {

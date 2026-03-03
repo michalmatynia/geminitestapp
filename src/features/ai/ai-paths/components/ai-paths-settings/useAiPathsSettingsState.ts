@@ -285,7 +285,7 @@ export function useAiPathsSettingsState({
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async () => {
-      const response = await triggerButtonsApi.list();
+      const response = await triggerButtonsApi.list({ entityType: 'custom' });
       if (!response.ok) throw new Error(response.error);
       return response.data;
     },

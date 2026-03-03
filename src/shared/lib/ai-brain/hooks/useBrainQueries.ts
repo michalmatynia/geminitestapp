@@ -1,15 +1,15 @@
 'use client';
 
-import type { AiPathRuntimeAnalyticsSummaryDto as AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
-import type { AnalyticsSummaryDto as AnalyticsSummary } from '@/shared/contracts/analytics';
-import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AnalyticsSummary } from '@/shared/contracts/analytics';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
   BrainOperationsOverviewResponse,
   BrainOperationsRange,
   BrainModelsResponse,
   InsightsSnapshot,
 } from '@/shared/contracts/ai-brain';
-import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
+import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

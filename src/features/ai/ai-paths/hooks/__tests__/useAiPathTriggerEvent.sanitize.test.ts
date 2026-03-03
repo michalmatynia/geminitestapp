@@ -1,26 +1,36 @@
 import { describe, expect, it } from 'vitest';
 
-import { aiNodeSchema, type AiNode } from '@/shared/contracts/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 
 describe('sanitizeTriggerPathConfig', () => {
-  it('backfills legacy node timestamps and repairs stale database query config for enqueue', () => {
-    const fallbackTimestamp = '2026-03-02T05:57:46.562Z';
+  it('rejects deprecated database snapshot and provider payloads', () => {
     const baseConfig = createDefaultPathConfig('path_legacy_trigger');
     const legacyConfig = {
       ...baseConfig,
-      updatedAt: fallbackTimestamp,
       nodes: [
         {
           id: 'node-regex-legacy',
           type: 'regex',
+          title: 'Regex JSON Extract',
+          description: '',
           position: { x: 0, y: 0 },
+          data: {},
+          inputs: ['value', 'prompt', 'regexCallback'],
+          outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+          createdAt: '2026-03-02T05:57:46.562Z',
+          updatedAt: null,
         },
         {
           id: 'node-database-legacy',
           type: 'database',
+          title: 'Database Query',
+          description: '',
           position: { x: 320, y: 0 },
+          data: {},
+          inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
+          outputs: ['result', 'bundle'],
           config: {
             database: {
               operation: 'query',
@@ -43,6 +53,8 @@ describe('sanitizeTriggerPathConfig', () => {
               },
             },
           },
+          createdAt: '2026-03-02T05:57:46.562Z',
+          updatedAt: null,
         },
       ] as unknown as AiNode[],
       edges: [
@@ -56,26 +68,10 @@ describe('sanitizeTriggerPathConfig', () => {
       ],
     };
 
-    const sanitized = sanitizeTriggerPathConfig(legacyConfig);
-    const regexNode = sanitized.nodes.find((node: AiNode) => node.type === 'regex');
-    const databaseNode = sanitized.nodes.find((node: AiNode) => node.type === 'database');
-
-    expect(regexNode).toBeTruthy();
-    expect(databaseNode).toBeTruthy();
-    expect(regexNode?.createdAt).toBe(fallbackTimestamp);
-    expect(regexNode?.updatedAt).toBeNull();
-    expect(databaseNode?.createdAt).toBe(fallbackTimestamp);
-    expect(databaseNode?.updatedAt).toBeNull();
-    expect(databaseNode?.config?.database?.query?.provider).toBe('auto');
-    expect(databaseNode?.config?.database).not.toHaveProperty('schemaSnapshot');
-
-    sanitized.nodes.forEach((node: AiNode) => {
-      const parsed = aiNodeSchema.safeParse(node);
-      expect(parsed.success).toBe(true);
-    });
+    expect(() => sanitizeTriggerPathConfig(legacyConfig)).toThrowError(/deprecated database/i);
   });
 
-  it('does not rewrite renamed legacy EN->PL translation paths before trigger preflight', () => {
+  it('keeps canonical trigger configs unchanged', () => {
     const config = createDefaultPathConfig('path_translation_v2');
     config.name = 'Translation EN->PL Description + Parameters v2';
     config.nodes = [
@@ -88,6 +84,8 @@ describe('sanitizeTriggerPathConfig', () => {
         data: {},
         inputs: ['value', 'prompt', 'regexCallback'],
         outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        createdAt: '2026-03-02T05:57:46.562Z',
+        updatedAt: null,
       } as AiNode,
       {
         id: 'node-db-update-translate-en-pl',
@@ -98,6 +96,8 @@ describe('sanitizeTriggerPathConfig', () => {
         data: {},
         inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
         outputs: ['result', 'bundle'],
+        createdAt: '2026-03-02T05:57:46.562Z',
+        updatedAt: null,
         config: {
           database: {
             operation: 'update',
@@ -131,11 +131,13 @@ describe('sanitizeTriggerPathConfig', () => {
       },
     ];
 
+    const snapshotBeforeSanitize = JSON.parse(JSON.stringify(config));
     const sanitized = sanitizeTriggerPathConfig(config);
     const databaseNode = sanitized.nodes.find(
       (node: AiNode): boolean => node.id === 'node-db-update-translate-en-pl'
     );
 
+    expect(sanitized).toEqual(snapshotBeforeSanitize);
     expect(databaseNode?.config?.database?.updatePayloadMode).not.toBe('custom');
     expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
       '"description_pl": "{{value.description_pl}}"'

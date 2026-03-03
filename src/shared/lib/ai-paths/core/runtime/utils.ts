@@ -19,7 +19,10 @@ export {
   appendInputValue,
   cloneValue,
   getPortDataTypes,
+  getValueAtMappingPath,
   isValueCompatibleWithTypes,
+  renderTemplate,
+  safeStringify,
 } from '../utils';
 
 export const looksLikeObjectId = (value: unknown): boolean =>

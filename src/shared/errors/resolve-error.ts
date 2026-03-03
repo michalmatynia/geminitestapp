@@ -285,6 +285,30 @@ function resolvePrismaError(
     };
   }
 
+  // Prisma validation (for example invalid enum/input values)
+  if (error.constructor.name === 'PrismaClientValidationError') {
+    return {
+      errorId,
+      message: 'Invalid request payload',
+      code: AppErrorCodes.validation,
+      httpStatus: 400,
+      expected: true,
+      critical: false,
+      retryable: false,
+      category: ERROR_CATEGORY.VALIDATION,
+      suggestedActions: [
+        {
+          label: 'Check Input',
+          description:
+            'Please review the request payload and ensure all fields use valid values.',
+          actionType: 'VERIFY_INPUT_DATA',
+        },
+      ],
+      ...(code ? { meta: { prismaCode: code } } : {}),
+      cause: error,
+    };
+  }
+
   // Generic database error
   return {
     errorId,

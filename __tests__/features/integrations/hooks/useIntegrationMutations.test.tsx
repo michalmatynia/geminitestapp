@@ -12,13 +12,17 @@ import {
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-vi.mock('@/shared/lib/api-client', () => ({
-  api: {
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+vi.mock('@/shared/lib/api-client', () => {
+  class ApiError extends Error {}
+  return {
+    ApiError,
+    api: {
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
 
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({

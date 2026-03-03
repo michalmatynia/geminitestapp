@@ -203,9 +203,18 @@ const isAddressOwnerPresent = (
   return eventIds.has(ownerId);
 };
 
+type NormalizeFilemakerDatabaseOptions = {
+  rejectLegacyInlinePayloads?: boolean;
+  stripCompatibilityFields?: boolean;
+};
+
 export const normalizeFilemakerDatabase = (
-  value: FilemakerDatabase | null | undefined
+  value: FilemakerDatabase | null | undefined,
+  options: NormalizeFilemakerDatabaseOptions = {}
 ): FilemakerDatabase => {
+  const rejectLegacyInlinePayloads = options.rejectLegacyInlinePayloads === true;
+  const stripCompatibilityFields = options.stripCompatibilityFields === true;
+
   if (!value || typeof value !== 'object') {
     return createDefaultFilemakerDatabase();
   }
@@ -234,41 +243,45 @@ export const normalizeFilemakerDatabase = (
     valueRecord['eventOrganizationLinks']
   );
 
-  if ([...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)) {
+  if (
+    rejectLegacyInlinePayloads &&
+    [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)
+  ) {
     throw validationError('Legacy Filemaker fullAddress payloads are no longer supported.');
   }
 
   if (
-    rawAddressLinks.length === 0 &&
+    rejectLegacyInlinePayloads &&
     [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)
   ) {
+    throw validationError('Legacy Filemaker inline address payloads are no longer supported.');
+  }
+
+  if (
+    rejectLegacyInlinePayloads &&
+    rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
+  ) {
     throw validationError(
-      'Legacy Filemaker inline address payloads are no longer supported without addressLinks.'
+      'Legacy Filemaker inline person phoneNumbers payloads are no longer supported.'
     );
   }
 
   if (
-    rawPhoneNumberLinks.length === 0 &&
-    rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
+    rejectLegacyInlinePayloads &&
+    rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
   ) {
-    throw validationError(
-      'Legacy Filemaker inline person phoneNumbers payloads are no longer supported without phoneNumberLinks.'
-    );
-  }
-
-  if (rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)) {
     throw validationError(
       'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported.'
     );
   }
 
-  if (rawPersons.some(hasInlineEmailFields)) {
+  if (rejectLegacyInlinePayloads && rawPersons.some(hasInlineEmailFields)) {
     throw validationError(
       'Legacy Filemaker inline person email payloads are no longer supported.'
     );
   }
 
-  if (rawOrganizations.some(hasInlineEmailFields)) {
+  if (rejectLegacyInlinePayloads && rawOrganizations.some(hasInlineEmailFields)) {
     throw validationError(
       'Legacy Filemaker inline organization email payloads are no longer supported.'
     );
@@ -766,12 +779,52 @@ export const normalizeFilemakerDatabase = (
   });
 
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
+  const outputPersons = stripCompatibilityFields
+    ? syncedPersons.map(
+      (person: FilemakerPerson): FilemakerPerson => ({
+        ...person,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+        phoneNumbers: [],
+      })
+    )
+    : syncedPersons;
+  const outputOrganizations = stripCompatibilityFields
+    ? resolvedOrganizations.map(
+      (organization: FilemakerOrganization): FilemakerOrganization => ({
+        ...organization,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+      })
+    )
+    : resolvedOrganizations;
+  const outputEvents = stripCompatibilityFields
+    ? resolvedEvents.map(
+      (event: FilemakerEvent): FilemakerEvent => ({
+        ...event,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+      })
+    )
+    : resolvedEvents;
 
   return {
     version: 2,
-    persons: syncedPersons,
-    organizations: resolvedOrganizations,
-    events: resolvedEvents,
+    persons: outputPersons,
+    organizations: outputOrganizations,
+    events: outputEvents,
     addresses,
     addressLinks,
     phoneNumbers,
@@ -781,3 +834,10 @@ export const normalizeFilemakerDatabase = (
     eventOrganizationLinks,
   };
 };
+
+export const toPersistedFilemakerDatabase = (
+  value: FilemakerDatabase | null | undefined
+): FilemakerDatabase =>
+  normalizeFilemakerDatabase(value, {
+    stripCompatibilityFields: true,
+  });

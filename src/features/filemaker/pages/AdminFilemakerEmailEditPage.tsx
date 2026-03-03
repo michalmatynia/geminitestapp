@@ -25,6 +25,7 @@ import {
   linkFilemakerEmailToParty,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
+  toPersistedFilemakerDatabase,
 } from '../settings';
 import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 
@@ -173,7 +174,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
     try {
       await updateSetting.mutateAsync({
         key: FILEMAKER_DATABASE_KEY,
-        value: JSON.stringify(linkedDatabase),
+        value: JSON.stringify(toPersistedFilemakerDatabase(linkedDatabase)),
       });
       toast('Email updated.', { variant: 'success' });
       router.push('/admin/filemaker/emails');

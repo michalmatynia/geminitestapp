@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defaultPromptExploderSettings,
+  parsePromptExploderSettings,
   parsePromptExploderSettingsResult,
 } from '../settings';
 
@@ -72,5 +73,32 @@ describe('parsePromptExploderSettingsResult', () => {
 
     expect(parsed.error?.code).toBe('invalid_shape');
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
+  });
+});
+
+describe('parsePromptExploderSettings', () => {
+  it('returns defaults for empty payloads', () => {
+    expect(parsePromptExploderSettings(null)).toEqual(defaultPromptExploderSettings);
+    expect(parsePromptExploderSettings('')).toEqual(defaultPromptExploderSettings);
+  });
+
+  it('throws for invalid non-empty payloads', () => {
+    expect(() => parsePromptExploderSettings('{"broken"')).toThrowError(
+      /not valid json/i
+    );
+  });
+
+  it('throws for deprecated AI snapshot keys in non-empty payloads', () => {
+    expect(() =>
+      parsePromptExploderSettings(
+        JSON.stringify({
+          ...defaultPromptExploderSettings,
+          ai: {
+            ...defaultPromptExploderSettings.ai,
+            provider: 'openai',
+          },
+        })
+      )
+    ).toThrowError(/deprecated ai snapshot keys/i);
   });
 });

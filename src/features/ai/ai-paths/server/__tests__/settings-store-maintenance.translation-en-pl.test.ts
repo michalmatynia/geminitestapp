@@ -79,16 +79,19 @@ const buildSettingsRecords = (): AiPathsSettingRecord[] => [
 ];
 
 describe('AI Paths maintenance forward-only action ids', () => {
-  it('does not surface legacy migration actions and still reports canonical upgrade actions', () => {
+  it('does not surface removed runtime input contract migration actions', () => {
     const report = buildAiPathsMaintenanceReport(buildSettingsRecords());
 
     expect(report.actions.some((action) => action.id === 'migrate_legacy_starter_workflows')).toBe(
       false
     );
+    expect(report.actions.some((action) => action.id === 'upgrade_runtime_input_contracts')).toBe(
+      false
+    );
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'upgrade_runtime_input_contracts',
+          id: 'upgrade_server_execution_mode',
           affectedRecords: 1,
         }),
       ])
@@ -103,10 +106,10 @@ describe('AI Paths maintenance forward-only action ids', () => {
         'upgrade_translation_en_pl',
         'ensure_parameter_inference_defaults',
         'unknown',
-        'upgrade_runtime_input_contracts',
+        'upgrade_server_execution_mode',
         'upgrade_runtime_input_contracts',
       ] as unknown as AiPathsMaintenanceActionId[]
     );
-    expect(resolved).toEqual(['upgrade_runtime_input_contracts']);
+    expect(resolved).toEqual(['upgrade_server_execution_mode']);
   });
 });

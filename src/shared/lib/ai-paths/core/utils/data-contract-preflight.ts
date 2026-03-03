@@ -47,17 +47,13 @@ const normalizeNonEmptyString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.from) ?? normalizeNonEmptyString(edge.source);
+const resolveEdgeFromNodeId = (edge: Edge): string | null => normalizeNonEmptyString(edge.from);
 
-const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.to) ?? normalizeNonEmptyString(edge.target);
+const resolveEdgeToNodeId = (edge: Edge): string | null => normalizeNonEmptyString(edge.to);
 
-const resolveEdgeFromPort = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.fromPort) ?? normalizeNonEmptyString(edge.sourceHandle);
+const resolveEdgeFromPort = (edge: Edge): string | null => normalizeNonEmptyString(edge.fromPort);
 
-const resolveEdgeToPort = (edge: Edge): string | null =>
-  normalizeNonEmptyString(edge.toPort) ?? normalizeNonEmptyString(edge.targetHandle);
+const resolveEdgeToPort = (edge: Edge): string | null => normalizeNonEmptyString(edge.toPort);
 
 const resolveNodeLabel = (node: AiNode | undefined, fallbackNodeId: string): string => {
   const title =

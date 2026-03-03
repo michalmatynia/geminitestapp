@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { CodeFirstRegistryBackend } from './backend';
 
 import { pageNodes } from './definitions/pages';

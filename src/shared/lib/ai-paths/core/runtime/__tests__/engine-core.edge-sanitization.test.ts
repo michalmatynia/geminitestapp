@@ -59,7 +59,7 @@ describe('engine-core edge sanitization', () => {
     expect(result.outputs?.['node-delay']?.['value']).toBe('hello');
   });
 
-  it('forwards data when edges are provided in source/target format', async () => {
+  it('does not wire data when edges use deprecated source/target format', async () => {
     const nodes = buildNodes();
     const edges: Edge[] = [
       {
@@ -77,7 +77,6 @@ describe('engine-core edge sanitization', () => {
       reportAiPathsError: (): void => {},
     });
 
-    expect(result.status).toBe('completed');
-    expect(result.outputs?.['node-delay']?.['value']).toBe('hello');
+    expect(result.outputs?.['node-delay']?.['value']).not.toBe('hello');
   });
 });

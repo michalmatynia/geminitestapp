@@ -311,6 +311,17 @@ export const dbApi = {
   query: databaseQuery,
   update: databaseUpdate,
   fetchSchema,
+  browse: async (
+    collection: string,
+    args?: { provider?: string; limit?: number; skip?: number; query?: string }
+  ) =>
+    browseDatabase({
+      collection,
+      ...(args?.provider ? { provider: args.provider } : {}),
+      ...(typeof args?.limit === 'number' ? { limit: args.limit } : {}),
+      ...(typeof args?.skip === 'number' ? { skip: args.skip } : {}),
+      ...(typeof args?.query === 'string' ? { query: args.query } : {}),
+    }),
   browseDatabase,
   schema: fetchSchema,
 };
@@ -326,33 +337,53 @@ export const entityApi = {
 };
 
 export const settingsApi = {
-  fetchSettings,
-  updateSetting
+  list: fetchSettings,
+  update: updateSetting
 };
 
 export const triggerButtonsApi = {
-  fetchTriggerButtons,
-  createTriggerButton,
-  updateTriggerButton,
-  deleteTriggerButton,
-  reorderTriggerButtons
+  list: fetchTriggerButtons,
+  create: createTriggerButton,
+  update: updateTriggerButton,
+  delete: deleteTriggerButton,
+  remove: deleteTriggerButton,
+  reorder: (
+    payload:
+      | string[]
+      | {
+        orderedIds?: string[];
+        buttonIds?: string[];
+      }
+  ) => {
+    if (Array.isArray(payload)) {
+      return reorderTriggerButtons({ orderedIds: payload });
+    }
+    if (Array.isArray(payload.orderedIds)) {
+      return reorderTriggerButtons({ orderedIds: payload.orderedIds });
+    }
+    return reorderTriggerButtons({ orderedIds: payload.buttonIds ?? [] });
+  }
 };
 
 export const aiJobsApi = {
   enqueue: async (payload: unknown) => apiPost<{ jobId: string }>('/api/ai/jobs/enqueue', payload),
-  poll: async (jobId: string) => apiFetch<{ status: string; result?: unknown }>(`/api/ai/jobs/${jobId}/poll`),
+  poll: async (jobId: string, options?: { signal?: AbortSignal }) => 
+    apiFetch<{ status: string; result?: unknown; error?: string }>(`/api/ai/jobs/${jobId}/poll`, options),
   get: async (jobId: string) => apiFetch<{ job: unknown }>(`/api/ai/jobs/${jobId}`),
   list: async () => apiFetch<{ jobs: unknown[] }>('/api/ai/jobs'),
 };
 
 export const agentApi = {
+  enqueue: enqueueAgentRun,
   enqueueAgentRun,
   enqueuePlaywrightRun,
-  fetchPlaywrightRun
+  get: fetchPlaywrightRun,
+  poll: fetchPlaywrightRun,
 };
 
 export const learnerAgentsApi = {
-  async list() { return { ok: true, data: { agents: [] } }; }
+  list: async () => { return { ok: true, data: { agents: [] } }; },
+  chat: async (payload: unknown) => apiPost<unknown>('/api/ai/learner-agents/chat', payload),
 };
 
 export const aiPathsApi = {
@@ -360,10 +391,13 @@ export const aiPathsApi = {
 };
 
 export const aiGenerationApi = {
-  async generate() { return { ok: true, data: { result: '' } }; }
+  async generate() { return { ok: true, data: { result: '' } }; },
+  updateProductDescription: async (productId: string, description: string) => 
+    apiPatch<unknown>(`/api/products/${productId}`, { description }),
 };
 
 export const playwrightNodeApi = {
   enqueue: enqueuePlaywrightRun,
   get: fetchPlaywrightRun,
+  poll: fetchPlaywrightRun,
 };

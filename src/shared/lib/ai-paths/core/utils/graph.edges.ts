@@ -9,23 +9,13 @@ const coerceEdgeList = (edges: unknown): Edge[] => {
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const edgeList = coerceEdgeList(edges);
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
-  const resolveNodeId = (
-    primary: string | undefined,
-    fallback: string | undefined
-  ): string | null => {
-    const first = typeof primary === 'string' ? primary.trim() : '';
-    if (first.length > 0) return first;
-    const second = typeof fallback === 'string' ? fallback.trim() : '';
-    return second.length > 0 ? second : null;
+  const resolveNodeId = (value: string | undefined): string | null => {
+    const first = typeof value === 'string' ? value.trim() : '';
+    return first.length > 0 ? first : null;
   };
-  const resolvePort = (
-    primary: string | null | undefined,
-    fallback: string | null | undefined
-  ): string | null => {
-    const first = typeof primary === 'string' ? normalizePortName(primary) : '';
-    if (first.length > 0) return first;
-    const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
-    return second.length > 0 ? second : null;
+  const resolvePort = (value: string | null | undefined): string | null => {
+    const normalized = typeof value === 'string' ? normalizePortName(value) : '';
+    return normalized.length > 0 ? normalized : null;
   };
   const toCanonicalEdge = (
     edge: Edge,
@@ -37,20 +27,18 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     ...edge,
     from: fromNodeId,
     to: toNodeId,
-    source: fromNodeId,
-    target: toNodeId,
-    ...(fromPort ? { fromPort, sourceHandle: fromPort } : {}),
-    ...(toPort ? { toPort, targetHandle: toPort } : {}),
+    ...(fromPort ? { fromPort } : {}),
+    ...(toPort ? { toPort } : {}),
   });
   return edgeList.flatMap((edge: Edge) => {
-    const fromNodeId = resolveNodeId(edge.from, edge.source);
-    const toNodeId = resolveNodeId(edge.to, edge.target);
+    const fromNodeId = resolveNodeId(edge.from);
+    const toNodeId = resolveNodeId(edge.to);
     if (!fromNodeId || !toNodeId) return [];
     const from = nodeMap.get(fromNodeId);
     const to = nodeMap.get(toNodeId);
     if (!from || !to) return [];
-    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle) ?? undefined;
-    const toPort = resolvePort(edge.toPort, edge.targetHandle) ?? undefined;
+    const fromPort = resolvePort(edge.fromPort) ?? undefined;
+    const toPort = resolvePort(edge.toPort) ?? undefined;
 
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {

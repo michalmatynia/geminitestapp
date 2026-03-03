@@ -218,17 +218,13 @@ export function useCanvasBoardState({
           const toPort =
             typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
               ? edge.toPort
-              : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
-                ? edge.targetHandle
-                : null;
+              : null;
           if (toNodeId !== nodeId || toPort !== port) return;
           const fromNodeId = typeof edge.from === 'string' ? edge.from : null;
           const fromPort =
             typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
               ? edge.fromPort
-              : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
-                ? edge.sourceHandle
-                : null;
+              : null;
           if (!fromNodeId || !fromPort) return;
           const upstreamValue = readRuntimePortValue('outputs', fromNodeId, fromPort);
           if (upstreamValue !== undefined) {

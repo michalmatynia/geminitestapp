@@ -55,7 +55,8 @@ type MongoSystemLogDoc = {
 };
 
 const isMissingPrismaTable = (error: unknown): boolean =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2021';
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  (error.code === 'P2021' || error.code === 'P2022');
 
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
@@ -555,14 +556,16 @@ export async function createSystemLog(input: CreateSystemLogInput): Promise<Syst
       updatedAt: null,
     } as SystemLogRecord);
   } catch (error) {
-    if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
-      const mongo = await getMongoDb();
-      await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
-        _id: toMongoId(payload.id),
-        ...payload,
-        createdAt: new Date(payload.createdAt || Date.now()),
-        updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
-      } as OptionalId<MongoSystemLogDoc>);
+    if (isMissingPrismaTable(error)) {
+      if (process.env['MONGODB_URI']) {
+        const mongo = await getMongoDb();
+        await mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION).insertOne({
+          _id: toMongoId(payload.id),
+          ...payload,
+          createdAt: new Date(payload.createdAt || Date.now()),
+          updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
+        } as OptionalId<MongoSystemLogDoc>);
+      }
       return normalizeLogRecord(payload);
     }
     throw error;

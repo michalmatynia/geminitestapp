@@ -3,7 +3,6 @@ import 'server-only';
 
 import {
   evaluateRunPreflight,
-  migrateTriggerToFetcherGraph,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   palette,
@@ -230,9 +229,8 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
 
     const rawEdges = input.edges ?? [];
     const normalizedNodes = normalizeNodes(input.nodes ?? []);
-    const migratedGraph = migrateTriggerToFetcherGraph(normalizedNodes, rawEdges);
     const identityRepair = repairPathNodeIdentities(
-      buildIdentityRepairSeed(input, migratedGraph.nodes, migratedGraph.edges),
+      buildIdentityRepairSeed(input, normalizedNodes, rawEdges),
       { palette }
     );
     const nodes = normalizeNodes(identityRepair.config.nodes);

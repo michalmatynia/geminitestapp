@@ -13,7 +13,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
     'compact_oversized_configs',
     'repair_path_index',
     'ensure_starter_workflow_defaults',
-    'upgrade_runtime_input_contracts',
     'upgrade_server_execution_mode',
   ] as const,
   inspectAiPathsSettingsMaintenance: inspectAiPathsSettingsMaintenanceMock,
@@ -55,7 +54,7 @@ describe('ai-paths maintenance handler', () => {
 
   it('passes canonical maintenance action ids to apply', async () => {
     applyAiPathsSettingsMaintenanceMock.mockResolvedValue({
-      appliedActionIds: ['upgrade_runtime_input_contracts'],
+      appliedActionIds: ['upgrade_server_execution_mode'],
       report: {
         scannedAt: '2026-03-03T10:00:00.000Z',
         pendingActions: 0,
@@ -67,14 +66,14 @@ describe('ai-paths maintenance handler', () => {
     const response = await POST_handler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
-        body: JSON.stringify({ actionIds: ['upgrade_runtime_input_contracts'] }),
+        body: JSON.stringify({ actionIds: ['upgrade_server_execution_mode'] }),
       }) as Parameters<typeof POST_handler>[0],
       {} as Parameters<typeof POST_handler>[1]
     );
 
     expect(response.status).toBe(200);
     expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith([
-      'upgrade_runtime_input_contracts',
+      'upgrade_server_execution_mode',
     ]);
   });
 
@@ -91,4 +90,3 @@ describe('ai-paths maintenance handler', () => {
     expect(applyAiPathsSettingsMaintenanceMock).not.toHaveBeenCalled();
   });
 });
-

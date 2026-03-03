@@ -15,16 +15,14 @@ export const agentPersonaSchema = namedDtoSchema.extend({
   settings: z.lazy(() => agentPersonaSettingsSchema).optional(),
 });
 
-export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;
-export type AgentPersona = AgentPersonaDto;
+export type AgentPersona = z.infer<typeof agentPersonaSchema>;
 
 export const agentPersonaSettingsSchema = z.object({
   personaId: z.string().optional(),
   customInstructions: z.string().optional(),
 }).strict();
 
-export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;
-export type AgentPersonaSettings = AgentPersonaSettingsDto;
+export type AgentPersonaSettings = z.infer<typeof agentPersonaSettingsSchema>;
 
 export const AGENT_PERSONA_SETTINGS_KEY = 'agent_personas';
 
@@ -36,8 +34,8 @@ export const createAgentPersonaSchema = agentPersonaSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAgentPersonaDto = z.infer<typeof createAgentPersonaSchema>;
-export type UpdateAgentPersonaDto = Partial<CreateAgentPersonaDto>;
+export type CreateAgentPersona = z.infer<typeof createAgentPersonaSchema>;
+export type UpdateAgentPersona = Partial<CreateAgentPersona>;
 
 export const agentSchema = namedDtoSchema.extend({
   personaId: z.string(),
@@ -47,8 +45,7 @@ export const agentSchema = namedDtoSchema.extend({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type AgentDto = z.infer<typeof agentSchema>;
-export type AgentRecord = AgentDto;
+export type Agent = z.infer<typeof agentSchema>;
 
 export const createAgentSchema = agentSchema.omit({
   id: true,
@@ -56,8 +53,8 @@ export const createAgentSchema = agentSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAgentDto = z.infer<typeof createAgentSchema>;
-export type UpdateAgentDto = Partial<CreateAgentDto>;
+export type CreateAgent = z.infer<typeof createAgentSchema>;
+export type UpdateAgent = Partial<CreateAgent>;
 
 export const executeAgentSchema = z.object({
   agentId: z.string(),
@@ -65,4 +62,4 @@ export const executeAgentSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type ExecuteAgentDto = z.infer<typeof executeAgentSchema>;
+export type ExecuteAgent = z.infer<typeof executeAgentSchema>;

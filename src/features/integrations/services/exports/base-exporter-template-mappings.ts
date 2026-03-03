@@ -127,3 +127,5 @@ export const resolveBaseExporterTemplateMappings = (
 
   return result;
 };
+
+export const applyExportTemplateMappings = resolveBaseExporterTemplateMappings;

@@ -103,7 +103,7 @@ describe('SelectModal', () => {
       />
     );
 
-    expect(screen.getAllByText('Loading...').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Loading options...').length).toBeGreaterThan(0);
   });
 
   it('disables disabled options', () => {

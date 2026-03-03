@@ -10,6 +10,9 @@ import type {
   DatabasePreviewTable,
   DatabaseTablePreviewData,
   DatabaseEnumInfo,
+  DatabaseConfig,
+  DatabaseData,
+  DatabasePagination,
 } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -17,12 +20,6 @@ import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
 // --- Granular Contexts ---
 
-export interface DatabaseConfig {
-  dbType: DatabaseType;
-  setDbType: (type: DatabaseType) => void;
-  mode: DatabasePreviewMode;
-  backupName?: string | undefined;
-}
 const ConfigContext = createContext<DatabaseConfig | null>(null);
 export const useDatabaseConfig = () => {
   const context = useContext(ConfigContext);
@@ -30,17 +27,6 @@ export const useDatabaseConfig = () => {
   return context;
 };
 
-export interface DatabaseData {
-  tableDetails: DatabaseTableDetail[];
-  isLoading: boolean;
-  error: string | null;
-  refresh: () => void;
-  groups: DatabasePreviewGroup[];
-  tables: DatabasePreviewTable[];
-  tableRows: DatabaseTablePreviewData[];
-  enums: DatabaseEnumInfo[];
-  databaseSize: string;
-}
 const DataContext = createContext<DatabaseData | null>(null);
 export const useDatabaseData = () => {
   const context = useContext(DataContext);
@@ -48,12 +34,6 @@ export const useDatabaseData = () => {
   return context;
 };
 
-export interface DatabasePagination {
-  page: number;
-  setPage: (page: number) => void;
-  pageSize: number;
-  setPageSize: (size: number) => void;
-}
 const PaginationContext = createContext<DatabasePagination | null>(null);
 export const useDatabasePagination = () => {
   const context = useContext(PaginationContext);

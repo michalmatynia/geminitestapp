@@ -296,8 +296,12 @@ describe('AI Path Run Queue Worker', () => {
         .mockResolvedValueOnce({ queuedCount: 1, oldestQueuedAt: null })
         .mockResolvedValueOnce({ queuedCount: 2, oldestQueuedAt: null });
 
-      const globalStatus = await getAiPathRunQueueStatus({ visibility: 'global' });
+      const globalStatus = await getAiPathRunQueueStatus({
+        bypassCache: true,
+        visibility: 'global',
+      });
       const scopedStatus = await getAiPathRunQueueStatus({
+        bypassCache: true,
         visibility: 'scoped',
         userId: 'user-1',
       });

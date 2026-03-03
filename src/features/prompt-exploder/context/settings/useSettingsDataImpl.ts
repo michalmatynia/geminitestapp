@@ -1,5 +1,12 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   useSearchParams 
@@ -18,8 +25,7 @@ import {
 import { 
   PROMPT_EXPLODER_SETTINGS_KEY, 
   parsePromptExploderSettingsResult,
-  defaultPromptExploderSettings 
-} from '../settings';
+} from '../../settings';
 import { 
   VALIDATOR_PATTERN_LISTS_KEY, 
   parseValidatorPatternLists 
@@ -28,16 +34,16 @@ import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource
-} from '../validation-stack';
+} from '../../validation-stack';
 import { 
   readPromptExploderDraftPayload,
   PROMPT_EXPLODER_DRAFT_PROMPT_KEY 
-} from '../bridge';
-import { isPromptValidationStrictStackMode } from '../feature-flags';
+} from '../../bridge';
+import { isPromptValidationStrictStackMode } from '../../feature-flags';
 import { 
   resolvePromptValidationRuntime,
-} from '../prompt-validation-orchestrator';
-import { getPromptExploderRuntimeGuardrailIssue } from '../runtime-guardrails';
+} from '../../prompt-validation-orchestrator';
+import { getPromptExploderRuntimeGuardrailIssue } from '../../runtime-guardrails';
 import { 
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
@@ -48,7 +54,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { 
   LearningDraft 
 } from './SettingsDraftsContext';
-import { buildPromptExploderParserTuningDrafts } from '../parser-tuning';
+import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 
 export function useSettingsDataImpl(args: {
   settingsQuery: any;
@@ -120,7 +126,7 @@ export function useSettingsDataImpl(args: {
     const error = promptExploderSettingsResult.error;
     const raw = rawExploderSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `\${raw}::\${error.code}::\${error.message}`;
+    const signature = `${raw}::${error.code}::${error.message}`;
     if (settingsParseErrorRef.current === signature) return;
     settingsParseErrorRef.current = signature;
     logClientError(error, {
@@ -134,7 +140,7 @@ export function useSettingsDataImpl(args: {
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
 
   const validatorPatternListsHydrationSignature = useMemo(
-    () => validatorPatternLists.map((list) => `\${list.id}:\${list.scope}:\${list.updatedAt}`).join('|'),
+    () => validatorPatternLists.map((list) => `${list.id}:${list.scope}:${list.updatedAt}`).join('|'),
     [validatorPatternLists]
   );
 
@@ -312,7 +318,7 @@ export function useSettingsDataImpl(args: {
   );
 
   const availableSnapshots = useMemo((): PromptExploderPatternSnapshot[] => {
-    return (promptExploderSettings.patternSnapshots ?? []).map((snapshot) => {
+    return (promptExploderSettings.patternSnapshots ?? []).map((snapshot: any) => {
       let rules: PromptValidationRule[] = [];
       try {
         if (snapshot.rulesJson) {

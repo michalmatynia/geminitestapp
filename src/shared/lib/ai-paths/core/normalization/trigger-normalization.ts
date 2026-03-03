@@ -1,20 +1,17 @@
-import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import {
+  aiNodeSchema,
+  edgeSchema,
+  type AiNode,
+  type PathConfig,
+  type PathMeta,
+} from '@/shared/contracts/ai-paths';
+import { validationError } from '@/shared/errors/app-error';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
 } from '../constants';
-import { palette } from '../definitions';
-import {
-  backfillPathConfigNodeContracts,
-  migrateLegacyDbQueryProvider,
-  migrateTriggerToFetcherGraph,
-  normalizeNodes,
-} from '../normalization';
-import { migratePathConfigCollections } from '../utils/collection-names';
-import { sanitizeEdges } from '../utils/graph';
-import { repairPathNodeIdentities } from '../utils/node-identity';
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
   return typeof name === 'string' ? name.trim() : '';
@@ -79,129 +76,74 @@ export const resolveHistoryRetentionPasses = (
   return normalizeHistoryRetentionPasses(raw);
 };
 
-export const normalizeTriggerNodeTimestamps = (
-  nodes: AiNode[],
-  fallbackTimestamp: string
-): AiNode[] => {
-  return nodes.map((node: AiNode): AiNode => {
-    const createdAt =
-      typeof node.createdAt === 'string' && node.createdAt.trim().length > 0
-        ? node.createdAt
-        : fallbackTimestamp;
-    const updatedAt =
-      typeof node.updatedAt === 'string' && node.updatedAt.trim().length > 0 ? node.updatedAt : null;
-    return {
-      ...node,
-      createdAt,
-      updatedAt,
-    };
-  });
-};
-
-export const sanitizeTriggerDatabaseNode = (node: AiNode): AiNode => {
-  if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
-    return node;
-  }
+const assertNoDeprecatedTriggerDatabaseConfig = (node: AiNode): void => {
+  if (node.type !== 'database' || !node.config || typeof node.config !== 'object') return;
   const configRecord = node.config as Record<string, unknown>;
   const databaseConfig =
     configRecord['database'] && typeof configRecord['database'] === 'object'
       ? (configRecord['database'] as Record<string, unknown>)
       : null;
-  if (!databaseConfig) {
-    return node;
+  if (!databaseConfig) return;
+
+  if (Object.prototype.hasOwnProperty.call(databaseConfig, 'schemaSnapshot')) {
+    throw validationError('AI Path trigger payload contains deprecated database schemaSnapshot.', {
+      source: 'ai_paths.trigger_payload',
+      reason: 'deprecated_database_schema_snapshot',
+      nodeId: node.id,
+    });
   }
+
   const queryConfig =
     databaseConfig['query'] && typeof databaseConfig['query'] === 'object'
       ? (databaseConfig['query'] as Record<string, unknown>)
       : null;
-  const nextDatabaseConfig: Record<string, unknown> = { ...databaseConfig };
-  if (queryConfig) {
-    nextDatabaseConfig['query'] = migrateLegacyDbQueryProvider({
-      provider:
-        queryConfig['provider'] === 'auto' ||
-        queryConfig['provider'] === 'mongodb' ||
-        queryConfig['provider'] === 'prisma'
-          ? queryConfig['provider']
-          : 'auto',
-      collection:
-        typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
-      mode:
-        queryConfig['mode'] === 'preset' || queryConfig['mode'] === 'custom'
-          ? queryConfig['mode']
-          : 'custom',
-      preset:
-        queryConfig['preset'] === 'by_id' ||
-        queryConfig['preset'] === 'by_productId' ||
-        queryConfig['preset'] === 'by_entityId' ||
-        queryConfig['preset'] === 'by_field'
-          ? queryConfig['preset']
-          : 'by_id',
-      field: typeof queryConfig['field'] === 'string' ? queryConfig['field'] : '_id',
-      idType:
-        queryConfig['idType'] === 'string' || queryConfig['idType'] === 'objectId'
-          ? queryConfig['idType']
-          : 'string',
-      queryTemplate:
-        typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'] : '',
-      limit:
-        typeof queryConfig['limit'] === 'number' && Number.isFinite(queryConfig['limit'])
-          ? queryConfig['limit']
-          : 20,
-      sort: typeof queryConfig['sort'] === 'string' ? queryConfig['sort'] : '',
-      ...(typeof queryConfig['sortPresetId'] === 'string'
-        ? { sortPresetId: queryConfig['sortPresetId'] }
-        : {}),
-      projection: typeof queryConfig['projection'] === 'string' ? queryConfig['projection'] : '',
-      ...(typeof queryConfig['projectionPresetId'] === 'string'
-        ? { projectionPresetId: queryConfig['projectionPresetId'] }
-        : {}),
-      single: queryConfig['single'] === true,
-    });
+  if (queryConfig?.['provider'] === 'all') {
+    throw validationError(
+      'AI Path trigger payload contains deprecated database query provider "all".',
+      {
+        source: 'ai_paths.trigger_payload',
+        reason: 'deprecated_database_query_provider',
+        nodeId: node.id,
+        provider: queryConfig['provider'],
+      }
+    );
   }
-  delete nextDatabaseConfig['schemaSnapshot'];
-  const operation = typeof nextDatabaseConfig['operation'] === 'string' ? nextDatabaseConfig['operation'] : 'query';
-  return {
-    ...node,
-    config: {
-      ...configRecord,
-      database: {
-        ...nextDatabaseConfig,
-        operation,
-      },
-    },
-  };
 };
 
 export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
-  const fallbackTimestamp =
-    typeof config.updatedAt === 'string' && config.updatedAt.trim().length > 0
-      ? config.updatedAt
-      : new Date().toISOString();
-  const migratedConfig = migratePathConfigCollections(config).config;
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
-  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(
-    sanitizeTriggerDatabaseNode
+  const graphNodes = (Array.isArray(config.nodes) ? config.nodes : []).map(
+    (node: AiNode, index: number): AiNode => {
+      assertNoDeprecatedTriggerDatabaseConfig(node);
+      const parsedNode = aiNodeSchema.safeParse(node);
+      if (!parsedNode.success) {
+        throw validationError('Invalid AI Path trigger node payload.', {
+          source: 'ai_paths.trigger_payload',
+          reason: 'invalid_node',
+          index,
+          issues: parsedNode.error.flatten(),
+        });
+      }
+      return parsedNode.data;
+    }
   );
-  const identityRepair = repairPathNodeIdentities(
-    {
-      ...contractBackfilledConfig,
-      nodes: sanitizedDatabaseNodes,
-    },
-    { palette }
+
+  const graphEdges = (Array.isArray(config.edges) ? config.edges : []).map(
+    (edge: unknown, index: number) => {
+      const parsedEdge = edgeSchema.safeParse(edge);
+      if (!parsedEdge.success) {
+        throw validationError('Invalid AI Path trigger edge payload.', {
+          source: 'ai_paths.trigger_payload',
+          reason: 'invalid_edge',
+          index,
+          issues: parsedEdge.error.flatten(),
+        });
+      }
+      return parsedEdge.data;
+    }
   );
-  const repaired = identityRepair.config;
-  const normalizedNodes = normalizeTriggerNodeTimestamps(
-    normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []),
-    fallbackTimestamp
-  );
-  const migratedGraph = migrateTriggerToFetcherGraph(
-    normalizedNodes,
-    Array.isArray(repaired.edges) ? repaired.edges : []
-  );
-  const graphNodes = normalizeTriggerNodeTimestamps(normalizeNodes(migratedGraph.nodes), fallbackTimestamp);
-  const graphEdges = sanitizeEdges(graphNodes, migratedGraph.edges);
+
   return {
-    ...repaired,
+    ...config,
     nodes: graphNodes,
     edges: graphEdges,
   };

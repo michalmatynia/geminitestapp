@@ -1,5 +1,4 @@
 import { classifyError } from '@/shared/errors/error-classifier';
-import { ApiError } from '@/shared/lib/api-client';
 import { z } from 'zod';
 import type {
   TanstackCriticality,
@@ -54,6 +53,12 @@ type EmitTanstackTelemetryInput = {
   error?: unknown;
   context?: Record<string, unknown> | undefined;
   tags?: string[] | undefined;
+};
+
+type ApiErrorLike = {
+  status: number;
+  errorId?: string | null | undefined;
+  payload?: unknown;
 };
 
 type SerializableRecord = Record<string, unknown>;
@@ -148,6 +153,11 @@ const extractStatusCode = (error: unknown): number | undefined => {
   if (typeof responseStatus === 'number' && Number.isFinite(responseStatus)) return responseStatus;
   return undefined;
 };
+
+const isApiErrorLike = (error: unknown): error is ApiErrorLike =>
+  Boolean(error) &&
+  typeof error === 'object' &&
+  typeof (error as { status?: unknown }).status === 'number';
 
 const sanitizeContext = (
   context: Record<string, unknown> | undefined
@@ -401,9 +411,9 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
 
   // Extend error context with detailed info if available
   const errorContext: Record<string, unknown> = {};
-  if (input.error instanceof ApiError) {
+  if (isApiErrorLike(input.error)) {
     errorContext['apiStatus'] = input.error.status;
-    errorContext['apiErrorId'] = input.error.errorId;
+    errorContext['apiErrorId'] = input.error.errorId ?? null;
     if (input.error.payload) {
       errorContext['apiPayload'] = input.error.payload;
     }

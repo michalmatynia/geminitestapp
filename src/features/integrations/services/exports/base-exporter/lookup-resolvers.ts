@@ -1,5 +1,3 @@
-'use client';
-
 import { toTrimmedString } from './template-helpers';
 
 export type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;

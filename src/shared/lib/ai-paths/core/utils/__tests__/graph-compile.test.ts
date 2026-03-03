@@ -411,7 +411,7 @@ describe('compileGraph', () => {
     ).toBe(true);
   });
 
-  it('warns when optional inputs are wired incompatibly', () => {
+  it('drops optional incompatible wiring during sanitization', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'osc-1',
@@ -439,6 +439,9 @@ describe('compileGraph', () => {
       },
     ];
 
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toEqual([]);
+
     const report = compileGraph(nodes, edges);
     expect(
       report.findings.some(
@@ -446,7 +449,7 @@ describe('compileGraph', () => {
           finding.code === 'optional_input_incompatible_wiring' &&
           finding.edgeId === 'edge-optional-invalid'
       )
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('blocks cycles that use unsupported node types', () => {

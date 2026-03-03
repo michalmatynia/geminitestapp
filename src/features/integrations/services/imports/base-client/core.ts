@@ -1,5 +1,3 @@
-'use client';
-
 import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 import { externalServiceError } from '@/shared/errors/app-error';
 import { 

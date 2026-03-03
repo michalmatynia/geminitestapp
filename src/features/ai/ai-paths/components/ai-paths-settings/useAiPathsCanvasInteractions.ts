@@ -370,8 +370,8 @@ export function useAiPathsCanvasInteractions(args: UseAiPathsCanvasInteractionsA
     handlePanMoveView(event);
   };
 
-  const handlePanEnd = (event: React.PointerEvent<HTMLDivElement>): void => {
-    handlePanEndView(event);
+  const handlePanEnd = (_event: React.PointerEvent<HTMLDivElement>): void => {
+    handlePanEndView();
     if (connecting) {
       setConnecting(null);
       setConnectingPos(null);

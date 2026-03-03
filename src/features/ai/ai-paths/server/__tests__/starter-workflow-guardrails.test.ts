@@ -39,7 +39,6 @@ describe('starter workflow guardrails', () => {
       'settings-store.repository.ts',
       'settings-store.compaction.ts',
       'settings-store-execution-mode-server.ts',
-      'settings-store-runtime-input-contracts.ts',
       'settings-store.maintenance.ts',
       'settings-store.ts',
     ]);

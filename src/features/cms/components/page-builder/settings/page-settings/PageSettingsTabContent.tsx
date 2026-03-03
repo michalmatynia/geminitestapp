@@ -142,7 +142,7 @@ export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): Reac
         <Label className='text-xs text-gray-400'>Status</Label>
         <SegmentedControl
           value={page.status}
-          onValueChange={(value: string) => handleStatusChange(value as PageStatus)}
+          onChange={(value: string) => handleStatusChange(value as PageStatus)}
           options={STATUS_OPTIONS}
           size='sm'
           className='w-full'

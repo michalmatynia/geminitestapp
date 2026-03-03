@@ -11,13 +11,13 @@ import { useToast } from '@/shared/ui';
 import {
   createFilemakerEvent,
   FILEMAKER_DATABASE_KEY,
-  normalizeFilemakerDatabase,
   parseFilemakerDatabase,
   removeFilemakerEmail,
   removeFilemakerEvent,
   removeFilemakerOrganizationEventLinks,
   removeFilemakerPartyEmailLinks,
   removeFilemakerPartyPhoneNumberLinks,
+  toPersistedFilemakerDatabase,
 } from '../settings';
 
 import type {
@@ -95,7 +95,7 @@ export function useAdminFilemakerPageState() {
       try {
         await updateSetting.mutateAsync({
           key: FILEMAKER_DATABASE_KEY,
-          value: JSON.stringify(normalizeFilemakerDatabase(next)),
+          value: JSON.stringify(toPersistedFilemakerDatabase(next)),
         });
         toast(message, { variant: 'success' });
       } catch (_error: unknown) {

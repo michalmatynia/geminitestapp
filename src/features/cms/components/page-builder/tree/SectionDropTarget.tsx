@@ -6,6 +6,7 @@ import { cn } from '@/shared/utils';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { isCmsSectionSamePositionDrop } from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
 
@@ -21,10 +22,15 @@ const PROMOTABLE_BLOCK_TYPES = [
 
 interface SectionDropTargetProps {
   zone: PageZone;
+  toParentSectionId?: string | null;
   toIndex: number;
 }
 
-export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): React.ReactNode {
+export function SectionDropTarget({
+  zone,
+  toParentSectionId = null,
+  toIndex,
+}: SectionDropTargetProps): React.ReactNode {
   const {
     showExtractPlaceholder,
     showSectionDropPlaceholder,
@@ -36,6 +42,7 @@ export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): Re
     moveSectionByMaster,
   } = useComponentTreePanelContext();
   const [isOver, setIsOver] = useState(false);
+  const { state: pbState } = usePageBuilder();
   const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
   const { sectionActions } = useTreeActions();
 
@@ -47,6 +54,8 @@ export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): Re
   const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
   const draggedSectionZone = dragState.section.zone;
   const draggedSectionIndex = dragState.section.index;
+  const draggedSection = pbState.sections.find((section) => section.id === draggedSectionId);
+  const draggedSectionParentId = draggedSection?.parentSectionId ?? null;
 
   const isDraggingBlock = Boolean(draggedBlockId);
   const isDraggingSection =
@@ -62,6 +71,10 @@ export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): Re
 
   return (
     <div
+      data-cms-section-drop-target='sibling'
+      data-cms-section-drop-zone={zone}
+      data-cms-section-drop-parent={toParentSectionId ?? 'root'}
+      data-cms-section-drop-index={String(toIndex)}
       onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
         if (isDraggingSection) {
           const sectionDrag = readSectionDragData(event.dataTransfer, {
@@ -73,12 +86,14 @@ export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): Re
           if (!dragSectionId) return;
           const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
           const dragIndex = sectionDrag.index;
-          const isSamePosition = isCmsSectionSamePositionDrop({
-            draggedZone: dragZone,
-            draggedIndex: dragIndex,
-            targetZone: zone,
-            targetIndex: toIndex,
-          });
+          const isSamePosition =
+            draggedSectionParentId === toParentSectionId &&
+            isCmsSectionSamePositionDrop({
+              draggedZone: dragZone,
+              draggedIndex: dragIndex,
+              targetZone: zone,
+              targetIndex: toIndex,
+            });
           if (isSamePosition) return;
         }
         event.preventDefault();
@@ -104,14 +119,16 @@ export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): Re
           if (!dragSectionId) return;
           const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
           const dragIndex = sectionDrag.index;
-          const isSamePosition = isCmsSectionSamePositionDrop({
-            draggedZone: dragZone,
-            draggedIndex: dragIndex,
-            targetZone: zone,
-            targetIndex: toIndex,
-          });
+          const isSamePosition =
+            draggedSectionParentId === toParentSectionId &&
+            isCmsSectionSamePositionDrop({
+              draggedZone: dragZone,
+              draggedIndex: dragIndex,
+              targetZone: zone,
+              targetIndex: toIndex,
+            });
           if (isSamePosition) return;
-          void moveSectionByMaster(dragSectionId, zone, toIndex).finally(() => {
+          void moveSectionByMaster(dragSectionId, zone, toIndex, toParentSectionId).finally(() => {
             endSectionDrag();
           });
           return;

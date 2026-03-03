@@ -11,7 +11,11 @@ import { toSlotName } from './studio-modals/prompt-extract-utils';
 import { slotHasRenderableImage } from './studio-modals/slot-inline-edit-utils';
 import { createUploadHandlers } from './studio-modals/studio-modals-upload-handlers';
 import { StudioImportPanels } from './studio-modals/StudioImportPanels';
-import { StudioImportProvider } from './studio-modals/StudioImportContext';
+import {
+  StudioImportProvider,
+  type StudioImportContextValue,
+  type StudioUploadMode,
+} from './studio-modals/StudioImportContext';
 import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
 import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
 
@@ -21,6 +25,7 @@ export function StudioModals(): React.JSX.Element {
   const {
     slots,
     selectedSlot,
+    selectedFolder,
     slotCreateOpen,
     driveImportOpen,
     driveImportMode,
@@ -54,28 +59,40 @@ export function StudioModals(): React.JSX.Element {
     });
   };
 
-  const {
-    handleDriveSelection,
-    handleCreateEmptySlot: handleCreateEmptySlotCore,
-    handleLocalUpload,
-  } = createUploadHandlers({
-    applyEnvironmentReferenceDraft: () => {}, // Handled in provider for inline edit
-    clearTemporaryUpload: async (asset: any): Promise<void> => {
+  const normalizeLocalUploadMode = (
+    mode: StudioUploadMode
+  ): 'create' | 'replace' | 'temporary-object' | 'environment' => {
+    if (mode === 'slot') return 'replace';
+    if (mode === 'assets') return 'create';
+    return mode;
+  };
+
+  const setLocalUploadModeFromImport = (mode: StudioUploadMode): void => {
+    setLocalUploadMode(normalizeLocalUploadMode(mode));
+  };
+
+  const setLocalUploadTargetIdFromImport = (targetId: string | null): void => {
+    setLocalUploadTargetId(targetId);
+  };
+
+  const uploadHandlersDeps: Parameters<typeof createUploadHandlers>[0] = {
+    applyEnvironmentReferenceDraft: () => {},
+    clearTemporaryUpload: async (asset): Promise<void> => {
       await deleteStagedAsset(asset).catch(() => {});
     },
     createSlots,
-    driveImportMode,
+    driveImportMode: normalizeLocalUploadMode(driveImportMode),
     driveImportTargetId,
     importFromDriveMutation,
     localUploadMode,
     localUploadTargetId,
-    selectedFolder: '', // From SlotsContext normally
+    selectedFolder,
     selectedSlot,
-    setDriveImportMode,
+    setDriveImportMode: (mode) => setDriveImportMode(mode),
     setDriveImportOpen,
     setDriveImportTargetId,
-    setLocalUploadMode,
-    setLocalUploadTargetId,
+    setLocalUploadMode: setLocalUploadModeFromImport,
+    setLocalUploadTargetId: setLocalUploadTargetIdFromImport,
     setSelectedSlotId,
     setTemporaryObjectUpload,
     slotHasRenderableImage,
@@ -85,45 +102,48 @@ export function StudioModals(): React.JSX.Element {
     toSlotName,
     updateSlotMutation,
     uploadMutation,
-  } as any);
+  };
+
+  const {
+    handleDriveSelection,
+    handleCreateEmptySlot: handleCreateEmptySlotCore,
+    handleLocalUpload,
+  } = createUploadHandlers(uploadHandlersDeps);
 
   const handleCreateEmptySlot = async (): Promise<void> => {
     setSlotCreateOpen(false);
     await handleCreateEmptySlotCore();
   };
 
-  const triggerLocalUpload = (
-    mode: 'create' | 'replace' | 'temporary-object' | 'environment',
-    targetId: string | null
-  ): void => {
-    setLocalUploadMode(mode);
+  const triggerLocalUpload = (mode: StudioUploadMode, targetId: string | null): void => {
+    setLocalUploadMode(normalizeLocalUploadMode(mode));
     setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
   };
 
+  const importContextValue: StudioImportContextValue = {
+    driveImportMode,
+    driveImportOpen,
+    driveImportTargetId,
+    handleCreateEmptySlot,
+    handleDriveSelection,
+    handleLocalUpload,
+    projectId: projectId ?? null,
+    selectedSlot,
+    setDriveImportMode,
+    setDriveImportOpen,
+    setDriveImportTargetId,
+    setLocalUploadMode: setLocalUploadModeFromImport,
+    setLocalUploadTargetId: setLocalUploadTargetIdFromImport,
+    setSlotCreateOpen,
+    slotCreateOpen,
+    triggerLocalUpload,
+    uploadPending: uploadMutation.isPending,
+  };
+
   return (
     <>
-      <StudioImportProvider
-        value={{
-          driveImportMode,
-          driveImportOpen,
-          driveImportTargetId,
-          handleCreateEmptySlot,
-          handleDriveSelection,
-          handleLocalUpload,
-          projectId: projectId ?? null,
-          selectedSlot,
-          setDriveImportMode,
-          setDriveImportOpen,
-          setDriveImportTargetId,
-          setLocalUploadMode,
-          setLocalUploadTargetId,
-          setSlotCreateOpen,
-          slotCreateOpen,
-          triggerLocalUpload,
-          uploadPending: uploadMutation.isPending,
-        } as any}
-      >
+      <StudioImportProvider value={importContextValue}>
         <StudioImportPanels />
       </StudioImportProvider>
 

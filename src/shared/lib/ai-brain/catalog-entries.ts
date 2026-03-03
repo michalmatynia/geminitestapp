@@ -1,7 +1,6 @@
 import type {
   AiBrainCatalogEntry,
   AiBrainCatalogPool,
-  AiBrainProviderCatalog,
 } from '@/shared/contracts/ai-brain';
 
 export const BRAIN_CATALOG_POOL_VALUES: readonly AiBrainCatalogPool[] = [
@@ -54,15 +53,7 @@ export const sanitizeCatalogEntries = (
   return output;
 };
 
-type BrainCatalogArrays = Pick<
-  AiBrainProviderCatalog,
-  | 'modelPresets'
-  | 'paidModels'
-  | 'ollamaModels'
-  | 'agentModels'
-  | 'deepthinkingAgents'
-  | 'playwrightPersonas'
->;
+export type BrainCatalogArrays = Record<AiBrainCatalogPool, string[]>;
 
 const createEmptyCatalogArrays = (): BrainCatalogArrays => ({
   modelPresets: [],
@@ -82,24 +73,11 @@ export const entriesToCatalogArrays = (entries: ReadonlyArray<AiBrainCatalogEntr
 };
 
 export const catalogToEntries = (
-  catalog: Pick<
-    AiBrainProviderCatalog,
-    'entries' | keyof BrainCatalogArrays
-  >
+  catalog: {
+    entries?: ReadonlyArray<AiBrainCatalogEntry> | null | undefined;
+  }
 ): AiBrainCatalogEntry[] => {
-  const canonicalEntries = sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
-  if (canonicalEntries.length > 0) return canonicalEntries;
-
-  return sanitizeCatalogEntries(
-    BRAIN_CATALOG_POOL_VALUES.flatMap((pool): AiBrainCatalogEntry[] => {
-      const poolValues = catalog[pool];
-      if (!Array.isArray(poolValues)) return [];
-      return poolValues.map((value) => ({
-        pool,
-        value: String(value ?? ''),
-      }));
-    })
-  );
+  return sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
 };
 
 export const hasCatalogPoolEntries = (

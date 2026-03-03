@@ -1,4 +1,5 @@
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
+import { validationError } from '@/shared/errors/app-error';
 import {
   CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
@@ -73,13 +74,6 @@ const resolveRelationNodeType = (entityType: CaseResolverRelationEntityType): Ai
 const hasKnownRelationNodeType = (value: string): value is AiNode['type'] =>
   Object.prototype.hasOwnProperty.call(typeStyles, value);
 
-const sanitizeRelationNodeType = (value: unknown): AiNode['type'] => {
-  if (typeof value !== 'string') return 'template';
-  const normalized = value.trim();
-  if (normalized.length === 0) return 'template';
-  return hasKnownRelationNodeType(normalized) ? normalized : 'template';
-};
-
 const sanitizeRelationNodes = (value: unknown): AiNode[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -96,6 +90,16 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
         ? record['title'].trim()
         : `Relation ${index + 1}`;
     const description = typeof record['description'] === 'string' ? record['description'] : '';
+    const rawType = typeof record['type'] === 'string' ? record['type'].trim() : '';
+    if (!rawType || !hasKnownRelationNodeType(rawType)) {
+      throw validationError('Invalid Case Resolver relation graph node type.', {
+        source: 'case_resolver.relation_graph',
+        reason: 'invalid_node_type',
+        index,
+        nodeId: rawId,
+        nodeType: rawType || null,
+      });
+    }
     const positionRecord =
       record['position'] && typeof record['position'] === 'object'
         ? (record['position'] as Record<string, unknown>)
@@ -135,7 +139,7 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
       id: rawId,
       createdAt,
       updatedAt,
-      type: sanitizeRelationNodeType(record['type']),
+      type: rawType,
       title,
       description,
       inputs: inputs.length > 0 ? inputs : ['in'],

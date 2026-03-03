@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { ObjectId, type Filter } from 'mongodb';
 import {
   CategoryMapping,

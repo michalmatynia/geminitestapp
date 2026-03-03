@@ -10,11 +10,11 @@ import React, {
 import type {
   IntegrationsContextType,
 } from '@/features/integrations/context/integrations-context-types';
+import type { IntegrationsData } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
 import {
   IntegrationsDataContext,
-  type IntegrationsData,
 } from './integrations/IntegrationsDataContext';
 import {
   IntegrationsFormContext,

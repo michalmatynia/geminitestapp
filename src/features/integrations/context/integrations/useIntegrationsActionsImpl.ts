@@ -8,7 +8,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   Integration, 
   IntegrationConnection, 
@@ -76,8 +75,6 @@ export function useIntegrationsActionsImpl(args: {
   integrationsQuery: any;
 }) {
   const { toast } = useToast();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const router = useRouter();
 
   const createIntegrationMutation = useCreateIntegration();
   const upsertConnectionMutation = useUpsertConnection();

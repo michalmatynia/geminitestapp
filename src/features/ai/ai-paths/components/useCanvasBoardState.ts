@@ -300,6 +300,7 @@ export function useCanvasBoardState({
     selectedEdgeId: selectionState.selectedEdgeId,
     selectionToolMode: selectionState.selectionToolMode,
     selectEdge: selectionActions.selectEdge,
+    clearNodeSelection: selectionActions.clearNodeSelection,
     setConfigOpen: selectionActions.setConfigOpen,
     edgeRoutingMode,
     setEdgeRoutingMode,

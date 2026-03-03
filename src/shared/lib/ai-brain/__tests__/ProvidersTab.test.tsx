@@ -45,12 +45,6 @@ describe('ProvidersTab', () => {
       { pool: 'modelPresets', value: 'gpt-4o-mini' },
       { pool: 'paidModels', value: 'gpt-4.1' },
     ],
-    modelPresets: ['gpt-4o-mini'],
-    paidModels: ['gpt-4.1'],
-    ollamaModels: [],
-    agentModels: [],
-    deepthinkingAgents: [],
-    playwrightPersonas: [],
   };
 
   beforeEach(() => {

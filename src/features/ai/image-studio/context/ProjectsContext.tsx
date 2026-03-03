@@ -12,8 +12,12 @@ import {
 } from 'react';
 
 import {
+  type CreateStudioProjectPayload,
+  type CreateStudioProjectResult,
   type ResizeStudioProjectCanvasPayload,
   type ResizeStudioProjectCanvasResult,
+  type UpdateStudioProjectPayload,
+  type UpdateStudioProjectResult,
   useCreateStudioProject,
   useDeleteStudioProject,
   useRenameStudioProject,
@@ -25,6 +29,7 @@ import {
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -44,10 +49,13 @@ export interface ProjectsState {
 
 export interface ProjectsActions {
   setProjectId: (id: string) => void;
-  createProjectMutation: any;
-  renameProjectMutation: any;
-  deleteProjectMutation: any;
-  resizeProjectCanvasMutation: any;
+  createProjectMutation: CreateMutation<CreateStudioProjectResult, CreateStudioProjectPayload>;
+  renameProjectMutation: UpdateMutation<UpdateStudioProjectResult, UpdateStudioProjectPayload>;
+  deleteProjectMutation: DeleteMutation<string, string>;
+  resizeProjectCanvasMutation: UpdateMutation<
+    ResizeStudioProjectCanvasResult,
+    ResizeStudioProjectCanvasPayload
+  >;
   handleRenameProject: (id: string, nextId: string) => Promise<string>;
   handleResizeProjectCanvas: (
     payload: ResizeStudioProjectCanvasPayload
@@ -55,7 +63,7 @@ export interface ProjectsActions {
   handleDeleteProject: (id: string) => Promise<void>;
   handleConfirmDeleteProject: (id: string, onDeleted?: () => Promise<void>) => void;
   setProjectSearch: (s: string) => void;
-  ConfirmationModal: any;
+  ConfirmationModal: () => React.JSX.Element | null;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
@@ -230,11 +238,11 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       }
 
       try {
-        const result: any = await renameProjectMutation.mutateAsync({
+        const result = await renameProjectMutation.mutateAsync({
           projectId: sourceId,
           nextProjectId: targetId,
-        } as any);
-        const resolvedProjectId = result.projectId?.trim() || targetId;
+        });
+        const resolvedProjectId = result.projectId.trim() || targetId;
         if (projectId === sourceId) {
           setProjectId(resolvedProjectId);
         }
@@ -265,22 +273,16 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       }
 
       try {
-        const result: any = await resizeProjectCanvasMutation.mutateAsync({
+        const result = await resizeProjectCanvasMutation.mutateAsync({
           ...payload,
           projectId: normalizedProjectId,
         });
-        const resolvedProjectId = result.projectId?.trim() || normalizedProjectId;
+        const resolvedProjectId = result.projectId.trim() || normalizedProjectId;
         if (projectId === normalizedProjectId && resolvedProjectId !== normalizedProjectId) {
           setProjectId(resolvedProjectId);
         }
-        const canvasWidth =
-          typeof result.project?.canvasWidthPx === 'number'
-            ? result.project.canvasWidthPx
-            : payload.canvasWidthPx;
-        const canvasHeight =
-          typeof result.project?.canvasHeightPx === 'number'
-            ? result.project.canvasHeightPx
-            : payload.canvasHeightPx;
+        const canvasWidth = result.canvasWidthPx;
+        const canvasHeight = result.canvasHeightPx;
         if (
           typeof canvasWidth === 'number' &&
           Number.isFinite(canvasWidth) &&

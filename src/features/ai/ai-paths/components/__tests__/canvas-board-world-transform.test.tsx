@@ -99,6 +99,7 @@ const buildState = (): CanvasBoardState =>
     selectionToolMode: 'pan',
     selectedNodeIdSet: new Set<string>(),
     selectEdge: noop,
+    clearNodeSelection: noop,
     setConfigOpen: noop,
     setEdgeRoutingMode: noop as unknown as React.Dispatch<
       React.SetStateAction<'bezier' | 'orthogonal'>
@@ -227,5 +228,25 @@ describe('CanvasBoard world transform', () => {
     expect(handlePanMove.mock.calls[0]?.[0]).toBeTruthy();
     expect(handlePanEnd).toHaveBeenCalledTimes(1);
     expect(handlePanEnd.mock.calls[0]?.[0]).toBeTruthy();
+  });
+
+  it('clears node and edge selection when pointer down starts on empty canvas', () => {
+    const clearNodeSelection = vi.fn();
+    const selectEdge = vi.fn();
+    useCanvasBoardStateMock.mockReturnValue({
+      ...buildState(),
+      clearNodeSelection,
+      selectEdge,
+    });
+
+    const { container } = render(<CanvasBoard />);
+    const canvasHost = container.querySelector('div.touch-none.select-none.overscroll-none');
+    expect(canvasHost).toBeTruthy();
+    if (!canvasHost) return;
+
+    fireEvent.pointerDown(canvasHost, { clientX: 200, clientY: 200 });
+
+    expect(clearNodeSelection).toHaveBeenCalledTimes(1);
+    expect(selectEdge).toHaveBeenCalledWith(null);
   });
 });

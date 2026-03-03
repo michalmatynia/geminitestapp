@@ -1,4 +1,4 @@
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import { validationError } from '@/shared/errors/app-error';
 import { 
   FilemakerDatabase, 
   FilemakerAddress, 
@@ -16,8 +16,32 @@ import {
 import { normalizeString } from '../filemaker-settings.helpers';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 
+const parseFilemakerDatabasePayload = (raw: string | null | undefined): FilemakerDatabase | null => {
+  if (typeof raw !== 'string') return null;
+  const trimmedRaw = raw.trim();
+  if (!trimmedRaw) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmedRaw);
+  } catch {
+    throw validationError('Invalid Filemaker database JSON payload.', {
+      reason: 'invalid_json',
+    });
+  }
+
+  if (parsed === null) return null;
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw validationError('Invalid Filemaker database payload.', {
+      reason: 'invalid_root_type',
+    });
+  }
+
+  return parsed as FilemakerDatabase;
+};
+
 export const parseFilemakerDatabase = (raw: string | null | undefined): FilemakerDatabase => {
-  const parsed = parseJsonSetting<FilemakerDatabase | null>(raw, null);
+  const parsed = parseFilemakerDatabasePayload(raw);
   return normalizeFilemakerDatabase(parsed, {
     rejectLegacyInlinePayloads: true,
   });

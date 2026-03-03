@@ -162,7 +162,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       return;
     }
     try {
-      const createdProjectId = await createProjectMutation.mutateAsync({
+      const { projectId: createdProjectId } = await createProjectMutation.mutateAsync({
         projectId: id,
         canvasWidthPx,
         canvasHeightPx,

@@ -22,7 +22,12 @@ export type ComponentTreePanelContextValue = {
   startSectionMasterDrag: (sectionId: string) => void;
   endSectionMasterDrag: () => void;
   draggedMasterSectionId: string | null;
-  moveSectionByMaster: (sectionId: string, zone: PageZone, toIndex: number) => Promise<boolean>;
+  moveSectionByMaster: (
+    sectionId: string,
+    zone: PageZone,
+    toIndex: number,
+    toParentSectionId?: string | null
+  ) => Promise<boolean>;
 };
 
 const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);

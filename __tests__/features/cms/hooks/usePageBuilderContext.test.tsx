@@ -174,7 +174,10 @@ describe('usePageBuilder Hook', () => {
       result.current.dispatch({ type: 'COPY_SECTION', sectionId });
     });
 
-    expect(result.current.state.clipboard?.type).toBe('section');
+    expect(result.current.state.clipboard?.type).toBe('section_hierarchy');
+    expect(result.current.state.clipboard?.data.rootSectionId).toBe(sectionId);
+    expect(result.current.state.clipboard?.data.sections).toHaveLength(1);
+    expect(result.current.state.clipboard?.data.sections[0]?.id).toBe(sectionId);
 
     act(() => {
       result.current.dispatch({ type: 'PASTE_SECTION', zone: 'footer' });

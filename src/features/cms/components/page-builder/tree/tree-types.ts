@@ -7,6 +7,9 @@ import type { SectionInstance, BlockInstance } from '../../../types/page-builder
 export interface SectionNodeItemProps {
   section: SectionInstance;
   sectionIndex: number;
+  hasTreeChildren?: boolean;
+  isTreeExpanded?: boolean;
+  toggleTreeExpand?: (() => void) | undefined;
 }
 
 export interface SlideshowFrameNodeItemProps {

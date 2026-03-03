@@ -17,6 +17,7 @@ const createSection = (overrides: Partial<SectionInstance>): SectionInstance =>
     id: 'section-default',
     type: 'Hero',
     zone: 'template',
+    parentSectionId: null,
     settings: {},
     blocks: [],
     ...overrides,
@@ -62,6 +63,12 @@ describe('buildCmsMasterNodes', () => {
         type: 'Gallery',
         zone: 'template',
       }),
+      createSection({
+        id: 'header-child-1',
+        type: 'TextElement',
+        zone: 'template',
+        parentSectionId: 'header-1',
+      }),
     ]);
 
     expect(nodes.find((node) => node.id === toCmsZoneNodeId('header'))).toMatchObject({
@@ -72,10 +79,17 @@ describe('buildCmsMasterNodes', () => {
       name: 'Header',
     });
     expect(nodes.find((node) => node.id === toCmsSectionNodeId('header-1'))).toMatchObject({
+      type: 'folder',
       kind: 'section',
       parentId: toCmsZoneNodeId('header'),
       sortOrder: 0,
       name: 'Top Hero',
+    });
+    expect(nodes.find((node) => node.id === toCmsSectionNodeId('header-child-1'))).toMatchObject({
+      type: 'folder',
+      kind: 'section',
+      parentId: toCmsSectionNodeId('header-1'),
+      sortOrder: 0,
     });
     expect(nodes.find((node) => node.id === toCmsZoneFooterNodeId('header'))).toMatchObject({
       kind: 'zone_footer',

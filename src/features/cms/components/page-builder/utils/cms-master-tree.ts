@@ -1,4 +1,5 @@
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 
 import type { PageZone, SectionInstance } from '../../../types/page-builder';
 
@@ -83,11 +84,15 @@ const getSectionNodeLabel = (section: SectionInstance): string => {
 
 export const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode[] => {
   const nodes: MasterTreeNode[] = [];
+  const hierarchy = buildHierarchyIndexes(sections);
 
   CMS_ZONE_ORDER.forEach((zone: PageZone, zoneIndex: number) => {
     const zoneNodeId = toCmsZoneNodeId(zone);
     const zoneLabel = CMS_ZONE_LABELS[zone];
-    const zoneSections = sections.filter((section: SectionInstance) => section.zone === zone);
+    const rootSectionIds = (hierarchy.childrenByParent.get(null) ?? []).filter((sectionId: string) => {
+      const section = hierarchy.nodeById.get(sectionId);
+      return section?.zone === zone;
+    });
 
     nodes.push({
       id: zoneNodeId,
@@ -100,17 +105,40 @@ export const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode
       metadata: { entity: 'zone', zone },
     });
 
-    zoneSections.forEach((section: SectionInstance, sectionIndex: number) => {
+    const pushSectionNode = (
+      sectionId: string,
+      parentNodeId: string,
+      parentPath: string,
+      sortOrder: number
+    ): void => {
+      const section = hierarchy.nodeById.get(sectionId);
+      if (!section) return;
+      const sectionNodeId = toCmsSectionNodeId(section.id);
+
       nodes.push({
-        id: toCmsSectionNodeId(section.id),
-        type: 'file',
+        id: sectionNodeId,
+        type: 'folder',
         kind: 'section',
-        parentId: zoneNodeId,
+        parentId: parentNodeId,
         name: getSectionNodeLabel(section),
-        path: `${zone}/${section.id}`,
-        sortOrder: sectionIndex,
-        metadata: { entity: 'section', zone, sectionId: section.id },
+        path: `${parentPath}/${section.id}`,
+        sortOrder,
+        metadata: {
+          entity: 'section',
+          zone: section.zone,
+          sectionId: section.id,
+          parentSectionId: section.parentSectionId ?? null,
+        },
       });
+
+      const childIds = hierarchy.childrenByParent.get(section.id) ?? [];
+      childIds.forEach((childId: string, childIndex: number) => {
+        pushSectionNode(childId, sectionNodeId, `${parentPath}/${section.id}`, childIndex);
+      });
+    };
+
+    rootSectionIds.forEach((sectionId: string, sectionIndex: number) => {
+      pushSectionNode(sectionId, zoneNodeId, zone, sectionIndex);
     });
 
     nodes.push({
@@ -120,7 +148,7 @@ export const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode
       parentId: zoneNodeId,
       name: `${zoneLabel} controls`,
       path: `${zone}/controls`,
-      sortOrder: zoneSections.length,
+      sortOrder: rootSectionIds.length,
       metadata: { entity: 'zone_footer', zone },
     });
   });

@@ -180,6 +180,19 @@ const getSubtreeHeight = (
   );
 };
 
+const cloneBlockTree = (
+  blocks: SectionInstance['blocks'],
+  uidFactory: () => string
+): SectionInstance['blocks'] =>
+  blocks.map((block) => ({
+    ...block,
+    id: uidFactory(),
+    settings: block.settings ? { ...block.settings } : {},
+    ...(Array.isArray(block.blocks)
+      ? { blocks: cloneBlockTree(block.blocks, uidFactory) }
+      : {}),
+  }));
+
 const flattenWithStructure = (
   nodeById: Map<string, SectionInstance>,
   childrenByParent: Map<string | null, string[]>
@@ -420,7 +433,7 @@ export const cloneSectionSubtree = (
       ...node,
       id: clonedId,
       parentSectionId: parentCloneId,
-      blocks: node.blocks ? [...node.blocks] : [],
+      blocks: cloneBlockTree(node.blocks ?? [], uidFactory),
       settings: node.settings ? { ...node.settings } : {},
     };
     clones.push(clone);

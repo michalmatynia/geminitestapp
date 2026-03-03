@@ -69,6 +69,7 @@ export interface CanvasBoardState {
 
   // UI Actions
   selectEdge: (edgeId: string | null) => void;
+  clearNodeSelection: () => void;
   setConfigOpen: (open: boolean) => void;
   setEdgeRoutingMode: (mode: EdgeRoutingMode) => void;
 

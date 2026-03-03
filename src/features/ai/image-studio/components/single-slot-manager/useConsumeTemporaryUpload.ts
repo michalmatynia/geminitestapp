@@ -30,7 +30,7 @@ interface ConsumeTemporaryUploadProps {
     Error,
     { id: string; data: UpdateImageStudioSlotDto }
   >;
-  setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<ImageStudioUploadedAsset | null>>;
+  setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
   setPreviewMode: (mode: 'image' | '3d') => void;
@@ -255,7 +255,7 @@ export function useConsumeTemporaryUpload({
           void invalidateImageStudioSlots(queryClient, normalizedProjectId);
           return true;
         } catch (error) {
-          setTemporaryObjectUpload((current) => current ?? asset);
+          setTemporaryObjectUpload(asset);
           setUploadError(
             error instanceof Error ? error.message : 'Failed to create card from temporary upload'
           );

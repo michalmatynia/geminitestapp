@@ -13,13 +13,14 @@ import type {
   UpdateImageStudioSlotDto,
   CreateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
+import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
 interface SlotImageUploadProps {
   projectId: string;
   temporaryObjectUpload: ImageStudioUploadedAsset | null;
   uploadMutation: UseMutationResult<
-    { uploaded?: ImageStudioUploadedAsset[]; failures?: Array<{ error: string }> },
+    StudioAssetImportResult,
     Error,
     { files: File[]; folder: string }
   >;
@@ -75,9 +76,18 @@ export function useSlotImageUpload({
           files: [file],
           folder: getFolderForNewSlot(),
         });
-        const uploaded = result.uploaded?.[0] ?? null;
+        const importedFile = result.importedFiles[0];
+        const uploaded: ImageStudioUploadedAsset | null = importedFile
+          ? {
+            id: importedFile.id,
+            filepath: importedFile.filepath,
+            filename: importedFile.filename,
+            width: importedFile.width ?? null,
+            height: importedFile.height ?? null,
+          }
+          : null;
         if (!uploaded) {
-          throw new Error(result.failures?.[0]?.error || 'Upload failed');
+          throw new Error(result.warnings[0] || 'Upload failed');
         }
 
         lastConsumedTemporaryUploadIdRef.current = null;

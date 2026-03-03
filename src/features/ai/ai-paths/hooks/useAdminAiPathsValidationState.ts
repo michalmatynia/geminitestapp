@@ -3,7 +3,7 @@
  
 
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import type {
@@ -25,6 +25,7 @@ import {
   rejectInferredAiPathsValidationRule,
 } from '@/shared/lib/ai-paths/core/validation-engine';
 import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -50,11 +51,42 @@ export function useAdminAiPathsValidationState() {
   const focusNodeType = searchParams?.get('focusNodeType')?.trim() ?? '';
   const { toast } = useToast();
   const settingsQuery = useAiPathsSettingsQuery();
+  const settingsParseErrorSignatureRef = useRef<string | null>(null);
+  const parsedSettingsResult = useMemo(() => {
+    try {
+      return {
+        parsedSettings: parseAiPathsSettings(settingsQuery.data ?? []),
+        settingsParseError: null as Error | null,
+      };
+    } catch (error) {
+      return {
+        parsedSettings: {
+          pathMetas: [],
+          pathConfigs: {},
+        },
+        settingsParseError:
+          error instanceof Error ? error : new Error('Failed to parse AI Paths validation settings.'),
+      };
+    }
+  }, [settingsQuery.data]);
+  const { parsedSettings, settingsParseError } = parsedSettingsResult;
 
-  const parsedSettings = useMemo(
-    () => parseAiPathsSettings(settingsQuery.data ?? []),
-    [settingsQuery.data]
-  );
+  useEffect(() => {
+    if (!settingsParseError) {
+      settingsParseErrorSignatureRef.current = null;
+      return;
+    }
+    const signature = settingsParseError.message;
+    if (settingsParseErrorSignatureRef.current === signature) return;
+    settingsParseErrorSignatureRef.current = signature;
+    logClientError(settingsParseError, {
+      context: {
+        source: 'useAdminAiPathsValidationState',
+        action: 'parseAiPathsSettings',
+      },
+    });
+    toast(settingsParseError.message, { variant: 'error' });
+  }, [settingsParseError, toast]);
 
   const [selectedPathId, setSelectedPathId] = useState<string>('');
   const [validationDraft, setValidationDraft] = useState<AiPathsValidationConfig>(
@@ -756,6 +788,7 @@ export function useAdminAiPathsValidationState() {
     focusNodeId,
     focusNodeType,
     settingsQuery,
+    settingsParseError,
     parsedSettings,
     selectedPathId,
     setSelectedPathId,

@@ -5,40 +5,85 @@ import React from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import { setMasterTreeDragNodeData } from '@/features/foldertree/v2';
-import type { SectionInstance } from '@/shared/contracts/cms';
-import { Button, Badge } from '@/shared/ui';
+import { Button, Badge, TreeCaret } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { BlockNodeItem } from './';
+import { readSectionDragData, setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
+import { isDescendant } from '@/features/cms/hooks/page-builder/section-hierarchy';
+import { BlockNodeItem } from './BlockNodeItem';
+import { ColumnNodeItem } from './ColumnNodeItem';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
+import { RowNodeItem } from './RowNodeItem';
+import { SectionBlockNodeItem } from './SectionBlockNodeItem';
+import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
 import { TreeSectionProvider } from './TreeSectionContext';
-import { setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { toCmsSectionNodeId } from '../utils/cms-master-tree';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { SectionPicker } from './SectionPicker';
+import type { SectionNodeItemProps } from './tree-types';
 
 export function SectionNodeItem({
   section,
   sectionIndex,
-}: {
-  section: SectionInstance;
-  sectionIndex: number;
-}): React.JSX.Element {
-  const { startSectionMasterDrag, endSectionMasterDrag, draggedMasterSectionId } =
+  hasTreeChildren = false,
+  isTreeExpanded = false,
+  toggleTreeExpand,
+}: SectionNodeItemProps): React.JSX.Element {
+  const { startSectionMasterDrag, endSectionMasterDrag, draggedMasterSectionId, moveSectionByMaster } =
     useComponentTreePanelContext();
   const { state: pbState } = usePageBuilder();
+  const allSections = pbState.sections ?? [];
+  const [isInsideDropOver, setIsInsideDropOver] = React.useState(false);
   const drag = useDragStateExtract();
   const { startSectionDrag, endSectionDrag } = drag.actions;
-  const { expandedIds, sectionActions, blockActions, selectNode } = useTreeActions();
+  const { expandedIds, sectionActions, blockActions, selectNode, toggleExpand } = useTreeActions();
 
   const isExpanded = expandedIds.has(section.id);
+  const isRowExpanded = isExpanded || isTreeExpanded;
   const isSelected = pbState.selectedNodeId === section.id;
   const isDragging = draggedMasterSectionId === section.id;
   const isHidden = isCmsSectionHidden(section.settings['isHidden']);
+  const draggedSectionId = drag.section.id ?? draggedMasterSectionId;
+  const draggedSection = allSections.find((candidate) => candidate.id === draggedSectionId);
+  const isNestedSameParent = draggedSection?.parentSectionId === section.id;
+  const isNestingDescendant =
+    draggedSectionId !== null && draggedSectionId !== undefined
+      ? isDescendant(allSections, draggedSectionId, section.id)
+      : false;
+  const canShowInsideDrop =
+    Boolean(draggedSectionId) &&
+    draggedSectionId !== section.id &&
+    !isNestedSameParent &&
+    !isNestingDescendant;
 
   const SectionIcon: LucideIcon = Box;
+  const rootRows = section.blocks.filter((block) => block.type === 'Row');
+  const rowIndexById = new Map<string, number>();
+  rootRows.forEach((row, index) => {
+    rowIndexById.set(row.id, index);
+  });
+  const rootColumns = section.blocks.filter((block) => block.type === 'Column');
+  const columnIndexById = new Map<string, number>();
+  rootColumns.forEach((column, index) => {
+    columnIndexById.set(column.id, index);
+  });
+  const childSectionCount = allSections.filter(
+    (candidate) => candidate.parentSectionId === section.id
+  ).length;
+  const hasBlockChildren = section.blocks.length > 0;
+  const hasAnyChildren = hasBlockChildren || hasTreeChildren;
+
+  const handleToggleExpand = React.useCallback((): void => {
+    const nextOpen = !isRowExpanded;
+    if (isExpanded !== nextOpen) {
+      toggleExpand(section.id);
+    }
+    if (toggleTreeExpand && isTreeExpanded !== nextOpen) {
+      toggleTreeExpand();
+    }
+  }, [isExpanded, isRowExpanded, isTreeExpanded, section.id, toggleExpand, toggleTreeExpand]);
 
   const dragProps = {
     draggable: true,
@@ -60,6 +105,7 @@ export function SectionNodeItem({
     },
     onDragEnd: (): void => {
       endSectionDrag();
+      setIsInsideDropOver(false);
       endSectionMasterDrag();
     },
   };
@@ -73,8 +119,57 @@ export function SectionNodeItem({
         )}
       >
         <div
+          data-cms-section-row='true'
+          data-cms-section-id={section.id}
+          data-cms-section-zone={section.zone}
+          onDragOver={(event: React.DragEvent): void => {
+            const sectionDrag = readSectionDragData(event.dataTransfer, {
+              id: draggedSectionId,
+              type: drag.section.type,
+              zone: drag.section.zone,
+              index: drag.section.index,
+            });
+            const dragSectionId = sectionDrag.id;
+            if (!dragSectionId || dragSectionId === section.id) return;
+            if (isDescendant(allSections, dragSectionId, section.id)) return;
+            const dragSection = allSections.find((candidate) => candidate.id === dragSectionId);
+            if (dragSection?.parentSectionId === section.id) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setIsInsideDropOver(true);
+          }}
+          onDragLeave={(event: React.DragEvent): void => {
+            if (event.currentTarget.contains(event.relatedTarget as Node)) return;
+            setIsInsideDropOver(false);
+          }}
+          onDrop={(event: React.DragEvent): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsInsideDropOver(false);
+
+            const sectionDrag = readSectionDragData(event.dataTransfer, {
+              id: draggedSectionId,
+              type: drag.section.type,
+              zone: drag.section.zone,
+              index: drag.section.index,
+            });
+            const dragSectionId = sectionDrag.id;
+            if (!dragSectionId || dragSectionId === section.id) return;
+            if (isDescendant(allSections, dragSectionId, section.id)) return;
+            const dragSection = allSections.find((candidate) => candidate.id === dragSectionId);
+            if (dragSection?.parentSectionId === section.id) return;
+
+            void moveSectionByMaster(dragSectionId, section.zone, childSectionCount, section.id).finally(
+              () => {
+                endSectionDrag();
+              }
+            );
+          }}
           className={cn(
             'flex items-center gap-2 rounded-md border py-1.5 pl-1 pr-2 transition',
+            isInsideDropOver
+              ? 'border-emerald-500/60 bg-emerald-500/10'
+              : '',
             isSelected
               ? 'border-blue-500/50 bg-blue-500/10'
               : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
@@ -84,6 +179,17 @@ export function SectionNodeItem({
             selectNode(section.id);
           }}
         >
+          <TreeCaret
+            isOpen={isRowExpanded}
+            hasChildren={hasAnyChildren}
+            ariaLabel={isRowExpanded ? `Collapse ${section.type}` : `Expand ${section.type}`}
+            onToggle={(event?: React.MouseEvent | React.KeyboardEvent): void => {
+              event?.stopPropagation?.();
+              handleToggleExpand();
+            }}
+            iconClassName='size-3'
+            placeholderClassName='block size-3 shrink-0'
+          />
           <div
             className='flex h-7 w-5 cursor-grab items-center justify-center text-gray-600 hover:text-gray-400 active:cursor-grabbing'
             {...dragProps}
@@ -142,13 +248,48 @@ export function SectionNodeItem({
             </Button>
           </div>
         </div>
+        {canShowInsideDrop ? (
+          <div
+            data-cms-section-drop-target='inside'
+            data-cms-section-parent-id={section.id}
+            className={cn(
+              'mt-1 rounded border border-dashed px-2 py-1 text-[10px] font-medium uppercase tracking-wide transition',
+              isInsideDropOver
+                ? 'border-emerald-500/70 bg-emerald-500/10 text-emerald-300'
+                : 'border-border/40 text-gray-500'
+            )}
+          >
+            {isInsideDropOver ? 'Release to nest section' : 'Drop inside to nest'}
+          </div>
+        ) : null}
 
         {isExpanded && (
           <div className='ml-4 mt-1 border-l-2 border-border/20 pl-2'>
             <div className='space-y-1'>
-              {section.blocks.map((block, idx) => (
-                <BlockNodeItem key={block.id} block={block} index={idx} />
-              ))}
+              {section.blocks.map((block, idx) => {
+                if (block.type === 'Row') {
+                  const rowIndex = rowIndexById.get(block.id) ?? idx;
+                  return (
+                    <RowNodeItem
+                      key={block.id}
+                      row={block}
+                      rowIndex={rowIndex}
+                      rowCount={rootRows.length}
+                    />
+                  );
+                }
+                if (block.type === 'Column') {
+                  const columnIndex = columnIndexById.get(block.id) ?? idx;
+                  return <ColumnNodeItem key={block.id} column={block} columnIndex={columnIndex} />;
+                }
+                if (block.type === 'SlideshowFrame') {
+                  return <SlideshowFrameNodeItem key={block.id} frame={block} index={idx} />;
+                }
+                if (Array.isArray(block.blocks)) {
+                  return <SectionBlockNodeItem key={block.id} block={block} index={idx} />;
+                }
+                return <BlockNodeItem key={block.id} block={block} index={idx} />;
+              })}
             </div>
             <div className='mt-2'>
               <SectionPicker

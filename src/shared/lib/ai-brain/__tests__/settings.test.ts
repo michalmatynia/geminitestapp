@@ -106,7 +106,17 @@ describe('ai-brain settings helpers', () => {
     );
   });
 
-  it('parses legacy provider catalog pool arrays when canonical entries are missing', () => {
+  it('rejects unknown provider catalog keys', () => {
+    expect(() =>
+      parseBrainProviderCatalog(
+        JSON.stringify({
+          roguePool: ['gpt-4o-mini'],
+        })
+      )
+    ).toThrowError(/Invalid AI Brain provider catalog payload/i);
+  });
+
+  it('normalizes deprecated provider catalog pool arrays when canonical entries are missing', () => {
     const parsed = parseBrainProviderCatalog(
       JSON.stringify({
         modelPresets: ['gpt-4o-mini'],
@@ -123,29 +133,26 @@ describe('ai-brain settings helpers', () => {
       { pool: 'paidModels', value: 'gpt-4.1' },
       { pool: 'ollamaModels', value: 'llama3.1' },
     ]);
-    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
-    expect(parsed.paidModels).toEqual(['gpt-4.1']);
-    expect(parsed.ollamaModels).toEqual(['llama3.1']);
   });
 
-  it('prefers canonical provider catalog entries when legacy arrays are also present', () => {
+  it('merges deprecated provider catalog pool arrays into canonical entries', () => {
     const parsed = parseBrainProviderCatalog(
       JSON.stringify({
         entries: [
           { pool: 'paidModels', value: 'gpt-4.1' },
           { pool: 'modelPresets', value: 'gpt-4o-mini' },
         ],
-        modelPresets: ['legacy-ignored'],
-        paidModels: ['legacy-ignored'],
+        modelPresets: ['gpt-4o-mini', 'gpt-4o'],
+        paidModels: ['gpt-4.1', 'o1'],
       })
     );
 
     expect(parsed.entries).toEqual([
       { pool: 'paidModels', value: 'gpt-4.1' },
       { pool: 'modelPresets', value: 'gpt-4o-mini' },
+      { pool: 'modelPresets', value: 'gpt-4o' },
+      { pool: 'paidModels', value: 'o1' },
     ]);
-    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
-    expect(parsed.paidModels).toEqual(['gpt-4.1']);
   });
 
   it('parses canonical entry-only provider catalog payloads and preserves entry order', () => {
@@ -162,43 +169,27 @@ describe('ai-brain settings helpers', () => {
       { pool: 'paidModels', value: 'gpt-4.1' },
       { pool: 'modelPresets', value: 'gpt-4o-mini' },
     ]);
-    expect(parsed.paidModels).toEqual(['gpt-4.1']);
-    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
   });
 
-  it('sanitizes provider entries and emits both entries and arrays', () => {
+  it('sanitizes provider entries without emitting deprecated pool arrays', () => {
     const sanitized = sanitizeBrainProviderCatalog({
       entries: [
         { pool: 'modelPresets', value: ' gpt-4o-mini ' },
         { pool: 'modelPresets', value: 'gpt-4o-mini' },
         { pool: 'paidModels', value: 'gpt-4.1' },
       ],
-      modelPresets: ['legacy'],
-      paidModels: ['legacy'],
-      ollamaModels: [],
-      agentModels: [],
-      deepthinkingAgents: [],
-      playwrightPersonas: [],
     });
 
     expect(sanitized.entries).toEqual([
       { pool: 'modelPresets', value: 'gpt-4o-mini' },
       { pool: 'paidModels', value: 'gpt-4.1' },
     ]);
-    expect(sanitized.modelPresets).toEqual(['gpt-4o-mini']);
-    expect(sanitized.paidModels).toEqual(['gpt-4.1']);
   });
 
   it('serializes provider catalogs using canonical entry-only persisted shape', () => {
     const persisted = toPersistedBrainProviderCatalog(
       sanitizeBrainProviderCatalog({
         entries: [{ pool: 'modelPresets', value: 'gpt-4o-mini' }],
-        modelPresets: ['legacy'],
-        paidModels: ['legacy'],
-        ollamaModels: [],
-        agentModels: [],
-        deepthinkingAgents: [],
-        playwrightPersonas: [],
       })
     ) as Record<string, unknown>;
 

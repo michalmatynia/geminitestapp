@@ -12,6 +12,7 @@ import {
   defaultBrainProviderCatalog,
   parseBrainProviderCatalog,
 } from './settings';
+import { catalogToEntries, entriesToCatalogArrays } from './catalog-entries';
 import {
   inferBrainRuntimeVendor,
   normalizeBrainRuntimeModelId,
@@ -209,10 +210,11 @@ export const listBrainModels = async (
       ? parseBrainProviderCatalog(providerCatalogRaw)
       : defaultBrainProviderCatalog;
   const liveOllamaModels = await fetchLiveOllamaModels();
+  const catalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
 
-  const modelPresets = normalizeUnique(providerCatalog.modelPresets ?? []);
-  const paidModels = normalizeUnique(providerCatalog.paidModels ?? []);
-  const configuredOllamaModels = normalizeUnique(providerCatalog.ollamaModels ?? []);
+  const modelPresets = normalizeUnique(catalogArrays.modelPresets);
+  const paidModels = normalizeUnique(catalogArrays.paidModels);
+  const configuredOllamaModels = normalizeUnique(catalogArrays.ollamaModels);
   const liveModels = normalizeUnique(liveOllamaModels ?? []);
 
   const combined = normalizeUnique([

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import type {
   DatabaseEngineStatus,
@@ -15,22 +15,20 @@ import type {
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  normalizeDatabaseEngineBackupSchedule,
-} from '@/shared/lib/db/database-engine-backup-schedule';
-import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
+  DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   DEFAULT_DATABASE_ENGINE_POLICY,
   type DatabaseEngineBackupSchedule,
   type DatabaseEngineOperationControls,
   type DatabaseEnginePolicy,
 } from '@/shared/lib/db/database-engine-constants';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
   useDatabaseBackupSchedulerStatus,
@@ -40,6 +38,13 @@ import {
   useAllCollectionsSchema,
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
+import {
+  parseDatabaseEngineBackupScheduleSetting,
+  parseDatabaseEngineCollectionRouteMapSetting,
+  parseDatabaseEngineOperationControlsSetting,
+  parseDatabaseEnginePolicySetting,
+  parseDatabaseEngineServiceRouteMapSetting,
+} from './database-engine-settings-parsing';
 
 export interface DatabaseCollectionRow extends UnifiedCollection {
   assignedProvider: 'mongodb' | 'prisma' | 'auto';
@@ -104,37 +109,112 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const [serviceRouteMap, setServiceRouteMap] = useState<Record<string, string>>({});
   const [collectionRouteMap, setCollectionRouteMap] = useState<Record<string, string>>({});
   const [backupSchedule, setBackupSchedule] = useState<DatabaseEngineBackupSchedule>(
-    normalizeDatabaseEngineBackupSchedule(null)
+    DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE
   );
   const [operationControls, setOperationControls] = useState<DatabaseEngineOperationControls>(
     DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
   );
 
   const [isDirty, setIsDirty] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const lastValidationErrorSignatureRef = useRef<string | null>(null);
+
+  const parsedPersistedSettings = useMemo(() => {
+    const errors: string[] = [];
+    const loggedErrors: Array<{ label: string; error: unknown }> = [];
+
+    const parseSetting = <T,>(
+      label: string,
+      parser: () => T,
+      fallback: T
+    ): T => {
+      try {
+        return parser();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : `Invalid ${label} settings payload.`;
+        errors.push(message);
+        loggedErrors.push({ label, error });
+        return fallback;
+      }
+    };
+
+    return {
+      policy: parseSetting(
+        DATABASE_ENGINE_POLICY_KEY,
+        () => parseDatabaseEnginePolicySetting(settingsMap?.get(DATABASE_ENGINE_POLICY_KEY)),
+        DEFAULT_DATABASE_ENGINE_POLICY
+      ),
+      serviceRouteMap: parseSetting(
+        DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
+        () =>
+          parseDatabaseEngineServiceRouteMapSetting(
+            settingsMap?.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY)
+          ),
+        {}
+      ),
+      collectionRouteMap: parseSetting(
+        DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+        () =>
+          parseDatabaseEngineCollectionRouteMapSetting(
+            settingsMap?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY)
+          ),
+        {}
+      ),
+      backupSchedule: parseSetting(
+        DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
+        () =>
+          parseDatabaseEngineBackupScheduleSetting(
+            settingsMap?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY)
+          ),
+        DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE
+      ),
+      operationControls: parseSetting(
+        DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
+        () =>
+          parseDatabaseEngineOperationControlsSetting(
+            settingsMap?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY)
+          ),
+        DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
+      ),
+      errors,
+      loggedErrors,
+    };
+  }, [settingsMap]);
 
   useEffect(() => {
     if (settingsMap) {
-      setPolicy(
-        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_POLICY_KEY), DEFAULT_DATABASE_ENGINE_POLICY)
-      );
-      setServiceRouteMap(
-        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY), {})
-      );
-      setCollectionRouteMap(
-        parseJsonSetting(settingsMap.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY), {})
-      );
-      setBackupSchedule(
-        normalizeDatabaseEngineBackupSchedule(settingsMap.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY))
-      );
-      setOperationControls(
-        parseJsonSetting(
-          settingsMap.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY),
-          DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
-        )
-      );
+      setPolicy(parsedPersistedSettings.policy);
+      setServiceRouteMap(parsedPersistedSettings.serviceRouteMap);
+      setCollectionRouteMap(parsedPersistedSettings.collectionRouteMap);
+      setBackupSchedule(parsedPersistedSettings.backupSchedule);
+      setOperationControls(parsedPersistedSettings.operationControls);
+      setValidationErrors(parsedPersistedSettings.errors);
       setIsDirty(false);
     }
-  }, [settingsMap]);
+  }, [parsedPersistedSettings, settingsMap]);
+
+  useEffect(() => {
+    if (parsedPersistedSettings.loggedErrors.length === 0) {
+      lastValidationErrorSignatureRef.current = null;
+      return;
+    }
+
+    const signature = parsedPersistedSettings.errors.join('::');
+    if (lastValidationErrorSignatureRef.current === signature) return;
+    lastValidationErrorSignatureRef.current = signature;
+
+    parsedPersistedSettings.loggedErrors.forEach(
+      ({ label, error }: { label: string; error: unknown }): void => {
+        logClientError(error, {
+          context: {
+            source: 'useDatabaseEngineState',
+            action: 'parsePersistedSettings',
+            setting: label,
+          },
+        });
+      }
+    );
+  }, [parsedPersistedSettings.errors, parsedPersistedSettings.loggedErrors]);
 
   const rows = useMemo<DatabaseCollectionRow[]>(() => {
     const data = schemaQuery.data;
@@ -252,6 +332,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       void schemaQuery.refetch();
       void redisOverviewQuery.refetch();
     },
-    validationErrors: [],
+    validationErrors,
   };
 }

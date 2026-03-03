@@ -80,6 +80,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     isBackupScheduleDirty,
     activeTargetKey,
     isBackupScheduleSaving,
+    settingsValidationErrors,
     closeLogModal,
     handleBackup,
     handleUpload,
@@ -138,6 +139,12 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           Some backup actions are disabled by Database Engine manual operation controls.
         </Alert>
       )}
+
+      {settingsValidationErrors.length > 0 && (
+        <Alert variant='error'>
+          {settingsValidationErrors[0]}
+        </Alert>
+      )}
     </>
   );
 
@@ -191,7 +198,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           label='Enable Scheduled Backups'
           description='Global scheduler switch for all backup targets.'
           checked={schedulerEnabledDraft}
-          disabled={isBackupScheduleSaving}
+          disabled={isBackupScheduleSaving || settingsValidationErrors.length > 0}
           onCheckedChange={handleSchedulerEnabledDraftChange}
           className='border-border/60 bg-card/20'
         />
@@ -200,7 +207,11 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           label='Enable schedule for selected source'
           description={`Applies to ${selectedDatabase.label} only.`}
           checked={activeTargetEnabledDraft}
-          disabled={isBackupScheduleSaving || !schedulerEnabledDraft}
+          disabled={
+            isBackupScheduleSaving ||
+            !schedulerEnabledDraft ||
+            settingsValidationErrors.length > 0
+          }
           onCheckedChange={handleActiveTargetEnabledDraftChange}
           className='border-border/60 bg-card/20'
         />
@@ -217,7 +228,10 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
                 handleActiveTargetTimeLocalChange(event.target.value);
               }}
               disabled={
-                isBackupScheduleSaving || !schedulerEnabledDraft || !activeTargetEnabledDraft
+                isBackupScheduleSaving ||
+                !schedulerEnabledDraft ||
+                !activeTargetEnabledDraft ||
+                settingsValidationErrors.length > 0
               }
             />
           </FormField>
@@ -227,7 +241,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           label='Enable Repeating Due-Checks'
           description='When disabled, scheduler checks run only on startup catch-up and manual tick.'
           checked={repeatTickEnabledDraft}
-          disabled={isBackupScheduleSaving}
+          disabled={isBackupScheduleSaving || settingsValidationErrors.length > 0}
           onCheckedChange={handleRepeatSchedulerTickDraftChange}
           className='border-border/60 bg-card/20'
         />
@@ -255,7 +269,10 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           size='sm'
           variant='secondary'
           disabled={
-            isBackupScheduleSaving || !isBackupScheduleDirty || !activeTargetTimeLocalDraftValid
+            isBackupScheduleSaving ||
+            !isBackupScheduleDirty ||
+            !activeTargetTimeLocalDraftValid ||
+            settingsValidationErrors.length > 0
           }
           onClick={(): void => {
             void saveDailySchedule();

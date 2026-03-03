@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 
 const E2E_ADMIN_EMAIL =
   process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ??
@@ -22,9 +23,30 @@ async function ensureAdminSession(page: Page): Promise<void> {
   await page.waitForURL(/\/admin(\/.*)?(\?.*)?$/);
 }
 
+async function dragToTarget(page: Page, source: Locator, target: Locator): Promise<void> {
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await source.dispatchEvent('dragstart', { dataTransfer });
+  await target.waitFor({ state: 'visible', timeout: 5_000 });
+  const box = await target.boundingBox();
+  const clientX = box ? box.x + box.width / 2 : 8;
+  const clientY = box ? box.y + box.height / 2 : 8;
+  await target.dispatchEvent('dragenter', { dataTransfer, clientX, clientY });
+  await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY });
+  await target.dispatchEvent('drop', { dataTransfer, clientX, clientY });
+}
+
 function sectionToggleLocator(page: Page, sectionType: string) {
   return page
     .getByRole('button', { name: new RegExp(`^(Expand|Collapse)\\s+${sectionType}$`) })
+    .first();
+}
+
+function sectionRowLocator(page: Page, sectionType: string): Locator {
+  return page
+    .locator('[data-cms-section-row="true"]')
+    .filter({
+      has: page.getByText(new RegExp(`^${sectionType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')),
+    })
     .first();
 }
 
@@ -148,7 +170,7 @@ test.describe('CMS and Page Builder', () => {
     await expect(page.getByTestId('preview-canvas')).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId('preview-empty')).toHaveCount(0);
 
-    // Add a second section with a different type so we can verify section drag/reorder.
+    // Add a second section with a different type so we can verify section nesting.
     await page.click('button:has-text("Add section")');
     await page.waitForSelector('button:has-text("Text element")', { timeout: 15000 });
     await page.click('button:has-text("Text element")');
@@ -158,17 +180,22 @@ test.describe('CMS and Page Builder', () => {
     const textElementLabel = page.getByText(/^Text\s?Element$/i).first();
     await expect(textElementLabel).toBeVisible({ timeout: 20000 });
 
-    const richTextRow = richTextLabel.locator('xpath=ancestor::div[.//*[@draggable="true"]][1]');
-    const textElementRow = textElementLabel.locator(
-      'xpath=ancestor::div[.//*[@draggable="true"]][1]'
-    );
+    const richTextRow = sectionRowLocator(page, 'RichText');
+    const textElementRow = sectionRowLocator(page, 'TextElement');
+    await expect(richTextRow).toBeVisible({ timeout: 20000 });
+    await expect(textElementRow).toBeVisible({ timeout: 20000 });
 
-    await textElementRow.hover();
+    const beforeNestingX = (await textElementRow.boundingBox())?.x ?? 0;
     const textElementDragHandle = textElementRow.locator('[draggable="true"]').first();
-    await textElementDragHandle.dragTo(richTextRow);
+    await dragToTarget(page, textElementDragHandle, richTextRow);
 
-    // Ensure DnD kept structure stable.
+    // Center-drop should nest, which increases tree indentation for the moved section.
     await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible({ timeout: 20000 });
+    await expect
+      .poll(async () => (await sectionRowLocator(page, 'TextElement').boundingBox())?.x ?? 0, {
+        timeout: 15000,
+      })
+      .toBeGreaterThan(beforeNestingX + 8);
   });
 
   test('should update front page destination setting', async ({ page }) => {

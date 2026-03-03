@@ -5,6 +5,7 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { validationError } from '@/shared/errors/app-error';
 import { type AgentPersona, type AgentPersonaSettings } from '@/shared/contracts/agents';
 
 export const createAgentPersonaId = (): string => {
@@ -21,12 +22,48 @@ export const buildAgentPersonaSettings = (
   ...(settings ?? {}),
 });
 
+const DEPRECATED_AGENT_PERSONA_SETTINGS_KEYS = [
+  'executorModel',
+  'plannerModel',
+  'selfCheckModel',
+  'extractionValidationModel',
+  'toolRouterModel',
+  'memoryValidationModel',
+  'memorySummarizationModel',
+  'loopGuardModel',
+  'approvalGateModel',
+  'selectorInferenceModel',
+  'outputNormalizationModel',
+  'modelId',
+  'temperature',
+  'maxTokens',
+] as const;
+
+const DEPRECATED_AGENT_PERSONA_TOP_LEVEL_KEYS = ['modelId', 'temperature', 'maxTokens'] as const;
+
 const toCanonicalAgentPersonaSettings = (value: unknown): AgentPersonaSettings => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (value === undefined || value === null) {
     return buildAgentPersonaSettings();
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw validationError('Invalid agent persona settings payload.', {
+      source: 'agent_personas',
+      reason: 'invalid_settings_shape',
+    });
   }
 
   const raw = value as Record<string, unknown>;
+  const deprecatedKeys = DEPRECATED_AGENT_PERSONA_SETTINGS_KEYS.filter((key: string): boolean =>
+    Object.prototype.hasOwnProperty.call(raw, key)
+  );
+  if (deprecatedKeys.length > 0) {
+    throw validationError('Agent persona settings contain deprecated AI snapshot keys.', {
+      source: 'agent_personas',
+      reason: 'deprecated_snapshot_keys',
+      keys: deprecatedKeys,
+    });
+  }
+
   const next: Partial<AgentPersonaSettings> = {};
   if (typeof raw['personaId'] === 'string') {
     next.personaId = raw['personaId'];
@@ -38,21 +75,52 @@ const toCanonicalAgentPersonaSettings = (value: unknown): AgentPersonaSettings =
 };
 
 export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {
+    throw validationError('Invalid agent personas payload.', {
+      source: 'agent_personas',
+      reason: 'payload_not_array',
+    });
+  }
 
   return value
-    .map((item: unknown): AgentPersona | null => {
-      if (!item || typeof item !== 'object') return null;
-      const raw = item as AgentPersona;
-      const name = typeof raw.name === 'string' ? raw.name.trim() : '';
-      if (!name) return null;
+    .map((item: unknown, index: number): AgentPersona => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw validationError('Invalid agent persona payload.', {
+          source: 'agent_personas',
+          reason: 'persona_not_object',
+          index,
+        });
+      }
 
-      const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id : createAgentPersonaId();
+      const raw = item as Record<string, unknown>;
+      const deprecatedTopLevelKeys = DEPRECATED_AGENT_PERSONA_TOP_LEVEL_KEYS.filter(
+        (key: string): boolean => Object.prototype.hasOwnProperty.call(raw, key)
+      );
+      if (deprecatedTopLevelKeys.length > 0) {
+        throw validationError('Agent persona contains deprecated AI snapshot keys.', {
+          source: 'agent_personas',
+          reason: 'deprecated_snapshot_keys',
+          index,
+          keys: deprecatedTopLevelKeys,
+        });
+      }
+
+      const name = typeof raw['name'] === 'string' ? raw['name'].trim() : '';
+      if (!name) {
+        throw validationError('Agent persona name is required.', {
+          source: 'agent_personas',
+          reason: 'missing_name',
+          index,
+        });
+      }
+
+      const id =
+        typeof raw['id'] === 'string' && raw['id'].trim() ? raw['id'] : createAgentPersonaId();
       const createdAt =
-        typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
-      const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
-      const settings = toCanonicalAgentPersonaSettings(raw.settings);
-      const description = typeof raw.description === 'string' ? raw.description : null;
+        typeof raw['createdAt'] === 'string' ? raw['createdAt'] : new Date().toISOString();
+      const updatedAt = typeof raw['updatedAt'] === 'string' ? raw['updatedAt'] : createdAt;
+      const settings = toCanonicalAgentPersonaSettings(raw['settings']);
+      const description = typeof raw['description'] === 'string' ? raw['description'] : null;
 
       return {
         id,
@@ -62,18 +130,27 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
         createdAt,
         updatedAt,
       } as AgentPersona;
-    })
-    .filter((item: AgentPersona | null): item is AgentPersona => Boolean(item));
+    });
 };
 
 const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
   if (!rawValue?.trim()) return [];
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(rawValue) as unknown;
-    return Array.isArray(parsed) ? parsed : [];
+    parsed = JSON.parse(rawValue) as unknown;
   } catch {
-    return [];
+    throw validationError('Invalid agent personas payload.', {
+      source: 'agent_personas',
+      reason: 'invalid_json',
+    });
   }
+  if (!Array.isArray(parsed)) {
+    throw validationError('Invalid agent personas payload.', {
+      source: 'agent_personas',
+      reason: 'payload_not_array',
+    });
+  }
+  return parsed;
 };
 
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {

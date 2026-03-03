@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {
@@ -55,6 +55,44 @@ export type ResizeStudioProjectCanvasPayload = {
   canvasHeightPx?: number;
 };
 
+export type CreateStudioProjectPayload = {
+  projectId: string;
+  canvasWidthPx?: number;
+  canvasHeightPx?: number;
+};
+
+export type CreateStudioProjectResult = {
+  projectId: string;
+  project: ImageStudioProjectRecord;
+  projectSettingsKey: string;
+};
+
+export type UpdateStudioProjectPayload = {
+  projectId: string;
+  nextProjectId: string;
+};
+
+export type UpdateStudioProjectStats = {
+  movedDirectory: boolean;
+  createdDirectory: boolean;
+  updatedSlots: number;
+  updatedSlotImageUrls: number;
+  updatedRuns: number;
+  updatedSlotLinks: number;
+  updatedImageFiles: number;
+  migratedSettings?: boolean;
+  deletedLegacySettingsKeys?: number;
+  settingsKey?: string | null;
+};
+
+export type UpdateStudioProjectResult = {
+  projectId: string;
+  project: ImageStudioProjectRecord;
+  fromProjectId: string;
+  renamed: boolean;
+  stats: UpdateStudioProjectStats;
+};
+
 export type ResizeStudioProjectCanvasResult = {
   projectId: string;
   canvasWidthPx: number;
@@ -69,11 +107,12 @@ export type StudioAssetImportResult = {
 };
 
 export function useCreateStudioProject(): CreateMutation<
-  ImageStudioProjectRecord,
-  { id: string; name?: string; width?: number; height?: number }
+  CreateStudioProjectResult,
+  CreateStudioProjectPayload
   > {
   return createCreateMutationV2({
-    mutationFn: (data) => api.post('/api/image-studio/projects', data),
+    mutationFn: (data: CreateStudioProjectPayload) =>
+      api.post<CreateStudioProjectResult>('/api/image-studio/projects', data),
     mutationKey: QUERY_KEYS.imageStudio.all,
     meta: {
       source: 'imageStudio.hooks.useCreateStudioProject',
@@ -88,11 +127,15 @@ export function useCreateStudioProject(): CreateMutation<
 }
 
 export function useRenameStudioProject(): UpdateMutation<
-  ImageStudioProjectRecord,
-  { id: string; name: string }
+  UpdateStudioProjectResult,
+  UpdateStudioProjectPayload
   > {
   return createUpdateMutationV2({
-    mutationFn: ({ id, name }) => api.patch(`/api/image-studio/projects/${encodeURIComponent(id)}`, { name }),
+    mutationFn: ({ projectId, nextProjectId }: UpdateStudioProjectPayload) =>
+      api.patch<UpdateStudioProjectResult>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}`,
+        { projectId: nextProjectId }
+      ),
     mutationKey: QUERY_KEYS.imageStudio.all,
     meta: {
       source: 'imageStudio.hooks.useRenameStudioProject',
@@ -121,7 +164,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
       if (typeof payload.canvasWidthPx !== 'number' && typeof payload.canvasHeightPx !== 'number') {
         throw new Error('At least one canvas dimension is required.');
       }
-      const response = await api.patch<ResizeStudioProjectCanvasResult>(
+      const response = await api.patch<UpdateStudioProjectResult>(
         `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}`,
         {
           ...(typeof payload.canvasWidthPx === 'number'
@@ -138,7 +181,16 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<
       if (!response.projectId?.trim()) {
         throw new Error('Failed to update project canvas size.');
       }
-      return response;
+      const canvasWidthPx = response.project.canvasWidthPx ?? payload.canvasWidthPx ?? null;
+      const canvasHeightPx = response.project.canvasHeightPx ?? payload.canvasHeightPx ?? null;
+      if (canvasWidthPx === null || canvasHeightPx === null) {
+        throw new Error('Failed to resolve project canvas size.');
+      }
+      return {
+        projectId: response.projectId,
+        canvasWidthPx,
+        canvasHeightPx,
+      };
     },
     mutationKey: QUERY_KEYS.imageStudio.all,
     meta: {
@@ -321,7 +373,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
   const activeDeleteVerifierIdsRef = useRef<Set<string>>(new Set());
   const slotsQueryKey = QUERY_KEYS.imageStudio.slots(projectId);
 
-  const applyOptimisticDeleteFilter = (qc: any, candidateIds: Set<string>): void => {
+  const applyOptimisticDeleteFilter = (qc: QueryClient, candidateIds: Set<string>): void => {
     if (candidateIds.size === 0) return;
     patchImageStudioSlotsCache(qc, projectId, (current) => {
       if (!current?.slots?.length) return current;
@@ -337,7 +389,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
   };
 
   const verifyPendingDelete = async (
-    qc: any,
+    qc: QueryClient,
     normalizedDeletedSlotId: string
   ): Promise<void> => {
     const normalizedProjectId = projectId.trim();
@@ -378,7 +430,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
           // Continue polling even if one refresh attempt fails.
         }
 
-        const current = qc.getQueryData(slotsQueryKey) as StudioSlotsResponse | undefined;
+        const current = qc.getQueryData<StudioSlotsResponse>(slotsQueryKey);
         const remainingSlotIds = new Set(
           (current?.slots ?? [])
             .map((slot: ImageStudioSlotRecord) => normalizeStudioSlotId(slot.id))
@@ -419,7 +471,6 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       });
     }
   };
-
 
   return createDeleteMutationV2<void, string>({
     mutationFn: async (id: string) => {

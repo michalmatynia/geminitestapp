@@ -140,10 +140,11 @@ const normalizeProducerRelations = (
       reason: 'not_array',
     });
   }
+  const producerEntries = producers as unknown[];
   const normalized: NonNullable<ProductWithImages['producers']> = [];
   const seen = new Set<string>();
-  for (let index = 0; index < producers.length; index += 1) {
-    const entry = producers[index];
+  for (let index = 0; index < producerEntries.length; index += 1) {
+    const entry = producerEntries[index];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       throw validationError('Invalid product producer relation entry payload.', {
         productId: rootProductId,
@@ -210,10 +211,11 @@ const normalizeTagRelations = (
       reason: 'not_array',
     });
   }
+  const tagEntries = tags as unknown[];
   const normalized: NonNullable<ProductRecord['tags']> = [];
   const seen = new Set<string>();
-  for (let index = 0; index < tags.length; index += 1) {
-    const entry = tags[index];
+  for (let index = 0; index < tagEntries.length; index += 1) {
+    const entry = tagEntries[index];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       throw validationError('Invalid product tag relation entry payload.', {
         productId: rootProductId,

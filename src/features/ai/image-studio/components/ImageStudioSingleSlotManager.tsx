@@ -123,7 +123,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       objectSlot,
       queryClient,
       updateSlotMutation,
-      setTemporaryObjectUpload: setTemporaryObjectUpload as any,
+      setTemporaryObjectUpload,
       setSelectedSlotId,
       setWorkingSlotId,
       setPreviewMode,

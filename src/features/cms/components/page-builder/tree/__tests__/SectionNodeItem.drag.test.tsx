@@ -77,6 +77,7 @@ vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
   usePageBuilder: () => ({
     state: {
       selectedNodeId: null,
+      sections: [],
     },
   }),
 }));
@@ -196,4 +197,3 @@ describe('SectionNodeItem drag bridge', () => {
     expect(selectNodeMock).toHaveBeenCalledWith('section-1');
   });
 });
-

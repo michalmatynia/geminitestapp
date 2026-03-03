@@ -15,6 +15,7 @@ const createSection = (overrides: Partial<SectionInstance>): SectionInstance =>
     id: 'section-default',
     type: 'Hero',
     zone: 'template',
+    parentSectionId: null,
     settings: {},
     blocks: [],
     ...overrides,
@@ -49,8 +50,8 @@ const applyOperation = async (
 
 describe('createCmsMasterTreeAdapter', () => {
   it('maps root-top section move to zone index 0', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [
@@ -74,13 +75,13 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledWith('template-1', 'header', 0);
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('template-1', 'header', null, 0);
   });
 
   it('applies explicit move target index from operation', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [
@@ -104,13 +105,13 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledWith('template-1', 'header', 1);
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('template-1', 'header', null, 1);
   });
 
   it('derives move index from next nodes when targetIndex is omitted', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [
@@ -133,13 +134,13 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledWith('header-1', 'header', 1);
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('header-1', 'header', null, 1);
   });
 
   it('maps reorder before/after operations to zone indexes', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [
@@ -174,14 +175,14 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledTimes(2);
-    expect(applySectionMoveByZoneIndex).toHaveBeenNthCalledWith(1, 'header-2', 'header', 0);
-    expect(applySectionMoveByZoneIndex).toHaveBeenNthCalledWith(2, 'header-1', 'header', 2);
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(2);
+    expect(applySectionMoveInTree).toHaveBeenNthCalledWith(1, 'header-2', 'header', null, 0);
+    expect(applySectionMoveInTree).toHaveBeenNthCalledWith(2, 'header-1', 'header', null, 2);
   });
 
   it('maps cross-zone reorder operations to target section zone and index', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [
@@ -207,13 +208,13 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledTimes(1);
-    expect(applySectionMoveByZoneIndex).toHaveBeenCalledWith('header-1', 'template', 1);
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith('header-1', 'template', null, 1);
   });
 
   it('ignores moves targeting non-zone ids', async () => {
-    const applySectionMoveByZoneIndex = vi.fn();
-    const adapter = createCmsMasterTreeAdapter(applySectionMoveByZoneIndex);
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
 
     const context = createContext(
       [createSection({ id: 'header-1', zone: 'header' })],
@@ -231,6 +232,82 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    expect(applySectionMoveByZoneIndex).not.toHaveBeenCalled();
+    expect(applySectionMoveInTree).not.toHaveBeenCalled();
+  });
+
+  it('maps move inside a section parent with inherited zone', async () => {
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
+
+    const context = createContext(
+      [
+        createSection({ id: 'header-parent', zone: 'header' }),
+        createSection({ id: 'template-1', zone: 'template' }),
+      ],
+      [
+        createSection({ id: 'header-parent', zone: 'header' }),
+        createSection({
+          id: 'template-1',
+          zone: 'template',
+          parentSectionId: 'header-parent',
+        }),
+      ]
+    );
+
+    await applyOperation(
+      adapter,
+      {
+        type: 'move',
+        nodeId: toCmsSectionNodeId('template-1'),
+        targetParentId: toCmsSectionNodeId('header-parent'),
+        targetIndex: 0,
+      },
+      context
+    );
+
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith(
+      'template-1',
+      'header',
+      'header-parent',
+      0
+    );
+  });
+
+  it('maps reorder within nested section siblings', async () => {
+    const applySectionMoveInTree = vi.fn();
+    const adapter = createCmsMasterTreeAdapter(applySectionMoveInTree);
+
+    const context = createContext(
+      [
+        createSection({ id: 'header-parent', zone: 'header' }),
+        createSection({ id: 'child-a', zone: 'header', parentSectionId: 'header-parent' }),
+        createSection({ id: 'child-b', zone: 'header', parentSectionId: 'header-parent' }),
+      ],
+      [
+        createSection({ id: 'header-parent', zone: 'header' }),
+        createSection({ id: 'child-b', zone: 'header', parentSectionId: 'header-parent' }),
+        createSection({ id: 'child-a', zone: 'header', parentSectionId: 'header-parent' }),
+      ]
+    );
+
+    await applyOperation(
+      adapter,
+      {
+        type: 'reorder',
+        nodeId: toCmsSectionNodeId('child-b'),
+        targetId: toCmsSectionNodeId('child-a'),
+        position: 'before',
+      },
+      context
+    );
+
+    expect(applySectionMoveInTree).toHaveBeenCalledTimes(1);
+    expect(applySectionMoveInTree).toHaveBeenCalledWith(
+      'child-b',
+      'header',
+      'header-parent',
+      0
+    );
   });
 });

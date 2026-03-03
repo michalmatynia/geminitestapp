@@ -1,14 +1,13 @@
 'use client';
 
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DatabaseInfo, DatabaseType } from '@/shared/contracts';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   isValidDatabaseEngineBackupTimeUtc,
-  normalizeDatabaseEngineBackupSchedule,
 } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
@@ -17,7 +16,6 @@ import {
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
   type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
-import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
@@ -28,6 +26,10 @@ import {
   useRestoreBackupMutation,
   useUploadBackupMutation,
 } from '../hooks/useDatabaseQueries';
+import {
+  parseDatabaseEngineBackupScheduleSetting,
+  parseDatabaseEngineOperationControlsSetting,
+} from './database-engine-settings-parsing';
 
 export function useDatabaseBackupsState() {
   const [activeTab, setActiveTab] = useState<DatabaseType>('postgresql');
@@ -45,6 +47,7 @@ export function useDatabaseBackupsState() {
   const isProd = process.env['NODE_ENV'] === 'production';
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
+  const lastSettingsValidationSignatureRef = useRef<string | null>(null);
 
   const backupsQuery = useDatabaseBackups(activeTab);
   const data = useMemo(() => backupsQuery.data ?? [], [backupsQuery.data]);
@@ -54,17 +57,43 @@ export function useDatabaseBackupsState() {
   const uploadBackup = useUploadBackupMutation();
   const deleteBackup = useDeleteBackupMutation();
 
-  const operationControls = useMemo(() => {
-    const raw = settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY);
-    return normalizeDatabaseEngineOperationControls(
-      raw ?? DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
-    );
+  const parsedSettings = useMemo(() => {
+    const errors: string[] = [];
+    const loggedErrors: unknown[] = [];
+
+    const parseSetting = <T,>(parser: () => T, fallback: T): T => {
+      try {
+        return parser();
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : 'Invalid backup settings payload.');
+        loggedErrors.push(error);
+        return fallback;
+      }
+    };
+
+    return {
+      operationControls: parseSetting(
+        () =>
+          parseDatabaseEngineOperationControlsSetting(
+            settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY)
+          ),
+        DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
+      ),
+      backupSchedule: parseSetting(
+        () =>
+          parseDatabaseEngineBackupScheduleSetting(
+            settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY)
+          ),
+        DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE
+      ),
+      errors,
+      loggedErrors,
+    };
   }, [settingsQuery.data]);
 
-  const backupSchedule = useMemo(() => {
-    const raw = settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
-    return normalizeDatabaseEngineBackupSchedule(raw ?? DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE);
-  }, [settingsQuery.data]);
+  const operationControls = parsedSettings.operationControls;
+  const backupSchedule = parsedSettings.backupSchedule;
+  const settingsValidationErrors = parsedSettings.errors;
 
   const backupRunNowAllowed = operationControls.allowManualBackupRunNow;
   const backupMaintenanceAllowed = operationControls.allowManualBackupMaintenance;
@@ -93,6 +122,30 @@ export function useDatabaseBackupsState() {
     activeTargetSchedule.enabled,
     activeTargetTimeLocalCurrent,
   ]);
+
+  useEffect(() => {
+    if (parsedSettings.loggedErrors.length === 0) {
+      lastSettingsValidationSignatureRef.current = null;
+      return;
+    }
+
+    const signature = settingsValidationErrors.join('::');
+    if (lastSettingsValidationSignatureRef.current === signature) return;
+    lastSettingsValidationSignatureRef.current = signature;
+
+    parsedSettings.loggedErrors.forEach((error: unknown): void => {
+      logClientError(error, {
+        context: {
+          source: 'useDatabaseBackupsState',
+          action: 'parsePersistedSettings',
+        },
+      });
+    });
+
+    toast(settingsValidationErrors[0] ?? 'Invalid database backup settings payload.', {
+      variant: 'error',
+    });
+  }, [parsedSettings.loggedErrors, settingsValidationErrors, toast]);
 
   const isBackupScheduleDirty = useMemo(
     () =>
@@ -406,6 +459,7 @@ ${String(error)}`);
     isBackupScheduleDirty,
     activeTargetKey,
     isBackupScheduleSaving,
+    settingsValidationErrors,
     closeLogModal,
     handleBackup,
     handleUpload,

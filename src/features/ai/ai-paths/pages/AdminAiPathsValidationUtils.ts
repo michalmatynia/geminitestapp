@@ -1,5 +1,4 @@
 import type {
-  AiNode,
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
@@ -8,8 +7,9 @@ import type {
   CentralDocsSnapshotResponse,
   CandidateChangeKind,
 } from '@/shared/contracts/ai-paths';
+import { pathConfigSchema } from '@/shared/contracts/ai-paths';
+import { validationError } from '@/shared/errors/app-error';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
-import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type SettingsRecord = { key: string; value: string };
@@ -126,29 +126,37 @@ export const getSourceHashFromRule = (rule: AiPathsValidationRule): string | nul
 export const getCandidateTags = (rule: AiPathsValidationRule): string[] =>
   uniqueStringList(rule.inference?.tags ?? []);
 
-export const coercePathConfig = (pathId: string, raw: unknown): PathConfig | null => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const record = raw as Record<string, unknown>;
-  const fallback = createDefaultPathConfig(pathId);
-  const name = normalizeString(record['name']) || fallback.name || `Path ${pathId.slice(0, 6)}`;
-  const updatedAt = normalizeIso(record['updatedAt'], new Date().toISOString());
-  const nodes = Array.isArray(record['nodes']) ? (record['nodes'] as AiNode[]) : fallback.nodes;
-  const edges = Array.isArray(record['edges'])
-    ? (record['edges'] as PathConfig['edges'])
-    : fallback.edges;
+export const parsePathConfig = (pathId: string, raw: unknown): PathConfig => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw validationError('Invalid AI Paths validation path config payload.', {
+      source: 'ai_paths.validation',
+      reason: 'payload_not_object',
+      pathId,
+    });
+  }
+  const result = pathConfigSchema.safeParse(raw);
+  if (!result.success) {
+    throw validationError('Invalid AI Paths validation path config payload.', {
+      source: 'ai_paths.validation',
+      reason: 'schema_validation_failed',
+      pathId,
+      issues: result.error.flatten(),
+    });
+  }
+
+  const config = result.data;
+  if (config.id !== pathId) {
+    throw validationError('AI Paths validation path config id does not match its settings key.', {
+      source: 'ai_paths.validation',
+      reason: 'path_id_mismatch',
+      pathId,
+      configId: config.id,
+    });
+  }
 
   return {
-    ...fallback,
-    ...(record as Partial<PathConfig>),
-    id: pathId,
-    name,
-    updatedAt,
-    nodes,
-    edges,
-    aiPathsValidation: normalizeAiPathsValidationConfig(
-      (record['aiPathsValidation'] as PathConfig['aiPathsValidation'] | undefined) ??
-        fallback.aiPathsValidation
-    ),
+    ...config,
+    aiPathsValidation: normalizeAiPathsValidationConfig(config.aiPathsValidation),
   };
 };
 
@@ -187,8 +195,14 @@ export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSe
     const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
     if (!pathId) return;
     const parsed = parseJson(value);
-    const config = coercePathConfig(pathId, parsed);
-    if (!config) return;
+    if (parsed === null) {
+      throw validationError('Invalid AI Paths validation path config JSON payload.', {
+        source: 'ai_paths.validation',
+        reason: 'invalid_json',
+        pathId,
+      });
+    }
+    const config = parsePathConfig(pathId, parsed);
     parsedConfigById.set(pathId, config);
   });
 

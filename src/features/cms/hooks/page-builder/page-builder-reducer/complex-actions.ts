@@ -8,6 +8,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import {
+  uid,
   findSection,
   findBlock,
   createBlockInstance,

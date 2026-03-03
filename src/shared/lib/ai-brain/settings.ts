@@ -17,8 +17,8 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
+  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
-  entriesToCatalogArrays,
   sanitizeCatalogEntries,
 } from '@/shared/lib/ai-brain/catalog-entries';
 import { validationError } from '@/shared/errors/app-error';
@@ -355,23 +355,22 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
     { pool: 'modelPresets', value: 'gemini-1.5-pro' },
     { pool: 'modelPresets', value: 'gemini-1.5-flash' },
   ],
-  modelPresets: [
-    'gpt-4o-mini',
-    'gpt-4o',
-    'gpt-4.1-mini',
-    'gpt-4.1',
-    'o1-mini',
-    'claude-3-5-sonnet-20241022',
-    'claude-3-5-haiku-20241022',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash',
-  ],
-  paidModels: [],
-  ollamaModels: [],
-  agentModels: [],
-  deepthinkingAgents: [],
-  playwrightPersonas: [],
 };
+
+const resolveLegacyProviderCatalogEntries = (
+  parsed: Record<string, unknown>
+): AiBrainCatalogEntry[] =>
+  BRAIN_CATALOG_POOL_VALUES.flatMap((pool: AiBrainCatalogPool): AiBrainCatalogEntry[] => {
+    const values = parsed[pool];
+    if (!Array.isArray(values)) return [];
+    return values.map((value: unknown): AiBrainCatalogEntry => ({
+      pool,
+      value: typeof value === 'string' ? value : '',
+    }));
+  });
+
+const isLegacyProviderCatalogKey = (value: string): value is AiBrainCatalogPool =>
+  BRAIN_CATALOG_POOL_VALUES.includes(value as AiBrainCatalogPool);
 
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
   if (!raw?.trim()) return defaultBrainSettings;
@@ -429,7 +428,43 @@ export const parseBrainProviderCatalog = (
     });
   }
 
-  const result = providerCatalogSchema.safeParse(parsed);
+  const parsedRecord = parsed as Record<string, unknown>;
+  const unsupportedKeys = Object.keys(parsedRecord).filter(
+    (key: string): boolean => key !== 'entries' && !isLegacyProviderCatalogKey(key)
+  );
+  if (unsupportedKeys.length > 0) {
+    throw validationError('Invalid AI Brain provider catalog payload.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'unknown_keys',
+      keys: unsupportedKeys,
+    });
+  }
+  BRAIN_CATALOG_POOL_VALUES.forEach((pool: AiBrainCatalogPool): void => {
+    if (
+      Object.prototype.hasOwnProperty.call(parsedRecord, pool) &&
+      !Array.isArray(parsedRecord[pool])
+    ) {
+      throw validationError('Invalid AI Brain provider catalog payload.', {
+        source: 'ai_brain.provider_catalog',
+        reason: 'invalid_legacy_pool_shape',
+        key: pool,
+      });
+    }
+  });
+  const legacyEntries = resolveLegacyProviderCatalogEntries(parsedRecord);
+  const normalizedParsed: Record<string, unknown> = {};
+  if (Object.prototype.hasOwnProperty.call(parsedRecord, 'entries')) {
+    normalizedParsed['entries'] = parsedRecord['entries'];
+  }
+  if (legacyEntries.length > 0) {
+    normalizedParsed['entries'] = Array.isArray(parsedRecord['entries'])
+      ? [...parsedRecord['entries'], ...legacyEntries]
+      : parsedRecord['entries'] === undefined
+        ? legacyEntries
+        : parsedRecord['entries'];
+  }
+
+  const result = providerCatalogSchema.safeParse(normalizedParsed);
   if (!result.success) {
     throw validationError('Invalid AI Brain provider catalog payload.', {
       source: 'ai_brain.provider_catalog',
@@ -438,12 +473,8 @@ export const parseBrainProviderCatalog = (
     });
   }
 
-  const entries = sanitizeCatalogEntries(catalogToEntries(result.data));
-  const arrays = entriesToCatalogArrays(entries);
-
   return {
-    entries,
-    ...arrays,
+    entries: sanitizeCatalogEntries(catalogToEntries(result.data)),
   };
 };
 
@@ -518,11 +549,8 @@ export const sanitizeBrainAssignmentForProviders = (
 export const sanitizeBrainProviderCatalog = (
   catalog: AiBrainProviderCatalog
 ): AiBrainProviderCatalog => {
-  const entries = sanitizeCatalogEntries(catalogToEntries(catalog));
-  const arrays = entriesToCatalogArrays(entries);
   return {
-    entries,
-    ...arrays,
+    entries: sanitizeCatalogEntries(catalogToEntries(catalog)),
   };
 };
 

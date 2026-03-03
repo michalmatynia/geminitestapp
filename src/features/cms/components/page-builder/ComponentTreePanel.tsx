@@ -1,6 +1,5 @@
 'use client';
 
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { FolderTreeViewportV2, useMasterFolderTreeShell } from '@/features/foldertree/v2';
@@ -29,6 +28,7 @@ import {
   toCmsZoneNodeId,
 } from './utils/cms-master-tree';
 import { createCmsMasterTreeAdapter } from './utils/cms-master-tree-adapter';
+import { buildHierarchyIndexes } from '../../hooks/page-builder/section-hierarchy';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider } from '../../hooks/useTreeActionsContext';
@@ -49,16 +49,23 @@ export function ComponentTreePanel(): React.ReactNode {
   // Ensure drag state context is available.
   useDragState();
 
-  const sectionsByZone = useMemo(
-    () =>
-      CMS_ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
-        (acc, zone) => {
-          acc[zone] = state.sections.filter((section: SectionInstance) => section.zone === zone);
-          return acc;
-        },
-        { header: [], template: [], footer: [] }
-      ),
-    [state.sections]
+  const hierarchy = useMemo(() => buildHierarchyIndexes(state.sections), [state.sections]);
+  const rootSectionsByZone = useMemo(
+    () => {
+      const grouped: Record<PageZone, SectionInstance[]> = {
+        header: [],
+        template: [],
+        footer: [],
+      };
+      const rootIds = hierarchy.childrenByParent.get(null) ?? [];
+      rootIds.forEach((sectionId: string) => {
+        const section = hierarchy.nodeById.get(sectionId);
+        if (!section) return;
+        grouped[section.zone].push(section);
+      });
+      return grouped;
+    },
+    [hierarchy.childrenByParent, hierarchy.nodeById]
   );
 
   const sectionById = useMemo(() => {
@@ -71,13 +78,13 @@ export function ComponentTreePanel(): React.ReactNode {
 
   const sectionIndexById = useMemo(() => {
     const next = new Map<string, number>();
-    CMS_ZONE_ORDER.forEach((zone: PageZone) => {
-      sectionsByZone[zone].forEach((section: SectionInstance, index: number) => {
-        next.set(section.id, index);
+    hierarchy.childrenByParent.forEach((sectionIds: string[]) => {
+      sectionIds.forEach((sectionId: string, index: number) => {
+        next.set(sectionId, index);
       });
     });
     return next;
-  }, [sectionsByZone]);
+  }, [hierarchy.childrenByParent]);
 
   const masterNodes = useMemo(
     (): MasterTreeNode[] => buildCmsMasterNodes(state.sections),
@@ -98,32 +105,26 @@ export function ComponentTreePanel(): React.ReactNode {
     () => CMS_ZONE_ORDER.map((zone: PageZone) => toCmsZoneNodeId(zone)),
     []
   );
-  const applySectionMoveByZoneIndex = React.useCallback(
-    (sectionId: string, zone: PageZone, toIndex: number): void => {
-      const section = state.sections.find(
-        (item: SectionInstance): boolean => item.id === sectionId
-      );
-      if (!section) return;
-
-      if (section.zone === zone) {
-        const zoneSections = state.sections.filter(
-          (item: SectionInstance): boolean => item.zone === zone
-        );
-        const fromIndex = zoneSections.findIndex(
-          (item: SectionInstance): boolean => item.id === sectionId
-        );
-        if (fromIndex === -1 || fromIndex === toIndex) return;
-        dispatch({ type: 'REORDER_SECTIONS', zone, fromIndex, toIndex });
-        return;
-      }
-
-      dispatch({ type: 'MOVE_SECTION_TO_ZONE', sectionId, toZone: zone, toIndex });
+  const applySectionMoveInTree = React.useCallback(
+    (
+      sectionId: string,
+      toZone: PageZone,
+      toParentSectionId: string | null,
+      toIndex: number
+    ): void => {
+      dispatch({
+        type: 'MOVE_SECTION_IN_TREE',
+        sectionId,
+        toZone,
+        toParentSectionId: toParentSectionId ?? null,
+        toIndex,
+      });
     },
-    [dispatch, state.sections]
+    [dispatch]
   );
   const cmsTreeAdapter = useMemo(
-    () => createCmsMasterTreeAdapter(applySectionMoveByZoneIndex),
-    [applySectionMoveByZoneIndex]
+    () => createCmsMasterTreeAdapter(applySectionMoveInTree),
+    [applySectionMoveInTree]
   );
 
   const {
@@ -159,21 +160,28 @@ export function ComponentTreePanel(): React.ReactNode {
     clearMasterDrag();
   }, [clearMasterDrag]);
   const moveSectionByMaster = React.useCallback(
-    async (sectionId: string, zone: PageZone, toIndex: number): Promise<boolean> => {
-      const result = await moveMasterNode(
-        toCmsSectionNodeId(sectionId),
-        toCmsZoneNodeId(zone),
-        toIndex
-      );
+    async (
+      sectionId: string,
+      zone: PageZone,
+      toIndex: number,
+      toParentSectionId: string | null = null
+    ): Promise<boolean> => {
+      const targetParentNodeId = toParentSectionId
+        ? toCmsSectionNodeId(toParentSectionId)
+        : toCmsZoneNodeId(zone);
+      const result = await moveMasterNode(toCmsSectionNodeId(sectionId), targetParentNodeId, toIndex);
+      if (result.ok && toParentSectionId) {
+        structureController.expandNode(targetParentNodeId);
+      }
       return result.ok;
     },
-    [moveMasterNode]
+    [moveMasterNode, structureController]
   );
   const canDropSectionsAtRoot = useMemo(
     () =>
       canNestTreeNodeV2({
         profile: treeProfile,
-        nodeType: 'file',
+        nodeType: 'folder',
         nodeKind: 'section',
         targetType: 'root',
       }),
@@ -267,10 +275,10 @@ export function ComponentTreePanel(): React.ReactNode {
               controller={structureController}
               enableDnd={false}
               className='space-y-0.5'
-              renderNode={({ node, isExpanded, toggleExpand }) => {
+              renderNode={({ node, hasChildren, isExpanded, toggleExpand }) => {
                 const zoneFromNode = fromCmsZoneNodeId(node.id);
                 if (zoneFromNode) {
-                  const zoneSections = sectionsByZone[zoneFromNode];
+                  const zoneSections = rootSectionsByZone[zoneFromNode];
                   return (
                     <div className='border-b border-border/50 px-4 py-2.5'>
                       <Button
@@ -279,11 +287,9 @@ export function ComponentTreePanel(): React.ReactNode {
                         onClick={toggleExpand}
                         className='flex h-auto w-full items-center justify-start gap-1.5 p-0 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:bg-transparent hover:text-gray-300 font-bold'
                       >
-                        {isExpanded ? (
-                          <ChevronDown className='size-3.5' />
-                        ) : (
-                          <ChevronRight className='size-3.5' />
-                        )}
+                        <span className='inline-block w-3.5 text-center'>
+                          {isExpanded ? '▾' : '▸'}
+                        </span>
                         <span>{CMS_ZONE_LABELS[zoneFromNode]}</span>
                         {zoneSections.length > 0 ? (
                           <span className='ml-1 text-[10px] text-gray-500'>
@@ -302,8 +308,18 @@ export function ComponentTreePanel(): React.ReactNode {
                   const sectionIndex = sectionIndexById.get(sectionId) ?? 0;
                   return (
                     <div className='px-2'>
-                      <SectionDropTarget zone={section.zone} toIndex={sectionIndex} />
-                      <SectionNodeItem section={section} sectionIndex={sectionIndex} />
+                      <SectionDropTarget
+                        zone={section.zone}
+                        toParentSectionId={section.parentSectionId ?? null}
+                        toIndex={sectionIndex}
+                      />
+                      <SectionNodeItem
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        hasTreeChildren={hasChildren}
+                        isTreeExpanded={isExpanded}
+                        toggleTreeExpand={toggleExpand}
+                      />
                     </div>
                   );
                 }
@@ -314,7 +330,7 @@ export function ComponentTreePanel(): React.ReactNode {
                   <div className='px-2 pb-2'>
                     <ZoneFooterNode
                       zone={zoneFromFooter}
-                      sectionCount={sectionsByZone[zoneFromFooter].length}
+                      sectionCount={rootSectionsByZone[zoneFromFooter].length}
                     />
                   </div>
                 );

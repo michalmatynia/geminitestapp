@@ -19,11 +19,13 @@ import {
   type StudioAssetImportResult,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   ImageStudioSlotRecord,
   StudioSlotsResponse,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
 } from '@/shared/contracts/image-studio';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -36,11 +38,27 @@ import {
 import { useProjectsState } from './ProjectsContext';
 import {
   getImageStudioProjectSessionKey,
+  type ImageStudioProjectSession,
   resolveImageStudioProjectSession,
 } from '@/features/ai/image-studio/utils/project-session';
 import { type StudioUploadMode } from '../components/studio-modals/StudioImportContext';
 
 export type StudioPreviewMode = 'image' | '3d';
+
+type StudioFolderMutation = CreateMutation<string, string>;
+type StudioUpdateSlotMutation = UpdateMutation<
+  ImageStudioSlotRecord,
+  { id: string; data: Partial<ImageStudioSlotRecord> }
+>;
+type StudioDeleteSlotMutation = DeleteMutation<void, string>;
+type StudioUploadMutation = CreateMutation<
+  StudioAssetImportResult,
+  { files: File[]; folder: string }
+>;
+type StudioDriveImportMutation = CreateMutation<
+  StudioAssetImportResult,
+  { files: ImageFileSelection[]; folder: string }
+>;
 
 export type SlotsContextType = {
   // State
@@ -113,16 +131,16 @@ export type SlotsContextType = {
     options?: { folder?: string; slotId?: string }
   ) => Promise<ImageStudioUploadedAsset[]>;
   importAssetsFromDrive: (
-    selection: any,
+    selection: ImageFileSelection,
     options?: { folder?: string; slotId?: string }
   ) => Promise<StudioAssetImportResult>;
   
   // Mutations
-  createFolderMutation: any;
-  updateSlotMutation: any;
-  deleteSlotMutation: any;
-  uploadMutation: any;
-  importFromDriveMutation: any;
+  createFolderMutation: StudioFolderMutation;
+  updateSlotMutation: StudioUpdateSlotMutation;
+  deleteSlotMutation: StudioDeleteSlotMutation;
+  uploadMutation: StudioUploadMutation;
+  importFromDriveMutation: StudioDriveImportMutation;
 
   isUploading: boolean;
   isImporting: boolean;
@@ -132,6 +150,7 @@ export type SlotsContextType = {
 const SlotsContext = createContext<SlotsContextType | null>(null);
 
 const DEFAULT_FOLDERS = ['Root'];
+type SessionWithFolders = ImageStudioProjectSession & { folders?: string[] };
 
 const normalizeFolderPaths = (paths: string[]): string[] => {
   const seen = new Set<string>();
@@ -143,6 +162,31 @@ const normalizeFolderPaths = (paths: string[]): string[] => {
       return true;
     })
     .sort();
+};
+
+const toUploadedAsset = (file: {
+  id: string;
+  filepath: string;
+  filename?: string;
+  width?: number | null;
+  height?: number | null;
+}): ImageStudioUploadedAsset => ({
+  id: file.id,
+  filepath: file.filepath,
+  filename: file.filename,
+  width: file.width ?? null,
+  height: file.height ?? null,
+});
+
+const getSessionFolders = (session: ImageStudioProjectSession | null): string[] => {
+  const folders = (session as SessionWithFolders | null)?.folders;
+  if (!Array.isArray(folders)) return [];
+  return folders.filter((folder: unknown): folder is string => typeof folder === 'string');
+};
+
+const isCompositeSlot = (slot: ImageStudioSlotRecord): boolean => {
+  const raw = slot as Record<string, unknown>;
+  return raw['isComposite'] === true || slot.metadata?.role === 'composite';
 };
 
 export function SlotsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -178,26 +222,32 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
   // ── Folders ──
   const settingsKey = projectId ? getImageStudioProjectSessionKey(projectId) : null;
+  const settingsQueryOptions = settingsKey
+    ? { scope: 'heavy' as const, enabled: true }
+    : { enabled: false };
   const { data: settingsMap, isLoading: loadingSettings } = useSettingsMap(
-    settingsKey ? ({ scope: 'heavy', enabled: true } as any) : ({ enabled: false } as any)
+    settingsQueryOptions
   );
   const updateSetting = useUpdateSetting();
 
   const session = useMemo(() => {
-    const raw = settingsKey ? (settingsMap as any)?.get?.(settingsKey) : null;
+    const raw = settingsKey ? settingsMap?.get(settingsKey) ?? null : null;
     return resolveImageStudioProjectSession(raw, projectId ?? '');
   }, [settingsKey, settingsMap, projectId]);
 
   const virtualFolders = useMemo(() => {
-    const fromSession = (session as any)?.folders;
+    const fromSession = getSessionFolders(session);
     if (!fromSession || fromSession.length === 0) return DEFAULT_FOLDERS;
     return normalizeFolderPaths([...DEFAULT_FOLDERS, ...fromSession]);
   }, [session]);
 
   const persistFolders = useCallback(
-    async (folders: string[]) => {
+    async (folders: string[]): Promise<void> => {
       if (!settingsKey) return;
-      const nextSession = { ...session, folders: normalizeFolderPaths(folders) };
+      const nextSession: Record<string, unknown> = {
+        ...(session ?? {}),
+        folders: normalizeFolderPaths(folders),
+      };
       await updateSetting.mutateAsync({
         key: settingsKey,
         value: serializeSetting(nextSession),
@@ -229,7 +279,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   );
 
   const compositeSlot = useMemo(
-    () => slots.find((s: any) => s.isComposite || s.metadata?.role === 'composite') ?? null,
+    () => slots.find((slot: ImageStudioSlotRecord) => isCompositeSlot(slot)) ?? null,
     [slots]
   );
 
@@ -242,7 +292,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   );
 
   const compositeAssetOptions = useMemo(
-    () => slots.map(s => ({ value: s.id, label: s.name || s.id })),
+    () =>
+      slots.map((slot: ImageStudioSlotRecord) => ({ value: slot.id, label: slot.name || slot.id })),
     [slots]
   );
 
@@ -286,7 +337,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     [updateSlotMutation]
   );
 
-  const createFolderMutation = createCreateMutationV2<string, string>({
+  const createFolderMutation: StudioFolderMutation = createCreateMutationV2<string, string>({
     mutationKey: studioKeys.mutation('folders.create'),
     mutationFn: async (folder: string) => {
       const expanded = expandFolderPath(folder);
@@ -303,11 +354,11 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     },
   });
 
-  const handleMoveFolder = useCallback(async (_source: string, _target: string) => {
+  const handleMoveFolder = useCallback(async (_source: string, _target: string): Promise<void> => {
     // Implementation omitted
   }, []);
 
-  const handleRenameFolder = useCallback(async (_source: string, _nextName: string) => {
+  const handleRenameFolder = useCallback(async (_source: string, _nextName: string): Promise<void> => {
     // Implementation omitted
   }, []);
 
@@ -316,46 +367,44 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       const target = 'Root';
       if (source === 'Root') throw new Error('Cannot delete Root folder.');
 
-      const affectedSlots = slots.filter((s: any) => isTreePathWithin(s.folderPath || 'Root', source));
-
-      try {
-        const response = await api.post<{ failedRootSlotIds: string[] }>(
-          `/api/image-studio/projects/${projectId}/folders/delete`,
-          {
-            source,
-            target,
-            deleteSlots: true,
-          }
-        );
-
-        const deletedIds = new Set(affectedSlots.map((s: any) => s.id));
-        queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
-          if (!current) return current;
-          return {
-            ...current,
-            slots: current.slots.filter((s: ImageStudioSlotRecord) => !deletedIds.has(s.id)),
-          };
-        });
-
-        const nextFolders = virtualFolders.filter((f) => !isTreePathWithin(f, source));
-        await persistFolders(nextFolders);
-
-        if (selectedFolder === source || isTreePathWithin(selectedFolder, source)) {
-          setSelectedFolder('Root');
+      const affectedSlots = slots.filter((slot: ImageStudioSlotRecord) =>
+        isTreePathWithin(slot.folderPath || 'Root', source)
+      );
+      const response = await api.post<{ failedRootSlotIds: string[] }>(
+        `/api/image-studio/projects/${projectId}/folders/delete`,
+        {
+          source,
+          target,
+          deleteSlots: true,
         }
-        if (selectedSlotId && deletedIds.has(selectedSlotId)) {
-          setSelectedSlotId(null);
-        }
-        if (workingSlotId && deletedIds.has(workingSlotId)) {
-          setWorkingSlotId(null);
-        }
+      );
 
-        if ((response.failedRootSlotIds ?? []).length > 0) {
-          const failedCount = response.failedRootSlotIds.length;
-          const noun = failedCount === 1 ? 'card' : 'cards';
-          throw new Error(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
-        }
-      } finally {
+      const deletedIds = new Set(affectedSlots.map((slot: ImageStudioSlotRecord) => slot.id));
+      queryClient.setQueryData(slotsQueryKey, (current: StudioSlotsResponse | undefined) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slots: current.slots.filter((slot: ImageStudioSlotRecord) => !deletedIds.has(slot.id)),
+        };
+      });
+
+      const nextFolders = virtualFolders.filter((folder) => !isTreePathWithin(folder, source));
+      await persistFolders(nextFolders);
+
+      if (selectedFolder === source || isTreePathWithin(selectedFolder, source)) {
+        setSelectedFolder('Root');
+      }
+      if (selectedSlotId && deletedIds.has(selectedSlotId)) {
+        setSelectedSlotId(null);
+      }
+      if (workingSlotId && deletedIds.has(workingSlotId)) {
+        setWorkingSlotId(null);
+      }
+
+      if ((response.failedRootSlotIds ?? []).length > 0) {
+        const failedCount = response.failedRootSlotIds.length;
+        const noun = failedCount === 1 ? 'card' : 'cards';
+        throw new Error(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
       }
     },
     [
@@ -430,12 +479,24 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       handleRenameFolder,
       handleDeleteFolder,
 
-      uploadAssets: (files: File[], options?: { folder?: string; slotId?: string }) =>
-        uploadMutation.mutateAsync({ files, folder: options?.folder || 'Root' }) as any,
-      importAssetsFromDrive: (
-        selection: any,
+      uploadAssets: async (
+        files: File[],
         options?: { folder?: string; slotId?: string }
-      ) => importFromDriveMutation.mutateAsync({ files: [selection], folder: options?.folder || 'Root' } as any),
+      ): Promise<ImageStudioUploadedAsset[]> => {
+        const result = await uploadMutation.mutateAsync({
+          files,
+          folder: options?.folder || 'Root',
+        });
+        return result.importedFiles.map(toUploadedAsset);
+      },
+      importAssetsFromDrive: (
+        selection: ImageFileSelection,
+        options?: { folder?: string; slotId?: string }
+      ) =>
+        importFromDriveMutation.mutateAsync({
+          files: [selection],
+          folder: options?.folder || 'Root',
+        }),
       
       createFolderMutation,
       updateSlotMutation,

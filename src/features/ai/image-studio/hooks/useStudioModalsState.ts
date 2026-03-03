@@ -178,7 +178,7 @@ export function useStudioModalsState() {
     if (files.length === 0) return;
     try {
       const result = await importFromDriveMutation.mutateAsync({ files, folder: selectedFolder });
-      const imported = result.uploaded?.[0];
+      const imported = result.importedFiles[0];
       if (!imported) throw new Error('Import failed');
 
       if (driveImportMode === 'replace' && driveImportTargetId) {

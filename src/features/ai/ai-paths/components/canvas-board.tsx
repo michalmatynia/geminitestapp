@@ -261,6 +261,8 @@ export function CanvasBoard({
           className='relative h-full w-full touch-none select-none overscroll-none'
           onPointerDown={(event) => {
             if (shouldIgnoreCanvasPanStart(event.target)) return;
+            state.clearNodeSelection();
+            state.selectEdge(null);
             handlePanStart(event);
           }}
           onPointerMove={handlePanMove}

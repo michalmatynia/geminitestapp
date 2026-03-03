@@ -155,7 +155,7 @@ describe('case-resolver settings', () => {
     expect(workspace.activeFileId).toBe('detached-doc-root');
   });
 
-  it('repairs missing document ownership from uniquely-owned folder records', () => {
+  it('does not infer missing document ownership from folder records', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -193,7 +193,7 @@ describe('case-resolver settings', () => {
     );
 
     const doc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-a');
-    expect(doc?.parentCaseId).toBe('case-a');
+    expect(doc?.parentCaseId).toBeNull();
   });
 
   it('keeps case-owned documents when unrelated case metadata changes', () => {
@@ -905,7 +905,7 @@ describe('case-resolver settings', () => {
     expect(relationGraph.edgeMeta!['custom-edge']?.isStructural).toBe(false);
     expect(relationGraph.edgeMeta!['custom-edge']?.label).toBe('cross');
   });
-  it('coerces unknown relation node types to a safe template type', () => {
+  it('rejects unknown relation node types instead of coercing them', () => {
     const raw = JSON.stringify({
       version: 2,
       workspaceRevision: 0,
@@ -955,13 +955,9 @@ describe('case-resolver settings', () => {
       activeFileId: 'case-a',
     });
 
-    const workspace = parseCaseResolverWorkspace(raw);
-    const unknownNode = workspace.relationGraph.nodes.find(
-      (node: AiNode): boolean => node.id === 'custom-unknown'
+    expect(() => parseCaseResolverWorkspace(raw)).toThrowError(
+      /Invalid Case Resolver relation graph node type\./
     );
-    expect(unknownNode).toBeDefined();
-
-    expect(unknownNode?.type).toBe('template');
   });
 
   it('drops stale structural relation graph links and keeps valid custom ones', () => {

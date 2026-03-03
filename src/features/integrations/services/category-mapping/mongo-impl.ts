@@ -120,7 +120,7 @@ export const mongoCategoryMappingImpl = {
       externalCategoryId: input.externalCategoryId,
       internalCategoryId: input.internalCategoryId,
       catalogId: input.catalogId,
-      isActive: input.isActive ?? true,
+      isActive: true,
       createdAt: now,
       updatedAt: now,
     };

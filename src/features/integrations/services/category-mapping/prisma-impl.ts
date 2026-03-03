@@ -96,7 +96,7 @@ export const prismaCategoryMappingImpl = {
           externalCategoryId: input.externalCategoryId,
           internalCategoryId: input.internalCategoryId,
           catalogId: input.catalogId,
-          isActive: input.isActive ?? true,
+          isActive: true,
         },
       });
       return mapToRecord(record);

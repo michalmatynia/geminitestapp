@@ -255,8 +255,10 @@ describe('Page Builder Reducer', () => {
       const sectionId = state.sections[0]!.id;
 
       state = pageBuilderReducer(state, { type: 'COPY_SECTION', sectionId });
-      expect(state.clipboard?.type).toBe('section');
-      expect(state.clipboard?.data.id).toBe(sectionId);
+      expect(state.clipboard?.type).toBe('section_hierarchy');
+      expect(state.clipboard?.data.rootSectionId).toBe(sectionId);
+      expect(state.clipboard?.data.sections).toHaveLength(1);
+      expect(state.clipboard?.data.sections[0]?.id).toBe(sectionId);
 
       state = pageBuilderReducer(state, { type: 'PASTE_SECTION', zone: 'footer' });
       expect(state.sections).toHaveLength(2);

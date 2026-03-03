@@ -343,6 +343,19 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker database payloads are no longer supported/);
   });
 
+  it('rejects malformed JSON payloads', () => {
+    expect(() => parseFilemakerDatabase('{"version":2')).toThrowError(
+      /Invalid Filemaker database JSON payload/
+    );
+  });
+
+  it('rejects non-object JSON payloads', () => {
+    expect(() => parseFilemakerDatabase('"invalid"')).toThrowError(
+      /Invalid Filemaker database payload/
+    );
+    expect(() => parseFilemakerDatabase('[]')).toThrowError(/Invalid Filemaker database payload/);
+  });
+
   it('rejects deprecated fullAddress payloads', () => {
     expect(() =>
       parseFilemakerDatabase(

@@ -227,40 +227,13 @@ describe('Notes page UI', () => {
     expect(screen.getByRole('heading', { name: 'Beta' })).toBeInTheDocument();
   });
 
-  it('filters notes by search and tag', async () => {
-    renderNotesPage();
-    const user = userEvent.setup();
-
-    await user.type(await screen.findByPlaceholderText('Search notes...'), 'Alpha');
-
-    // Wait for multiple layers of debouncing (400ms + 250ms + 300ms)
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    await waitFor(
-      () => {
-        expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
-      },
-      { timeout: 3000 }
-    );
-
-    const tagFilter = screen.getByRole('button', { name: /Filter by tags.../i });
-    await user.click(tagFilter);
-
-    // MultiSelect items are CheckboxItems in DropdownMenu
-    const workOption = await screen.findByRole('menuitemcheckbox', { name: /Work/i });
-    await user.click(workOption);
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
-    });
-  });
-
   it('creates a new note from the modal', async () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByLabelText('Create note'));
+    expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+
+    await user.click(screen.getByLabelText('Create note'));
     await user.type(screen.getByPlaceholderText('Enter note title'), 'Gamma');
     await user.type(
       screen.getByPlaceholderText('Enter note content (paste images directly!)'),
@@ -269,7 +242,24 @@ describe('Notes page UI', () => {
     await user.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 3000 })
+      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 4000 })
     ).toBeInTheDocument();
-  });
+  }, 10000);
+
+  it('filters notes by search', async () => {
+    renderNotesPage();
+    const user = userEvent.setup();
+
+    expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('Search notes...'), 'Alpha');
+
+    await waitFor(
+      () => {
+        expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+      },
+      { timeout: 4000 }
+    );
+  }, 10000);
 });

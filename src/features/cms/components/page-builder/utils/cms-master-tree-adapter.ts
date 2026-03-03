@@ -1,18 +1,24 @@
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import { decodeCmsMasterNodeId, fromCmsZoneNodeId } from './cms-master-tree';
+import { decodeCmsMasterNodeId, fromCmsSectionNodeId, fromCmsZoneNodeId } from './cms-master-tree';
 
 import type { PageZone } from '../../../types/page-builder';
 
 export const createCmsMasterTreeAdapter = (
-  applySectionMoveByZoneIndex: (sectionId: string, zone: PageZone, toIndex: number) => void
+  applySectionMoveInTree: (
+    sectionId: string,
+    toZone: PageZone,
+    toParentSectionId: string | null,
+    toIndex: number
+  ) => void
 ) =>
   createMasterFolderTreeAdapterV3({
     decodeNodeId: decodeCmsMasterNodeId,
     handlers: {
       onMove: ({ operation, context, node, targetParent }): void => {
-        if (node.entity !== 'section' || targetParent?.entity !== 'zone') return;
+        if (node.entity !== 'section' || !targetParent) return;
+        if (targetParent.entity !== 'zone' && targetParent.entity !== 'section') return;
 
         const nextSections = context.nextNodes
           .filter(
@@ -25,17 +31,25 @@ export const createCmsMasterTreeAdapter = (
         );
         const targetIndex = operation.targetIndex ?? derivedIndex;
         if (targetIndex < 0) return;
-        const targetZone = fromCmsZoneNodeId(targetParent.nodeId);
+
+        if (targetParent.entity === 'zone') {
+          const targetZone = extractPageZone(targetParent.id);
+          if (!targetZone) return;
+          applySectionMoveInTree(node.id, targetZone, null, targetIndex);
+          return;
+        }
+
+        const parentSectionId = targetParent.id;
+        const targetZone = resolveZoneForParentNode(context.nextNodes, targetParent.nodeId);
         if (!targetZone) return;
-        applySectionMoveByZoneIndex(node.id, targetZone, targetIndex);
+        applySectionMoveInTree(node.id, targetZone, parentSectionId, targetIndex);
       },
       onReorder: ({ operation, context, node, target }): void => {
         if (node.entity !== 'section' || target.entity !== 'section') return;
         const targetNode = context.previousNodes.find(
           (entry: MasterTreeNode): boolean => entry.id === operation.targetId
         );
-        const zone = targetNode?.parentId ? fromCmsZoneNodeId(targetNode.parentId) : null;
-        if (!zone || !targetNode?.parentId) return;
+        if (!targetNode?.parentId) return;
 
         const currentSections = context.previousNodes
           .filter(
@@ -49,7 +63,38 @@ export const createCmsMasterTreeAdapter = (
         if (targetIndex < 0) return;
 
         const dropIndex = operation.position === 'after' ? targetIndex + 1 : targetIndex;
-        applySectionMoveByZoneIndex(node.id, zone, dropIndex);
+        const parentZone = fromCmsZoneNodeId(targetNode.parentId);
+        if (parentZone) {
+          applySectionMoveInTree(node.id, parentZone, null, dropIndex);
+          return;
+        }
+
+        const parentSectionId = fromCmsSectionNodeId(targetNode.parentId);
+        if (!parentSectionId) return;
+        const targetZone = resolveZoneForParentNode(context.previousNodes, targetNode.parentId);
+        if (!targetZone) return;
+        applySectionMoveInTree(node.id, targetZone, parentSectionId, dropIndex);
       },
     },
   });
+
+const resolveZoneForParentNode = (
+  nodes: MasterTreeNode[],
+  parentNodeId: string
+): PageZone | null => {
+  const zoneFromId = fromCmsZoneNodeId(parentNodeId);
+  if (zoneFromId) return zoneFromId;
+
+  const parentNode = nodes.find((entry: MasterTreeNode): boolean => entry.id === parentNodeId);
+  if (!parentNode) return null;
+  const metadataZone = extractPageZone((parentNode.metadata)?.['zone']);
+  if (metadataZone) return metadataZone;
+
+  const pathRoot = parentNode.path.split('/')[0] ?? '';
+  return extractPageZone(pathRoot);
+};
+
+const extractPageZone = (value: unknown): PageZone | null => {
+  if (value === 'header' || value === 'template' || value === 'footer') return value;
+  return null;
+};

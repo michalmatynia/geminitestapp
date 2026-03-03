@@ -14,7 +14,7 @@ import { EntityCollectionMapPanel } from '../components/validation/EntityCollect
 import { ValidationRulesEditor } from '../components/validation/ValidationRulesEditor';
 
 function AdminAiPathsValidationPageInner(): React.JSX.Element {
-  const { settingsQuery, selectedPathConfig } = useAdminAiPathsValidationContext();
+  const { settingsQuery, settingsParseError, selectedPathConfig } = useAdminAiPathsValidationContext();
 
   if (settingsQuery.isLoading) {
     return <LoadingState message='Loading AI-Paths validator...' className='py-12' />;
@@ -24,13 +24,25 @@ function AdminAiPathsValidationPageInner(): React.JSX.Element {
     <div className='mx-auto w-full max-w-none space-y-6 pb-10'>
       <ValidationHeader />
 
+      {settingsParseError ? (
+        <Card
+          variant='subtle'
+          padding='lg'
+          className='border-red-500/30 bg-red-500/10 text-sm text-red-200'
+        >
+          {settingsParseError.message}
+        </Card>
+      ) : null}
+
       {!selectedPathConfig ? (
         <Card
           variant='subtle'
           padding='lg'
           className='border-border/60 bg-card/40 text-sm text-gray-400'
         >
-          No AI Path config found for the selected path.
+          {settingsParseError
+            ? 'The selected AI Path settings could not be loaded because the persisted payload is invalid.'
+            : 'No AI Path config found for the selected path.'}
         </Card>
       ) : (
         <div className='grid gap-6 xl:grid-cols-12'>

@@ -62,39 +62,6 @@ const attachCaseResolverWorkspaceNormalizationDiagnostics = (
   return workspace;
 };
 
-const buildFolderOwnerCaseIdsByPath = (
-  folderRecords: CaseResolverFolderRecord[]
-): Map<string, Set<string>> => {
-  const ownerCaseIdsByPath = new Map<string, Set<string>>();
-  folderRecords.forEach((record: CaseResolverFolderRecord): void => {
-    const ownerCaseId = record.ownerCaseId?.trim() ?? '';
-    if (!ownerCaseId) return;
-    const folderPath = normalizeFolderPath(record.path);
-    if (!folderPath) return;
-    const currentOwners = ownerCaseIdsByPath.get(folderPath) ?? new Set<string>();
-    currentOwners.add(ownerCaseId);
-    ownerCaseIdsByPath.set(folderPath, currentOwners);
-  });
-  return ownerCaseIdsByPath;
-};
-
-const inferOwnerCaseIdFromFolderAncestors = (
-  folderPath: string,
-  ownerCaseIdsByPath: Map<string, Set<string>>
-): string | null => {
-  const normalizedFolderPath = normalizeFolderPath(folderPath);
-  if (!normalizedFolderPath) return null;
-  const segments = normalizedFolderPath.split('/').filter(Boolean);
-  for (let index = segments.length; index >= 1; index -= 1) {
-    const ancestorPath = segments.slice(0, index).join('/');
-    const ownerCaseIds = ownerCaseIdsByPath.get(ancestorPath);
-    if (!ownerCaseIds || ownerCaseIds.size === 0) continue;
-    if (ownerCaseIds.size !== 1) continue;
-    return Array.from(ownerCaseIds)[0] ?? null;
-  }
-  return null;
-};
-
 export const getCaseResolverWorkspaceNormalizationDiagnostics = (
   workspace: CaseResolverWorkspace | null | undefined
 ): CaseResolverWorkspaceNormalizationDiagnostics =>
@@ -226,11 +193,6 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
       .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
-  const sourceFolderRecordsForInference = parseCaseResolverFolderRecords(
-    workspaceRecord['folderRecords'],
-    new Set<string>(caseFilesById.keys())
-  );
-  const folderOwnerCaseIdsByPath = buildFolderOwnerCaseIdsByPath(sourceFolderRecordsForInference);
   const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFilesWithCaseRelations = normalizedFilesBase.map(
     (file: CaseResolverFile): CaseResolverFile => {
@@ -252,22 +214,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       };
     }
   );
-  const normalizedFiles = normalizedFilesWithCaseRelations.map(
-    (file: CaseResolverFile): CaseResolverFile => {
-      if (file.fileType === 'case') return file;
-      if (file.parentCaseId) return file;
-      const inferredOwnerCaseId = inferOwnerCaseIdFromFolderAncestors(
-        file.folder,
-        folderOwnerCaseIdsByPath
-      );
-      if (!inferredOwnerCaseId) return file;
-      ownershipRepairedCount += 1;
-      return {
-        ...file,
-        parentCaseId: inferredOwnerCaseId,
-      };
-    }
-  );
+  const normalizedFiles = normalizedFilesWithCaseRelations;
   const rawAssets = Array.isArray(workspaceRecord['assets'])
     ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
     : [];

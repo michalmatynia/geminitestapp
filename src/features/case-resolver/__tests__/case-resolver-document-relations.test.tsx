@@ -107,4 +107,27 @@ describe('DocumentRelationSearchPanel tree integration', () => {
     fireEvent.click(screen.getByLabelText('Link Scan C'));
     expect(onLinkFile).toHaveBeenCalledWith('scan-c');
   });
+
+  it('applies document default file-type and can switch to all', () => {
+    const onLinkFile = vi.fn();
+
+    render(
+      <MasterFolderTreeRuntimeProvider>
+        <DocumentRelationSearchPanel
+          draftFileId='doc-a'
+          isLocked={false}
+          onLinkFile={onLinkFile}
+          relationTreeInstance='case_resolver_document_relations'
+          defaultScope='all_cases'
+          defaultFileType='document'
+        />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    expect(screen.getByText('Related Document')).toBeInTheDocument();
+    expect(screen.queryByText('Scan C')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(screen.getByText('Scan C')).toBeInTheDocument();
+  });
 });

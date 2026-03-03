@@ -67,5 +67,27 @@ describe('scan relations tree integration', () => {
     expect(onLinkFile).toHaveBeenCalledWith('scan-linked');
     expect(onLinkFile).toHaveBeenCalledWith('doc-linked');
   });
-});
 
+  it('applies scanfile default file-type and can switch to all', () => {
+    const onLinkFile = vi.fn();
+
+    render(
+      <MasterFolderTreeRuntimeProvider>
+        <DocumentRelationSearchPanel
+          draftFileId='scan-draft'
+          isLocked={false}
+          onLinkFile={onLinkFile}
+          relationTreeInstance='case_resolver_scanfile_relations'
+          defaultScope='all_cases'
+          defaultFileType='scanfile'
+        />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    expect(screen.getByText('Candidate Scan')).toBeInTheDocument();
+    expect(screen.queryByText('Candidate Document')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(screen.getByText('Candidate Document')).toBeInTheDocument();
+  });
+});

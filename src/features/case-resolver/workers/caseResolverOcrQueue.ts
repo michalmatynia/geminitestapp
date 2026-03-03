@@ -27,7 +27,9 @@ import {
   type PreparedCaseResolverOcrInput
 } from './case-resolver-ocr/types';
 import { 
-  resolveCaseResolverOcrModelCandidates 
+  inferCaseResolverOcrProviderFromModel,
+  resolveCaseResolverOcrModel,
+  resolveCaseResolverOcrModelCandidates,
 } from './case-resolver-ocr/model-resolution';
 import { 
   runOpenAiOcrRequest 
@@ -45,6 +47,7 @@ import {
   extractPdfTextForOcr 
 } from './case-resolver-ocr/pdf-utils';
 import { 
+  classifyCaseResolverOcrError,
   isRetryableCaseResolverOcrError 
 } from './case-resolver-ocr/error-classification';
 
@@ -248,7 +251,8 @@ const processOcrJob = async (data: CaseResolverOcrQueueJobData): Promise<void> =
   }
 };
 
-const ocrQueue = createManagedQueue<CaseResolverOcrQueueJobData>('case-resolver-ocr', {
+const ocrQueue = createManagedQueue<CaseResolverOcrQueueJobData>({
+  name: 'case-resolver-ocr',
   concurrency: 2,
   processor: async (data: CaseResolverOcrQueueJobData) => {
     await processOcrJob(data);
@@ -263,10 +267,7 @@ export const enqueueCaseResolverOcrJob = async (
     throw new Error('Case Resolver is disabled in Brain settings.');
   }
 
-  const execution = await resolveBrainExecutionConfigForCapability('case_resolver', 'ocr');
-  if (!execution.enabled) {
-    throw new Error('OCR capability is disabled in Brain settings.');
-  }
+  await resolveBrainExecutionConfigForCapability('case_resolver.ocr');
 
   const isRedis = await isRedisAvailable();
   if (!isRedis) {
@@ -280,7 +281,7 @@ export const enqueueCaseResolverOcrJob = async (
     return 'inline';
   }
 
-  await ocrQueue.add(data.jobId, data, {
+  await ocrQueue.enqueue(data, {
     jobId: data.jobId,
     attempts: 3,
     backoff: {
@@ -299,3 +300,12 @@ export const startCaseResolverOcrWorker = (): void => {
 };
 
 export const startCaseResolverOcrQueue = startCaseResolverOcrWorker;
+
+// Backward-compatible re-exports used by tests and other modules.
+export {
+  inferCaseResolverOcrProviderFromModel,
+  resolveCaseResolverOcrModel,
+  resolveCaseResolverOcrModelCandidates,
+  classifyCaseResolverOcrError,
+  isRetryableCaseResolverOcrError,
+};

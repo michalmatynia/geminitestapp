@@ -155,14 +155,14 @@ describe('case-resolver composer', () => {
     expect(compiled.segments).toHaveLength(1);
     expect(compiled.segments[0]?.text).toBe("<<'Quoted text'>>");
     expect(compiled.outputsByNode['focus']).toEqual({
-      textfield: "<<'Quoted text'>>",
+      wysiwygText: "<<'Quoted text'>>",
       plaintextContent: "<<'Quoted text'>>",
       plainText: "<<'Quoted text'>>",
       wysiwygContent: '',
     });
   });
 
-  it('supports document-node textfield/content flow outputs', () => {
+  it('supports document-node wysiwygText/plaintextContent flow outputs', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'doc-a', title: 'Doc A', template: 'Alpha', x: 0, y: 0 }),
@@ -208,13 +208,13 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'doc-a');
 
     expect(compiled.outputsByNode['doc-a']).toEqual({
-      textfield: 'Alpha',
+      wysiwygText: 'Alpha',
       plaintextContent: 'Alpha',
       plainText: 'Alpha',
       wysiwygContent: '',
     });
     expect(compiled.outputsByNode['doc-b']).toEqual({
-      textfield: '"Beta"',
+      wysiwygText: '"Beta"',
       plaintextContent: 'Alpha\n"Beta"',
       plainText: '"Beta"',
       wysiwygContent: '',
@@ -274,13 +274,13 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: '<b>Alpha</b>',
+      wysiwygText: '<b>Alpha</b>',
       plaintextContent: '<b>Alpha</b>',
       plainText: 'Alpha',
       wysiwygContent: '',
     });
     expect(compiled.outputsByNode['target']).toEqual({
-      textfield: 'Alpha',
+      wysiwygText: 'Alpha',
       plaintextContent: 'Alpha',
       plainText: 'Alpha',
       wysiwygContent: '',
@@ -357,13 +357,13 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['scan-edit']).toEqual({
-      textfield: 'Upstream text',
+      wysiwygText: 'Upstream text',
       plaintextContent: 'Upstream text',
       plainText: 'Upstream text',
       wysiwygContent: '',
     });
     expect(compiled.outputsByNode['next']).toEqual({
-      textfield: 'Upstream text',
+      wysiwygText: 'Upstream text',
       plaintextContent: 'Upstream text',
       plainText: 'Upstream text',
       wysiwygContent: '',
@@ -422,14 +422,14 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['note']).toEqual({
-      textfield: 'Upstream text\nAdditional note',
+      wysiwygText: 'Upstream text\nAdditional note',
       plaintextContent: 'Upstream text\nAdditional note',
       plainText: 'Additional note',
       wysiwygContent: 'Additional note',
     });
   });
 
-  it('merges explanatory node text with incoming textfield input', () => {
+  it('merges explanatory node text with incoming wysiwygText input', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Input text', x: 0, y: 0 }),
@@ -481,7 +481,7 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['note']).toEqual({
-      textfield: 'Input text\nAdditional note',
+      wysiwygText: 'Input text\nAdditional note',
       plaintextContent: 'Input text\nInput text\nAdditional note',
       plainText: 'Input text\nAdditional note',
       wysiwygContent: 'Additional note',
@@ -544,7 +544,7 @@ describe('case-resolver composer', () => {
     const noteOutputs = compiled.outputsByNode['note'];
 
     expect(noteOutputs).toEqual({
-      textfield: '<span style="color: #ff0000;">Alpha</span>\nAdditional note',
+      wysiwygText: '<span style="color: #ff0000;">Alpha</span>\nAdditional note',
       plaintextContent: 'Alpha\nAlpha\nAdditional note',
       plainText: 'Alpha\nAdditional note',
       wysiwygContent: 'Additional note',
@@ -599,7 +599,7 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['note']).toEqual({
-      textfield: 'Input text',
+      wysiwygText: 'Input text',
       plaintextContent: '',
       plainText: '',
       wysiwygContent: '',
@@ -687,7 +687,7 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: '&lt;b&gt;Alpha&lt;/b&gt;',
+      wysiwygText: '&lt;b&gt;Alpha&lt;/b&gt;',
       plaintextContent: '&lt;b&gt;Alpha&lt;/b&gt;',
       plainText: 'Alpha',
       wysiwygContent: '',
@@ -721,7 +721,7 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: 'Alpha\n',
+      wysiwygText: 'Alpha\n',
       plaintextContent: '<span style="color: #ff0000;">Alpha\n</span>',
       plainText: 'Alpha',
       wysiwygContent: '',

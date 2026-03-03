@@ -15,10 +15,7 @@ import {
   resolveIdentifierSearchLabel,
   resolvePartyReferenceSearchLabel,
   normalizeSearchText,
-  isFolderPathWithinScope,
   type NodeFileDocumentSearchRow,
-  type NodeFileDocumentFolderTree,
-  type NodeFileDocumentFolderNode,
   type NodeFileDocumentSearchScope,
 } from '../../components/CaseResolverNodeFileUtils';
 import { buildRelationMasterTree } from '../tree/relation-master-tree';
@@ -49,9 +46,6 @@ export function useDocumentRelationSearch({
   const [documentSearchScope, setDocumentSearchScope] =
     useState<NodeFileDocumentSearchScope>(initialScope);
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
-  const [selectedSearchFolderPath, setSelectedSearchFolderPath] = useState<string | null>(null);
-  const [caseSearchQuery, setCaseSearchQuery] = useState('');
-  const [selectedDrillCaseId, setSelectedDrillCaseId] = useState<string | null>(null);
   const [fileTypeFilter, setFileTypeFilter] =
     useState<DocumentRelationFileTypeFilter>(initialFileType);
   const [sortMode, setSortMode] = useState<DocumentRelationSortMode>(initialSort);
@@ -134,23 +128,8 @@ export function useDocumentRelationSearch({
     });
   }, [allSearchableFiles, caseIdentifierLabelById, caseScopedSearchableFiles, documentSearchScope]);
 
-  const folderScopedDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (selectedSearchFolderPath === null) return documentSearchRows;
-    return documentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      isFolderPathWithinScope(row.folderPath, selectedSearchFolderPath)
-    );
-  }, [documentSearchRows, selectedSearchFolderPath]);
-
-  const filteredVisibleDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const query = normalizeSearchText(documentSearchQuery);
-    if (!query) return folderScopedDocumentSearchRows;
-    return folderScopedDocumentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      row.searchable.includes(query)
-    );
-  }, [documentSearchQuery, folderScopedDocumentSearchRows]);
-
   const visibleDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const rows = [...filteredVisibleDocumentSearchRows];
+    const rows = [...documentSearchRows];
     if (sortMode === 'name_asc') {
       rows.sort((a, b) => a.file.name.localeCompare(b.file.name));
     } else if (sortMode === 'folder_asc') {
@@ -165,74 +144,7 @@ export function useDocumentRelationSearch({
       );
     }
     return rows;
-  }, [filteredVisibleDocumentSearchRows, sortMode]);
-
-  const folderTree = useMemo((): NodeFileDocumentFolderTree => {
-    const nodesByPath = new Map<string, NodeFileDocumentFolderNode>();
-    const childPathsByParent = new Map<string | null, string[]>();
-    let rootFileCount = 0;
-
-    documentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
-      if (!row.folderPath) {
-        rootFileCount += 1;
-        return;
-      }
-      let currentPath = '';
-      row.folderSegments.forEach((segment: string, index: number): void => {
-        const parentPath = currentPath || null;
-        currentPath = currentPath ? `${currentPath}/${segment}` : segment;
-        if (!nodesByPath.has(currentPath)) {
-          nodesByPath.set(currentPath, {
-            path: currentPath,
-            name: segment,
-            parentPath,
-            depth: index,
-            directFileCount: 0,
-            descendantFileCount: 0,
-          });
-          const siblings = childPathsByParent.get(parentPath) ?? [];
-          siblings.push(currentPath);
-          childPathsByParent.set(parentPath, siblings);
-        }
-        const node = nodesByPath.get(currentPath)!;
-        node.descendantFileCount += 1;
-        if (index === row.folderSegments.length - 1) {
-          node.directFileCount += 1;
-        }
-      });
-    });
-
-    childPathsByParent.forEach((paths: string[]): void => {
-      paths.sort((a: string, b: string): number =>
-        nodesByPath.get(a)!.name.localeCompare(nodesByPath.get(b)!.name)
-      );
-    });
-
-    return { nodesByPath, childPathsByParent, rootFileCount };
-  }, [documentSearchRows]);
-
-  const visibleCaseRows = useMemo(() => {
-    const query = normalizeSearchText(caseSearchQuery);
-    const caseFiles = workspace.files.filter(
-      (f: CaseResolverFile): boolean => f.fileType === 'case'
-    );
-    return caseFiles
-      .map((caseFile: CaseResolverFile) => ({
-        file: caseFile,
-        signatureLabel: resolveIdentifierSearchLabel(
-          caseFile.caseIdentifierId,
-          caseIdentifierLabelById
-        ),
-        docCount: workspace.files.filter(
-          (f: CaseResolverFile): boolean =>
-            f.parentCaseId === caseFile.id && !excludeSet.has(f.id) && f.fileType !== 'case'
-        ).length,
-      }))
-      .filter(
-        (row): boolean =>
-          !query || normalizeSearchText(row.signatureLabel + ' ' + row.file.name).includes(query)
-      );
-  }, [caseSearchQuery, workspace.files, caseIdentifierLabelById, excludeSet]);
+  }, [documentSearchRows, sortMode]);
 
   const relationTreeBuildResult = useMemo(
     () =>
@@ -256,12 +168,6 @@ export function useDocumentRelationSearch({
     setDocumentSearchScope,
     documentSearchQuery,
     setDocumentSearchQuery,
-    selectedSearchFolderPath,
-    setSelectedSearchFolderPath,
-    caseSearchQuery,
-    setCaseSearchQuery,
-    selectedDrillCaseId,
-    setSelectedDrillCaseId,
     fileTypeFilter,
     setFileTypeFilter,
     sortMode,
@@ -278,13 +184,9 @@ export function useDocumentRelationSearch({
     // Computed
     caseIdentifierLabelById,
     documentSearchRows,
-    folderScopedDocumentSearchRows,
     visibleDocumentSearchRows,
-    folderTree,
-    visibleCaseRows,
     totalRowCount: documentSearchRows.length,
     relationTreeNodes: relationTreeBuildResult.nodes,
     relationTreeLookup: relationTreeBuildResult.lookup,
-    visibleFileIdsInTreeOrder: relationTreeBuildResult.visibleFileIdsInTreeOrder,
   };
 }

@@ -219,21 +219,9 @@ describe('AdminPromptExploderSettingsPage', () => {
     const operationMode = await screen.findByLabelText('Operation Mode');
     expect(operationMode).toBeEnabled();
 
-    const provider = screen.getByLabelText('Provider Snapshot');
-    const primaryModel = screen.getByLabelText('Primary AI Model');
-    const temperature = screen.getByLabelText('Brain Temperature');
-    const maxTokens = screen.getByLabelText('Brain Max Tokens');
-
-    expect(provider).toBeDisabled();
-    expect(primaryModel).toBeDisabled();
-    expect(temperature).toBeDisabled();
-    expect(maxTokens).toBeDisabled();
-
-    expect(provider).toHaveValue('openai');
-    expect(primaryModel).toHaveValue('gpt-4o-mini');
-    expect(temperature).toHaveValue('0.7');
-    expect(maxTokens).toHaveValue('2048');
-    expect(screen.queryByLabelText('Fallback Model Snapshot')).not.toBeInTheDocument();
+    const brainAssignment = screen.getByLabelText('Brain Assignment');
+    expect(brainAssignment).toBeDisabled();
+    expect(brainAssignment).toHaveValue('gpt-4o-mini');
 
     expect(vi.mocked(useBrainModelOptions)).toHaveBeenCalledWith({
       capability: 'prompt_engine.prompt_exploder',

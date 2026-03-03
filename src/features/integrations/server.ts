@@ -1,6 +1,10 @@
 import 'server-only';
 
 export * from './services/category-mapping-repository';
+export async function getCategoryMappingRepository() {
+  const { categoryMappingRepository } = await import('./services/category-mapping-repository');
+  return categoryMappingRepository;
+}
 export type { Template, TemplateMapping } from './services/export-template-repository';
 export * from './services/export-template-repository';
 export * from './services/exports/base-exporter';

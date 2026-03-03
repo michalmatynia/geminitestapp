@@ -80,7 +80,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   const outputPreviewRows = React.useMemo((): Array<{ label: string; value: string }> => {
     if (!selectedPromptOutputPreview) return [];
     const rows: Array<{ label: string; value: string }> = [
-      { label: 'wysiwygText', value: selectedPromptOutputPreview.textfield || '' },
+      { label: 'wysiwygText', value: selectedPromptOutputPreview.wysiwygText || '' },
       { label: 'plaintextContent', value: selectedPromptOutputPreview.plaintextContent || '' },
       { label: 'plainText', value: selectedPromptOutputPreview.plainText || '' },
     ];
@@ -376,7 +376,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
 
                 <div className='grid gap-2 md:grid-cols-2'>
                   <div className='rounded border border-border/60 bg-card/30 p-3'>
-                    <div className='mb-1 text-[11px] text-gray-400'>Input Textfield Content</div>
+                    <div className='mb-1 text-[11px] text-gray-400'>Input WYSIWYG Text Content</div>
                     <div className='max-h-52 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
                       {selectedPromptInputText || '(empty)'}
                     </div>

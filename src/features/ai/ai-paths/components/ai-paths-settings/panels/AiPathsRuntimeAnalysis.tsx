@@ -11,7 +11,7 @@ import {
   formatStatusLabel,
   statusToVariant,
 } from '../ai-paths-settings-view-utils';
-import { runsApi, type AiNode } from '@/shared/lib/ai-paths';
+import { listAiPathRuns, type AiNode } from '@/shared/lib/ai-paths';
 import type {
   AiPathRuntimeTraceSlowNode,
   AiPathRuntimeTraceFailedNode,
@@ -101,7 +101,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
       };
 
       if (preferFailed) {
-        const failedResult = await runsApi.list({
+        const failedResult = await listAiPathRuns({
           ...baseOptions,
           status: 'failed',
         });
@@ -109,7 +109,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         if (failedRunId) return failedRunId;
       }
 
-      const fallbackResult = await runsApi.list(baseOptions);
+      const fallbackResult = await listAiPathRuns(baseOptions);
       return readFirstRunId(fallbackResult);
     },
     [activePathId]

@@ -66,6 +66,93 @@ describe('admin case resolver cases workspace adoption', () => {
     ).toBe(false);
   });
 
+  it('adopts equal-revision incoming workspace when current has no case files and incoming has cases', () => {
+    const current: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      id: 'workspace-current',
+      files: [
+        createCaseResolverFile({
+          id: 'document-1',
+          name: 'Document One',
+          fileType: 'document',
+          folder: '',
+          parentCaseId: null,
+        }),
+      ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      workspaceRevision: 0,
+      lastMutationId: null,
+    };
+    const incoming: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      id: 'workspace-incoming',
+      files: [
+        createCaseResolverFile({
+          id: 'case-1',
+          name: 'Case One',
+          fileType: 'case',
+          folder: '',
+        }),
+      ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      workspaceRevision: 0,
+      lastMutationId: null,
+    };
+
+    expect(
+      shouldAdoptIncomingCaseResolverCasesWorkspace({
+        current,
+        incoming,
+      })
+    ).toBe(true);
+  });
+
+  it('adopts equal-revision incoming workspace when incoming has more case files', () => {
+    const current: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      id: 'workspace-current',
+      files: [
+        createCaseResolverFile({
+          id: 'case-1',
+          name: 'Case One',
+          fileType: 'case',
+          folder: '',
+        }),
+      ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      workspaceRevision: 0,
+      lastMutationId: null,
+    };
+    const incoming: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      id: 'workspace-incoming',
+      files: [
+        createCaseResolverFile({
+          id: 'case-1',
+          name: 'Case One',
+          fileType: 'case',
+          folder: '',
+        }),
+        createCaseResolverFile({
+          id: 'case-2',
+          name: 'Case Two',
+          fileType: 'case',
+          folder: '',
+        }),
+      ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      workspaceRevision: 0,
+      lastMutationId: null,
+    };
+
+    expect(
+      shouldAdoptIncomingCaseResolverCasesWorkspace({
+        current,
+        incoming,
+      })
+    ).toBe(true);
+  });
+
   it('forces keyed record bootstrap for placeholder case-list workspaces', () => {
     expect(shouldBootstrapCaseResolverCasesFromRecord(parseCaseResolverWorkspace(null))).toBe(true);
 
@@ -84,5 +171,24 @@ describe('admin case resolver cases workspace adoption', () => {
     };
 
     expect(shouldBootstrapCaseResolverCasesFromRecord(populatedWorkspace)).toBe(false);
+  });
+
+  it('forces keyed record bootstrap when workspace has no case files yet', () => {
+    const unresolvedWorkspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      id: 'workspace-unresolved',
+      files: [
+        createCaseResolverFile({
+          id: 'document-1',
+          name: 'Document One',
+          fileType: 'document',
+          folder: '',
+          parentCaseId: null,
+        }),
+      ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+    };
+
+    expect(shouldBootstrapCaseResolverCasesFromRecord(unresolvedWorkspace)).toBe(true);
   });
 });

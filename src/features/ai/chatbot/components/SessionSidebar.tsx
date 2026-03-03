@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, MessageSquare } from 'lucide-react';
 
-import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import { Button } from '@/shared/ui';
 
 import { useChatbotSessions } from '../context/ChatbotContext';
@@ -36,7 +36,7 @@ export function SessionSidebar(): React.JSX.Element {
         ) : (
           <div className='space-y-1'>
             {sessions.map(
-              (session: ChatSession): React.JSX.Element => (
+              (session: ChatbotSessionListItem): React.JSX.Element => (
                 <div
                   key={session.id}
                   className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
@@ -50,7 +50,7 @@ export function SessionSidebar(): React.JSX.Element {
                   <div className='flex-1 overflow-hidden'>
                     <div className='truncate text-sm font-medium'>{session.title}</div>
                     <div className='truncate text-xs text-gray-500'>
-                      {session.messages?.length ?? 0} messages
+                      {session.messageCount ?? 0} messages
                     </div>
                   </div>
                   <Button

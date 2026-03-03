@@ -4,8 +4,8 @@ import React from 'react';
 import {
   evaluateDataContractPreflight,
   evaluateAiPathsValidationPreflight,
+  listAiPathRuns,
   normalizeAiPathsValidationConfig,
-  runsApi,
 } from '../../lib';
 import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-utils';
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
@@ -92,7 +92,9 @@ export function useAiPathsSettingsPageValue(
         offset: 0,
       };
 
-      const readFirstRunId = (result: Awaited<ReturnType<typeof runsApi.list>>): string | null => {
+      const readFirstRunId = (
+        result: Awaited<ReturnType<typeof listAiPathRuns>>
+      ): string | null => {
         if (!result.ok) return null;
         const payload = result.data as { runs?: Array<{ id?: unknown }> } | undefined;
         if (!Array.isArray(payload?.runs)) return null;
@@ -102,12 +104,12 @@ export function useAiPathsSettingsPageValue(
 
       let runId: string | null = null;
       if (focus === 'failed') {
-        const result = await runsApi.list({ ...baseOptions, status: 'failed' });
+        const result = await listAiPathRuns({ ...baseOptions, status: 'failed' });
         runId = readFirstRunId(result);
       }
 
       if (!runId) {
-        const result = await runsApi.list(baseOptions);
+        const result = await listAiPathRuns(baseOptions);
         runId = readFirstRunId(result);
       }
 

@@ -15,7 +15,7 @@ export interface CardNodeItemProps {
   isExpanded: boolean;
   isSelected: boolean;
   isRenaming: boolean;
-  select: () => void;
+  select: (event?: React.MouseEvent<HTMLElement>) => void;
   toggleExpand: () => void;
 }
 
@@ -170,7 +170,7 @@ export function CardNodeItem({
                 clearSelection();
                 return;
               }
-              select();
+              select(event);
               onSelectCardNode(card, node.id);
             }}
             onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {

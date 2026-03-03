@@ -7,6 +7,7 @@ import {
   type CaseResolverWorkspaceRecordFetchResult,
   type CaseResolverWorkspaceFetchIfStaleResult as FetchIfStaleResult,
 } from '@/shared/contracts/case-resolver';
+import { validationError } from '@/shared/errors/app-error';
 
 import {
   getCaseResolverWorkspaceNormalizationDiagnostics,
@@ -54,7 +55,6 @@ import {
   deleteCaseResolverNodeFileSnapshot,
   readCaseResolverNodeFileSnapshotStorageMode,
 } from './node-file-persistence';
-import { validationError } from '@/shared/errors/app-error';
 
 export {
   createCaseResolverWorkspaceMutationId,
@@ -106,6 +106,9 @@ const readWorkspaceFromSettingRecord = (
   fallback: string
 ): CaseResolverWorkspace => {
   const rawValue = typeof record?.value === 'string' ? record.value : fallback;
+  if (!rawValue.trim()) {
+    return parseCaseResolverWorkspace(fallback);
+  }
   return parseCaseResolverWorkspace(rawValue);
 };
 
@@ -464,26 +467,31 @@ const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
   };
 };
 
-const assertNoLegacyNodeFileSnapshotPayload = (
-  asset: CaseResolverWorkspace['assets'][number],
-  source: string
-): void => {
-  if (asset.kind !== 'node_file') return;
+const sanitizeCanonicalNodeFileSnapshotPayload = (
+  asset: CaseResolverWorkspace['assets'][number]
+): CaseResolverWorkspace['assets'][number] => {
+  if (asset.kind !== 'node_file') return asset;
   const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
   if (inlineText.length > 0) {
     throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-      source,
+      source: 'case_resolver.workspace_persistence',
       assetId: asset.id,
+      reason: 'inline_node_file_snapshot_not_supported',
     });
   }
   const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
   if (storageMode && storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED) {
-    throw validationError('Legacy Case Resolver node-file snapshot storage mode is no longer supported.', {
-      source,
-      assetId: asset.id,
-      storageMode,
-    });
+    throw validationError(
+      'Legacy Case Resolver node-file snapshot storage metadata is no longer supported.',
+      {
+        source: 'case_resolver.workspace_persistence',
+        assetId: asset.id,
+        reason: 'legacy_snapshot_storage_mode_not_supported',
+        storageMode,
+      }
+    );
   }
+  return asset;
 };
 
 export const compactCaseResolverWorkspaceForPersist = (
@@ -539,8 +547,8 @@ export const compactCaseResolverWorkspaceForPersist = (
   const compactedAssets = Array.isArray(workspace.assets)
     ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
       if (asset.kind !== 'node_file') return asset;
-      assertNoLegacyNodeFileSnapshotPayload(asset, 'case_resolver.workspace_compact');
-      const { textContent: _textContent, ...assetRest } = asset;
+      const sanitizedAsset = sanitizeCanonicalNodeFileSnapshotPayload(asset);
+      const { textContent: _textContent, ...assetRest } = sanitizedAsset;
       return {
         ...assetRest,
       } as CaseResolverWorkspace['assets'][number];

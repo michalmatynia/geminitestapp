@@ -137,7 +137,7 @@ export const normalizeLabeledPartySegments = (
       return;
     }
 
-    const lines = sourceText.replace(/\\r\\n/g, '\\n').split('\\n');
+    const lines = sourceText.replace(/\r\n/g, '\n').split('\n');
     const labeledBlocks: Array<{
       role: PromptExploderCaseResolverPartyRole;
       lines: string[];
@@ -193,7 +193,7 @@ export const normalizeLabeledPartySegments = (
       return;
     }
 
-    labeledBlocks.forEach((block, _index): void => {
+    labeledBlocks.forEach((block, index): void => {
       if (block.role !== 'addresser' && block.role !== 'addressee') return;
       const roleConfig = CASE_RESOLVER_LABEL_ROLE_CONFIG[block.role];
       const blockText = normalizeRawCaptureText(block.lines.join('\n'));

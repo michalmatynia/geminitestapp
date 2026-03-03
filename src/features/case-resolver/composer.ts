@@ -34,7 +34,7 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   none: '',
 };
 
-const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
+const DOCUMENT_WYSIWYG_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
 const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
@@ -185,7 +185,7 @@ const sortEdgesBySourcePosition = (edges: Edge[], nodeById: Map<string, AiNode>)
 const resolveSourceOutputValue = (
   sourceOutputs:
     | {
-        textfield: string;
+        wysiwygText: string;
         plaintextContent: string;
         plainText: string;
         wysiwygContent: string;
@@ -193,11 +193,11 @@ const resolveSourceOutputValue = (
     | null
     | undefined,
   fromPort: string | null | undefined,
-  fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
+  fallback: 'wysiwygText' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
 ): string => {
   if (!sourceOutputs) return '';
-  if (fromPort === DOCUMENT_TEXTFIELD_PORT) {
-    return sourceOutputs.textfield;
+  if (fromPort === DOCUMENT_WYSIWYG_TEXT_PORT) {
+    return sourceOutputs.wysiwygText;
   }
   if (fromPort === DOCUMENT_PLAINTEXT_CONTENT_PORT) {
     return sourceOutputs.plaintextContent;
@@ -214,11 +214,13 @@ const resolveSourceOutputValue = (
   if (fallback === 'wysiwygContent') {
     return sourceOutputs.wysiwygContent;
   }
-  return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.plaintextContent;
+  return fallback === 'wysiwygText'
+    ? sourceOutputs.wysiwygText
+    : sourceOutputs.plaintextContent;
 };
 
-const isTextfieldInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_TEXTFIELD_PORT;
+const isWysiwygTextInputPort = (port: string | null | undefined): boolean =>
+  port === DOCUMENT_WYSIWYG_TEXT_PORT;
 
 const isPlaintextContentInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_PLAINTEXT_CONTENT_PORT;
@@ -310,7 +312,7 @@ export const compileCaseResolverPrompt = (
     const outputsByNode: Record<
       string,
       {
-        textfield: string;
+        wysiwygText: string;
         plaintextContent: string;
         plainText: string;
         wysiwygContent: string;
@@ -327,15 +329,15 @@ export const compileCaseResolverPrompt = (
       const incomingEdges = sortEdgesBySourcePosition(incomingByNode.get(node.id) ?? [], nodeById);
 
       const collectIncoming = (
-        type: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
+        type: 'wysiwygText' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
       ): { value: string; firstJoinMode: CaseResolverJoinMode | null } => {
         let value = '';
         let firstJoinMode: CaseResolverJoinMode | null = null;
 
         incomingEdges.forEach((edge: Edge): void => {
           const acceptsEdge =
-            type === 'textfield'
-              ? isTextfieldInputPort(edge.targetHandle)
+            type === 'wysiwygText'
+              ? isWysiwygTextInputPort(edge.targetHandle)
               : type === 'plaintextContent'
                 ? isPlaintextContentInputPort(edge.targetHandle)
                 : type === 'plainText'
@@ -355,52 +357,52 @@ export const compileCaseResolverPrompt = (
         return { value, firstJoinMode };
       };
 
-      const incomingTextfield = collectIncoming('textfield');
+      const incomingWysiwygText = collectIncoming('wysiwygText');
       const incomingPlaintextContent = collectIncoming('plaintextContent');
       const incomingPlainText = collectIncoming('plainText');
       const incomingWysiwygContent = collectIncoming('wysiwygContent');
-      const hasIncomingTextfield = incomingTextfield.value.trim().length > 0;
+      const hasIncomingWysiwygText = incomingWysiwygText.value.trim().length > 0;
       const hasIncomingPlaintextContent = incomingPlaintextContent.value.trim().length > 0;
       const hasIncomingPlainText = incomingPlainText.value.trim().length > 0;
       const hasIncomingWysiwygContent = incomingWysiwygContent.value.trim().length > 0;
       const isExplanatoryPlainTextInputFlow = meta.role === 'explanatory' && hasIncomingPlainText;
-      const incomingText = hasIncomingTextfield
-        ? incomingTextfield.value
+      const incomingText = hasIncomingWysiwygText
+        ? incomingWysiwygText.value
         : hasIncomingPlainText
           ? incomingPlainText.value
           : meta.role === 'explanatory' && hasIncomingPlaintextContent
             ? incomingPlaintextContent.value
             : '';
       const incomingTextJoinMode =
-        (hasIncomingTextfield
-          ? incomingTextfield.firstJoinMode
+        (hasIncomingWysiwygText
+          ? incomingWysiwygText.firstJoinMode
           : hasIncomingPlainText
             ? incomingPlainText.firstJoinMode
             : meta.role === 'explanatory' && hasIncomingPlaintextContent
               ? incomingPlaintextContent.firstJoinMode
               : null) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-      const resolvedTextfield =
+      const resolvedWysiwygText =
         meta.role === 'explanatory' && incomingText.trim().length > 0 && nodeText.trim().length > 0
           ? appendWithJoin(incomingText, nodeText, incomingTextJoinMode as CaseResolverJoinMode)
           : incomingText.trim().length > 0
             ? incomingText
             : nodeText;
-      const hasTextfieldOnlyIncoming =
-        hasIncomingTextfield &&
+      const hasWysiwygTextOnlyIncoming =
+        hasIncomingWysiwygText &&
         !hasIncomingPlaintextContent &&
         !hasIncomingPlainText &&
         !hasIncomingWysiwygContent;
       const secondaryOutputSeed = isExplanatoryPlainTextInputFlow
         ? nodeText
-        : hasTextfieldOnlyIncoming
+        : hasWysiwygTextOnlyIncoming
           ? nodeText
-          : resolvedTextfield;
-      const wrappedTextfieldOutput = wrapByQuoteModeWithoutColor(resolvedTextfield, meta);
+          : resolvedWysiwygText;
+      const wrappedWysiwygTextOutput = wrapByQuoteModeWithoutColor(resolvedWysiwygText, meta);
       const wrappedSecondaryPlainTextSeed = wrapByQuoteModeWithoutColor(secondaryOutputSeed, meta);
       let plainTextOutput = options.transformPlainTextOutput
         ? wrappedSecondaryPlainTextSeed
         : stripHtml(wrappedSecondaryPlainTextSeed);
-      const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
+      const wrappedText = wrapByQuoteMode(resolvedWysiwygText, meta);
       const wrappedSecondaryText = wrapByQuoteMode(secondaryOutputSeed, meta);
       let plaintextContentOutput = isExplanatoryPlainTextInputFlow
         ? incomingPlainText.value
@@ -450,7 +452,7 @@ export const compileCaseResolverPrompt = (
       }
 
       outputsByNode[node.id] = {
-        textfield: wrappedTextfieldOutput,
+        wysiwygText: wrappedWysiwygTextOutput,
         plaintextContent: plaintextContentOutput,
         plainText: plainTextOutput,
         wysiwygContent: wysiwygContentOutput,

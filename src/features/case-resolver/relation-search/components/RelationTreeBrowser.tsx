@@ -2,8 +2,18 @@
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { FolderTreeViewportV2, useFolderTreeInstanceV2, type FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import {
+  FolderTreeViewportV2,
+  useFolderTreeInstanceV2,
+  type FolderTreeViewportRenderNodeInput,
+} from '@/features/foldertree/v2';
+import { useMasterFolderTreeSearch } from '@/features/foldertree/v2/search';
 import type { MasterTreeDropPosition, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import {
+  defaultFolderTreeProfilesV2,
+  resolveFolderTreeMultiSelectConfig,
+  resolveFolderTreeSearchConfig,
+} from '@/shared/utils/folder-tree-profiles-v2';
 
 import type { NodeFileDocumentSearchRow } from '../../components/CaseResolverNodeFileUtils';
 import { logCaseResolverWorkspaceEvent } from '../../workspace-persistence';
@@ -15,14 +25,6 @@ import type {
 } from '../types';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
-
-const areNodeIdListsEqual = (left: string[], right: string[]): boolean => {
-  if (left.length !== right.length) return false;
-  for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) return false;
-  }
-  return true;
-};
 
 type RelationTreeBrowserProps = {
   instance: RelationTreeInstance;
@@ -63,15 +65,20 @@ export function RelationTreeBrowser({
   className,
   emptyLabel = 'No files found',
 }: RelationTreeBrowserProps): React.JSX.Element {
+  const profile = useMemo(() => defaultFolderTreeProfilesV2[instance], [instance]);
+  const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
+  const multiSelectConfig = useMemo(
+    () => resolveFolderTreeMultiSelectConfig(profile),
+    [profile]
+  );
   const controller = useFolderTreeInstanceV2({
     initialNodes: nodes,
+    profile,
     instanceId: instance,
   });
 
   const dragArmedFileIdRef = useRef<string | null>(null);
   const dropRejectLoggedRef = useRef<boolean>(false);
-  const nonSearchExpandedNodeIdsRef = useRef<string[] | null>(null);
-  const wasSearchingRef = useRef<boolean>(false);
 
   const clearDragHandleArm = useCallback((): void => {
     dragArmedFileIdRef.current = null;
@@ -116,64 +123,9 @@ export function RelationTreeBrowser({
     });
   }, [instance, mode, searchQuery]);
 
-  const rootNodeIds = useMemo(
-    () => nodes.filter((node) => node.parentId === null).map((node) => node.id),
-    [nodes]
-  );
-  const nodeIdSet = useMemo(() => new Set(nodes.map((node) => node.id)), [nodes]);
-  const allFolderNodeIds = useMemo(
-    () => nodes.filter((node) => node.type === 'folder').map((node) => node.id),
-    [nodes]
-  );
-  const normalizedSearchQuery = searchQuery?.trim() ?? '';
-  const isSearching = normalizedSearchQuery.length > 0;
-
-  useEffect(() => {
-    const currentExpandedNodeIds = Array.from(controller.expandedNodeIds).filter((nodeId) =>
-      nodeIdSet.has(nodeId)
-    );
-    const ensureExpandedState = (nextExpandedNodeIds: string[]): void => {
-      if (areNodeIdListsEqual(currentExpandedNodeIds, nextExpandedNodeIds)) return;
-      controller.setExpandedNodeIds(nextExpandedNodeIds);
-    };
-
-    if (isSearching) {
-      if (!wasSearchingRef.current) {
-        nonSearchExpandedNodeIdsRef.current = currentExpandedNodeIds;
-      }
-      wasSearchingRef.current = true;
-      ensureExpandedState(allFolderNodeIds);
-      return;
-    }
-
-    if (wasSearchingRef.current) {
-      wasSearchingRef.current = false;
-      const restoredExpandedNodeIds =
-        nonSearchExpandedNodeIdsRef.current?.filter((nodeId) => nodeIdSet.has(nodeId)) ?? [];
-      const fallbackExpandedNodeIds = restoredExpandedNodeIds.length > 0 ? restoredExpandedNodeIds : rootNodeIds;
-      nonSearchExpandedNodeIdsRef.current = fallbackExpandedNodeIds;
-      ensureExpandedState(fallbackExpandedNodeIds);
-      return;
-    }
-
-    if (nonSearchExpandedNodeIdsRef.current === null) {
-      const initialExpandedNodeIds = currentExpandedNodeIds.length > 0 ? currentExpandedNodeIds : rootNodeIds;
-      nonSearchExpandedNodeIdsRef.current = initialExpandedNodeIds;
-      ensureExpandedState(initialExpandedNodeIds);
-      return;
-    }
-
-    if (!areNodeIdListsEqual(nonSearchExpandedNodeIdsRef.current, currentExpandedNodeIds)) {
-      nonSearchExpandedNodeIdsRef.current = currentExpandedNodeIds;
-    }
-  }, [
-    allFolderNodeIds,
-    controller.expandedNodeIds,
-    controller.setExpandedNodeIds,
-    isSearching,
-    nodeIdSet,
-    rootNodeIds,
-  ]);
+  const searchState = useMasterFolderTreeSearch(nodes, searchQuery ?? '', {
+    config: searchConfig,
+  });
 
   const handleArmDragHandle = useCallback((fileId: string): void => {
     if (mode !== 'add_to_node_canvas') return;
@@ -303,6 +255,8 @@ export function RelationTreeBrowser({
       controller={controller}
       className={className}
       emptyLabel={emptyLabel}
+      searchState={searchState}
+      multiSelectConfig={multiSelectConfig}
       enableDnd={mode === 'add_to_node_canvas'}
       canStartDrag={mode === 'add_to_node_canvas' ? canStartDrag : undefined}
       canDrop={mode === 'add_to_node_canvas' ? canDrop : undefined}

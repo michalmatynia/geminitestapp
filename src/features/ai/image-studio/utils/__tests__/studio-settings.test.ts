@@ -82,7 +82,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/deprecated ai snapshot keys/i);
   });
 
   it('rejects deprecated persisted prompt extractor model fields', () => {
@@ -99,7 +99,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/deprecated ai snapshot keys/i);
   });
 
   it('rejects deprecated persisted UI extractor model fields', () => {
@@ -113,7 +113,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/deprecated ai snapshot keys/i);
   });
 
   it('rejects deprecated persisted modelPresets fields', () => {
@@ -130,7 +130,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/deprecated ai snapshot keys/i);
   });
 
   it('still rejects unknown strict fields', () => {

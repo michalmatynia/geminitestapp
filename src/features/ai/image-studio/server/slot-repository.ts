@@ -11,6 +11,11 @@ import {
   ImageStudioSlotRecord,
   SlotGenerationMetadata,
 } from '@/shared/contracts/image-studio';
+
+export type {
+  ImageStudioSlotRecord,
+  SlotGenerationMetadata,
+};
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

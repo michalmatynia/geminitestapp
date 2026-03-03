@@ -10,7 +10,7 @@ import {
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/shared/lib/ai-paths/core/constants';
-import { runsApi } from '@/shared/lib/ai-paths/api/client';
+import { enqueueAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 import {
   normalizeLoadedPathName,
   normalizeLoadedPathMetas,
@@ -135,6 +135,8 @@ const loadTriggerSettingsData = async (args: {
 };
 
 const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => sanitizeTriggerPathConfig(config);
+
+export { sanitizeTriggerPathConfig };
 
 const loadPathConfigsFromSettings = async (
   settingsData?: Array<{ key: string; value: string }>
@@ -612,7 +614,7 @@ export function useAiPathTriggerEvent(): {
 
       /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
       const apiStartedAt = performance.now();
-      const runResult = (await runsApi.enqueue({
+      const runResult = (await enqueueAiPathRun({
         pathId: selectedConfig.id,
         pathName: selectedConfig.name,
         nodes: selectedConfig.nodes,
@@ -725,7 +727,7 @@ export function useAiPathTriggerEvent(): {
         node: null,
       });
 
-      void runsApi.list({
+      void listAiPathRuns({
         pathId: selectedConfig.id,
         status: 'running',
         limit: 1,

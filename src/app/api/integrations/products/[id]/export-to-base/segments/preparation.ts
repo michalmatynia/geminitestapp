@@ -501,7 +501,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         );
       }
 
-      const categoryMappingRepo = getCategoryMappingRepository();
+      const categoryMappingRepo = await getCategoryMappingRepository();
       const categoryMappings = await categoryMappingRepo.listByConnection(data.connectionId);
       const productCatalogIds = new Set(
         (product.catalogs ?? []).map((catalog) => (catalog as { catalogId: string }).catalogId)

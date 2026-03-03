@@ -87,7 +87,25 @@ export const searchMasterTreeNodes = (
     }
   }
 
-  results.sort((a, b) => b.score - a.score);
+  const nodeById = new Map(
+    nodes.map((node: MasterTreeNode): [MasterTreeId, MasterTreeNode] => [node.id, node])
+  );
+
+  results.sort((left, right) => {
+    const scoreDelta = right.score - left.score;
+    if (scoreDelta !== 0) return scoreDelta;
+
+    const leftNode = nodeById.get(left.nodeId);
+    const rightNode = nodeById.get(right.nodeId);
+    if (leftNode && rightNode) {
+      const nameDelta = leftNode.name.localeCompare(rightNode.name);
+      if (nameDelta !== 0) return nameDelta;
+      const pathDelta = leftNode.path.localeCompare(rightNode.path);
+      if (pathDelta !== 0) return pathDelta;
+    }
+
+    return left.nodeId.localeCompare(right.nodeId);
+  });
   return maxResults !== undefined ? results.slice(0, maxResults) : results;
 };
 

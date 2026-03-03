@@ -31,7 +31,6 @@ export function ScopeBar(): React.JSX.Element {
   const {
     documentSearchScope,
     setDocumentSearchScope,
-    setSelectedDrillCaseId,
     fileTypeFilter,
     setFileTypeFilter,
     sortMode,
@@ -51,10 +50,7 @@ export function ScopeBar(): React.JSX.Element {
           { value: 'all_cases', label: 'All Cases' },
         ]}
         value={documentSearchScope}
-        onChange={(v) => {
-          setDocumentSearchScope(v);
-          if (v === 'case_scope') setSelectedDrillCaseId(null);
-        }}
+        onChange={setDocumentSearchScope}
       />
 
       {showFileTypeFilter && (

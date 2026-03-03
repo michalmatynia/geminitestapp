@@ -6,16 +6,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { signIn } from 'next-auth/react';
 import { SessionProvider } from 'next-auth/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuthProvider } from '@/features/auth/context/AuthContext';
-import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
 import SignInPage from '@/features/auth/pages/public/SignInPage';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 
+const searchParamsGetMock = vi.fn<(key: string) => string | null>();
+
 vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => ({
-    get: vi.fn().mockReturnValue(null),
+    get: searchParamsGetMock,
   })),
 }));
 
@@ -23,10 +24,6 @@ vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
   SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
-}));
-
-vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
-  useVerifyCredentials: vi.fn(),
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -48,16 +45,16 @@ describe('SignInPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'callbackUrl') return null;
+      if (key === 'error') return null;
+      return null;
+    });
 
-    // Default mocks for successful initial load
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
-      data: new Map([['auth_user_pages', JSON.stringify({ allowSocialLogin: true })]]),
+      data: new Map([['auth_user_pages', JSON.stringify({ allowSignup: true })]]),
     } as ReturnType<typeof useSettingsMap>);
-
-    vi.mocked(useVerifyCredentials).mockReturnValue({
-      mutateAsync: vi.fn(),
-    } as unknown as ReturnType<typeof useVerifyCredentials>);
   });
 
   const renderPage = () =>
@@ -76,91 +73,79 @@ describe('SignInPage', () => {
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   it('handles successful sign in', async () => {
     const user = userEvent.setup();
-    const mutateAsync = vi.fn().mockResolvedValue({
+    vi.mocked(signIn).mockResolvedValue({
       ok: true,
-      payload: { ok: true, mfaRequired: false, challengeId: 'ch1' },
+      error: null,
+      status: 200,
+      url: '/admin',
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
-      typeof useVerifyCredentials
-    >);
 
     renderPage();
 
     const emailInput = await screen.findByLabelText(/email/i);
     await user.type(emailInput, 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(mutateAsync).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123',
-      });
       expect(signIn).toHaveBeenCalledWith(
         'credentials',
         expect.objectContaining({
           email: 'test@example.com',
           password: 'password123',
-          challengeId: 'ch1',
+          callbackUrl: '/admin',
+          redirect: false,
         })
       );
     });
   });
 
-  it('shows error message on verification failure', async () => {
+  it('shows error message when sign in returns an error result', async () => {
     const user = userEvent.setup();
-    const mutateAsync = vi.fn().mockResolvedValue({
-      ok: true,
-      payload: { ok: false, message: 'Invalid credentials' },
+    vi.mocked(signIn).mockResolvedValue({
+      ok: false,
+      error: 'CredentialsSignin',
+      status: 401,
+      url: null,
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
-      typeof useVerifyCredentials
-    >);
 
     renderPage();
 
-    const emailInput = await screen.findByLabelText(/email/i);
-    await user.type(emailInput, 'wrong@example.com');
+    await user.type(await screen.findByLabelText(/email/i), 'wrong@example.com');
     await user.type(screen.getByLabelText(/password/i), 'wrong');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
 
-    expect(await screen.findByText('Invalid credentials')).toBeInTheDocument();
+    expect(await screen.findByText('Invalid email or password.')).toBeInTheDocument();
   });
 
-  it('shows MFA fields if required', async () => {
+  it('shows a generic error message when sign in throws unexpectedly', async () => {
     const user = userEvent.setup();
-    const mutateAsync = vi.fn().mockResolvedValue({
-      ok: true,
-      payload: { ok: true, mfaRequired: true, challengeId: 'ch-mfa' },
+    vi.mocked(signIn).mockRejectedValue(new Error('Network down'));
+
+    renderPage();
+
+    await user.type(await screen.findByLabelText(/email/i), 'x@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'wrong');
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    expect(
+      await screen.findByText('An unexpected error occurred. Please try again.')
+    ).toBeInTheDocument();
+  });
+
+  it('shows URL error state when auth error query param is present', async () => {
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'error') return 'CredentialsSignin';
+      return null;
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
-      typeof useVerifyCredentials
-    >);
 
     renderPage();
 
-    const emailInput = await screen.findByLabelText(/email/i);
-    await user.type(emailInput, 'mfa@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
-
-    expect(await screen.findByLabelText(/one-time code/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/recovery code/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /verify & sign in/i })).toBeInTheDocument();
-  });
-
-  it('calls social sign in', async () => {
-    const user = userEvent.setup();
-    renderPage();
-
-    const googleBtn = await screen.findByRole('button', { name: /continue with google/i });
-    await user.click(googleBtn);
-
-    expect(signIn).toHaveBeenCalledWith('google', expect.anything());
+    expect(await screen.findByText('Invalid credentials.')).toBeInTheDocument();
   });
 });

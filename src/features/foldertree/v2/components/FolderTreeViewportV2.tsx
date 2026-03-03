@@ -1,15 +1,21 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
+ 
+ 
+
 import { useVirtualizer } from '@tanstack/react-virtual';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import type { ResolvedFolderTreeMultiSelectConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import type { FolderTreeNodeView } from '../types';
 
-import type { MasterFolderTreeController, MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
-import { EmptyState, Button } from '@/shared/ui';
-import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import { EmptyState } from '@/shared/ui';
 import type {
-  MasterTreeDropPosition,
   MasterTreeId,
   MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
@@ -19,32 +25,17 @@ import { getMasterTreeNodeStatus } from '../operations/node-status';
 import { FolderTreeContextMenu } from './FolderTreeContextMenu';
 import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 
-import { flattenVisibleNodesV2 } from '../core/engine';
+import { buildRootsV2, flattenVisibleNodesV2 } from '../core/engine';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
-import { cn } from '@/shared/utils';
-import {
-  getMasterTreeDragNodeData,
-  setMasterTreeDragNodeData,
-} from '../operations/drag-data';
+import { setMasterTreeDragNodeData } from '../operations/drag-data';
+import type { MasterFolderTreeSearchState } from '../search/useMasterFolderTreeSearch';
 
-export type FolderTreeViewportRenderNodeInput = {
-  node: MasterTreeViewNode;
-  depth: number;
-  hasChildren: boolean;
-  isExpanded: boolean;
-  isSelected: boolean;
-  /** True when this node is part of a multi-selection. */
-  isMultiSelected: boolean;
-  isRenaming: boolean;
-  isDragging: boolean;
-  isDropTarget: boolean;
-  dropPosition: MasterTreeDropPosition | null;
-  /** Semantic status from node.metadata['_status']. Null when not set. */
-  nodeStatus: MasterTreeNodeStatus | null;
-  select: () => void;
-  toggleExpand: () => void;
-  startRename: () => void;
-};
+import { DefaultRow } from './DefaultRow';
+import { FolderTreeViewportRenderNodeInput } from './types';
+import { useFolderTreeViewportSelection } from '../hooks/useFolderTreeViewportSelection';
+import { useFolderTreeViewportDnd } from '../hooks/useFolderTreeViewportDnd';
+
+export type { FolderTreeViewportRenderNodeInput };
 
 export type FolderTreeViewportV2Props = {
   controller: MasterFolderTreeController;
@@ -59,7 +50,7 @@ export type FolderTreeViewportV2Props = {
         input: {
           draggedNodeId: MasterTreeId;
           targetId: MasterTreeId | null;
-          position: MasterTreeDropPosition;
+          position: any;
           defaultAllowed: boolean;
         },
         controller: MasterFolderTreeController
@@ -70,7 +61,7 @@ export type FolderTreeViewportV2Props = {
         input: {
           draggedNodeId: MasterTreeId;
           targetId: MasterTreeId | null;
-          position: MasterTreeDropPosition;
+          position: any;
           rootDropZone?: 'top' | 'bottom' | undefined;
         },
         controller: MasterFolderTreeController
@@ -84,7 +75,7 @@ export type FolderTreeViewportV2Props = {
           targetId: MasterTreeId;
         },
         controller: MasterFolderTreeController
-      ) => MasterTreeDropPosition)
+      ) => any)
     | undefined;
   onNodeDragStart?:
     | ((
@@ -112,114 +103,18 @@ export type FolderTreeViewportV2Props = {
         activeClassName?: string | undefined;
       }
     | undefined;
-  /**
-   * Optional context menu factory. Called per rendered row with the hovered node and controller.
-   * Return an empty array to suppress the menu for that node. Zero overhead when undefined.
-   */
   contextMenuItems?:
     | ((node: MasterTreeNode, controller: MasterFolderTreeController) => FolderTreeContextMenuItem[])
     | undefined;
-  /**
-   * Estimate row height for virtualization. Pass a number for a fixed height
-   * (default: 34) or a function for per-row dynamic sizing.
-   */
   estimateRowHeight?: ((row: FolderTreeNodeView) => number) | number | undefined;
-  /**
-   * Milliseconds to wait while dragging over a collapsed folder before auto-expanding it.
-   * Default: 600. Set to 0 to disable.
-   */
   autoExpandOnHoverMs?: number | undefined;
-  /**
-   * Ref that the viewport fills with a scroll-to-node function once mounted.
-   * Call `scrollToNodeRef.current(nodeId)` to bring a node into view.
-   */
+  multiSelectConfig?: ResolvedFolderTreeMultiSelectConfig | undefined;
+  searchState?: MasterFolderTreeSearchState | undefined;
   scrollToNodeRef?: React.MutableRefObject<((nodeId: MasterTreeId) => void) | null> | undefined;
 };
 
 const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
 const defaultRootDropActiveClassName = 'border-sky-200/55 bg-sky-500/12 text-sky-100';
-
-const STATUS_ICON_CHARS: Record<MasterTreeNodeStatus, string> = {
-  loading: '⏳',
-  error: '✕',
-  locked: '🔒',
-  warning: '⚠',
-  success: '✓',
-};
-
-const STATUS_COLOR_CLASSES: Record<MasterTreeNodeStatus, string> = {
-  loading: 'text-blue-400',
-  error: 'text-red-400',
-  locked: 'text-amber-400',
-  warning: 'text-yellow-400',
-  success: 'text-green-400',
-};
-
-const DefaultRow = ({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isMultiSelected,
-  isDragging,
-  dropPosition,
-  nodeStatus,
-  select,
-  toggleExpand,
-}: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
-  const stateClassName = isSelected
-    ? 'bg-blue-600 text-white shadow-sm'
-    : isMultiSelected
-      ? 'bg-blue-500/20 text-blue-100 ring-1 ring-inset ring-blue-400/40'
-      : dropPosition === 'before'
-        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-        : dropPosition === 'after'
-          ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-          : isDragging
-            ? 'opacity-50'
-            : 'text-gray-300 hover:bg-muted/40';
-
-  return (
-    <Button
-      variant='ghost'
-      onClick={select}
-      className={cn(
-        'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-all h-auto font-normal justify-start',
-        stateClassName
-      )}
-      style={{ paddingLeft: `${depth * 16 + 8}px` }}
-    >
-      {hasChildren ? (
-        <span
-          aria-hidden='true'
-          onClick={(event: React.MouseEvent) => {
-            event.preventDefault();
-            event.stopPropagation();
-            toggleExpand();
-          }}
-          className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/40'
-        >
-          {isExpanded ? '▾' : '▸'}
-        </span>
-      ) : (
-        <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
-      )}
-      <span className='truncate'>{node.name}</span>
-      {nodeStatus ? (
-        <span
-          aria-label={nodeStatus}
-          className={cn(
-            'ml-auto shrink-0 text-xs',
-            isSelected ? 'text-white/80' : STATUS_COLOR_CLASSES[nodeStatus]
-          )}
-        >
-          {STATUS_ICON_CHARS[nodeStatus]}
-        </span>
-      ) : null}
-    </Button>
-  );
-};
 
 export function FolderTreeViewportV2({
   controller,
@@ -238,12 +133,38 @@ export function FolderTreeViewportV2({
   contextMenuItems,
   estimateRowHeight,
   autoExpandOnHoverMs = 600,
+  multiSelectConfig,
+  searchState,
   scrollToNodeRef,
 }: FolderTreeViewportV2Props): React.JSX.Element {
   const runtime = useMasterFolderTreeRuntime();
+  const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(
+    () => ({
+      enabled: multiSelectConfig?.enabled ?? false,
+      ctrlClick: multiSelectConfig?.ctrlClick ?? true,
+      shiftClick: multiSelectConfig?.shiftClick ?? true,
+      selectAll: multiSelectConfig?.selectAll ?? true,
+    }),
+    [multiSelectConfig]
+  );
+  const visibleNodes = useMemo((): MasterTreeNode[] => {
+    if (!searchState?.isActive || searchState.config.filterMode !== 'filter_tree') {
+      return controller.nodes;
+    }
+    return searchState.filteredNodes;
+  }, [controller.nodes, searchState]);
+
+  const visibleRoots = useMemo(() => buildRootsV2(visibleNodes), [visibleNodes]);
+  const visibleExpandedNodeIds = useMemo((): Set<MasterTreeId> => {
+    if (!searchState?.isActive || searchState.config.filterMode !== 'filter_tree') {
+      return controller.expandedNodeIds;
+    }
+    return new Set(searchState.filteredExpandedNodeIds);
+  }, [controller.expandedNodeIds, searchState]);
+
   const nodeById = useMemo(
-    () => new Map(controller.nodes.map((node) => [node.id, node])),
-    [controller.nodes]
+    () => new Map(visibleNodes.map((node) => [node.id, node])),
+    [visibleNodes]
   );
   const rootsById = useMemo(() => {
     const map = new Map<string, MasterTreeViewNode>();
@@ -255,26 +176,43 @@ export function FolderTreeViewportV2({
         }
       });
     };
-    walk(controller.roots);
+    walk(visibleRoots);
     return map;
-  }, [controller.roots]);
+  }, [visibleRoots]);
 
   const rows = useMemo(
-    () => flattenVisibleNodesV2(controller.roots, controller.expandedNodeIds),
-    [controller.expandedNodeIds, controller.roots]
+    () => flattenVisibleNodesV2(visibleRoots, visibleExpandedNodeIds),
+    [visibleExpandedNodeIds, visibleRoots]
   );
+
+  const selection = useFolderTreeViewportSelection({
+    controller,
+    resolvedMultiSelectConfig,
+    rows,
+  });
+
+  const dnd = useFolderTreeViewportDnd({
+    controller,
+    enableDnd,
+    canDrop,
+    onNodeDrop,
+    resolveDropPosition,
+    resolveDraggedNodeId,
+  });
+
+  const resolvedEmptyLabel = useMemo((): string => {
+    if (searchState?.isActive && searchState.effectiveQuery.length > 0) {
+      return `No results for "${searchState.effectiveQuery}"`;
+    }
+    return emptyLabel;
+  }, [emptyLabel, searchState?.effectiveQuery, searchState?.isActive]);
 
   const rootDropEnabled = rootDropUi?.enabled ?? true;
   const rootDropLabel = rootDropUi?.label?.trim() || 'Drop to Root';
   const rootDropIdleClassName = rootDropUi?.idleClassName ?? defaultRootDropIdleClassName;
   const rootDropActiveClassName = rootDropUi?.activeClassName ?? defaultRootDropActiveClassName;
 
-  const [rootDropHoverZone, setRootDropHoverZone] = useState<'top' | 'bottom' | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  // Auto-expand on drag hover
-  const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoExpandTargetRef = useRef<MasterTreeId | null>(null);
 
   const resolvedEstimateSize = useMemo(() => {
     const defaultHeight = 34;
@@ -326,100 +264,9 @@ export function FolderTreeViewportV2({
     };
   }, [rows, rowVirtualizer, scrollToNodeRef]);
 
-  const clearDragState = (): void => {
-    controller.clearDrag();
-    setRootDropHoverZone(null);
-    if (autoExpandTimerRef.current) {
-      clearTimeout(autoExpandTimerRef.current);
-      autoExpandTimerRef.current = null;
-    }
-    autoExpandTargetRef.current = null;
-  };
-
-  const resolveDraggedNode = (event: React.DragEvent<HTMLElement>): MasterTreeId | null => {
-    if (controller.dragState?.draggedNodeId) {
-      return controller.dragState.draggedNodeId;
-    }
-    const payloadNodeId = getMasterTreeDragNodeData(event.dataTransfer);
-    if (payloadNodeId) return payloadNodeId;
-    return resolveDraggedNodeId?.(event) ?? null;
-  };
-
-  const resolveDropAllowance = (
-    draggedNodeId: MasterTreeId,
-    targetId: MasterTreeId | null,
-    position: MasterTreeDropPosition
-  ): boolean => {
-    const defaultCheck = controller.canDropNode(draggedNodeId, targetId, position);
-    if (defaultCheck.ok) {
-      if (!canDrop) return true;
-      return canDrop(
-        {
-          draggedNodeId,
-          targetId,
-          position,
-          defaultAllowed: true,
-        },
-        controller
-      );
-    }
-    if (!canDrop) return false;
-    return canDrop(
-      {
-        draggedNodeId,
-        targetId,
-        position,
-        defaultAllowed: false,
-      },
-      controller
-    );
-  };
-
-  const resolveNodeDropPosition = (
-    event: React.DragEvent<HTMLDivElement>,
-    draggedNodeId: MasterTreeId,
-    targetNode: MasterTreeViewNode
-  ): MasterTreeDropPosition | null => {
-    const targetRect = event.currentTarget.getBoundingClientRect();
-    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-      thresholdRatio: 0.34,
-    });
-    const requestedPosition =
-      resolveDropPosition?.(
-        event,
-        {
-          draggedNodeId,
-          targetId: targetNode.id,
-        },
-        controller
-      ) ??
-      edgePosition ??
-      'inside';
-
-    const insideAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, 'inside');
-    const requestedAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, requestedPosition);
-
-    if (
-      !resolveDropPosition &&
-      requestedPosition !== 'inside' &&
-      targetNode.type === 'folder' &&
-      insideAllowed
-    ) {
-      const draggedNode =
-        controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
-      if (!draggedNode || draggedNode.type === 'file') {
-        return 'inside';
-      }
-    }
-
-    if (requestedAllowed) return requestedPosition;
-    if (requestedPosition !== 'inside' && insideAllowed) return 'inside';
-    return null;
-  };
-
   const canDropToRoot = Boolean(
     controller.dragState?.draggedNodeId &&
-    resolveDropAllowance(controller.dragState.draggedNodeId, null, 'inside')
+    dnd.resolveDropAllowance(controller.dragState.draggedNodeId, null, 'inside')
   );
 
   const showRootDropZones = enableDnd && rootDropEnabled && canDropToRoot;
@@ -462,9 +309,9 @@ export function FolderTreeViewportV2({
         onDragOver={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.dataTransfer.dropEffect = 'move';
             }
@@ -473,9 +320,9 @@ export function FolderTreeViewportV2({
         onDrop={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               void (async (): Promise<void> => {
                 try {
@@ -492,7 +339,7 @@ export function FolderTreeViewportV2({
                     await controller.dropNodeToRoot(draggedNodeId);
                   }
                 } finally {
-                  clearDragState();
+                  dnd.clearDragState();
                 }
               })();
             }
@@ -503,23 +350,23 @@ export function FolderTreeViewportV2({
           <div
             data-master-tree-root-drop='top'
             onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
-              setRootDropHoverZone('top');
+              dnd.setRootDropHoverZone('top');
               event.dataTransfer.dropEffect = 'move';
             }}
             onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
               const nextTarget = event.relatedTarget;
               if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-              setRootDropHoverZone(null);
+              dnd.setRootDropHoverZone(null);
             }}
             onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
               void (async (): Promise<void> => {
@@ -538,12 +385,12 @@ export function FolderTreeViewportV2({
                     await controller.dropNodeToRoot(draggedNodeId, 0);
                   }
                 } finally {
-                  clearDragState();
+                  dnd.clearDragState();
                 }
               })();
             }}
             className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
-              rootDropHoverZone === 'top' ? rootDropActiveClassName : rootDropIdleClassName
+              dnd.rootDropHoverZone === 'top' ? rootDropActiveClassName : rootDropIdleClassName
             }`}
           >
             {rootDropLabel}
@@ -567,12 +414,15 @@ export function FolderTreeViewportV2({
                 if (!node || !viewNode) return null;
 
                 const isSelected = controller.selectedNodeId === node.id;
-                const isMultiSelected = controller.selectedNodeIds?.has(node.id) ?? false;
+                const isMultiSelected =
+                  resolvedMultiSelectConfig.enabled &&
+                  (controller.selectedNodeIds?.has(node.id) ?? false);
                 const isDragging = controller.dragState?.draggedNodeId === node.id;
                 const isDropTarget = controller.dragState?.targetId === node.id;
                 const dropPosition =
                   controller.dragState?.targetId === node.id ? controller.dragState.position : null;
                 const nodeStatus = getMasterTreeNodeStatus(node);
+                const isSearchMatch = searchState?.matchNodeIds.has(node.id) ?? false;
 
                 const rowNode = renderNode ? (
                   renderNode({
@@ -587,7 +437,8 @@ export function FolderTreeViewportV2({
                     isDropTarget: Boolean(isDropTarget),
                     dropPosition,
                     nodeStatus,
-                    select: () => controller.selectNode(node.id),
+                    isSearchMatch,
+                    select: (event) => selection.handleSelectNode(node.id, event),
                     toggleExpand: () => controller.toggleNodeExpanded(node.id),
                     startRename: () => controller.startRename(node.id),
                   })
@@ -604,27 +455,20 @@ export function FolderTreeViewportV2({
                     isDropTarget={Boolean(isDropTarget)}
                     dropPosition={dropPosition}
                     nodeStatus={nodeStatus}
-                    select={() => controller.selectNode(node.id)}
+                    isSearchMatch={isSearchMatch}
+                    select={(event) => selection.handleSelectNode(node.id, event)}
                     toggleExpand={() => controller.toggleNodeExpanded(node.id)}
                     startRename={() => controller.startRename(node.id)}
                   />
                 );
 
-                const renderedRow = contextMenuItems ? (
-                  <FolderTreeContextMenu
-                    node={node}
-                    controller={controller}
-                    items={contextMenuItems(node, controller)}
-                  >
-                    {rowNode}
-                  </FolderTreeContextMenu>
-                ) : rowNode;
+                const menuItems = contextMenuItems ? contextMenuItems(node, controller) : [];
 
                 return (
                   <div
-                    key={node.id}
-                    ref={useFallbackRows ? undefined : rowVirtualizer.measureElement}
+                    key={virtualRow.key}
                     data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -632,104 +476,106 @@ export function FolderTreeViewportV2({
                       width: '100%',
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    draggable={enableDnd}
-                    data-master-tree-node-id={node.id}
-                    onDragStart={
+                    draggable={
                       enableDnd
-                        ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          if (
-                            canStartDrag &&
-                              !canStartDrag(
-                                {
-                                  node: viewNode,
-                                  event,
-                                },
-                                controller
-                              )
-                          ) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            return;
-                          }
-
-                          try {
-                            setMasterTreeDragNodeData(event.dataTransfer, node.id);
-                          } catch {
-                            // no-op
-                          }
-                          event.dataTransfer.effectAllowed = 'move';
-                          setTimeout((): void => {
-                            controller.startDrag(node.id);
-                            onNodeDragStart?.(
-                              {
-                                node: viewNode,
-                                event,
-                              },
-                              controller
-                            );
-                          }, 0);
-                        }
-                        : undefined
                     }
-                    onDragEnd={
-                      enableDnd
-                        ? (): void => {
-                          clearDragState();
-                        }
-                        : undefined
-                    }
+                    onDragStart={(event: React.DragEvent<HTMLDivElement>): void => {
+                      if (!enableDnd) return;
+                      if (
+                        canStartDrag &&
+                        !canStartDrag(
+                          {
+                            node: viewNode,
+                            event,
+                          },
+                          controller
+                        )
+                      ) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return;
+                      }
+                      setMasterTreeDragNodeData(event.dataTransfer, node.id);
+                      controller.startDrag(node.id);
+                      onNodeDragStart?.({ node: viewNode, event }, controller);
+                    }}
+                    onDragEnd={(): void => {
+                      if (!enableDnd) return;
+                      dnd.clearDragState();
+                    }}
                     onDragOver={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          const draggedNodeId = resolveDraggedNode(event);
-                          if (!draggedNodeId) return;
-                          const resolvedPosition = resolveNodeDropPosition(
+                          const draggedNodeId = dnd.resolveDraggedNode(event);
+                          if (!draggedNodeId || draggedNodeId === node.id) return;
+
+                          const position = dnd.resolveNodeDropPosition(
                             event,
                             draggedNodeId,
                             viewNode
                           );
-                          if (!resolvedPosition) return;
+                          if (!position) return;
+
                           event.preventDefault();
                           event.stopPropagation();
-                          setRootDropHoverZone(null);
-                          controller.updateDragTarget(node.id, resolvedPosition);
                           event.dataTransfer.dropEffect = 'move';
 
-                          // Auto-expand collapsed folders on prolonged hover
                           if (
-                            autoExpandOnHoverMs > 0 &&
+                            controller.dragState?.targetId !== node.id ||
+                            controller.dragState?.position !== position
+                          ) {
+                            controller.updateDragTarget(node.id, position);
+                          }
+
+                          if (
                             viewNode.type === 'folder' &&
                             !row.isExpanded &&
-                            autoExpandTargetRef.current !== node.id
+                            autoExpandOnHoverMs > 0
                           ) {
-                            if (autoExpandTimerRef.current) {
-                              clearTimeout(autoExpandTimerRef.current);
+                            if (dnd.autoExpandTargetRef.current !== node.id) {
+                              if (dnd.autoExpandTimerRef.current) clearTimeout(dnd.autoExpandTimerRef.current);
+                              dnd.autoExpandTargetRef.current = node.id;
+                              dnd.autoExpandTimerRef.current = setTimeout(() => {
+                                controller.expandNode(node.id);
+                              }, autoExpandOnHoverMs);
                             }
-                            autoExpandTargetRef.current = node.id;
-                            autoExpandTimerRef.current = setTimeout((): void => {
-                              controller.expandNode(node.id);
-                              autoExpandTargetRef.current = null;
-                            }, autoExpandOnHoverMs);
-                          } else if (autoExpandTargetRef.current !== node.id) {
-                            if (autoExpandTimerRef.current) {
-                              clearTimeout(autoExpandTimerRef.current);
+                          } else {
+                            if (dnd.autoExpandTimerRef.current) {
+                              clearTimeout(dnd.autoExpandTimerRef.current);
+                              dnd.autoExpandTimerRef.current = null;
                             }
-                            autoExpandTargetRef.current = null;
+                            dnd.autoExpandTargetRef.current = null;
                           }
                         }
                         : undefined
                     }
+                    onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+                      const nextTarget = event.relatedTarget;
+                      if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget))
+                        return;
+
+                      if (controller.dragState?.targetId === node.id) {
+                        controller.updateDragTarget(null, 'inside');
+                      }
+                      if (dnd.autoExpandTimerRef.current) {
+                        clearTimeout(dnd.autoExpandTimerRef.current);
+                        dnd.autoExpandTimerRef.current = null;
+                      }
+                      dnd.autoExpandTargetRef.current = null;
+                    }}
                     onDrop={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          const draggedNodeId = resolveDraggedNode(event);
-                          if (!draggedNodeId) return;
-                          const resolvedPosition = resolveNodeDropPosition(
+                          const draggedNodeId = dnd.resolveDraggedNode(event);
+                          if (!draggedNodeId || draggedNodeId === node.id) return;
+
+                          const position = dnd.resolveNodeDropPosition(
                             event,
                             draggedNodeId,
                             viewNode
                           );
-                          if (!resolvedPosition) return;
+                          if (!position) return;
+
                           event.preventDefault();
                           event.stopPropagation();
 
@@ -740,64 +586,60 @@ export function FolderTreeViewportV2({
                                   {
                                     draggedNodeId,
                                     targetId: node.id,
-                                    position: resolvedPosition,
+                                    position,
                                   },
                                   controller
                                 );
-                                return;
-                              }
-                              if (resolvedPosition === 'inside') {
-                                await controller.moveNode(draggedNodeId, node.id);
                               } else {
-                                await controller.reorderNode(
-                                  draggedNodeId,
-                                  node.id,
-                                  resolvedPosition
-                                );
+                                if (position === 'inside') {
+                                  await controller.moveNode(draggedNodeId, node.id);
+                                } else {
+                                  await controller.reorderNode(draggedNodeId, node.id, position);
+                                }
                               }
                             } finally {
-                              clearDragState();
+                              dnd.clearDragState();
                             }
                           })();
                         }
                         : undefined
                     }
                   >
-                    {renderedRow}
+                    <FolderTreeContextMenu items={menuItems} controller={controller}>
+                      {rowNode}
+                    </FolderTreeContextMenu>
                   </div>
                 );
               })}
             </div>
           </div>
         ) : (
-          <EmptyState
-            title={emptyLabel}
-            variant='compact'
-            className='border-dashed border-border/50 py-4'
-          />
+          <div className='flex flex-col items-center justify-center py-12 text-center'>
+            <EmptyState title={resolvedEmptyLabel} />
+          </div>
         )}
 
         {showRootDropZones ? (
           <div
             data-master-tree-root-drop='bottom'
             onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
-              setRootDropHoverZone('bottom');
+              dnd.setRootDropHoverZone('bottom');
               event.dataTransfer.dropEffect = 'move';
             }}
             onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
               const nextTarget = event.relatedTarget;
               if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-              setRootDropHoverZone(null);
+              dnd.setRootDropHoverZone(null);
             }}
             onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
+              const draggedNodeId = dnd.resolveDraggedNode(event);
               if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
               void (async (): Promise<void> => {
@@ -816,12 +658,12 @@ export function FolderTreeViewportV2({
                     await controller.dropNodeToRoot(draggedNodeId);
                   }
                 } finally {
-                  clearDragState();
+                  dnd.clearDragState();
                 }
               })();
             }}
             className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
-              rootDropHoverZone === 'bottom' ? rootDropActiveClassName : rootDropIdleClassName
+              dnd.rootDropHoverZone === 'bottom' ? rootDropActiveClassName : rootDropIdleClassName
             }`}
           >
             {rootDropLabel}

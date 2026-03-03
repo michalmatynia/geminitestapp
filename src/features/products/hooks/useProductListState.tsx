@@ -37,6 +37,8 @@ import { useProductListFilters } from './product-list/useProductListFilters';
 import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 import { useCreateFromDraft } from './useCreateFromDraft';
 
+export { shouldAdoptIncomingEditProductDetail } from './product-list/useProductEditHydration';
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;

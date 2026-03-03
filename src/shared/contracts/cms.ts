@@ -212,6 +212,32 @@ export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.obje
 });
 
 export type SectionInstance = CmsSectionInstanceDto;
+
+export interface BulkOperationResult {
+  ok: boolean;
+  count?: number;
+  message?: string;
+  error?: string;
+}
+
+export interface MasterTreePasteResult {
+  ok: boolean;
+  nextId?: string;
+  error?: string;
+}
+
+export interface SectionDragData {
+  sectionId: string;
+  zone: PageZone;
+}
+
+export interface BlockDragData {
+  blockId: string;
+  sectionId: string;
+  columnId?: string;
+  parentBlockId?: string;
+}
+
 export const clipboardDataSchema = z.object({
   type: z.enum(['section', 'block']),
   data: z.union([cmsSectionInstanceSchema, cmsBlockInstanceSchema]),

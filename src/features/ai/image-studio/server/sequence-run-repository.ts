@@ -9,6 +9,16 @@ import {
   ImageStudioSequenceRunRequest,
   ImageStudioSequenceMaskContext,
 } from '@/shared/contracts/image-studio';
+
+export type {
+  ImageStudioSequenceRunRecord,
+  ImageStudioSequenceRunStatus,
+  ImageStudioSequenceRunDispatchMode,
+  ImageStudioSequenceRunHistoryEvent,
+  ImageStudioSequenceRunHistoryEventSource,
+  ImageStudioSequenceRunRequest,
+  ImageStudioSequenceMaskContext,
+};
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 

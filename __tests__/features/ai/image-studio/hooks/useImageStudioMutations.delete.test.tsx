@@ -23,6 +23,22 @@ vi.mock('@/shared/lib/api-client', () => ({
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateImageStudioProjects: vi.fn(async () => undefined),
   invalidateImageStudioSlots: vi.fn(async () => undefined),
+  patchImageStudioSlotsCache: vi.fn(
+    (
+      queryClient: QueryClient,
+      projectId: string,
+      updater: (
+        current: StudioSlotsResponse | undefined
+      ) => StudioSlotsResponse | undefined
+    ) => {
+      const key = QUERY_KEYS.imageStudio.slots(projectId);
+      const current = queryClient.getQueryData<StudioSlotsResponse>(key);
+      const next = updater(current);
+      if (next !== undefined) {
+        queryClient.setQueryData(key, next);
+      }
+    }
+  ),
 }));
 
 const createTestQueryClient = (): QueryClient =>

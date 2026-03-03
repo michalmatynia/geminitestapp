@@ -61,8 +61,8 @@ export function NotesAppTreeNode({
         isSelected ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-muted/40'
       )}
       style={{ marginLeft: `${depth * 16}px` }}
-      onClick={(): void => {
-        select();
+      onClick={(event): void => {
+        select(event);
         if (folderId) {
           setSelectedFolderId(folderId);
           setSelectedNote(null);

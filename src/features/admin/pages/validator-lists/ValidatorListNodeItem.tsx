@@ -21,7 +21,7 @@ export interface ValidatorListNodeItemProps {
   isDragging: boolean;
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
-  select: () => void;
+  select: (event?: React.MouseEvent<HTMLElement>) => void;
   toggleExpand: () => void;
 }
 
@@ -83,7 +83,7 @@ export function ValidatorListNodeItem({
           className='flex h-full w-full min-w-0 items-center gap-1.5 text-left'
           onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
             event.stopPropagation();
-            select();
+            select(event);
           }}
         >
           <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>

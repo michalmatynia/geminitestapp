@@ -182,10 +182,10 @@ export function CaseResolverTreeNode({
                   ? 'bg-cyan-500/10 text-cyan-100'
                   : 'text-gray-300 hover:bg-muted/50';
 
-  const handleClick = (): void => {
+  const handleClick = (event?: React.MouseEvent<HTMLElement>): void => {
     if (isCaseEntryNode) return;
     if (!isSelected) {
-      select();
+      select(event);
     }
     if (isVirtualSectionNode) return;
     if (folderPath !== null) {

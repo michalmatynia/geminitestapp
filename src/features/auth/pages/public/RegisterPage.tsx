@@ -118,7 +118,11 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
               </Alert>
             )}
 
-            <FormField label='Full Name' description='Display name for your profile (optional).'>
+            <FormField
+              id='name'
+              label='Full Name'
+              description='Display name for your profile (optional).'
+            >
               <Input
                 id='name'
                 placeholder='John Doe'
@@ -129,7 +133,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
               />
             </FormField>
 
-            <FormField label='Email Address' required>
+            <FormField id='email' label='Email Address' required>
               <Input
                 id='email'
                 type='email'
@@ -142,7 +146,7 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
               />
             </FormField>
 
-            <FormField label='Password' required>
+            <FormField id='password' label='Password' required>
               <Input
                 id='password'
                 type='password'

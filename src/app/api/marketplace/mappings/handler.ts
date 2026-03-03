@@ -30,7 +30,7 @@ export async function GET_handler(
     throw badRequestError('connectionId is required');
   }
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
   const mappings = await repo.listByConnection(connectionId, catalogId);
 
   return NextResponse.json(mappings);
@@ -53,7 +53,7 @@ export async function POST_handler(
     );
   }
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
 
   // Check if mapping already exists
   const existing = await repo.getByExternalCategory(connectionId, externalCategoryId, catalogId);

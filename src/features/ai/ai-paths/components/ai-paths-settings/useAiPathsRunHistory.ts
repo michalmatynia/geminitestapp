@@ -4,7 +4,10 @@ import { type Query, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-  runsApi,
+  cancelAiPathRun,
+  getAiPathRun,
+  listAiPathRuns,
+  resumeAiPathRun,
   type AiPathRunEventRecord,
   type AiPathRunNodeRecord,
   type AiPathRunRecord,
@@ -291,7 +294,7 @@ export function useAiPathsRunHistory({
   >({
     queryKey: QUERY_KEYS.ai.aiPaths.runs({ pathId: activePathId }),
     queryFn: async ({ signal }) => {
-      const res = await runsApi.list({
+      const res = await listAiPathRuns({
         ...(activePathId ? { pathId: activePathId } : {}),
         includeTotal: false,
         limit: 100,
@@ -340,7 +343,7 @@ export function useAiPathsRunHistory({
     setRunDetailOpen(true);
     setRunDetailLoading(true);
     try {
-      const response = await runsApi.get(runId);
+      const response = await getAiPathRun(runId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to load run details.');
       }
@@ -361,7 +364,7 @@ export function useAiPathsRunHistory({
   };
 
   const handleResumeRun = async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
-    const response = await runsApi.resume(runId, mode);
+    const response = await resumeAiPathRun(runId, mode);
     if (!response.ok) {
       toast(response.error || 'Failed to resume run.', { variant: 'error' });
       return;
@@ -373,7 +376,7 @@ export function useAiPathsRunHistory({
   };
 
   const handleCancelRun = async (runId: string): Promise<void> => {
-    const response = await runsApi.cancel(runId);
+    const response = await cancelAiPathRun(runId);
     if (!response.ok) {
       toast(response.error || 'Failed to cancel run.', { variant: 'error' });
       return;
@@ -387,7 +390,7 @@ export function useAiPathsRunHistory({
   };
 
   const handleRequeueDeadLetter = async (runId: string): Promise<void> => {
-    const response = await runsApi.resume(runId, 'replay');
+    const response = await resumeAiPathRun(runId, 'replay');
     if (!response.ok) {
       toast(response.error || 'Failed to requeue run.', { variant: 'error' });
       return;

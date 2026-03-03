@@ -233,6 +233,5 @@ export const buildRelationMasterTree = ({
       caseMetaByNodeId,
       folderMetaByNodeId,
     },
-    visibleFileIdsInTreeOrder,
   };
 };

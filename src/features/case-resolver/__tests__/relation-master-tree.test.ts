@@ -67,7 +67,6 @@ describe('buildRelationMasterTree', () => {
     expect(folderNodes.some((node) => node.name === 'A')).toBe(true);
     expect(folderNodes.some((node) => node.name === 'B')).toBe(true);
     expect(fileNodes).toHaveLength(3);
-    expect(result.visibleFileIdsInTreeOrder).toEqual(['f-1', 'f-2', 'f-3']);
     expect(result.lookup.fileNodeIdByFileId.has('f-1')).toBe(true);
     expect(result.lookup.fileNodeIdByFileId.has('f-2')).toBe(true);
     expect(result.lookup.fileNodeIdByFileId.has('f-3')).toBe(true);
@@ -103,4 +102,3 @@ describe('buildRelationMasterTree', () => {
     ).toBe(true);
   });
 });
-

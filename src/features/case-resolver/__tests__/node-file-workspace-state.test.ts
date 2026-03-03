@@ -38,22 +38,20 @@ vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
 
 vi.mock('@/features/case-resolver/relation-search/hooks/useDocumentRelationSearch', () => ({
   useDocumentRelationSearch: () => ({
-    documentSearchScope: 'current_case',
+    documentSearchScope: 'case_scope',
     setDocumentSearchScope: vi.fn(),
     documentSearchQuery: '',
     setDocumentSearchQuery: vi.fn(),
-    selectedSearchFolderPath: null,
-    setSelectedSearchFolderPath: vi.fn(),
-    caseSearchQuery: '',
-    setCaseSearchQuery: vi.fn(),
-    selectedDrillCaseId: null,
-    setSelectedDrillCaseId: vi.fn(),
     caseIdentifierLabelById: new Map(),
     documentSearchRows: [],
-    folderScopedDocumentSearchRows: [],
     visibleDocumentSearchRows: [],
-    folderTree: { rootPaths: [], folderByPath: new Map() },
-    visibleCaseRows: [],
+    relationTreeNodes: [],
+    relationTreeLookup: {
+      fileRowByNodeId: new Map(),
+      fileNodeIdByFileId: new Map(),
+      caseMetaByNodeId: new Map(),
+      folderMetaByNodeId: new Map(),
+    },
   }),
 }));
 

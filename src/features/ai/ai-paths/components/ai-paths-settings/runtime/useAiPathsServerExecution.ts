@@ -10,7 +10,7 @@ import type {
   AiPathRunRecord,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-import { runsApi } from '@/shared/lib/ai-paths';
+import { enqueueAiPathRun, streamAiPathRun } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
@@ -176,7 +176,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       const entityType = resolveEntityTypeFromContext(triggerContext, entityId);
 
       try {
-        const enqueueResult = await runsApi.enqueue({
+        const enqueueResult = await enqueueAiPathRun({
           pathId: args.activePathId,
           pathName: args.pathName,
           nodes: args.normalizedNodes,
@@ -380,7 +380,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           }
         };
 
-        const eventSource = runsApi.stream(runId);
+        const eventSource = streamAiPathRun(runId);
         eventSourceRef.current = eventSource;
 
         eventSource.addEventListener('run', (event: Event): void => {

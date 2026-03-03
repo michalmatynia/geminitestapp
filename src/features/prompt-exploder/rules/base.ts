@@ -67,6 +67,9 @@ export const remapExploderScopesForTarget = (
   return deduped;
 };
 
+const normalizeRegexPattern = (pattern: string): string =>
+  pattern.replace(/\\\\/g, '\\');
+
 export const createRegexRule = (rule: {
   id: string;
   title: string;
@@ -95,7 +98,7 @@ export const createRegexRule = (rule: {
   severity: 'info',
   title: rule.title,
   description: rule.description,
-  pattern: rule.pattern,
+  pattern: normalizeRegexPattern(rule.pattern),
   flags: rule.flags ?? 'm',
   message: rule.message,
   similar: [],

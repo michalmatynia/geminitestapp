@@ -28,40 +28,21 @@ describe('category-mapping-repository (mongodb)', () => {
 
   it('bulkUpsert does not duplicate externalCategoryId across $set and $setOnInsert', async () => {
     const createIndex = vi.fn().mockResolvedValue('ok');
-    const externalFindToArray = vi
-      .fn()
-      .mockResolvedValue([{ _id: 'canonical-external-id', externalId: 'base-external-100' }]);
-    const externalFind = vi.fn().mockReturnValue({
-      toArray: externalFindToArray,
-    });
-    const updateOne = vi.fn().mockResolvedValue({
-      acknowledged: true,
-      matchedCount: 1,
-      modifiedCount: 1,
-      upsertedCount: 0,
-      upsertedId: null,
-    });
-    const updateMany = vi.fn().mockResolvedValue({
+    const bulkWrite = vi.fn().mockResolvedValue({
       acknowledged: true,
       matchedCount: 0,
-      modifiedCount: 0,
+      modifiedCount: 1,
       upsertedCount: 0,
-      upsertedId: null,
     });
 
     const mappingCollection = {
       createIndex,
-      updateOne,
-      updateMany,
-    };
-    const externalCollection = {
-      find: externalFind,
+      bulkWrite,
     };
 
     vi.mocked(getMongoDb).mockResolvedValue({
       collection: (name: string) => {
         if (name === 'category_mappings') return mappingCollection;
-        if (name === 'external_categories') return externalCollection;
         throw new Error(`Unexpected collection: ${name}`);
       },
     } as never);
@@ -75,10 +56,17 @@ describe('category-mapping-repository (mongodb)', () => {
     ]);
 
     expect(count).toBe(1);
-    expect(updateOne).toHaveBeenCalledTimes(1);
-    expect(updateMany).toHaveBeenCalledTimes(1);
+    expect(bulkWrite).toHaveBeenCalledTimes(1);
 
-    const updatePayload = updateOne.mock.calls[0]?.[1] as {
+    const firstOperation = (bulkWrite.mock.calls[0]?.[0] as Array<{
+      updateOne: {
+        update: {
+          $set: Record<string, unknown>;
+          $setOnInsert: Record<string, unknown>;
+        };
+      };
+    }>)?.[0];
+    const updatePayload = firstOperation?.updateOne.update as {
       $set: Record<string, unknown>;
       $setOnInsert: Record<string, unknown>;
     };

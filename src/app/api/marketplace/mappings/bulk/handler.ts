@@ -41,7 +41,7 @@ export async function POST_handler(
     }
   }
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
   const typedMappings = mappings as {
     externalCategoryId: string;
     internalCategoryId: string | null;

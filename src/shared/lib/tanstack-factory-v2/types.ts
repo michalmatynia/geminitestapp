@@ -10,6 +10,8 @@ import {
   type UseSuspenseInfiniteQueryOptions,
   type UseSuspenseQueryOptions,
   type QueryClient,
+  type UseQueryResult,
+  type UseSuspenseQueryResult,
 } from '@tanstack/react-query';
 
 import { 
@@ -140,7 +142,7 @@ export type MutationFactoryV2Config<TData, TVariables, TError = Error, TContext 
   UseMutationOptions<TData, TError, TVariables, TContext>,
   'mutationFn' | 'meta'
 > & {
-  mutationFn: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>;
+  mutationFn?: (variables: TVariables, context: { queryClient: QueryClient }) => Promise<TData>;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
   transformError?: (error: unknown) => TError;
@@ -198,6 +200,48 @@ export type SingleQueryConfigV2<
   telemetryContext?: Record<string, unknown> | undefined;
   transformError?: (error: unknown) => Error;
 };
+
+export type MultiQueryConfigV2<
+  TQueries extends readonly any[],
+  TCombine = MultiQueryResultsV2<TQueries>,
+> = {
+  queries: {
+    [K in keyof TQueries]: TQueries[K] extends QueryDescriptorV2<infer TQueryFnData, infer TError, infer TData, infer TQueryKey>
+      ? QueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+      : never;
+  };
+  combine?: (results: MultiQueryResultsV2<TQueries>) => TCombine;
+};
+
+export type MultiQueryResultsV2<TQueries extends readonly any[]> = {
+  [K in keyof TQueries]: TQueries[K] extends QueryDescriptorV2<any, infer TError, infer TData, any>
+    ? UseQueryResult<TData, TError>
+    : never;
+};
+
+export type SuspenseMultiQueryConfigV2<
+  TQueries extends readonly any[],
+  TCombine = SuspenseMultiQueryResultsV2<TQueries>,
+> = {
+  queries: {
+    [K in keyof TQueries]: TQueries[K] extends SuspenseQueryDescriptorV2<infer TQueryFnData, infer TError, infer TData, infer TQueryKey>
+      ? SuspenseQueryDescriptorV2<TQueryFnData, TError, TData, TQueryKey>
+      : never;
+  };
+  combine?: (results: SuspenseMultiQueryResultsV2<TQueries>) => TCombine;
+};
+
+export type SuspenseMultiQueryResultsV2<TQueries extends readonly any[]> = {
+  [K in keyof TQueries]: TQueries[K] extends SuspenseQueryDescriptorV2<any, infer TError, infer TData, any>
+    ? UseSuspenseQueryResult<TData, TError>
+    : never;
+};
+
+export type SaveMutationFactoryV2Config<TData, TVariables, TError = Error, TContext = unknown> = 
+  Omit<MutationFactoryV2Config<TData, TVariables, TError, TContext>, 'mutationFn'> & {
+    createFn: (variables: TVariables) => Promise<TData>;
+    updateFn: (id: string, variables: TVariables) => Promise<TData>;
+  };
 
 export type PaginatedResult<TItem> = {
   items: TItem[];

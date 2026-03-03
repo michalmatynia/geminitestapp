@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CategoryMapperSelectCell } from '../CategoryMapperSelectCell';
@@ -13,73 +14,54 @@ describe('CategoryMapperSelectCell', () => {
     const onChange = vi.fn<(value: string | null) => void>();
 
     render(
-      <>
-        <CategoryMapperSelectCell
-          value='cat-2'
-          onChange={onChange}
-          options={OPTIONS}
-          disabled={false}
-          datalistId='internal-categories'
-        />
-        <datalist id='internal-categories'>
-          {OPTIONS.map((option) => (
-            <option key={option.value} value={option.label} />
-          ))}
-        </datalist>
-      </>
+      <CategoryMapperSelectCell
+        value='cat-2'
+        onChange={onChange}
+        options={OPTIONS}
+        disabled={false}
+        datalistId='internal-categories'
+      />
     );
 
-    expect(screen.getByRole('combobox')).toHaveValue('Root / Child B');
+    expect(screen.getByRole('button', { name: 'Root / Child B' })).toBeInTheDocument();
   });
 
-  it('maps typed option label to internal category id', () => {
+  it('maps selected option label to internal category id', async () => {
+    const user = userEvent.setup();
     const onChange = vi.fn<(value: string | null) => void>();
 
     render(
-      <>
-        <CategoryMapperSelectCell
-          value={null}
-          onChange={onChange}
-          options={OPTIONS}
-          disabled={false}
-          datalistId='internal-categories'
-        />
-        <datalist id='internal-categories'>
-          {OPTIONS.map((option) => (
-            <option key={option.value} value={option.label} />
-          ))}
-        </datalist>
-      </>
+      <CategoryMapperSelectCell
+        value={null}
+        onChange={onChange}
+        options={OPTIONS}
+        disabled={false}
+        datalistId='internal-categories'
+      />
     );
 
-    const input = screen.getByRole('combobox');
-    fireEvent.change(input, { target: { value: 'Root / Child A' } });
+    await user.click(screen.getByRole('button', { name: 'Search internal category...' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Root / Child A' }));
 
     expect(onChange).toHaveBeenCalledWith('cat-1');
   });
 
-  it('clears mapping when input is emptied', () => {
+  it('clears mapping when the selected option is toggled off', async () => {
+    const user = userEvent.setup();
     const onChange = vi.fn<(value: string | null) => void>();
 
     render(
-      <>
-        <CategoryMapperSelectCell
-          value='cat-1'
-          onChange={onChange}
-          options={OPTIONS}
-          disabled={false}
-          datalistId='internal-categories'
-        />
-        <datalist id='internal-categories'>
-          {OPTIONS.map((option) => (
-            <option key={option.value} value={option.label} />
-          ))}
-        </datalist>
-      </>
+      <CategoryMapperSelectCell
+        value='cat-1'
+        onChange={onChange}
+        options={OPTIONS}
+        disabled={false}
+        datalistId='internal-categories'
+      />
     );
 
-    const input = screen.getByRole('combobox');
-    fireEvent.change(input, { target: { value: '' } });
+    await user.click(screen.getByRole('button', { name: 'Root / Child A' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Root / Child A' }));
 
     expect(onChange).toHaveBeenCalledWith(null);
   });

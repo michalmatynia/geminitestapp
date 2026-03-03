@@ -80,7 +80,7 @@ function SignInPageLoader(): React.JSX.Element {
               </Alert>
             )}
 
-            <FormField label='Email Address'>
+            <FormField id='email' label='Email Address'>
               <Input
                 id='email'
                 type='email'
@@ -93,7 +93,7 @@ function SignInPageLoader(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField label='Password'>
+            <FormField id='password' label='Password'>
               <Input
                 id='password'
                 type='password'

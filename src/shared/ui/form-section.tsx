@@ -4,6 +4,8 @@ import { Card } from './card';
 import { Label } from './label';
 import { SectionHeader } from './section-header';
 
+import { cloneElement, isValidElement, useId } from 'react';
+
 import type { ReactNode } from 'react';
 
 interface FormSectionProps {
@@ -80,6 +82,16 @@ export function FormField({
   className,
   id,
 }: FormFieldProps): React.JSX.Element {
+  const generatedId = useId().replace(/:/g, '');
+  const fieldId = id ?? (label ? `form-field-${generatedId}` : undefined);
+
+  const linkedChildren =
+    fieldId &&
+    isValidElement<{ id?: string }>(children) &&
+    (children.props.id === undefined || children.props.id === '')
+      ? cloneElement(children, { id: fieldId })
+      : children;
+
   return (
     <div className={cn('space-y-2', className)}>
       <div className='space-y-1'>
@@ -87,7 +99,7 @@ export function FormField({
           <div className='flex items-center justify-between gap-2'>
             {label ? (
               <Label
-                htmlFor={id}
+                htmlFor={fieldId}
                 className={cn(
                   'text-[11px] font-medium uppercase tracking-wider text-gray-400',
                   required && 'after:content-[\'*\'] after:ml-0.5 after:text-red-500'
@@ -105,7 +117,7 @@ export function FormField({
           <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>
         )}
       </div>
-      {children ?? null}
+      {linkedChildren ?? null}
       {error && (
         <p className='text-[10px] font-medium text-red-400 mt-1' role='alert'>
           {error}

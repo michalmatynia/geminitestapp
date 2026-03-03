@@ -95,6 +95,7 @@ vi.mock('@/shared/ui', () => ({
     </select>
   ),
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
+  StatusBadge: ({ label }: { label?: string }) => <span>{label ?? ''}</span>,
   FormModal: ({
     open,
     title,

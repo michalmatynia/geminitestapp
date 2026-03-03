@@ -56,6 +56,7 @@ import {
   resolveBrainCapabilityAssignment,
   sanitizeBrainAssignmentForProviders,
   sanitizeBrainProviderCatalog,
+  toPersistedBrainProviderCatalog,
   type AiBrainAssignment,
   type AiBrainCapabilityKey,
   type AiBrainFeature,
@@ -259,9 +260,10 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   const [logsPromptSystem, setLogsPromptSystem] = useState(DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT);
 
   const hydrateFromSettingsMap = useCallback((map: Map<string, string>): void => {
+    const rawBrainSettings = map.get(AI_BRAIN_SETTINGS_KEY) ?? null;
     let parsedBrain = defaultBrainSettings;
     try {
-      parsedBrain = parseBrainSettings(map.get(AI_BRAIN_SETTINGS_KEY));
+      parsedBrain = parseBrainSettings(rawBrainSettings);
     } catch (error: unknown) {
       logClientError(error, {
         context: {
@@ -276,10 +278,12 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
           : 'AI Brain settings are invalid and could not be loaded.',
         { variant: 'error' }
       );
+      if (rawBrainSettings?.trim()) return;
     }
+    const rawProviderCatalog = map.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null;
     let parsedCatalog = defaultBrainProviderCatalog;
     try {
-      parsedCatalog = parseBrainProviderCatalog(map.get(AI_BRAIN_PROVIDER_CATALOG_KEY));
+      parsedCatalog = parseBrainProviderCatalog(rawProviderCatalog);
     } catch (error: unknown) {
       logClientError(error, {
         context: {
@@ -294,6 +298,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
           : 'AI Brain provider catalog is invalid and could not be loaded.',
         { variant: 'error' }
       );
+      if (rawProviderCatalog?.trim()) return;
     }
     const playwrightPersonaIds = parsePlaywrightPersonaIds(
       map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)
@@ -680,7 +685,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       });
       await updateSetting.mutateAsync({
         key: AI_BRAIN_PROVIDER_CATALOG_KEY,
-        value: serializeSetting(sanitizeBrainProviderCatalog(providerCatalog)),
+        value: serializeSetting(
+          toPersistedBrainProviderCatalog(sanitizeBrainProviderCatalog(providerCatalog))
+        ),
       });
 
       await updateSettingsBulk.mutateAsync([

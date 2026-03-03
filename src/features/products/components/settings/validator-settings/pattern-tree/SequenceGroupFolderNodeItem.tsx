@@ -19,7 +19,7 @@ export interface SequenceGroupFolderNodeItemProps {
   isDragging: boolean;
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
-  select: () => void;
+  select: (event?: React.MouseEvent<HTMLElement>) => void;
   toggleExpand: () => void;
   startRename: () => void;
 }
@@ -166,7 +166,7 @@ export function SequenceGroupFolderNodeItem({
             className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left p-0 font-normal hover:bg-transparent justify-start'
             onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.stopPropagation();
-              select();
+              select(event);
             }}
             onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.preventDefault();

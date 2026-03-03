@@ -137,7 +137,7 @@ export const collectScopedCaseIds = (
   return scoped.size > 0 ? scoped : null;
 };
 
-export const isDocumentTextfieldPort = (port: string | null | undefined): boolean =>
+export const isDocumentWysiwygTextPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0];
 
 export const isDocumentPlaintextContentPort = (port: string | null | undefined): boolean =>
@@ -152,7 +152,7 @@ export const isDocumentWysiwygContentPort = (port: string | null | undefined): b
 export const resolveOutputValueByPort = (
   outputs:
     | {
-        textfield: string;
+        wysiwygText: string;
         plaintextContent: string;
         plainText: string;
         wysiwygContent: string;
@@ -160,16 +160,16 @@ export const resolveOutputValueByPort = (
     | null
     | undefined,
   fromPort: string | null | undefined,
-  fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
+  fallback: 'wysiwygText' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
 ): string => {
   if (!outputs) return '';
-  if (isDocumentTextfieldPort(fromPort)) return outputs.textfield;
+  if (isDocumentWysiwygTextPort(fromPort)) return outputs.wysiwygText;
   if (isDocumentPlainTextPort(fromPort)) return outputs.plainText;
   if (isDocumentWysiwygContentPort(fromPort)) return outputs.wysiwygContent;
   if (isDocumentPlaintextContentPort(fromPort)) return outputs.plaintextContent;
   if (fallback === 'plainText') return outputs.plainText;
   if (fallback === 'wysiwygContent') return outputs.wysiwygContent;
-  return fallback === 'textfield' ? outputs.textfield : outputs.plaintextContent;
+  return fallback === 'wysiwygText' ? outputs.wysiwygText : outputs.plaintextContent;
 };
 
 export const appendWithJoinMode = (

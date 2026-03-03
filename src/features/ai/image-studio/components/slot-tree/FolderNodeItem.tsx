@@ -17,7 +17,7 @@ export interface FolderNodeItemProps {
   isRenaming: boolean;
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
-  select: () => void;
+  select: (event?: React.MouseEvent<HTMLElement>) => void;
   toggleExpand: () => void;
 }
 
@@ -179,7 +179,7 @@ export function FolderNodeItem({
                     clearSelection();
                     return;
                   }
-                  select();
+                  select(event);
                   onSelectFolder(folderPath);
                 }, 180);
                 return;
@@ -188,7 +188,7 @@ export function FolderNodeItem({
                 clearSelection();
                 return;
               }
-              select();
+              select(event);
               onSelectFolder(folderPath);
             }}
             onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {

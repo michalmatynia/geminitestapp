@@ -1,27 +1,34 @@
-import type { AiNode, Edge, NodeCacheScope } from '@/shared/contracts/ai-paths';
-import type {
-  RuntimePortValues,
-  RuntimeState,
-  NodeHandlerContext,
-  RuntimeHistoryEntry,
-} from '@/shared/contracts/ai-paths-runtime';
-import type { ToastOptions } from '@/shared/contracts/ui';
+'use client';
 
 import {
-  appendInputValue,
+  AiNode,
+  Edge,
+} from '@/shared/contracts/ai-paths';
+import {
+  RuntimeState,
+  RuntimeHistoryEntry,
+  NodeHandlerContext,
+} from '@/shared/contracts/ai-paths-runtime';
+import { ToastOptions } from '@/shared/contracts/ui';
+import { getProductRepository } from '@/features/products/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
+import {
   cloneValue,
-  getPortDataTypes,
-  isValueCompatibleWithTypes,
   sanitizeEdges,
 } from '../utils';
-import { nowMs, resolveNodeTimeoutMs, withTimeout, withRetries, DEFAULT_RETRY_BACKOFF_MS } from './execution-helpers';
+import { 
+  nowMs, 
+  resolveNodeTimeoutMs, 
+  withTimeout, 
+  withRetries, 
+  DEFAULT_RETRY_BACKOFF_MS 
+} from './execution-helpers';
 
 // Modular imports
 import {
   GraphExecutionError,
   GraphExecutionCancelled,
-  type RuntimeProfileNodeStats,
-  type RuntimeProfileSummary,
   type EvaluateGraphOptions,
 } from './engine-modules/engine-types';
 import {
@@ -34,29 +41,20 @@ import {
   orderNodesByDependencies,
   evaluateInputReadiness,
   pickString,
-  readEntityTypeFromContext,
-  readEntityIdFromContext,
   resolveEdgeFromNodeId,
   resolveEdgeToNodeId,
-  resolveEdgeFromPort,
-  resolveEdgeToPort,
   checkContextMatchesSimulation,
   hasValuableSimulationContext,
   isSimulationCapableFetcher,
 } from './engine-modules/engine-utils';
+import { EngineStateManager, resolveNodeCacheScope } from './engine-modules/engine-state-manager';
+import { resolveScopedNodeIds } from './engine-modules/engine-reachability';
+import { collectNodeInputs } from './engine-modules/engine-input-collector';
+import { deriveNodeInputs } from './engine-modules/engine-node-input-deriver';
 
 export { GraphExecutionError, GraphExecutionCancelled };
 
 const MAX_ITERATIONS = process.env['NODE_ENV'] === 'test' ? 10 : 500;
-const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';
-
-const resolveNodeCacheScope = (node: AiNode): NodeCacheScope => {
-  const scope = node.config?.runtime?.cache?.scope;
-  if (scope === 'run' || scope === 'activation' || scope === 'session') {
-    return scope;
-  }
-  return DEFAULT_NODE_CACHE_SCOPE;
-};
 
 export async function evaluateGraphInternal(
   nodes: AiNode[],
@@ -67,35 +65,11 @@ export async function evaluateGraphInternal(
   const resolvedRunStartedAtMs = nowMs();
   const resolvedRunStartedAt = new Date(resolvedRunStartedAtMs).toISOString();
 
-  const nodeStats = new Map<string, RuntimeProfileNodeStats>();
-
-  const getOrCreateNodeStats = (node: AiNode): RuntimeProfileNodeStats => {
-    let stats = nodeStats.get(node.id);
-    if (!stats) {
-      stats = {
-        nodeId: node.id,
-        nodeType: node.type,
-        count: 0,
-        totalMs: 0,
-        maxMs: 0,
-        cachedCount: 0,
-        skippedCount: 0,
-        errorCount: 0,
-        hashCount: 0,
-        hashTotalMs: 0,
-        hashMaxMs: 0,
-      };
-      nodeStats.set(node.id, stats);
-    }
-    return stats;
-  };
-
-  const sanitizedEdges = sanitizeEdges(nodes, edges);
-  const orderedNodes = orderNodesByDependencies(nodes, sanitizedEdges);
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const incomingEdgesByNode = new Map<string, Edge[]>();
   const outgoingEdgesByNode = new Map<string, Edge[]>();
 
+  const sanitizedEdges = sanitizeEdges(nodes, edges);
   sanitizedEdges.forEach((edge) => {
     const fromNodeId = resolveEdgeFromNodeId(edge);
     const toNodeId = resolveEdgeToNodeId(edge);
@@ -106,132 +80,38 @@ export async function evaluateGraphInternal(
     outgoingEdgesByNode.get(fromNodeId)!.push(edge);
   });
 
-  const collectNodeInputs = (
-    nodeId: string,
-    currentOutputs: Record<string, RuntimePortValues>
-  ): RuntimePortValues => {
-    const incoming = incomingEdgesByNode.get(nodeId) ?? [];
-    if (incoming.length === 0) return {};
-    const collected: RuntimePortValues = {};
-    incoming.forEach((edge: Edge) => {
-      const fromNodeId = resolveEdgeFromNodeId(edge);
-      if (!fromNodeId) return;
-      const fromOutput = currentOutputs[fromNodeId];
-      const fromPort = resolveEdgeFromPort(edge);
-      const toPort = resolveEdgeToPort(edge);
-      if (!fromOutput || !fromPort || !toPort) return;
-      const value = fromOutput[fromPort];
-      if (value === undefined) return;
-      const expectedTypes = getPortDataTypes(toPort);
-      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = collected[toPort];
-      collected[toPort] = appendInputValue(existing, value);
-    });
-    return collected;
-  };
-
+  const orderedNodes = orderNodesByDependencies(nodes, sanitizedEdges);
   const seedHashes = options.seedHashes ?? {};
 
-  const scopedNodeIds = (() => {
-    if (!options.triggerNodeId || !nodeById.has(options.triggerNodeId)) {
-      return new Set(nodes.map((node) => node.id));
-    }
-    const reachable = new Set<string>();
-    const stack = [options.triggerNodeId];
+  const scopedNodeIds = resolveScopedNodeIds({
+    nodes,
+    triggerNodeId: options.triggerNodeId,
+    nodeById,
+    outgoingEdgesByNode,
+    incomingEdgesByNode,
+    seedHashes,
+  });
+  
+  const state = new EngineStateManager(nodes, scopedNodeIds.size, options);
 
-    // Forward reachability
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!current || reachable.has(current)) continue;
-      reachable.add(current);
-      const outgoing = outgoingEdgesByNode.get(current) ?? [];
-      outgoing.forEach((edge) => {
-        const toNodeId = resolveEdgeToNodeId(edge);
-        if (toNodeId && !reachable.has(toNodeId)) {
-          stack.push(toNodeId);
-        }
-      });
-    }
-
-    // Include upstream simulation nodes if trigger requires simulation
-    const triggerNode = nodeById.get(options.triggerNodeId);
-    if (
-      triggerNode?.config?.trigger?.contextMode === 'simulation_required' ||
-      triggerNode?.config?.trigger?.contextMode === 'simulation_preferred'
-    ) {
-      const incoming = incomingEdgesByNode.get(options.triggerNodeId) ?? [];
-      incoming.forEach((edge) => {
-        const fromNodeId = resolveEdgeFromNodeId(edge);
-        if (fromNodeId) {
-          const fromNode = nodeById.get(fromNodeId);
-          if (fromNode?.type === 'simulation' || isSimulationCapableFetcher(fromNode!)) {
-            const config = fromNode?.config?.simulation;
-            // Respect manual_only behavior
-            if (
-              fromNode?.type !== 'simulation' ||
-              config?.runBehavior !== 'manual_only' ||
-              fromNodeId === options.triggerNodeId ||
-              seedHashes[fromNodeId]
-            ) {
-              reachable.add(fromNodeId);
-            }
-          }
-        }
-      });
-    }
-
-    return reachable;
-  })();
-  const executableNodeCount = scopedNodeIds.size;
-
-  const inputs: Record<string, RuntimePortValues> = {};
-  const outputs: Record<string, RuntimePortValues> = options.seedOutputs
-    ? cloneValue(options.seedOutputs)
-    : {};
-  const variables: Record<string, unknown> = {};
-
-  const history = new Map<string, RuntimeHistoryEntry[]>();
-  const activeNodes = new Set<string>();
-  const finishedNodes = new Set<string>();
-  const errorNodes = new Set<string>();
-  const timeoutNodes = new Set<string>();
-  const blockedNodes = new Set<string>();
-  const skippedNodes = new Set<string>(options.skipNodeIds ?? []);
-  const nodeHashes = new Map<string, string>();
-  // Engine-measured last execution duration per node (ms). Populated on finish/error.
-  const nodeDurationsMap = new Map<string, number>();
-  // Auto-create an in-run cache Map when any node has cache mode enabled and no external cache
-  // was provided. This makes `cache: { mode: 'auto', scope: 'run' }` work without configuration.
-  const effectiveCache: Map<string, RuntimePortValues> | null =
-    options.cache ??
-    (nodes.some(
-      (n) => n.config?.runtime?.cache?.mode && n.config.runtime.cache.mode !== 'disabled'
-    )
-      ? new Map<string, RuntimePortValues>()
-      : null);
-
-  Object.keys(outputs).forEach((nodeId) => {
+  Object.keys(state.outputs).forEach((nodeId) => {
     if (!scopedNodeIds.has(nodeId)) {
-      delete outputs[nodeId];
-    } else if (seedHashes[nodeId] === undefined) {
-      // Re-validate if no seed hash provided.
-    } else {
-      // Validation will happen in the loop based on hash match.
+      delete state.outputs[nodeId];
     }
   });
 
-  skippedNodes.forEach((id) => {
+  state.skippedNodes.forEach((id) => {
     if (nodeById.has(id)) {
-      finishedNodes.add(id);
+      state.finishedNodes.add(id);
     }
   });
 
   // Initial input propagation
   nodes.forEach((node) => {
-    inputs[node.id] = collectNodeInputs(node.id, outputs);
+    state.inputs[node.id] = collectNodeInputs(node.id, state.outputs, incomingEdgesByNode);
   });
 
-  const executed: NodeHandlerContext['executed'] = {
+  const executed = {
     notification: new Set<string>(),
     updater: new Set<string>(),
     http: new Set<string>(),
@@ -242,78 +122,28 @@ export async function evaluateGraphInternal(
     mapper: new Set<string>(),
   };
 
-  const buildRuntimeStateSnapshot = (
-    inputsSnapshot: Record<string, RuntimePortValues>
-  ): RuntimeState => {
-    const nodeStatuses = nodes.reduce<Record<string, RuntimeState['nodeStatuses'][string]>>(
-      (acc, node) => {
-        if (errorNodes.has(node.id)) {
-          acc[node.id] = timeoutNodes.has(node.id) ? 'timeout' : 'failed';
-        } else if (skippedNodes.has(node.id)) {
-          acc[node.id] = 'skipped';
-        } else if (finishedNodes.has(node.id)) {
-          acc[node.id] = 'completed';
-        } else if (blockedNodes.has(node.id)) {
-          acc[node.id] = 'blocked';
-        } else if (activeNodes.has(node.id)) {
-          acc[node.id] = 'running';
-        } else {
-          acc[node.id] = 'pending';
-        }
-        return acc;
-      },
-      {}
-    );
-
-    const outputsSnapshot = cloneValue(outputs);
-    return {
-      status:
-        errorNodes.size > 0
-          ? 'failed'
-          : finishedNodes.size >= executableNodeCount
-            ? 'completed'
-            : 'running',
-      nodeStatuses,
-      nodeOutputs: outputsSnapshot,
-      variables: cloneValue(variables),
-      events: [],
-      inputs: cloneValue(inputsSnapshot),
-      outputs: outputsSnapshot,
-      hashes: Object.fromEntries(nodeHashes),
-      nodeDurations: nodeDurationsMap.size ? Object.fromEntries(nodeDurationsMap) : undefined,
-      history: history.size
-        ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
-        : undefined,
-    };
-  };
-
-  const throwAbortIfCancelled = (
-    nextInputs: Record<string, RuntimePortValues>,
-    nodeId?: string
-  ): void => {
+  const throwAbortIfCancelled = (nodeId?: string): void => {
     if (options.abortSignal?.aborted) {
       throw new GraphExecutionError(
         'Execution aborted by signal.',
-        buildRuntimeStateSnapshot(nextInputs),
+        state.buildRuntimeStateSnapshot(state.inputs),
         nodeId
       );
     }
   };
 
   const triggerContext = options.triggerContext ?? null;
-  const triggerContextRecord = triggerContext ?? null;
-
   const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
 
   const checkTriggerProvenance = (): boolean => {
     const simulationNodesInScope = Array.from(scopedNodeIds)
       .map((id) => nodeById.get(id))
       .filter((n) => n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
-    const finishedSimulationNodes = simulationNodesInScope.filter((n) => finishedNodes.has(n!.id));
-    const simulationOutputs = finishedSimulationNodes.map((n) => outputs[n!.id]).filter(Boolean);
+    const finishedSimulationNodes = simulationNodesInScope.filter((n) => state.finishedNodes.has(n!.id));
+    const simulationOutputs = finishedSimulationNodes.map((n) => state.outputs[n!.id]).filter(Boolean);
 
     const hasLiveProvenance =
-      triggerContextRecord && checkContextMatchesSimulation(triggerContextRecord);
+      triggerContext && checkContextMatchesSimulation(triggerContext);
     const hasSimNodeProvenance = simulationOutputs.some(
       (out) =>
         out && hasValuableSimulationContext((out['context'] as Record<string, unknown>) ?? {})
@@ -323,69 +153,28 @@ export async function evaluateGraphInternal(
       return true;
     }
 
-    const hasPotentialSimNode = simulationNodesInScope.some((n) => !finishedNodes.has(n!.id));
+    const hasPotentialSimNode = simulationNodesInScope.some((n) => !state.finishedNodes.has(n!.id));
     return hasPotentialSimNode;
   };
 
   // Pre-Execution Simulation Context Feasibility Check
-  const triggerCanEventuallyHaveSimulationProvenance =
-    triggerSource?.type === 'simulation' ||
-    (triggerContextRecord && checkContextMatchesSimulation(triggerContextRecord)) ||
-    Array.from(scopedNodeIds).some((id) => {
-      const n = nodeById.get(id);
-      return n && (n.type === 'simulation' || isSimulationCapableFetcher(n));
-    });
-
   if (
     triggerSource?.config?.trigger?.contextMode === 'simulation_required' &&
-    !triggerCanEventuallyHaveSimulationProvenance
+    !(
+      triggerSource?.type === 'simulation' ||
+      (triggerContext && checkContextMatchesSimulation(triggerContext)) ||
+      Array.from(scopedNodeIds).some((id) => {
+        const n = nodeById.get(id);
+        return n && (n.type === 'simulation' || isSimulationCapableFetcher(n));
+      })
+    )
   ) {
     throw new GraphExecutionError(
       `Trigger "${triggerSource.title || triggerSource.id}" requires simulation context but none was provided or resolved.`,
-      buildRuntimeStateSnapshot(inputs),
+      state.buildRuntimeStateSnapshot(state.inputs),
       triggerSource.id
     );
   }
-
-  const deriveNodeInputs = (node: AiNode, rawInputs: RuntimePortValues): RuntimePortValues => {
-    const next = { ...rawInputs };
-    if (node.type === 'database') {
-      if (!pickString(next['entityId'])) {
-        const triggerEntityId =
-          pickString(triggerContext?.['productId']) ?? pickString(triggerContext?.['entityId']);
-        if (triggerEntityId) {
-          next['entityId'] = triggerEntityId;
-        }
-      }
-      if (!pickString(next['entityType'])) {
-        const triggerEntityType =
-          pickString(triggerContext?.['entityType']) ??
-          (pickString(triggerContext?.['productId']) ? 'product' : undefined);
-        if (triggerEntityType) {
-          next['entityType'] = triggerEntityType;
-        }
-      }
-    }
-    if (node.type === 'model' || node.type === 'prompt') {
-      const contextEntityId = readEntityIdFromContext(next);
-      const contextEntityType = readEntityTypeFromContext(next);
-      if (contextEntityId && contextEntityType && checkTriggerProvenance()) {
-        const inheritedContextSource =
-          typeof triggerContextRecord?.['contextSource'] === 'string'
-            ? triggerContextRecord['contextSource']
-            : null;
-        const currentContext = (next['context'] as Record<string, unknown>) ?? {};
-        next['context'] = {
-          ...currentContext,
-          entityId: contextEntityId,
-          entityType: contextEntityType,
-          contextSource: inheritedContextSource ?? 'simulation',
-          provenance: 'trigger_simulation',
-        };
-      }
-    }
-    return next;
-  };
 
   let iteration = 0;
   let changedInLastIteration = true;
@@ -395,7 +184,7 @@ export async function evaluateGraphInternal(
     iteration += 1;
     changedInLastIteration = false;
 
-    // Warn at 80% of max iterations so callers can surface a heads-up before the hard cap.
+    // Warn at 80% of max iterations
     const warningThreshold = Math.floor(maxIterationsLimit * 0.8);
     if (iteration === warningThreshold && options.onIterationLimitWarning) {
       await options.onIterationLimitWarning({
@@ -410,16 +199,21 @@ export async function evaluateGraphInternal(
       await options.onIteration({
         runId: resolvedRunId,
         iteration,
-        activeNodes: Array.from(activeNodes),
+        activeNodes: Array.from(state.activeNodes),
       });
     }
 
     const readyNodes = orderedNodes.filter((node) => {
       if (!scopedNodeIds.has(node.id)) return false;
-      if (finishedNodes.has(node.id) || errorNodes.has(node.id)) return false;
+      if (state.finishedNodes.has(node.id) || state.errorNodes.has(node.id)) return false;
 
-      const rawInputs = inputs[node.id] ?? {};
-      const nodeInputs = deriveNodeInputs(node, rawInputs);
+      const rawInputs = state.inputs[node.id] ?? {};
+      const nodeInputs = deriveNodeInputs({
+        node,
+        rawInputs,
+        triggerContext,
+        checkTriggerProvenance,
+      });
 
       const readiness = evaluateInputReadiness(
         node,
@@ -427,20 +221,23 @@ export async function evaluateGraphInternal(
         incomingEdgesByNode.get(node.id) ?? [],
         nodeById,
         (id) =>
-          finishedNodes.has(id)
+          state.finishedNodes.has(id)
             ? 'completed'
-            : errorNodes.has(id)
+            : state.errorNodes.has(id)
               ? 'failed'
-              : blockedNodes.has(id)
+              : state.blockedNodes.has(id)
                 ? 'blocked'
                 : 'pending',
-        (id) => outputs[id] ?? {}
+        (id) => state.outputs[id] ?? {}
       );
 
       if (!readiness.ready) {
-        if (!blockedNodes.has(node.id)) {
-          blockedNodes.add(node.id);
-          let message = `Upstream waiting diagnostics: ${readiness.waitingOnPorts.length > 0 ? `Waiting on ports: ${readiness.waitingOnPorts.join(', ')}` : 'Blocked by upstream nodes'}`;
+        if (!state.blockedNodes.has(node.id)) {
+          state.blockedNodes.add(node.id);
+          let message = readiness.waitingOnPorts.length > 0 
+            ? `Upstream waiting diagnostics: Waiting on ports: ${readiness.waitingOnPorts.join(', ')}`
+            : 'Upstream waiting diagnostics: Blocked by upstream nodes';
+            
           if (readiness.waitingOnDetails && readiness.waitingOnDetails.length > 0) {
             const detailsMsg = readiness.waitingOnDetails
               .map((d) => {
@@ -453,7 +250,7 @@ export async function evaluateGraphInternal(
             message = `Upstream waiting diagnostics: ${detailsMsg}`;
           }
 
-          outputs[node.id] = {
+          state.outputs[node.id] = {
             status: 'blocked',
             skipReason: 'missing_inputs',
             message,
@@ -463,7 +260,7 @@ export async function evaluateGraphInternal(
           };
 
           if (options['recordHistory']) {
-            const entries = history.get(node.id) ?? [];
+            const entries = state.history.get(node.id) ?? [];
             entries.push({
               timestamp: new Date().toISOString(),
               pathId: options.pathId ?? null,
@@ -474,12 +271,12 @@ export async function evaluateGraphInternal(
               status: 'blocked',
               iteration,
               inputs: cloneValue(nodeInputs),
-              outputs: cloneValue(outputs[node.id]),
+              outputs: cloneValue(state.outputs[node.id]),
               skipReason: 'missing_inputs',
               requiredPorts: readiness.requiredPorts,
               waitingOnPorts: readiness.waitingOnPorts,
             } as RuntimeHistoryEntry);
-            history.set(node.id, entries);
+            state.history.set(node.id, entries);
           }
 
           if (options.profile?.onEvent) {
@@ -518,10 +315,15 @@ export async function evaluateGraphInternal(
     if (readyNodes.length > 0) {
       await Promise.all(
         readyNodes.map(async (node) => {
-          throwAbortIfCancelled(inputs, node.id);
+          throwAbortIfCancelled(node.id);
 
-          const rawInputs = inputs[node.id] ?? {};
-          const nodeInputs = deriveNodeInputs(node, rawInputs);
+          const rawInputs = state.inputs[node.id] ?? {};
+          const nodeInputs = deriveNodeInputs({
+            node,
+            rawInputs,
+            triggerContext,
+            checkTriggerProvenance,
+          });
 
           // --- Cache Check Start ---
           const cacheScope = resolveNodeCacheScope(node);
@@ -530,7 +332,6 @@ export async function evaluateGraphInternal(
           if (cacheScope === 'run') {
             cacheScopeFingerprint = { runId: resolvedRunId };
           } else if (cacheScope === 'session' || cacheScope === 'activation') {
-            // Bind session/activation scope to the primary entity context
             const entityId =
               pickString(triggerContext?.['entityId']) ??
               pickString(triggerContext?.['productId']);
@@ -549,11 +350,11 @@ export async function evaluateGraphInternal(
                   : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
 
           if (nodeHash) {
-            nodeHashes.set(node.id, nodeHash);
+            state.nodeHashes.set(node.id, nodeHash);
           }
 
-          const prevOutputs = outputs[node.id] ?? null;
-          const cachedOutputs = nodeHash ? effectiveCache?.get(nodeHash) : null;
+          const prevOutputs = state.outputs[node.id] ?? null;
+          const cachedOutputs = nodeHash ? state.effectiveCache?.get(nodeHash) : null;
           const isSeedMatch = Boolean(
             nodeHash && seedHashes[node.id] === nodeHash && options.seedOutputs?.[node.id]
           );
@@ -564,7 +365,7 @@ export async function evaluateGraphInternal(
           const isCacheDisabled = cacheMode === 'disabled';
           
           let validCacheHit = false;
-          let cacheSource: RuntimePortValues | null = null;
+          let cacheSource: typeof state.outputs[string] | null = null;
 
           if (!isEntryNode && !isImplicitTriggerNode && !isCacheDisabled) {
             if (isSeedMatch) {
@@ -575,7 +376,6 @@ export async function evaluateGraphInternal(
               validCacheHit = true;
             }
 
-            // Guardrail: Reject status-only cache if node expects outputs
             if (validCacheHit && cacheSource) {
               const hasData = Object.keys(cacheSource).some(k => k !== 'status' && k !== 'context');
               const expectsData = (node.outputs ?? []).length > 0;
@@ -588,16 +388,16 @@ export async function evaluateGraphInternal(
 
           if (validCacheHit && cacheSource) {
             const out = cacheSource;
-            outputs[node.id] = cloneValue(out);
+            state.outputs[node.id] = cloneValue(out);
 
             if (out['status'] === 'blocked') {
-              blockedNodes.add(node.id);
+              state.blockedNodes.add(node.id);
             } else {
-              finishedNodes.add(node.id);
+              state.finishedNodes.add(node.id);
             }
 
             if (options['recordHistory']) {
-              const entries = history.get(node.id) ?? [];
+              const entries = state.history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
                 pathId: options.pathId ?? null,
@@ -608,9 +408,9 @@ export async function evaluateGraphInternal(
                 status: 'cached',
                 iteration,
                 inputs: cloneValue(nodeInputs),
-                outputs: cloneValue(outputs[node.id]),
+                outputs: cloneValue(state.outputs[node.id]),
               } as RuntimeHistoryEntry);
-              history.set(node.id, entries);
+              state.history.set(node.id, entries);
             }
 
             if (options.profile?.onEvent) {
@@ -633,7 +433,7 @@ export async function evaluateGraphInternal(
                 node,
                 nodeInputs,
                 prevOutputs,
-                nextOutputs: outputs[node.id]!,
+                nextOutputs: state.outputs[node.id]!,
                 changed: false,
                 iteration,
                 cached: true,
@@ -643,32 +443,28 @@ export async function evaluateGraphInternal(
           }
           // --- Cache Check End ---
 
-          // Final check for trigger provenance if ready
           if (
             node.id === options.triggerNodeId &&
-          node.config?.trigger?.contextMode === 'simulation_required'
+            node.config?.trigger?.contextMode === 'simulation_required'
           ) {
             if (!checkTriggerProvenance()) {
               throw new GraphExecutionError(
                 `Trigger "${node.title || node.id}" requires simulation context but none was provided or resolved.`,
-                buildRuntimeStateSnapshot(inputs),
+                state.buildRuntimeStateSnapshot(state.inputs),
                 node.id
               );
             }
           }
 
-          if (blockedNodes.has(node.id)) {
-            delete outputs[node.id];
-          }
-          blockedNodes.delete(node.id);
-          activeNodes.add(node.id);
+          state.blockedNodes.delete(node.id);
+          state.activeNodes.add(node.id);
 
           const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
           if (!handler) {
-            errorNodes.add(node.id);
+            state.errorNodes.add(node.id);
             const handlerMissingError = new GraphExecutionError(
               `No handler found for node type: ${node.type}`,
-              buildRuntimeStateSnapshot(inputs),
+              state.buildRuntimeStateSnapshot(state.inputs),
               node.id
             );
             if (options.onNodeError) {
@@ -685,7 +481,7 @@ export async function evaluateGraphInternal(
             throw handlerMissingError;
           }
 
-          const stats = getOrCreateNodeStats(node);
+          const stats = state.getOrCreateNodeStats(node);
           stats.count += 1;
           const nodeStartedAt = nowMs();
 
@@ -698,123 +494,110 @@ export async function evaluateGraphInternal(
             let sideEffectDecision: 'executed' | 'skipped_policy' = 'executed';
             if (
               sideEffectPolicy === 'per_run' &&
-            (executed as unknown as Record<string, Set<string> | undefined>)[node.type]?.has(
-              node.id
-            )
+              executed[node.type as keyof typeof executed]?.has(node.id)
             ) {
               sideEffectDecision = 'skipped_policy';
             }
 
-            if (options.onNodeStart) {
-              await options.onNodeStart({
-                runId: resolvedRunId,
-                runStartedAt: resolvedRunStartedAt,
-                node,
-                nodeInputs,
-                prevOutputs,
-                iteration,
-              });
-            }
-
-            const timeoutMs = resolveNodeTimeoutMs(node);
-            const resolvedEntityType =
-            readEntityTypeFromContext(nodeInputs) ??
-            pickString(triggerContext?.['entityType']) ??
-            (pickString(triggerContext?.['productId']) ? 'product' : null);
-            const resolvedEntityId =
-            readEntityIdFromContext(nodeInputs) ??
-            pickString(triggerContext?.['productId']) ??
-            pickString(triggerContext?.['entityId']) ??
-            null;
-            const fetchEntityResolver =
-            options.fetchEntityByType ?? options.fetchEntityCached ?? (async () => null);
-
-            const handlerContext: NodeHandlerContext = {
+            const ctx: NodeHandlerContext = {
               node,
+              nodeId: node.id,
+              nodeTitle: node.title,
               nodeInputs,
-              prevOutputs: prevOutputs && prevOutputs['status'] !== 'blocked' ? prevOutputs : {},
+              prevOutputs: prevOutputs ?? {},
               edges: sanitizedEdges,
-              nodes,
-              nodeById,
+              nodes: nodes,
+              nodeById: nodeById,
               runId: resolvedRunId,
               runStartedAt: resolvedRunStartedAt,
-              runMeta: options.services,
               activePathId: options.pathId ?? null,
-              triggerNodeId: options.triggerNodeId ?? undefined,
-              triggerEvent: options.triggerEvent ?? undefined,
-              triggerContext: options.triggerContext,
-              deferPoll: options.deferPoll,
-              skipAiJobs: options.skipAiJobs,
-              now: new Date().toISOString(),
+              triggerContext,
+              variables: state.variables,
+              iteration,
+              executed,
+              isDryRun: Boolean(options['isDryRun']),
+              sideEffectDecision,
+              activationHash,
+              timeoutMs: resolveNodeTimeoutMs(node),
               abortSignal: options.abortSignal,
-              allOutputs: outputs,
-              allInputs: inputs,
-              fetchEntityCached: fetchEntityResolver,
-              reportAiPathsError: options.reportAiPathsError,
-              toast: (msg: string, opts?: ToastOptions) => {
-                if (options.toast) {
-                  options.toast(msg, opts);
+              now: new Date().toISOString(),
+              allOutputs: state.outputs,
+              allInputs: state.inputs,
+              fetchEntityCached: async (type, id) => {
+                const repo = await getProductRepository();
+                return repo.getProductById(id) as any;
+              },
+              reportAiPathsError: (error, meta) => {
+                void logSystemEvent({
+                  level: 'error',
+                  source: 'ai-paths.engine',
+                  message: 'Node execution error',
+                  error,
+                  context: meta,
+                });
+              },
+              toast: (message: string, toastOptions?: ToastOptions): void => {
+                if (options['onToast']) {
+                  void (options['onToast'] as any)({
+                    runId: resolvedRunId,
+                    nodeId: node.id,
+                    message,
+                    options: toastOptions,
+                  });
                 }
               },
-              simulationEntityType:
-              typeof resolvedEntityType === 'string' ? resolvedEntityType : null,
-              simulationEntityId: typeof resolvedEntityId === 'string' ? resolvedEntityId : null,
+              simulationEntityType: null,
+              simulationEntityId: null,
               resolvedEntity: null,
               fallbackEntityId: null,
-              strictFlowMode: options.strictFlowMode ?? true,
-              sideEffectControl: {
-                policy: sideEffectPolicy,
-                decision: sideEffectDecision,
-                activationHash,
-                idempotencyKey: null,
-              },
-              executed,
-              variables,
-              setVariable: (key: string, value: unknown) => {
-                variables[key] = cloneValue(value);
+              strictFlowMode: false,
+              setVariable: (key, value) => {
+                state.variables[key] = value;
               },
             };
 
-            const retryConfig = node.config?.runtime?.retry;
-            const retryAttempts =
-            typeof retryConfig?.attempts === 'number' && retryConfig.attempts > 1
-              ? retryConfig.attempts
-              : 1;
-            const retryBackoffMs =
-            typeof retryConfig?.backoffMs === 'number' && retryConfig.backoffMs > 0
-              ? retryConfig.backoffMs
-              : DEFAULT_RETRY_BACKOFF_MS;
-            const result = await withRetries(
+            const retryPolicy = node.config?.runtime?.retry ?? {
+              enabled: false,
+              attempts: 1,
+              backoffMs: DEFAULT_RETRY_BACKOFF_MS,
+            };
+
+             
+            const nodeResult = await withRetries(
               () =>
                 withTimeout(
-                  Promise.resolve(handler(handlerContext)),
-                  timeoutMs,
-                  `${node.type}:${node.id}`
+                  Promise.resolve(handler(ctx)),
+                  ctx.timeoutMs,
+                  `Node ${node.title || node.id}`
                 ),
-              retryAttempts,
-              retryBackoffMs,
-              `${node.type}:${node.id}`,
+              (retryPolicy['enabled'] ? (retryPolicy['attempts'] ?? 1) : 1) as any,
+              (retryPolicy['backoffMs'] ?? DEFAULT_RETRY_BACKOFF_MS) as any,
+              `Node ${node.title || node.id}`,
               options.abortSignal
             );
 
-            if (sideEffectPolicy === 'per_run') {
-              (executed as unknown as Record<string, Set<string> | undefined>)[node.type]?.add(
-                node.id
-              );
+            const nodeDurationMs = nowMs() - nodeStartedAt;
+            state.nodeDurationsMap.set(node.id, nodeDurationMs);
+            stats.totalMs += nodeDurationMs;
+            stats.maxMs = Math.max(stats.maxMs, nodeDurationMs);
+
+            const nextOutputs = cloneValue(nodeResult);
+            state.outputs[node.id] = nextOutputs;
+
+            if (nodeHash && state.effectiveCache && !isCacheDisabled) {
+              state.effectiveCache.set(nodeHash, cloneValue(nextOutputs));
             }
 
-            const nodeFinishedAt = nowMs();
-            const durationMs = nodeFinishedAt - nodeStartedAt;
-            stats.totalMs += durationMs;
-            stats.maxMs = Math.max(stats.maxMs, durationMs);
-            nodeDurationsMap.set(node.id, durationMs);
+            if (executed[node.type as keyof typeof executed]) {
+              executed[node.type as keyof typeof executed].add(node.id);
+            }
 
-            outputs[node.id] = result;
-            finishedNodes.add(node.id);
-            if (nodeHash) effectiveCache?.set(nodeHash, cloneValue(result));
+            state.finishedNodes.add(node.id);
+            state.activeNodes.delete(node.id);
+            changedInLastIteration = true;
 
             if (options['recordHistory']) {
-              const entries = history.get(node.id) ?? [];
+              const entries = state.history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
                 pathId: options.pathId ?? null,
@@ -822,16 +605,16 @@ export async function evaluateGraphInternal(
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
-                status: 'completed',
+                status: 'executed',
                 iteration,
                 inputs: cloneValue(nodeInputs),
-                outputs: cloneValue(result),
-                sideEffectPolicy,
-                sideEffectDecision,
-                activationHash,
-                durationMs,
+                outputs: cloneValue(nextOutputs),
+                inputHash: activationHash,
+                inputsFrom: [],
+                outputsTo: [],
+                durationMs: nodeDurationMs,
               } as RuntimeHistoryEntry);
-              history.set(node.id, entries);
+              state.history.set(node.id, entries);
             }
 
             if (options.profile?.onEvent) {
@@ -843,10 +626,7 @@ export async function evaluateGraphInternal(
                 nodeType: node.type,
                 iteration,
                 status: 'executed',
-                durationMs,
-                sideEffectPolicy,
-                sideEffectDecision,
-                activationHash,
+                durationMs: nodeDurationMs,
               });
             }
 
@@ -857,24 +637,40 @@ export async function evaluateGraphInternal(
                 node,
                 nodeInputs,
                 prevOutputs,
-                nextOutputs: result,
+                nextOutputs: state.outputs[node.id]!,
                 changed: true,
                 iteration,
-                sideEffectDecision,
-                sideEffectPolicy,
-                activationHash,
+                cached: false,
               });
             }
+
+            // Propagate outputs to connected inputs
+            const outgoing = outgoingEdgesByNode.get(node.id) ?? [];
+            outgoing.forEach((edge) => {
+              const toNodeId = resolveEdgeToNodeId(edge);
+              if (toNodeId) {
+                state.inputs[toNodeId] = collectNodeInputs(toNodeId, state.outputs, incomingEdgesByNode);
+              }
+            });
           } catch (error) {
-            if (error instanceof Error && /timed out after/.test(error.message)) {
-              timeoutNodes.add(node.id);
+            const nodeDurationMs = nowMs() - nodeStartedAt;
+            state.nodeDurationsMap.set(node.id, nodeDurationMs);
+            state.activeNodes.delete(node.id);
+            state.errorNodes.add(node.id);
+            if (error instanceof Error && error.message.includes('timed out')) {
+              state.timeoutNodes.add(node.id);
             }
-            errorNodes.add(node.id);
-            stats.errorCount += 1;
-            nodeDurationsMap.set(node.id, nowMs() - nodeStartedAt);
+
+            const errorSnapshot = state.buildRuntimeStateSnapshot(state.inputs);
+            const graphError = new GraphExecutionError(
+              error instanceof Error ? error.message : String(error),
+              errorSnapshot,
+              node.id,
+              error instanceof Error ? error : undefined
+            );
 
             if (options['recordHistory']) {
-              const entries = history.get(node.id) ?? [];
+              const entries = state.history.get(node.id) ?? [];
               entries.push({
                 timestamp: new Date().toISOString(),
                 pathId: options.pathId ?? null,
@@ -885,10 +681,16 @@ export async function evaluateGraphInternal(
                 status: 'failed',
                 iteration,
                 inputs: cloneValue(nodeInputs),
-                outputs: {},
-                error: error instanceof Error ? error.message : String(error),
+                outputs: {
+                  status: 'failed',
+                  error: graphError.message,
+                },
+                inputHash: null,
+                inputsFrom: [],
+                outputsTo: [],
+                durationMs: nodeDurationMs,
               } as RuntimeHistoryEntry);
-              history.set(node.id, entries);
+              state.history.set(node.id, entries);
             }
 
             if (options.profile?.onEvent) {
@@ -900,7 +702,8 @@ export async function evaluateGraphInternal(
                 nodeType: node.type,
                 iteration,
                 status: 'error',
-                durationMs: nowMs() - nodeStartedAt,
+                durationMs: nodeDurationMs,
+                reason: graphError.message,
               });
             }
 
@@ -911,68 +714,24 @@ export async function evaluateGraphInternal(
                 node,
                 nodeInputs,
                 prevOutputs,
-                error,
+                error: graphError,
                 iteration,
               });
             }
-            throw error;
+
+            throw graphError;
           }
         })
       );
     }
-    // Input propagation for next iteration
-    nodes.forEach((n) => {
-      const updatedInputs = collectNodeInputs(n.id, outputs);
-      const currentInputsStr = JSON.stringify(inputs[n.id] ?? {});
-      const updatedInputsStr = JSON.stringify(updatedInputs);
-      if (updatedInputsStr !== currentInputsStr) {
-        inputs[n.id] = updatedInputs;
-        changedInLastIteration = true;
-        if (finishedNodes.has(n.id)) {
-          finishedNodes.delete(n.id);
-        }
-        blockedNodes.delete(n.id);
-        errorNodes.delete(n.id);
-      }
-    });
   }
 
-  const finalState = buildRuntimeStateSnapshot(inputs) as any;
-
-  const onHalt =
-    options.onHalt ||
-    ((options['control'] as Record<string, unknown> | undefined)?.[
-      'onHalt'
-    ] as typeof options.onHalt);
-
-  if (finalState.status !== 'completed' && finalState.status !== 'failed' && onHalt) {
-    const reason = iteration >= maxIterationsLimit ? 'max_iterations' : 'blocked';
-    await onHalt({
-      runId: resolvedRunId,
-      reason,
-      nodeStatuses: finalState.nodeStatuses,
-    });
+  if (iteration >= maxIterationsLimit && state.finishedNodes.size < scopedNodeIds.size) {
+    throw new GraphExecutionError(
+      `Graph execution exceeded maximum iterations (${maxIterationsLimit}).`,
+      state.buildRuntimeStateSnapshot(state.inputs)
+    );
   }
 
-  if (options.profile?.onSummary) {
-    const profileNodes = Array.from(nodeStats.values()).map((stats) => ({
-      ...stats,
-      avgMs: stats.count > 0 ? stats.totalMs / stats.count : 0,
-      hashAvgMs: stats.hashCount > 0 ? stats.hashTotalMs / stats.hashCount : 0,
-    }));
-    const summary: RuntimeProfileSummary = {
-      runId: resolvedRunId,
-      durationMs: nowMs() - resolvedRunStartedAtMs,
-      iterationCount: iteration,
-      nodeCount: nodes.length,
-      edgeCount: sanitizedEdges.length,
-      nodes: profileNodes,
-      hottestNodes: [...profileNodes]
-        .sort((a, b) => b.totalMs - a.totalMs || b.maxMs - a.maxMs)
-        .slice(0, 10),
-    };
-    options.profile.onSummary(summary);
-  }
-
-  return finalState;
+  return state.buildRuntimeStateSnapshot(state.inputs);
 }

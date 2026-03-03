@@ -10,7 +10,6 @@ import {
   type BrainModelFamily,
   type BrainAppliedMeta,
   type BrainExecutionConfig,
-  type BrainModelExecutionConfig,
   type AiPathsNodeExecutionInput,
   aiBrainSettingsSchema as settingsSchema,
   aiBrainProviderCatalogSchema as providerCatalogSchema,
@@ -18,6 +17,7 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
+  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
   entriesToCatalogArrays,
   sanitizeCatalogEntries,
@@ -36,7 +36,6 @@ export type {
   BrainModelFamily,
   BrainAppliedMeta,
   BrainExecutionConfig,
-  BrainModelExecutionConfig,
   AiPathsNodeExecutionInput,
 };
 
@@ -431,6 +430,18 @@ export const parseBrainProviderCatalog = (
     });
   }
 
+  const parsedRecord = parsed as Record<string, unknown>;
+  const legacyPoolKeys = BRAIN_CATALOG_POOL_VALUES.filter(
+    (pool: string): boolean => Object.prototype.hasOwnProperty.call(parsedRecord, pool)
+  );
+  if (legacyPoolKeys.length > 0) {
+    throw validationError('Legacy AI Brain provider catalog pool arrays are no longer supported.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'deprecated_catalog_pool_arrays',
+      keys: legacyPoolKeys,
+    });
+  }
+
   const result = providerCatalogSchema.safeParse(parsed);
   if (!result.success) {
     throw validationError('Invalid AI Brain provider catalog payload.', {
@@ -527,3 +538,9 @@ export const sanitizeBrainProviderCatalog = (
     ...arrays,
   };
 };
+
+export const toPersistedBrainProviderCatalog = (
+  catalog: AiBrainProviderCatalog
+): { entries: AiBrainCatalogEntry[] } => ({
+  entries: sanitizeCatalogEntries(catalogToEntries(catalog)),
+});

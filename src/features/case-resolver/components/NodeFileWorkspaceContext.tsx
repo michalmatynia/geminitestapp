@@ -13,7 +13,6 @@ import type {
 import {
   NodeFileDocumentSearchScope,
   NodeFileDocumentSearchRow,
-  NodeFileDocumentFolderTree,
 } from './CaseResolverNodeFileUtils';
 import type { RelationTreeLookup } from '../relation-search/types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -41,23 +40,6 @@ export type NodeFileWorkspaceContextValue = {
   setDocumentSearchScope: (scope: NodeFileDocumentSearchScope) => void;
   documentSearchQuery: string;
   setDocumentSearchQuery: (query: string) => void;
-  selectedSearchFolderPath: string | null;
-  setSelectedSearchFolderPath: (path: string | null) => void;
-  expandedSearchFolderPaths: Set<string>;
-  setExpandedSearchFolderPaths: (paths: Set<string>) => void;
-  selectedSearchDocumentId: string;
-  setSelectedSearchDocumentId: (id: string) => void;
-  isDocumentSearchOpen: boolean;
-  setIsDocumentSearchOpen: (open: boolean) => void;
-  caseSearchQuery: string;
-  setCaseSearchQuery: (query: string) => void;
-  selectedDrillCaseId: string | null;
-  setSelectedDrillCaseId: (id: string | null) => void;
-  visibleCaseRows: Array<{
-    file: CaseResolverFile;
-    signatureLabel: string;
-    docCount: number;
-  }>;
   nodeMetaByNode: Record<string, CaseResolverNodeMeta>;
   edgeMetaByEdge: Record<string, CaseResolverEdgeMeta>;
 
@@ -65,12 +47,9 @@ export type NodeFileWorkspaceContextValue = {
   filesById: Map<string, CaseResolverFile>;
   caseIdentifierLabelById: Map<string, string>;
   documentSearchRows: NodeFileDocumentSearchRow[];
-  folderScopedDocumentSearchRows: NodeFileDocumentSearchRow[];
   visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
-  folderTree: NodeFileDocumentFolderTree;
   relationTreeNodes?: MasterTreeNode[] | undefined;
   relationTreeLookup?: RelationTreeLookup | undefined;
-  visibleFileIdsInTreeOrder?: string[] | undefined;
   compiled: CaseResolverCompileResult;
   selectedNode: AiNode | null;
   selectedNodeMeta: CaseResolverNodeMeta | null;
@@ -101,7 +80,7 @@ export type NodeFileWorkspaceContextValue = {
   selectedPromptTemplate?: string;
   selectedPromptInputText?: string;
   selectedPromptOutputPreview?: {
-    textfield: string;
+    wysiwygText: string;
     plaintextContent: string;
     plainText: string;
     wysiwygContent: string;

@@ -32,12 +32,6 @@ interface DocumentRelationSearchContextType {
   setDocumentSearchScope: (scope: DocumentSearchScope) => void;
   documentSearchQuery: string;
   setDocumentSearchQuery: (query: string) => void;
-  selectedSearchFolderPath: string | null;
-  setSelectedSearchFolderPath: (path: string | null) => void;
-  caseSearchQuery: string;
-  setCaseSearchQuery: (query: string) => void;
-  selectedDrillCaseId: string | null;
-  setSelectedDrillCaseId: (id: string | null) => void;
   fileTypeFilter: DocumentRelationFileTypeFilter;
   setFileTypeFilter: (filter: DocumentRelationFileTypeFilter) => void;
   sortMode: DocumentRelationSortMode;
@@ -71,21 +65,11 @@ interface DocumentRelationSearchContextType {
   toggleFileSelection: (id: string) => void;
 
   // Computed
-  isDrillMode: boolean;
-  isAllCases: boolean;
-  showDocTable: boolean;
-  drillSignatureLabel: string;
   caseTagOptions: SelectOption[];
   caseCategoryOptions: SelectOption[];
   documentSearchRows: NodeFileDocumentSearchRow[];
   visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
-  visibleCaseRows: Array<{
-    file: CaseResolverFile;
-    signatureLabel: string;
-    docCount: number;
-  }>;
   currentDocRows: NodeFileDocumentSearchRow[];
-  currentFolderPaths: string[];
   filtersActiveCount: number;
   allVisibleSelected: boolean;
   someVisibleSelected: boolean;
@@ -93,7 +77,6 @@ interface DocumentRelationSearchContextType {
   previewFile: CaseResolverFile | null;
   relationTreeNodes: MasterTreeNode[];
   relationTreeLookup: RelationTreeLookup;
-  visibleFileIdsInTreeOrder: string[];
 }
 
 const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextType | null>(null);
@@ -158,10 +141,7 @@ export function DocumentRelationSearchProvider({
 
   const {
     documentSearchScope,
-    selectedDrillCaseId,
     visibleDocumentSearchRows,
-    visibleCaseRows,
-    folderTree,
     documentSearchQuery,
     dateFrom,
     dateTo,
@@ -183,21 +163,7 @@ export function DocumentRelationSearchProvider({
     fileTypeFilter,
   ]);
 
-  const isDrillMode = documentSearchScope === 'all_cases' && selectedDrillCaseId !== null;
-  const isAllCases = documentSearchScope === 'all_cases';
-  const showDocTable = true;
-
-  const drillSignatureLabel = useMemo((): string => {
-    if (!selectedDrillCaseId) return '';
-    const caseRow = visibleCaseRows.find((r) => r.file.id === selectedDrillCaseId);
-    if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
-    return selectedDrillCaseId;
-  }, [selectedDrillCaseId, visibleCaseRows]);
-
   const currentDocRows = visibleDocumentSearchRows;
-  const currentFolderPaths = useMemo(() => {
-    return folderTree.childPathsByParent.get(null) ?? [];
-  }, [folderTree]);
 
   const filtersActiveCount = useMemo(() => {
     let count = 0;
@@ -276,14 +242,9 @@ export function DocumentRelationSearchProvider({
       setPreviewFileId,
       onLinkFile,
       isLocked,
-      isDrillMode,
-      isAllCases,
-      showDocTable,
-      drillSignatureLabel,
       caseTagOptions,
       caseCategoryOptions,
       currentDocRows,
-      currentFolderPaths,
       filtersActiveCount,
       selectAllVisible,
       clearSelection,
@@ -295,7 +256,6 @@ export function DocumentRelationSearchProvider({
       previewFile,
       relationTreeNodes: searchProps.relationTreeNodes,
       relationTreeLookup: searchProps.relationTreeLookup,
-      visibleFileIdsInTreeOrder: searchProps.visibleFileIdsInTreeOrder,
     }),
     [
       searchProps,
@@ -305,14 +265,9 @@ export function DocumentRelationSearchProvider({
       previewFileId,
       onLinkFile,
       isLocked,
-      isDrillMode,
-      isAllCases,
-      showDocTable,
-      drillSignatureLabel,
       caseTagOptions,
       caseCategoryOptions,
       currentDocRows,
-      currentFolderPaths,
       filtersActiveCount,
       selectAllVisible,
       clearSelection,
@@ -324,7 +279,6 @@ export function DocumentRelationSearchProvider({
       previewFile,
       searchProps.relationTreeNodes,
       searchProps.relationTreeLookup,
-      searchProps.visibleFileIdsInTreeOrder,
     ]
   );
 

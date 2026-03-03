@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
-import { runsApi } from '@/shared/lib/ai-paths';
+import {
+  getAiPathRun,
+  listAiPathRuns,
+  requeueAiPathDeadLetterRuns,
+  resumeAiPathRun,
+  retryAiPathRunNode,
+} from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   AiPathRunEventRecord,
@@ -104,7 +110,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       pageSize,
     }),
     queryFn: async () => {
-      const response = await runsApi.list({
+      const response = await listAiPathRuns({
         status: 'dead_lettered',
         ...(normalizedPathId ? { pathId: normalizedPathId } : {}),
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
@@ -312,7 +318,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       requeued: number;
       errors?: Array<{ runId: string; error: string }>;
     }> => {
-      const response = await runsApi.requeueDeadLetter({
+      const response = await requeueAiPathDeadLetterRuns({
         runIds: Array.from(selectedIds),
         mode: requeueMode,
       });
@@ -363,7 +369,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       requeued: number;
       errors?: Array<{ runId: string; error: string }>;
     }> => {
-      const response = await runsApi.requeueDeadLetter({
+      const response = await requeueAiPathDeadLetterRuns({
         pathId: normalizedPathId || null,
         query: normalizedQuery || null,
         mode: requeueMode,
@@ -413,7 +419,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       setDetailLoading(true);
       setStreamPaused(false);
       try {
-        const response = await runsApi.get(runId);
+        const response = await getAiPathRun(runId);
         if (!response.ok) {
           throw new Error(response.error || 'Failed to load run details.');
         }
@@ -453,7 +459,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
 
   const handleRequeueSingle = useCallback(
     async (runId: string): Promise<void> => {
-      const response = await runsApi.resume(runId, requeueMode);
+      const response = await resumeAiPathRun(runId, requeueMode);
       if (!response.ok) {
         toast(response.error || 'Failed to requeue run.', { variant: 'error' });
         return;
@@ -475,7 +481,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       runId: string;
       nodeId: string;
     }): Promise<{ run: unknown }> => {
-      const response = await runsApi.retryNode(runId, nodeId);
+      const response = await retryAiPathRunNode(runId, nodeId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to retry node.');
       }
@@ -523,7 +529,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     try {
       const results = await Promise.all(
         retryableNodes.map((node: AiPathRunNodeRecord) =>
-          runsApi.retryNode(detail.run.id, node.nodeId)
+          retryAiPathRunNode(detail.run.id, node.nodeId)
         )
       );
       const failed = results.filter((result: { ok: boolean }) => !result.ok);

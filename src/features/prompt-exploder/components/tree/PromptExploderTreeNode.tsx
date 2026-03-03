@@ -89,7 +89,9 @@ export function PromptExploderTreeNode({
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
       role='button'
       tabIndex={0}
-      onClick={select}
+      onClick={(event): void => {
+        select(event);
+      }}
       onKeyDown={(event): void => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();

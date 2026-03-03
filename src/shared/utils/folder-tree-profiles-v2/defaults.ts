@@ -307,6 +307,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     interactions: {
       selectionBehavior: 'click_away',
     },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
   },
   case_resolver_cases: {
     version: 2,
@@ -351,6 +358,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     },
     interactions: {
       selectionBehavior: 'click_away',
+    },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
     },
   },
   case_resolver_document_relations: {
@@ -413,6 +427,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     interactions: {
       selectionBehavior: 'click_away',
     },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
   },
   case_resolver_nodefile_relations: {
     version: 2,
@@ -474,6 +495,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     interactions: {
       selectionBehavior: 'click_away',
     },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    },
   },
   case_resolver_scanfile_relations: {
     version: 2,
@@ -534,6 +562,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
     },
     interactions: {
       selectionBehavior: 'click_away',
+    },
+    search: {
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
     },
   },
   validator_list_tree: {

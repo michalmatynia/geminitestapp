@@ -12,6 +12,12 @@ import {
 } from '@/shared/contracts/agents';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 
+const DEPRECATED_AGENT_PERSONA_TOP_LEVEL_MODEL_KEYS = [
+  'modelId',
+  'temperature',
+  'maxTokens',
+] as const;
+
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -40,6 +46,16 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
       const createdAt =
         typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
       const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
+      const deprecatedTopLevelKeys = DEPRECATED_AGENT_PERSONA_TOP_LEVEL_MODEL_KEYS.filter(
+        (key: string): boolean => key in raw
+      );
+      if (deprecatedTopLevelKeys.length > 0) {
+        throw validationError('Legacy Agent Persona model snapshot fields are no longer supported.', {
+          reason: 'deprecated_top_level_model_snapshot_fields',
+          personaId: id,
+          keys: deprecatedTopLevelKeys,
+        });
+      }
       const parsedSettingsResult =
         raw.settings === undefined
           ? null

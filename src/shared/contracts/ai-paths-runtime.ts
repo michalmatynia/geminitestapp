@@ -502,6 +502,8 @@ export type ToastFn = (message: string, options?: Record<string, unknown>) => vo
 
 export interface NodeHandlerContext {
   node: AiNode;
+  nodeId: string;
+  nodeTitle: string | null | undefined;
   nodeInputs: Record<string, unknown>; // RuntimePortValues
   prevOutputs: Record<string, unknown>; // RuntimePortValues
   edges: Edge[];
@@ -509,6 +511,7 @@ export interface NodeHandlerContext {
   nodeById: Map<string, AiNode>;
   runId: string;
   runStartedAt: string;
+  timeoutMs: number;
   runMeta?: Record<string, unknown> | null | undefined;
   activePathId: string | null;
   triggerNodeId?: string | undefined;

@@ -18,6 +18,7 @@ import {
   type UseInfiniteQueryResult,
   type UseSuspenseInfiniteQueryResult,
   type UseSuspenseQueryResult,
+  type QueryClient,
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 
@@ -348,6 +349,9 @@ export function createMutationV2<TData, TVariables, TContext = unknown, TError =
       });
 
       try {
+        if (!mutationFn) {
+          throw new Error('Mutation function is required');
+        }
         const data = await mutationFn(variables, { queryClient });
         emitFactoryTelemetry({
           entity: 'mutation',

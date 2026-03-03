@@ -18,6 +18,9 @@ import {
   folderTreeSelectionBehaviorValues,
   folderTreePlaceholderStyleValues,
   type FolderTreeProfileV2,
+  resolveFolderTreeKeyboardConfig,
+  resolveFolderTreeMultiSelectConfig,
+  resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
 import {
   getRuleAllow,
@@ -62,6 +65,9 @@ export function InstanceSettingsPanel({
   const allowFileToRoot = getRuleAllow(profile, 'file_to_root');
   const folderKinds = getRuleKinds(profile, 'folder_to_folder');
   const fileKinds = getRuleKinds(profile, 'file_to_folder');
+  const keyboardConfig = resolveFolderTreeKeyboardConfig(profile);
+  const multiSelectConfig = resolveFolderTreeMultiSelectConfig(profile);
+  const searchConfig = resolveFolderTreeSearchConfig(profile);
 
   return (
     <Card
@@ -478,7 +484,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.keyboard?.enabled ?? false}
+                  checked={keyboardConfig.enabled}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -496,7 +502,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.keyboard?.arrowNavigation ?? true}
+                  checked={keyboardConfig.arrowNavigation}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -517,7 +523,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.keyboard?.enterToRename ?? true}
+                  checked={keyboardConfig.enterToRename}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -538,7 +544,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.keyboard?.deleteKey ?? false}
+                  checked={keyboardConfig.deleteKey}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -561,7 +567,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.multiSelect?.enabled ?? false}
+                  checked={multiSelectConfig.enabled}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -582,7 +588,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.multiSelect?.ctrlClick ?? true}
+                  checked={multiSelectConfig.ctrlClick}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -603,7 +609,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.multiSelect?.shiftClick ?? true}
+                  checked={multiSelectConfig.shiftClick}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -624,7 +630,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.multiSelect?.selectAll ?? true}
+                  checked={multiSelectConfig.selectAll}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -650,7 +656,7 @@ export function InstanceSettingsPanel({
                 className='flex items-start gap-2 border-border/50 bg-card/30'
               >
                 <Checkbox
-                  checked={profile.search?.enabled ?? false}
+                  checked={searchConfig.enabled}
                   onCheckedChange={(checked: boolean | 'indeterminate'): void => {
                     updateProfile(meta.id, (current) => ({
                       ...current,
@@ -664,7 +670,7 @@ export function InstanceSettingsPanel({
             <FormField label='Filter Mode'>
               <SelectSimple
                 size='sm'
-                value={profile.search?.filterMode ?? 'highlight'}
+                value={searchConfig.filterMode}
                 options={[
                   { value: 'highlight', label: 'Highlight matches' },
                   { value: 'filter_tree', label: 'Filter tree' },
@@ -685,7 +691,7 @@ export function InstanceSettingsPanel({
                 type='number'
                 min={0}
                 max={2000}
-                value={profile.search?.debounceMs ?? 200}
+                value={searchConfig.debounceMs}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                   const parsed = parseInt(event.target.value, 10);
                   updateProfile(meta.id, (current) => ({
@@ -703,7 +709,7 @@ export function InstanceSettingsPanel({
                 type='number'
                 min={0}
                 max={10}
-                value={profile.search?.minQueryLength ?? 1}
+                value={searchConfig.minQueryLength}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                   const parsed = parseInt(event.target.value, 10);
                   updateProfile(meta.id, (current) => ({

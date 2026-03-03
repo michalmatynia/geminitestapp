@@ -13,6 +13,7 @@ import type {
 
 export type { PromptExploderParserTuningRuleId, PromptExploderParserTuningRuleDraft };
 import { PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS } from '@/shared/contracts/prompt-exploder';
+export { PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS };
 
 const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string> = {
   'segment.boundary.requirements': 'Boundary · Requirements',

@@ -172,9 +172,9 @@ export type ChatSession = ChatbotSessionDto;
 export const chatbotSessionListItemSchema = z.object({
   id: z.string(),
   title: z.string().nullable(),
-  lastMessageAt: z.string().nullable(),
-  messageCount: z.number(),
-  isActive: z.boolean(),
+  lastMessageAt: z.string().nullable().optional(),
+  messageCount: z.number().optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type ChatbotSessionListItemDto = z.infer<typeof chatbotSessionListItemSchema>;

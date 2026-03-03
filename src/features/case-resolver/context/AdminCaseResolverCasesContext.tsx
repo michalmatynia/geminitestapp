@@ -160,6 +160,7 @@ export function AdminCaseResolverCasesProvider({
 
   const settingsStoreRefetchRef = useRef(settingsStore.refetch);
   settingsStoreRefetchRef.current = settingsStore.refetch;
+  const [isRouteWorkspaceSyncing, setIsRouteWorkspaceSyncing] = React.useState(false);
 
   const state = useAdminCaseResolverCasesState(parsedWorkspace);
 
@@ -319,9 +320,15 @@ export function AdminCaseResolverCasesProvider({
     });
     if (!snapshot) return;
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      const currentStateRevision = getCaseResolverWorkspaceRevision(current);
+      if (
+        !shouldAdoptIncomingCaseResolverCasesWorkspace({
+          current,
+          incoming: snapshot,
+        })
+      ) {
+        return current;
+      }
       const nextRevision = getCaseResolverWorkspaceRevision(snapshot);
-      if (nextRevision <= currentStateRevision) return current;
       lastPersistedWorkspaceValueRef.current = JSON.stringify(snapshot);
       lastPersistedWorkspaceRevisionRef.current = nextRevision;
       return snapshot;
@@ -332,83 +339,91 @@ export function AdminCaseResolverCasesProvider({
   useEffect(() => {
     if (!isCasesRoute) return;
     let isCancelled = false;
+    setIsRouteWorkspaceSyncing(true);
     void (async (): Promise<void> => {
-      const inMemoryRevision = Math.max(
-        getCaseResolverWorkspaceRevision(parsedWorkspace),
-        lastPersistedWorkspaceRevisionRef.current
-      );
+      try {
+        const inMemoryRevision = Math.max(
+          getCaseResolverWorkspaceRevision(parsedWorkspace),
+          lastPersistedWorkspaceRevisionRef.current
+        );
 
-      // Fast path: use navigation cache if it was recently primed with a newer revision
-      // (e.g. user just came back from editing a case — workspace is known fresh, skip network)
-      const cachedWorkspace = readCaseResolverNavigationWorkspace();
-      if (cachedWorkspace) {
-        const cachedRevision = getCaseResolverWorkspaceRevision(cachedWorkspace);
-        if (cachedRevision > inMemoryRevision) {
-          if (isCancelled) return;
-          setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-            if (
-              !shouldAdoptIncomingCaseResolverCasesWorkspace({
-                current,
-                incoming: cachedWorkspace,
-              })
-            ) {
-              return current;
-            }
-            lastPersistedWorkspaceValueRef.current = JSON.stringify(cachedWorkspace);
-            lastPersistedWorkspaceRevisionRef.current = cachedRevision;
-            logCaseResolverWorkspaceEvent({
-              source: 'cases_page',
-              action: 'route_sync_workspace_nav_cache',
-              workspaceRevision: cachedRevision,
+        // Fast path: use navigation cache if it was recently primed with a newer revision
+        // (e.g. user just came back from editing a case — workspace is known fresh, skip network)
+        const cachedWorkspace = readCaseResolverNavigationWorkspace();
+        if (cachedWorkspace) {
+          const cachedRevision = getCaseResolverWorkspaceRevision(cachedWorkspace);
+          if (cachedRevision > inMemoryRevision) {
+            if (isCancelled) return;
+            setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+              if (
+                !shouldAdoptIncomingCaseResolverCasesWorkspace({
+                  current,
+                  incoming: cachedWorkspace,
+                })
+              ) {
+                return current;
+              }
+              lastPersistedWorkspaceValueRef.current = JSON.stringify(cachedWorkspace);
+              lastPersistedWorkspaceRevisionRef.current = cachedRevision;
+              logCaseResolverWorkspaceEvent({
+                source: 'cases_page',
+                action: 'route_sync_workspace_nav_cache',
+                workspaceRevision: cachedRevision,
+              });
+              return cachedWorkspace;
             });
-            return cachedWorkspace;
-          });
-          return;
+            return;
+          }
         }
-      }
 
-      // Single conditional fetch: server returns the workspace only when its revision
-      // is greater than inMemoryRevision, otherwise returns a lightweight upToDate signal.
-      // Replaces the previous 2-request waterfall (metadata pre-flight + workspace fetch).
-      const shouldForceRecordFetch = shouldBootstrapCaseResolverCasesFromRecord(workspace);
-      const result = shouldForceRecordFetch
-        ? null
-        : await fetchCaseResolverWorkspaceIfStale('cases_page_route_sync', inMemoryRevision);
-      if (isCancelled) return;
-      let latestWorkspace = result?.updated ? result.workspace : null;
-      if (!latestWorkspace && shouldForceRecordFetch) {
-        latestWorkspace = await fetchCaseResolverWorkspaceRecord('cases_page_route_sync', {
-          attemptProfile: 'context_fast',
-          maxTotalMs: 6_500,
-          attemptTimeoutMs: 2_200,
-        });
+        // Single conditional fetch: server returns the workspace only when its revision
+        // is greater than inMemoryRevision, otherwise returns a lightweight upToDate signal.
+        // Replaces the previous 2-request waterfall (metadata pre-flight + workspace fetch).
+        const shouldForceRecordFetch = shouldBootstrapCaseResolverCasesFromRecord(workspace);
+        const result = shouldForceRecordFetch
+          ? null
+          : await fetchCaseResolverWorkspaceIfStale('cases_page_route_sync', inMemoryRevision);
         if (isCancelled) return;
-      }
-      if (!latestWorkspace) return;
-      const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
-      setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        if (
-          !shouldAdoptIncomingCaseResolverCasesWorkspace({
-            current,
-            incoming: latestWorkspace,
-          })
-        ) {
-          return current;
+        let latestWorkspace = result?.updated ? result.workspace : null;
+        if (!latestWorkspace && shouldForceRecordFetch) {
+          latestWorkspace = await fetchCaseResolverWorkspaceRecord('cases_page_route_sync', {
+            attemptProfile: 'context_fast',
+            maxTotalMs: 6_500,
+            attemptTimeoutMs: 2_200,
+          });
+          if (isCancelled) return;
         }
-        lastPersistedWorkspaceValueRef.current = JSON.stringify(latestWorkspace);
-        lastPersistedWorkspaceRevisionRef.current = latestRevision;
-        logCaseResolverWorkspaceEvent({
-          source: 'cases_page',
-          action: 'route_sync_workspace',
-          workspaceRevision: latestRevision,
+        if (!latestWorkspace) return;
+        const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
+        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+          if (
+            !shouldAdoptIncomingCaseResolverCasesWorkspace({
+              current,
+              incoming: latestWorkspace,
+            })
+          ) {
+            return current;
+          }
+          lastPersistedWorkspaceValueRef.current = JSON.stringify(latestWorkspace);
+          lastPersistedWorkspaceRevisionRef.current = latestRevision;
+          logCaseResolverWorkspaceEvent({
+            source: 'cases_page',
+            action: 'route_sync_workspace',
+            workspaceRevision: latestRevision,
+          });
+          return latestWorkspace;
         });
-        return latestWorkspace;
-      });
-      // Prime navigation cache so repeat navigations within 2 min skip the network entirely
-      primeCaseResolverNavigationWorkspace(latestWorkspace);
+        // Prime navigation cache so repeat navigations within 2 min skip the network entirely
+        primeCaseResolverNavigationWorkspace(latestWorkspace);
+      } finally {
+        if (!isCancelled) {
+          setIsRouteWorkspaceSyncing(false);
+        }
+      }
     })();
     return (): void => {
       isCancelled = true;
+      setIsRouteWorkspaceSyncing(false);
     };
   }, [
     isCasesRoute,
@@ -555,7 +570,7 @@ export function AdminCaseResolverCasesProvider({
       .map((folder) => ({ value: folder, label: folder }));
   }, [workspace.files]);
 
-  const isLoading = settingsStore.isLoading;
+  const isLoading = settingsStore.isLoading || isRouteWorkspaceSyncing;
   const value = useMemo(
     (): AdminCaseResolverCasesContextValue => ({
       workspace,

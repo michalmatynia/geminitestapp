@@ -69,6 +69,14 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
   }),
 }));
 
+const expandVisibleNodes = (): void => {
+  for (let pass = 0; pass < 4; pass += 1) {
+    const expandButtons = screen.queryAllByLabelText('Expand');
+    if (expandButtons.length === 0) return;
+    expandButtons.forEach((button) => fireEvent.click(button));
+  }
+};
+
 describe('DocumentRelationSearchPanel tree integration', () => {
   it('scopes results to active case by default', () => {
     const onLinkFile = vi.fn();
@@ -78,6 +86,8 @@ describe('DocumentRelationSearchPanel tree integration', () => {
         <DocumentRelationSearchPanel draftFileId='doc-a' isLocked={false} onLinkFile={onLinkFile} />
       </MasterFolderTreeRuntimeProvider>
     );
+
+    expandVisibleNodes();
 
     expect(screen.getByText('Related Document')).toBeInTheDocument();
     expect(screen.queryByText('Outside Case Document')).not.toBeInTheDocument();
@@ -96,6 +106,8 @@ describe('DocumentRelationSearchPanel tree integration', () => {
         />
       </MasterFolderTreeRuntimeProvider>
     );
+
+    expandVisibleNodes();
 
     const selectDocCheckbox = screen.getByLabelText('Select Related Document');
     fireEvent.click(selectDocCheckbox);
@@ -124,10 +136,13 @@ describe('DocumentRelationSearchPanel tree integration', () => {
       </MasterFolderTreeRuntimeProvider>
     );
 
+    expandVisibleNodes();
+
     expect(screen.getByText('Related Document')).toBeInTheDocument();
     expect(screen.queryByText('Scan C')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expandVisibleNodes();
     expect(screen.getByText('Scan C')).toBeInTheDocument();
   });
 });

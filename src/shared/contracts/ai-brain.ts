@@ -337,8 +337,6 @@ export type BrainExecutionConfig = {
   brainApplied: BrainAppliedMeta;
 };
 
-export type BrainModelExecutionConfig = BrainExecutionConfig;
-
 export type AiPathsNodeExecutionInput = {
   requestedModelId?: string;
   requestedTemperature?: number;

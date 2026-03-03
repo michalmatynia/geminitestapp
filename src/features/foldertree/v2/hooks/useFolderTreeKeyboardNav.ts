@@ -4,6 +4,10 @@ import { useEffect, useRef } from 'react';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  ResolvedFolderTreeKeyboardConfig,
+  ResolvedFolderTreeMultiSelectConfig,
+} from '@/shared/utils/folder-tree-profiles-v2';
 
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { resolveKeyboardAction } from '../operations/keyboard';
@@ -21,8 +25,10 @@ export type UseFolderTreeKeyboardNavOptions = {
    * selected node scrolls into view. Wire up from `scrollToNodeRef` on FolderTreeViewportV2.
    */
   scrollToNode?: ((nodeId: MasterTreeId) => void) | undefined;
-  /** Set to false to temporarily disable keyboard navigation (e.g. during modal). Default true. */
-  enabled?: boolean | undefined;
+  /** Resolved keyboard capability flags for this instance. */
+  keyboard: ResolvedFolderTreeKeyboardConfig;
+  /** Resolved multi-select capability flags for this instance. */
+  multiSelect: ResolvedFolderTreeMultiSelectConfig;
 };
 
 /**
@@ -37,7 +43,8 @@ export function useFolderTreeKeyboardNav({
   instanceId,
   onDeleteRequest,
   scrollToNode,
-  enabled = true,
+  keyboard,
+  multiSelect,
 }: UseFolderTreeKeyboardNavOptions): void {
   const runtime = useMasterFolderTreeRuntime();
 
@@ -52,13 +59,19 @@ export function useFolderTreeKeyboardNav({
   scrollToNodeRef.current = scrollToNode;
 
   useEffect(() => {
-    if (!enabled || !instanceId) return;
+    if (!keyboard.enabled || !instanceId) return;
 
     const handler = (event: KeyboardEvent): void => {
       const ctrl = controllerRef.current;
       // Derive visible rows from the controller at call time — always up-to-date
       const visibleRows = flattenVisibleNodesV2(ctrl.roots, ctrl.expandedNodeIds);
-      const action = resolveKeyboardAction({ event, controller: ctrl, visibleRows });
+      const action = resolveKeyboardAction({
+        event,
+        controller: ctrl,
+        visibleRows,
+        keyboard,
+        allowSelectAll: multiSelect.enabled && multiSelect.selectAll,
+      });
       if (!action) return;
 
       event.preventDefault();
@@ -97,9 +110,13 @@ export function useFolderTreeKeyboardNav({
           scrollToNodeRef.current?.(action.nodeId);
           break;
         }
+        case 'select_all': {
+          ctrl.selectAllNodes?.();
+          break;
+        }
       }
     };
 
     return runtime.registerKeyboardHandler(instanceId, handler);
-  }, [enabled, instanceId, runtime]);
+  }, [instanceId, keyboard, multiSelect, runtime]);
 }

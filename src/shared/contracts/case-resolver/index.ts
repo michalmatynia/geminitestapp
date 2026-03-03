@@ -933,7 +933,7 @@ export interface CaseResolverCompileResult {
   outputsByNode: Record<
     string,
     {
-      textfield: string;
+      wysiwygText: string;
       plaintextContent: string;
       plainText: string;
       wysiwygContent: string;
@@ -971,19 +971,6 @@ export type NodeFileDocumentFolderTree = {
   nodesByPath: Map<string, NodeFileDocumentFolderNode>;
   childPathsByParent: Map<string | null, string[]>;
   rootFileCount: number;
-};
-
-export type CaseListSearchMatchedFile = {
-  file: CaseResolverFile;
-  folderPath: string;
-  signatureLabel: string;
-};
-
-export type CaseListSearchEntry = {
-  caseFile: CaseResolverFile;
-  signatureLabel: string;
-  caseMatched: boolean;
-  matchedFiles: CaseListSearchMatchedFile[];
 };
 
 export interface CreateCaseResolverFileInput {

@@ -46,6 +46,17 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
   }),
 }));
 
+const expandVisibleNodes = (): void => {
+  // Expand nested relation rows until no collapsed rows remain.
+  for (let pass = 0; pass < 4; pass += 1) {
+    const expandButtons = screen.queryAllByLabelText('Expand');
+    if (expandButtons.length === 0) return;
+    expandButtons.forEach((button) => {
+      fireEvent.click(button);
+    });
+  }
+};
+
 describe('scan relations tree integration', () => {
   it('links scan/document files from tree in scan flow', () => {
     const onLinkFile = vi.fn();
@@ -60,6 +71,8 @@ describe('scan relations tree integration', () => {
         />
       </MasterFolderTreeRuntimeProvider>
     );
+
+    expandVisibleNodes();
 
     fireEvent.click(screen.getByLabelText('Link Candidate Scan'));
     fireEvent.click(screen.getByLabelText('Link Candidate Document'));
@@ -84,10 +97,12 @@ describe('scan relations tree integration', () => {
       </MasterFolderTreeRuntimeProvider>
     );
 
+    expandVisibleNodes();
     expect(screen.getByText('Candidate Scan')).toBeInTheDocument();
     expect(screen.queryByText('Candidate Document')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expandVisibleNodes();
     expect(screen.getByText('Candidate Document')).toBeInTheDocument();
   });
 });

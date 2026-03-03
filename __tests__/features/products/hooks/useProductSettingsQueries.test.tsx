@@ -142,9 +142,14 @@ describe('useProductSettingsQueries invalidation', () => {
 
     await result.current.mutateAsync({ enabledByDefault: true });
 
-    expect(productSettingsApi.updateValidatorSettings).toHaveBeenCalledWith({
-      enabledByDefault: true,
-    });
+    expect(productSettingsApi.updateValidatorSettings).toHaveBeenCalledWith(
+      {
+        enabledByDefault: true,
+      },
+      expect.objectContaining({
+        queryClient: expect.any(QueryClient),
+      })
+    );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorSettings(),
@@ -464,12 +469,17 @@ describe('useProductSettingsQueries invalidation', () => {
       message: 'Name is required',
     } as never);
 
-    expect(productSettingsApi.createValidationPattern).toHaveBeenCalledWith({
-      label: 'no-empty-name',
-      target: 'name',
-      regex: '.+',
-      message: 'Name is required',
-    });
+    expect(productSettingsApi.createValidationPattern).toHaveBeenCalledWith(
+      {
+        label: 'no-empty-name',
+        target: 'name',
+        regex: '.+',
+        message: 'Name is required',
+      },
+      expect.objectContaining({
+        queryClient: expect.any(QueryClient),
+      })
+    );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),

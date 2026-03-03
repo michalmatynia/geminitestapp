@@ -62,6 +62,49 @@ describe('searchMasterTreeNodes', () => {
     expect(results[0]?.nodeId).toBe('1');
     expect(results[0]?.score).toBeGreaterThan(0);
   });
+
+  it('supports metadata field matching when configured', () => {
+    const nodesWithMetadata: MasterTreeNode[] = [
+      {
+        id: 'meta-a',
+        type: 'file',
+        kind: 'file',
+        parentId: null,
+        name: 'Document A',
+        path: '/docs/a',
+        sortOrder: 0,
+        metadata: {
+          tags: ['classified', 'urgent'],
+        },
+      },
+      {
+        id: 'meta-b',
+        type: 'file',
+        kind: 'file',
+        parentId: null,
+        name: 'Document B',
+        path: '/docs/b',
+        sortOrder: 1,
+      },
+    ];
+
+    const results = searchMasterTreeNodes(nodesWithMetadata, 'urgent', {
+      fields: ['metadata'],
+    });
+    expect(results).toHaveLength(1);
+    expect(results[0]?.nodeId).toBe('meta-a');
+    expect(results[0]?.matchField).toBe('metadata');
+  });
+
+  it('applies deterministic tiebreak ordering for equal-score matches', () => {
+    const nodesForTieBreak: MasterTreeNode[] = [
+      node('b-id', 'Beta'),
+      node('a-id', 'Alpha'),
+    ];
+
+    const results = searchMasterTreeNodes(nodesForTieBreak, 'a');
+    expect(results.map((result) => result.nodeId)).toEqual(['a-id', 'b-id']);
+  });
 });
 
 describe('filterMasterTreeToMatches', () => {

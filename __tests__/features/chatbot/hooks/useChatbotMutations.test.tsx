@@ -53,7 +53,12 @@ describe('Chatbot Mutation Hooks', () => {
       result.current.mutate({ title: 'New' });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(chatbotApi.createChatbotSession).toHaveBeenCalledWith({ title: 'New' });
+      expect(chatbotApi.createChatbotSession).toHaveBeenCalledWith(
+        { title: 'New' },
+        expect.objectContaining({
+          queryClient: expect.any(QueryClient),
+        })
+      );
       expect(result.current.data).toEqual({ sessionId: 'new-s' });
     });
   });
@@ -82,7 +87,12 @@ describe('Chatbot Mutation Hooks', () => {
       result.current.mutate('s1');
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(chatbotApi.deleteChatbotSession).toHaveBeenCalledWith('s1');
+      expect(chatbotApi.deleteChatbotSession).toHaveBeenCalledWith(
+        's1',
+        expect.objectContaining({
+          queryClient: expect.any(QueryClient),
+        })
+      );
     });
   });
   describe('useSaveChatbotSettings', () => {

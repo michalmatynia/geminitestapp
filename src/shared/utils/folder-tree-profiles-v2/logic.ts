@@ -4,6 +4,9 @@ import {
 } from '../master-folder-tree-contract';
 import {
   FolderTreeProfileV2,
+  FolderTreeKeyboardConfig,
+  FolderTreeMultiSelectConfig,
+  FolderTreeSearchConfig,
   FolderTreePlaceholderPreset,
   FolderTreePlaceholderClassSet,
   FolderTreeProfilesV2Map,
@@ -16,6 +19,73 @@ import {
   folderTreeInstanceValues,
 } from './types';
 import { profileV2Schema } from './schema';
+
+export type ResolvedFolderTreeKeyboardConfig = FolderTreeKeyboardConfig;
+export type ResolvedFolderTreeMultiSelectConfig = FolderTreeMultiSelectConfig;
+export type ResolvedFolderTreeSearchConfig = FolderTreeSearchConfig;
+
+const DEFAULT_KEYBOARD_CONFIG: ResolvedFolderTreeKeyboardConfig = {
+  enabled: true,
+  arrowNavigation: true,
+  enterToRename: true,
+  deleteKey: false,
+};
+
+const DEFAULT_MULTI_SELECT_CONFIG: ResolvedFolderTreeMultiSelectConfig = {
+  enabled: false,
+  ctrlClick: true,
+  shiftClick: true,
+  selectAll: true,
+};
+
+const DEFAULT_SEARCH_CONFIG: ResolvedFolderTreeSearchConfig = {
+  enabled: false,
+  debounceMs: 200,
+  filterMode: 'highlight',
+  matchFields: ['name'],
+  minQueryLength: 1,
+};
+
+export const resolveFolderTreeKeyboardConfig = (
+  profile: FolderTreeProfileV2 | null | undefined
+): ResolvedFolderTreeKeyboardConfig => ({
+  enabled: profile?.keyboard?.enabled ?? DEFAULT_KEYBOARD_CONFIG.enabled,
+  arrowNavigation: profile?.keyboard?.arrowNavigation ?? DEFAULT_KEYBOARD_CONFIG.arrowNavigation,
+  enterToRename: profile?.keyboard?.enterToRename ?? DEFAULT_KEYBOARD_CONFIG.enterToRename,
+  deleteKey: profile?.keyboard?.deleteKey ?? DEFAULT_KEYBOARD_CONFIG.deleteKey,
+});
+
+export const resolveFolderTreeMultiSelectConfig = (
+  profile: FolderTreeProfileV2 | null | undefined
+): ResolvedFolderTreeMultiSelectConfig => ({
+  enabled: profile?.multiSelect?.enabled ?? DEFAULT_MULTI_SELECT_CONFIG.enabled,
+  ctrlClick: profile?.multiSelect?.ctrlClick ?? DEFAULT_MULTI_SELECT_CONFIG.ctrlClick,
+  shiftClick: profile?.multiSelect?.shiftClick ?? DEFAULT_MULTI_SELECT_CONFIG.shiftClick,
+  selectAll: profile?.multiSelect?.selectAll ?? DEFAULT_MULTI_SELECT_CONFIG.selectAll,
+});
+
+export const resolveFolderTreeSearchConfig = (
+  profile: FolderTreeProfileV2 | null | undefined
+): ResolvedFolderTreeSearchConfig => {
+  const rawDebounceMs = profile?.search?.debounceMs;
+  const rawMinQueryLength = profile?.search?.minQueryLength;
+  return {
+    enabled: profile?.search?.enabled ?? DEFAULT_SEARCH_CONFIG.enabled,
+    debounceMs:
+      typeof rawDebounceMs === 'number' && Number.isFinite(rawDebounceMs)
+        ? Math.max(0, Math.floor(rawDebounceMs))
+        : DEFAULT_SEARCH_CONFIG.debounceMs,
+    filterMode: profile?.search?.filterMode ?? DEFAULT_SEARCH_CONFIG.filterMode,
+    matchFields:
+      Array.isArray(profile?.search?.matchFields) && profile.search.matchFields.length > 0
+        ? [...new Set(profile.search.matchFields)]
+        : DEFAULT_SEARCH_CONFIG.matchFields,
+    minQueryLength:
+      typeof rawMinQueryLength === 'number' && Number.isFinite(rawMinQueryLength)
+        ? Math.max(0, Math.floor(rawMinQueryLength))
+        : DEFAULT_SEARCH_CONFIG.minQueryLength,
+  };
+};
 
 export function getFolderTreePlaceholderClasses(
   preset: FolderTreePlaceholderPreset

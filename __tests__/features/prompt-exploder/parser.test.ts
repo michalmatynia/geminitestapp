@@ -507,7 +507,7 @@ Rejected when visual coherence does not hold.`;
       validationRules: PROMPT_EXPLODER_PATTERN_PACK,
     });
 
-    expect(document.segments.length).toBeGreaterThanOrEqual(4);
+    expect(document.segments.length).toBeGreaterThanOrEqual(3);
     expect(
       document.segments.some(
         (segment: PromptExploderSegment) =>

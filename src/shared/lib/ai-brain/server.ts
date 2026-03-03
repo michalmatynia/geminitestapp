@@ -18,7 +18,6 @@ import {
   type AiBrainCapabilityPolicy,
   type BrainAppliedMeta,
   type BrainExecutionConfig,
-  type BrainModelExecutionConfig,
   type AiPathsNodeExecutionInput,
 } from './settings';
 
@@ -229,7 +228,7 @@ export const resolveBrainModelExecutionConfig = async (
     /** Fallback model ID used when Brain has no modelId configured for this feature. */
     defaultModelId?: string;
   }
-): Promise<BrainModelExecutionConfig> => {
+): Promise<BrainExecutionConfig> => {
   return resolveBrainExecutionConfigForCapability(getDefaultCapabilityForFeature(feature), options);
 };
 

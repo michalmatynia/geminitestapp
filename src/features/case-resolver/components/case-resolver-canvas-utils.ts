@@ -80,7 +80,8 @@ export const ensureDocumentPromptPorts = (
   };
 };
 
-export const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
+export const DOCUMENT_WYSIWYG_TEXT_PORT =
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
 export const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
@@ -207,13 +208,6 @@ export const buildCanvasNodeFileTemplate = (
 
 export const resolvePromptConfig = (node: AiNode): { template: string } => {
   const template = node.config?.prompt?.template;
-  return {
-    template: typeof template === 'string' ? template : '',
-  };
-};
-
-export const resolveTemplateConfig = (node: AiNode): { template: string } => {
-  const template = node.config?.template?.template;
   return {
     template: typeof template === 'string' ? template : '',
   };
@@ -348,18 +342,18 @@ export const resolvePromptNodeStaticOutputs = (
   node: AiNode,
   nodeMeta: CaseResolverNodeMeta
 ): {
-  textfield: string;
+  wysiwygText: string;
   plaintextContent: string;
   plainText: string;
   wysiwygContent: string;
 } => {
   const promptTemplate = resolvePromptConfig(node).template;
-  const textfield = stripHtmlToPlainText(promptTemplate);
-  const plaintextContent = renderPromptNodeTextPreview(node, nodeMeta) || textfield;
-  const plainText = stripHtmlToPlainText(plaintextContent || textfield);
+  const wysiwygText = stripHtmlToPlainText(promptTemplate);
+  const plaintextContent = renderPromptNodeTextPreview(node, nodeMeta) || wysiwygText;
+  const plainText = stripHtmlToPlainText(plaintextContent || wysiwygText);
   const wysiwygContent = nodeMeta.role === 'explanatory' ? promptTemplate : '';
   return {
-    textfield,
+    wysiwygText,
     plaintextContent,
     plainText,
     wysiwygContent,

@@ -68,7 +68,27 @@ describe('Mongo Note Repository', () => {
 
   describe('Note Operations', () => {
     it('creates a note with resolved notebookId', async () => {
-      mockCollection.toArray.mockResolvedValue([{ _id: 'default-n', id: 'default-n' }]); // For getOrCreateDefault
+      mockCollection.findOne.mockResolvedValue({
+        _id: 'mock-uuid',
+        id: 'mock-uuid',
+        title: 'New Note',
+        content: 'Content',
+        editorType: 'markdown',
+        color: '#ffffff',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        notebookId: 'default-n',
+        tags: [],
+        categories: [],
+        relationsFrom: [],
+        relationsTo: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockCollection.toArray
+        .mockResolvedValueOnce([]) // noteFiles in getById
+        .mockResolvedValueOnce([]); // incoming relations in getById
       mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-uuid' });
 
       const note = await mongoNoteRepository.create({

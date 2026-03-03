@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { runsApi } from '@/shared/lib/ai-paths/api/client';
+import { enqueueAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -256,7 +256,7 @@ export function useAiPathTrigger(): {
         );
       }
       const enqueueStartedAt = performance.now();
-      const enqueueResult = await runsApi.enqueue(
+      const enqueueResult = await enqueueAiPathRun(
         {
           pathId: selectedConfig.id ?? 'path',
           pathName: selectedConfig.name ?? undefined,

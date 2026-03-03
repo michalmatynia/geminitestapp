@@ -158,27 +158,19 @@ const createWorkspaceState = (
   setDocumentSearchScope: vi.fn(),
   documentSearchQuery: '',
   setDocumentSearchQuery: vi.fn(),
-  selectedSearchFolderPath: null,
-  setSelectedSearchFolderPath: vi.fn(),
-  expandedSearchFolderPaths: new Set(),
-  setExpandedSearchFolderPaths: vi.fn(),
-  selectedSearchDocumentId: '',
-  setSelectedSearchDocumentId: vi.fn(),
-  isDocumentSearchOpen: false,
-  setIsDocumentSearchOpen: vi.fn(),
-  caseSearchQuery: '',
-  setCaseSearchQuery: vi.fn(),
-  selectedDrillCaseId: null,
-  setSelectedDrillCaseId: vi.fn(),
-  visibleCaseRows: [],
   nodeMetaByNode: {},
   edgeMetaByEdge: {},
   filesById: new Map(),
   caseIdentifierLabelById: new Map(),
   documentSearchRows: [],
-  folderScopedDocumentSearchRows: [],
   visibleDocumentSearchRows: [],
-  folderTree: { nodesByPath: new Map(), childPathsByParent: new Map(), rootFileCount: 0 },
+  relationTreeNodes: [],
+  relationTreeLookup: {
+    fileRowByNodeId: new Map(),
+    fileNodeIdByFileId: new Map(),
+    caseMetaByNodeId: new Map(),
+    folderMetaByNodeId: new Map(),
+  },
   compiled: {
     segments: [],
     combinedContent: '',
@@ -298,6 +290,22 @@ describe('CaseResolverNodeFileWorkspace', () => {
         'node_file_workspace_load'
       );
       expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toEqual(snapshot);
+    });
+  });
+
+  it('surfaces keyed snapshot validation failures instead of silently loading defaults', async () => {
+    fetchCaseResolverNodeFileSnapshotMock.mockRejectedValueOnce(
+      new Error('Legacy Case Resolver node-file snapshot fields are no longer supported.')
+    );
+
+    render(<CaseResolverNodeFileWorkspace />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid node file snapshot')).toBeInTheDocument();
+      expect(
+        screen.getByText('Legacy Case Resolver node-file snapshot fields are no longer supported.')
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId('canvas-board')).not.toBeInTheDocument();
     });
   });
 });

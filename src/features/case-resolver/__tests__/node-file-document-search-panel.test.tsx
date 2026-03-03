@@ -50,6 +50,17 @@ vi.mock('@/features/case-resolver/components/NodeFileWorkspaceContext', () => ({
   useNodeFileWorkspaceContext: () => contextValue.value,
 }));
 
+const expandVisibleNodes = (): void => {
+  // Expand nested relation rows until no collapsed rows remain.
+  for (let pass = 0; pass < 4; pass += 1) {
+    const expandButtons = screen.queryAllByLabelText('Expand');
+    if (expandButtons.length === 0) return;
+    expandButtons.forEach((button) => {
+      fireEvent.click(button);
+    });
+  }
+};
+
 describe('NodeFileDocumentSearchPanel tree mode', () => {
   it('adds selected document from tree action button to canvas', () => {
     render(
@@ -62,6 +73,8 @@ describe('NodeFileDocumentSearchPanel tree mode', () => {
         />
       </MasterFolderTreeRuntimeProvider>
     );
+
+    expandVisibleNodes();
 
     fireEvent.click(screen.getByLabelText('Add Doc 1 to canvas'));
 
@@ -77,4 +90,3 @@ describe('NodeFileDocumentSearchPanel tree mode', () => {
     );
   });
 });
-

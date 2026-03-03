@@ -8,6 +8,14 @@ import {
   ImageStudioRunHistoryEventSource,
   ImageStudioRunRequest,
 } from '@/shared/contracts/image-studio';
+
+export type {
+  ImageStudioRunRecord,
+  ImageStudioRunStatus,
+  ImageStudioRunHistoryEvent,
+  ImageStudioRunHistoryEventSource,
+  ImageStudioRunRequest,
+};
 import type { UpdateFilter } from 'mongodb';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { isObjectRecord } from '@/shared/utils/object-utils';

@@ -204,18 +204,10 @@ export const listBrainModels = async (
   options: ListBrainModelsOptions = {}
 ): Promise<BrainModelsResponse> => {
   const providerCatalogRaw = await readStoredSettingValue(AI_BRAIN_PROVIDER_CATALOG_KEY);
-  let providerCatalog = defaultBrainProviderCatalog;
-  let providerCatalogWarning: BrainModelsResponse['warning'] | undefined;
-  try {
-    providerCatalog = parseBrainProviderCatalog(providerCatalogRaw);
-  } catch {
-    providerCatalogWarning = {
-      code: 'PROVIDER_CATALOG_INVALID',
-      message:
-        'AI Brain provider catalog is invalid. Falling back to the default catalog. ' +
-        'Update the ai_brain_provider_catalog setting in Admin > Brain.',
-    };
-  }
+  const providerCatalog =
+    providerCatalogRaw?.trim().length
+      ? parseBrainProviderCatalog(providerCatalogRaw)
+      : defaultBrainProviderCatalog;
   const liveOllamaModels = await fetchLiveOllamaModels();
 
   const modelPresets = normalizeUnique(providerCatalog.modelPresets ?? []);
@@ -262,14 +254,7 @@ export const listBrainModels = async (
       }
       : undefined;
 
-  const warning = providerCatalogWarning
-    ? ollamaWarning
-      ? {
-        code: 'PROVIDER_CATALOG_INVALID_AND_OLLAMA_UNAVAILABLE',
-        message: `${providerCatalogWarning.message} ${ollamaWarning.message}`,
-      }
-      : providerCatalogWarning
-    : ollamaWarning;
+  const warning = ollamaWarning;
 
   return {
     models: filteredModels,

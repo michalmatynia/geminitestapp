@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -58,6 +58,17 @@ const createDataTransfer = () => {
   };
 };
 
+const expandVisibleNodes = (): void => {
+  // Expand nested relation rows until no collapsed rows remain.
+  for (let pass = 0; pass < 4; pass += 1) {
+    const expandButtons = screen.queryAllByLabelText('Expand');
+    if (expandButtons.length === 0) return;
+    expandButtons.forEach((button) => {
+      fireEvent.click(button);
+    });
+  }
+};
+
 describe('RelationTreeBrowser', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -93,7 +104,7 @@ describe('RelationTreeBrowser', () => {
     );
 
     expect(screen.queryByText('Doc In Folder')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('alpha'));
+    expandVisibleNodes();
     expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
 
     rerender(
@@ -128,7 +139,7 @@ describe('RelationTreeBrowser', () => {
     const relationTree = buildRelationMasterTree({ rows });
     const dataTransfer = createDataTransfer();
 
-    const { container } = render(
+    render(
       <MasterFolderTreeRuntimeProvider>
         <RelationTreeBrowser
           instance='case_resolver_nodefile_relations'
@@ -139,13 +150,13 @@ describe('RelationTreeBrowser', () => {
       </MasterFolderTreeRuntimeProvider>
     );
 
-    const fileRow = container.querySelector('[data-master-tree-node-id^="relation_file::"]');
+    expandVisibleNodes();
+
+    const fileLabel = screen.getByText('Doc 1');
+    const fileRow = fileLabel.closest('[draggable]');
     expect(fileRow).not.toBeNull();
 
     fireEvent.dragStart(fileRow as Element, { dataTransfer });
-    await act(async () => {
-      vi.runAllTimers();
-    });
 
     expect(dataTransfer.setData).not.toHaveBeenCalledWith('application/case-resolver-file-id', 'file-1');
     expect(
@@ -160,9 +171,6 @@ describe('RelationTreeBrowser', () => {
     const dragHandle = screen.getByLabelText('Drag handle');
     fireEvent.pointerDown(dragHandle);
     fireEvent.dragStart(fileRow as Element, { dataTransfer });
-    await act(async () => {
-      vi.runAllTimers();
-    });
 
     expect(dataTransfer.setData).toHaveBeenCalledWith('application/case-resolver-file-id', 'file-1');
     expect(
@@ -183,7 +191,7 @@ describe('RelationTreeBrowser', () => {
     const relationTree = buildRelationMasterTree({ rows });
     const dataTransfer = createDataTransfer();
 
-    const { container } = render(
+    render(
       <MasterFolderTreeRuntimeProvider>
         <RelationTreeBrowser
           instance='case_resolver_nodefile_relations'
@@ -194,16 +202,15 @@ describe('RelationTreeBrowser', () => {
       </MasterFolderTreeRuntimeProvider>
     );
 
-    const fileRow = container.querySelector('[data-master-tree-node-id^="relation_file::"]');
-    const caseRow = container.querySelector('[data-master-tree-node-id^="relation_case::"]');
+    expandVisibleNodes();
+
+    const fileRow = screen.getByText('Doc 1').closest('[draggable]');
+    const caseRow = screen.getByText('SIG/1').closest('[draggable]');
     expect(fileRow).not.toBeNull();
     expect(caseRow).not.toBeNull();
 
     fireEvent.pointerDown(screen.getAllByLabelText('Drag handle')[0]);
     fireEvent.dragStart(fileRow as Element, { dataTransfer });
-    await act(async () => {
-      vi.runAllTimers();
-    });
     fireEvent.dragOver(caseRow as Element, { dataTransfer });
 
     expect(
@@ -235,6 +242,8 @@ describe('RelationTreeBrowser', () => {
         />
       </MasterFolderTreeRuntimeProvider>
     );
+
+    expandVisibleNodes();
 
     const selectCheckbox = screen.getByLabelText('Select Doc 9');
     fireEvent.click(selectCheckbox);

@@ -1,0 +1,224 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import type { Dispatch, SetStateAction } from 'react';
+
+import type { PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+
+import { useAiPathsSettingsPathActions } from '../useAiPathsSettingsPathActions';
+import {
+  fetchAiPathsSettingsByKeysCached,
+  fetchAiPathsSettingsCached,
+} from '@/shared/lib/ai-paths/settings-store-client';
+
+type PathActionsInput = Parameters<typeof useAiPathsSettingsPathActions>[0];
+
+vi.mock('@/shared/lib/ai-paths/settings-store-client', async () => {
+  const actual = await vi.importActual<typeof import('@/shared/lib/ai-paths/settings-store-client')>(
+    '@/shared/lib/ai-paths/settings-store-client'
+  );
+  return {
+    ...actual,
+    fetchAiPathsSettingsByKeysCached: vi.fn(),
+    fetchAiPathsSettingsCached: vi.fn(),
+    deleteAiPathsSettings: vi.fn().mockResolvedValue(0),
+  };
+});
+
+const mockedFetchAiPathsSettingsByKeysCached = vi.mocked(fetchAiPathsSettingsByKeysCached);
+const mockedFetchAiPathsSettingsCached = vi.mocked(fetchAiPathsSettingsCached);
+
+const createDispatchMock = <T,>() => {
+  const fn = vi.fn<(value: SetStateAction<T>) => void>();
+  return {
+    dispatch: fn as Dispatch<SetStateAction<T>>,
+    mock: fn,
+  };
+};
+
+const emptyRuntimeState = (): RuntimeState =>
+  ({
+    status: 'idle',
+    nodeStatuses: {},
+    nodeOutputs: {},
+    variables: {},
+    events: [],
+    inputs: {},
+    outputs: {},
+  }) as RuntimeState;
+
+const buildInput = (): {
+  input: PathActionsInput;
+  mocks: {
+    setActivePathId: ReturnType<typeof createDispatchMock<string | null>>['mock'];
+    setPathConfigs: ReturnType<typeof createDispatchMock<Record<string, PathConfig>>>['mock'];
+    toast: ReturnType<typeof vi.fn>;
+    persistActivePathPreference: ReturnType<typeof vi.fn>;
+  };
+} => {
+  const oldPathId = 'path_old';
+  const oldConfig = createDefaultPathConfig(oldPathId);
+  const oldPath: PathMeta = {
+    id: oldPathId,
+    name: oldConfig.name,
+    createdAt: oldConfig.createdAt,
+    updatedAt: oldConfig.updatedAt,
+  };
+
+  const setActivePathId = createDispatchMock<string | null>();
+  const setPathConfigs = createDispatchMock<Record<string, PathConfig>>();
+  const setPaths = createDispatchMock<PathMeta[]>();
+  const setNodes = createDispatchMock(oldConfig.nodes);
+  const setEdges = createDispatchMock(oldConfig.edges);
+  const setPathName = createDispatchMock<string>();
+  const setPathDescription = createDispatchMock<string>();
+  const setActiveTrigger = createDispatchMock<string>();
+  const setExecutionMode = createDispatchMock<PathActionsInput['executionMode']>();
+  const setFlowIntensity = createDispatchMock<PathActionsInput['flowIntensity']>();
+  const setRunMode = createDispatchMock<PathActionsInput['runMode']>();
+  const setStrictFlowMode = createDispatchMock<boolean>();
+  const setBlockedRunPolicy = createDispatchMock<PathActionsInput['blockedRunPolicy']>();
+  const setAiPathsValidation = createDispatchMock<PathActionsInput['aiPathsValidation']>();
+  const setParserSamples = createDispatchMock<Record<string, PathActionsInput['parserSamples'][string]>>();
+  const setUpdaterSamples = createDispatchMock<Record<string, PathActionsInput['updaterSamples'][string]>>();
+  const setRuntimeState = createDispatchMock<RuntimeState>();
+  const setLastRunAt = createDispatchMock<string | null>();
+  const setIsPathLocked = createDispatchMock<boolean>();
+  const setIsPathActive = createDispatchMock<boolean>();
+  const setSelectedNodeId = createDispatchMock<string | null>();
+  const setConfigOpen = createDispatchMock<boolean>();
+
+  const toast = vi.fn();
+  const persistPathSettings = vi.fn().mockResolvedValue(undefined);
+  const persistSettingsBulk = vi.fn().mockResolvedValue(undefined);
+  const persistActivePathPreference = vi.fn().mockResolvedValue(undefined);
+
+  const input: PathActionsInput = {
+    activePathId: oldPathId,
+    setActivePathId: setActivePathId.dispatch,
+    isPathLocked: false,
+    pathConfigs: { [oldPathId]: oldConfig },
+    setPathConfigs: setPathConfigs.dispatch,
+    paths: [oldPath],
+    setPaths: setPaths.dispatch,
+    setNodes: setNodes.dispatch,
+    setEdges: setEdges.dispatch,
+    setPathName: setPathName.dispatch,
+    setPathDescription: setPathDescription.dispatch,
+    setActiveTrigger: setActiveTrigger.dispatch,
+    setExecutionMode: setExecutionMode.dispatch,
+    setFlowIntensity: setFlowIntensity.dispatch,
+    setRunMode: setRunMode.dispatch,
+    setStrictFlowMode: setStrictFlowMode.dispatch,
+    setBlockedRunPolicy: setBlockedRunPolicy.dispatch,
+    setAiPathsValidation: setAiPathsValidation.dispatch,
+    setParserSamples: setParserSamples.dispatch,
+    setUpdaterSamples: setUpdaterSamples.dispatch,
+    setRuntimeState: setRuntimeState.dispatch,
+    setLastRunAt: setLastRunAt.dispatch,
+    setIsPathLocked: setIsPathLocked.dispatch,
+    setIsPathActive: setIsPathActive.dispatch,
+    setSelectedNodeId: setSelectedNodeId.dispatch,
+    setConfigOpen: setConfigOpen.dispatch,
+    normalizeTriggerLabel: (value) => value ?? 'Product Modal - Context Filter',
+    updateActivePathMeta: vi.fn(),
+    persistPathSettings,
+    persistSettingsBulk,
+    persistActivePathPreference,
+    reportAiPathsError: vi.fn(),
+    confirm: vi.fn(),
+    toast,
+  };
+
+  return {
+    input,
+    mocks: {
+      setActivePathId: setActivePathId.mock,
+      setPathConfigs: setPathConfigs.mock,
+      toast,
+      persistActivePathPreference,
+    },
+  };
+};
+
+describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('applies fetched path config and persists active path preference', async () => {
+    const { input, mocks } = buildInput();
+    const nextPathId = 'path_next';
+    const fetchedConfig = createDefaultPathConfig(nextPathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(fetchedConfig),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
+    });
+    expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
+    expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replace target path with default config when fetch fails', async () => {
+    const { input, mocks } = buildInput();
+    const oldPathId = input.activePathId as string;
+
+    mockedFetchAiPathsSettingsByKeysCached.mockRejectedValueOnce(new Error('timeout'));
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath('path_missing');
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(oldPathId);
+    });
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith('Failed to load selected path. Try again in a moment.', {
+      variant: 'error',
+    });
+  });
+
+  it('switches path using fallback full-settings lookup when selective fetch fails', async () => {
+    const { input, mocks } = buildInput();
+    const nextPathId = 'path_fallback';
+    const recoveredConfig = createDefaultPathConfig(nextPathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockRejectedValueOnce(new Error('timeout'));
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(recoveredConfig),
+      },
+    ]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
+    });
+    expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
+    expect(mocks.toast).not.toHaveBeenCalledWith(
+      'Failed to load selected path. Try again in a moment.',
+      expect.anything()
+    );
+  });
+});

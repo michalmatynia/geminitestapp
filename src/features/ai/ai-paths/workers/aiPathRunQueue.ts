@@ -288,8 +288,8 @@ export const removePathRunQueueEntries = async (runIds: string[]): Promise<void>
     cancelLocalFallbackRun(runId);
   });
 
-  const queueApi = queue.getQueue();
-  if (!queueApi || typeof (queueApi as { getJob?: unknown }).getJob !== 'function') return;
+  const queueApi = queue.getQueue() as any;
+  if (!queueApi || typeof queueApi.getJob !== 'function') return;
 
   await Promise.all(
     uniqueRunIds.map(async (runId: string) => {

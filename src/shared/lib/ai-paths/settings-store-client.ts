@@ -418,6 +418,28 @@ export const fetchAiPathsSettingsByKeysCached = async (
           return fromFullCache;
         }
       }
+      const backup = readBackupSettings();
+      if (backup && backup.length > 0) {
+        const byKey = new Map(backup.map((record) => [record.key, record]));
+        const fromBackup = normalizedKeys
+          .map((key) => byKey.get(key) ?? null)
+          .filter((record): record is AiPathsSettingRecord => Boolean(record));
+        if (fromBackup.length > 0) {
+          logClientError(error, {
+            context: {
+              source: 'ai-paths-settings-client',
+              action: 'fetchByKeysCached',
+              message: 'Selective GET failed; using local backup subset.',
+              level: 'warn',
+              requestedKeys: normalizedKeys.length,
+              resolvedKeys: fromBackup.length,
+            },
+          });
+          aiPathsSettingsCache = backup;
+          aiPathsSettingsFetchedAt = Date.now();
+          return fromBackup;
+        }
+      }
       throw error;
     })
     .finally(() => {

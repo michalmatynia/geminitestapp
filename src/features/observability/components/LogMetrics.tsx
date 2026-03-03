@@ -15,6 +15,9 @@ import { formatTimestamp } from '../utils/formatTimestamp';
 
 export function LogMetrics(): React.JSX.Element {
   const { metricsQuery, metrics, levels } = useSystemLogsContext();
+  const topSources = metrics?.topSources ?? [];
+  const topServices = metrics?.topServices ?? [];
+  const topPaths = metrics?.topPaths ?? [];
 
   return (
     <FormSection
@@ -100,7 +103,7 @@ export function LogMetrics(): React.JSX.Element {
                   Top Sources
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
-                  {metrics.topSources.map((item: { source: string; count: number }) => (
+                  {topSources.map((item: { source: string; count: number }) => (
                     <MetadataItem
                       key={item.source}
                       label={
@@ -116,7 +119,7 @@ export function LogMetrics(): React.JSX.Element {
                       variant='subtle'
                     />
                   ))}
-                  {metrics.topSources.length === 0 && (
+                  {topSources.length === 0 && (
                     <div className='text-[11px] text-gray-600'>No source data for this filter.</div>
                   )}
                 </div>
@@ -126,7 +129,7 @@ export function LogMetrics(): React.JSX.Element {
                   Top Services
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
-                  {metrics.topServices.map((item: { service: string; count: number }) => (
+                  {topServices.map((item: { service: string; count: number }) => (
                     <MetadataItem
                       key={item.service}
                       label={
@@ -142,7 +145,7 @@ export function LogMetrics(): React.JSX.Element {
                       variant='subtle'
                     />
                   ))}
-                  {metrics.topServices.length === 0 && (
+                  {topServices.length === 0 && (
                     <div className='text-[11px] text-gray-600'>No service data for this filter.</div>
                   )}
                 </div>
@@ -152,7 +155,7 @@ export function LogMetrics(): React.JSX.Element {
                   Top Paths
                 </Hint>
                 <div className='max-h-[80px] overflow-y-auto pr-2 space-y-1'>
-                  {metrics.topPaths.map((item: { path: string; count: number }) => (
+                  {topPaths.map((item: { path: string; count: number }) => (
                     <MetadataItem
                       key={item.path}
                       label={
@@ -168,7 +171,7 @@ export function LogMetrics(): React.JSX.Element {
                       variant='subtle'
                     />
                   ))}
-                  {metrics.topPaths.length === 0 && (
+                  {topPaths.length === 0 && (
                     <div className='text-[11px] text-gray-600'>No path data for this filter.</div>
                   )}
                 </div>

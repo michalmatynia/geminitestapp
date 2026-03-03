@@ -255,10 +255,10 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const validNodeIds = new Set<string>(
     rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
-  const edgesByNodeId = rawEdges
-    .map((edge: unknown): Edge =>
-      parseCanonicalCaseResolverEdge(edge, 'case_resolver.graph')
-    )
+  const parsedEdges = rawEdges.map((edge: unknown, index: number): Edge =>
+    parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`)
+  );
+  const edgesByNodeId = parsedEdges
     .filter(
       (edge: Edge): boolean =>
         validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')
@@ -289,6 +289,18 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     sanitizedNodeMeta,
     documentSourceFileIdByNode
   );
+  const nodeById = new Map<string, AiNode>(
+    nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+  );
+  Object.keys(documentFileLinksByNode).forEach((nodeId: string): void => {
+    const node = nodeById.get(nodeId);
+    if (!node || node.type === 'prompt') return;
+    throw validationError('Case Resolver document-link nodes must use prompt node type.', {
+      source: 'case_resolver.graph',
+      nodeId,
+      nodeType: node.type,
+    });
+  });
   const textNodeIds = new Set<string>(
     nodes
       .filter((node: AiNode): boolean => {
@@ -314,6 +326,16 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     validNodeIds.has(rawDocumentDropNodeId)
       ? rawDocumentDropNodeId
       : null;
+  if (documentDropNodeId) {
+    const dropNode = nodeById.get(documentDropNodeId);
+    if (dropNode && dropNode.type !== 'prompt') {
+      throw validationError('Case Resolver document-drop node must use prompt node type.', {
+        source: 'case_resolver.graph',
+        nodeId: documentDropNodeId,
+        nodeType: dropNode.type,
+      });
+    }
+  }
 
   return {
     nodes,

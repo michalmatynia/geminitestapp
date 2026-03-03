@@ -9,6 +9,18 @@ import type {
   ImageStudioSequenceRunRecord,
 } from '@/shared/contracts/image-studio';
 import {
+  upscaleImageWithSharp,
+  validateUpscaleSourceDimensions,
+} from '@/features/ai/image-studio/server/upscale-utils';
+import {
+  getDiskPathFromPublicPath,
+  getImageFileRepository,
+} from '@/shared/lib/files/services/image-file-service';
+import {
+  type ImageStudioSequenceCropStep,
+  type ImageStudioSequenceUpscaleStep,
+} from '@/features/ai/image-studio/utils/studio-settings';
+import {
   STUDIO_UPLOADS_ROOT,
   sanitizeSegment,
   guessExtensionFromMime,

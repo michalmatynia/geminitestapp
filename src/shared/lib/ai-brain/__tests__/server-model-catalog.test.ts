@@ -24,12 +24,9 @@ describe('server model catalog', () => {
     vi.restoreAllMocks();
   });
 
-  it('falls back to defaults when provider catalog payload is invalid', async () => {
+  it('rejects invalid provider catalog payloads instead of falling back to defaults', async () => {
     readStoredSettingValueMock.mockResolvedValue('{invalid_json');
 
-    const payload = await listBrainModels();
-
-    expect(payload.models.length).toBeGreaterThan(0);
-    expect(payload.warning?.code).toContain('PROVIDER_CATALOG_INVALID');
+    await expect(listBrainModels()).rejects.toThrow(/Invalid AI Brain provider catalog payload/i);
   });
 });

@@ -36,6 +36,7 @@ import {
 } from '@/shared/lib/ai-paths';
 import {
   deleteAiPathsSettings,
+  fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 
@@ -104,6 +105,8 @@ type UseAiPathsSettingsPathActionsInput = {
   confirm: ConfirmFn;
   toast: ToastFn;
 };
+
+const SWITCH_PATH_FETCH_TIMEOUT_MS = 25_000;
 
 export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
@@ -564,6 +567,8 @@ export function useAiPathsSettingsPathActions({
   const handleSwitchPath = useCallback(
     (value: string): void => {
       if (!value) return;
+      const previousActivePathId = activePathId;
+      const previousConfig = previousActivePathId ? pathConfigs[previousActivePathId] : null;
       const nextRequestSeq = switchRequestSeqRef.current + 1;
       switchRequestSeqRef.current = nextRequestSeq;
 
@@ -580,12 +585,11 @@ export function useAiPathsSettingsPathActions({
         return;
       }
 
-      setActivePathId(value);
       void (async (): Promise<void> => {
         try {
           const settings = await fetchAiPathsSettingsByKeysCached(
             [`${PATH_CONFIG_PREFIX}${value}`],
-            { timeoutMs: 10_000 }
+            { timeoutMs: SWITCH_PATH_FETCH_TIMEOUT_MS }
           );
           if (switchRequestSeqRef.current !== nextRequestSeq) return;
 
@@ -613,27 +617,65 @@ export function useAiPathsSettingsPathActions({
           }));
           applyIfLatest(config);
         } catch (error) {
+          try {
+            const allSettings = await fetchAiPathsSettingsCached();
+            if (switchRequestSeqRef.current !== nextRequestSeq) return;
+            const configItem = allSettings.find((item) => item.key === `${PATH_CONFIG_PREFIX}${value}`);
+            if (configItem?.value) {
+              let recoveredConfig = createDefaultPathConfig(value);
+              try {
+                recoveredConfig = JSON.parse(configItem.value) as PathConfig;
+              } catch (parseError) {
+                reportAiPathsError(
+                  parseError,
+                  { action: 'switchPathFallbackParseConfig', pathId: value },
+                  'Failed to parse fallback selected path config:'
+                );
+              }
+              recoveredConfig = migratePathConfigCollections(recoveredConfig).config;
+              recoveredConfig = repairPathNodeIdentities(recoveredConfig).config;
+              recoveredConfig.nodes = normalizeNodes(recoveredConfig.nodes);
+              setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+                ...prev,
+                [value]: recoveredConfig,
+              }));
+              applyIfLatest(recoveredConfig);
+              return;
+            }
+          } catch (fallbackError) {
+            reportAiPathsError(
+              fallbackError,
+              { action: 'switchPathFallbackLoadConfig', pathId: value },
+              'Failed to load fallback path config:'
+            );
+          }
           reportAiPathsError(
             error,
             { action: 'switchPathLoadConfig', pathId: value },
             'Failed to load selected path:'
           );
-          const fallbackConfig = createDefaultPathConfig(value);
-          setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-            ...prev,
-            [value]: fallbackConfig,
-          }));
-          applyIfLatest(fallbackConfig);
+          if (switchRequestSeqRef.current !== nextRequestSeq) return;
+          if (previousActivePathId) {
+            setActivePathId(previousActivePathId);
+            if (previousConfig) {
+              applyPathConfigState(previousConfig);
+            }
+          } else {
+            setActivePathId(null);
+          }
+          toast('Failed to load selected path. Try again in a moment.', { variant: 'error' });
         }
       })();
     },
     [
+      activePathId,
       applyPathConfigState,
       pathConfigs,
       persistActivePathPreference,
       reportAiPathsError,
       setActivePathId,
       setPathConfigs,
+      toast,
     ]
   );
 

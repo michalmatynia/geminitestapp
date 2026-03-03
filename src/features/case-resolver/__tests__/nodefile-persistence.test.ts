@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverAssetFile,
   createDefaultCaseResolverWorkspace,
   createEmptyNodeFileSnapshot,
@@ -130,12 +131,12 @@ describe('case resolver nodefile persistence', () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-legacy', 8_000, 'test')).rejects.toThrow(
-      /Legacy Case Resolver edge fields are no longer supported\./
+      /Legacy Case Resolver edge fields are no longer supported/i
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects invalid keyed nodefile snapshots instead of treating them as missing', async () => {
+  it('rejects invalid keyed nodefile snapshots', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
@@ -150,7 +151,7 @@ describe('case resolver nodefile persistence', () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test')).rejects.toThrow(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported\./
+      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -206,7 +207,12 @@ describe('case resolver nodefile persistence', () => {
       ],
     };
 
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(workspace),
+      })
+    );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await persistCaseResolverWorkspaceSnapshot({
@@ -217,10 +223,8 @@ describe('case resolver nodefile persistence', () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.conflict).toBe(false);
-      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported\./);
-    }
-    expect(fetchMock).toHaveBeenCalledTimes(0);
+    expect(result.conflict).toBe(false);
+    expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported/i);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

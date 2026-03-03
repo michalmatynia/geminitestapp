@@ -5,6 +5,9 @@ import {
   defaultFolderTreeProfilesV2,
   parseFolderTreeProfilesV2,
   resolveFolderTreeIconV2,
+  resolveFolderTreeKeyboardConfig,
+  resolveFolderTreeMultiSelectConfig,
+  resolveFolderTreeSearchConfig,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
 describe('folder-tree-profiles-v2', () => {
@@ -274,6 +277,148 @@ describe('folder-tree-profiles-v2', () => {
     expect(profile.statusIcons?.warning).toBeUndefined();
     expect(profile.badges?.field).toBe('children_count');
     expect(profile.badges?.style).toBe('count');
+  });
+
+  it('resolves capability defaults when optional sections are unset', () => {
+    const parsed = parseFolderTreeProfilesV2(
+      JSON.stringify({
+        notes: {
+          version: 2,
+          placeholders: {
+            preset: 'sublime',
+            style: 'ghost',
+            emphasis: 'subtle',
+            rootDropLabel: 'Drop to Root',
+            inlineDropLabel: 'Drop here',
+          },
+          icons: {
+            slots: {
+              folderClosed: 'Folder',
+              folderOpen: 'FolderOpen',
+              file: 'FileText',
+              root: 'Folder',
+              dragHandle: 'GripVertical',
+            },
+            byKind: {},
+          },
+          nesting: {
+            defaultAllow: false,
+            blockedTargetKinds: [],
+            rules: [],
+          },
+          interactions: {
+            selectionBehavior: 'click_away',
+          },
+        },
+      })
+    );
+
+    expect(resolveFolderTreeKeyboardConfig(parsed.notes)).toEqual({
+      enabled: true,
+      arrowNavigation: true,
+      enterToRename: true,
+      deleteKey: false,
+    });
+    expect(resolveFolderTreeMultiSelectConfig(parsed.notes)).toEqual({
+      enabled: false,
+      ctrlClick: true,
+      shiftClick: true,
+      selectAll: true,
+    });
+    expect(resolveFolderTreeSearchConfig(parsed.notes)).toEqual({
+      enabled: false,
+      debounceMs: 200,
+      filterMode: 'highlight',
+      matchFields: ['name'],
+      minQueryLength: 1,
+    });
+  });
+
+  it('keeps explicit capability overrides in resolved configs', () => {
+    const parsed = parseFolderTreeProfilesV2(
+      JSON.stringify({
+        notes: {
+          ...defaultFolderTreeProfilesV2.notes,
+          keyboard: {
+            enabled: false,
+            arrowNavigation: false,
+            enterToRename: false,
+            deleteKey: true,
+          },
+          multiSelect: {
+            enabled: true,
+            ctrlClick: false,
+            shiftClick: false,
+            selectAll: false,
+          },
+          search: {
+            enabled: true,
+            debounceMs: 150,
+            filterMode: 'filter_tree',
+            matchFields: ['name', 'metadata'],
+            minQueryLength: 2,
+          },
+        },
+      })
+    );
+
+    expect(resolveFolderTreeKeyboardConfig(parsed.notes)).toEqual({
+      enabled: false,
+      arrowNavigation: false,
+      enterToRename: false,
+      deleteKey: true,
+    });
+    expect(resolveFolderTreeMultiSelectConfig(parsed.notes)).toEqual({
+      enabled: true,
+      ctrlClick: false,
+      shiftClick: false,
+      selectAll: false,
+    });
+    expect(resolveFolderTreeSearchConfig(parsed.notes)).toEqual({
+      enabled: true,
+      debounceMs: 150,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'metadata'],
+      minQueryLength: 2,
+    });
+  });
+
+  it('ships case-resolver search defaults for all active case-resolver tree instances', () => {
+    expect(defaultFolderTreeProfilesV2.case_resolver.search).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
+    expect(defaultFolderTreeProfilesV2.case_resolver_cases.search).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
+    expect(defaultFolderTreeProfilesV2.case_resolver_document_relations.search).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
+    expect(defaultFolderTreeProfilesV2.case_resolver_nodefile_relations.search).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
+    expect(defaultFolderTreeProfilesV2.case_resolver_scanfile_relations.search).toEqual({
+      enabled: true,
+      debounceMs: 120,
+      filterMode: 'filter_tree',
+      matchFields: ['name', 'path', 'metadata'],
+      minQueryLength: 1,
+    });
   });
 
   it('unrecognized statusIcons values parse to undefined', () => {

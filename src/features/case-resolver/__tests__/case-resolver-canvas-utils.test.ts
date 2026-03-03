@@ -107,7 +107,7 @@ describe('case-resolver canvas utils', () => {
     });
 
     expect(outputs).toEqual({
-      textfield: 'Alpha',
+      wysiwygText: 'Alpha',
       plaintextContent: '[["Alpha"]]',
       plainText: '[["Alpha"]]',
       wysiwygContent: '',

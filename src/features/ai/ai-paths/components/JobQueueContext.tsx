@@ -10,7 +10,14 @@ import React, {
   useState,
 } from 'react';
 import { usePathname } from 'next/navigation';
-import { runsApi } from '@/shared/lib/ai-paths';
+import {
+  cancelAiPathRun,
+  clearAiPathRuns,
+  getAiPathQueueStatus,
+  getAiPathRun,
+  listAiPathRuns,
+  removeAiPathRun,
+} from '@/shared/lib/ai-paths';
 import type { AiPathRunRecord, AiPathRunVisibility } from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import {
@@ -301,7 +308,7 @@ export function JobQueueProvider({
         offset,
         ...(fresh ? { fresh: true } : {}),
       };
-      const response = await runsApi.list(options);
+      const response = await listAiPathRuns(options);
       if (!response.ok) throw new Error(response.error);
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
@@ -331,7 +338,7 @@ export function JobQueueProvider({
     queryFn: async () => {
       const fresh = forceFreshQueueStatusRef.current;
       forceFreshQueueStatusRef.current = false;
-      const response = await runsApi.queueStatus({
+      const response = await getAiPathQueueStatus({
         visibility: normalizedVisibility as AiPathRunVisibility,
         ...(fresh ? { fresh: true } : {}),
       });
@@ -380,7 +387,7 @@ export function JobQueueProvider({
   const clearRunsMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
     mutationFn: async (scope: 'terminal' | 'all') => {
-      const res = await runsApi.clear({
+      const res = await clearAiPathRuns({
         scope,
         pathId: normalizedPathFilter || undefined,
         source: normalizedSourceFilter || undefined,
@@ -407,7 +414,7 @@ export function JobQueueProvider({
   const cancelRunMutation = createMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.cancel-run'),
     mutationFn: async (id: string) => {
-      const res = await runsApi.cancel(id);
+      const res = await cancelAiPathRun(id);
       if (!res.ok) throw new Error(res.error);
       return res.data;
     },
@@ -428,7 +435,7 @@ export function JobQueueProvider({
   const deleteRunMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
     mutationFn: async (id: string) => {
-      const res = await runsApi.remove(id);
+      const res = await removeAiPathRun(id);
       if (!res.ok) throw new Error(res.error);
     },
     onSuccess: (_, _runId) => {
@@ -454,7 +461,7 @@ export function JobQueueProvider({
     });
     setRunDetailLoading((prev) => new Set(prev).add(runId));
     try {
-      const response = await runsApi.get(runId);
+      const response = await getAiPathRun(runId);
       if (!response.ok) throw new Error(response.error || 'Failed to load run details.');
       const data = normalizeRunDetail(response.data);
       if (!data) throw new Error('Failed to load run details.');

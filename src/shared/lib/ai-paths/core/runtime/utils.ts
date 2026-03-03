@@ -15,6 +15,13 @@ import {
 } from '../utils';
 import { getAiPathsCollectionMapFromInputs } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
+export {
+  appendInputValue,
+  cloneValue,
+  getPortDataTypes,
+  isValueCompatibleWithTypes,
+} from '../utils';
+
 export const looksLikeObjectId = (value: unknown): boolean =>
   typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
 

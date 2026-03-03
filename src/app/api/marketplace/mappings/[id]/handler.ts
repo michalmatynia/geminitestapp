@@ -22,7 +22,7 @@ export async function GET_handler(
 ): Promise<Response> {
   const { id } = params;
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
   const mapping = await repo.getById(id);
 
   if (!mapping) {
@@ -44,7 +44,7 @@ export async function PUT_handler(
   const { id } = params;
   const body = (await request.json()) as UpdateMappingRequest;
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
 
   // Check if mapping exists
   const existing = await repo.getById(id);
@@ -73,7 +73,7 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const { id } = params;
 
-  const repo = getCategoryMappingRepository();
+  const repo = await getCategoryMappingRepository();
 
   // Check if mapping exists
   const existing = await repo.getById(id);

@@ -37,7 +37,6 @@ import {
   sortCaseTreeNodes,
   parseBoolean,
 } from './list/case-list-utils';
-import { shouldBootstrapCaseResolverCasesFromRecord } from '../context/admin-cases/utils';
 import { primeCaseResolverNavigationWorkspace } from '../workspace-persistence';
 import { CaseListSorting } from './list/sections/CaseListSorting';
 import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
@@ -145,7 +144,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const [isHierarchyLocked, setIsHierarchyLocked] = useState(true);
   const [isSavingDefaults, setIsSavingDefaults] = useState(false);
   const [treeSearchQuery, setTreeSearchQuery] = useState('');
-  const showLoadingSkeleton = isLoading || shouldBootstrapCaseResolverCasesFromRecord(workspace);
+  const showLoadingSkeleton = isLoading;
 
   const handleSaveDefaults = useCallback(async (): Promise<void> => {
     setIsSavingDefaults(true);
@@ -167,6 +166,43 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       }),
     [caseIdentifierPathById, caseSortBy, caseSortOrder, filesById, workspace]
   );
+
+  const caseSearchOrderById = useMemo((): Map<string, number> => {
+    const siblingsByParentId = new Map<string | null, MasterTreeNode[]>();
+    baseCaseNodes.forEach((node: MasterTreeNode): void => {
+      const caseId = fromCaseResolverCaseNodeId(node.id);
+      if (!caseId) return;
+      const parentId = node.parentId ?? null;
+      const siblings = siblingsByParentId.get(parentId) ?? [];
+      siblings.push(node);
+      siblingsByParentId.set(parentId, siblings);
+    });
+
+    siblingsByParentId.forEach((siblings: MasterTreeNode[]): void => {
+      siblings.sort((left: MasterTreeNode, right: MasterTreeNode): number => {
+        if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+        const nameDelta = left.name.localeCompare(right.name);
+        if (nameDelta !== 0) return nameDelta;
+        return left.id.localeCompare(right.id);
+      });
+    });
+
+    const ordered = new Map<string, number>();
+    let nextIndex = 0;
+    const walk = (parentId: string | null): void => {
+      const siblings = siblingsByParentId.get(parentId) ?? [];
+      siblings.forEach((node: MasterTreeNode): void => {
+        const caseId = fromCaseResolverCaseNodeId(node.id);
+        if (caseId && !ordered.has(caseId)) {
+          ordered.set(caseId, nextIndex);
+          nextIndex += 1;
+        }
+        walk(node.id);
+      });
+    };
+    walk(null);
+    return ordered;
+  }, [baseCaseNodes]);
 
   const isSearchActive = treeSearchQuery.trim().length > 0;
 
@@ -619,6 +655,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           workspace={workspace}
           identifierLabelById={caseIdentifierPathById}
           query={treeSearchQuery}
+          caseOrderById={caseSearchOrderById}
           onPrefetchCase={handlePrefetchCase}
           onPrefetchFile={(file) => {
             handlePrefetchFile(file.id);

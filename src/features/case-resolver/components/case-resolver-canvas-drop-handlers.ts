@@ -26,7 +26,6 @@ import {
   ensureDocumentPromptPorts,
   normalizeExtractedPdfText,
   resolvePromptConfig,
-  resolveTemplateConfig,
 } from './case-resolver-canvas-utils';
 
 type PdfExtractResponse = {
@@ -152,11 +151,10 @@ export const createCaseResolverCanvasDropHandlers = ({
     indexOffset = 0
   ): Promise<void> => {
     try {
-      const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
       const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
       const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model');
-      if (!templateDefinition || !promptDefinition || !modelDefinition) {
-        toast('Missing Template/Prompt/Model node definitions for PDF flow.', { variant: 'error' });
+      if (!promptDefinition || !modelDefinition) {
+        toast('Missing Prompt/Model node definitions for PDF flow.', { variant: 'error' });
         return;
       }
 
@@ -207,18 +205,18 @@ export const createCaseResolverCanvasDropHandlers = ({
       ].join('\n');
 
       const pdfNodeBase = buildNode(
-        templateDefinition,
+        promptDefinition,
         basePosition,
         pdfNodeId,
-        `PDF Node: ${asset.name}`
+        `PDF Source: ${asset.name}`
       );
-      const pdfNodeTemplateConfig = resolveTemplateConfig(pdfNodeBase);
+      const pdfNodePromptConfig = resolvePromptConfig(pdfNodeBase);
       const pdfNode: AiNode = {
         ...pdfNodeBase,
         config: {
           ...(pdfNodeBase.config ?? {}),
-          template: {
-            ...pdfNodeTemplateConfig,
+          prompt: {
+            ...pdfNodePromptConfig,
             template: pdfSourceTemplate,
           },
         },
@@ -355,12 +353,12 @@ export const createCaseResolverCanvasDropHandlers = ({
       x: dropPosition.x + indexOffset * 28,
       y: dropPosition.y + indexOffset * 28,
     });
-    const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
+    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
 
-    if (!templateDefinition) return;
+    if (!promptDefinition) return;
     const id = createNodeId();
-    const node = buildNode(templateDefinition, position, id, `File: ${asset.name}`);
-    const templateConfig = resolveTemplateConfig(node);
+    const node = buildNode(promptDefinition, position, id, `File: ${asset.name}`);
+    const promptConfig = resolvePromptConfig(node);
     const summaryParts = [
       `Asset: ${asset.name}`,
       `Kind: ${asset.kind}`,
@@ -373,8 +371,8 @@ export const createCaseResolverCanvasDropHandlers = ({
       ...node,
       config: {
         ...(node.config ?? {}),
-        template: {
-          ...templateConfig,
+        prompt: {
+          ...promptConfig,
           template: summaryParts.join('\n'),
         },
       },
@@ -477,9 +475,9 @@ export const createCaseResolverCanvasDropHandlers = ({
       return;
     }
 
-    const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
-    if (!templateDefinition) {
-      toast('Template node definition is missing.', { variant: 'error' });
+    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
+    if (!promptDefinition) {
+      toast('Prompt node definition is missing.', { variant: 'error' });
       return;
     }
 
@@ -489,7 +487,7 @@ export const createCaseResolverCanvasDropHandlers = ({
     if (!targetNodeId) {
       const id = createNodeId();
       const node = buildNode(
-        templateDefinition,
+        promptDefinition,
         clampCanvasPosition(dropPosition),
         id,
         'Canvas Node File'
@@ -512,7 +510,11 @@ export const createCaseResolverCanvasDropHandlers = ({
       toast('Failed to resolve Canvas Node File target.', { variant: 'error' });
       return;
     }
-    const templateConfig = resolveTemplateConfig(targetNode);
+    if (targetNode.type !== 'prompt') {
+      toast('Canvas Node File must use prompt node type.', { variant: 'error' });
+      return;
+    }
+    const promptConfig = resolvePromptConfig(targetNode);
     const nextTemplate = buildCanvasNodeFileTemplate(nextLinkedFileIds, availableFilesById);
 
     const nextTargetNode: AiNode = {
@@ -520,8 +522,8 @@ export const createCaseResolverCanvasDropHandlers = ({
       title: 'Canvas Node File',
       config: {
         ...(targetNode.config ?? {}),
-        template: {
-          ...templateConfig,
+        prompt: {
+          ...promptConfig,
           template: nextTemplate,
         },
       },

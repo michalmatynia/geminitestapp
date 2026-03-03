@@ -312,6 +312,25 @@ describe('useMasterFolderTreeShell', () => {
     );
 
     expect(result.current.profile).toEqual(createDefaultFolderTreeProfilesV2().notes);
+    expect(result.current.capabilities.keyboard).toEqual({
+      enabled: true,
+      arrowNavigation: true,
+      enterToRename: true,
+      deleteKey: false,
+    });
+    expect(result.current.capabilities.multiSelect).toEqual({
+      enabled: false,
+      ctrlClick: true,
+      shiftClick: true,
+      selectAll: true,
+    });
+    expect(result.current.capabilities.search).toEqual({
+      enabled: false,
+      debounceMs: 200,
+      filterMode: 'highlight',
+      matchFields: ['name'],
+      minQueryLength: 1,
+    });
     expect(result.current.appearance.resolveIcon({ slot: 'file', fallback: Folder })).toBe(Folder);
 
     result.current.panel.setCollapsed(true);

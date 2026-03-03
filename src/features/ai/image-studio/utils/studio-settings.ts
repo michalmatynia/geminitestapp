@@ -515,10 +515,10 @@ const resolveActivePresetId = (
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const hasOwn = (value: Record<string, unknown>, key: string): boolean =>
+const hasOwnKey = (value: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(value, key);
 
-const getDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
+const resolveDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
   if (!isPlainObject(value)) return [];
 
   const deprecatedKeys: string[] = [];
@@ -526,13 +526,13 @@ const getDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
   const promptExtraction = value['promptExtraction'];
   if (isPlainObject(promptExtraction)) {
     const gpt = promptExtraction['gpt'];
-    if (isPlainObject(gpt) && hasOwn(gpt, 'model')) {
+    if (isPlainObject(gpt) && hasOwnKey(gpt, 'model')) {
       deprecatedKeys.push('promptExtraction.gpt.model');
     }
   }
 
   const uiExtractor = value['uiExtractor'];
-  if (isPlainObject(uiExtractor) && hasOwn(uiExtractor, 'model')) {
+  if (isPlainObject(uiExtractor) && hasOwnKey(uiExtractor, 'model')) {
     deprecatedKeys.push('uiExtractor.model');
   }
 
@@ -540,10 +540,10 @@ const getDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
   if (isPlainObject(targetAi)) {
     const openai = targetAi['openai'];
     if (isPlainObject(openai)) {
-      if (hasOwn(openai, 'model')) {
+      if (hasOwnKey(openai, 'model')) {
         deprecatedKeys.push('targetAi.openai.model');
       }
-      if (hasOwn(openai, 'modelPresets')) {
+      if (hasOwnKey(openai, 'modelPresets')) {
         deprecatedKeys.push('targetAi.openai.modelPresets');
       }
     }
@@ -567,12 +567,16 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
     });
   }
 
-  const deprecatedKeys = getDeprecatedImageStudioSnapshotKeys(parsed);
+  const deprecatedKeys = resolveDeprecatedImageStudioSnapshotKeys(parsed);
   if (deprecatedKeys.length > 0) {
-    throw validationError('Image Studio settings contain deprecated AI snapshot keys.', {
-      reason: 'deprecated_ai_snapshot_keys',
-      deprecatedKeys,
-    });
+    throw validationError(
+      'Image Studio settings contain deprecated AI snapshot keys.',
+      {
+        source: 'image_studio.settings',
+        reason: 'deprecated_snapshot_keys',
+        keys: deprecatedKeys,
+      }
+    );
   }
 
   const result = imageStudioSettingsSchema.safeParse(parsed);

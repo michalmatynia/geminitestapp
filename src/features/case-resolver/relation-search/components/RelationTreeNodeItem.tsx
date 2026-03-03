@@ -99,7 +99,7 @@ export function RelationTreeNodeItem({
               toggleExpand();
               return;
             }
-            select();
+            select(event);
           }}
           title={node.name}
         >
@@ -186,4 +186,3 @@ export function RelationTreeNodeItem({
     </div>
   );
 }
-

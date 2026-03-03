@@ -24,19 +24,56 @@ import {
   FormActions,
   Breadcrumbs,
   SearchableList,
+  Button,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 import { normalizePageSlugValues } from '@/features/cms/utils/slug-utils';
 
 export default function EditPagePageLoader(): React.JSX.Element {
+  const router = useRouter();
   const { id } = useParams();
-  const pageQuery = useCmsPage(id as string | undefined);
+  const pageId = Array.isArray(id) ? id[0] : id;
+  const pageQuery = useCmsPage(pageId);
 
-  if (pageQuery.isLoading || !pageQuery.data) {
+  if (!pageId) {
+    return (
+      <CmsEditorLayout>
+        <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-10'>
+          <Alert variant='error'>Invalid page URL. Missing page id.</Alert>
+          <div>
+            <Button variant='secondary' onClick={() => router.push('/admin/cms/pages')}>
+              Back to Pages
+            </Button>
+          </div>
+        </div>
+      </CmsEditorLayout>
+    );
+  }
+
+  if (pageQuery.isLoading) {
     return <LoadingState message='Loading page content...' />;
   }
 
-  return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={id as string} />;
+  if (pageQuery.isError || !pageQuery.data) {
+    const message = pageQuery.error instanceof Error ? pageQuery.error.message : 'Page not found.';
+    return (
+      <CmsEditorLayout>
+        <div className='mx-auto flex w-full max-w-3xl flex-col gap-4 py-10'>
+          <Alert variant='error'>{message}</Alert>
+          <div className='flex gap-2'>
+            <Button variant='secondary' onClick={() => router.push('/admin/cms/pages')}>
+              Back to Pages
+            </Button>
+            <Button variant='outline' onClick={() => pageQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      </CmsEditorLayout>
+    );
+  }
+
+  return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={pageId} />;
 }
 
 function EditPageContent({

@@ -10,9 +10,6 @@ export const agentPersonaSchema = namedDtoSchema.extend({
   description: z.string().optional(),
   role: z.string().optional(),
   instructions: z.string().optional(),
-  modelId: z.string().optional(),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
   tools: z.array(z.string()).optional(),
   isDefault: z.boolean().optional(),
   settings: z.lazy(() => agentPersonaSettingsSchema).optional(),
@@ -24,9 +21,6 @@ export type AgentPersona = AgentPersonaDto;
 export const agentPersonaSettingsSchema = z.object({
   personaId: z.string().optional(),
   customInstructions: z.string().optional(),
-  modelId: z.string().optional(),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
 }).strict();
 
 export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;

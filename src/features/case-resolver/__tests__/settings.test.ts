@@ -1552,6 +1552,81 @@ describe('case-resolver settings', () => {
     ).toThrowError(/text nodes must use prompt node type/i);
   });
 
+  it('rejects template document-drop nodes in workspace graphs', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-template-drop',
+              name: 'Case Template Drop',
+              folder: '',
+              graph: {
+                nodes: [createTemplateNode('legacy-drop-node', 'Legacy Canvas Node File')],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+                documentDropNodeId: 'legacy-drop-node',
+              },
+            },
+          ],
+          assets: [],
+          activeFileId: 'case-template-drop',
+        })
+      )
+    ).toThrowError(/document-drop node must use prompt node type/i);
+  });
+
+  it('rejects template document-link nodes in workspace graphs', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-template-links',
+              name: 'Case Template Links',
+              folder: '',
+              graph: {
+                nodes: [createTemplateNode('legacy-link-node', 'Legacy linked docs node')],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+                documentFileLinksByNode: {
+                  'legacy-link-node': ['doc-a'],
+                },
+              },
+            },
+            {
+              id: 'doc-a',
+              fileType: 'document',
+              name: 'Doc A',
+              folder: '',
+              parentCaseId: 'case-template-links',
+              graph: {
+                nodes: [],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+              },
+            },
+          ],
+          assets: [],
+          activeFileId: 'case-template-links',
+        })
+      )
+    ).toThrowError(/document-link nodes must use prompt node type/i);
+  });
+
   it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
@@ -1869,7 +1944,7 @@ describe('case-resolver settings', () => {
     expect(edgeById.get('edge-out-canonical')?.sourceHandle).toBe('plainText');
   });
 
-  it('rejects legacy text node edge ports', () => {
+  it('rejects legacy text node edge ports during workspace normalization', () => {
     expect(() =>
       parseCaseResolverWorkspace(
         JSON.stringify({
@@ -1911,6 +1986,6 @@ describe('case-resolver settings', () => {
           activeFileId: 'case-edge-ports',
         })
       )
-    ).toThrowError(/Legacy Case Resolver edge port names are no longer supported/i);
+    ).toThrow(/Legacy Case Resolver edge port names are no longer supported\./i);
   });
 });

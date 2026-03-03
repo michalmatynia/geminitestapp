@@ -12,6 +12,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 
 vi.mock('@/shared/lib/api-client', () => ({
+  ApiError: class MockApiError extends Error {},
   api: {
     get: vi.fn(),
     post: vi.fn(),

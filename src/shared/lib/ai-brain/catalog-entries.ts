@@ -87,18 +87,7 @@ export const catalogToEntries = (
     'entries' | keyof BrainCatalogArrays
   >
 ): AiBrainCatalogEntry[] => {
-  if (Array.isArray(catalog.entries) && catalog.entries.length > 0) {
-    return sanitizeCatalogEntries(catalog.entries);
-  }
-
-  return sanitizeCatalogEntries(
-    BRAIN_CATALOG_POOL_VALUES.flatMap((pool) => {
-      return (catalog[pool] ?? []).map((value) => ({
-        pool,
-        value,
-      }));
-    })
-  );
+  return sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
 };
 
 export const hasCatalogPoolEntries = (

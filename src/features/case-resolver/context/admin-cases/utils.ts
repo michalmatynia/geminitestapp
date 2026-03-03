@@ -141,6 +141,12 @@ export const shouldAdoptIncomingCaseResolverCasesWorkspace = ({
   current: CaseResolverWorkspace;
   incoming: CaseResolverWorkspace;
 }): boolean => {
+  const currentCaseCount = current.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType === 'case'
+  ).length;
+  const incomingCaseCount = incoming.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType === 'case'
+  ).length;
   const currentRevision = getCaseResolverWorkspaceRevision(current);
   const incomingRevision = getCaseResolverWorkspaceRevision(incoming);
   if (incomingRevision > currentRevision) return true;
@@ -151,10 +157,19 @@ export const shouldAdoptIncomingCaseResolverCasesWorkspace = ({
   if (incomingRevision === currentRevision && currentIsPlaceholder && !incomingIsPlaceholder) {
     return true;
   }
+  if (incomingRevision === currentRevision && incomingCaseCount > currentCaseCount) {
+    return true;
+  }
 
   return false;
 };
 
 export const shouldBootstrapCaseResolverCasesFromRecord = (
   workspace: CaseResolverWorkspace
-): boolean => isPlaceholderCaseResolverWorkspace(workspace);
+): boolean => {
+  if (isPlaceholderCaseResolverWorkspace(workspace)) return true;
+  const caseCount = workspace.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType === 'case'
+  ).length;
+  return caseCount === 0;
+};

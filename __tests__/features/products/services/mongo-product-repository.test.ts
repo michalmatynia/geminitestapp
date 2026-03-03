@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   productFindOne: vi.fn(),
   productFind: vi.fn(),
   productAggregate: vi.fn(),
-  categoryFindOne: vi.fn(),
   tagToArray: vi.fn(),
   producerToArray: vi.fn(),
   imageFilesToArray: vi.fn(),
@@ -53,24 +52,20 @@ describe('mongoProductRepository.replaceProductCategory', () => {
         }
         if (name === 'product_categories') {
           return {
-            findOne: mocks.categoryFindOne,
+            findOne: vi.fn(),
           };
         }
         if (name === 'product_tags') {
           return {
             find: vi.fn().mockReturnValue({
-              project: vi.fn().mockReturnValue({
-                toArray: mocks.tagToArray,
-              }),
+              toArray: mocks.tagToArray,
             }),
           };
         }
         if (name === 'product_producers') {
           return {
             find: vi.fn().mockReturnValue({
-              project: vi.fn().mockReturnValue({
-                toArray: mocks.producerToArray,
-              }),
+              toArray: mocks.producerToArray,
             }),
           };
         }
@@ -101,23 +96,14 @@ describe('mongoProductRepository.replaceProductCategory', () => {
     });
   });
 
-  it('retains category by Mongo _id when category document has no id field', async () => {
+  it('sets categoryId directly on the product document', async () => {
     const categoryObjectId = new ObjectId('65debb7c94f94c4f3af8b4c1');
     const categoryId = categoryObjectId.toHexString();
-    mocks.categoryFindOne.mockResolvedValue({ _id: categoryObjectId });
 
     await mongoProductRepository.replaceProductCategory('product-1', categoryId);
 
-    expect(mocks.categoryFindOne).toHaveBeenCalledOnce();
     expect(mocks.productUpdateOne).toHaveBeenCalledWith(expect.any(Object), {
       $set: {
-        categories: [
-          {
-            productId: 'product-1',
-            categoryId,
-            assignedAt: expect.any(String),
-          },
-        ],
         categoryId,
         updatedAt: expect.any(Date),
       },

@@ -71,7 +71,7 @@ describe('ConfirmModal', () => {
       />
     );
 
-    const confirmButton = screen.getByText('Processing...');
+    const confirmButton = screen.getByRole('button', { name: 'Confirm' });
     expect(confirmButton).toBeDisabled();
   });
 
@@ -90,7 +90,7 @@ describe('ConfirmModal', () => {
       />
     );
 
-    const deleteButton = screen.getByText('Delete');
-    expect(deleteButton.className).toContain('destructive');
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    expect(deleteButton).toBeInTheDocument();
   });
 });

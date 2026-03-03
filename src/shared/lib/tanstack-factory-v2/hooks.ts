@@ -13,6 +13,7 @@ import {
   type UseQueryResult,
   useSuspenseQuery,
   type UseSuspenseQueryResult,
+  type UseSuspenseQueryOptions,
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';

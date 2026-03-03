@@ -4,7 +4,6 @@ import { Prisma } from '@prisma/client';
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { CmsRepository } from '@/shared/contracts/cms';
-import { internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
 import { getCmsDataProvider } from '../cms-provider';
@@ -24,6 +23,12 @@ const isMissingTableError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
+const isPrismaUnavailableError = (error: unknown): boolean =>
+  isMissingTableError(error) ||
+  error instanceof Prisma.PrismaClientInitializationError ||
+  error instanceof Prisma.PrismaClientValidationError ||
+  error instanceof Prisma.PrismaClientUnknownRequestError;
+
 const canUsePrismaCms = async (): Promise<boolean> => {
   if (!process.env['DATABASE_URL'] && process.env['NODE_ENV'] !== 'test') return false;
   if (!('page' in prisma)) return false;
@@ -39,7 +44,7 @@ const canUsePrismaCms = async (): Promise<boolean> => {
       await prisma.page.findFirst({ select: { id: true } });
       return true;
     } catch (error) {
-      if (isMissingTableError(error)) return false;
+      if (isPrismaUnavailableError(error)) return false;
       throw error;
     }
   })();
@@ -80,9 +85,18 @@ export async function getCmsRepository(): Promise<CmsRepository> {
     }
     return cachedRepository;
   }
-  throw internalError(
-    'Prisma CMS tables are missing. Run migrations manually in Workflow Database -> Database Engine.'
-  );
+
+  cachedRepository = mongoCmsRepository;
+  cachedProvider = 'mongodb';
+  if (shouldLogCms()) {
+    void logSystemEvent({
+      level: 'warn',
+      source: LOG_SOURCE,
+      message: 'repository-fallback',
+      context: { requestedProvider: provider, activeProvider: 'mongodb' },
+    });
+  }
+  return cachedRepository;
 }
 
 export const getCmsRepositoryProvider = (): 'mongodb' | 'prisma' | null => cachedProvider;

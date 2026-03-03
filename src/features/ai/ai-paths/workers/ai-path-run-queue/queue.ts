@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
 import { createManagedQueue } from '@/shared/lib/queue';
 import { 
   AI_PATH_RUN_QUEUE_NAME, 
@@ -25,7 +25,7 @@ export const enqueuePathRunJob = async (
   runId: string,
   options: { delayMs?: number } = {}
 ): Promise<void> => {
-  await queue.add(runId, { runId }, { delay: options.delayMs, jobId: runId });
+  await queue.enqueue({ runId }, { delay: options.delayMs, jobId: runId });
 };
 
 export const queue = createManagedQueue<AiPathRunJobData>({

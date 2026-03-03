@@ -1,5 +1,6 @@
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
+import type { ResolvedFolderTreeKeyboardConfig } from '@/shared/utils/folder-tree-profiles-v2';
 
 import type { FolderTreeNodeView } from '../types';
 
@@ -11,12 +12,15 @@ export type MasterTreeKeyboardAction =
   | { type: 'cancel_rename' }
   | { type: 'commit_rename' }
   | { type: 'request_delete'; nodeId: MasterTreeId }
-  | { type: 'scroll_to'; nodeId: MasterTreeId };
+  | { type: 'scroll_to'; nodeId: MasterTreeId }
+  | { type: 'select_all' };
 
 export type MasterTreeKeyboardHandlerInput = {
   event: KeyboardEvent;
   controller: MasterFolderTreeController;
   visibleRows: FolderTreeNodeView[];
+  keyboard: ResolvedFolderTreeKeyboardConfig;
+  allowSelectAll: boolean;
 };
 
 const getSelectedIndex = (
@@ -35,7 +39,17 @@ export const resolveKeyboardAction = ({
   event,
   controller,
   visibleRows,
+  keyboard,
+  allowSelectAll,
 }: MasterTreeKeyboardHandlerInput): MasterTreeKeyboardAction | null => {
+  const isSelectAllShortcut =
+    allowSelectAll &&
+    !event.altKey &&
+    !event.shiftKey &&
+    (event.metaKey || event.ctrlKey) &&
+    event.key.toLowerCase() === 'a';
+  if (isSelectAllShortcut) return { type: 'select_all' };
+
   // Don't interfere when modifier keys (except Shift) are held
   if (event.metaKey || event.ctrlKey || event.altKey) return null;
 
@@ -50,11 +64,15 @@ export const resolveKeyboardAction = ({
 
   if (!selectedNodeId) {
     // If nothing is selected and user presses arrow, select first visible node
-    if ((event.key === 'ArrowDown' || event.key === 'Home') && visibleRows.length > 0) {
+    if (
+      keyboard.arrowNavigation &&
+      (event.key === 'ArrowDown' || event.key === 'Home') &&
+      visibleRows.length > 0
+    ) {
       const first = visibleRows[0];
       return first ? { type: 'select', nodeId: first.nodeId } : null;
     }
-    if (event.key === 'End' && visibleRows.length > 0) {
+    if (keyboard.arrowNavigation && event.key === 'End' && visibleRows.length > 0) {
       const last = visibleRows[visibleRows.length - 1];
       return last ? { type: 'select', nodeId: last.nodeId } : null;
     }
@@ -66,16 +84,19 @@ export const resolveKeyboardAction = ({
 
   switch (event.key) {
     case 'ArrowDown': {
+      if (!keyboard.arrowNavigation) return null;
       const nextRow = visibleRows[currentIndex + 1];
       if (nextRow) return { type: 'select', nodeId: nextRow.nodeId };
       return null;
     }
     case 'ArrowUp': {
+      if (!keyboard.arrowNavigation) return null;
       const prevRow = visibleRows[currentIndex - 1];
       if (prevRow) return { type: 'select', nodeId: prevRow.nodeId };
       return null;
     }
     case 'ArrowRight': {
+      if (!keyboard.arrowNavigation) return null;
       if (!currentRow) return null;
       if (currentRow.hasChildren && !currentRow.isExpanded) {
         return { type: 'expand', nodeId: selectedNodeId };
@@ -90,6 +111,7 @@ export const resolveKeyboardAction = ({
       return null;
     }
     case 'ArrowLeft': {
+      if (!keyboard.arrowNavigation) return null;
       if (!currentRow) return null;
       if (currentRow.hasChildren && currentRow.isExpanded) {
         return { type: 'collapse', nodeId: selectedNodeId };
@@ -101,6 +123,7 @@ export const resolveKeyboardAction = ({
       return null;
     }
     case 'Home': {
+      if (!keyboard.arrowNavigation) return null;
       const firstRow = visibleRows[0];
       if (firstRow && firstRow.nodeId !== selectedNodeId) {
         return { type: 'select', nodeId: firstRow.nodeId };
@@ -108,6 +131,7 @@ export const resolveKeyboardAction = ({
       return null;
     }
     case 'End': {
+      if (!keyboard.arrowNavigation) return null;
       const lastRow = visibleRows[visibleRows.length - 1];
       if (lastRow && lastRow.nodeId !== selectedNodeId) {
         return { type: 'select', nodeId: lastRow.nodeId };
@@ -115,6 +139,7 @@ export const resolveKeyboardAction = ({
       return null;
     }
     case 'Enter': {
+      if (!keyboard.enterToRename) return null;
       return { type: 'start_rename', nodeId: selectedNodeId };
     }
     case 'Escape': {
@@ -122,6 +147,7 @@ export const resolveKeyboardAction = ({
     }
     case 'Delete':
     case 'Backspace': {
+      if (!keyboard.deleteKey) return null;
       return { type: 'request_delete', nodeId: selectedNodeId };
     }
     default:

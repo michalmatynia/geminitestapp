@@ -22,16 +22,41 @@ describe('normalizeAgentPersonas', () => {
     }
   });
 
+  it('rejects deprecated top-level persona model snapshot fields', () => {
+    expect(() =>
+      normalizeAgentPersonas([
+        {
+          id: 'persona-top-level',
+          name: 'Legacy Top Level Persona',
+          modelId: 'gpt-4.1',
+        },
+      ])
+    ).toThrowError(/Legacy Agent Persona model snapshot fields are no longer supported/i);
+  });
+
+  it('rejects deprecated persona model snapshot settings', () => {
+    expect(() =>
+      normalizeAgentPersonas([
+        {
+          id: 'persona-2',
+          name: 'Legacy Persona Settings',
+          settings: {
+            modelId: 'gpt-4.1',
+            temperature: 0.2,
+            maxTokens: 1200,
+          },
+        },
+      ])
+    ).toThrowError(/Invalid Agent Persona settings payload/i);
+  });
+
   it('keeps canonical persona settings fields only', () => {
     const normalized = normalizeAgentPersonas([
       {
-        id: 'persona-2',
+        id: 'persona-3',
         name: 'Canonical Persona',
         settings: {
           customInstructions: 'Stay concise',
-          modelId: 'gpt-4.1',
-          temperature: 0.2,
-          maxTokens: 1200,
         },
       },
     ]);
@@ -39,9 +64,6 @@ describe('normalizeAgentPersonas', () => {
     expect(normalized).toHaveLength(1);
     expect(normalized[0]?.settings).toEqual({
       customInstructions: 'Stay concise',
-      modelId: 'gpt-4.1',
-      temperature: 0.2,
-      maxTokens: 1200,
     });
   });
 });

@@ -69,11 +69,6 @@ export function useNodeFileWorkspaceState({
   const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
     () => nodes.length > 0
   );
-  const [expandedSearchFolderPaths, setExpandedSearchFolderPaths] = useState<Set<string>>(
-    () => new Set()
-  );
-  const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
-  const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
   const [nodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
     () => snapshot.nodeMeta ?? {}
   );
@@ -92,21 +87,11 @@ export function useNodeFileWorkspaceState({
     setDocumentSearchScope,
     documentSearchQuery,
     setDocumentSearchQuery,
-    selectedSearchFolderPath,
-    setSelectedSearchFolderPath,
-    caseSearchQuery,
-    setCaseSearchQuery,
-    selectedDrillCaseId,
-    setSelectedDrillCaseId,
     caseIdentifierLabelById,
     documentSearchRows,
-    folderScopedDocumentSearchRows,
     visibleDocumentSearchRows,
-    folderTree,
-    visibleCaseRows,
     relationTreeNodes,
     relationTreeLookup,
-    visibleFileIdsInTreeOrder,
   } = useDocumentRelationSearch({
     workspace,
     activeCaseId,
@@ -328,30 +313,14 @@ export function useNodeFileWorkspaceState({
     setDocumentSearchScope,
     documentSearchQuery,
     setDocumentSearchQuery,
-    selectedSearchFolderPath,
-    setSelectedSearchFolderPath,
-    expandedSearchFolderPaths,
-    setExpandedSearchFolderPaths,
-    selectedSearchDocumentId,
-    setSelectedSearchDocumentId,
-    isDocumentSearchOpen,
-    setIsDocumentSearchOpen,
-    caseSearchQuery,
-    setCaseSearchQuery,
-    selectedDrillCaseId,
-    setSelectedDrillCaseId,
-    visibleCaseRows,
     nodeMetaByNode,
     edgeMetaByEdge,
     filesById,
     caseIdentifierLabelById,
     documentSearchRows,
-    folderScopedDocumentSearchRows,
     visibleDocumentSearchRows,
-    folderTree,
     relationTreeNodes,
     relationTreeLookup,
-    visibleFileIdsInTreeOrder,
     compiled,
     selectedNode,
     selectedNodeMeta,

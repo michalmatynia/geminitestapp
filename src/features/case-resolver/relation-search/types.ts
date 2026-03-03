@@ -45,5 +45,4 @@ export type RelationTreeLookup = {
 export type RelationTreeBuildResult = {
   nodes: MasterTreeNode[];
   lookup: RelationTreeLookup;
-  visibleFileIdsInTreeOrder: string[];
 };

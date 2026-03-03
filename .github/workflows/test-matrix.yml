@@ -1,0 +1,105 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit test project
+        run: npm run test:unit
+
+  integration-prisma:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: app_test
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/app_test?schema=public
+      APP_DB_PROVIDER: prisma
+      PRODUCT_DB_PROVIDER: prisma
+      NOTE_DB_PROVIDER: prisma
+      INTEGRATION_DB_PROVIDER: prisma
+      AUTH_DB_PROVIDER: prisma
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Run Prisma integration project
+        run: npm run test:integration:prisma
+
+  integration-mongo:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_DB_PROVIDER: mongodb
+      PRODUCT_DB_PROVIDER: mongodb
+      NOTE_DB_PROVIDER: mongodb
+      INTEGRATION_DB_PROVIDER: mongodb
+      AUTH_DB_PROVIDER: mongodb
+      MONGODB_URI: mongodb://localhost:27017
+      MONGODB_DB: app_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Mongo integration project
+        run: npm run test:integration:mongo

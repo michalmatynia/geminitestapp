@@ -2,6 +2,7 @@ import {
   type CaseResolverAssetFile,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
+import { validationError } from '@/shared/errors/app-error';
 import {
   parseNodeFileSnapshot,
   serializeNodeFileSnapshot,
@@ -166,7 +167,14 @@ export const fetchCaseResolverNodeFileSnapshot = async (
       action: 'node_file_snapshot_validation_failed',
       message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
     });
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw validationError('Invalid Case Resolver node-file snapshot payload.', {
+      source: 'case_resolver.node_file_snapshot',
+      reason: 'unknown_validation_error',
+      assetId,
+    });
   }
 };
 

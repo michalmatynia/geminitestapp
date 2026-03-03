@@ -149,12 +149,12 @@ export const parsePathList = (value: string): string[] =>
     .map((line: string) => line.trim())
     .filter(Boolean);
 
-export const safeParseJson = (value: string): { value: unknown; error: string } => {
-  if (!value.trim()) return { value: null as unknown, error: '' };
+export const safeParseJson = <T = unknown>(value: string): { value: T; error: string } => {
+  if (!value.trim()) return { value: null as T, error: '' };
   try {
-    return { value: JSON.parse(value) as unknown, error: '' };
+    return { value: JSON.parse(value) as T, error: '' };
   } catch {
-    return { value: null as unknown, error: 'Invalid JSON' };
+    return { value: null as T, error: 'Invalid JSON' };
   }
 };
 

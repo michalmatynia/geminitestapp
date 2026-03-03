@@ -9,6 +9,12 @@ import type {
 import { useToast } from '@/shared/ui/toast';
 import {
   folderTreePersistFeedbackByInstance,
+  resolveFolderTreeKeyboardConfig,
+  resolveFolderTreeMultiSelectConfig,
+  resolveFolderTreeSearchConfig,
+  type ResolvedFolderTreeKeyboardConfig,
+  type ResolvedFolderTreeMultiSelectConfig,
+  type ResolvedFolderTreeSearchConfig,
   type FolderTreeInstance,
   type FolderTreePlaceholderClassSet,
 } from '@/shared/utils/folder-tree-profiles-v2';
@@ -40,6 +46,11 @@ export type UseMasterFolderTreeShellOptions = Omit<
 export type MasterFolderTreeShell = {
   controller: MasterFolderTreeController;
   profile: FolderTreeProfileV2;
+  capabilities: {
+    keyboard: ResolvedFolderTreeKeyboardConfig;
+    multiSelect: ResolvedFolderTreeMultiSelectConfig;
+    search: ResolvedFolderTreeSearchConfig;
+  };
   appearance: {
     placeholderClasses: FolderTreePlaceholderClassSet;
     rootDropUi: {
@@ -68,6 +79,18 @@ export function useMasterFolderTreeShell({
 }: UseMasterFolderTreeShellOptions): MasterFolderTreeShell {
   const { toast } = useToast();
   const { profile, appearance } = useFolderTreeProfileConfig(instance);
+  const keyboardConfig = useMemo(
+    () => resolveFolderTreeKeyboardConfig(profile),
+    [profile]
+  );
+  const multiSelectConfig = useMemo(
+    () => resolveFolderTreeMultiSelectConfig(profile),
+    [profile]
+  );
+  const searchConfig = useMemo(
+    () => resolveFolderTreeSearchConfig(profile),
+    [profile]
+  );
   const uiState = useFolderTreeUiState(instance, expandedNodeIds, initiallyExpandedNodeIds);
 
   const controller = useFolderTreeInstanceV2({
@@ -102,7 +125,8 @@ export function useMasterFolderTreeShell({
     instanceId: instance,
     onDeleteRequest: onKeyboardDeleteRequest,
     scrollToNode,
-    enabled: profile.keyboard?.enabled ?? false,
+    keyboard: keyboardConfig,
+    multiSelect: multiSelectConfig,
   });
 
   useEffect(() => {
@@ -178,6 +202,11 @@ export function useMasterFolderTreeShell({
   return {
     controller,
     profile,
+    capabilities: {
+      keyboard: keyboardConfig,
+      multiSelect: multiSelectConfig,
+      search: searchConfig,
+    },
     appearance,
     panel: uiState.panel,
     viewport: {

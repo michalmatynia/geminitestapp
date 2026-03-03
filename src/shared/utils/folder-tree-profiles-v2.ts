@@ -21,3 +21,9 @@ export const parseFolderTreeProfileV2Strict = logic.parseFolderTreeProfileV2Stri
 export const canNestTreeNodeV2 = logic.canNestTreeNodeV2;
 export const resolveFolderTreeIconV2 = logic.resolveFolderTreeIconV2;
 export const getFolderTreeInstanceSettingsHref = logic.getFolderTreeInstanceSettingsHref;
+export const resolveFolderTreeKeyboardConfig = logic.resolveFolderTreeKeyboardConfig;
+export const resolveFolderTreeMultiSelectConfig = logic.resolveFolderTreeMultiSelectConfig;
+export const resolveFolderTreeSearchConfig = logic.resolveFolderTreeSearchConfig;
+export type { ResolvedFolderTreeKeyboardConfig } from './folder-tree-profiles-v2/logic';
+export type { ResolvedFolderTreeMultiSelectConfig } from './folder-tree-profiles-v2/logic';
+export type { ResolvedFolderTreeSearchConfig } from './folder-tree-profiles-v2/logic';

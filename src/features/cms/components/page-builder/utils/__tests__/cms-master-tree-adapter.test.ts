@@ -28,6 +28,25 @@ const createContext = (
   nextNodes: buildCmsMasterNodes(nextSections),
 });
 
+const applyOperation = async (
+  adapter: ReturnType<typeof createCmsMasterTreeAdapter>,
+  operation: {
+    type: 'move' | 'reorder';
+    [key: string]: unknown;
+  },
+  context: MasterFolderTreePersistContext
+): Promise<void> => {
+  const tx = {
+    id: `tx_${Date.now()}`,
+    version: 1,
+    createdAt: Date.now(),
+    operation,
+    previousNodes: context.previousNodes,
+    nextNodes: context.nextNodes,
+  };
+  await adapter.apply(tx, await adapter.prepare(tx));
+};
+
 describe('createCmsMasterTreeAdapter', () => {
   it('maps root-top section move to zone index 0', async () => {
     const applySectionMoveByZoneIndex = vi.fn();
@@ -44,7 +63,8 @@ describe('createCmsMasterTreeAdapter', () => {
       ]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCmsSectionNodeId('template-1'),
@@ -73,7 +93,8 @@ describe('createCmsMasterTreeAdapter', () => {
       ]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCmsSectionNodeId('template-1'),
@@ -102,7 +123,8 @@ describe('createCmsMasterTreeAdapter', () => {
       ]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCmsSectionNodeId('header-1'),
@@ -130,7 +152,8 @@ describe('createCmsMasterTreeAdapter', () => {
       ]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toCmsSectionNodeId('header-2'),
@@ -140,7 +163,8 @@ describe('createCmsMasterTreeAdapter', () => {
       context
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toCmsSectionNodeId('header-1'),
@@ -172,7 +196,8 @@ describe('createCmsMasterTreeAdapter', () => {
       ]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toCmsSectionNodeId('header-1'),
@@ -195,7 +220,8 @@ describe('createCmsMasterTreeAdapter', () => {
       [createSection({ id: 'header-1', zone: 'header' })]
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCmsSectionNodeId('header-1'),

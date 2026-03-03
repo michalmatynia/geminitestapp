@@ -114,9 +114,7 @@ export function SequencingPanel(): React.JSX.Element {
     [runtimeSequenceSteps]
   );
   const activeGenerationModel =
-    brainGenerationModel.effectiveModelId.trim() ||
-    studioSettings.targetAi.openai.model.trim() ||
-    'Not configured';
+    brainGenerationModel.effectiveModelId.trim() || 'Not configured';
   const workingSlotImageWidth = useMemo((): number | null => {
     const width = workingSlot?.imageFile?.width ?? null;
     return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;

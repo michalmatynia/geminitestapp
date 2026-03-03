@@ -118,7 +118,6 @@ export interface CanvasBoardState {
     React.SetStateAction<SvgNodeDiagnosticsTooltipState | null>
   >;
   rendererMode: CanvasRendererMode;
-  setRendererMode: React.Dispatch<React.SetStateAction<CanvasRendererMode>>;
   showMinimap: boolean;
   setShowMinimap: React.Dispatch<React.SetStateAction<boolean>>;
   viewportSize: { width: number; height: number } | null;

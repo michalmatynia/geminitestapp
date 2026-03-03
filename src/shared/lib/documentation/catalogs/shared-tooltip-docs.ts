@@ -1,7 +1,7 @@
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
-} from '@/shared/lib/documentation/types';
+} from '@/shared/contracts/documentation';
 
 export const SHARED_TOOLTIP_DOCUMENTATION_CATALOG: DocumentationEntry[] = [
   {

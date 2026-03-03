@@ -277,8 +277,6 @@ export async function evaluateGraphInternal(
       nodeOutputs: outputsSnapshot,
       variables: cloneValue(variables),
       events: [],
-      runId: resolvedRunId,
-      runStartedAt: resolvedRunStartedAt,
       inputs: cloneValue(inputsSnapshot),
       outputs: outputsSnapshot,
       hashes: Object.fromEntries(nodeHashes),
@@ -947,7 +945,7 @@ export async function evaluateGraphInternal(
     });
   }
 
-  const finalState = buildRuntimeStateSnapshot(inputs);
+  const finalState = buildRuntimeStateSnapshot(inputs) as any;
 
   const onHalt =
     options.onHalt ||

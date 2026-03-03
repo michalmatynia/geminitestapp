@@ -31,7 +31,6 @@ import type {
   FolderTreePreparedTransaction,
   FolderTreeState,
   FolderTreeTransaction,
-  MasterFolderTreeAdapterV3,
 } from '../types';
 
 const toActionOk = (): MasterFolderTreeActionResult => ({
@@ -161,64 +160,6 @@ const isConflictError = (error: unknown): boolean => {
   return false;
 };
 
-const toV3Adapter = (
-  adapter: UseMasterFolderTreeOptions['adapter']
-): MasterFolderTreeAdapterV3 | undefined => {
-  if (!adapter) return undefined;
-
-  const maybeV3 = adapter as unknown as MasterFolderTreeAdapterV3;
-  if (typeof maybeV3.apply === 'function') {
-    return maybeV3;
-  }
-
-  const legacy = adapter as {
-    loadNodes?: (() => Promise<UseMasterFolderTreeOptions['initialNodes']>) | undefined;
-    applyOperation?: (
-      operation: MasterFolderTreePersistOperation,
-      context: {
-        previousNodes: UseMasterFolderTreeOptions['initialNodes'];
-        nextNodes: UseMasterFolderTreeOptions['initialNodes'];
-      }
-    ) => Promise<UseMasterFolderTreeOptions['initialNodes'] | void>;
-  };
-
-  return {
-    ...(legacy.loadNodes
-      ? {
-        fetchState: async (_instanceId?: string) => ({
-          nodes: (await legacy.loadNodes?.()) ?? [],
-          version: 0,
-        }),
-      }
-      : {}),
-    prepare: async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> =>
-      createPreparedTx(tx),
-    apply: async (
-      tx: FolderTreeTransaction,
-      _prepared: FolderTreePreparedTransaction
-    ): Promise<FolderTreeAppliedTransaction | void> => {
-      const applyOperation = legacy.applyOperation;
-      if (!applyOperation) return;
-      const result = await applyOperation(tx.operation, {
-        previousNodes: tx.previousNodes,
-        nextNodes: tx.nextNodes,
-      });
-      if (!result) return createAppliedTx(tx);
-      return {
-        tx,
-        appliedAt: Date.now(),
-        nodes: result,
-      };
-    },
-    commit: async (): Promise<void> => {
-      // no-op for legacy adapters
-    },
-    rollback: async (): Promise<void> => {
-      // no-op for legacy adapters
-    },
-  };
-};
-
 const withUndoEntry = (
   state: FolderTreeState,
   label: string,
@@ -242,7 +183,7 @@ export function useFolderTreeInstanceV2(
     instanceId,
   } = options;
   const maxUndoEntries = Math.max(1, maxUndoEntriesInput ?? 50);
-  const adapter = useMemo(() => toV3Adapter(options.adapter), [options.adapter]);
+  const adapter = useMemo(() => options.adapter, [options.adapter]);
   const txVersionRef = useRef(0);
   const runtime = useMasterFolderTreeRuntime();
   const undoRef = useRef<() => Promise<MasterFolderTreeActionResult>>(async () =>
@@ -294,13 +235,11 @@ export function useFolderTreeInstanceV2(
 
       let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
       try {
-        const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
+        const prepared = await adapter.prepare(tx);
         stage = 'apply';
         const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
         stage = 'commit';
-        if (adapter.commit) {
-          await adapter.commit(tx, applied);
-        }
+        await adapter.commit(tx, applied);
         return {
           ok: true,
           applied,
@@ -311,12 +250,10 @@ export function useFolderTreeInstanceV2(
         } else {
           runtime.recordMetric('transaction_rollback');
         }
-        if (adapter.rollback) {
-          try {
-            await adapter.rollback(tx, stage, error);
-          } catch {
-            // no-op
-          }
+        try {
+          await adapter.rollback(tx, stage, error);
+        } catch {
+          // no-op
         }
         return {
           ok: false,

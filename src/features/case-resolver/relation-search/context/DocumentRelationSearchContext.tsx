@@ -2,7 +2,15 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  type CaseResolverFile,
+  type ResultHeight,
+  type CaseRow,
+  type DocumentRelationFileTypeFilter,
+  type DocumentRelationSortMode,
+} from '@/shared/contracts/case-resolver';
+
+export type { ResultHeight, CaseRow };
 import type {
   NodeFileDocumentSearchRow,
   NodeFileDocumentSearchScope,
@@ -11,356 +19,286 @@ import {
   useCaseResolverViewContext,
   type SelectOption,
 } from '../../components/CaseResolverViewContext';
-import {
-  useDocumentRelationSearch,
-  type DocumentRelationFileTypeFilter,
-  type DocumentRelationSortMode,
-} from '../hooks/useDocumentRelationSearch';
+import { useDocumentRelationSearch } from '../hooks/useDocumentRelationSearch';
 import { normalizeSearchText } from '../../components/CaseResolverNodeFileUtils';
 
-export type ResultHeight = 'compact' | 'normal' | 'expanded';
+export type DocumentSearchScope = NodeFileDocumentSearchScope;
 
-export type CaseRow = {
-  file: Pick<CaseResolverFile, 'id' | 'name' | 'caseStatus'>;
-  signatureLabel: string;
-  docCount: number;
-};
-
-export interface DocumentRelationSearchContextValue {
-  // Config & Props
-  draftFileId: string;
-  isLocked: boolean;
-  onLinkFile: (fileId: string) => void;
-
-  // Search State
-  documentSearchScope: NodeFileDocumentSearchScope;
-  setDocumentSearchScope: (s: NodeFileDocumentSearchScope) => void;
+interface DocumentRelationSearchContextType {
+  // State from hook
+  documentSearchScope: DocumentSearchScope;
+  setDocumentSearchScope: (scope: DocumentSearchScope) => void;
   documentSearchQuery: string;
-  setDocumentSearchQuery: (q: string) => void;
+  setDocumentSearchQuery: (query: string) => void;
   selectedSearchFolderPath: string | null;
-  setSelectedSearchFolderPath: (p: string | null) => void;
+  setSelectedSearchFolderPath: (path: string | null) => void;
   caseSearchQuery: string;
-  setCaseSearchQuery: (q: string) => void;
+  setCaseSearchQuery: (query: string) => void;
   selectedDrillCaseId: string | null;
   setSelectedDrillCaseId: (id: string | null) => void;
   fileTypeFilter: DocumentRelationFileTypeFilter;
-  setFileTypeFilter: (f: DocumentRelationFileTypeFilter) => void;
+  setFileTypeFilter: (filter: DocumentRelationFileTypeFilter) => void;
   sortMode: DocumentRelationSortMode;
-  setSortMode: (m: DocumentRelationSortMode) => void;
-
-  // Filter options (from workspace context)
-  caseTagOptions: SelectOption[];
-  caseCategoryOptions: SelectOption[];
-
-  // Advanced Filter State
+  setSortMode: (mode: DocumentRelationSortMode) => void;
   dateFrom: string | null;
-  setDateFrom: (v: string | null) => void;
+  setDateFrom: (date: string | null) => void;
   dateTo: string | null;
-  setDateTo: (v: string | null) => void;
+  setDateTo: (date: string | null) => void;
   tagIdFilter: string | null;
-  setTagIdFilter: (v: string | null) => void;
+  setTagIdFilter: (id: string | null) => void;
   categoryIdFilter: string | null;
-  setCategoryIdFilter: (v: string | null) => void;
+  setCategoryIdFilter: (id: string | null) => void;
   resetFilters: () => void;
-  showFiltersBar: boolean;
-  setShowFiltersBar: React.Dispatch<React.SetStateAction<boolean>>;
-  filtersActiveCount: number;
 
   // UI State
   resultHeight: ResultHeight;
-  setResultHeight: (h: ResultHeight) => void;
+  setResultHeight: (height: ResultHeight) => void;
+  showFiltersBar: boolean;
+  setShowFiltersBar: (show: boolean) => void;
   selectedFileIds: Set<string>;
   setSelectedFileIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   previewFileId: string | null;
   setPreviewFileId: (id: string | null) => void;
 
-  // Derived Data
-  isCurrentCase: boolean;
-  isAllCases: boolean;
-  isDrillMode: boolean;
-  showDocTable: boolean;
-  documentSearchRows: NodeFileDocumentSearchRow[];
-  visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
-  visibleDrillRows: NodeFileDocumentSearchRow[];
-  currentDocRows: NodeFileDocumentSearchRow[];
-  visibleCaseRows: CaseRow[];
-  currentFolderPaths: string[];
-  drillSignatureLabel: string;
-  allVisibleSelected: boolean;
-  someVisibleSelected: boolean;
-  previewFile: CaseResolverFile | null;
-  previewRow: NodeFileDocumentSearchRow | null;
-
-  // Handlers
-  toggleFileSelection: (fileId: string) => void;
+  // Actions
+  onLinkFile: (fileId: string) => void;
+  isLocked: boolean;
+  handleLinkAll: () => Promise<void>;
   selectAllVisible: () => void;
   clearSelection: () => void;
-  handleLinkAll: () => void;
+  toggleFileSelection: (id: string) => void;
+
+  // Computed
+  isDrillMode: boolean;
+  showDocTable: boolean;
+  drillSignatureLabel: string;
+  caseTagOptions: SelectOption[];
+  caseCategoryOptions: SelectOption[];
+  documentSearchRows: NodeFileDocumentSearchRow[];
+  visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
+  visibleCaseRows: any[];
+  currentDocRows: NodeFileDocumentSearchRow[];
+  currentFolderPaths: string[];
+  filtersActiveCount: number;
+  allVisibleSelected: boolean;
+  someVisibleSelected: boolean;
+  previewRow: NodeFileDocumentSearchRow | null;
+  previewFile: CaseResolverFile | null;
 }
 
-const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextValue | null>(
-  null
-);
+const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextType | null>(null);
 
-export function useDocumentRelationSearchContext(): DocumentRelationSearchContextValue {
+export function useDocumentRelationSearchContext(): DocumentRelationSearchContextType {
   const context = useContext(DocumentRelationSearchContext);
   if (!context) {
     throw new Error(
-      'useDocumentRelationSearchContext must be used within DocumentRelationSearchProvider'
+      'useDocumentRelationSearchContext must be used within a DocumentRelationSearchProvider'
     );
   }
   return context;
 }
 
-export type DocumentRelationSearchProviderProps = {
+export interface DocumentRelationSearchProviderProps {
   children: React.ReactNode;
   draftFileId: string;
-  isLocked: boolean;
   onLinkFile: (fileId: string) => void;
-  defaultScope?: NodeFileDocumentSearchScope;
+  isLocked?: boolean;
+  defaultScope?: DocumentSearchScope;
   defaultSort?: DocumentRelationSortMode;
-};
+}
 
 export function DocumentRelationSearchProvider({
   children,
   draftFileId,
-  isLocked,
   onLinkFile,
-  defaultScope = 'case_scope',
-  defaultSort = 'name_asc',
+  isLocked = false,
+  defaultScope,
+  defaultSort,
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
-  const { state, caseTagOptions, caseCategoryOptions } = useCaseResolverViewContext();
-  const { workspace, activeCaseId, caseResolverIdentifiers } = state;
-
-  // ── Persisted preferences (SSR-safe, read-once on mount) ────────────────────
-  const savedPrefs = useMemo((): { scope?: string; sort?: string } => {
-    if (typeof window === 'undefined') return {};
-    try {
-      return JSON.parse(localStorage.getItem('cr-relation-search-prefs') ?? '{}') as {
-        scope?: string;
-        sort?: string;
-      };
-    } catch {
-      return {};
-    }
-  }, []);
-
-  const resolvedInitialScope =
-    (savedPrefs.scope as NodeFileDocumentSearchScope | undefined) ?? defaultScope;
-  const resolvedInitialSort =
-    (savedPrefs.sort as DocumentRelationSortMode | undefined) ?? defaultSort;
-
-  const originalFile = workspace.files.find((f) => f.id === draftFileId);
-  const excludeFileIds = useMemo(
-    () => [draftFileId, ...(originalFile?.relatedFileIds ?? [])],
-    [draftFileId, originalFile?.relatedFileIds]
-  );
-
-  const search = useDocumentRelationSearch({
-    workspace,
-    activeCaseId,
-    caseResolverIdentifiers,
-    excludeFileIds,
-    initialScope: resolvedInitialScope,
-    initialSort: resolvedInitialSort,
-  });
+  const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } =
+    useCaseResolverViewContext();
 
   const [resultHeight, setResultHeight] = useState<ResultHeight>('normal');
   const [showFiltersBar, setShowFiltersBar] = useState(false);
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
 
-  // Persist scope + sort to localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(
-      'cr-relation-search-prefs',
-      JSON.stringify({ scope: search.documentSearchScope, sort: search.sortMode })
-    );
-  }, [search.documentSearchScope, search.sortMode]);
+  const searchProps = useDocumentRelationSearch({
+    workspace,
+    activeCaseId: null, // Global search for relations
+    caseResolverIdentifiers,
+    excludeFileIds: [draftFileId],
+    initialScope: defaultScope,
+    initialSort: defaultSort,
+  });
 
-  // Clear selection on scope or drill change
+  const {
+    documentSearchScope,
+    selectedDrillCaseId,
+    documentSearchRows,
+    visibleDocumentSearchRows,
+    visibleCaseRows,
+    folderTree,
+    documentSearchQuery,
+    dateFrom,
+    dateTo,
+    tagIdFilter,
+    categoryIdFilter,
+    fileTypeFilter,
+  } = searchProps;
+
+  // Reset selection when scope or filters change
   useEffect(() => {
     setSelectedFileIds(new Set());
-  }, [search.documentSearchScope]);
+  }, [documentSearchScope, documentSearchQuery, dateFrom, dateTo, tagIdFilter, categoryIdFilter]);
 
-  useEffect(() => {
-    setSelectedFileIds(new Set());
-  }, [search.selectedDrillCaseId]);
+  const isDrillMode = documentSearchScope === 'all_cases' && selectedDrillCaseId !== null;
+  const showDocTable = documentSearchScope === 'case_scope' || isDrillMode;
 
-  // Derived booleans
-  const isCurrentCase = search.documentSearchScope === 'case_scope';
-  const isAllCases = search.documentSearchScope === 'all_cases';
-  const isDrillMode = isAllCases && search.selectedDrillCaseId !== null;
-  const showDocTable = isCurrentCase || isDrillMode;
-
-  // Drill rows
   const drillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (!search.selectedDrillCaseId) return [];
-    return search.documentSearchRows.filter(
-      (row) => row.file.parentCaseId === search.selectedDrillCaseId
-    );
-  }, [search.documentSearchRows, search.selectedDrillCaseId]);
+    if (!selectedDrillCaseId) return [];
+    return documentSearchRows.filter((row) => row.file.parentCaseId === selectedDrillCaseId);
+  }, [documentSearchRows, selectedDrillCaseId]);
 
   const visibleDrillRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const q = normalizeSearchText(search.documentSearchQuery);
-    const rows = q ? drillRows.filter((row) => row.searchable.includes(q)) : [...drillRows];
-    if (search.sortMode === 'name_asc') rows.sort((a, b) => a.file.name.localeCompare(b.file.name));
-    else if (search.sortMode === 'folder_asc')
-      rows.sort((a, b) => a.folderPath.localeCompare(b.folderPath));
-    else if (search.sortMode === 'date_desc')
-      rows.sort((a, b) =>
-        (b.file.documentDate?.isoDate ?? '').localeCompare(a.file.documentDate?.isoDate ?? '')
-      );
-    else if (search.sortMode === 'date_asc')
-      rows.sort((a, b) =>
-        (a.file.documentDate?.isoDate ?? '').localeCompare(b.file.documentDate?.isoDate ?? '')
-      );
-    return rows;
-  }, [drillRows, search.documentSearchQuery, search.sortMode]);
+    const q = normalizeSearchText(documentSearchQuery);
+    if (!q) return drillRows;
+    return drillRows.filter((row) => row.searchable.includes(q));
+  }, [drillRows, documentSearchQuery]);
 
-  // Folder chips
-  const topLevelFolderPaths = useMemo(
-    () => search.folderTree.childPathsByParent.get(null) ?? [],
-    [search.folderTree]
+  const drillSignatureLabel = useMemo((): string => {
+    if (!selectedDrillCaseId) return '';
+    const caseRow = visibleCaseRows.find((r) => r.file.id === selectedDrillCaseId);
+    if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
+    return selectedDrillCaseId;
+  }, [selectedDrillCaseId, visibleCaseRows]);
+
+  const currentDocRows = isDrillMode ? visibleDrillRows : visibleDocumentSearchRows;
+  const currentFolderPaths = useMemo(() => {
+    if (isDrillMode) {
+      const seen = new Set<string>();
+      drillRows.forEach((row) => {
+        const top = row.folderSegments[0];
+        if (top) seen.add(top);
+      });
+      return Array.from(seen).sort();
+    }
+    return folderTree.childPathsByParent.get(null) ?? [];
+  }, [isDrillMode, drillRows, folderTree]);
+
+  const filtersActiveCount = useMemo(() => {
+    let count = 0;
+    if (dateFrom) count++;
+    if (dateTo) count++;
+    if (tagIdFilter) count++;
+    if (categoryIdFilter) count++;
+    if (fileTypeFilter !== 'all') count++;
+    return count;
+  }, [dateFrom, dateTo, tagIdFilter, categoryIdFilter, fileTypeFilter]);
+
+  const caseTagOptions = useMemo(
+    () => caseResolverTags.map((t) => ({ value: t.id, label: t.label })),
+    [caseResolverTags]
+  );
+  const caseCategoryOptions = useMemo(
+    () => caseResolverCategories.map((c) => ({ value: c.id, label: c.label })),
+    [caseResolverCategories]
   );
 
-  const drillTopLevelFolderPaths = useMemo((): string[] => {
-    if (!search.selectedDrillCaseId) return [];
-    const seen = new Set<string>();
-    drillRows.forEach((row) => {
-      const top = row.folderSegments[0];
-      if (top) seen.add(top);
-    });
-    return Array.from(seen).sort();
-  }, [drillRows, search.selectedDrillCaseId]);
-
-  // Drill case label
-  const drillSignatureLabel = useMemo((): string => {
-    if (!search.selectedDrillCaseId) return '';
-    const caseRow = search.visibleCaseRows.find((r) => r.file.id === search.selectedDrillCaseId);
-    if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
-    const anyRow = search.documentSearchRows.find(
-      (r) => r.file.parentCaseId === search.selectedDrillCaseId
-    );
-    return anyRow?.signatureLabel ?? search.selectedDrillCaseId;
-  }, [search.selectedDrillCaseId, search.visibleCaseRows, search.documentSearchRows]);
-
-  const currentFolderPaths = isDrillMode ? drillTopLevelFolderPaths : topLevelFolderPaths;
-  const currentDocRows = isDrillMode ? visibleDrillRows : search.visibleDocumentSearchRows;
-
-  // Filters active count
-  const filtersActiveCount = useMemo(() => {
-    let n = 0;
-    if (search.dateFrom !== null) n++;
-    if (search.dateTo !== null) n++;
-    if (search.tagIdFilter !== null) n++;
-    if (search.categoryIdFilter !== null) n++;
-    return n;
-  }, [search.dateFrom, search.dateTo, search.tagIdFilter, search.categoryIdFilter]);
-
-  // Multi-select helpers
-  const toggleFileSelection = React.useCallback((fileId: string) => {
+  const selectAllVisible = useCallback(() => {
     setSelectedFileIds((prev) => {
       const next = new Set(prev);
-      if (next.has(fileId)) next.delete(fileId);
-      else next.add(fileId);
+      currentDocRows.forEach((row) => next.add(row.file.id));
+      return next;
+    });
+  }, [currentDocRows]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedFileIds(new Set());
+  }, []);
+
+  const toggleFileSelection = useCallback((id: string) => {
+    setSelectedFileIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
 
-  const selectAllVisible = React.useCallback(() => {
-    setSelectedFileIds(new Set(currentDocRows.map((r) => r.file.id)));
-  }, [currentDocRows]);
+  const allVisibleSelected =
+    currentDocRows.length > 0 && currentDocRows.every((r) => selectedFileIds.has(r.file.id));
+  const someVisibleSelected = !allVisibleSelected && currentDocRows.some((r) => selectedFileIds.has(r.file.id));
 
-  const clearSelection = React.useCallback(() => setSelectedFileIds(new Set()), []);
-
-  const handleLinkAll = React.useCallback(() => {
-    selectedFileIds.forEach((id) => onLinkFile(id));
+  const handleLinkAll = useCallback(async () => {
+    if (selectedFileIds.size === 0) return;
+    const ids = Array.from(selectedFileIds);
+    for (const id of ids) {
+      onLinkFile(id);
+    }
     clearSelection();
   }, [selectedFileIds, onLinkFile, clearSelection]);
 
-  // Preview resolution
-  const previewFile = useMemo(
-    () => (previewFileId ? (workspace.files.find((f) => f.id === previewFileId) ?? null) : null),
-    [previewFileId, workspace.files]
-  );
   const previewRow = useMemo(
-    () =>
-      previewFileId
-        ? (search.documentSearchRows.find((r) => r.file.id === previewFileId) ?? null)
-        : null,
-    [previewFileId, search.documentSearchRows]
+    () => (previewFileId ? (currentDocRows.find((r) => r.file.id === previewFileId) ?? null) : null),
+    [currentDocRows, previewFileId]
   );
-
-  // Header checkbox state
-  const allVisibleSelected =
-    currentDocRows.length > 0 && currentDocRows.every((r) => selectedFileIds.has(r.file.id));
-  const someVisibleSelected =
-    currentDocRows.some((r) => selectedFileIds.has(r.file.id)) && !allVisibleSelected;
+  const previewFile = previewRow?.file ?? null;
 
   const value = useMemo(
-    (): DocumentRelationSearchContextValue => ({
-      draftFileId,
-      isLocked,
-      onLinkFile,
-      caseTagOptions,
-      caseCategoryOptions,
-      ...search,
-      showFiltersBar,
-      setShowFiltersBar,
-      filtersActiveCount,
+    () => ({
+      ...searchProps,
       resultHeight,
       setResultHeight,
+      showFiltersBar,
+      setShowFiltersBar,
       selectedFileIds,
       setSelectedFileIds,
       previewFileId,
       setPreviewFileId,
-      isCurrentCase,
-      isAllCases,
+      onLinkFile,
+      isLocked,
       isDrillMode,
       showDocTable,
-      visibleDrillRows,
-      currentDocRows,
-      currentFolderPaths,
       drillSignatureLabel,
-      allVisibleSelected,
-      someVisibleSelected,
-      previewFile,
-      previewRow,
-      toggleFileSelection,
-      selectAllVisible,
-      clearSelection,
-      handleLinkAll,
-    }),
-    [
-      draftFileId,
-      isLocked,
-      onLinkFile,
       caseTagOptions,
       caseCategoryOptions,
-      search,
-      showFiltersBar,
-      filtersActiveCount,
-      resultHeight,
-      selectedFileIds,
-      previewFileId,
-      isCurrentCase,
-      isAllCases,
-      isDrillMode,
-      showDocTable,
-      visibleDrillRows,
       currentDocRows,
       currentFolderPaths,
-      drillSignatureLabel,
-      allVisibleSelected,
-      someVisibleSelected,
-      previewFile,
-      previewRow,
-      toggleFileSelection,
+      filtersActiveCount,
       selectAllVisible,
       clearSelection,
+      toggleFileSelection,
       handleLinkAll,
+      allVisibleSelected,
+      someVisibleSelected,
+      previewRow,
+      previewFile,
+    }),
+    [
+      searchProps,
+      resultHeight,
+      showFiltersBar,
+      selectedFileIds,
+      previewFileId,
+      onLinkFile,
+      isLocked,
+      isDrillMode,
+      showDocTable,
+      drillSignatureLabel,
+      caseTagOptions,
+      caseCategoryOptions,
+      currentDocRows,
+      currentFolderPaths,
+      filtersActiveCount,
+      selectAllVisible,
+      clearSelection,
+      toggleFileSelection,
+      handleLinkAll,
+      allVisibleSelected,
+      someVisibleSelected,
+      previewRow,
+      previewFile,
     ]
   );
 

@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
-import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalytics';
+import { useTrackEventMutation } from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 
 const VISITOR_COOKIE = 'pa_vid';

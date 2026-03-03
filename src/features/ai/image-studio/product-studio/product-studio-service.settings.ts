@@ -10,6 +10,7 @@ import {
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/shared/lib/products/constants';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   normalizeProductStudioSequenceGenerationMode,
@@ -27,7 +28,8 @@ import {
 import { clampUpscaleScale } from './product-studio-service.io';
 
 export const resolveSequencingFromStudioSettings = (
-  studioSettings: ImageStudioSettings
+  studioSettings: ImageStudioSettings,
+  modelId: string | null = null
 ): ProductStudioSequencingConfig => {
   const sequenceConfig = studioSettings.projectSequencing;
   const activeSteps = resolveImageStudioSequenceActiveSteps(sequenceConfig).filter(
@@ -39,7 +41,7 @@ export const resolveSequencingFromStudioSettings = (
   const firstGenerateStep = activeSteps.find(
     (step) => step.type === 'generate' || step.type === 'regenerate'
   );
-  const currentSnapshot = buildImageStudioSequenceSnapshot(studioSettings);
+  const currentSnapshot = buildImageStudioSequenceSnapshot(studioSettings, { modelId });
   const savedSnapshotHash = trimString(sequenceConfig.snapshotHash);
   const savedSnapshotSavedAt = trimString(sequenceConfig.snapshotSavedAt);
   const savedSnapshotModelId = trimString(sequenceConfig.snapshotModelId);
@@ -101,11 +103,15 @@ export const resolveStudioSettingsBundle = async (
     throw badRequestError('Invalid Image Studio project id for settings lookup.');
   }
 
-  const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw] = await Promise.all([
-    getSettingValue(projectSettingsKey),
-    getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
-    getSettingValue(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY),
-  ]);
+  const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw, generationConfig] =
+    await Promise.all([
+      getSettingValue(projectSettingsKey),
+      getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
+      getSettingValue(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY),
+      resolveBrainExecutionConfigForCapability('image_studio.general', {
+        runtimeKind: 'image_generation',
+      }),
+    ]);
 
   const parsedSettings = hasPersistedSettingValue(projectSettingsRaw)
     ? parseImageStudioSettings(projectSettingsRaw)
@@ -119,11 +125,11 @@ export const resolveStudioSettingsBundle = async (
   });
   const sequenceGenerationMode =
     normalizeProductStudioSequenceGenerationMode(sequenceGenerationModeRaw);
-  const modelId = trimString(parsedSettings.targetAi.openai.model) ?? '';
+  const modelId = trimString(generationConfig.modelId) ?? '';
   return {
     parsedStudioSettings: parsedSettings,
     studioSettings: parsedSettings as unknown as Record<string, unknown>,
-    sequencing: resolveSequencingFromStudioSettings(parsedSettings),
+    sequencing: resolveSequencingFromStudioSettings(parsedSettings, modelId),
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,

@@ -4,7 +4,7 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { type DocumentRelationSortMode } from '../hooks/useDocumentRelationSearch';
+import type { DocumentRelationSortMode } from '@/shared/contracts/case-resolver';
 import {
   DocumentRelationSearchProvider,
   useDocumentRelationSearchContext,

@@ -211,11 +211,24 @@ const collectGenerationSourceContext = async (
   };
 };
 
-const resolveGenerationModel = (run: ImageStudioRunRecord): string | null => {
+const resolveGenerationModel = (
+  run: ImageStudioRunRecord,
+  executionMeta: ImageStudioRunExecutionMeta
+): string | null => {
+  if (isObjectRecord(executionMeta) && executionMeta['operation'] === 'generate') {
+    const modelUsed = executionMeta['modelUsed'];
+    if (typeof modelUsed === 'string' && modelUsed.trim()) {
+      return modelUsed.trim();
+    }
+  }
   if (!isObjectRecord(run.request.studioSettings)) return null;
-  const parsed = parseImageStudioSettings(JSON.stringify(run.request.studioSettings));
-  const model = parsed.targetAi.openai.model?.trim();
-  return model ? model : null;
+  try {
+    const parsed = parseImageStudioSettings(JSON.stringify(run.request.studioSettings));
+    const snapshotModelId = parsed.projectSequencing.snapshotModelId?.trim();
+    return snapshotModelId ? snapshotModelId : null;
+  } catch {
+    return null;
+  }
 };
 
 const createRunOutputSlotMetadata = (params: {
@@ -310,7 +323,8 @@ const materializeRunOutputSlots = async (params: {
   if (params.outputs.length === 0) return [];
   const sourceContext = await collectGenerationSourceContext(params.run);
   const operation = resolveRunOperation(params.run);
-  const model = operation === 'generate' ? resolveGenerationModel(params.run) : null;
+  const model =
+    operation === 'generate' ? resolveGenerationModel(params.run, params.executionMeta) : null;
   const outputCount = params.outputs.length;
   const generationCost = model
     ? estimateGenerationCost({

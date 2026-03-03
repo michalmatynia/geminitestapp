@@ -56,14 +56,11 @@ export type RightSidebarContextValue = {
   generationLabel: string;
   hasExtractedControls: boolean;
   modelSupportsSequenceGeneration: boolean;
-  modelValue: string;
-  onModelChange: (value: string) => void;
   onOpenControls: () => void;
   onOpenPromptControl: () => void;
   onOpenRequestPreview: () => void;
   onRunGeneration: () => void;
   onRunSequenceGeneration: () => void;
-  quickModelOptions: Array<{ value: string; label: string }>;
   selectedModelId: string;
   sequenceRunBusy: boolean;
 };

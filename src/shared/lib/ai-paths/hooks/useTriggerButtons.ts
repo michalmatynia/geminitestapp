@@ -78,7 +78,7 @@ export function useTriggerButtons({
 
     return all
       .filter((button: AiTriggerButtonRecord) => {
-        if (button.enabled === false || button.isActive === false) return false;
+        if (button.enabled === false) return false;
         if (!(button.locations ?? []).includes(location)) return false;
         if (!button.id || seen.has(button.id)) return false;
         seen.add(button.id);

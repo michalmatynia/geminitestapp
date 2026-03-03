@@ -1037,6 +1037,22 @@ export type ImageStudioRunRecord = {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  historyEvents?: Array<{
+    id: string;
+    type: string;
+    source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
+    message: string;
+    at: string;
+    payload?: Record<string, unknown>;
+  }>;
+};
+
+export type RunStudioEnqueueResult = {
+  ok: boolean;
+  runId: string;
+  status: ImageStudioRunStatus;
+  dispatchMode: 'queued' | 'inline';
+  expectedOutputs: number;
 };
 
 export type ImageStudioRunsResponse = {

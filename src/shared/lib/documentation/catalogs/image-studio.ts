@@ -1,7 +1,7 @@
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
-} from '@/shared/lib/documentation/types';
+} from '@/shared/contracts/documentation';
 
 import {
   IMAGE_STUDIO_CROP_DOC_KEYS,

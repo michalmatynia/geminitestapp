@@ -8,6 +8,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, SidePanel, Tooltip, useToast, EmptyState } from '@/shared/ui';
 
@@ -41,6 +42,9 @@ export function LeftSidebar(): React.JSX.Element {
   const { isFocusMode } = useUiState();
   const { studioSettings } = useSettingsState();
   const { saveStudioSettings, setStudioSettings } = useSettingsActions();
+  const generationModel = useBrainAssignment({
+    capability: 'image_studio.general',
+  });
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
@@ -359,7 +363,9 @@ export function LeftSidebar(): React.JSX.Element {
     setProjectSaveBusy(true);
     void (async (): Promise<void> => {
       const savedAt = new Date().toISOString();
-      const sequenceSnapshot = buildImageStudioSequenceSnapshot(studioSettings);
+      const sequenceSnapshot = buildImageStudioSequenceSnapshot(studioSettings, {
+        modelId: generationModel.effectiveModelId,
+      });
       const settingsPayload = {
         ...studioSettings,
         projectSequencing: {

@@ -414,16 +414,6 @@ export const promptExploderOperationModeSchema = z.enum([
 ]);
 export type PromptExploderOperationMode = z.infer<typeof promptExploderOperationModeSchema>;
 
-export const promptExploderAiProviderSchema = z.enum([
-  'auto',
-  'openai',
-  'anthropic',
-  'google',
-  'gemini',
-  'ollama',
-]);
-export type PromptExploderAiProvider = z.infer<typeof promptExploderAiProviderSchema>;
-
 export const promptExploderCaseResolverCaptureModeSchema = z.enum([
   'manual',
   'assisted',
@@ -520,37 +510,38 @@ export type PromptExploderCaseResolverExtractionMode = z.infer<
 
 export const promptExploderSettingsSchema = z.object({
   version: z.number(),
-  runtime: z.object({
-    ruleProfile: promptExploderRuntimeRuleProfileSchema,
-    validationRuleStack: z.string(),
-    allowValidationStackFallback: z.boolean().optional(),
-    caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
-    orchestratorEnabled: z.boolean().optional(),
-    benchmarkSuite: z.string().optional(),
-    benchmarkLowConfidenceThreshold: z.number().optional(),
-    benchmarkSuggestionLimit: z.number().optional(),
-    customBenchmarkCases: z.array(promptExploderBenchmarkCaseConfigSchema).optional(),
-  }),
-  learning: z.object({
-    enabled: z.boolean(),
-    similarityThreshold: z.number(),
-    templateMergeThreshold: z.number(),
-    benchmarkSuggestionUpsertTemplates: z.boolean().optional(),
-    minApprovalsForMatching: z.number(),
-    maxTemplates: z.number(),
-    autoActivateLearnedTemplates: z.boolean(),
-    templates: z.array(z.lazy(() => promptExploderLearnedTemplateSchema)),
-  }),
-  ai: z.object({
-    operationMode: promptExploderOperationModeSchema,
-    provider: promptExploderAiProviderSchema,
-    modelId: z.string(),
-    fallbackModelId: z.string(),
-    temperature: z.number(),
-    maxTokens: z.number(),
-  }),
+  runtime: z
+    .object({
+      ruleProfile: promptExploderRuntimeRuleProfileSchema,
+      validationRuleStack: z.string(),
+      allowValidationStackFallback: z.boolean().optional(),
+      caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
+      orchestratorEnabled: z.boolean().optional(),
+      benchmarkSuite: z.string().optional(),
+      benchmarkLowConfidenceThreshold: z.number().optional(),
+      benchmarkSuggestionLimit: z.number().optional(),
+      customBenchmarkCases: z.array(promptExploderBenchmarkCaseConfigSchema).optional(),
+    })
+    .strict(),
+  learning: z
+    .object({
+      enabled: z.boolean(),
+      similarityThreshold: z.number(),
+      templateMergeThreshold: z.number(),
+      benchmarkSuggestionUpsertTemplates: z.boolean().optional(),
+      minApprovalsForMatching: z.number(),
+      maxTemplates: z.number(),
+      autoActivateLearnedTemplates: z.boolean(),
+      templates: z.array(z.lazy(() => promptExploderLearnedTemplateSchema)),
+    })
+    .strict(),
+  ai: z
+    .object({
+      operationMode: promptExploderOperationModeSchema,
+    })
+    .strict(),
   patternSnapshots: z.array(z.lazy(() => promptExploderPatternSnapshotSchema)).optional(),
-});
+}).strict();
 
 export interface PromptExploderSettings {
   version: number;
@@ -577,11 +568,6 @@ export interface PromptExploderSettings {
   };
   ai: {
     operationMode: PromptExploderOperationMode;
-    provider: PromptExploderAiProvider;
-    modelId: string;
-    fallbackModelId: string;
-    temperature: number;
-    maxTokens: number;
   };
   patternSnapshots?: PromptExploderPatternSnapshot[];
 }
@@ -1061,10 +1047,8 @@ export type PromptExploderBenchmarkCaseConfigDto = PromptExploderBenchmarkCaseCo
 export type PromptExploderBenchmarkSuiteDto = PromptExploderBenchmarkSuite;
 export type PromptExploderBenchmarkSuggestionDto = PromptExploderBenchmarkSuggestion;
 export type PromptExploderOperationModeDto = PromptExploderOperationMode;
-export type PromptExploderAiProviderDto = PromptExploderAiProvider;
 export type PromptExploderCaseResolverCaptureModeDto = PromptExploderCaseResolverCaptureMode;
 export type PromptExploderSettingsDto = PromptExploderSettings;
-export type PromptExploderAiProviderDtoAlias = PromptExploderAiProviderDto;
 export type PromptExploderBindingDtoAlias = PromptExploderBindingDto;
 export type PromptExploderBindingOriginDtoAlias = PromptExploderBindingOriginDto;
 export type PromptExploderBindingTypeDtoAlias = PromptExploderBindingTypeDto;

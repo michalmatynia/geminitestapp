@@ -207,7 +207,33 @@ module.exports = tseslint.config(
       },
     },
     rules: {
-      // Client-side specific rules
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='fetchQuery']",
+          message:
+            'Use telemetrized manual query helpers from "@/shared/lib/query-factories-v2" instead of raw .fetchQuery(...).',
+        },
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='prefetchQuery']",
+          message:
+            'Use telemetrized manual query helpers from "@/shared/lib/query-factories-v2" instead of raw .prefetchQuery(...).',
+        },
+        {
+          selector:
+            "CallExpression[callee.type='MemberExpression'][callee.property.name='ensureQueryData']",
+          message:
+            'Use telemetrized manual query helpers from "@/shared/lib/query-factories-v2" instead of raw .ensureQueryData(...).',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/shared/lib/query-factories-v2.ts'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
   {

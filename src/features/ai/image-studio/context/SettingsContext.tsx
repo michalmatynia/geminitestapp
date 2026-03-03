@@ -11,8 +11,8 @@ import React, {
 } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -24,7 +24,6 @@ import {
   parseImageStudioSettings,
   type ImageStudioSettings,
   defaultImageStudioSettings,
-  normalizeImageStudioModelPresets,
 } from '@/features/ai/image-studio/utils/studio-settings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -72,18 +71,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(
     defaultImageStudioSettings
   );
-  const promptExtractModel = useBrainAssignment({
-    capability: 'image_studio.prompt_extract',
-  });
-  const uiExtractorModel = useBrainAssignment({
-    capability: 'image_studio.ui_extractor',
-  });
-  const generationModel = useBrainAssignment({
-    capability: 'image_studio.general',
-  });
   const hydratedSignatureRef = useRef<string | null>(null);
-  const modelPersistSignatureRef = useRef<string | null>(null);
-  const modelPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const liveProjectId = selectedProjectId.trim();
@@ -96,8 +84,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const studioProjectSettingsRaw = projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const studioSettingsRaw = studioProjectSettingsRaw ?? globalStudioSettingsRaw;
-  const openaiModelFallback = settingsStore.get('openai_model');
-  const settingsSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${openaiModelFallback ?? ''}`;
+  const settingsSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}`;
 
   useEffect(() => {
     if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading)
@@ -107,45 +94,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       return;
     }
 
-    const stored = parseImageStudioSettings(studioSettingsRaw);
-    const globalSettings = parseImageStudioSettings(globalStudioSettingsRaw);
-    const hasStoredStudioSettings = Boolean(
-      studioSettingsRaw && studioSettingsRaw.trim().length > 0
-    );
-    const hydratedBase: ImageStudioSettings =
-      openaiModelFallback && !hasStoredStudioSettings
-        ? {
-          ...stored,
-          targetAi: {
-            ...stored.targetAi,
-            openai: {
-              ...stored.targetAi.openai,
-              model: openaiModelFallback,
-              modelPresets: normalizeImageStudioModelPresets(
-                stored.targetAi.openai.modelPresets,
-                openaiModelFallback
-              ),
-            },
-          },
-        }
-        : stored;
-    const mergedModelPresets = normalizeImageStudioModelPresets(
-      [
-        ...globalSettings.targetAi.openai.modelPresets,
-        ...hydratedBase.targetAi.openai.modelPresets,
-      ],
-      hydratedBase.targetAi.openai.model
-    );
-    const hydrated: ImageStudioSettings = {
-      ...hydratedBase,
-      targetAi: {
-        ...hydratedBase.targetAi,
-        openai: {
-          ...hydratedBase.targetAi.openai,
-          modelPresets: mergedModelPresets,
+    let hydrated = defaultImageStudioSettings;
+    try {
+      hydrated = parseImageStudioSettings(studioSettingsRaw);
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          source: 'ImageStudioRuntimeSettings',
+          action: 'hydrateSettings',
         },
-      },
-    };
+      });
+    }
 
     setStudioSettings(hydrated);
     hydratedSignatureRef.current = settingsSignature;
@@ -157,88 +116,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     heavySettings.isLoading,
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
-    openaiModelFallback,
-    globalStudioSettingsRaw,
-  ]);
-
-  useEffect(() => {
-    if (!settingsLoaded) return;
-    if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading)
-      return;
-
-    const activeModel = studioSettings.targetAi.openai.model.trim();
-    if (!activeModel) return;
-    const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
-    if (!targetKey) return;
-
-    const normalizedPresets = normalizeImageStudioModelPresets(
-      studioSettings.targetAi.openai.modelPresets,
-      activeModel
-    );
-    const persisted = parseImageStudioSettings(studioSettingsRaw);
-    const persistedModel = persisted.targetAi.openai.model.trim();
-    const persistedPresets = normalizeImageStudioModelPresets(
-      persisted.targetAi.openai.modelPresets,
-      persistedModel
-    );
-
-    const presetsChanged =
-      normalizedPresets.length !== persistedPresets.length ||
-      normalizedPresets.some((entry: string, index: number) => entry !== persistedPresets[index]);
-    const modelChanged = activeModel !== persistedModel;
-    if (!modelChanged && !presetsChanged) {
-      modelPersistSignatureRef.current = null;
-      return;
-    }
-
-    const persistSignature = `${targetKey}:${activeModel}:${normalizedPresets.join('|')}`;
-    if (modelPersistSignatureRef.current === persistSignature) return;
-
-    if (modelPersistTimerRef.current) {
-      clearTimeout(modelPersistTimerRef.current);
-    }
-    modelPersistTimerRef.current = setTimeout(() => {
-      modelPersistSignatureRef.current = persistSignature;
-      const nextSettings: ImageStudioSettings = {
-        ...persisted,
-        targetAi: {
-          ...persisted.targetAi,
-          openai: {
-            ...persisted.targetAi.openai,
-            api: 'images',
-            model: activeModel,
-            modelPresets: normalizedPresets,
-          },
-        },
-      };
-      void updateSetting
-        .mutateAsync({
-          key: targetKey,
-          value: serializeSetting(nextSettings),
-        })
-        .catch(() => {
-          if (modelPersistSignatureRef.current === persistSignature) {
-            modelPersistSignatureRef.current = null;
-          }
-        });
-    }, 450);
-
-    return () => {
-      if (modelPersistTimerRef.current) {
-        clearTimeout(modelPersistTimerRef.current);
-        modelPersistTimerRef.current = null;
-      }
-    };
-  }, [
-    settingsLoaded,
-    settingsStore.isLoading,
-    heavySettings.isLoading,
-    userPreferencesQuery.isLoading,
-    studioSettings.targetAi.openai.model,
-    studioSettings.targetAi.openai.modelPresets,
-    projectSettingsKey,
-    studioSettingsRaw,
-    updateSetting,
+    settingsStore,
   ]);
 
   const saveStudioSettings = useCallback(
@@ -250,38 +128,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
       const scope: 'project' | 'global' = projectSettingsKey ? 'project' : 'global';
       const sourcePayload = options?.settingsOverride ?? studioSettings;
-      const effectivePromptExtractModel =
-        promptExtractModel.effectiveModelId.trim() ||
-        sourcePayload.promptExtraction.gpt.model.trim();
-      const effectiveUiExtractorModel =
-        uiExtractorModel.effectiveModelId.trim() || sourcePayload.uiExtractor.model.trim();
-      const effectiveGenerationModel =
-        generationModel.effectiveModelId.trim() || sourcePayload.targetAi.openai.model.trim();
-      const normalizedModelPresets = effectiveGenerationModel
-        ? normalizeImageStudioModelPresets(
-          sourcePayload.targetAi.openai.modelPresets,
-          effectiveGenerationModel
-        )
-        : sourcePayload.targetAi.openai.modelPresets;
       const payload: ImageStudioSettings = {
         ...sourcePayload,
-        promptExtraction: {
-          ...sourcePayload.promptExtraction,
-          gpt: {
-            ...sourcePayload.promptExtraction.gpt,
-            model: effectivePromptExtractModel,
-          },
-        },
-        uiExtractor: {
-          ...sourcePayload.uiExtractor,
-          model: effectiveUiExtractorModel,
-        },
         targetAi: {
           ...sourcePayload.targetAi,
           openai: {
             ...sourcePayload.targetAi.openai,
-            model: effectiveGenerationModel,
-            modelPresets: normalizedModelPresets,
+            api: 'images',
           },
         },
       };
@@ -350,14 +203,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       return result;
     },
     [
-      generationModel.effectiveModelId,
       heavySettings,
       projectSettingsKey,
-      promptExtractModel.effectiveModelId,
       settingsStore,
       studioSettings,
       toast,
-      uiExtractorModel.effectiveModelId,
       updateSetting,
     ]
   );
@@ -368,11 +218,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const handleRefreshSettings = useCallback((): void => {
     hydratedSignatureRef.current = null;
-    modelPersistSignatureRef.current = null;
-    if (modelPersistTimerRef.current) {
-      clearTimeout(modelPersistTimerRef.current);
-      modelPersistTimerRef.current = null;
-    }
     setSettingsLoaded(false);
     settingsStore.refetch();
     heavySettings.refetch().catch(() => {

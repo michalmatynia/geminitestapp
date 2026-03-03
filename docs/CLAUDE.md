@@ -48,6 +48,9 @@ to the canonical repo references.
   `src/shared/lib/observability/`
 - Shared query/data conventions: `src/shared/lib/query-factories-v2.ts`,
   `docs/ARCHITECTURE_GUARDRAILS.md`
+- Raw `queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and
+  `queryClient.ensureQueryData(...)` are forbidden outside the shared helper
+  implementation file.
 
 ## High-Signal Constraints
 

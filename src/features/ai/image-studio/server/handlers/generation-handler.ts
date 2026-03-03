@@ -16,6 +16,7 @@ import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   badRequestError,
@@ -144,9 +145,12 @@ export async function executeGenerationOperation(params: {
     throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
   }
 
-  const resolvedModel = settings.targetAi.openai.model?.trim() || null;
+  const generationConfig = await resolveBrainExecutionConfigForCapability('image_studio.general', {
+    runtimeKind: 'image_generation',
+  });
+  const resolvedModel = generationConfig.modelId.trim() || null;
   if (!resolvedModel) {
-    throw configurationError('Image Studio model is missing. Set it in Image Studio settings.');
+    throw configurationError('Image Studio model is missing. Configure it in AI Brain.');
   }
   const modelName = (resolvedModel ?? '').toLowerCase();
   const modelCapabilities = getImageModelCapabilities(resolvedModel);

@@ -51,7 +51,6 @@ export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema
 export const aiTriggerButtonSchema = dtoBaseSchema.extend({
   name: z.string(),
   iconId: z.string().nullable().optional(),
-  location: aiTriggerButtonLocationSchema.optional(),
   locations: z.array(aiTriggerButtonLocationSchema).optional(),
   mode: aiTriggerButtonModeSchema,
   display: aiTriggerButtonDisplaySchema,
@@ -60,10 +59,9 @@ export const aiTriggerButtonSchema = dtoBaseSchema.extend({
   textTemplate: z.string().nullable().optional(),
   contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   condition: z.string().nullable().optional(),
-  isActive: z.boolean(),
   enabled: z.boolean().optional(),
   sortIndex: z.number(),
-});
+}).strict();
 
 export type AiTriggerButtonDto = z.infer<typeof aiTriggerButtonSchema>;
 export type AiTriggerButtonRecord = AiTriggerButtonDto;
@@ -140,7 +138,6 @@ const normalizeLocationsForRead = (value: unknown): AiTriggerButtonLocation[] | 
 export const aiTriggerButtonRecordValidatorSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1),
-  icon: z.string().trim().min(1).nullable().optional(),
   iconId: z.string().trim().min(1).nullable().optional(),
   pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
   enabled: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
@@ -160,9 +157,8 @@ export const aiTriggerButtonRecordValidatorSchema = z.object({
   updatedAt: z
     .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
     .optional(),
-  isActive: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
   sortIndex: z.coerce.number().optional(),
-});
+}).strict();
 
 export const aiTriggerButtonCreatePayloadSchema = z.object({
   name: z.string().trim().min(1),
@@ -172,7 +168,7 @@ export const aiTriggerButtonCreatePayloadSchema = z.object({
   locations: z.array(aiTriggerButtonLocationSchema).min(1),
   mode: aiTriggerButtonModeSchema.optional().default('click'),
   display: aiTriggerButtonDisplayModeSchema.optional().default('icon_label'),
-});
+}).strict();
 
 export const aiTriggerButtonUpdatePayloadSchema = z
   .object({
@@ -184,13 +180,14 @@ export const aiTriggerButtonUpdatePayloadSchema = z
     mode: aiTriggerButtonModeSchema.optional(),
     display: aiTriggerButtonDisplayModeSchema.optional(),
   })
+  .strict()
   .refine((value) => Object.keys(value).length > 0, {
     message: 'No updates provided',
   });
 
 export const aiTriggerButtonReorderPayloadSchema = z.object({
   orderedIds: z.array(z.string().trim().min(1)),
-});
+}).strict();
 
 export type AiTriggerButtonCreatePayload = z.infer<typeof aiTriggerButtonCreatePayloadSchema>;
 export type AiTriggerButtonUpdatePayload = z.infer<typeof aiTriggerButtonUpdatePayloadSchema>;

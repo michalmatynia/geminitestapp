@@ -88,7 +88,7 @@ const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft 
   name: record?.name ?? '',
   iconId: record?.iconId ?? null,
   pathId: record?.pathId ?? null,
-  enabled: record?.enabled ?? record?.isActive ?? true,
+  enabled: record?.enabled ?? true,
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
   display: toDisplayMode(record),

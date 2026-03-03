@@ -60,8 +60,6 @@ export function CanvasBoard({
     setSvgConnectorTooltip,
     svgNodeDiagnosticsTooltip,
     setSvgNodeDiagnosticsTooltip,
-    rendererMode,
-    setRendererMode,
     showMinimap,
     setShowMinimap,
     viewportSize,
@@ -235,8 +233,6 @@ export function CanvasBoard({
         className={cn('relative h-full w-full overflow-hidden overscroll-none', viewportClassName)}
       >
         <CanvasControlPanel
-          rendererMode={rendererMode}
-          onRendererModeChange={setRendererMode}
           edgeRoutingMode={edgeRoutingMode}
           onEdgeRoutingModeChange={state.setEdgeRoutingMode}
           showMinimap={showMinimap}

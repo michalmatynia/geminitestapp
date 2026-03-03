@@ -2,21 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
-  type FolderTreeInstance,
-} from '@/shared/utils/folder-tree-profiles-v2';
-import {
-  FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
-  parseFolderTreeUiStateV1,
-} from '@/shared/utils/folder-tree-ui-state-v1';
+import { type FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  buildFolderTreeV2MigrationPayload,
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   getFolderTreeUiStateV2Key,
   parseFolderTreeUiStateV2Entry,
   serializeFolderTreeUiStateV2Entry,
@@ -76,88 +67,28 @@ export function useFolderTreeUiState(
   const runtime = useMasterFolderTreeRuntime();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
-  const updateSettingsBulk = useUpdateSettingsBulk();
-
-  const migrationMarker = settingsStore.get(FOLDER_TREE_V2_MIGRATION_MARKER_KEY);
-  const shouldReadLegacyState = !migrationMarker;
   const rawUiStateV2 = settingsStore.get(getFolderTreeUiStateV2Key(instance));
-  const rawUiStateV1 = shouldReadLegacyState
-    ? settingsStore.get(FOLDER_TREE_UI_STATE_V1_SETTING_KEY)
-    : undefined;
-  const rawProfilesV2Legacy = shouldReadLegacyState
-    ? settingsStore.get(FOLDER_TREE_PROFILES_V2_SETTING_KEY)
-    : undefined;
-
-  const migratedRef = useRef<boolean>(Boolean(migrationMarker));
-  const migrationRequestedRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    if (migratedRef.current) return;
-    if (migrationRequestedRef.current) return;
-    if (!shouldReadLegacyState) return;
-    if (settingsStore.isLoading || settingsStore.isFetching) return;
-
-    migrationRequestedRef.current = true;
-    void updateSettingsBulk
-      .mutateAsync(
-        buildFolderTreeV2MigrationPayload({
-          rawProfilesV2: rawProfilesV2Legacy,
-          rawUiStateV1,
-        })
-      )
-      .then(() => {
-        runtime.recordMetric('migration_success');
-        migratedRef.current = true;
-      })
-      .catch((error: unknown) => {
-        runtime.recordMetric('migration_failure');
-        migrationRequestedRef.current = false;
-        logClientError(error, {
-          context: {
-            source: 'useFolderTreeUiState',
-            action: 'migrateFolderTreeV2Settings',
-            instance,
-          },
-        });
-      });
-  }, [
-    instance,
-    rawProfilesV2Legacy,
-    rawUiStateV1,
-    settingsStore.isFetching,
-    settingsStore.isLoading,
-    shouldReadLegacyState,
-    runtime,
-    updateSettingsBulk,
-  ]);
-
-  const legacyUiEntry = useMemo(
-    () => parseFolderTreeUiStateV1(rawUiStateV1)[instance],
-    [instance, rawUiStateV1]
-  );
 
   const uiEntry = useMemo<FolderTreeUiStateV2Entry>(() => {
-    if (rawUiStateV2 !== undefined) {
+    try {
       return parseFolderTreeUiStateV2Entry(rawUiStateV2);
+    } catch (error) {
+      runtime.recordMetric('settings_validation_failure');
+      logClientError(error, {
+        context: {
+          source: 'useFolderTreeUiState',
+          action: 'parseFolderTreeUiStateV2',
+          instance,
+        },
+      });
+      throw error;
     }
-    if (migratedRef.current || migrationMarker) {
-      return parseFolderTreeUiStateV2Entry(undefined);
-    }
-    return {
-      expandedNodeIds: legacyUiEntry.expandedNodeIds,
-      panelCollapsed: legacyUiEntry.panelCollapsed,
-    };
-  }, [legacyUiEntry.expandedNodeIds, legacyUiEntry.panelCollapsed, migrationMarker, rawUiStateV2]);
+  }, [instance, rawUiStateV2, runtime]);
 
-  const hasPersistedUiStateV2 = rawUiStateV2 !== undefined;
-  const hasPersistedUiStateLegacy = shouldReadLegacyState && rawUiStateV1 !== undefined;
-  const hasPersistedState = hasPersistedUiStateV2 || hasPersistedUiStateLegacy;
+  const hasPersistedState = rawUiStateV2 !== undefined;
   const isExpandedNodeIdsControlled = controlledExpandedNodeIds !== undefined;
-  const persistedExpandedNodeIds = hasPersistedUiStateV2
-    ? uiEntry.expandedNodeIds
-    : uiEntry.expandedNodeIds.length > 0
-      ? uiEntry.expandedNodeIds
-      : undefined;
+  const persistedExpandedNodeIds =
+    rawUiStateV2 !== undefined ? uiEntry.expandedNodeIds : undefined;
   const resolvedExpandedNodeIds = persistedExpandedNodeIds ?? controlledExpandedNodeIds;
   const resolvedInitialExpandedNodeIds =
     persistedExpandedNodeIds !== undefined

@@ -39,6 +39,27 @@ const createContext = (
   nextNodes,
 });
 
+const applyOperation = async (
+  adapter: ReturnType<typeof createNotesMasterTreeAdapter>,
+  operation: Parameters<typeof createContext>[0] extends never
+    ? never
+    : {
+        type: 'move' | 'reorder' | 'rename';
+        [key: string]: unknown;
+      },
+  context: MasterFolderTreePersistContext
+): Promise<void> => {
+  const tx = {
+    id: `tx_${Date.now()}`,
+    version: 1,
+    createdAt: Date.now(),
+    operation,
+    previousNodes: context.previousNodes,
+    nextNodes: context.nextNodes,
+  };
+  await adapter.apply(tx, await adapter.prepare(tx));
+};
+
 describe('resolveNotesFolderTargetForNode', () => {
   it('resolves folder ancestors for note nodes', () => {
     const workFolderNodeId = toFolderMasterNodeId('work');
@@ -64,7 +85,8 @@ describe('createNotesMasterTreeAdapter', () => {
     };
     const adapter = createNotesMasterTreeAdapter(operations);
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toNoteMasterNodeId('note-1'),
@@ -89,7 +111,8 @@ describe('createNotesMasterTreeAdapter', () => {
     const adapter = createNotesMasterTreeAdapter(operations);
     const nextNodes: MasterTreeNode[] = [folderNode('alpha', null, 0), folderNode('beta', null, 1)];
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toFolderMasterNodeId('beta'),
@@ -120,7 +143,8 @@ describe('createNotesMasterTreeAdapter', () => {
       noteNode('target-note', workFolderNodeId, 0),
     ];
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toFolderMasterNodeId('archive'),
@@ -130,7 +154,8 @@ describe('createNotesMasterTreeAdapter', () => {
       createContext(nextNodes, nextNodes)
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toNoteMasterNodeId('moving-note'),
@@ -155,7 +180,8 @@ describe('createNotesMasterTreeAdapter', () => {
     };
     const adapter = createNotesMasterTreeAdapter(operations);
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'rename',
         nodeId: toNoteMasterNodeId('note-1'),
@@ -164,7 +190,8 @@ describe('createNotesMasterTreeAdapter', () => {
       createContext([], [])
     );
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'rename',
         nodeId: toFolderMasterNodeId('work'),

@@ -95,50 +95,6 @@ export type ActivityRepository = {
 };
 
 /**
- * System Logging DTOs (Legacy/Simplified)
- */
-
-export const legacyLogLevelSchema = z.enum(['info', 'warn', 'error', 'debug']);
-export type LegacyLogLevelDto = z.infer<typeof legacyLogLevelSchema>;
-
-export const legacySystemLogInputSchema = z.object({
-  level: legacyLogLevelSchema,
-  category: z.string(),
-  message: z.string(),
-  context: z.record(z.string(), z.unknown()).optional(),
-  userId: z.string().optional(),
-});
-
-export type LegacySystemLogInputDto = z.infer<typeof legacySystemLogInputSchema>;
-
-export const legacyListSystemLogsInputSchema = z.object({
-  level: legacyLogLevelSchema.optional(),
-  category: z.string().optional(),
-  userId: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  limit: z.number().optional(),
-  offset: z.number().optional(),
-});
-
-export type LegacyListSystemLogsInputDto = z.infer<typeof legacyListSystemLogsInputSchema>;
-
-export const legacyListSystemLogsResultSchema = z.object({
-  logs: z.array(
-    z.intersection(
-      legacySystemLogInputSchema,
-      z.object({
-        id: z.string(),
-        timestamp: z.string(),
-      })
-    )
-  ),
-  total: z.number(),
-});
-
-export type LegacyListSystemLogsResultDto = z.infer<typeof legacyListSystemLogsResultSchema>;
-
-/**
  * System Database Migration DTOs
  */
 

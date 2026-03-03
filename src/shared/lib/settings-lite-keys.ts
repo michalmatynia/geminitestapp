@@ -1,7 +1,6 @@
 import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
 } from '@/shared/contracts/master-folder-tree';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
@@ -32,7 +31,6 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   'case_resolver_settings_v1',
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,

@@ -4,63 +4,26 @@ import { useMemo } from 'react';
 import {
   getImageModelCapabilities,
   isGpt52ImageModel,
-  uniqueSortedModelIds,
 } from '@/features/ai/image-studio/utils/image-models';
-import { normalizeImageStudioModelPresets } from '@/features/ai/image-studio/utils/studio-settings';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useModelAwareSettings({
   studioSettings,
-  imageModelsQuery,
+  generationModelId,
 }: {
   studioSettings: ImageStudioSettings;
-  imageModelsQuery: UseQueryResult<{ models?: string[] }, Error>;
+  generationModelId: string;
 }) {
-  const quickSwitchModels = useMemo(() => {
-    return normalizeImageStudioModelPresets(
-      studioSettings.targetAi.openai.modelPresets,
-      studioSettings.targetAi.openai.model
-    );
-  }, [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]);
-
-  const selectedGenerationModel = useMemo(() => {
-    const currentModel = studioSettings.targetAi.openai.model?.trim() || '';
-    if (currentModel && quickSwitchModels.includes(currentModel)) return currentModel;
-    return quickSwitchModels[0] ?? '';
-  }, [quickSwitchModels, studioSettings.targetAi.openai.model]);
-
-  const generationModelOptions = useMemo(() => {
-    const discovered = Array.isArray(imageModelsQuery.data?.models)
-      ? imageModelsQuery.data.models
-      : [];
-    const currentModel = studioSettings.targetAi.openai.model?.trim() || '';
-    return uniqueSortedModelIds([
-      ...discovered,
-      ...quickSwitchModels,
-      ...(currentModel ? [currentModel] : []),
-    ]);
-  }, [imageModelsQuery.data?.models, quickSwitchModels, studioSettings.targetAi.openai.model]);
-
-  const addableGenerationModelOptions = useMemo(() => {
-    return generationModelOptions
-      .filter((modelId) => !quickSwitchModels.includes(modelId))
-      .map((modelId) => ({ value: modelId, label: modelId }));
-  }, [generationModelOptions, quickSwitchModels]);
-
-  const quickSwitchModelSelectOptions = useMemo(
-    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
-    [quickSwitchModels]
-  );
+  const resolvedGenerationModelId = generationModelId.trim();
 
   const modelCapabilities = useMemo(
-    () => getImageModelCapabilities(studioSettings.targetAi.openai.model),
-    [studioSettings.targetAi.openai.model]
+    () => getImageModelCapabilities(resolvedGenerationModelId),
+    [resolvedGenerationModelId]
   );
 
   const isGpt52Model = useMemo(
-    () => isGpt52ImageModel(studioSettings.targetAi.openai.model),
-    [studioSettings.targetAi.openai.model]
+    () => isGpt52ImageModel(resolvedGenerationModelId),
+    [resolvedGenerationModelId]
   );
 
   const modelAwareSizeValue = useMemo(() => {
@@ -124,10 +87,6 @@ export function useModelAwareSettings({
   );
 
   return {
-    quickSwitchModels,
-    selectedGenerationModel,
-    addableGenerationModelOptions,
-    quickSwitchModelSelectOptions,
     modelCapabilities,
     isGpt52Model,
     modelAwareSizeValue,

@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 import { StatusBadge, Tooltip } from '@/shared/ui';
-import type { CaseRow } from '../../context/DocumentRelationSearchContext';
+import type { CaseRow } from '@/shared/contracts/case-resolver';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 
 export interface CaseTableColumnProps {

@@ -1,11 +1,10 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import type {
   DatabaseEngineStatus,
-  DatabaseEngineOperationJob,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
   RedisOverview,
@@ -70,19 +69,7 @@ export interface UseDatabaseEngineStateReturn {
   saveSettings: () => Promise<void>;
   isDirty: boolean;
   refetchAll: () => void;
-  // Legacy aliases kept for backward compatibility with existing page components.
-  policyDraft: DatabaseEnginePolicy;
-  setPolicyDraft: Dispatch<SetStateAction<DatabaseEnginePolicy>>;
-  collectionRouteMapDraft: Record<string, string>;
-  setCollectionRouteMapDraft: Dispatch<SetStateAction<Record<string, string>>>;
-  operationJobs: DatabaseEngineOperationJob[];
-  workspaceView: DatabaseEngineWorkspaceView;
-  setView: (view: DatabaseEngineWorkspaceView) => void;
-  isFetching: boolean;
   validationErrors: string[];
-  saveConfiguration: () => Promise<void>;
-  refetch: () => void;
-  saving: boolean;
 }
 
 export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
@@ -224,11 +211,27 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       setIsDirty(true);
     },
     updateServiceRoute: (service, provider) => {
-      setServiceRouteMap((prev) => ({ ...prev, [service]: provider }));
+      setServiceRouteMap((prev) => {
+        const next = { ...prev };
+        if (provider === 'auto') {
+          delete next[service];
+        } else {
+          next[service] = provider;
+        }
+        return next;
+      });
       setIsDirty(true);
     },
     updateCollectionRoute: (collection, provider) => {
-      setCollectionRouteMap((prev) => ({ ...prev, [collection]: provider }));
+      setCollectionRouteMap((prev) => {
+        const next = { ...prev };
+        if (provider === 'auto') {
+          delete next[collection];
+        } else {
+          next[collection] = provider;
+        }
+        return next;
+      });
       setIsDirty(true);
     },
     updateBackupSchedule: (updates) => {
@@ -249,30 +252,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       void schemaQuery.refetch();
       void redisOverviewQuery.refetch();
     },
-    // Legacy aliases
-    policyDraft: policy,
-    setPolicyDraft: setPolicy,
-    collectionRouteMapDraft: collectionRouteMap,
-    setCollectionRouteMapDraft: setCollectionRouteMap,
-    operationJobs: operationsJobsQuery.data?.jobs ?? [],
-    workspaceView: activeView,
-    setView: setActiveView,
-    isFetching:
-      engineStatusQuery.isFetching ||
-      backupSchedulerStatusQuery.isFetching ||
-      operationsJobsQuery.isFetching ||
-      schemaQuery.isFetching ||
-      redisOverviewQuery.isFetching,
     validationErrors: [],
-    saveConfiguration: handleSave,
-    refetch: () => {
-      void engineStatusQuery.refetch();
-      void backupSchedulerStatusQuery.refetch();
-      void operationsJobsQuery.refetch();
-      void providerPreviewQuery.refetch();
-      void schemaQuery.refetch();
-      void redisOverviewQuery.refetch();
-    },
-    saving: updateSettingsBulk.isPending,
   };
 }

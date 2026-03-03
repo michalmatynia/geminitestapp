@@ -65,6 +65,7 @@ const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 export function CenterPreviewInner(): React.JSX.Element {
+  const queryClient = useQueryClient();
   const { isFocusMode, maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } =
     useUiState();
   const {
@@ -93,7 +94,6 @@ export function CenterPreviewInner(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const queryClient = useQueryClient();
   const { landingSlots, activeRunError, activeRunId, activeRunSourceSlotId } = useGenerationState();
   const { clearActiveRunError } = useGenerationActions();
 
@@ -481,7 +481,7 @@ export function CenterPreviewInner(): React.JSX.Element {
           slots,
           toast,
           variant,
-        });
+        } as any);
       } catch (error: unknown) {
         toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
           variant: 'error',
@@ -602,7 +602,7 @@ export function CenterPreviewInner(): React.JSX.Element {
             slots,
             toast,
             variant,
-          });
+          } as any);
           setCompareVariantIds((prev) => [
             prev[0] === variant.id ? null : prev[0],
             prev[1] === variant.id ? null : prev[1],

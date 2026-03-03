@@ -45,6 +45,7 @@ type ResolvedNodeFileSnapshotState = {
   isLoading: boolean;
   snapshot: CaseResolverNodeFileSnapshot;
   source: 'keyed' | 'inline_legacy' | 'empty_default';
+  validationErrorMessage: string | null;
 };
 
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
@@ -336,6 +337,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     isLoading: false,
     snapshot: createEmptyNodeFileSnapshot(),
     source: 'empty_default',
+    validationErrorMessage: null,
   });
 
   useEffect(() => {
@@ -344,6 +346,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
         isLoading: false,
         snapshot: createEmptyNodeFileSnapshot(),
         source: 'empty_default',
+        validationErrorMessage: null,
       });
       return;
     }
@@ -358,6 +361,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       isLoading: true,
       snapshot: inlineSnapshot,
       source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+      validationErrorMessage: null,
     });
 
     let isCancelled = false;
@@ -372,6 +376,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
           isLoading: false,
           snapshot: keyedSnapshot,
           source: 'keyed',
+          validationErrorMessage: null,
         });
         return;
       }
@@ -379,6 +384,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
         isLoading: false,
         snapshot: inlineSnapshot,
         source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+        validationErrorMessage: null,
       });
     })();
 
@@ -416,6 +422,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
         isLoading: false,
         snapshot: updated,
         source: 'keyed',
+        validationErrorMessage: null,
       });
       return true;
     },
@@ -459,6 +466,8 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       initialLoading={false}
       initialRuntimeState={{
         status: 'idle',
+        runId: null,
+        runStartedAt: null,
         nodeStatuses: {},
         nodeOutputs: {},
         variables: {},

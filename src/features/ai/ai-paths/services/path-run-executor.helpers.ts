@@ -64,6 +64,8 @@ export const isMissingRunUpdateError = (error: unknown): boolean => {
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',
+  runId: null,
+  runStartedAt: null,
   nodeStatuses: {},
   nodeOutputs: {},
   variables: {},

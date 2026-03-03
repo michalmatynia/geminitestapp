@@ -4,7 +4,6 @@ import React, {
   createContext,
   useContext,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -31,8 +30,6 @@ import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
-  normalizeImageStudioModelPresets,
-  parseImageStudioSettings,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
 
@@ -80,10 +77,7 @@ export function ImageStudioSettingsProvider({
   const [backfillDryRun, setBackfillDryRun] = useState<boolean>(true);
   const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] =
     useState<boolean>(true);
-  const [modelToAdd, setModelToAdd] = useState<string>('');
   const hydratedSignatureRef = useRef<string | null>(null);
-  const presetPersistSignatureRef = useRef<string | null>(null);
-  const presetPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
   const promptEngineSettings = useMemo(
@@ -110,10 +104,9 @@ export function ImageStudioSettingsProvider({
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const projectStudioSettingsRaw = projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const studioSettingsRaw = projectStudioSettingsRaw ?? globalStudioSettingsRaw;
-  const openaiModelFallback = settingsStore.get('openai_model');
   const apiKeyFallback =
     settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
-  const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${openaiModelFallback ?? ''}:${apiKeyFallback}:${promptEngineRaw ?? ''}`;
+  const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${apiKeyFallback}:${promptEngineRaw ?? ''}`;
 
   useSettingsHydration({
     settingsStore,
@@ -123,17 +116,13 @@ export function ImageStudioSettingsProvider({
     settingsLoaded,
     setSettingsLoaded,
     studioSettingsRaw,
-    globalStudioSettingsRaw,
-    openaiModelFallback,
     apiKeyFallback,
-    promptEngineRaw,
     setStudioSettings,
     setAdvancedOverridesText,
     setImageStudioApiKey,
     setPromptValidationEnabled,
     setPromptValidationRulesText,
     setPromptValidationRulesError,
-    setModelToAdd,
     hydrationSignature,
   });
 
@@ -199,13 +188,10 @@ export function ImageStudioSettingsProvider({
       return;
     }
 
-    const effectivePromptExtractModel =
-      promptExtractModel.effectiveModelId.trim() ||
-      studioSettings.promptExtraction.gpt.model.trim();
     if (
       (studioSettings.promptExtraction.mode === 'gpt' ||
         studioSettings.promptExtraction.mode === 'hybrid') &&
-      !effectivePromptExtractModel
+      !promptExtractModel.effectiveModelId.trim()
     ) {
       toast('Configure Image Studio Prompt Extract in AI Brain first.', {
         variant: 'error',
@@ -213,48 +199,26 @@ export function ImageStudioSettingsProvider({
       return;
     }
 
-    const effectiveUiExtractorModel =
-      uiExtractorModel.effectiveModelId.trim() || studioSettings.uiExtractor.model.trim();
     if (
       (studioSettings.uiExtractor.mode === 'ai' || studioSettings.uiExtractor.mode === 'both') &&
-      !effectiveUiExtractorModel
+      !uiExtractorModel.effectiveModelId.trim()
     ) {
       toast('Configure Image Studio UI Extractor in AI Brain first.', { variant: 'error' });
       return;
     }
 
-    const activeGenerationModel =
-      generationModel.effectiveModelId.trim() || studioSettings.targetAi.openai.model.trim();
-    if (!activeGenerationModel) {
+    if (!generationModel.effectiveModelId.trim()) {
       toast('Configure Image Studio Image Generation in AI Brain first.', { variant: 'error' });
       return;
     }
 
-    const normalizedModelPresets = normalizeImageStudioModelPresets(
-      studioSettings.targetAi.openai.modelPresets,
-      activeGenerationModel
-    );
-
     const nextStudioSettings: ImageStudioSettings = {
       ...studioSettings,
-      promptExtraction: {
-        ...studioSettings.promptExtraction,
-        gpt: {
-          ...studioSettings.promptExtraction.gpt,
-          model: effectivePromptExtractModel,
-        },
-      },
-      uiExtractor: {
-        ...studioSettings.uiExtractor,
-        model: effectiveUiExtractorModel,
-      },
       targetAi: {
         ...studioSettings.targetAi,
         openai: {
           ...studioSettings.targetAi.openai,
           api: 'images',
-          model: activeGenerationModel,
-          modelPresets: normalizedModelPresets,
         },
       },
     };
@@ -332,89 +296,7 @@ export function ImageStudioSettingsProvider({
       JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
     );
     setPromptValidationRulesError(null);
-    setModelToAdd('');
   }, []);
-
-  const persistGenerationModelPresets = useCallback(
-    (nextModel: string, nextPresets: string[]): void => {
-      const normalizedModel = nextModel.trim();
-      if (!normalizedModel) return;
-      const normalizedPresets = normalizeImageStudioModelPresets(nextPresets, normalizedModel);
-      const targetProjectId = selectedProjectId.trim() || activeProjectId.trim();
-      const targetSettingsKey =
-        getImageStudioProjectSettingsKey(targetProjectId) ?? IMAGE_STUDIO_SETTINGS_KEY;
-      const persistedRaw = heavyMap.get(targetSettingsKey) ?? studioSettingsRaw;
-      const persistedSettings = parseImageStudioSettings(persistedRaw);
-      const persistedModel = persistedSettings.targetAi.openai.model.trim();
-      const persistedPresets = normalizeImageStudioModelPresets(
-        persistedSettings.targetAi.openai.modelPresets,
-        persistedModel
-      );
-
-      const presetsChanged =
-        normalizedPresets.length !== persistedPresets.length ||
-        normalizedPresets.some((entry: string, index: number) => entry !== persistedPresets[index]);
-      const modelChanged = normalizedModel !== persistedModel;
-      if (!modelChanged && !presetsChanged) {
-        presetPersistSignatureRef.current = null;
-        return;
-      }
-
-      const persistSignature = `${targetSettingsKey}:${normalizedModel}:${normalizedPresets.join('|')}`;
-      if (presetPersistSignatureRef.current === persistSignature) return;
-
-      if (presetPersistTimerRef.current) {
-        clearTimeout(presetPersistTimerRef.current);
-      }
-      presetPersistTimerRef.current = setTimeout(() => {
-        presetPersistSignatureRef.current = persistSignature;
-        const nextPersistedSettings = {
-          ...persistedSettings,
-          targetAi: {
-            ...persistedSettings.targetAi,
-            openai: {
-              ...persistedSettings.targetAi.openai,
-              api: 'images',
-              model: normalizedModel,
-              modelPresets: normalizedPresets,
-            },
-          },
-        };
-        void updateSetting
-          .mutateAsync({
-            key: targetSettingsKey,
-            value: serializeSetting(nextPersistedSettings),
-          })
-          .catch(() => {
-            if (presetPersistSignatureRef.current === persistSignature) {
-              presetPersistSignatureRef.current = null;
-            }
-          });
-      }, 350);
-    },
-    [activeProjectId, heavyMap, selectedProjectId, studioSettingsRaw, updateSetting]
-  );
-
-  const setGenerationModelAndPresets = useCallback(
-    (nextModel: string, nextPresets: string[]): void => {
-      const normalizedModel = nextModel.trim();
-      if (!normalizedModel) return;
-      const normalizedPresets = normalizeImageStudioModelPresets(nextPresets, normalizedModel);
-      setStudioSettings((prev) => ({
-        ...prev,
-        targetAi: {
-          ...prev.targetAi,
-          openai: {
-            ...prev.targetAi.openai,
-            model: normalizedModel,
-            modelPresets: normalizedPresets,
-          },
-        },
-      }));
-      persistGenerationModelPresets(normalizedModel, normalizedPresets);
-    },
-    [persistGenerationModelPresets]
-  );
 
   const maintenance = useMaintenanceActions({
     backfillProjectId,
@@ -474,14 +356,10 @@ export function ImageStudioSettingsProvider({
 
   const modelAware = useModelAwareSettings({
     studioSettings,
-    imageModelsQuery,
+    generationModelId: generationModel.effectiveModelId,
   });
 
   const {
-    quickSwitchModels,
-    selectedGenerationModel,
-    addableGenerationModelOptions,
-    quickSwitchModelSelectOptions,
     modelCapabilities,
     isGpt52Model,
     modelAwareSizeValue,
@@ -507,11 +385,6 @@ export function ImageStudioSettingsProvider({
     return globalStudioSettingsRaw ? 'global settings' : 'defaults';
   }, [activeProjectId, globalStudioSettingsRaw, projectSettingsKey, projectStudioSettingsRaw]);
 
-  useEffect(() => {
-    if (modelToAdd && addableGenerationModelOptions.some((opt) => opt.value === modelToAdd)) return;
-    setModelToAdd(addableGenerationModelOptions[0]?.value ?? '');
-  }, [addableGenerationModelOptions, modelToAdd]);
-
   const value: ImageStudioSettingsContextValue = {
     settingsLoaded,
     activeSettingsTab,
@@ -534,12 +407,7 @@ export function ImageStudioSettingsProvider({
     setBackfillIncludeHeuristicGenerationLinks,
     backfillRunning,
     backfillResultText,
-    modelToAdd,
-    setModelToAdd,
     settingsSource,
-    quickSwitchModels,
-    quickSwitchModelSelectOptions,
-    addableGenerationModelOptions,
     isGpt52Model,
     modelCapabilities,
     modelAwareSizeValue,
@@ -550,7 +418,6 @@ export function ImageStudioSettingsProvider({
     modelAwareQualityOptions,
     modelAwareBackgroundOptions,
     modelAwareFormatOptions,
-    selectedGenerationModel,
     settingsStore: {
       isFetching: settingsStore.isFetching,
       isLoading: settingsStore.isLoading,
@@ -567,7 +434,6 @@ export function ImageStudioSettingsProvider({
     handlePromptValidationRulesChange,
     saveStudioSettings,
     resetStudioSettings,
-    setGenerationModelAndPresets,
     runCardBackfill,
     toggleProjectSequencingOperation,
     moveProjectSequencingOperation,

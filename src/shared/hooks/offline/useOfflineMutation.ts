@@ -167,15 +167,15 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
     tags: ['shared-hook', 'offline'],
   };
 
-  const finalMeta: TanstackFactoryMeta = {
-    ...defaultMeta,
-    ...options.meta,
-    queryKey: options.queryKey as any,
-  };
-
   return createMutationV2<TData, TVariables, TContext, TError>({
     mutationKey,
-    meta: finalMeta,
+    meta: {
+      ...defaultMeta,
+      ...options.meta,
+      operation: 'action',
+      domain: 'global',
+      queryKey: options.queryKey,
+    },
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (!isOnline) {
@@ -204,8 +204,8 @@ export function useOfflineMutation<TData, TError extends Error = Error, TVariabl
 
       return mutationFn(variables, { queryClient });
     },
-    onSuccess: async (data: TData, variables: TVariables, context, mutationContext): Promise<void> => {
-      const { queryClient: qc } = mutationContext;
+    onSuccess: async (data: TData, variables: TVariables, context, mutationContext: any): Promise<void> => {
+      const qc = mutationContext?.queryClient || queryClient;
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (isOnline && options.successMessage) {
         toast(options.successMessage, { variant: 'success' });

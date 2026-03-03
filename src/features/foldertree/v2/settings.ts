@@ -1,25 +1,18 @@
 import {
   defaultFolderTreeProfilesV2,
-  folderTreeInstanceValues,
   parseFolderTreeProfilesV2,
   type FolderTreeInstance,
   type FolderTreeProfileV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
-import {
-  parseFolderTreeUiStateV1,
-  type FolderTreeUiStateV1Entry,
-} from '@/shared/utils/folder-tree-ui-state-v1';
 
 import {
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
 } from '@/shared/contracts/master-folder-tree';
 
 export {
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
 };
 
 export const getFolderTreeUiStateV2Key = (instance: FolderTreeInstance): string =>
@@ -42,20 +35,37 @@ export const parseFolderTreeUiStateV2Entry = (
   raw: string | null | undefined
 ): FolderTreeUiStateV2Entry => {
   if (!raw) return createDefaultFolderTreeUiStateV2Entry();
-  try {
-    const parsed = JSON.parse(raw) as Partial<FolderTreeUiStateV2Entry>;
-    const expandedNodeIds = Array.isArray(parsed.expandedNodeIds)
-      ? Array.from(
-        new Set(parsed.expandedNodeIds.map((value: string) => value.trim()).filter(Boolean))
-      )
-      : [];
-    return {
-      expandedNodeIds,
-      panelCollapsed: Boolean(parsed.panelCollapsed),
-    };
-  } catch {
-    return createDefaultFolderTreeUiStateV2Entry();
+  const parsed = JSON.parse(raw) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Invalid folder tree V2 UI state payload.');
   }
+  const record = parsed as Record<string, unknown>;
+  const keys = Object.keys(record);
+  const allowedKeys = new Set(['expandedNodeIds', 'panelCollapsed']);
+  if (keys.some((key: string) => !allowedKeys.has(key))) {
+    throw new Error('Folder tree V2 UI state contains unsupported keys.');
+  }
+  const rawExpandedNodeIds = record['expandedNodeIds'];
+  if (rawExpandedNodeIds !== undefined && !Array.isArray(rawExpandedNodeIds)) {
+    throw new Error('Folder tree V2 expandedNodeIds must be an array.');
+  }
+  const expandedNodeIds = Array.isArray(rawExpandedNodeIds)
+    ? Array.from(
+        new Set(
+          rawExpandedNodeIds
+            .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
+            .filter(Boolean)
+        )
+      )
+    : [];
+  const panelCollapsed = record['panelCollapsed'];
+  if (panelCollapsed !== undefined && typeof panelCollapsed !== 'boolean') {
+    throw new Error('Folder tree V2 panelCollapsed must be a boolean.');
+  }
+  return {
+    expandedNodeIds,
+    panelCollapsed: panelCollapsed ?? false,
+  };
 };
 
 export const parseFolderTreeProfileV2Entry = (
@@ -86,41 +96,3 @@ export const serializeFolderTreeUiStateV2Entry = (value: FolderTreeUiStateV2Entr
 
 export const serializeFolderTreeProfileV2Entry = (profile: FolderTreeProfileV2): string =>
   JSON.stringify(profile);
-
-export const buildFolderTreeV2MigrationPayload = ({
-  rawProfilesV2,
-  rawUiStateV1,
-}: {
-  rawProfilesV2: string | null | undefined;
-  rawUiStateV1: string | null | undefined;
-}): Array<{ key: string; value: string }> => {
-  const profiles = parseFolderTreeProfilesV2(rawProfilesV2);
-  const uiStateMap = parseFolderTreeUiStateV1(rawUiStateV1);
-
-  const updates: Array<{ key: string; value: string }> = [];
-
-  folderTreeInstanceValues.forEach((instance: FolderTreeInstance): void => {
-    const profile = profiles[instance];
-    const uiState: FolderTreeUiStateV1Entry = uiStateMap[instance];
-
-    updates.push({
-      key: getFolderTreeProfileV2Key(instance),
-      value: serializeFolderTreeProfileV2Entry(profile),
-    });
-
-    updates.push({
-      key: getFolderTreeUiStateV2Key(instance),
-      value: serializeFolderTreeUiStateV2Entry({
-        expandedNodeIds: uiState.expandedNodeIds,
-        panelCollapsed: uiState.panelCollapsed,
-      }),
-    });
-  });
-
-  updates.push({
-    key: FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
-    value: new Date().toISOString(),
-  });
-
-  return updates;
-};

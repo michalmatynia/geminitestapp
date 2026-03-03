@@ -73,6 +73,8 @@ type UseAiPathsSettingsCleanupActionsInput = {
 
 const buildConnectorClearedRuntimeState = (): RuntimeState => ({
   status: 'idle',
+  runId: null,
+  runStartedAt: null,
   nodeStatuses: {},
   nodeOutputs: {},
   variables: {},

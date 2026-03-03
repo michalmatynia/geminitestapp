@@ -2,11 +2,11 @@
 
 import { useMemo } from 'react';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
+  ImageStudioSlotRecord,
   RunStudioEnqueueResult,
   RunStudioPayload,
-} from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+} from '@/shared/contracts/image-studio';
 import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,

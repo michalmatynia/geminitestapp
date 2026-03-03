@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useMemo } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 
 import type {
   AiNode,
@@ -59,7 +58,6 @@ import type { UseAiPathsSettingsStateReturn } from './types';
 export function useAiPathsSettingsState({
   activeTab,
 }: AiPathsSettingsStateOptions): UseAiPathsSettingsStateReturn {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
 
@@ -301,10 +299,7 @@ export function useAiPathsSettingsState({
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
     const buttons = (triggerButtonsQuery.data ?? [])
-      .filter(
-        (button: AiTriggerButtonRecord): boolean =>
-          button.enabled !== false && button.isActive !== false
-      )
+      .filter((button: AiTriggerButtonRecord): boolean => button.enabled !== false)
       .reduce((acc: AiTriggerButtonRecord[], button: AiTriggerButtonRecord) => {
         if (!button.id || acc.some((item: AiTriggerButtonRecord) => item.id === button.id)) {
           return acc;
@@ -355,7 +350,6 @@ export function useAiPathsSettingsState({
     handleFetchParserSample,
     handleFetchUpdaterSample,
   } = useAiPathsSettingsSamples({
-    queryClient,
     setParserSamples,
     setUpdaterSamples,
     toast,

@@ -129,9 +129,6 @@ export type SlotsContextType = {
   refreshSlots: () => Promise<void>;
 };
 
-export type SlotsState = SlotsContextType;
-export type SlotsActions = SlotsContextType;
-
 const SlotsContext = createContext<SlotsContextType | null>(null);
 
 const DEFAULT_FOLDERS = ['Root'];
@@ -391,7 +388,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setSlotSelectionLocked,
       captureRef,
       temporaryObjectUpload,
-      setTemporaryObjectUpload: setTemporaryObjectUpload as any,
+      setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => setTemporaryObjectUpload(asset),
       
       slotCreateOpen,
       setSlotCreateOpen,
@@ -492,6 +489,9 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
   return <SlotsContext.Provider value={value}>{children}</SlotsContext.Provider>;
 }
+
+export type SlotsState = SlotsContextType;
+export type SlotsActions = SlotsContextType;
 
 export function useSlotsState(): SlotsContextType {
   const context = useContext(SlotsContext);

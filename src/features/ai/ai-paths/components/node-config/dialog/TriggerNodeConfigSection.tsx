@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
@@ -15,12 +15,6 @@ const triggerButtonsQueryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
 
 // Query for trigger buttons (always called)
 const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => {
-  const queryClient = useQueryClient();
-  const queryState = queryClient.getQueryState<AiTriggerButtonRecord[]>(triggerButtonsQueryKey);
-  const hasCachedButtons = Boolean(queryState?.dataUpdatedAt);
-  const cachedButtons =
-    queryClient.getQueryData<AiTriggerButtonRecord[]>(triggerButtonsQueryKey) ?? [];
-
   return createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: triggerButtonsQueryKey,
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
@@ -28,7 +22,6 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
       if (!result.ok) return [];
       return Array.isArray(result.data) ? result.data : [];
     },
-    ...(hasCachedButtons ? { initialData: cachedButtons } : {}),
     // Use cached data immediately, but always validate freshness on mount.
     staleTime: 5 * 60_000,
     refetchOnMount: 'always',
@@ -38,7 +31,7 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
       source: 'ai.ai-paths.node-config.trigger-buttons',
       operation: 'list',
       resource: 'ai-paths.trigger-buttons',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'node-config', 'trigger-buttons'],
     },
   });
@@ -56,10 +49,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
     });
     (triggerButtonsQuery.data ?? []).forEach((button: AiTriggerButtonRecord) => {
       if (!button?.id) return;
-      if (
-        (button.enabled === false || button.isActive === false) &&
-        button.id !== selectedTriggerEvent
-      ) {
+      if (button.enabled === false && button.id !== selectedTriggerEvent) {
         return;
       }
       if (byId.has(button.id)) return;

@@ -95,21 +95,9 @@ export function AgentPersonasPage(): React.JSX.Element {
         description: '',
         settings: buildAgentPersonaSettings(),
       })}
-      renderItemTags={(persona) => {
-        const s = persona.settings;
-        if (!s) return [];
-        const tags = [
-          `Exec: ${s.executorModel || 'default'}`,
-          `Plan: ${s.plannerModel || 'default'}`,
-          `Self: ${s.selfCheckModel || 'default'}`,
-        ];
-        return tags;
-      }}
-      renderExtraFields={(draft, onChange) => (
-        <AgentPersonaSettingsForm
-          settings={draft.settings || buildAgentPersonaSettings()}
-          onChange={(settings) => onChange({ settings })}
-        />
+      renderItemTags={() => ['Routing: AI Brain']}
+      renderExtraFields={() => (
+        <AgentPersonaSettingsForm />
       )}
     />
   );

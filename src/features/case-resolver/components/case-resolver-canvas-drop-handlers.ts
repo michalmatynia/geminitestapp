@@ -87,41 +87,26 @@ export const createCaseResolverCanvasDropHandlers = ({
   showDocumentNodeInCanvas: (fileId: string, preferredNodeId?: string | null) => void;
 } => {
   const toCaseResolverEdge = (edge: AiEdge): CaseResolverGraph['edges'][number] | null => {
-    const legacyEdge = edge as AiEdge & {
-      from?: string;
-      to?: string;
-      fromPort?: string;
-      toPort?: string;
-      label?: string;
-    };
-    const from = legacyEdge.from ?? edge.source;
-    const to = legacyEdge.to ?? edge.target;
-    if (!from || !to) return null;
+    if (!edge.source || !edge.target) return null;
     return {
       id: edge.id,
-      from,
-      to,
-      ...(legacyEdge.label ? { label: legacyEdge.label } : {}),
-      ...((legacyEdge.fromPort ?? edge.sourceHandle)
-        ? { fromPort: legacyEdge.fromPort ?? edge.sourceHandle ?? undefined }
-        : {}),
-      ...((legacyEdge.toPort ?? edge.targetHandle)
-        ? { toPort: legacyEdge.toPort ?? edge.targetHandle ?? undefined }
-        : {}),
+      source: edge.source,
+      target: edge.target,
+      ...(edge.label ? { label: edge.label } : {}),
+      ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
+      ...(edge.targetHandle ? { targetHandle: edge.targetHandle } : {}),
     };
   };
   const toCanvasEdge = (edge: CaseResolverGraph['edges'][number]): AiEdge => ({
     id: edge.id,
-    source: edge.from,
-    target: edge.to,
-    from: edge.from,
-    to: edge.to,
+    source: edge.source ?? '',
+    target: edge.target ?? '',
     type: 'default',
     data: {},
     createdAt: new Date().toISOString(),
     updatedAt: null,
-    ...(edge.fromPort ? { sourceHandle: edge.fromPort } : {}),
-    ...(edge.toPort ? { targetHandle: edge.toPort } : {}),
+    ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
+    ...(edge.targetHandle ? { targetHandle: edge.targetHandle } : {}),
   });
   const existingEdges: CaseResolverGraph['edges'] = edges
     .map(toCaseResolverEdge)
@@ -284,24 +269,24 @@ export const createCaseResolverCanvasDropHandlers = ({
 
       const edgePdfToPrompt: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
-        from: pdfNodeId,
-        to: extractionPromptId,
-        fromPort: 'prompt',
-        toPort: 'result',
+        source: pdfNodeId,
+        target: extractionPromptId,
+        sourceHandle: 'prompt',
+        targetHandle: 'result',
       };
       const edgePromptToModel: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
-        from: extractionPromptId,
-        to: modelNodeId,
-        fromPort: 'prompt',
-        toPort: 'prompt',
+        source: extractionPromptId,
+        target: modelNodeId,
+        sourceHandle: 'prompt',
+        targetHandle: 'prompt',
       };
       const edgeModelToOutput: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
-        from: modelNodeId,
-        to: outputNodeId,
-        fromPort: 'result',
-        toPort: DOCUMENT_PLAINTEXT_CONTENT_PORT,
+        source: modelNodeId,
+        target: outputNodeId,
+        sourceHandle: 'result',
+        targetHandle: DOCUMENT_PLAINTEXT_CONTENT_PORT,
       };
 
       addNode(pdfNode);

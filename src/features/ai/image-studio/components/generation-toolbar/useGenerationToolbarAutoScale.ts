@@ -2,10 +2,12 @@
 
 import React, { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
-import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+import {
+  invalidateImageStudioSlots,
+  patchImageStudioSlotsCache,
+} from '@/shared/lib/query-invalidation';
 import type { QueryClient } from '@tanstack/react-query';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
 import {
   buildAutoScalerRequestId,
   dataUrlToUploadBlob,
@@ -215,16 +217,13 @@ export function useGenerationToolbarAutoScale({
         const responseSlot = response.slot;
         if (responseSlot) {
           const responseSlotId = responseSlot.id;
-          queryClient.setQueryData<{ slots: ImageStudioSlotRecord[] }>(
-            studioKeys.slots(normalizedProjectId),
-            (old) => {
-              if (!old) return old;
-              return {
-                ...old,
-                slots: [responseSlot, ...(old.slots || []).filter((s) => s.id !== responseSlotId)],
-              };
-            }
-          );
+          patchImageStudioSlotsCache(queryClient, normalizedProjectId, (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              slots: [responseSlot, ...(old.slots || []).filter((s) => s.id !== responseSlotId)],
+            };
+          });
         }
       }
 

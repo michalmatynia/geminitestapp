@@ -13,7 +13,6 @@ export const aiPathNodeStatusSchema = z.enum([
   'cached',
   'failed',
   'canceled',
-  'cancelled', // Legacy support
   'skipped',
   'blocked',
   'pending',
@@ -37,7 +36,6 @@ export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatus
   'completed',
   'failed',
   'canceled',
-  'cancelled',
   'cached',
   'blocked',
   'skipped',
@@ -58,7 +56,6 @@ export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<AiPathRuntimeNodeS
   'completed',
   'cached',
   'canceled',
-  'cancelled',
 ]);
 
 export const aiPathRuntimeNodeStatusMapSchema = z.record(z.string(), aiPathNodeStatusSchema);
@@ -217,8 +214,8 @@ export type RuntimeHistoryLink = z.infer<typeof runtimeHistoryLinkSchema>;
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
+  runId: z.string().nullable(),
+  runStartedAt: z.string().nullable(),
   pathId: z.string().nullable(),
   pathName: z.string().nullable(),
   nodeId: z.string(),
@@ -248,14 +245,13 @@ export type RuntimeHistoryEntry = z.infer<typeof runtimeHistoryEntrySchema>;
 
 export const runtimeStateSchema = z.object({
   status: runStatusSchema,
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
   nodeStatuses: aiPathRuntimeNodeStatusMapSchema,
   nodeOutputs: z.record(z.string(), runtimePortValuesSchema),
   variables: z.record(z.string(), z.unknown()),
   events: z.array(aiPathRuntimeEventSchema),
   currentRun: aiPathRunSchema.nullable().optional(),
-  // Backward-compat fields retained for legacy local execution paths.
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
   inputs: z.record(z.string(), runtimePortValuesSchema),
   outputs: z.record(z.string(), runtimePortValuesSchema),
   history: z.record(z.string(), z.array(runtimeHistoryEntrySchema)).optional(),
@@ -265,6 +261,8 @@ export const runtimeStateSchema = z.object({
 });
 
 export type RuntimeState = z.infer<typeof runtimeStateSchema> & {
+  runId: string | null;
+  runStartedAt: string | null;
   history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   hashes?: Record<string, string> | undefined;
   hashTimestamps?: Record<string, number> | undefined;

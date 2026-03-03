@@ -1,4 +1,5 @@
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
+import { validationError } from '@/shared/errors/app-error';
 import type {
   ProductParameterValue,
   ProductRecord,
@@ -41,71 +42,39 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const normalizeLocalizedField = (
-  legacy: ProductRecord['name'] | ProductRecord['description'] | undefined,
-  scalar: {
-    en: string | null | undefined;
-    pl: string | null | undefined;
-    de: string | null | undefined;
-  }
-): ProductRecord['name'] => {
-  const legacyRecord =
-    legacy && typeof legacy === 'object' && !Array.isArray(legacy)
-      ? legacy
-      : { en: '', pl: null, de: null };
+const assertNoLegacyLocalizedShape = (
+  value: unknown,
+  field: 'name' | 'description',
+  productId: string
+): void => {
+  if (value === undefined || value === null) return;
+  throw validationError(`Legacy product ${field} document shape is no longer supported.`, {
+    productId,
+    field,
+  });
+};
 
-  const resolveNullable = (
-    primary: string | null | undefined,
-    fallback: unknown
-  ): string | null => {
-    if (typeof primary === 'string') return primary;
-    if (primary === null) return null;
-    if (typeof fallback === 'string') return fallback;
-    return null;
-  };
-
-  const resolvedEn =
-    typeof scalar.en === 'string'
-      ? scalar.en
-      : typeof legacyRecord['en'] === 'string'
-        ? legacyRecord['en']
-        : '';
-
+const buildCanonicalLocalizedField = (scalar: {
+  en: string | null | undefined;
+  pl: string | null | undefined;
+  de: string | null | undefined;
+}): ProductRecord['name'] => {
   return {
-    en: resolvedEn,
-    pl: resolveNullable(scalar.pl, legacyRecord['pl']),
-    de: resolveNullable(scalar.de, legacyRecord['de']),
+    en: typeof scalar.en === 'string' ? scalar.en : '',
+    pl: typeof scalar.pl === 'string' ? scalar.pl : scalar.pl === null ? null : null,
+    de: typeof scalar.de === 'string' ? scalar.de : scalar.de === null ? null : null,
   };
 };
 
-const resolveCategoryId = (doc: ProductDocument): string | null => {
+const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): string | null => {
   const direct = toTrimmedString(doc.categoryId);
   if (direct) return direct;
-
-  if (Array.isArray(doc.categories)) {
-    for (const entry of doc.categories as unknown[]) {
-      if (!entry || typeof entry !== 'object') continue;
-      const record = entry as Record<string, unknown>;
-      const categoryId =
-        toTrimmedString(record['categoryId']) ??
-        toTrimmedString(record['category_id']) ??
-        toTrimmedString(record['id']) ??
-        toTrimmedString(record['value']);
-      if (categoryId) return categoryId;
-    }
-    return null;
+  if (doc.categories !== undefined && doc.categories !== null) {
+    throw validationError('Legacy product category document shape is no longer supported.', {
+      productId,
+      field: 'categories',
+    });
   }
-
-  if (doc.categories && typeof doc.categories === 'object') {
-    const record = doc.categories as Record<string, unknown>;
-    const categoryId =
-      toTrimmedString(record['categoryId']) ??
-      toTrimmedString(record['category_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
-    if (categoryId) return categoryId;
-  }
-
   return null;
 };
 
@@ -257,12 +226,14 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
   const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-  const normalizedName = normalizeLocalizedField(doc.name, {
+  assertNoLegacyLocalizedShape(doc.name, 'name', productId);
+  assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  const normalizedName = buildCanonicalLocalizedField({
     en: doc.name_en,
     pl: doc.name_pl,
     de: doc.name_de,
   });
-  const normalizedDescription = normalizeLocalizedField(doc.description, {
+  const normalizedDescription = buildCanonicalLocalizedField({
     en: doc.description_en,
     pl: doc.description_pl,
     de: doc.description_de,
@@ -310,7 +281,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),
     catalogs: catalogs.map((cat) => ({ ...cat, assignedAt: cat.assignedAt })),
-    categoryId: resolveCategoryId(doc),
+    categoryId: resolveCanonicalCategoryId(doc, productId),
     tags,
     producers,
   };
@@ -318,12 +289,14 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
 
 export const toProductBase = (doc: ProductDocument): ProductRecord => {
   const productId = doc.id ?? doc._id;
-  const normalizedName = normalizeLocalizedField(doc.name, {
+  assertNoLegacyLocalizedShape(doc.name, 'name', productId);
+  assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  const normalizedName = buildCanonicalLocalizedField({
     en: doc.name_en,
     pl: doc.name_pl,
     de: doc.name_de,
   });
-  const normalizedDescription = normalizeLocalizedField(doc.description, {
+  const normalizedDescription = buildCanonicalLocalizedField({
     en: doc.description_en,
     pl: doc.description_pl,
     de: doc.description_de,
@@ -369,7 +342,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     noteIds,
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
-    categoryId: resolveCategoryId(doc),
+    categoryId: resolveCanonicalCategoryId(doc, productId),
     tags,
     producers,
     images: Array.isArray(doc.images) ? doc.images : [],

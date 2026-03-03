@@ -1,8 +1,4 @@
-import type {
-  LegacyPaginatedResponseDto,
-  PaginatedResponseDto,
-  PaginationDto,
-} from '@/shared/contracts/http';
+import type { PaginatedResponseDto, PaginationDto } from '@/shared/contracts/http';
 import { createInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
 
 import type {
@@ -11,7 +7,7 @@ import type {
   UseInfiniteQueryResult,
 } from '@tanstack/react-query';
 
-export type PaginatedResponse<T> = PaginatedResponseDto<T> | LegacyPaginatedResponseDto<T>;
+export type PaginatedResponse<T> = PaginatedResponseDto<T>;
 
 export interface InfiniteQueryParams {
   page: number;
@@ -19,29 +15,8 @@ export interface InfiniteQueryParams {
   [key: string]: unknown;
 }
 
-const hasNestedPagination = <T>(page: PaginatedResponse<T>): page is PaginatedResponseDto<T> => {
-  return (
-    typeof page === 'object' &&
-    page !== null &&
-    'pagination' in page &&
-    Boolean((page as { pagination?: unknown }).pagination)
-  );
-};
-
 const toPagination = <T>(page: PaginatedResponse<T>): PaginationDto => {
-  if (hasNestedPagination(page)) return page.pagination;
-  const total = typeof page.total === 'number' ? page.total : 0;
-  const currentPage = typeof page.page === 'number' ? page.page : 1;
-  const pageSize = typeof page.limit === 'number' ? page.limit : 1;
-  const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1;
-  return {
-    page: currentPage,
-    pageSize,
-    total,
-    totalPages,
-    hasNextPage: currentPage < totalPages,
-    hasPreviousPage: currentPage > 1,
-  };
+  return page.pagination;
 };
 
 // Hook for infinite/paginated queries

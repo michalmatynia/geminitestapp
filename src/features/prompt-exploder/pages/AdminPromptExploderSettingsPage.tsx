@@ -132,17 +132,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     brainAssignment.enabled && brainAssignment.provider === 'model' && brainEffectiveModelId !== '';
   const providerSnapshot = hasConfiguredBrainModel
     ? inferBrainModelVendor(brainEffectiveModelId)
-    : (draft?.ai.provider ?? 'auto');
+    : 'Not configured in AI Brain';
   const primaryModelSnapshot = hasConfiguredBrainModel
     ? brainEffectiveModelId
-    : draft?.ai.modelId.trim() || '';
-  const fallbackModelSnapshot = draft?.ai.fallbackModelId.trim() || '';
-  const temperatureSnapshot = hasConfiguredBrainModel
-    ? (brainAssignment.temperature ?? draft?.ai.temperature ?? parsedSettings.ai.temperature)
-    : (draft?.ai.temperature ?? parsedSettings.ai.temperature);
-  const maxTokensSnapshot = hasConfiguredBrainModel
-    ? (brainAssignment.maxTokens ?? draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens)
-    : (draft?.ai.maxTokens ?? parsedSettings.ai.maxTokens);
+    : 'Not configured in AI Brain';
+  const temperatureSnapshot = brainAssignment.temperature;
+  const maxTokensSnapshot = brainAssignment.maxTokens;
 
   const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
     () => [
@@ -303,23 +298,6 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       },
       ai: {
         ...draft.ai,
-        provider: hasConfiguredBrainModel ? providerSnapshot : draft.ai.provider,
-        modelId: hasConfiguredBrainModel ? brainEffectiveModelId : draft.ai.modelId.trim(),
-        fallbackModelId: draft.ai.fallbackModelId.trim(),
-        temperature: clampNumber(
-          hasConfiguredBrainModel
-            ? (brainAssignment.temperature ?? draft.ai.temperature)
-            : draft.ai.temperature,
-          0,
-          2
-        ),
-        maxTokens: toIntInRange(
-          hasConfiguredBrainModel
-            ? (brainAssignment.maxTokens ?? draft.ai.maxTokens)
-            : draft.ai.maxTokens,
-          1,
-          8192
-        ),
       },
     };
 
@@ -397,7 +375,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       <div className='grid gap-6'>
         <FormSection
           title='AI Operations'
-          description='AI Brain owns Prompt Exploder routing. Local AI fields are saved as explicit compatibility snapshots only.'
+          description='AI Brain owns Prompt Exploder routing. Only the local operation mode remains configurable here.'
           variant='subtle'
           className='p-4'
           actions={
@@ -433,7 +411,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             </FormField>
             <FormField
               label='Provider Snapshot'
-              description='Derived from the Brain-assigned model. Saved only as a compatibility snapshot.'
+              description='Derived from the Brain-assigned model.'
             >
               <Input
                 value={providerSnapshot}
@@ -445,10 +423,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             </FormField>
             <FormField
               label='Primary AI Model'
-              description='Read-only Brain-managed effective model. Saved locally only as a compatibility snapshot.'
+              description='Read-only Brain-managed effective model.'
             >
               <Input
-                value={primaryModelSnapshot || 'Not configured in AI Brain'}
+                value={primaryModelSnapshot}
                 readOnly
                 disabled
                 className='cursor-not-allowed'
@@ -456,34 +434,30 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField
-              label='Fallback Model Snapshot'
-              description='Legacy fallback snapshot retained for compatibility only.'
+              label='Brain Temperature'
+              description='Read-only Brain-managed temperature.'
             >
               <Input
-                value={fallbackModelSnapshot || 'Not configured'}
-                readOnly
-                disabled
-                className='cursor-not-allowed'
-                placeholder='Not configured'
-              />
-            </FormField>
-            <FormField
-              label='Temperature Snapshot'
-              description='Read-only Brain-managed temperature saved as a compatibility snapshot.'
-            >
-              <Input
-                value={String(temperatureSnapshot)}
+                value={
+                  temperatureSnapshot === null || temperatureSnapshot === undefined
+                    ? 'Not set'
+                    : String(temperatureSnapshot)
+                }
                 readOnly
                 disabled
                 className='cursor-not-allowed'
               />
             </FormField>
             <FormField
-              label='Max Tokens Snapshot'
-              description='Read-only Brain-managed max token limit saved as a compatibility snapshot.'
+              label='Brain Max Tokens'
+              description='Read-only Brain-managed max token limit.'
             >
               <Input
-                value={String(maxTokensSnapshot)}
+                value={
+                  maxTokensSnapshot === null || maxTokensSnapshot === undefined
+                    ? 'Not set'
+                    : String(maxTokensSnapshot)
+                }
                 readOnly
                 disabled
                 className='cursor-not-allowed'

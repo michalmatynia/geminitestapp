@@ -23,6 +23,25 @@ const createContext = (
   nextNodes,
 });
 
+const applyOperation = async (
+  adapter: ReturnType<typeof createCategoryMasterTreeAdapter>,
+  operation: {
+    type: 'move' | 'reorder';
+    [key: string]: unknown;
+  },
+  context: MasterFolderTreePersistContext
+): Promise<void> => {
+  const tx = {
+    id: `tx_${Date.now()}`,
+    version: 1,
+    createdAt: Date.now(),
+    operation,
+    previousNodes: context.previousNodes,
+    nextNodes: context.nextNodes,
+  };
+  await adapter.apply(tx, await adapter.prepare(tx));
+};
+
 describe('createCategoryMasterTreeAdapter', () => {
   it('maps root-top moves to reorder-before payload', async () => {
     const applyReorderPayload = vi.fn(async () => undefined);
@@ -35,7 +54,8 @@ describe('createCategoryMasterTreeAdapter', () => {
       categoryNode('beta', null, 1),
     ];
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCategoryMasterNodeId('beta'),
@@ -61,7 +81,8 @@ describe('createCategoryMasterTreeAdapter', () => {
       applyReorderPayload,
     });
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toCategoryMasterNodeId('beta'),
@@ -94,7 +115,8 @@ describe('createCategoryMasterTreeAdapter', () => {
       categoryNode('moving', null, 1),
     ];
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toCategoryMasterNodeId('moving'),

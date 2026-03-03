@@ -23,6 +23,7 @@ import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -32,6 +33,8 @@ import {
   productsCountsQueryKey,
   getProductDetailQueryKey,
   refetchProductsAndCounts,
+  invalidateProductsAndCounts,
+  invalidateProductsAndDetail,
 } from './productCache';
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;

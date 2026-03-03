@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validationError } from '@/shared/errors/app-error';
 
 import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
@@ -36,29 +37,6 @@ export function getImageStudioProjectSettingsKey(
   return `${IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX}${safeProjectId}`;
 }
 
-export function normalizeImageStudioModelPresets(
-  presets: string[] | null | undefined,
-  fallbackModel: string | null | undefined
-): string[] {
-  const normalized: string[] = [];
-  if (Array.isArray(presets)) {
-    for (const entry of presets) {
-      if (typeof entry !== 'string') continue;
-      const modelId = entry.trim();
-      if (!modelId) continue;
-      if (normalized.includes(modelId)) continue;
-      normalized.push(modelId);
-    }
-  }
-
-  const fallback = typeof fallbackModel === 'string' ? fallbackModel.trim() : '';
-  if (fallback && !normalized.includes(fallback)) {
-    normalized.unshift(fallback);
-  }
-
-  return normalized;
-}
-
 export type ImageStudioSettings = {
   version: 1;
   projectSequencing: ImageStudioProjectSequencingSettings;
@@ -68,7 +46,6 @@ export type ImageStudioSettings = {
     autoApplyFormattedPrompt: boolean;
     showValidationSummary: boolean;
     gpt: {
-      model: string;
       temperature: number | null;
       top_p: number | null;
       max_output_tokens: number | null;
@@ -76,7 +53,6 @@ export type ImageStudioSettings = {
   };
   uiExtractor: {
     mode: 'heuristic' | 'ai' | 'both';
-    model: string;
     temperature: number | null;
     max_output_tokens: number | null;
   };
@@ -89,8 +65,6 @@ export type ImageStudioSettings = {
     provider: 'openai';
     openai: {
       api: 'responses' | 'images';
-      model: string;
-      modelPresets: string[];
       temperature: number | null;
       top_p: number | null;
       max_output_tokens: number | null;
@@ -164,7 +138,6 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     autoApplyFormattedPrompt: true,
     showValidationSummary: true,
     gpt: {
-      model: 'gpt-4o-mini',
       temperature: null,
       top_p: null,
       max_output_tokens: null,
@@ -172,7 +145,6 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
   },
   uiExtractor: {
     mode: 'heuristic',
-    model: 'gpt-4o-mini',
     temperature: 0.2,
     max_output_tokens: 800,
   },
@@ -185,8 +157,6 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     provider: 'openai',
     openai: {
       api: 'images',
-      model: 'gpt-image-1',
-      modelPresets: ['gpt-image-1'],
       temperature: null,
       top_p: null,
       max_output_tokens: null,
@@ -267,13 +237,16 @@ const hashSequenceSnapshotPayload = (payload: string): string => {
 };
 
 const buildImageStudioSequenceSnapshotPayload = (
-  settings: ImageStudioSettings
+  settings: ImageStudioSettings,
+  options?: {
+    modelId?: string | null;
+  }
 ): ImageStudioSequenceSnapshotPayload => {
   const activeSteps = resolveImageStudioSequenceActiveSteps(settings.projectSequencing).filter(
     (step) => step.enabled
   );
 
-  const modelId = asTrimmedString(settings.targetAi.openai.model);
+  const modelId = asTrimmedString(options?.modelId);
   const defaultOutputCount =
     typeof settings.targetAi.openai.image.n === 'number' &&
     Number.isFinite(settings.targetAi.openai.image.n)
@@ -292,9 +265,12 @@ const buildImageStudioSequenceSnapshotPayload = (
 };
 
 export function buildImageStudioSequenceSnapshot(
-  settings: ImageStudioSettings
+  settings: ImageStudioSettings,
+  options?: {
+    modelId?: string | null;
+  }
 ): ImageStudioSequenceSnapshot {
-  const payload = buildImageStudioSequenceSnapshotPayload(settings);
+  const payload = buildImageStudioSequenceSnapshotPayload(settings, options);
   const hash = hashSequenceSnapshotPayload(JSON.stringify(payload));
 
   return {
@@ -387,6 +363,7 @@ const imageStudioSettingsSchema = z.object({
         .optional()
         .default(defaultImageStudioSettings.projectSequencing.snapshotModelId),
     })
+    .strict()
     .optional()
     .default(defaultImageStudioSettings.projectSequencing),
   promptExtraction: z
@@ -409,19 +386,15 @@ const imageStudioSettingsSchema = z.object({
         .default(defaultImageStudioSettings.promptExtraction.showValidationSummary),
       gpt: z
         .object({
-          model: z
-            .string()
-            .trim()
-            .min(1)
-            .optional()
-            .default(defaultImageStudioSettings.promptExtraction.gpt.model),
           temperature: finiteNumberOrNull,
           top_p: finiteNumberOrNull,
           max_output_tokens: intOrNull,
         })
+        .strict()
         .optional()
         .default(defaultImageStudioSettings.promptExtraction.gpt),
     })
+    .strict()
     .optional()
     .default(defaultImageStudioSettings.promptExtraction),
   uiExtractor: z
@@ -430,15 +403,10 @@ const imageStudioSettingsSchema = z.object({
         .enum(['heuristic', 'ai', 'both'])
         .optional()
         .default(defaultImageStudioSettings.uiExtractor.mode),
-      model: z
-        .string()
-        .trim()
-        .min(1)
-        .optional()
-        .default(defaultImageStudioSettings.uiExtractor.model),
       temperature: finiteNumberOrNull,
       max_output_tokens: intOrNull,
     })
+    .strict()
     .optional()
     .default(defaultImageStudioSettings.uiExtractor),
   helpTooltips: z
@@ -456,6 +424,7 @@ const imageStudioSettingsSchema = z.object({
         .optional()
         .default(defaultImageStudioSettings.helpTooltips.versionGraphButtonsEnabled),
     })
+    .strict()
     .optional()
     .default(defaultImageStudioSettings.helpTooltips),
   targetAi: z
@@ -467,16 +436,6 @@ const imageStudioSettingsSchema = z.object({
             .enum(['responses', 'images'])
             .optional()
             .default(defaultImageStudioSettings.targetAi.openai.api),
-          model: z
-            .string()
-            .trim()
-            .min(1)
-            .optional()
-            .default(defaultImageStudioSettings.targetAi.openai.model),
-          modelPresets: z
-            .array(z.string().trim().min(1))
-            .optional()
-            .default(defaultImageStudioSettings.targetAi.openai.modelPresets),
           temperature: finiteNumberOrNull,
           top_p: finiteNumberOrNull,
           max_output_tokens: intOrNull,
@@ -529,28 +488,19 @@ const imageStudioSettingsSchema = z.object({
                 .default(null),
               partial_images: z.number().int().min(0).max(3).nullable().optional().default(null),
             })
+            .strict()
             .optional()
             .default(defaultImageStudioSettings.targetAi.openai.image),
           advanced_overrides: z.record(z.string(), z.unknown()).nullable().optional().default(null),
         })
+        .strict()
         .optional()
         .default(defaultImageStudioSettings.targetAi.openai),
     })
+    .strict()
     .optional()
     .default(defaultImageStudioSettings.targetAi),
-});
-
-const extractRawModelFallback = (value: unknown): string | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const targetAi = (value as Record<string, unknown>)['targetAi'];
-  if (!targetAi || typeof targetAi !== 'object' || Array.isArray(targetAi)) return null;
-  const openai = (targetAi as Record<string, unknown>)['openai'];
-  if (!openai || typeof openai !== 'object' || Array.isArray(openai)) return null;
-  const model = (openai as Record<string, unknown>)['model'];
-  if (typeof model !== 'string') return null;
-  const normalized = model.trim();
-  return normalized.length > 0 ? normalized : null;
-};
+}).strict();
 
 const resolveActivePresetId = (
   requestedPresetId: string | null | undefined,
@@ -564,91 +514,73 @@ const resolveActivePresetId = (
 
 export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
+  if (!raw.trim()) return defaultImageStudioSettings;
+
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(raw) as unknown;
-    const result = imageStudioSettingsSchema.safeParse(parsed);
-    if (!result.success) {
-      const modelFallback = extractRawModelFallback(parsed);
-      if (!modelFallback) return defaultImageStudioSettings;
-      return {
-        ...defaultImageStudioSettings,
-        targetAi: {
-          ...defaultImageStudioSettings.targetAi,
-          openai: {
-            ...defaultImageStudioSettings.targetAi.openai,
-            model: modelFallback,
-            modelPresets: normalizeImageStudioModelPresets(
-              defaultImageStudioSettings.targetAi.openai.modelPresets,
-              modelFallback
-            ),
-          },
-        },
-      };
-    }
-    const parsedSettings = result.data;
-    const modelPresets = normalizeImageStudioModelPresets(
-      parsedSettings.targetAi.openai.modelPresets,
-      parsedSettings.targetAi.openai.model
-    );
-
-    const normalizedSteps = normalizeImageStudioSequenceSteps(
-      parsedSettings.projectSequencing.steps
-    );
-
-    const normalizedPresets = normalizeImageStudioSequencePresets(
-      parsedSettings.projectSequencing.presets,
-      normalizedSteps
-    );
-
-    const activePresetId = resolveActivePresetId(
-      parsedSettings.projectSequencing.activePresetId,
-      normalizedPresets
-    );
-
-    const activeSteps = activePresetId
-      ? (normalizedPresets.find((preset) => preset.id === activePresetId)?.steps ?? normalizedSteps)
-      : normalizedSteps;
-    const operations = deriveOperationsFromSteps(activeSteps);
-    const upscaleSummary = deriveUpscaleSummaryFromSteps(activeSteps);
-
-    const snapshotHash = asTrimmedString(parsedSettings.projectSequencing.snapshotHash);
-    const snapshotSavedAt = asTrimmedString(parsedSettings.projectSequencing.snapshotSavedAt);
-    const snapshotStepCount = asNonNegativeInteger(
-      parsedSettings.projectSequencing.snapshotStepCount
-    );
-    const snapshotModelId = asTrimmedString(parsedSettings.projectSequencing.snapshotModelId);
-
-    const projectSequencing: ImageStudioProjectSequencingSettings = {
-      enabled: parsedSettings.projectSequencing.enabled,
-      trigger:
-        parsedSettings.projectSequencing.trigger === 'product_studio' ? 'product_studio' : 'manual',
-      runtime: 'server',
-      operations: operations.length > 0 ? operations : deriveOperationsFromSteps(activeSteps),
-      steps: normalizedSteps,
-      presets: normalizedPresets,
-      activePresetId,
-      upscaleStrategy: upscaleSummary.strategy,
-      upscaleScale: clampImageStudioUpscaleScale(upscaleSummary.scale),
-      upscaleTargetWidth: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetWidth),
-      upscaleTargetHeight: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetHeight),
-      snapshotHash,
-      snapshotSavedAt,
-      snapshotStepCount,
-      snapshotModelId,
-    };
-
-    return {
-      ...parsedSettings,
-      projectSequencing,
-      targetAi: {
-        ...parsedSettings.targetAi,
-        openai: {
-          ...parsedSettings.targetAi.openai,
-          modelPresets,
-        },
-      },
-    };
-  } catch {
-    return defaultImageStudioSettings;
+    parsed = JSON.parse(raw) as unknown;
+  } catch (error) {
+    throw validationError('Invalid Image Studio settings payload.', {
+      reason: 'json_parse_failed',
+      raw,
+      cause: error instanceof Error ? error.message : String(error),
+    });
   }
+
+  const result = imageStudioSettingsSchema.safeParse(parsed);
+  if (!result.success) {
+    throw validationError('Invalid Image Studio settings payload.', {
+      reason: 'schema_validation_failed',
+      issues: result.error.flatten(),
+    });
+  }
+
+  const parsedSettings = result.data;
+
+  const normalizedSteps = normalizeImageStudioSequenceSteps(parsedSettings.projectSequencing.steps);
+
+  const normalizedPresets = normalizeImageStudioSequencePresets(
+    parsedSettings.projectSequencing.presets,
+    normalizedSteps
+  );
+
+  const activePresetId = resolveActivePresetId(
+    parsedSettings.projectSequencing.activePresetId,
+    normalizedPresets
+  );
+
+  const activeSteps = activePresetId
+    ? (normalizedPresets.find((preset) => preset.id === activePresetId)?.steps ?? normalizedSteps)
+    : normalizedSteps;
+  const operations = deriveOperationsFromSteps(activeSteps);
+  const upscaleSummary = deriveUpscaleSummaryFromSteps(activeSteps);
+
+  const snapshotHash = asTrimmedString(parsedSettings.projectSequencing.snapshotHash);
+  const snapshotSavedAt = asTrimmedString(parsedSettings.projectSequencing.snapshotSavedAt);
+  const snapshotStepCount = asNonNegativeInteger(parsedSettings.projectSequencing.snapshotStepCount);
+  const snapshotModelId = asTrimmedString(parsedSettings.projectSequencing.snapshotModelId);
+
+  const projectSequencing: ImageStudioProjectSequencingSettings = {
+    enabled: parsedSettings.projectSequencing.enabled,
+    trigger:
+      parsedSettings.projectSequencing.trigger === 'product_studio' ? 'product_studio' : 'manual',
+    runtime: 'server',
+    operations: operations.length > 0 ? operations : deriveOperationsFromSteps(activeSteps),
+    steps: normalizedSteps,
+    presets: normalizedPresets,
+    activePresetId,
+    upscaleStrategy: upscaleSummary.strategy,
+    upscaleScale: clampImageStudioUpscaleScale(upscaleSummary.scale),
+    upscaleTargetWidth: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetWidth),
+    upscaleTargetHeight: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetHeight),
+    snapshotHash,
+    snapshotSavedAt,
+    snapshotStepCount,
+    snapshotModelId,
+  };
+
+  return {
+    ...parsedSettings,
+    projectSequencing,
+  };
 }

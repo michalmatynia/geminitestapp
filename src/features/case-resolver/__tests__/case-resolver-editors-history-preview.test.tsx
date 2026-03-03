@@ -26,6 +26,14 @@ vi.mock('@/features/case-resolver/hooks/prompt-exploder-transfer-lifecycle', () 
   resolvePromptExploderTransferStatusLabel: () => 'Idle',
 }));
 
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/ui')>();
+  return {
+    ...actual,
+    useToast: () => ({ toast: vi.fn() }),
+  };
+});
+
 const handleUseHistoryEntryMock = vi.fn();
 const setEditorDetailsTabMock = vi.fn();
 

@@ -9,7 +9,7 @@ import type {
   CaseResolverAssetFile,
 } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import type { MasterFolderTreeAdapter } from '@/shared/contracts/master-folder-tree';
+import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder-tree';
 import { useCaseResolverPageContext } from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 import {
@@ -66,7 +66,7 @@ export interface CaseResolverFolderTreeDataContextValue {
   treeWorkspace: CaseResolverWorkspace;
   selectedMasterNodeId: string | null;
   initialExpandedFolderNodeIds: string[];
-  adapter: MasterFolderTreeAdapter;
+  adapter: MasterFolderTreeAdapterV3;
 
   // Stats & Indexes
   fileLockById: Map<string, boolean>;
@@ -226,7 +226,7 @@ export function CaseResolverFolderTreeProvider({
   };
 
   const adapter = useMemo(
-    (): MasterFolderTreeAdapter =>
+    (): MasterFolderTreeAdapterV3 =>
       createMasterFolderTreeAdapterV3({
         handlers: {
           onMove: async ({ node, targetParent }) => {

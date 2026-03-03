@@ -9,6 +9,8 @@ import {
   createMutationV2,
   createOptimisticMutationV2,
   createListQueryV2,
+  ensureQueryDataV2,
+  fetchQueryV2,
   prefetchQueryV2,
   queryFactoriesV2TestUtils,
   useEnsureQueryDataV2,
@@ -238,30 +240,116 @@ describe('query-factories-v2', () => {
     );
   });
 
-  it('ensures query data and reuses cached data', async () => {
+  it('emits telemetry for fetchQueryV2 and rethrows transformed errors', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const transformedError = new Error('normalized fetch error');
+
+    const fetcher = fetchQueryV2(queryClient, {
+      queryKey: ['products', 'fetch'],
+      queryFn: async () => {
+        throw new Error('boom');
+      },
+      meta: {
+        source: 'tests.shared.query-factories-v2.fetch',
+        operation: 'detail',
+        resource: 'products.fetch',
+      },
+      transformError: () => transformedError,
+    });
+
+    await expect(fetcher()).rejects.toBe(transformedError);
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'start',
+      })
+    );
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'error',
+      })
+    );
+  });
+
+  it('ensures query data and reuses cached data through ensureQueryDataV2', async () => {
     const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
     const fetcher = vi.fn(async () => ({ id: 'ensured' }));
+
+    const ensure = ensureQueryDataV2(queryClient, {
+      queryKey: ['products', 'ensure'],
+      queryFn: fetcher,
+      staleTime: 60_000,
+      meta: {
+        source: 'tests.shared.query-factories-v2.ensure',
+        operation: 'detail',
+        resource: 'products.ensure',
+      },
+    });
+
+    await expect(ensure()).resolves.toEqual({ id: 'ensured' });
+    await expect(ensure()).resolves.toEqual({ id: 'ensured' });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(['products', 'ensure'])).toEqual({ id: 'ensured' });
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'success',
+      })
+    );
+  });
+
+  it('rethrows transformed errors from ensureQueryDataV2', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const transformedError = new Error('normalized ensure error');
+
+    const ensure = ensureQueryDataV2(queryClient, {
+      queryKey: ['products', 'ensure-error'],
+      queryFn: async () => {
+        throw new Error('ensure boom');
+      },
+      meta: {
+        source: 'tests.shared.query-factories-v2.ensure-error',
+        operation: 'detail',
+        resource: 'products.ensure-error',
+      },
+      transformError: () => transformedError,
+    });
+
+    await expect(ensure()).rejects.toBe(transformedError);
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity: 'query',
+        stage: 'error',
+      })
+    );
+  });
+
+  it('delegates useEnsureQueryDataV2 through the shared ensure helper behavior', async () => {
+    const emitSpy = vi.spyOn(telemetry, 'emitTanstackTelemetry').mockReturnValue(true);
+    const fetcher = vi.fn(async () => ({ id: 'hook-ensured' }));
 
     const { result } = renderHook(
       () =>
         useEnsureQueryDataV2({
-          queryKey: ['products', 'ensure'],
+          queryKey: ['products', 'ensure-hook'],
           queryFn: fetcher,
           staleTime: 60_000,
           meta: {
-            source: 'tests.shared.query-factories-v2.ensure',
+            source: 'tests.shared.query-factories-v2.ensure-hook',
             operation: 'detail',
-            resource: 'products.ensure',
+            resource: 'products.ensure-hook',
           },
         }),
       { wrapper }
     );
 
-    await expect(result.current()).resolves.toEqual({ id: 'ensured' });
-    await expect(result.current()).resolves.toEqual({ id: 'ensured' });
+    await expect(result.current()).resolves.toEqual({ id: 'hook-ensured' });
+    await expect(result.current()).resolves.toEqual({ id: 'hook-ensured' });
 
     expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData(['products', 'ensure'])).toEqual({ id: 'ensured' });
+    expect(queryClient.getQueryData(['products', 'ensure-hook'])).toEqual({ id: 'hook-ensured' });
     expect(emitSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         entity: 'query',

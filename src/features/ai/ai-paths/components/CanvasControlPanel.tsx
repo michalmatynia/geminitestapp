@@ -6,7 +6,6 @@ import {
   ZoomIn,
   ZoomOut,
   Crosshair,
-  Layers,
   Activity,
   Zap,
   Route,
@@ -14,12 +13,9 @@ import {
 } from 'lucide-react';
 import { Button, Tooltip, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { type CanvasRendererMode } from './CanvasBoard.utils';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 
 export interface CanvasControlPanelProps {
-  rendererMode: CanvasRendererMode;
-  onRendererModeChange: (mode: CanvasRendererMode) => void;
   edgeRoutingMode: EdgeRoutingMode;
   onEdgeRoutingModeChange: (mode: EdgeRoutingMode) => void;
   showMinimap: boolean;
@@ -35,8 +31,6 @@ export interface CanvasControlPanelProps {
 }
 
 export function CanvasControlPanel({
-  rendererMode,
-  onRendererModeChange,
   edgeRoutingMode,
   onEdgeRoutingModeChange,
   showMinimap,
@@ -126,22 +120,6 @@ export function CanvasControlPanel({
             <MapIcon className='size-4' />
           </Button>
         </Tooltip>
-        <Tooltip
-          content={
-            rendererMode === 'svg'
-              ? 'Switch to Legacy (DOM) Renderer'
-              : 'Switch to Modern (SVG) Renderer'
-          }
-        >
-          <Button
-            variant={rendererMode === 'svg' ? 'secondary' : 'ghost'}
-            size='icon'
-            className='h-8 w-8 rounded-full'
-            onClick={() => onRendererModeChange(rendererMode === 'svg' ? 'legacy' : 'svg')}
-          >
-            <Layers className='size-4' />
-          </Button>
-        </Tooltip>
         <Tooltip content={edgeRoutingMode === 'bezier' ? 'Orthogonal Edges' : 'Bezier Edges'}>
           <Button
             variant='ghost'
@@ -160,7 +138,7 @@ export function CanvasControlPanel({
         </Tooltip>
       </div>
 
-      {svgPerf && svgPerf.fps > 0 && rendererMode === 'svg' && (
+      {svgPerf && svgPerf.fps > 0 && (
         <div className='flex items-center gap-2 pl-2 pr-1'>
           <div className='h-4 w-px bg-border/40' />
           <Badge

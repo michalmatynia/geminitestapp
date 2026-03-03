@@ -774,13 +774,13 @@ export function useLocalExecutionTriggers(
     args.resetRuntimeNodeStatuses({});
     const clearedState: RuntimeState = {
       status: 'idle',
+      runId: null,
+      runStartedAt: null,
       nodeStatuses: {},
       nodeOutputs: {},
       variables: {},
       events: [],
       currentRun: null,
-      runId: null,
-      runStartedAt: null,
       inputs: {},
       outputs: {},
       history: {},

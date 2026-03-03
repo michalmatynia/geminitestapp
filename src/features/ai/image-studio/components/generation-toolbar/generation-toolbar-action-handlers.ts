@@ -1,6 +1,9 @@
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api, type ApiError } from '@/shared/lib/api-client';
-import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+import {
+  invalidateImageStudioSlots,
+  patchImageStudioSlotsCache,
+} from '@/shared/lib/query-invalidation';
 
 import {
   buildCropRequestId,
@@ -25,8 +28,6 @@ import {
   imageStudioUpscaleResponseSchema,
   type ImageStudioUpscaleResponse,
 } from '../../contracts/upscale';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
-
 import type { QueryClient } from '@tanstack/react-query';
 
 type Toast = (
@@ -357,9 +358,10 @@ export const createGenerationToolbarActionHandlers = (
         const mergedSlots = createdSlotId
           ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
           : slotsSnapshot;
-        deps.queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+        patchImageStudioSlotsCache(deps.queryClient, normalizedProjectId, (current) => ({
+          ...current,
           slots: mergedSlots,
-        });
+        }));
       }
 
       if (response.slot?.id) {
@@ -559,9 +561,10 @@ export const createGenerationToolbarActionHandlers = (
         const mergedSlots = createdSlotId
           ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
           : slotsSnapshot;
-        deps.queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+        patchImageStudioSlotsCache(deps.queryClient, normalizedProjectId, (current) => ({
+          ...current,
           slots: mergedSlots,
-        });
+        }));
       }
 
       if (response.slot?.id) {

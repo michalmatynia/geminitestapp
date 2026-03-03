@@ -31,8 +31,10 @@ All data fetching MUST use the factory functions exported from `@/shared/lib/que
 | `createMutationV2` | Standard mutations (CREATE, UPDATE, DELETE). |
 | `createOptimisticMutationV2` | Mutations with automatic optimistic UI updates and rollback. |
 | `createSaveMutationV2` | Helper for "upsert" logic (POST if new, PUT if exists). |
+| `ensureQueryDataV2` | Telemetrized manual ensure/fetch-if-missing helper. |
 | `fetchQueryV2` | Telemetrized manual fetching (async/await). |
 | `prefetchQueryV2` | Telemetrized manual prefetching. |
+| `useEnsureQueryDataV2` / `useFetchQueryV2` / `usePrefetchQueryV2` | Hook aliases for manual helpers when a local `QueryClient` should be resolved automatically. |
 
 ### 2. Mandatory Metadata (`meta`)
 
@@ -119,6 +121,8 @@ export function useUpdateProductMutation() {
 
 ### Manual Fetching
 
+Raw `queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and `queryClient.ensureQueryData(...)` are forbidden outside `src/shared/lib/query-factories-v2.ts`. Use `fetchQueryV2`, `prefetchQueryV2`, `ensureQueryDataV2`, or their hook aliases instead.
+
 ```typescript
 const refreshData = async () => {
   await fetchQueryV2(queryClient, {
@@ -143,6 +147,7 @@ This script checks:
 1.  All v2 factory calls have a `meta` object.
 2.  The `meta` object contains a valid `domain`.
 3.  The `operation` matches the factory type (e.g., `createListQueryV2` expects `list` or `search`).
+4.  Raw manual query execution calls (`.fetchQuery`, `.prefetchQuery`, `.ensureQueryData`) are not used outside the telemetrized helper implementation file.
 
 ---
 
@@ -155,4 +160,5 @@ When refactoring legacy `useQuery` or `useMutation` hooks:
 3.  **Define Keys**: Ensure query keys are centralized in `src/shared/lib/query-keys.ts`.
 4.  **Add Metadata**: Populate the `meta` object with accurate source, resource, and domain info.
 5.  **Remove Manual Cache Logic**: Replace `onSuccess` cache manipulation with `invalidateKeys` or `createOptimisticMutationV2`.
-6.  **Verify**: Run `npm run check:factory-meta`.
+6.  **Replace Raw Manual Query Calls**: Migrate direct `queryClient.fetchQuery`, `queryClient.prefetchQuery`, and `queryClient.ensureQueryData` usage to the corresponding v2 helpers.
+7.  **Verify**: Run `npm run check:factory-meta`.

@@ -143,7 +143,6 @@ export const executePathRun = async (
     runtimeState.outputs ?? {}
   );
 
-  let resolvedRunId = run.id;
   let resolvedRunStartedAt = runStartedAt;
 
   const loadRunNodesForRuntimeRepair = async (): Promise<AiPathRunNodeRecord[]> => {
@@ -155,11 +154,15 @@ export const executePathRun = async (
   };
 
   const buildCurrentRuntimeStateSnapshot = async (): Promise<RuntimeState> => {
+    const currentRun = {
+      ...run,
+      status: 'running' as const,
+      startedAt: resolvedRunStartedAt,
+    };
     const candidate: RuntimeState = {
       ...EMPTY_RUNTIME_STATE,
       status: 'running',
-      runId: resolvedRunId,
-      runStartedAt: resolvedRunStartedAt,
+      currentRun,
       inputs: accInputs,
       outputs: accOutputs,
       nodeOutputs: accOutputs,
@@ -285,8 +288,8 @@ export const executePathRun = async (
       seedHashes: runtimeState.hashes,
       seedHashTimestamps: runtimeState.hashTimestamps,
       seedHistory: runtimeState.history,
-      seedRunId: runtimeState.runId ?? undefined,
-      seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
+      seedRunId: runtimeState.currentRun?.id ?? undefined,
+      seedRunStartedAt: runtimeState.currentRun?.startedAt ?? undefined,
       recordHistory: true,
       historyLimit: (run.meta?.['historyRetentionPasses'] as number | undefined) ?? 20,
       skipNodeIds: Array.from(skipNodes),
@@ -311,7 +314,6 @@ export const executePathRun = async (
         runStartedAt: cbRunStartedAt,
       }) => {
         try {
-          resolvedRunId = run.id;
           resolvedRunStartedAt = cbRunStartedAt;
           const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
           nodeAttemptMap.set(node.id, nextAttempt);
@@ -385,7 +387,6 @@ export const executePathRun = async (
         runStartedAt: cbRunStartedAt,
       }) => {
         try {
-          resolvedRunId = run.id;
           resolvedRunStartedAt = cbRunStartedAt;
           const attempt = nodeAttemptMap.get(node.id) ?? 1;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
@@ -499,7 +500,6 @@ export const executePathRun = async (
       },
       onNodeError: async ({ node, nodeInputs, error, iteration, runStartedAt: cbRunStartedAt }) => {
         try {
-          resolvedRunId = run.id;
           resolvedRunStartedAt = cbRunStartedAt;
           const attempt = nodeAttemptMap.get(node.id) ?? 1;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;

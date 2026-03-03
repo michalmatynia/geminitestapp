@@ -414,6 +414,9 @@ The codebase has a strong TanStack Query abstraction layer.
 - explicit factory metadata is part of the design
 - telemetry hooks are attached to query/mutation factories
 - query persistence/offline support exists in the root `QueryProvider`
+- raw `queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and
+  `queryClient.ensureQueryData(...)` are forbidden outside the helper layer;
+  use `fetchQueryV2`, `prefetchQueryV2`, or `ensureQueryDataV2`
 
 Related scripts:
 

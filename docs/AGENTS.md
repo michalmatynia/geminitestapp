@@ -146,11 +146,13 @@ Related checks:
 - The preferred data-fetching layer is the shared TanStack Query factory system,
   not ad hoc direct query usage everywhere.
 - See `src/shared/lib/query-factories-v2.ts`.
+- Raw `queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and
+  `queryClient.ensureQueryData(...)` are forbidden outside that helper file.
 - Query persistence, offline support, and advanced runtime hooks are wired into
   the root query provider.
 
 When editing feature hooks, verify they still align with shared query keys,
-telemetry metadata, and invalidation conventions.
+telemetry metadata, invalidation conventions, and the manual-query helper rule.
 
 ## Files, Media, and Storage
 

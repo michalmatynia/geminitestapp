@@ -1,7 +1,7 @@
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
-} from '@/shared/lib/documentation/types';
+} from '@/shared/contracts/documentation';
 
 import {
   AI_PATHS_TOOLTIP_CATALOG,

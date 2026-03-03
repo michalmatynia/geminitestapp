@@ -305,9 +305,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     []
   );
   const generationModel =
-    brainGenerationModel.effectiveModelId.trim() ||
-    studioSettings.targetAi.openai.model.trim() ||
-    'Not configured in AI Brain';
+    brainGenerationModel.effectiveModelId.trim() || 'Not configured in AI Brain';
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
 
   return (

@@ -29,7 +29,6 @@ import { useUiActions, useUiState } from '../context/UiContext';
 import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
 import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
-  normalizeImageStudioModelPresets,
   resolveImageStudioSequenceActiveSteps,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import {
@@ -141,27 +140,11 @@ export function RightSidebar(): React.JSX.Element {
   );
   const hasExtractedControls = flattenedParamsList.length > 0;
 
-  const quickSwitchModels = useMemo(
-    () =>
-      normalizeImageStudioModelPresets(
-        studioSettings.targetAi.openai.modelPresets,
-        studioSettings.targetAi.openai.model
-      ),
-    [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]
-  );
-  const quickModelOptions = useMemo(
-    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
-    [quickSwitchModels]
-  );
   const estimatedPromptTokens = useMemo(() => estimatePromptTokens(promptText), [promptText]);
   const selectedModelId = useMemo(
-    () =>
-      brainGenerationModel.effectiveModelId.trim() ||
-      studioSettings.targetAi.openai.model.trim() ||
-      '',
-    [brainGenerationModel.effectiveModelId, studioSettings.targetAi.openai.model]
+    () => brainGenerationModel.effectiveModelId.trim(),
+    [brainGenerationModel.effectiveModelId]
   );
-  const quickModelValue = selectedModelId;
   const estimatedGenerationCost = useMemo(() => {
     const profile = resolveModelCostProfile(selectedModelId);
     const count = Math.max(1, Number(studioSettings.targetAi.openai.image.n ?? 1));
@@ -435,6 +418,7 @@ export function RightSidebar(): React.JSX.Element {
         maskShapes,
         maskInvert,
         maskFeather,
+        selectedModelId,
         studioSettings,
       }),
     [
@@ -447,6 +431,7 @@ export function RightSidebar(): React.JSX.Element {
       maskShapes,
       maskInvert,
       maskFeather,
+      selectedModelId,
       studioSettings,
     ]
   );
@@ -490,19 +475,6 @@ export function RightSidebar(): React.JSX.Element {
       window.cancelAnimationFrame(frameId);
     };
   }, [projectId, sidebarTab]);
-
-  const handleQuickModelChange = React.useCallback(
-    (value: string): void => {
-      setStudioSettings((prev) => ({
-        ...prev,
-        targetAi: {
-          ...prev.targetAi,
-          openai: { ...prev.targetAi.openai, api: 'images', model: value },
-        },
-      }));
-    },
-    [setStudioSettings]
-  );
 
   const quickActionsPanelContent = useMemo(() => <RightSidebarQuickActions />, []);
 
@@ -548,14 +520,11 @@ export function RightSidebar(): React.JSX.Element {
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
-      modelValue: quickModelValue,
-      onModelChange: handleQuickModelChange,
       onOpenControls: () => setControlsOpen(true),
       onOpenPromptControl: () => setPromptControlOpen(true),
       onOpenRequestPreview: () => setRequestPreviewOpen(true),
       onRunGeneration: handleRunGeneration,
       onRunSequenceGeneration: handleRunSequenceGeneration,
-      quickModelOptions,
       selectedModelId,
       sequenceRunBusy,
     }),
@@ -586,11 +555,8 @@ export function RightSidebar(): React.JSX.Element {
       generationLabel,
       hasExtractedControls,
       modelSupportsSequenceGeneration,
-      quickModelValue,
-      handleQuickModelChange,
       handleRunGeneration,
       handleRunSequenceGeneration,
-      quickModelOptions,
       selectedModelId,
       sequenceRunBusy,
     ]

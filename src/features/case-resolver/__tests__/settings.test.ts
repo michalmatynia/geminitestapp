@@ -25,7 +25,6 @@ import {
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
   type CaseResolverFile,
-  type CaseResolverAssetFile,
   type Edge,
 } from '@/shared/contracts/case-resolver';
 
@@ -38,6 +37,9 @@ const createPromptNode = (id: string): AiNode => ({
   outputs: ['output'],
   position: { x: 0, y: 0 },
   config: { prompt: { template: '' } },
+  data: {},
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
 const createTemplateNode = (id: string, template: string): AiNode => ({
@@ -49,6 +51,9 @@ const createTemplateNode = (id: string, template: string): AiNode => ({
   outputs: ['output'],
   position: { x: 0, y: 0 },
   config: { template: { template } },
+  data: {},
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
 describe('case-resolver settings', () => {
@@ -1388,7 +1393,7 @@ describe('case-resolver settings', () => {
     expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS);
   });
 
-  it('migrates legacy template document nodes to prompt nodes', () => {
+  it('keeps template document nodes as template nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1423,10 +1428,8 @@ describe('case-resolver settings', () => {
     const graph = workspace.files[0]?.graph;
     const legacyNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'legacy-doc-node');
 
-    expect(legacyNode?.type).toBe('prompt');
-    expect(legacyNode?.config?.prompt?.template).toBe('<p>Legacy template text</p>');
-    expect(legacyNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
-    expect(legacyNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
+    expect(legacyNode?.type).toBe('template');
+    expect(legacyNode?.config?.template?.template).toBe('<p>Legacy template text</p>');
   });
 
   it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {
@@ -1493,39 +1496,29 @@ describe('case-resolver settings', () => {
     });
   });
 
-  it('parses legacy node-file snapshots with single-node payload shape', () => {
-    const snapshot = parseNodeFileSnapshot(
-      JSON.stringify({
-        kind: 'case_resolver_node_file_snapshot_v1',
-        source: 'manual',
-        nodeId: 'legacy-node',
-        sourceFileId: 'doc-legacy',
-        sourceFileName: 'Legacy Document',
-        sourceFileType: 'scanfile',
-        node: createPromptNode('legacy-node'),
-        connectedEdges: [
-          {
-            id: 'edge-legacy',
-            from: 'legacy-node',
-            to: 'legacy-node',
-            fromPort: 'output',
-            toPort: 'input',
-          },
-        ],
-      })
-    );
-
-    expect(snapshot.nodes.map((node) => node.id)).toEqual(['legacy-node']);
-    expect(snapshot.edges.map((edge) => edge.id)).toEqual(['edge-legacy']);
-    expect(snapshot.nodeFileMeta).toEqual({
-      'legacy-node': {
-        fileId: 'doc-legacy',
-        fileType: 'scanfile',
-        fileName: 'Legacy Document',
-      },
-    });
-    expect(snapshot.nodeMeta).toEqual({});
-    expect(snapshot.edgeMeta).toEqual({});
+  it('rejects legacy node-file snapshots with single-node payload shape', () => {
+    expect(() =>
+      parseNodeFileSnapshot(
+        JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodeId: 'legacy-node',
+          sourceFileId: 'doc-legacy',
+          sourceFileName: 'Legacy Document',
+          sourceFileType: 'scanfile',
+          node: createPromptNode('legacy-node'),
+          connectedEdges: [
+            {
+              id: 'edge-legacy',
+              source: 'legacy-node',
+              target: 'legacy-node',
+              sourceHandle: 'output',
+              targetHandle: 'input',
+            },
+          ],
+        })
+      )
+    ).toThrowError(/Legacy Case Resolver node-file snapshot fields are no longer supported/i);
   });
 
   it('parses node-file snapshots with node and edge metadata', () => {
@@ -1537,10 +1530,10 @@ describe('case-resolver settings', () => {
         edges: [
           {
             id: 'meta-edge',
-            from: 'meta-node',
-            to: 'meta-node',
-            fromPort: 'plaintextContent',
-            toPort: 'plaintextContent',
+            source: 'meta-node',
+            target: 'meta-node',
+            sourceHandle: 'plaintextContent',
+            targetHandle: 'plaintextContent',
           },
         ],
         nodeMeta: {
@@ -1609,72 +1602,66 @@ describe('case-resolver settings', () => {
     expect(second.edgeMeta).toEqual({});
   });
 
-  it('removes stale legacy node-file binding snapshots when no graph binding exists', () => {
-    const workspace = parseCaseResolverWorkspace(
-      JSON.stringify({
-        version: 2,
-        workspaceRevision: 0,
-        lastMutationId: null,
-        lastMutationAt: null,
-        folders: [],
-        files: [
-          {
-            id: 'case-a',
-            fileType: 'case',
-            name: 'Case A',
-            folder: '',
-            graph: {
-              nodes: [],
-              edges: [],
-              nodeMeta: {},
-              edgeMeta: {},
+  it('rejects legacy node-file binding snapshots when loading the workspace', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-a',
+              fileType: 'case',
+              name: 'Case A',
+              folder: '',
+              graph: {
+                nodes: [],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+              },
             },
-          },
-          {
-            id: 'doc-legacy',
-            fileType: 'document',
-            name: 'Legacy Document',
-            folder: '',
-            parentCaseId: 'case-a',
-            graph: {
-              nodes: [],
-              edges: [],
-              nodeMeta: {},
-              edgeMeta: {},
+            {
+              id: 'doc-legacy',
+              fileType: 'document',
+              name: 'Legacy Document',
+              folder: '',
+              parentCaseId: 'case-a',
+              graph: {
+                nodes: [],
+                edges: [],
+                nodeMeta: {},
+                edgeMeta: {},
+              },
             },
-          },
-        ],
-        assets: [
-          {
-            id: 'node-file-legacy',
-            name: 'Legacy Node File',
-            folder: '',
-            kind: 'node_file',
-            sourceFileId: 'doc-legacy',
-            textContent: JSON.stringify({
-              kind: 'case_resolver_node_file_snapshot_v1',
-              source: 'manual',
-              nodeId: 'legacy-node',
+          ],
+          assets: [
+            {
+              id: 'node-file-legacy',
+              name: 'Legacy Node File',
+              folder: '',
+              kind: 'node_file',
               sourceFileId: 'doc-legacy',
-              sourceFileType: 'document',
-              sourceFileName: 'Legacy Document',
-            }),
-          },
-        ],
-        activeFileId: 'doc-legacy',
-      })
-    );
-
-    const legacyNodeFile = workspace.assets.find(
-      (asset: CaseResolverAssetFile) => asset.id === 'node-file-legacy'
-    );
-    expect(legacyNodeFile).toBeDefined();
-    expect(legacyNodeFile?.sourceFileId).toBeNull();
-    const snapshot = parseNodeFileSnapshot(legacyNodeFile?.textContent ?? '');
-    expect(snapshot.nodeFileMeta).toEqual({});
+              textContent: JSON.stringify({
+                kind: 'case_resolver_node_file_snapshot_v1',
+                source: 'manual',
+                nodeId: 'legacy-node',
+                sourceFileId: 'doc-legacy',
+                sourceFileType: 'document',
+                sourceFileName: 'Legacy Document',
+              }),
+            },
+          ],
+          activeFileId: 'doc-legacy',
+        })
+      )
+    ).toThrowError(/Legacy Case Resolver node-file snapshot fields are no longer supported/i);
   });
 
-  it('normalizes text node edge ports to document ports and maps legacy textfield', () => {
+  it('keeps canonical text node edge ports on prompt nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1695,46 +1682,18 @@ describe('case-resolver settings', () => {
               ],
               edges: [
                 {
-                  id: 'edge-in-prompt',
-                  from: 'upstream',
-                  to: 'doc-node',
-                  fromPort: 'result',
-                  toPort: 'prompt',
+                  id: 'edge-in-canonical',
+                  source: 'upstream',
+                  target: 'doc-node',
+                  sourceHandle: 'result',
+                  targetHandle: 'plaintextContent',
                 },
                 {
-                  id: 'edge-in-unknown',
-                  from: 'upstream',
-                  to: 'doc-node',
-                  fromPort: 'result',
-                  toPort: 'custom',
-                },
-                {
-                  id: 'edge-in-legacy-textfield',
-                  from: 'upstream',
-                  to: 'doc-node',
-                  fromPort: 'result',
-                  toPort: 'textfield',
-                },
-                {
-                  id: 'edge-out-result',
-                  from: 'doc-node',
-                  to: 'downstream',
-                  fromPort: 'result',
-                  toPort: 'prompt',
-                },
-                {
-                  id: 'edge-out-prompt',
-                  from: 'doc-node',
-                  to: 'downstream',
-                  fromPort: 'prompt',
-                  toPort: 'prompt',
-                },
-                {
-                  id: 'edge-out-legacy-textfield',
-                  from: 'doc-node',
-                  to: 'downstream',
-                  fromPort: 'textfield',
-                  toPort: 'prompt',
+                  id: 'edge-out-canonical',
+                  source: 'doc-node',
+                  target: 'downstream',
+                  sourceHandle: 'plainText',
+                  targetHandle: 'prompt',
                 },
               ],
               nodeMeta: {
@@ -1759,15 +1718,52 @@ describe('case-resolver settings', () => {
     const edgeById = new Map<string, Edge>(
       (graph?.edges ?? []).map((edge: Edge) => [edge.id, edge])
     );
-    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('plaintextContent');
-    expect(edgeById.get('edge-in-unknown')?.toPort).toBe('plaintextContent');
-    expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(
-      CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]
-    );
-    expect(edgeById.get('edge-out-result')?.fromPort).toBe('plaintextContent');
-    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('plaintextContent');
-    expect(edgeById.get('edge-out-legacy-textfield')?.fromPort).toBe(
-      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0]
-    );
+    expect(edgeById.get('edge-in-canonical')?.targetHandle).toBe('plaintextContent');
+    expect(edgeById.get('edge-out-canonical')?.sourceHandle).toBe('plainText');
+  });
+
+  it('rejects legacy text node edge ports', () => {
+    expect(() =>
+      parseCaseResolverWorkspace(
+        JSON.stringify({
+          version: 2,
+          workspaceRevision: 0,
+          lastMutationId: null,
+          lastMutationAt: null,
+          folders: [],
+          files: [
+            {
+              id: 'case-edge-ports',
+              name: 'Case Edge Ports',
+              folder: '',
+              graph: {
+                nodes: [createPromptNode('upstream'), createPromptNode('doc-node')],
+                edges: [
+                  {
+                    id: 'edge-legacy-port',
+                    source: 'upstream',
+                    target: 'doc-node',
+                    sourceHandle: 'result',
+                    targetHandle: 'textfield',
+                  },
+                ],
+                nodeMeta: {
+                  'doc-node': {
+                    role: 'text_note',
+                    includeInOutput: true,
+                    quoteMode: 'none',
+                    surroundPrefix: '',
+                    surroundSuffix: '',
+                  },
+                },
+                edgeMeta: {},
+              },
+            },
+          ],
+          assets: [],
+          activeFileId: 'case-edge-ports',
+        })
+      )
+    ).toThrowError(/Legacy Case Resolver edge port names are no longer supported/i);
   });
 });

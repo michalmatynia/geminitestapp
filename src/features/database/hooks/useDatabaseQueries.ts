@@ -109,7 +109,7 @@ export function useCreateBackupMutation(): MutationResult<
       mutationKey,
       tags: ['database', 'backups', 'create'],
     },
-    invalidate: (queryClient, _result, dbType) => invalidateBackups(queryClient, dbType),
+    invalidateKeys: (_result, dbType) => [dbKeys.backups(dbType)],
   });
 }
 
@@ -160,7 +160,7 @@ export function useUploadBackupMutation(): MutationResult<
       mutationKey,
       tags: ['database', 'backups', 'upload'],
     },
-    invalidate: (queryClient, _result, variables) => invalidateBackups(queryClient, variables.dbType),
+    invalidateKeys: (_result, variables) => [dbKeys.backups(variables.dbType)],
   });
 }
 
@@ -181,7 +181,7 @@ export function useDeleteBackupMutation(): MutationResult<
       mutationKey,
       tags: ['database', 'backups', 'delete'],
     },
-    invalidate: (queryClient, _result, variables) => invalidateBackups(queryClient, variables.dbType),
+    invalidateKeys: (_result, variables) => [dbKeys.backups(variables.dbType)],
   });
 }
 
@@ -391,7 +391,7 @@ export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
       mutationKey,
       tags: ['database', 'engine', 'backup-scheduler', 'tick'],
     },
-    invalidate: (queryClient) => invalidateEngineSchedulerStatus(queryClient),
+    invalidateKeys: [dbKeys.engineBackupSchedulerStatus()],
   });
 }
 
@@ -412,9 +412,9 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
       tags: ['database', 'engine', 'backup', 'run-now'],
     },
     invalidate: (queryClient, payload) => {
-      invalidateEngineSchedulerStatus(queryClient);
+      void invalidateEngineSchedulerStatus(queryClient);
       payload.queued.forEach((item) => {
-        invalidateBackups(queryClient, item.dbType);
+        void invalidateBackups(queryClient, item.dbType);
       });
     },
   });
@@ -488,7 +488,7 @@ export function useCopyCollectionMutation(): MutationResult<
       mutationKey,
       tags: ['database', 'copy-collection'],
     },
-    invalidate: (queryClient) => invalidateSchemaAll(queryClient),
+    invalidateKeys: [dbKeys.schema({ provider: 'all', includeCounts: true })],
   });
 }
 

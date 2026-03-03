@@ -49,14 +49,9 @@ export interface ImageStudioSettingsContextValue {
   setBackfillIncludeHeuristicGenerationLinks: React.Dispatch<React.SetStateAction<boolean>>;
   backfillRunning: boolean;
   backfillResultText: string;
-  modelToAdd: string;
-  setModelToAdd: React.Dispatch<React.SetStateAction<string>>;
 
   // Derived
   settingsSource: string;
-  quickSwitchModels: string[];
-  quickSwitchModelSelectOptions: SelectOption[];
-  addableGenerationModelOptions: SelectOption[];
   isGpt52Model: boolean;
   modelCapabilities: ModelCapabilities;
   modelAwareSizeValue: string;
@@ -67,7 +62,6 @@ export interface ImageStudioSettingsContextValue {
   modelAwareQualityOptions: SelectOption[];
   modelAwareBackgroundOptions: SelectOption[];
   modelAwareFormatOptions: SelectOption[];
-  selectedGenerationModel: string;
 
   // Queries/Stores
   settingsStore: {
@@ -88,7 +82,6 @@ export interface ImageStudioSettingsContextValue {
   handlePromptValidationRulesChange: (raw: string) => void;
   saveStudioSettings: () => Promise<void>;
   resetStudioSettings: () => void;
-  setGenerationModelAndPresets: (nextModel: string, nextPresets: string[]) => void;
   runCardBackfill: () => Promise<void>;
   toggleProjectSequencingOperation: (
     operation: ImageStudioSequenceOperation,

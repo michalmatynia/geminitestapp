@@ -1,5 +1,4 @@
 import type {
-  PromptExploderAiProvider,
   PromptExploderBinding,
   PromptExploderBindingOrigin,
   PromptExploderBindingType,
@@ -25,7 +24,6 @@ import type {
 } from '@/shared/contracts/prompt-exploder';
 
 export type {
-  PromptExploderAiProvider,
   PromptExploderBinding,
   PromptExploderBindingOrigin,
   PromptExploderBindingType,

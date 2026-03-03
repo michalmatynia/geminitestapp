@@ -273,6 +273,13 @@ type EmitFactoryTelemetryInput = {
   error?: unknown;
 };
 
+type ManualQueryExecutorInput<TQueryFnData, TQueryKey extends QueryKey> = {
+  queryClient: QueryClient;
+  normalizedQueryKey: TQueryKey;
+  queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>;
+  staleTime?: number;
+};
+
 const sanitizeRefetchIntervalValue = (
   value: number | false | undefined
 ): number | false | undefined => {
@@ -447,6 +454,73 @@ const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   context: QueryFunctionContext<TQueryKey>
 ): Promise<TQueryFnData> =>
     (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+
+const createManualQueryExecutor = <
+    TQueryFnData,
+    TError,
+    TResult,
+    TQueryKey extends QueryKey = QueryKey,
+  >(
+    queryClient: QueryClient,
+    config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>,
+    executor: (input: ManualQueryExecutorInput<TQueryFnData, TQueryKey>) => Promise<TResult>,
+    options?: { swallowErrors?: boolean }
+  ): (() => Promise<TResult | undefined>) => {
+  const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
+  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
+  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
+
+  return async (): Promise<TResult | undefined> => {
+    const startMs = Date.now();
+    emitFactoryTelemetry({
+      entity: 'query',
+      stage: 'start',
+      meta: telemetryMeta,
+      key: normalizedQueryKey,
+      attempt: 1,
+      ...(telemetryContext ? { context: telemetryContext } : {}),
+    });
+
+    try {
+      const data = await executor({
+        queryClient,
+        normalizedQueryKey,
+        queryFn,
+        staleTime,
+      });
+
+      emitFactoryTelemetry({
+        entity: 'query',
+        stage: 'success',
+        meta: telemetryMeta,
+        key: normalizedQueryKey,
+        attempt: 1,
+        ...(telemetryContext ? { context: telemetryContext } : {}),
+        startedAtMs: startMs,
+      });
+
+      return data;
+    } catch (error) {
+      emitFactoryTelemetry({
+        entity: 'query',
+        stage: telemetryErrorStage(error),
+        meta: telemetryMeta,
+        key: normalizedQueryKey,
+        attempt: 1,
+        startedAtMs: startMs,
+        error,
+        ...(telemetryContext ? { context: telemetryContext } : {}),
+      });
+
+      if (options?.swallowErrors) {
+        return undefined;
+      }
+
+      const finalError = transformError ? transformError(error) : (error as TError);
+      throw finalError;
+    }
+  };
+};
 
 const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends QueryKey>(
   enabled: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>['enabled'],
@@ -1003,55 +1077,8 @@ export function useEnsureQueryDataV2<
   TData = TQueryFnData,
   TQueryKey extends QueryKey = QueryKey,
 >(config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>): () => Promise<TData> {
-  const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
   const queryClient = useQueryClient();
-  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
-  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
-
-  return async (): Promise<TData> => {
-    const startMs = Date.now();
-    emitFactoryTelemetry({
-      entity: 'query',
-      stage: 'start',
-      meta: telemetryMeta,
-      key: normalizedQueryKey,
-      attempt: 1,
-      ...(telemetryContext ? { context: telemetryContext } : {}),
-    });
-
-    try {
-      const data = await queryClient.ensureQueryData({
-        queryKey: normalizedQueryKey,
-        queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
-        staleTime,
-      });
-
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: 'success',
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-        startedAtMs: startMs,
-      });
-
-      return data as TData;
-    } catch (error) {
-      const finalError = transformError ? transformError(error) : (error as TError);
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: telemetryErrorStage(error),
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        startedAtMs: startMs,
-        error,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-      });
-      throw finalError;
-    }
-  };
+  return ensureQueryDataV2(queryClient, config);
 }
 
 export function usePrefetchQueryV2<
@@ -1073,6 +1100,30 @@ export function useFetchQueryV2<
   return fetchQueryV2(queryClient, config);
 }
 
+export function ensureQueryDataV2<
+  TQueryFnData,
+  TError = Error,
+  TData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  queryClient: QueryClient,
+  config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>
+): () => Promise<TData> {
+  return createManualQueryExecutor<TQueryFnData, TError, TData, TQueryKey>(
+    queryClient,
+    config,
+    async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
+      const data = await currentQueryClient.ensureQueryData({
+        queryKey: normalizedQueryKey,
+        queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
+        staleTime,
+      });
+
+      return data as TData;
+    }
+  ) as () => Promise<TData>;
+}
+
 export function prefetchQueryV2<
   TQueryFnData,
   TError = Error,
@@ -1081,50 +1132,18 @@ export function prefetchQueryV2<
   queryClient: QueryClient,
   config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>
 ): () => Promise<void> {
-  const { queryKey, queryFn, meta, telemetryContext, staleTime } = config;
-  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
-  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
-
-  return async (): Promise<void> => {
-    const startMs = Date.now();
-    emitFactoryTelemetry({
-      entity: 'query',
-      stage: 'start',
-      meta: telemetryMeta,
-      key: normalizedQueryKey,
-      attempt: 1,
-      ...(telemetryContext ? { context: telemetryContext } : {}),
-    });
-
-    try {
-      await queryClient.prefetchQuery({
+  return createManualQueryExecutor<TQueryFnData, TError, void, TQueryKey>(
+    queryClient,
+    config,
+    async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
+      await currentQueryClient.prefetchQuery({
         queryKey: normalizedQueryKey,
         queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
         staleTime,
       });
-
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: 'success',
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-        startedAtMs: startMs,
-      });
-    } catch (error) {
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: telemetryErrorStage(error),
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        startedAtMs: startMs,
-        error,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-      });
-    }
-  };
+    },
+    { swallowErrors: true }
+  ) as () => Promise<void>;
 }
 
 export function fetchQueryV2<
@@ -1136,54 +1155,19 @@ export function fetchQueryV2<
   queryClient: QueryClient,
   config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>
 ): () => Promise<TData> {
-  const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
-  const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
-  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
-
-  return async (): Promise<TData> => {
-    const startMs = Date.now();
-    emitFactoryTelemetry({
-      entity: 'query',
-      stage: 'start',
-      meta: telemetryMeta,
-      key: normalizedQueryKey,
-      attempt: 1,
-      ...(telemetryContext ? { context: telemetryContext } : {}),
-    });
-
-    try {
-      const data = await queryClient.fetchQuery({
+  return createManualQueryExecutor<TQueryFnData, TError, TData, TQueryKey>(
+    queryClient,
+    config,
+    async ({ queryClient: currentQueryClient, normalizedQueryKey, queryFn, staleTime }) => {
+      const data = await currentQueryClient.fetchQuery({
         queryKey: normalizedQueryKey,
         queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
         staleTime,
       });
 
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: 'success',
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-        startedAtMs: startMs,
-      });
-
       return data as TData;
-    } catch (error) {
-      const finalError = transformError ? transformError(error) : (error as TError);
-      emitFactoryTelemetry({
-        entity: 'query',
-        stage: telemetryErrorStage(error),
-        meta: telemetryMeta,
-        key: normalizedQueryKey,
-        attempt: 1,
-        startedAtMs: startMs,
-        error,
-        ...(telemetryContext ? { context: telemetryContext } : {}),
-      });
-      throw finalError;
     }
-  };
+  ) as () => Promise<TData>;
 }
 
 export const queryFactoriesV2TestUtils = {

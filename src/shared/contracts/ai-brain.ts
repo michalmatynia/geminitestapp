@@ -288,11 +288,6 @@ export const brainOperationsOverviewResponseSchema = z.object({
 export type BrainOperationsOverviewResponse = z.infer<typeof brainOperationsOverviewResponseSchema>;
 export type BrainOperationsOverviewResponseDto = BrainOperationsOverviewResponse;
 
-// Backward-compatibility alias for one migration cycle.
-export const chatbotModelsResponseSchema = brainModelsResponseSchema;
-export type ChatbotModelsResponse = BrainModelsResponse;
-export type ChatbotModelsResponseDto = ChatbotModelsResponse;
-
 const insightsSnapshotSchema = z.object({
   analytics: z.array(aiInsightRecordSchema).default([]),
   logs: z.array(aiInsightRecordSchema).default([]),

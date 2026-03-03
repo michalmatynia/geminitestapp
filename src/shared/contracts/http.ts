@@ -56,17 +56,3 @@ export type PaginatedResponseDto<T> = {
   page?: number;
   limit?: number;
 };
-
-export const legacyPaginatedResponseSchema = z.object({
-  data: z.array(z.unknown()),
-  total: z.number().optional(),
-  page: z.number().optional(),
-  limit: z.number().optional(),
-});
-
-export type LegacyPaginatedResponseDto<T> = {
-  data: T[];
-  total?: number;
-  page?: number;
-  limit?: number;
-};

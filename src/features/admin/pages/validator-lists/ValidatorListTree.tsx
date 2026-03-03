@@ -55,6 +55,7 @@ export function ValidatorListTree({
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () => ({
+      prepare: async (tx) => ({ tx, preparedAt: Date.now() }),
       apply: async (tx: MasterFolderTreeTransaction) => {
         const reordered = resolveValidatorListOrderFromNodes(tx.nextNodes, listByIdRef.current);
         onReorderRef.current(reordered);
@@ -63,6 +64,8 @@ export function ValidatorListTree({
           appliedAt: Date.now(),
         };
       },
+      commit: async () => {},
+      rollback: async () => {},
     }),
     []
   );

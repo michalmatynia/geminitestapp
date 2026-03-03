@@ -133,9 +133,7 @@ export function StudioSettingsContent(): React.JSX.Element {
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={
-                  promptExtractModel.effectiveModelId.trim() ||
-                  studioSettings.promptExtraction.gpt.model.trim() ||
-                  'Not configured in AI Brain'
+                  promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'
                 }
                 readOnly
                 disabled
@@ -229,9 +227,7 @@ export function StudioSettingsContent(): React.JSX.Element {
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={
-                  uiExtractorModel.effectiveModelId.trim() ||
-                  studioSettings.uiExtractor.model.trim() ||
-                  'Not configured in AI Brain'
+                  uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain'
                 }
                 readOnly
                 disabled
@@ -274,9 +270,7 @@ export function StudioSettingsContent(): React.JSX.Element {
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
                 value={
-                  generationModel.effectiveModelId.trim() ||
-                  studioSettings.targetAi.openai.model.trim() ||
-                  'Not configured in AI Brain'
+                  generationModel.effectiveModelId.trim() || 'Not configured in AI Brain'
                 }
                 readOnly
                 disabled

@@ -28,10 +28,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
   const brainGenerationModel = useBrainAssignment({
     capability: 'image_studio.general',
   });
-  const effectiveGenerationModel =
-    brainGenerationModel.effectiveModelId.trim() ||
-    studioSettings.targetAi.openai.model.trim() ||
-    '';
+  const effectiveGenerationModel = brainGenerationModel.effectiveModelId.trim();
 
   const handleSizeChange = (val: string): void => {
     setStudioSettings((prev) => ({
@@ -114,8 +111,8 @@ export function GenerationSettingsTab(): React.JSX.Element {
               </FormField>
 
               <div className='rounded-md border border-border/60 bg-card/35 px-3 py-2 text-[11px] text-gray-400'>
-                Model switching is managed in AI Brain. Local Image Studio generation model presets
-                remain as compatibility snapshots only.
+                Generation routing is managed in AI Brain. Image Studio no longer stores local
+                generation model snapshots.
               </div>
             </div>
 

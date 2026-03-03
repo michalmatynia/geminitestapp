@@ -22,12 +22,9 @@ import {
   type ProductListingExportEvent,
   type CreateProductListing,
   type ProductListingWithDetails,
-  type ListingAttempt,
 } from './listings';
 import {
   type Integration,
-  type ImageTransformOptions,
-  type ImageRetryPreset,
   type ImageExportLogger,
   type CapturedLog,
 } from './base';
@@ -58,6 +55,8 @@ import {
 } from './base-com';
 
 export type {
+  Integration,
+  ProductListing,
   BaseImportItemStatus,
   BaseImportItemAction,
   BaseImportErrorCode,
@@ -550,35 +549,6 @@ export type NormalizedMappedProduct = ProductCreateInput & {
   producerIds?: string[];
   tagIds?: string[];
 };
-
-import {
-  type IntegrationTemplate,
-  type IntegrationTemplateMapping,
-} from './templates';
-
-// Backward-compatible aliases for modules that still import *Dto names.
-export type ImageTransformOptionsDto = ImageTransformOptions;
-export type ImageRetryPresetDto = ImageRetryPreset;
-export type TemplateMappingDto = IntegrationTemplateMapping;
-export type TemplateDto = IntegrationTemplate;
-export type BaseInventoryDto = unknown;
-export type FetchMarketplaceCategoriesRequestDto = unknown;
-export type BulkCategoryMappingRequestDto = unknown;
-export type BaseImportItemStatusDto = BaseImportItemStatus;
-export type BaseImportModeDto = unknown;
-export type BaseImportRunRecordDto = BaseImportRunRecord;
-export type BaseImportStartResponseDto = BaseImportStartResponse;
-export type BaseImportRunDetailResponseDto = BaseImportRunDetailResponse;
-export type BaseImportParameterImportSettingsDto = ImportTemplateParameterImport;
-export type SessionCookieDto = SessionCookie;
-export type ImageUrlDiagnosticDto = ImageUrlDiagnostic;
-export type ImageExportDiagnosticsDto = ImageExportDiagnostics;
-export type CapturedLogDto = CapturedLog;
-export type IntegrationConnectionBasicDto = IntegrationConnectionBasic;
-export type IntegrationWithConnectionsDto = IntegrationWithConnections;
-export type ImportParameterCacheResponseDto = ImportParameterCacheResponse;
-export type ProductListingExportEventDto = ProductListingExportEvent;
-export type ListingAttemptDto = ListingAttempt;
 
 export const defaultBaseImportParameterImportSettings: ImportTemplateParameterImport = {
   enabled: false,

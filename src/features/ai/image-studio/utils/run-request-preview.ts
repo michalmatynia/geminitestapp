@@ -13,6 +13,7 @@ type BuildRunRequestPayloadInput = {
   maskShapes: VectorShape[];
   maskInvert: boolean;
   maskFeather: number;
+  selectedModelId: string;
   studioSettings: ImageStudioSettings;
 };
 
@@ -129,6 +130,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     maskShapes,
     maskInvert,
     maskFeather,
+    selectedModelId,
     studioSettings,
   } = input;
 
@@ -143,7 +145,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   if (!resolvedPrompt) {
     errors.push('Resolved prompt is empty.');
   }
-  const selectedModel = studioSettings.targetAi.openai.model?.trim() ?? '';
+  const selectedModel = selectedModelId.trim();
   if (selectedModel && isDalleModelId(selectedModel)) {
     const resolvedPromptLength = countPromptCharacters(resolvedPrompt);
     if (resolvedPromptLength > DALLE_PROMPT_MAX_CHARS) {

@@ -3,10 +3,7 @@ import { Folder } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMasterFolderTreeShell } from '@/features/foldertree/v2/shell/useMasterFolderTreeShell';
-import {
-  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
-  getFolderTreeUiStateV2Key,
-} from '@/features/foldertree/v2/settings';
+import { getFolderTreeUiStateV2Key } from '@/features/foldertree/v2/settings';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils';
 import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
@@ -170,7 +167,6 @@ describe('useMasterFolderTreeShell', () => {
     const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_cases');
     let settingsStore = createSettingsStore({
       entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
         [uiStateKey]: JSON.stringify({
           expandedNodeIds: ['folder-a'],
           panelCollapsed: false,
@@ -198,7 +194,6 @@ describe('useMasterFolderTreeShell', () => {
 
     settingsStore = createSettingsStore({
       entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
         [uiStateKey]: JSON.stringify({
           expandedNodeIds: ['folder-a'],
           panelCollapsed: false,
@@ -210,7 +205,6 @@ describe('useMasterFolderTreeShell', () => {
 
     settingsStore = createSettingsStore({
       entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
         [uiStateKey]: JSON.stringify({
           expandedNodeIds: ['folder-a'],
           panelCollapsed: false,
@@ -228,7 +222,6 @@ describe('useMasterFolderTreeShell', () => {
     const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_cases');
     const settingsStore = createSettingsStore({
       entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
         [uiStateKey]: JSON.stringify({
           expandedNodeIds: [],
           panelCollapsed: false,
@@ -262,9 +255,7 @@ describe('useMasterFolderTreeShell', () => {
     const controller = createMockController();
     const instance: FolderTreeInstance = 'notes';
     let settingsStore = createSettingsStore({
-      entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
-      },
+      entries: {},
     });
 
     useSettingsStoreMock.mockImplementation(() => settingsStore);
@@ -290,9 +281,7 @@ describe('useMasterFolderTreeShell', () => {
 
     controller.setExpandedNodeIds.mockClear();
     settingsStore = createSettingsStore({
-      entries: {
-        [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
-      },
+      entries: {},
       isFetching: true,
     });
     rerender({ externalExpanded: ['folder-b'] });
@@ -310,9 +299,7 @@ describe('useMasterFolderTreeShell', () => {
     });
     useSettingsStoreMock.mockImplementation(() =>
       createSettingsStore({
-        entries: {
-          [FOLDER_TREE_V2_MIGRATION_MARKER_KEY]: '2026-02-25T00:00:00.000Z',
-        },
+        entries: {},
       })
     );
     useFolderTreeInstanceV2Mock.mockReturnValue(controller);

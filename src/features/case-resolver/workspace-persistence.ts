@@ -496,7 +496,16 @@ export const fetchCaseResolverNodeFileSnapshot = async (
 ): Promise<CaseResolverNodeFileSnapshot | null> => {
   const rawValue = await fetchCaseResolverNodeFileSnapshotText(assetId, source);
   if (rawValue === null) return null;
-  return parseNodeFileSnapshot(rawValue);
+  try {
+    return parseNodeFileSnapshot(rawValue);
+  } catch (error: unknown) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'node_file_snapshot_validation_failed',
+      message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
+    });
+    throw error;
+  }
 };
 
 const persistCaseResolverNodeFileSnapshotText = async ({

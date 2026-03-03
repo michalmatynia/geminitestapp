@@ -1,7 +1,7 @@
 import {
   DOCUMENTATION_MODULE_IDS,
   type DocumentationEntry,
-} from '@/shared/lib/documentation/types';
+} from '@/shared/contracts/documentation';
 
 import {
   VALIDATOR_FUNCTION_DOCS,

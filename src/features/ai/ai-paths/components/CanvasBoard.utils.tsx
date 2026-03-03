@@ -16,14 +16,13 @@ type RuntimeEvent = Record<string, unknown>;
 type NodeProcessingStatus = string;
 
 export const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
-export const RENDERER_MODE_STORAGE_KEY = 'ai-paths:canvas-renderer-mode';
 export const EDGE_ROUTING_MODE_STORAGE_KEY = 'ai-paths:canvas-edge-routing-mode';
 export const MINIMAP_VISIBILITY_STORAGE_KEY = 'ai-paths:canvas-minimap-visible';
 export const SVG_CULL_PADDING = 260;
 export const SVG_EDGE_CULL_PADDING = 160;
 export const SVG_PERF_SAMPLE_WINDOW_MS = 1200;
 
-export type CanvasRendererMode = 'legacy' | 'svg';
+export type CanvasRendererMode = 'svg';
 
 /**
  * Extension of AiNode with layout and UI properties
@@ -119,7 +118,6 @@ export interface CanvasBoardState {
   svgNodeDiagnosticsTooltip: SvgNodeDiagnosticsTooltipState | null;
   setSvgNodeDiagnosticsTooltip: (tooltip: SvgNodeDiagnosticsTooltipState | null) => void;
   rendererMode: CanvasRendererMode;
-  setRendererMode: (mode: CanvasRendererMode) => void;
   showMinimap: boolean;
   setShowMinimap: (show: boolean) => void;
   viewportSize: { width: number; height: number } | null;

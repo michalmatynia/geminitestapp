@@ -142,30 +142,12 @@ export function createMasterFolderTreeAdapterV3<TEntity extends string>({
 }: CreateMasterFolderTreeAdapterV3Options<TEntity>): MasterFolderTreeAdapterV3 {
   return {
     ...(fetchState ? { fetchState } : {}),
-    loadNodes: fetchState
-      ? async (): Promise<MasterTreeNode[]> => {
-        const { nodes } = await fetchState();
-        return nodes;
-      }
-      : undefined,
     prepare: defaultPrepare,
     apply: async (
       tx: FolderTreeTransaction,
       _prepared: FolderTreePreparedTransaction
     ): Promise<FolderTreeAppliedTransaction | void> => {
       return await applyDecodedOperation({ tx, decodeNodeId, handlers });
-    },
-    applyOperation: async (operation, context): Promise<MasterTreeNode[] | void> => {
-      const tx: FolderTreeTransaction = {
-        id: 'legacy-' + Date.now(),
-        version: 1,
-        createdAt: Date.now(),
-        operation,
-        previousNodes: context.previousNodes,
-        nextNodes: context.nextNodes,
-      };
-      const result = await applyDecodedOperation({ tx, decodeNodeId, handlers });
-      return result?.nodes;
     },
     commit: async (): Promise<void> => {
       // No-op by default, but this explicit phase keeps the v3 transaction contract stable.

@@ -173,16 +173,14 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
 
   const handleVisibilityToggle = useCallback(
     (record: AiTriggerButtonRecord, enabled: boolean): void => {
-      setLocalRows((prev) =>
-        prev.map((row) => (row.id === record.id ? { ...row, enabled, isActive: enabled } : row))
-      );
+      setLocalRows((prev) => prev.map((row) => (row.id === record.id ? { ...row, enabled } : row)));
       onToggleVisibility(record, enabled);
     },
     [onToggleVisibility]
   );
 
   const isVisible = useCallback((record: AiTriggerButtonRecord): boolean => {
-    return record.enabled !== false && record.isActive !== false;
+    return record.enabled !== false;
   }, []);
 
   const getRowClassName = useCallback(

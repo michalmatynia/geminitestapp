@@ -3,9 +3,6 @@ import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
-  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
-  CASE_RESOLVER_PLAINTEXT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
@@ -16,6 +13,8 @@ import {
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
 } from '@/shared/contracts/case-resolver';
+import { validationError } from '@/shared/errors/app-error';
+import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 
 const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
@@ -172,29 +171,10 @@ const ensureDocumentPromptPorts = (
       nodeMeta[node.id]?.role === 'text_note' ||
       nodeMeta[node.id]?.role === 'explanatory' ||
       Boolean(documentSourceFileIdByNode[node.id]);
-    const normalizedNode: AiNode =
-      node.type === 'template' && isTextNode
-        ? {
-          ...node,
-          type: 'prompt',
-          config: {
-            ...(node.config ?? {}),
-            prompt: {
-              ...(node.config?.prompt ?? {}),
-              template:
-                  typeof node.config?.prompt?.template === 'string'
-                    ? node.config.prompt.template
-                    : typeof node.config?.template?.template === 'string'
-                      ? node.config.template.template
-                      : '',
-            },
-          },
-        }
-        : node;
-    if (normalizedNode.type !== 'prompt' || !isTextNode) return normalizedNode;
+    if (node.type !== 'prompt' || !isTextNode) return node;
     const isExplanatoryNode = nodeMeta[node.id]?.role === 'explanatory';
-    const currentInputs = Array.isArray(normalizedNode.inputs) ? normalizedNode.inputs : [];
-    const currentOutputs = Array.isArray(normalizedNode.outputs) ? normalizedNode.outputs : [];
+    const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
+    const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
     const nextInputs = isExplanatoryNode
       ? [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS]
       : [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
@@ -207,103 +187,69 @@ const ensureDocumentPromptPorts = (
     const sameOutputs =
       nextOutputs.length === currentOutputs.length &&
       nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
-    if (sameInputs && sameOutputs) return normalizedNode;
+    if (sameInputs && sameOutputs) return node;
     return {
-      ...normalizedNode,
+      ...node,
       inputs: nextInputs,
       outputs: nextOutputs,
     };
   });
 
-const sanitizeTextNodeEdgePorts = (
+const validateTextNodeEdgePorts = (
   edges: Edge[],
   textNodeIds: Set<string>,
   explanatoryNodeIds: Set<string>
 ): Edge[] => {
   if (edges.length === 0 || textNodeIds.size === 0) return edges;
-  const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
-  const plaintextContentPort =
-    CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? CASE_RESOLVER_PLAINTEXT_CONTENT_PORT;
-  const plainTextPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
-  const wysiwygContentPort = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
-  const legacyTextfieldPort = 'textfield';
-  const legacyContentPort = CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
-
-  const normalizeInputPort = (
-    value: string | null | undefined,
-    isExplanatoryNode: boolean
-  ): string => {
-    if (value === legacyTextfieldPort) return textfieldPort;
-    if (value === legacyContentPort) return plaintextContentPort;
-    if (
-      value === textfieldPort ||
-      value === plaintextContentPort ||
-      value === plainTextPort ||
-      (isExplanatoryNode && value === wysiwygContentPort)
-    ) {
-      return value;
-    }
-    return plaintextContentPort;
-  };
-
-  const normalizeOutputPort = (
-    value: string | null | undefined,
-    isExplanatoryNode: boolean
-  ): string => {
-    if (value === legacyTextfieldPort) return textfieldPort;
-    if (value === legacyContentPort) return plaintextContentPort;
-    if (
-      value === textfieldPort ||
-      value === plaintextContentPort ||
-      value === plainTextPort ||
-      (isExplanatoryNode && value === wysiwygContentPort)
-    ) {
-      return value;
-    }
-    return plaintextContentPort;
-  };
-
   return edges.map((edge: Edge): Edge => {
-    let nextFromPort = edge.fromPort;
-    let nextToPort = edge.toPort;
-    const fromNodeId = edge.from ?? edge.source;
-    const toNodeId = edge.to ?? edge.target;
-    if (fromNodeId && textNodeIds.has(fromNodeId)) {
-      const normalized = normalizeOutputPort(edge.fromPort, explanatoryNodeIds.has(fromNodeId));
-      if (normalized !== edge.fromPort) {
-        nextFromPort = normalized;
+    const sourceNodeId = edge.source?.trim() ?? '';
+    const targetNodeId = edge.target?.trim() ?? '';
+    const validatePort = (
+      port: string | null | undefined,
+      nodeId: string,
+      direction: 'sourceHandle' | 'targetHandle'
+    ): void => {
+      if (!textNodeIds.has(nodeId)) return;
+      const allowedPorts = explanatoryNodeIds.has(nodeId)
+        ? direction === 'sourceHandle'
+          ? CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS
+          : CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS
+        : direction === 'sourceHandle'
+          ? CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS
+          : CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS;
+      if (typeof port !== 'string' || !allowedPorts.includes(port)) {
+        throw validationError('Invalid Case Resolver text-node edge port.', {
+          source: 'case_resolver.graph',
+          edgeId: edge.id,
+          nodeId,
+          direction,
+          port: port ?? null,
+          allowedPorts,
+        });
       }
-    }
-    if (toNodeId && textNodeIds.has(toNodeId)) {
-      const normalized = normalizeInputPort(edge.toPort, explanatoryNodeIds.has(toNodeId));
-      if (normalized !== edge.toPort) {
-        nextToPort = normalized;
-      }
-    }
-    if (nextFromPort === edge.fromPort && nextToPort === edge.toPort) return edge;
-    return {
-      ...edge,
-      fromPort: nextFromPort,
-      toPort: nextToPort,
     };
+
+    validatePort(edge.sourceHandle, sourceNodeId, 'sourceHandle');
+    validatePort(edge.targetHandle, targetNodeId, 'targetHandle');
+    return edge;
   });
 };
 
 export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
   const rawNodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
-  const edges = Array.isArray(graphRecord['edges']) ? (graphRecord['edges'] as Edge[]) : [];
+  const rawEdges = Array.isArray(graphRecord['edges']) ? graphRecord['edges'] : [];
   const validNodeIds = new Set<string>(
     rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
-  const edgesByNodeId = edges.filter(
-    (edge: Edge): boolean =>
-      typeof edge?.id === 'string' &&
-      typeof edge.from === 'string' &&
-      typeof edge.to === 'string' &&
-      validNodeIds.has(edge.from) &&
-      validNodeIds.has(edge.to)
-  );
+  const edgesByNodeId = rawEdges
+    .map((edge: unknown): Edge =>
+      parseCanonicalCaseResolverEdge(edge, 'case_resolver.graph')
+    )
+    .filter(
+      (edge: Edge): boolean =>
+        validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')
+    );
 
   const presetRaw = graphRecord['pdfExtractionPresetId'];
   const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =
@@ -343,26 +289,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       .filter((node: AiNode): boolean => sanitizedNodeMeta[node.id]?.role === 'explanatory')
       .map((node: AiNode): string => node.id)
   );
-  const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds, explanatoryNodeIds);
-  const strictEdges: CaseResolverGraph['edges'] = sanitizedEdges
-    .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
-      const from = edge.from ?? edge.source;
-      const to = edge.to ?? edge.target;
-      if (!from || !to) return null;
-      return {
-        id: edge.id,
-        from,
-        to,
-        ...(edge.label ? { label: edge.label } : {}),
-        ...((edge.fromPort ?? edge.sourceHandle)
-          ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
-          : {}),
-        ...((edge.toPort ?? edge.targetHandle)
-          ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
-          : {}),
-      };
-    })
-    .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
+  const strictEdges = validateTextNodeEdgePorts(edgesByNodeId, textNodeIds, explanatoryNodeIds);
   const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
   const documentDropNodeId =
     typeof rawDocumentDropNodeId === 'string' &&

@@ -9,7 +9,7 @@ import {
 import {
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
-} from '../../hooks/useDocumentRelationSearch';
+} from '@/shared/contracts/case-resolver';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 
 const SORT_OPTIONS: { value: DocumentRelationSortMode; label: string }[] = [

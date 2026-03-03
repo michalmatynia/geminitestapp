@@ -12,9 +12,7 @@ import {
 } from '../context';
 import type { AiNode, PathFlowIntensity } from '@/shared/lib/ai-paths';
 import {
-  RENDERER_MODE_STORAGE_KEY,
   MINIMAP_VISIBILITY_STORAGE_KEY,
-  type CanvasRendererMode,
   type SvgConnectorTooltipState,
   type SvgNodeDiagnosticsTooltipState,
   SVG_PERF_SAMPLE_WINDOW_MS,
@@ -56,7 +54,6 @@ export function useCanvasBoardState({
     React.useState<SvgConnectorTooltipState | null>(null);
   const [svgNodeDiagnosticsTooltip, setSvgNodeDiagnosticsTooltip] =
     React.useState<SvgNodeDiagnosticsTooltipState | null>(null);
-  const [rendererMode, setRendererMode] = React.useState<CanvasRendererMode>('svg');
   const [showMinimap, setShowMinimap] = React.useState<boolean>(true);
   const [viewportSize, setViewportSize] = React.useState<{
     width: number;
@@ -76,10 +73,6 @@ export function useCanvasBoardState({
   // --- Effects ---
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    const storedMode = window.localStorage.getItem(RENDERER_MODE_STORAGE_KEY);
-    if (storedMode === 'legacy' || storedMode === 'svg') {
-      setRendererMode(storedMode);
-    }
     const storedMinimapVisibility = window.localStorage.getItem(MINIMAP_VISIBILITY_STORAGE_KEY);
     if (storedMinimapVisibility === '0') {
       setShowMinimap(false);
@@ -88,25 +81,8 @@ export function useCanvasBoardState({
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(RENDERER_MODE_STORAGE_KEY, rendererMode);
-  }, [rendererMode]);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
     window.localStorage.setItem(MINIMAP_VISIBILITY_STORAGE_KEY, showMinimap ? '1' : '0');
   }, [showMinimap]);
-
-  React.useEffect(() => {
-    if (rendererMode !== 'svg' && svgConnectorTooltip !== null) {
-      setSvgConnectorTooltip(null);
-    }
-  }, [rendererMode, svgConnectorTooltip]);
-
-  React.useEffect(() => {
-    if (rendererMode !== 'svg' && svgNodeDiagnosticsTooltip !== null) {
-      setSvgNodeDiagnosticsTooltip(null);
-    }
-  }, [rendererMode, svgNodeDiagnosticsTooltip]);
 
   React.useEffect(() => {
     if (!pinnedConnectorKey && !hoveredConnectorKey) {
@@ -138,10 +114,8 @@ export function useCanvasBoardState({
     return (): void => observer.disconnect();
   }, [canvasRefs.viewportRef]);
 
-  const isSvgRenderer = rendererMode === 'svg';
-
   React.useEffect(() => {
-    if (!isSvgRenderer || typeof window === 'undefined' || prefersReducedMotion) {
+    if (typeof window === 'undefined' || prefersReducedMotion) {
       setSvgPerf({ fps: 0, avgFrameMs: 0, slowFrameRatio: 0 });
       return;
     }
@@ -186,7 +160,7 @@ export function useCanvasBoardState({
     };
     rafId = window.requestAnimationFrame(tick);
     return (): void => window.cancelAnimationFrame(rafId);
-  }, [prefersReducedMotion, isSvgRenderer]);
+  }, [prefersReducedMotion]);
 
   // --- Derived ---
   const configuredFlowIntensity: PathFlowIntensity = graphState.flowIntensity ?? 'medium';
@@ -409,15 +383,14 @@ export function useCanvasBoardState({
     setSvgConnectorTooltip,
     svgNodeDiagnosticsTooltip,
     setSvgNodeDiagnosticsTooltip,
-    rendererMode,
-    setRendererMode,
+    rendererMode: 'svg',
     showMinimap,
     setShowMinimap,
     viewportSize,
     prefersReducedMotion,
     svgPerf,
     effectiveFlowIntensity,
-    isSvgRenderer,
+    isSvgRenderer: true,
     nodeById,
     getConnectorInfo,
     getPortValue,

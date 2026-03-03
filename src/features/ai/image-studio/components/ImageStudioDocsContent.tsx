@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { CopyButton, Input, FormSection, DocumentationList, Card, Hint } from '@/shared/ui';
 
@@ -44,6 +45,15 @@ function metricValue(value: string | number | boolean | null | undefined): strin
 
 export function ImageStudioDocsContent(): React.JSX.Element {
   const [docsQuery, setDocsQuery] = useState('');
+  const promptExtractModel = useBrainAssignment({
+    capability: 'image_studio.prompt_extract',
+  });
+  const uiExtractorModel = useBrainAssignment({
+    capability: 'image_studio.ui_extractor',
+  });
+  const generationModel = useBrainAssignment({
+    capability: 'image_studio.general',
+  });
 
   const { projectId, projectSearch, projectsQuery } = useProjectsState();
   const {
@@ -223,10 +233,10 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         value: metricValue(studioSettings.promptExtraction.showValidationSummary),
       },
       {
-        path: 'promptExtraction.gpt.model',
-        label: 'Prompt extraction GPT model',
-        description: 'Model used when extraction mode includes GPT.',
-        value: studioSettings.promptExtraction.gpt.model,
+        path: 'aiBrain.image_studio.prompt_extract',
+        label: 'Prompt extraction Brain assignment',
+        description: 'AI Brain capability used when extraction mode includes GPT.',
+        value: promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain',
       },
       {
         path: 'promptExtraction.gpt.temperature',
@@ -253,10 +263,10 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         value: studioSettings.uiExtractor.mode,
       },
       {
-        path: 'uiExtractor.model',
-        label: 'UI extractor model',
-        description: 'Model used by AI UI extraction.',
-        value: studioSettings.uiExtractor.model,
+        path: 'aiBrain.image_studio.ui_extractor',
+        label: 'UI extractor Brain assignment',
+        description: 'AI Brain capability used by AI UI extraction.',
+        value: uiExtractorModel.effectiveModelId.trim() || 'Not configured in AI Brain',
       },
       {
         path: 'uiExtractor.temperature',
@@ -304,10 +314,10 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         value: studioSettings.targetAi.openai.api,
       },
       {
-        path: 'targetAi.openai.model',
-        label: 'OpenAI model',
-        description: 'Primary model for generation in Studio.',
-        value: studioSettings.targetAi.openai.model,
+        path: 'aiBrain.image_studio.general',
+        label: 'Generation Brain assignment',
+        description: 'AI Brain capability used for final image generation.',
+        value: generationModel.effectiveModelId.trim() || 'Not configured in AI Brain',
       },
       {
         path: 'targetAi.openai.temperature',

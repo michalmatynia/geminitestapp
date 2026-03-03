@@ -2,7 +2,6 @@
 
  
 
-import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import {
@@ -120,14 +119,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const activeVariant = regexConfig.activeVariant ?? 'manual';
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
-  const queryClient = useQueryClient();
-  const cachedAiPathSettings =
-    queryClient.getQueryData<Array<{ key: string; value: string }>>(
-      QUERY_KEYS.ai.aiPaths.settings()
-    ) ?? [];
-  const hasCachedAiPathSettings = Boolean(
-    queryClient.getQueryState(QUERY_KEYS.ai.aiPaths.settings())?.dataUpdatedAt
-  );
+
   const settingsQuery = createListQueryV2<
     Array<{ key: string; value: string }>,
     Array<{ key: string; value: string }>
@@ -135,7 +127,6 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached(),
-    ...(hasCachedAiPathSettings ? { initialData: cachedAiPathSettings } : {}),
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -144,7 +135,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       source: 'ai.ai-paths.node-config.regex.settings',
       operation: 'list',
       resource: 'ai-paths.settings',
-      domain: 'global',
+      domain: 'ai_paths',
       tags: ['ai-paths', 'node-config', 'regex'],
     },
   });

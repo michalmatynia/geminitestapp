@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -43,7 +43,6 @@ export function useDatabaseBackupsState() {
   const [activeTargetTimeLocalDraft, setActiveTargetTimeLocalDraft] = useState('02:00');
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const isProd = process.env['NODE_ENV'] === 'production';
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
@@ -122,7 +121,6 @@ export function useDatabaseBackupsState() {
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
     setLogModalContent('');
-    invalidateBackups(queryClient, activeTab);
   }, [queryClient, activeTab]);
 
   const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {

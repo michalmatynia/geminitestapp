@@ -296,3 +296,15 @@ export type CaseMetadataDraft = {
 
 export type DocumentRelationFileTypeFilter = 'all' | 'document' | 'scanfile';
 export type DocumentRelationSortMode = 'name_asc' | 'date_desc' | 'date_asc' | 'folder_asc';
+
+export type ResultHeight = 'compact' | 'normal' | 'expanded';
+
+export type CaseRow = {
+  file: {
+    id: string;
+    name: string;
+    caseStatus?: string | null | undefined;
+  };
+  signatureLabel: string;
+  docCount: number;
+};

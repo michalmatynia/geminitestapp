@@ -1,12 +1,11 @@
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
 import { dbApi, entityApi } from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { createMutationV2, fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
-import type { QueryClient } from '@tanstack/react-query';
 
 const AI_PATHS_SAMPLE_STALE_MS = 10_000;
 
@@ -18,7 +17,6 @@ type ToastFn = (
 ) => void;
 
 type UseAiPathsSettingsSamplesInput = {
-  queryClient: QueryClient;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   toast: ToastFn;
@@ -53,11 +51,11 @@ export type UseAiPathsSettingsSamplesReturn = {
 };
 
 export function useAiPathsSettingsSamples({
-  queryClient,
   setParserSamples,
   setUpdaterSamples,
   toast,
 }: UseAiPathsSettingsSamplesInput): UseAiPathsSettingsSamplesReturn {
+  const queryClient = useQueryClient();
   const fetchParserSampleMutation = createMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
@@ -89,7 +87,7 @@ export function useAiPathsSettingsSamples({
           queryKey: getProductDetailQueryKey(entityId),
           queryFn: async () => {
             const result = await entityApi.getProduct(entityId);
-            return result.ok ? (result.data) : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {
@@ -106,7 +104,7 @@ export function useAiPathsSettingsSamples({
           queryKey: QUERY_KEYS.notes.detail(entityId),
           queryFn: async () => {
             const result = await entityApi.getNote(entityId);
-            return result.ok ? (result.data) : null;
+            return result.ok ? (result.data as Record<string, unknown>) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {

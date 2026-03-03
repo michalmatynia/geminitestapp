@@ -38,7 +38,6 @@ vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
 
 vi.mock('@/features/case-resolver/settings', () => ({
   createEmptyNodeFileSnapshot: () => snapshot,
-  parseNodeFileSnapshot: () => snapshot,
 }));
 
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
@@ -112,6 +111,16 @@ vi.mock('@/shared/ui', () => ({
       {description ? <div>{description}</div> : null}
     </div>
   ),
+  Badge: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Chip: ({
+    label,
+    onClick,
+  }: {
+    label: React.ReactNode;
+    onClick?: () => void;
+  }) => <button type='button' onClick={onClick}>{label}</button>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useToast: () => ({ toast: vi.fn() }),
 }));
 
 const createWorkspaceState = (
@@ -214,26 +223,30 @@ describe('CaseResolverNodeFileWorkspace', () => {
     workspaceStateMock = createWorkspaceState();
   });
 
-  it('bridges shared config-open state into the node inspector modal flow', () => {
+  it('bridges shared config-open state into the node inspector modal flow', async () => {
     workspaceStateMock = createWorkspaceState({ configOpen: true });
 
     render(<CaseResolverNodeFileWorkspace />);
 
-    expect(setIsNodeInspectorOpenMock).toHaveBeenCalledWith(true);
-    expect(setConfigOpenMock).toHaveBeenCalledWith(false);
+    await waitFor(() => {
+      expect(setIsNodeInspectorOpenMock).toHaveBeenCalledWith(true);
+      expect(setConfigOpenMock).toHaveBeenCalledWith(false);
+    });
   });
 
-  it('renders nodefile controls and preserves manual save behavior', () => {
+  it('renders nodefile controls and preserves manual save behavior', async () => {
     workspaceStateMock = createWorkspaceState({ hasPendingSnapshotChanges: true });
 
     render(<CaseResolverNodeFileWorkspace />);
 
+    await waitFor(() => {
+      expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+    });
     const saveButton = screen.getByRole('button', { name: /save map/i });
     const inspectorButton = screen.getByRole('button', { name: /open inspector/i });
 
     expect(saveButton).toBeEnabled();
     expect(inspectorButton).toBeEnabled();
-    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
 
     fireEvent.click(saveButton);
     fireEvent.click(inspectorButton);
@@ -242,14 +255,16 @@ describe('CaseResolverNodeFileWorkspace', () => {
     expect(setIsNodeInspectorOpenMock).toHaveBeenCalledWith(true);
   });
 
-  it('keeps the canvas visible and shows the empty-state guidance without hiding the board', () => {
+  it('keeps the canvas visible and shows the empty-state guidance without hiding the board', async () => {
     workspaceStateMock = createWorkspaceState({ nodes: [], selectedNodeId: null });
 
     render(<CaseResolverNodeFileWorkspace />);
 
-    expect(screen.getByTestId('canvas-board')).toBeInTheDocument();
-    expect(screen.getByText('Empty canvas')).toBeInTheDocument();
-    expect(screen.getByText('All changes saved')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('canvas-board')).toBeInTheDocument();
+      expect(screen.getByText('Empty canvas')).toBeInTheDocument();
+      expect(screen.getByText('All changes saved')).toBeInTheDocument();
+    });
   });
 
   it('prefers a keyed snapshot when one is available', async () => {
@@ -269,6 +284,18 @@ describe('CaseResolverNodeFileWorkspace', () => {
       expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toMatchObject({
         edges: [{ id: 'edge-1' }],
       });
+    });
+  });
+
+  it('does not fall back to inline node-file snapshot text when keyed storage is empty', async () => {
+    render(<CaseResolverNodeFileWorkspace />);
+
+    await waitFor(() => {
+      expect(fetchCaseResolverNodeFileSnapshotMock).toHaveBeenCalledWith(
+        'asset-node-file',
+        'node_file_workspace_load'
+      );
+      expect(lastUseNodeFileWorkspaceStateProps?.snapshot).toEqual(snapshot);
     });
   });
 });

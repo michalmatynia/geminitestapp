@@ -1,5 +1,6 @@
 'use client';
 
+import { classifyError } from '@/shared/errors/error-classifier';
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
@@ -63,6 +64,7 @@ const buildPayload = (
     context?: ClientErrorContext | null | undefined;
   }
 ): ClientErrorPayload => {
+  const category = classifyError(error);
   const payload: ClientErrorPayload = {
     message: 'Unknown client error',
     timestamp: new Date().toISOString(),
@@ -90,9 +92,10 @@ const buildPayload = (
       ? { ...baseContext, ...(extra?.context ?? {}) }
       : null;
 
-  if (mergedContext || getLastUserAction()) {
+  if (mergedContext || getLastUserAction() || category) {
     const contextToSerialize = {
       ...(mergedContext || {}),
+      ...(category ? { category } : {}),
       ...(getLastUserAction() ? { lastAction: getLastUserAction() } : {}),
     };
     const serialized = safeSerialize(contextToSerialize);

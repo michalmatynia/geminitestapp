@@ -72,6 +72,11 @@ npm run check:factory-meta
 npm run metrics:guardrails
 ```
 
+`npm run check:factory-meta` also enforces the manual-query helper rule:
+prefer `fetchQueryV2`, `prefetchQueryV2`, and `ensureQueryDataV2` over raw
+`queryClient.fetchQuery(...)`, `queryClient.prefetchQuery(...)`, and
+`queryClient.ensureQueryData(...)`.
+
 ## Last Updated
 
 Aligned to the scanned repo structure on `2026-03-03`.

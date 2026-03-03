@@ -65,6 +65,22 @@ const toVariantOutput = (
   };
 };
 
+export const normalizeStudioSlotId = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (trimmed.startsWith('slot:')) return trimmed.slice(5);
+  if (trimmed.startsWith('run:')) return trimmed; // preserve run IDs as they are
+  return trimmed;
+};
+
+export const resolveStudioSlotIdCandidates = (
+  id: string | null | undefined
+): Set<string> => {
+  const normalized = normalizeStudioSlotId(id);
+  if (!normalized) return new Set();
+  return new Set([normalized]);
+};
+
 export const resolveSourceSlotIdFromGeneratedPath = (
   slot: ImageStudioSlotRecord | null
 ): string | null => {

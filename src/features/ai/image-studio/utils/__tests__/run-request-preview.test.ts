@@ -36,6 +36,7 @@ describe('buildRunRequestPreview', () => {
       maskShapes: [],
       maskInvert: false,
       maskFeather: 0,
+      selectedModelId: 'gpt-image-1',
       studioSettings: baseStudioSettings,
     });
 
@@ -76,6 +77,7 @@ describe('buildRunRequestPreview', () => {
       maskShapes: [],
       maskInvert: false,
       maskFeather: 0,
+      selectedModelId: 'gpt-image-1',
       studioSettings: baseStudioSettings,
     });
 

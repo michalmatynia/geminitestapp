@@ -24,7 +24,7 @@ export async function GET_handler(
   const repo = await getIntegrationRepository();
   const integration = await repo.getIntegrationById(id);
 
-  if (integration?.slug !== 'allegro') {
+  if (integration?.['slug'] !== 'allegro') {
     throw notFoundError('Allegro integration not found.', { integrationId: id });
   }
 

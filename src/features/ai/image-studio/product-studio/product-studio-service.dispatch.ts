@@ -274,7 +274,7 @@ export async function sendProductImageToStudio(params: {
   const sequenceStepPlan = buildProductStudioSequenceStepPlan(resolvedActiveSteps);
   const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
   routeDecisionMs = Date.now() - routeDecisionStartMs;
-  const sequenceSnapshot = buildImageStudioSequenceSnapshot(parsedStudioSettings);
+  const sequenceSnapshot = buildImageStudioSequenceSnapshot(parsedStudioSettings, { modelId });
   const auditSettingsContext = buildAuditSettingsContext(sequencingDiagnostics);
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
@@ -347,7 +347,7 @@ export async function sendProductImageToStudio(params: {
     const stepOrderUsed = stepsForSequenceRun.map((step) => step.type);
     const resolvedCropRect = resolveFirstSequenceCropRect(stepsForSequenceRun);
     const settingsSnapshotHash = buildSettingsSnapshotHash(studioSettings);
-    const projectModelId = trimString(parsedStudioSettings.targetAi.openai.model);
+    const projectModelId = trimString(modelId);
     try {
       validateProductStudioSequenceSteps(stepsForSequenceRun);
     } catch (error) {

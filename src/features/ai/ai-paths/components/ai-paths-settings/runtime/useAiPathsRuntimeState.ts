@@ -78,7 +78,6 @@ export function useAiPathsRuntimeState() {
       s === 'completed' ||
       s === 'failed' ||
       s === 'canceled' ||
-      s === 'cancelled' ||
       s === 'cached' ||
       s === 'polling' ||
       s === 'waiting_callback' ||
@@ -105,8 +104,7 @@ export function useAiPathsRuntimeState() {
       case 'failed':
         return 'Failed';
       case 'canceled':
-      case 'cancelled':
-        return 'Cancelled';
+        return 'Canceled';
       case 'cached':
         return 'Cached';
       case 'polling':

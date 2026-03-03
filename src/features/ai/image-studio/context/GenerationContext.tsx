@@ -13,13 +13,16 @@ import React, {
 
 import {
   useRunStudio,
-  type ImageStudioRunRecord,
-  type ImageStudioRunStatus,
-  type RunStudioEnqueueResult,
-  type RunStudioPayload,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import type {
+  ImageStudioRunRecord,
+  ImageStudioRunStatus,
+  RunStudioEnqueueResult,
+  RunStudioPayload,
+} from '@/shared/contracts/image-studio';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import { api } from '@/shared/lib/api-client';
+import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useToast } from '@/shared/ui';
 
 import { useMaskingState, useMaskingActions } from './MaskingContext';
@@ -117,7 +120,8 @@ const readCreatedSlotIdsFromPayload = (payload: unknown): string[] => {
   return createdIds;
 };
 
-const extractCreatedSlotIdsFromRun = (run: ImageStudioRunRecord): string[] => {
+const extractCreatedSlotIdsFromRun = (runRecord: ImageStudioRunRecord): string[] => {
+  const run = runRecord as any;
   const historyEvents = Array.isArray(run.historyEvents) ? [...run.historyEvents].reverse() : [];
   const createdSlotIds: string[] = [];
   const seen = new Set<string>();
@@ -161,7 +165,19 @@ const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingS
   const outputs = Array.isArray(run.outputs) ? run.outputs : [];
   const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);
   return Array.from({ length: slotCount }, (_value, index) => {
-    const output = outputs[index] ?? null;
+    const rawOutput = outputs[index] ?? null;
+    const output: ImageFileRecord | null = rawOutput
+      ? {
+          id: rawOutput.id,
+          filepath: rawOutput.filepath,
+          filename: rawOutput.filepath.split('/').pop() || rawOutput.id,
+          mimetype: 'image/png', // Fallback, assuming PNG for generated variants
+          size: 0, // Unknown size for variants in this context
+          tags: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      : null;
     const status: GenerationLandingSlot['status'] = output
       ? 'completed'
       : run.status === 'failed' || run.status === 'completed'
@@ -171,7 +187,7 @@ const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingS
       id: `${run.id}:${index + 1}`,
       index: index + 1,
       status,
-      output,
+      output: output as any,
     };
   });
 };
@@ -192,7 +208,8 @@ const markLandingSlotsAsFailed = (
   }));
 };
 
-const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord | null => {
+const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationRecord | null => {
+  const run = runRecord as any;
   const outputs = Array.isArray(run.outputs) ? run.outputs : [];
   if (outputs.length === 0) return null;
 
@@ -217,7 +234,16 @@ const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord 
     maskShapeCount,
     maskInvert,
     maskFeather,
-    outputs,
+    outputs: outputs.map((out: any) => ({
+      id: out.id,
+      filepath: out.filepath,
+      filename: out.filepath.split('/').pop() || out.id,
+      mimetype: 'image/png',
+      size: 0,
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })),
     slotId: run.request?.asset?.id ?? '',
     slotName: run.request?.asset?.id ?? run.request?.asset?.filepath ?? run.id,
   };
@@ -238,6 +264,9 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   const { promptText, paramsState } = usePromptState();
   const { setPromptText } = usePromptActions();
   const { studioSettings } = useSettingsState();
+  const generationModel = useBrainAssignment({
+    capability: 'image_studio.general',
+  });
 
   const runMutation = useRunStudio();
   const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
@@ -334,7 +363,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         }
       };
 
-      const applyRunSnapshot = (run: ImageStudioRunRecord): boolean => {
+      const applyRunSnapshot = (runRecord: ImageStudioRunRecord): boolean => {
+        const run = runRecord as any;
         if (token.cancelled || token.settled || pollTokenRef.current !== token) return true;
 
         setActiveRunId(run.id);
@@ -364,7 +394,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           const generatedSourceSlotId = createdSlotIds[0] ?? null;
           const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;
 
-          setRunOutputs(outputs);
+          setRunOutputs(outputs as any);
           if (generatedSourceSlotId && shouldPromoteGeneratedSource) {
             setPendingSourceSlotId(generatedSourceSlotId);
           }
@@ -382,7 +412,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             maskShapeCount: params.maskShapeCount,
             maskInvert: params.submittedMaskInvert,
             maskFeather: params.submittedMaskFeather,
-            outputs,
+            outputs: outputs as any,
             slotId: params.submittedSlotId,
             slotName: params.submittedSlotName,
           };
@@ -542,7 +572,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
         const latestRunInFlight =
           runs.find((run) => run.status === 'queued' || run.status === 'running') ?? null;
-        const latestRun = latestRunInFlight ?? runs[0] ?? null;
+        const latestRunRaw = latestRunInFlight ?? runs[0] ?? null;
+        const latestRun = latestRunRaw as any;
         if (!latestRun) {
           setRunOutputs([]);
           setGenerationHistory([]);
@@ -554,11 +585,11 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           return;
         }
 
-        setRunOutputs(Array.isArray(latestRun.outputs) ? latestRun.outputs : []);
+        setRunOutputs(Array.isArray(latestRun.outputs) ? (latestRun.outputs as any) : []);
         setLandingSlots(buildLandingSlotsFromRun(latestRun));
         setActiveRunId(latestRun.id);
         setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
-        setActiveRunStatus(latestRun.status);
+        setActiveRunStatus(latestRun.status as any);
         const latestSelectedRunInFlight =
           latestRun.status === 'queued' || latestRun.status === 'running';
         setActiveRunError(latestSelectedRunInFlight ? (latestRun.errorMessage ?? null) : null);
@@ -630,6 +661,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       maskShapes,
       maskInvert,
       maskFeather,
+      selectedModelId: generationModel.effectiveModelId,
       studioSettings,
     });
     if (!requestPreview.payload) {
@@ -653,12 +685,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     setPendingSourceSlotId(null);
     setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
 
-    runMutation.mutate(requestPreview.payload, {
+    runMutation.mutate(requestPreview.payload as any, {
       onSuccess: (data) => {
         const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
         setActiveRunId(data.runId);
         setActiveRunSourceSlotId(submittedSlotId || null);
-        setActiveRunStatus(data.status);
+        setActiveRunStatus(data.status as any);
         setActiveRunError(null);
         setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
         if (data.dispatchMode === 'inline') {

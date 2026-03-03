@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMasterFolderTreeAdapterV3 } from '@/features/foldertree/v2/adapter/createMasterFolderTreeAdapterV3';
-import type {
-  MasterFolderTreePersistContext,
-  MasterFolderTreePersistOperation,
-} from '@/shared/contracts/master-folder-tree';
+import type { MasterFolderTreePersistOperation } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const decodeNodeId = (nodeId: string) => {
@@ -18,11 +15,6 @@ const decodeNodeId = (nodeId: string) => {
 };
 
 describe('createMasterFolderTreeAdapterV3', () => {
-  const context: MasterFolderTreePersistContext = {
-    previousNodes: [],
-    nextNodes: [],
-  };
-
   it('delegates move operations through apply', async () => {
     const onMove = vi.fn();
     const adapter = createMasterFolderTreeAdapterV3({
@@ -45,8 +37,8 @@ describe('createMasterFolderTreeAdapterV3', () => {
       nextNodes: [],
     };
 
-    const prepared = await adapter.prepare?.(tx);
-    await adapter.apply(tx, prepared ?? { tx, preparedAt: Date.now() });
+    const prepared = await adapter.prepare(tx);
+    await adapter.apply(tx, prepared);
 
     expect(onMove).toHaveBeenCalledTimes(1);
     expect(onMove).toHaveBeenCalledWith(
@@ -93,13 +85,21 @@ describe('createMasterFolderTreeAdapterV3', () => {
       },
     });
 
-    const operation: Extract<MasterFolderTreePersistOperation, { type: 'rename' }> = {
-      type: 'rename',
-      nodeId: 'folder:root',
-      name: '   ',
+    const tx = {
+      id: 'tx-rename',
+      version: 1,
+      createdAt: Date.now(),
+      operation: {
+        type: 'rename' as const,
+        nodeId: 'folder:root',
+        name: '   ',
+      },
+      previousNodes: [],
+      nextNodes: [],
     };
 
-    await adapter.applyOperation?.(operation, context);
+    const prepared = await adapter.prepare(tx);
+    await adapter.apply(tx, prepared);
 
     expect(onRename).not.toHaveBeenCalled();
   });
@@ -113,24 +113,38 @@ describe('createMasterFolderTreeAdapterV3', () => {
       },
     });
 
-    const validOperation: Extract<MasterFolderTreePersistOperation, { type: 'reorder' }> = {
-      type: 'reorder',
-      nodeId: 'folder:alpha',
-      targetId: 'folder:beta',
-      position: 'before',
+    const validTx = {
+      id: 'tx-reorder-valid',
+      version: 1,
+      createdAt: Date.now(),
+      operation: {
+        type: 'reorder' as const,
+        nodeId: 'folder:alpha',
+        targetId: 'folder:beta',
+        position: 'before',
+      },
+      previousNodes: [],
+      nextNodes: [],
     };
 
-    await adapter.applyOperation?.(validOperation, context);
+    await adapter.apply(validTx, await adapter.prepare(validTx));
     expect(onReorder).toHaveBeenCalledTimes(1);
 
-    const invalidOperation: Extract<MasterFolderTreePersistOperation, { type: 'reorder' }> = {
-      type: 'reorder',
-      nodeId: 'folder:alpha',
-      targetId: 'unknown',
-      position: 'after',
+    const invalidTx = {
+      id: 'tx-reorder-invalid',
+      version: 1,
+      createdAt: Date.now(),
+      operation: {
+        type: 'reorder' as const,
+        nodeId: 'folder:alpha',
+        targetId: 'unknown',
+        position: 'after',
+      },
+      previousNodes: [],
+      nextNodes: [],
     };
 
-    await adapter.applyOperation?.(invalidOperation, context);
+    await adapter.apply(invalidTx, await adapter.prepare(invalidTx));
     expect(onReorder).toHaveBeenCalledTimes(1);
   });
 });

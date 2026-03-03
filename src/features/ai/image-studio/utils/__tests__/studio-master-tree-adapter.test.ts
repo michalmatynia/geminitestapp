@@ -31,6 +31,25 @@ const createContext = (
   nextNodes,
 });
 
+const applyOperation = async (
+  adapter: ReturnType<typeof createImageStudioMasterTreeAdapter>,
+  operation: {
+    type: 'move' | 'reorder' | 'rename';
+    [key: string]: unknown;
+  },
+  context: MasterFolderTreePersistContext
+): Promise<void> => {
+  const tx = {
+    id: `tx_${Date.now()}`,
+    version: 1,
+    createdAt: Date.now(),
+    operation,
+    previousNodes: context.previousNodes,
+    nextNodes: context.nextNodes,
+  };
+  await adapter.apply(tx, await adapter.prepare(tx));
+};
+
 const createSlot = (id: string, folderPath: string | null): ImageStudioSlotRecord => ({
   id,
   projectId: 'project-1',
@@ -53,7 +72,8 @@ describe('createImageStudioMasterTreeAdapter', () => {
       renameSlot,
     });
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'move',
         nodeId: toSlotMasterNodeId(slot.id),
@@ -90,7 +110,8 @@ describe('createImageStudioMasterTreeAdapter', () => {
       folderNode('assets', null, 1),
     ];
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'reorder',
         nodeId: toFolderMasterNodeId('assets'),
@@ -117,7 +138,8 @@ describe('createImageStudioMasterTreeAdapter', () => {
       renameSlot,
     });
 
-    await adapter.applyOperation?.(
+    await applyOperation(
+      adapter,
       {
         type: 'rename',
         nodeId: toSlotMasterNodeId('slot-2'),

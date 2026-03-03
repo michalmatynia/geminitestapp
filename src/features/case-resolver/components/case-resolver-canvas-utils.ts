@@ -13,7 +13,6 @@ import {
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
-  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
@@ -87,19 +86,11 @@ export const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 export const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
-const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
-const LEGACY_DOCUMENT_CONTENT_PORT = CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
 
 const normalizeTextNodeInputPort = (
   value: string | null | undefined,
   allowWysiwygContentPort: boolean
 ): string => {
-  if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
-    return DOCUMENT_TEXTFIELD_PORT;
-  }
-  if (value === LEGACY_DOCUMENT_CONTENT_PORT) {
-    return DOCUMENT_PLAINTEXT_CONTENT_PORT;
-  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
@@ -115,12 +106,6 @@ const normalizeTextNodeOutputPort = (
   value: string | null | undefined,
   allowWysiwygContentPort: boolean
 ): string => {
-  if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
-    return DOCUMENT_TEXTFIELD_PORT;
-  }
-  if (value === LEGACY_DOCUMENT_CONTENT_PORT) {
-    return DOCUMENT_PLAINTEXT_CONTENT_PORT;
-  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
@@ -138,16 +123,10 @@ export const normalizeEdgesForTextNode = (
   isExplanatoryNode = false
 ): AiEdge[] =>
   edges.map((edge: AiEdge): AiEdge => {
-    const legacyEdge = edge as AiEdge & {
-      from?: string;
-      to?: string;
-      fromPort?: string;
-      toPort?: string;
-    };
-    const from = legacyEdge.from ?? edge.source;
-    const to = legacyEdge.to ?? edge.target;
-    const currentFromPort = legacyEdge.fromPort ?? edge.sourceHandle;
-    const currentToPort = legacyEdge.toPort ?? edge.targetHandle;
+    const from = edge.source;
+    const to = edge.target;
+    const currentFromPort = edge.sourceHandle;
+    const currentToPort = edge.targetHandle;
 
     let nextFromPort = currentFromPort;
     let nextToPort = currentToPort;

@@ -999,6 +999,17 @@ export const agentConfigSchema = z.object({
   personaId: z.string().optional(),
   promptTemplate: z.string().optional(),
   waitForResult: z.boolean().optional(),
+  executorModel: z.string().optional(),
+  plannerModel: z.string().optional(),
+  selfCheckModel: z.string().optional(),
+  extractionValidationModel: z.string().optional(),
+  toolRouterModel: z.string().optional(),
+  memoryValidationModel: z.string().optional(),
+  memorySummarizationModel: z.string().optional(),
+  loopGuardModel: z.string().optional(),
+  approvalGateModel: z.string().optional(),
+  selectorInferenceModel: z.string().optional(),
+  outputNormalizationModel: z.string().optional(),
 });
 
 export type AgentConfigDto = z.infer<typeof agentConfigSchema>;

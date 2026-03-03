@@ -88,11 +88,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const record = {
     id,
     name: normalizedName,
-    icon: iconId ? iconId.trim() : null,
     iconId: iconId ? iconId.trim() : null,
     pathId: pathId ? pathId.trim() : null,
     enabled: isVisible,
-    isActive: isVisible,
     locations,
     mode,
     display: buildCanonicalTriggerButtonDisplay(normalizedName, display),

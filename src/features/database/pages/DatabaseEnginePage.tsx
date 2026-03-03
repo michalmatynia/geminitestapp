@@ -9,7 +9,6 @@ import {
 import React, { useMemo, Suspense } from 'react';
 
 import type { DatabaseEngineOperationJobDto, DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
-import type { DatabaseEnginePolicy } from '@/shared/lib/db/database-engine-constants';
 import {
   Button,
   FormSection,
@@ -37,14 +36,14 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 function DatabaseEngineSettingsTab(): React.JSX.Element {
   const {
-    policyDraft,
-    setPolicyDraft,
-    collectionRouteMapDraft,
-    setCollectionRouteMapDraft,
+    policy,
+    updatePolicy,
+    collectionRouteMap,
+    updateCollectionRoute,
     rows,
-    isFetching,
+    isLoading,
     engineStatus,
-    operationJobs,
+    operationsJobs,
     redisOverview,
   } = useDatabaseEngineContext();
 
@@ -85,14 +84,9 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         cell: ({ row }: { row: { original: DatabaseCollectionRow } }) => (
           <SelectSimple
             size='xs'
-            value={collectionRouteMapDraft[row.original.name] ?? 'auto'}
+            value={collectionRouteMap[row.original.name] ?? 'auto'}
             onValueChange={(val) => {
-              setCollectionRouteMapDraft((prev: Record<string, string>) => {
-                const next = { ...prev };
-                if (val === 'auto') delete next[row.original.name];
-                else next[row.original.name] = val;
-                return next;
-              });
+              updateCollectionRoute(row.original.name, val);
             }}
             options={[
               { value: 'auto', label: 'Auto' },
@@ -105,7 +99,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         ),
       },
     ],
-    [collectionRouteMapDraft, setCollectionRouteMapDraft]
+    [collectionRouteMap, updateCollectionRoute]
   );
 
   const jobColumns = useMemo<ColumnDef<DatabaseEngineOperationJobDto>[]>(
@@ -149,56 +143,36 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
             <ToggleRow
               label='Strict Service Routing'
               description='Require explicit provider per service'
-              checked={policyDraft.requireExplicitServiceRouting}
+              checked={policy.requireExplicitServiceRouting}
               onCheckedChange={(checked) => {
-                setPolicyDraft(
-                  (p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({
-                    ...p,
-                    requireExplicitServiceRouting: checked,
-                  })
-                );
+                updatePolicy({ requireExplicitServiceRouting: checked });
               }}
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
               label='Strict Collection Routing'
               description='Require explicit provider per collection'
-              checked={policyDraft.requireExplicitCollectionRouting}
+              checked={policy.requireExplicitCollectionRouting}
               onCheckedChange={(checked) => {
-                setPolicyDraft(
-                  (p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({
-                    ...p,
-                    requireExplicitCollectionRouting: checked,
-                  })
-                );
+                updatePolicy({ requireExplicitCollectionRouting: checked });
               }}
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
               label='Auto Fallback'
               description='Switch providers on failure'
-              checked={policyDraft.allowAutomaticFallback}
+              checked={policy.allowAutomaticFallback}
               onCheckedChange={(checked) => {
-                setPolicyDraft(
-                  (p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({
-                    ...p,
-                    allowAutomaticFallback: checked,
-                  })
-                );
+                updatePolicy({ allowAutomaticFallback: checked });
               }}
               className='bg-white/5 border-white/5'
             />
             <ToggleRow
               label='Strict Availability'
               description='Throw on unconfigured envs'
-              checked={policyDraft.strictProviderAvailability}
+              checked={policy.strictProviderAvailability}
               onCheckedChange={(checked) => {
-                setPolicyDraft(
-                  (p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({
-                    ...p,
-                    strictProviderAvailability: checked,
-                  })
-                );
+                updatePolicy({ strictProviderAvailability: checked });
               }}
               className='bg-white/5 border-white/5'
             />
@@ -245,7 +219,7 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         title='Collection Routing'
         columns={collectionColumns}
         data={rows}
-        isLoading={isFetching}
+        isLoading={isLoading}
         variant='flat'
       />
 
@@ -279,8 +253,8 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
         <StandardDataTablePanel
           title='Recent Activity'
           columns={jobColumns}
-          data={operationJobs.slice(0, 5)}
-          isLoading={isFetching}
+          data={(operationsJobs?.jobs ?? []).slice(0, 5)}
+          isLoading={isLoading}
           variant='flat'
         />
       </div>
@@ -290,19 +264,19 @@ function DatabaseEngineSettingsTab(): React.JSX.Element {
 
 function DatabaseEngineContent(): React.JSX.Element {
   const {
-    workspaceView,
-    setView,
+    activeView,
+    setActiveView,
     validationErrors,
-    saveConfiguration,
-    isFetching,
-    refetch,
-    saving,
+    saveSettings,
+    isLoading,
+    refetchAll,
+    isSaving,
   } = useDatabaseEngineContext();
 
   const activeViewLabel =
-    workspaceView === 'engine'
+    activeView === 'engine'
       ? 'Engine Settings'
-      : workspaceView === 'backups'
+      : activeView === 'backups'
         ? 'Backups'
         : 'Operations Log';
 
@@ -311,8 +285,8 @@ function DatabaseEngineContent(): React.JSX.Element {
       title='Database Engine'
       description='Control center for data provider routing, synchronization, and fallback policies.'
       refresh={{
-        onRefresh: refetch,
-        isRefreshing: isFetching,
+        onRefresh: refetchAll,
+        isRefreshing: isLoading,
       }}
       headerActions={
         <div className='flex gap-2'>
@@ -326,19 +300,19 @@ function DatabaseEngineContent(): React.JSX.Element {
             size='xs'
             className='h-8'
             onClick={() => {
-              void saveConfiguration();
+              void saveSettings();
             }}
-            disabled={saving || validationErrors.length > 0}
+            disabled={isSaving || validationErrors.length > 0}
           >
             <SaveIcon className='size-3.5 mr-2' />
-            {saving ? 'Saving...' : 'Save Configuration'}
+            {isSaving ? 'Saving...' : 'Save Configuration'}
           </Button>
         </div>
       }
     >
       <Tabs
-        value={workspaceView}
-        onValueChange={(v) => setView(v as DatabaseEngineWorkspaceView)}
+        value={activeView}
+        onValueChange={(v) => setActiveView(v as DatabaseEngineWorkspaceView)}
         className='w-full'
       >
         <TabsList className='grid h-auto w-full grid-cols-1 gap-2 border border-border/60 bg-card/30 p-2 md:grid-cols-3'>

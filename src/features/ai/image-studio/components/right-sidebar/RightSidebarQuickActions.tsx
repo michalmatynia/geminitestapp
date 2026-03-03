@@ -36,8 +36,8 @@ export function RightSidebarQuickActions(): React.JSX.Element {
             aria-label='Brain-managed generation model'
           />
           <div className='text-[11px] text-gray-400'>
-            Generation routing is managed in AI Brain. Local Image Studio model presets are kept
-            only as compatibility snapshots.
+            Generation routing is managed in AI Brain. Image Studio no longer stores local model
+            presets or fallback model snapshots.
           </div>
           <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
             <Button

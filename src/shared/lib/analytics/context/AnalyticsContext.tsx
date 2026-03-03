@@ -9,7 +9,7 @@ import {
   useAnalyticsSummary,
   useAnalyticsInsights,
   useRunAnalyticsInsight,
-} from '@/shared/lib/analytics/hooks/useAnalytics';
+} from '@/shared/lib/analytics/hooks/useAnalyticsQueries';
 import type { AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 

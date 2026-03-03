@@ -1,4 +1,4 @@
-import type { DocumentationEntry } from '@/shared/lib/documentation/types';
+import type { DocumentationEntry } from '@/shared/contracts/documentation';
 
 import { AI_PATHS_DOCUMENTATION_CATALOG } from './ai-paths';
 import { IMAGE_STUDIO_DOCUMENTATION_CATALOG } from './image-studio';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+
 import { useState, useMemo, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -20,7 +20,6 @@ import {
 export type ViewMode = Asset3dViewMode;
 
 export function useAdmin3DAssetsState() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const [showUploader, setShowUploader] = useState(false);
@@ -58,14 +57,12 @@ export function useAdmin3DAssetsState() {
   const handleUpload = useCallback(
     (_asset: Asset3DRecord) => {
       setShowUploader(false);
-      void invalidateAsset3d(queryClient);
     },
     [queryClient]
   );
 
   const handleEdit = useCallback(
     (_updated: Asset3DRecord) => {
-      void invalidateAsset3d(queryClient);
     },
     [queryClient]
   );

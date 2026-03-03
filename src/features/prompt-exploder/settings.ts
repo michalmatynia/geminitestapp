@@ -34,11 +34,6 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   },
   ai: {
     operationMode: 'rules_only',
-    provider: 'auto',
-    modelId: '',
-    fallbackModelId: '',
-    temperature: 0.2,
-    maxTokens: 1200,
   },
   patternSnapshots: [],
 };
@@ -55,24 +50,25 @@ export function parsePromptExploderSettings(
     }
     const record = rawParsed as Record<string, unknown>;
 
-    const getNestedObject = (key: string): Record<string, unknown> => {
-      const val = record[key];
-      return val && typeof val === 'object' && !Array.isArray(val)
-        ? (val as Record<string, unknown>)
-        : {};
-    };
-
-    const learningRecord = getNestedObject('learning');
+    const runtimeRecord = getNestedObject(record, 'runtime');
+    const learningRecord = getNestedObject(record, 'learning');
+    const aiRecord = getNestedObject(record, 'ai');
+    if (
+      ['provider', 'modelId', 'fallbackModelId', 'temperature', 'maxTokens'].some(
+        (key: string): boolean => key in aiRecord
+      )
+    ) {
+      return defaultPromptExploderSettings;
+    }
     const templates = Array.isArray(learningRecord['templates'])
       ? (learningRecord['templates'] as unknown[])
       : [];
 
     const merged = {
-      ...defaultPromptExploderSettings,
-      ...record,
+      version: record['version'],
       runtime: {
         ...defaultPromptExploderSettings.runtime,
-        ...getNestedObject('runtime'),
+        ...runtimeRecord,
       },
       learning: {
         ...defaultPromptExploderSettings.learning,
@@ -81,8 +77,9 @@ export function parsePromptExploderSettings(
       },
       ai: {
         ...defaultPromptExploderSettings.ai,
-        ...getNestedObject('ai'),
+        ...aiRecord,
       },
+      patternSnapshots: record['patternSnapshots'],
     };
 
     const result = promptExploderSettingsSchema.safeParse(merged);
@@ -112,4 +109,14 @@ export function parsePromptExploderSettings(
   } catch {
     return defaultPromptExploderSettings;
   }
+}
+
+function getNestedObject(
+  record: Record<string, unknown>,
+  key: string
+): Record<string, unknown> {
+  const val = record[key];
+  return val && typeof val === 'object' && !Array.isArray(val)
+    ? (val as Record<string, unknown>)
+    : {};
 }

@@ -164,7 +164,7 @@ export const handleAgent: NodeHandler = async ({
   const persona = agentConfig.personaId
     ? personas.find((item: { id: string }) => item.id === agentConfig.personaId)
     : undefined;
-  const settings = persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS;
+  const settings = (persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS) as any;
 
   const payload: AgentEnqueuePayload = {
     prompt,
@@ -197,17 +197,18 @@ export const handleAgent: NodeHandler = async ({
     if (!enqueueResult.ok) {
       throw new Error(enqueueResult.error || 'Failed to enqueue agent run.');
     }
-    runId = enqueueResult.data.runId;
+    const runIdRaw = (enqueueResult.data as any).runId;
+    runId = runIdRaw;
     executed.ai.add(node.id);
     toast('Agent run queued.', { variant: 'success' });
 
     if (agentConfig.waitForResult === false) {
       return {
         jobId: runId,
-        status: enqueueResult.data.status ?? 'queued',
+        status: (enqueueResult.data as any).status ?? 'queued',
         bundle: {
           runId,
-          status: enqueueResult.data.status ?? 'queued',
+          status: (enqueueResult.data as any).status ?? 'queued',
           personaId: persona?.id ?? null,
           personaName: persona?.name ?? null,
           model: settings.executorModel ?? null,

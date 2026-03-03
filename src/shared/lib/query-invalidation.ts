@@ -1,5 +1,6 @@
 import { QueryClient, type QueryKey } from '@tanstack/react-query';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 import { QUERY_KEYS } from './query-keys';
 
@@ -408,6 +409,17 @@ export const invalidateImageStudioProjects = (queryClient: QueryClient) => {
 
 export const invalidateImageStudioSlots = (queryClient: QueryClient, projectId: string) => {
   return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.imageStudio.slots(projectId) });
+};
+
+/**
+ * Synchronously patches the slots cache for a specific project.
+ */
+export const patchImageStudioSlotsCache = (
+  queryClient: QueryClient,
+  projectId: string,
+  updater: (current: StudioSlotsResponse | undefined) => StudioSlotsResponse | undefined
+): void => {
+  queryClient.setQueryData<StudioSlotsResponse>(QUERY_KEYS.imageStudio.slots(projectId), updater);
 };
 
 // --- AI Paths ---

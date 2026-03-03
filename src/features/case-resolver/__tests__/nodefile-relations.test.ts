@@ -21,6 +21,9 @@ const createPromptNode = (id: string): AiNode => ({
   outputs: ['output'],
   position: { x: 0, y: 0 },
   config: { prompt: { template: '' } },
+  data: {},
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
 const createGraph = (input: {
@@ -266,29 +269,6 @@ describe('case-resolver nodefile relations', () => {
         folder: '',
         parentCaseId: 'case-a',
       }),
-      createCaseResolverFile({
-        id: 'doc-legacy',
-        fileType: 'document',
-        name: 'Legacy Doc',
-        folder: '',
-        parentCaseId: 'case-a',
-      }),
-      createCaseResolverFile({
-        id: 'canvas-a',
-        fileType: 'document',
-        name: 'Canvas A',
-        folder: '',
-        parentCaseId: 'case-a',
-        graph: createGraph({
-          nodeIds: ['legacy-node'],
-          documentSourceFileIdByNode: {
-            'legacy-node': 'doc-legacy',
-          },
-          nodeFileAssetIdByNode: {
-            'legacy-node': 'node-asset-legacy',
-          },
-        }),
-      }),
     ];
     const assets = [
       createCaseResolverAssetFile({
@@ -315,20 +295,6 @@ describe('case-resolver nodefile relations', () => {
           },
         }),
       }),
-      createCaseResolverAssetFile({
-        id: 'node-asset-legacy',
-        name: 'Legacy',
-        folder: '',
-        kind: 'node_file',
-        textContent: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
-          source: 'manual',
-          nodeId: 'legacy-node',
-          sourceFileId: 'doc-legacy',
-          sourceFileType: 'document',
-          sourceFileName: 'Legacy Doc',
-        }),
-      }),
     ];
 
     const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files });
@@ -336,20 +302,17 @@ describe('case-resolver nodefile relations', () => {
     expect(index.nodeIdsByDocumentFileId).toEqual({
       'doc-1': ['node-1'],
       'scan-1': ['node-2'],
-      'doc-legacy': ['legacy-node'],
     });
     expect(index.nodeFileAssetIdsByDocumentFileId).toEqual({
       'doc-1': ['node-asset-a'],
       'scan-1': ['node-asset-a'],
-      'doc-legacy': ['node-asset-legacy'],
     });
     expect(index.documentFileIdsByNodeFileAssetId).toEqual({
       'node-asset-a': ['doc-1', 'scan-1'],
-      'node-asset-legacy': ['doc-legacy'],
     });
   });
 
-  it('drops stale legacy snapshot relations when no valid graph binding exists', () => {
+  it('rejects legacy snapshot relations instead of rebuilding them', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -377,14 +340,12 @@ describe('case-resolver nodefile relations', () => {
       }),
     ];
 
-    const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files });
-    expect(index.nodeIdsByDocumentFileId).toEqual({});
-    expect(index.nodeFileAssetIdsByDocumentFileId).toEqual({});
-    expect(index.documentFileIdsByNodeFileAssetId).toEqual({});
-    expect(index.nodeIdsByNodeFileAssetId).toEqual({});
+    expect(() => buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files })).toThrowError(
+      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
+    );
   });
 
-  it('sanitizes stale legacy snapshot bindings into canonical empty nodeFileMeta', () => {
+  it('rejects legacy snapshot bindings instead of sanitizing them into canonical metadata', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -413,14 +374,9 @@ describe('case-resolver nodefile relations', () => {
       }),
     ];
 
-    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
-    expect(sanitizedAssets).toHaveLength(1);
-    const asset = sanitizedAssets[0];
-    expect(asset?.sourceFileId).toBeNull();
-    const parsedSnapshot = JSON.parse(asset?.textContent ?? '{}') as {
-      nodeFileMeta?: Record<string, unknown>;
-    };
-    expect(parsedSnapshot.nodeFileMeta ?? {}).toEqual({});
+    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrowError(
+      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
+    );
   });
 
   it('preserves case ownership for manual unbound node-file snapshots', () => {
@@ -489,10 +445,10 @@ describe('case-resolver nodefile relations', () => {
           edges: [
             {
               id: 'meta-edge',
-              from: 'meta-node',
-              to: 'meta-node',
-              fromPort: 'content',
-              toPort: 'content',
+              source: 'meta-node',
+              target: 'meta-node',
+              sourceHandle: 'plaintextContent',
+              targetHandle: 'plaintextContent',
             },
           ],
           nodeMeta: {

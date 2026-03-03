@@ -41,11 +41,6 @@ export function useBrainModels(options?: {
   });
 }
 
-// Backward-compatibility alias for existing call sites.
-export function useOllamaModels(): SingleQuery<BrainModelsResponse> {
-  return useBrainModels();
-}
-
 export function useBrainOperationsOverview(options?: {
   range?: BrainOperationsRange;
 }): SingleQuery<BrainOperationsOverviewResponse> {

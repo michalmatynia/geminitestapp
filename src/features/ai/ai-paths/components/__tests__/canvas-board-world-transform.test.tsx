@@ -156,7 +156,6 @@ const buildState = (): CanvasBoardState =>
       React.SetStateAction<SvgNodeDiagnosticsTooltipState | null>
     >,
     rendererMode: 'svg',
-    setRendererMode: noop as unknown as React.Dispatch<React.SetStateAction<'legacy' | 'svg'>>,
     showMinimap: false,
     setShowMinimap: noop as unknown as React.Dispatch<React.SetStateAction<boolean>>,
     viewportSize: { width: 1200, height: 800 },

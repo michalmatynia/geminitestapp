@@ -7,7 +7,7 @@ import React, { useMemo } from 'react';
 import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 import { Button, StandardDataTablePanel, Badge, ConfirmModal, PanelHeader } from '@/shared/ui';
 
-import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
+import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingCollectionDetailState';
 import { DocumentAddForm } from '../components/DocumentAddForm';
 import { SearchSimulator } from '../components/SearchSimulator';
 

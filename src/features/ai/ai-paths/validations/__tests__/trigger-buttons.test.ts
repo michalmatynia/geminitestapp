@@ -6,6 +6,10 @@ import {
   parseAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 
+const expectStoredPayloadToThrow = (payload: unknown): void => {
+  expect(() => parseAiTriggerButtonsRaw(JSON.stringify(payload))).toThrow();
+};
+
 describe('trigger button validation', () => {
   it('defaults enabled to true on create payloads', () => {
     const parsed = aiTriggerButtonCreateSchema.parse({
@@ -66,19 +70,14 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.enabled).toBe(true);
   });
 
-  it('falls back to legacy isActive=false when enabled is missing', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-legacy-inactive',
-          name: 'Legacy Inactive',
-          isActive: false,
-        },
-      ])
-    );
-
-    expect(parsed[0]?.enabled).toBe(false);
-    expect(parsed[0]?.isActive).toBe(false);
+  it('rejects legacy isActive when reading stored buttons', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-legacy-inactive',
+        name: 'Legacy Inactive',
+        isActive: false,
+      },
+    ]);
   });
 
   it('preserves enabled=false when reading stored buttons', () => {
@@ -96,49 +95,35 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.enabled).toBe(false);
   });
 
-  it('treats conflicting enabled/isActive flags as hidden', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-conflict',
-          name: 'Conflicting Flags',
-          enabled: false,
-          isActive: true,
-          locations: ['product_modal'],
-        },
-      ])
-    );
-
-    expect(parsed[0]?.enabled).toBe(false);
-    expect(parsed[0]?.isActive).toBe(false);
+  it('rejects conflicting enabled/isActive flags instead of repairing them', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-conflict',
+        name: 'Conflicting Flags',
+        enabled: false,
+        isActive: true,
+        locations: ['product_modal'],
+      },
+    ]);
   });
 
-  it('maps legacy icon field to iconId for backward compatibility', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-legacy-icon',
-          name: 'Legacy',
-          icon: 'sparkles',
-        },
-      ])
-    );
-
-    expect(parsed[0]?.iconId).toBe('sparkles');
+  it('rejects legacy icon field instead of mapping it to iconId', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-legacy-icon',
+        name: 'Legacy',
+        icon: 'sparkles',
+      },
+    ]);
   });
 
-  it('falls back to legacy top-level label when name is missing', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-legacy-label',
-          label: 'Legacy Label',
-        },
-      ])
-    );
-
-    expect(parsed[0]?.name).toBe('Legacy Label');
-    expect(parsed[0]?.display.label).toBe('Legacy Label');
+  it('rejects legacy top-level label when canonical name is missing', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-legacy-label',
+        label: 'Legacy Label',
+      },
+    ]);
   });
 
   it('infers display.label from button name', () => {
@@ -183,7 +168,7 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.display.showLabel).toBe(true);
   });
 
-  it('prefers display.label when stored name is an opaque id', () => {
+  it('preserves canonical stored name even when display.label differs', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
@@ -194,8 +179,8 @@ describe('trigger button validation', () => {
       ])
     );
 
-    expect(parsed[0]?.name).toBe('Friendly Trigger Name');
-    expect(parsed[0]?.display.label).toBe('Friendly Trigger Name');
+    expect(parsed[0]?.name).toBe('90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f');
+    expect(parsed[0]?.display.label).toBe('90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f');
   });
 
   it('parses string enabled values without dropping the record', () => {
@@ -240,17 +225,13 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.pathId).toBe('path_desc_name');
   });
 
-  it('falls back to first pathIds entry when pathId is missing', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-path-ids',
-          name: 'Run Target Path',
-          pathIds: ['path_one', 'path_two'],
-        },
-      ])
-    );
-
-    expect(parsed[0]?.pathId).toBe('path_one');
+  it('rejects legacy pathIds when pathId is missing', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-path-ids',
+        name: 'Run Target Path',
+        pathIds: ['path_one', 'path_two'],
+      },
+    ]);
   });
 });

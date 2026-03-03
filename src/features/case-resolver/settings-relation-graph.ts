@@ -157,7 +157,70 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[
   const seen = new Set<string>();
   const edges: Edge[] = [];
   value.forEach((entry: unknown): void => {
-    const edge = parseCanonicalCaseResolverEdge(entry, 'case_resolver.relation_graph');
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const entryRecord = entry as Record<string, unknown>;
+    const sourceCandidate =
+      typeof entryRecord['source'] === 'string'
+        ? entryRecord['source']
+        : typeof entryRecord['from'] === 'string'
+          ? entryRecord['from']
+          : null;
+    const targetCandidate =
+      typeof entryRecord['target'] === 'string'
+        ? entryRecord['target']
+        : typeof entryRecord['to'] === 'string'
+          ? entryRecord['to']
+          : null;
+    const sourceHandleCandidate =
+      typeof entryRecord['sourceHandle'] === 'string'
+        ? entryRecord['sourceHandle']
+        : typeof entryRecord['fromPort'] === 'string'
+          ? entryRecord['fromPort']
+          : null;
+    const targetHandleCandidate =
+      typeof entryRecord['targetHandle'] === 'string'
+        ? entryRecord['targetHandle']
+        : typeof entryRecord['toPort'] === 'string'
+          ? entryRecord['toPort']
+          : null;
+    const normalizedSourceHandle =
+      sourceHandleCandidate === 'textfield' || sourceHandleCandidate === 'content'
+        ? null
+        : sourceHandleCandidate;
+    const normalizedTargetHandle =
+      targetHandleCandidate === 'textfield' || targetHandleCandidate === 'content'
+        ? null
+        : targetHandleCandidate;
+    const canonicalEntry: Record<string, unknown> = {
+      id: entryRecord['id'],
+      source: sourceCandidate,
+      target: targetCandidate,
+      ...(typeof normalizedSourceHandle === 'string'
+        ? { sourceHandle: normalizedSourceHandle }
+        : {}),
+      ...(typeof normalizedTargetHandle === 'string'
+        ? { targetHandle: normalizedTargetHandle }
+        : {}),
+      ...(typeof entryRecord['label'] === 'string' ? { label: entryRecord['label'] } : {}),
+      ...(typeof entryRecord['type'] === 'string' ? { type: entryRecord['type'] } : {}),
+      ...(entryRecord['data'] &&
+      typeof entryRecord['data'] === 'object' &&
+      !Array.isArray(entryRecord['data'])
+        ? { data: entryRecord['data'] }
+        : {}),
+      ...(typeof entryRecord['createdAt'] === 'string'
+        ? { createdAt: entryRecord['createdAt'] }
+        : {}),
+      ...(typeof entryRecord['updatedAt'] === 'string'
+        ? { updatedAt: entryRecord['updatedAt'] }
+        : {}),
+    };
+    let edge: Edge;
+    try {
+      edge = parseCanonicalCaseResolverEdge(canonicalEntry, 'case_resolver.relation_graph');
+    } catch {
+      return;
+    }
     const id = edge.id.trim();
     const source = edge.source?.trim() ?? '';
     const target = edge.target?.trim() ?? '';

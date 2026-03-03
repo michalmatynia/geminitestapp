@@ -14,8 +14,8 @@ import {
 import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
-import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
-import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { validateCanonicalPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
+import { safeParseJson, stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { isAppError, validationError } from '@/shared/errors/app-error';
 import {
   fetchAiPathsSettingsByKeysCached,
@@ -219,26 +219,47 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
 };
 
 export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
-  const migratedConfig = migratePathConfigCollections(config).config;
-  const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
+  const migratedConfig = migratePathConfigCollections(config);
+  if (migratedConfig.changed) {
+    throw validationError('AI Path config contains deprecated collection aliases.', {
+      source: 'ai_paths.path_settings',
+      reason: 'deprecated_collection_aliases',
+      pathId: config.id,
+    });
+  }
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(config).config;
   const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(
     sanitizeLoadedDatabaseNode
   );
-  const identityRepair = repairPathNodeIdentities(
+  const identityIssues = validateCanonicalPathNodeIdentities(
     {
       ...contractBackfilledConfig,
       nodes: sanitizedDatabaseNodes,
     },
     { palette }
   );
-  const repaired = identityRepair.config;
-  const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
-  const rawEdges = Array.isArray(repaired.edges) ? repaired.edges : [];
+  if (identityIssues.length > 0) {
+    throw validationError('AI Path config contains legacy node identities.', {
+      source: 'ai_paths.path_settings',
+      reason: 'deprecated_node_identities',
+      pathId: config.id,
+      issues: identityIssues,
+    });
+  }
+  const normalized = normalizeNodes(sanitizedDatabaseNodes);
+  const rawEdges = Array.isArray(contractBackfilledConfig.edges) ? contractBackfilledConfig.edges : [];
   assertNoLegacyTriggerDataGraph(normalized, rawEdges);
   const graphNodes = normalizeNodes(normalized);
   const graphEdges = sanitizeEdges(graphNodes, rawEdges);
+  if (stableStringify(graphEdges) !== stableStringify(rawEdges)) {
+    throw validationError('AI Path config contains invalid or non-canonical edges.', {
+      source: 'ai_paths.path_settings',
+      reason: 'invalid_edges',
+      pathId: config.id,
+    });
+  }
   return {
-    ...repaired,
+    ...contractBackfilledConfig,
     nodes: graphNodes,
     edges: graphEdges,
   };

@@ -10,6 +10,7 @@ import {
 import { validationError } from '@/shared/errors/app-error';
 
 import {
+  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
   getCaseResolverWorkspaceNormalizationDiagnostics,
   normalizeCaseResolverWorkspace,
   parseCaseResolverWorkspace,
@@ -38,6 +39,8 @@ import {
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  buildSettingRecordFetchAttempts,
+  resolveSettingRecordFromSettingsPayload,
   readWorkspaceMetadata,
   resolveWorkspaceRecordFromSettingsPayload,
   buildWorkspaceRecordFetchAttempts,
@@ -110,6 +113,154 @@ const readWorkspaceFromSettingRecord = (
     return parseCaseResolverWorkspace(fallback);
   }
   return parseCaseResolverWorkspace(rawValue);
+};
+
+type WorkspaceRecordFetchAttempt = {
+  key: string;
+  url: string;
+  scope: 'light' | 'heavy';
+};
+
+type WorkspaceRecordAttemptResult =
+  | {
+    status: 'resolved';
+    workspace: CaseResolverWorkspace;
+    attemptKey: string;
+    scope: 'light' | 'heavy';
+  }
+  | {
+    status: 'incomplete';
+    lastFailureMessage: string;
+    sawMissingRequiredFile: boolean;
+    lastMissingRequiredAttemptKey: string | null;
+    sawTransportFailure: boolean;
+    budgetExhausted: boolean;
+  };
+
+const fetchWorkspaceRecordByKeyAttempts = async ({
+  source,
+  workspaceKey,
+  attempts,
+  startedAt,
+  maxTotalMs,
+  attemptTimeoutMs,
+  requiredFileId,
+  logHeavyFallback,
+}: {
+  source: string;
+  workspaceKey: string;
+  attempts: WorkspaceRecordFetchAttempt[];
+  startedAt: number;
+  maxTotalMs: number;
+  attemptTimeoutMs: number;
+  requiredFileId: string;
+  logHeavyFallback: boolean;
+}): Promise<WorkspaceRecordAttemptResult> => {
+  let lastFailureMessage = 'Workspace record request failed.';
+  let sawMissingRequiredFile = false;
+  let lastMissingRequiredAttemptKey: string | null = null;
+  let sawTransportFailure = false;
+  let budgetExhausted = false;
+  let loggedHeavyFallback = false;
+
+  for (const attempt of attempts) {
+    const elapsedMs = Date.now() - startedAt;
+    const remainingBudgetMs = maxTotalMs - elapsedMs;
+    if (remainingBudgetMs <= 0) {
+      budgetExhausted = true;
+      lastFailureMessage = `Workspace fetch budget exhausted before attempt ${attempt.key}.`;
+      break;
+    }
+    if (logHeavyFallback && !loggedHeavyFallback && attempt.scope === 'heavy') {
+      loggedHeavyFallback = true;
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_fallback_to_heavy',
+        durationMs: Date.now() - startedAt,
+        message: `fallback=heavy_keyed key=${workspaceKey}`,
+      });
+    }
+    try {
+      const response = await fetchSettingsPayloadWithTimeout({
+        url: attempt.url,
+        timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
+      });
+      if (!response.ok) {
+        sawTransportFailure = true;
+        lastFailureMessage = `Attempt ${attempt.key} failed (${response.status}).`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: `${lastFailureMessage} key=${workspaceKey}`,
+        });
+        continue;
+      }
+      const payload = (await response.json()) as unknown;
+      const workspaceRecord =
+        workspaceKey === CASE_RESOLVER_WORKSPACE_KEY
+          ? resolveWorkspaceRecordFromSettingsPayload(payload)
+          : resolveSettingRecordFromSettingsPayload(payload, workspaceKey);
+      if (!workspaceRecord) {
+        lastFailureMessage = `Attempt ${attempt.key} returned no workspace record.`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: `${lastFailureMessage} key=${workspaceKey}`,
+        });
+        continue;
+      }
+      const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
+      if (
+        requiredFileId.length > 0 &&
+        !workspace.files.some((file): boolean => file.id === requiredFileId)
+      ) {
+        sawMissingRequiredFile = true;
+        lastMissingRequiredAttemptKey = attempt.key;
+        lastFailureMessage = `Attempt ${attempt.key} returned workspace without required file ${requiredFileId}.`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: `${lastFailureMessage} key=${workspaceKey}`,
+        });
+        continue;
+      }
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_success',
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+        durationMs: Date.now() - startedAt,
+        message: `attempt=${attempt.key} key=${workspaceKey}`,
+      });
+      return {
+        status: 'resolved',
+        workspace,
+        attemptKey: attempt.key,
+        scope: attempt.scope,
+      };
+    } catch (error: unknown) {
+      sawTransportFailure = true;
+      lastFailureMessage =
+        error instanceof Error ? error.message : `Unknown refresh error (${attempt.key}).`;
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_attempt_failed',
+        durationMs: Date.now() - startedAt,
+        message: `Attempt ${attempt.key} failed: ${lastFailureMessage} key=${workspaceKey}`,
+      });
+    }
+  }
+
+  return {
+    status: 'incomplete',
+    lastFailureMessage,
+    sawMissingRequiredFile,
+    lastMissingRequiredAttemptKey,
+    sawTransportFailure,
+    budgetExhausted,
+  };
 };
 
 export const fetchCaseResolverWorkspaceMetadata = async (
@@ -209,100 +360,69 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     typeof options?.maxTotalMs === 'number' && Number.isFinite(options.maxTotalMs)
       ? Math.max(1, Math.floor(options.maxTotalMs))
       : defaultMaxTotalMs;
+  const primaryResult = await fetchWorkspaceRecordByKeyAttempts({
+    source,
+    workspaceKey: CASE_RESOLVER_WORKSPACE_KEY,
+    attempts,
+    startedAt,
+    maxTotalMs,
+    attemptTimeoutMs,
+    requiredFileId,
+    logHeavyFallback: fetchStrategy === 'light_then_heavy',
+  });
+  if (primaryResult.status === 'resolved') {
+    return {
+      status: 'resolved',
+      workspace: primaryResult.workspace,
+      attemptKey: primaryResult.attemptKey,
+      scope: primaryResult.scope,
+      durationMs: Date.now() - startedAt,
+    };
+  }
 
-  let lastFailureMessage = 'Workspace record request failed.';
-  let loggedHeavyFallback = false;
-  let sawWorkspaceRecordMissingRequiredFile = false;
-  let lastMissingRequiredAttemptKey: string | null = null;
-  let sawTransportFailure = false;
-  let budgetExhausted = false;
+  let lastFailureMessage = primaryResult.lastFailureMessage;
+  let sawWorkspaceRecordMissingRequiredFile = primaryResult.sawMissingRequiredFile;
+  let lastMissingRequiredAttemptKey = primaryResult.lastMissingRequiredAttemptKey;
+  let sawTransportFailure = primaryResult.sawTransportFailure;
+  let budgetExhausted = primaryResult.budgetExhausted;
 
-  for (const attempt of attempts) {
-    const elapsedMs = Date.now() - startedAt;
-    const remainingBudgetMs = maxTotalMs - elapsedMs;
-    if (remainingBudgetMs <= 0) {
-      budgetExhausted = true;
-      lastFailureMessage = `Workspace fetch budget exhausted before attempt ${attempt.key}.`;
-      break;
-    }
-    if (!loggedHeavyFallback && fetchStrategy === 'light_then_heavy' && attempt.scope === 'heavy') {
-      loggedHeavyFallback = true;
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'refresh_fallback_to_heavy',
-        durationMs: Date.now() - startedAt,
-        message: 'fallback=heavy_keyed',
-      });
-    }
-    try {
-      const response = await fetchSettingsPayloadWithTimeout({
-        url: attempt.url,
-        timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
-      });
-      if (!response.ok) {
-        sawTransportFailure = true;
-        lastFailureMessage = `Attempt ${attempt.key} failed (${response.status}).`;
-        logCaseResolverWorkspaceEvent({
-          source,
-          action: 'refresh_attempt_failed',
-          durationMs: Date.now() - startedAt,
-          message: lastFailureMessage,
-        });
-        continue;
-      }
-      const payload = (await response.json()) as unknown;
-      const workspaceRecord = resolveWorkspaceRecordFromSettingsPayload(payload);
-      if (!workspaceRecord) {
-        lastFailureMessage = `Attempt ${attempt.key} returned no workspace record.`;
-        logCaseResolverWorkspaceEvent({
-          source,
-          action: 'refresh_attempt_failed',
-          durationMs: Date.now() - startedAt,
-          message: lastFailureMessage,
-        });
-        continue;
-      }
-      const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
-      if (
-        requiredFileId.length > 0 &&
-        !workspace.files.some((file): boolean => file.id === requiredFileId)
-      ) {
-        sawWorkspaceRecordMissingRequiredFile = true;
-        lastMissingRequiredAttemptKey = attempt.key;
-        lastFailureMessage = `Attempt ${attempt.key} returned workspace without required file ${requiredFileId}.`;
-        logCaseResolverWorkspaceEvent({
-          source,
-          action: 'refresh_attempt_failed',
-          durationMs: Date.now() - startedAt,
-          message: lastFailureMessage,
-        });
-        continue;
-      }
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'refresh_success',
-        workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
-        durationMs: Date.now() - startedAt,
-        message: `attempt=${attempt.key}`,
-      });
+  if (!budgetExhausted) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'refresh_fallback_to_legacy',
+      durationMs: Date.now() - startedAt,
+      message: `fallback=legacy_keyed key=${CASE_RESOLVER_LEGACY_WORKSPACE_KEY}`,
+    });
+    const legacyResult = await fetchWorkspaceRecordByKeyAttempts({
+      source,
+      workspaceKey: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
+      attempts: buildSettingRecordFetchAttempts({
+        key: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
+        strategy: 'light_only',
+        fresh: fetchFresh,
+      }),
+      startedAt,
+      maxTotalMs,
+      attemptTimeoutMs,
+      requiredFileId,
+      logHeavyFallback: false,
+    });
+    if (legacyResult.status === 'resolved') {
       return {
         status: 'resolved',
-        workspace,
-        attemptKey: attempt.key,
-        scope: attempt.scope,
+        workspace: legacyResult.workspace,
+        attemptKey: legacyResult.attemptKey,
+        scope: legacyResult.scope,
         durationMs: Date.now() - startedAt,
       };
-    } catch (error: unknown) {
-      sawTransportFailure = true;
-      lastFailureMessage =
-        error instanceof Error ? error.message : `Unknown refresh error (${attempt.key}).`;
-      logCaseResolverWorkspaceEvent({
-        source,
-        action: 'refresh_attempt_failed',
-        durationMs: Date.now() - startedAt,
-        message: `Attempt ${attempt.key} failed: ${lastFailureMessage}`,
-      });
     }
+    lastFailureMessage = legacyResult.lastFailureMessage;
+    sawWorkspaceRecordMissingRequiredFile =
+      sawWorkspaceRecordMissingRequiredFile || legacyResult.sawMissingRequiredFile;
+    lastMissingRequiredAttemptKey =
+      legacyResult.lastMissingRequiredAttemptKey ?? lastMissingRequiredAttemptKey;
+    sawTransportFailure = sawTransportFailure || legacyResult.sawTransportFailure;
+    budgetExhausted = budgetExhausted || legacyResult.budgetExhausted;
   }
 
   if (budgetExhausted) {

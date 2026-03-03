@@ -52,6 +52,7 @@ const buildInput = (): {
   mocks: {
     setActivePathId: ReturnType<typeof createDispatchMock<string | null>>['mock'];
     setPathConfigs: ReturnType<typeof createDispatchMock<Record<string, PathConfig>>>['mock'];
+    setPaths: ReturnType<typeof createDispatchMock<PathMeta[]>>['mock'];
     toast: ReturnType<typeof vi.fn>;
     persistActivePathPreference: ReturnType<typeof vi.fn>;
   };
@@ -135,6 +136,7 @@ const buildInput = (): {
     mocks: {
       setActivePathId: setActivePathId.mock,
       setPathConfigs: setPathConfigs.mock,
+      setPaths: setPaths.mock,
       toast,
       persistActivePathPreference,
     },
@@ -220,5 +222,95 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
       'Failed to load selected path. Try again in a moment.',
       expect.anything()
     );
+  });
+
+  it('rejects invalid persisted path configs during path switch', async () => {
+    const { input, mocks } = buildInput();
+    const oldPathId = input.activePathId as string;
+    const nextPathId = 'path_invalid';
+    const invalidConfig = createDefaultPathConfig(nextPathId);
+    invalidConfig.runtimeState = JSON.stringify({
+      inputs: {},
+      outputs: {},
+      runId: 'legacy-run-id',
+    });
+
+    mockedFetchAiPathsSettingsByKeysCached.mockResolvedValueOnce([
+      {
+        key: `ai_paths_config_${nextPathId}`,
+        value: JSON.stringify(invalidConfig),
+      },
+    ]);
+    mockedFetchAiPathsSettingsCached.mockResolvedValueOnce([]);
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleSwitchPath(nextPathId);
+    });
+
+    await waitFor(() => {
+      expect(mocks.setActivePathId).toHaveBeenCalledWith(oldPathId);
+    });
+    expect(mocks.setPathConfigs).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith('Failed to load selected path. Try again in a moment.', {
+      variant: 'error',
+    });
+  });
+
+  it('duplicates paths with fresh canonical node ids and remapped samples', () => {
+    const { input, mocks } = buildInput();
+    const sourceId = input.activePathId as string;
+    const sourceConfig = input.pathConfigs[sourceId] as PathConfig;
+    const sourceSelectedNodeId = sourceConfig.nodes[0]?.id as string;
+    input.pathConfigs[sourceId] = {
+      ...sourceConfig,
+      uiState: {
+        selectedNodeId: sourceSelectedNodeId,
+        configOpen: false,
+      },
+      parserSamples: {
+        [sourceSelectedNodeId]: {
+          entityType: 'product',
+          entityId: 'product-1',
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useAiPathsSettingsPathActions(input));
+
+    act(() => {
+      result.current.handleDuplicatePath(sourceId);
+    });
+
+    expect(mocks.setPaths).toHaveBeenCalledTimes(1);
+    expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
+    expect(mocks.setActivePathId).toHaveBeenCalledTimes(1);
+
+    const nextPaths = (mocks.setPaths.mock.calls[0]?.[0] as (prev: PathMeta[]) => PathMeta[])(
+      input.paths
+    );
+    const duplicateMeta = nextPaths.find((path: PathMeta): boolean => path.id !== sourceId);
+    expect(duplicateMeta).toBeDefined();
+
+    const nextConfigs = (
+      mocks.setPathConfigs.mock.calls[0]?.[0] as (
+        prev: Record<string, PathConfig>
+      ) => Record<string, PathConfig>
+    )(input.pathConfigs);
+    const duplicateConfig = nextConfigs[duplicateMeta?.id as string];
+    const sourceNodeIds = new Set(sourceConfig.nodes.map((node) => node.id));
+    const duplicateNodeIds = duplicateConfig.nodes.map((node) => node.id);
+
+    expect(duplicateNodeIds).toHaveLength(sourceConfig.nodes.length);
+    expect(duplicateNodeIds.every((nodeId) => /^node-[a-f0-9]{24}$/.test(nodeId))).toBe(true);
+    expect(duplicateNodeIds.some((nodeId) => sourceNodeIds.has(nodeId))).toBe(false);
+    expect(duplicateConfig.uiState?.selectedNodeId).toBeTruthy();
+    expect(duplicateConfig.uiState?.selectedNodeId).not.toBe(sourceSelectedNodeId);
+    expect(Object.keys(duplicateConfig.parserSamples ?? {})).toEqual([
+      duplicateConfig.uiState?.selectedNodeId,
+    ]);
+    expect(duplicateConfig.runtimeState).toEqual({});
+    expect(mocks.toast).toHaveBeenCalledWith('Path duplicated.', { variant: 'success' });
   });
 });

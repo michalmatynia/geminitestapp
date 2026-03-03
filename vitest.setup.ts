@@ -9,6 +9,17 @@ process.env['APP_DB_PROVIDER'] = 'prisma';
 process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
 process.env['MONGODB_DB'] = 'test';
 
+const THREE_DUPLICATE_IMPORT_WARNING = 'THREE.WARNING: Multiple instances of Three.js being imported.';
+const originalConsoleWarn = console.warn.bind(console);
+
+console.warn = (...args: unknown[]): void => {
+  const [firstArg] = args;
+  if (typeof firstArg === 'string' && firstArg.includes(THREE_DUPLICATE_IMPORT_WARNING)) {
+    return;
+  }
+  originalConsoleWarn(...args);
+};
+
 // Define mock models inside vi.mock factory to avoid hoisting issues
 vi.mock('@/shared/lib/db/prisma', () => {
   const store: Record<string, any[]> = {};
@@ -226,6 +237,12 @@ vi.mock('next/link', () => ({
   default: ({
     href,
     children,
+    prefetch: _prefetch,
+    replace: _replace,
+    scroll: _scroll,
+    shallow: _shallow,
+    locale: _locale,
+    legacyBehavior: _legacyBehavior,
     ...props
   }: {
     href: string;
@@ -623,5 +640,6 @@ afterEach(async () => {
 
 afterAll(() => {
   // Clean up and stop the server after all tests complete
+  console.warn = originalConsoleWarn;
   server.close();
 });

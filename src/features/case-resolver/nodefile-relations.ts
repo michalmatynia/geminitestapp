@@ -6,27 +6,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
-const assertNoInlineNodeFileSnapshotText = (
-  asset: CaseResolverAssetFile,
-  source: string
-): void => {
-  if (asset.kind !== 'node_file') return;
-  const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-  if (inlineText.length === 0) return;
-  throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-    source,
-    assetId: asset.id,
-  });
-};
-
-const assertNoInlineNodeFileSnapshotTextInAssets = (
-  assets: CaseResolverAssetFile[],
-  source: string
-): void => {
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    assertNoInlineNodeFileSnapshotText(asset, source);
-  });
-};
+const hasInlineNodeFileSnapshotText = (asset: CaseResolverAssetFile): boolean =>
+  asset.kind === 'node_file' &&
+  typeof asset.textContent === 'string' &&
+  asset.textContent.trim().length > 0;
 
 const addUnique = (target: Record<string, string[]>, key: string, value: string): void => {
   const normalizedKey = key.trim();
@@ -84,8 +67,6 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  assertNoInlineNodeFileSnapshotTextInAssets(assets, 'case_resolver.node_file_relation_index');
-
   const validNodeIds = new Set<string>(
     graph.nodes
       .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))
@@ -93,17 +74,20 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   );
   const validNodeFileAssetIds = new Set<string>(
     assets
-      .filter((asset: CaseResolverAssetFile): boolean => asset.kind === 'node_file')
+      .filter(
+        (asset: CaseResolverAssetFile): boolean =>
+          asset.kind === 'node_file' && !hasInlineNodeFileSnapshotText(asset)
+      )
       .map((asset: CaseResolverAssetFile): string => asset.id.trim())
       .filter(Boolean)
   );
   const validDocumentFileIds = files
     ? new Set(
-      files
-        .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-        .map((file: CaseResolverFile): string => file.id.trim())
-        .filter(Boolean)
-    )
+        files
+          .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
+          .map((file: CaseResolverFile): string => file.id.trim())
+          .filter(Boolean)
+      )
     : null;
 
   const sourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);
@@ -156,11 +140,6 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
   assets: CaseResolverAssetFile[];
   files?: CaseResolverFile[] | null;
 }): CaseResolverNodeFileRelationIndex => {
-  assertNoInlineNodeFileSnapshotTextInAssets(
-    assets,
-    'case_resolver.node_file_relation_index_from_assets'
-  );
-
   const nodeIdsByDocumentFileId: Record<string, string[]> = {};
   const nodeFileAssetIdsByDocumentFileId: Record<string, string[]> = {};
   const documentFileIdsByNodeFileAssetId: Record<string, string[]> = {};
@@ -199,15 +178,32 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
 export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
   assets,
   files: _files,
+  mode = 'strip',
 }: {
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
+  mode?: 'strip' | 'reject';
 }): CaseResolverAssetFile[] => {
-  assertNoInlineNodeFileSnapshotTextInAssets(
-    assets,
-    'case_resolver.node_file_asset_sanitize'
+  if (mode === 'reject') {
+    const inlineSnapshotAsset = assets.find((asset: CaseResolverAssetFile): boolean =>
+      hasInlineNodeFileSnapshotText(asset)
+    );
+    if (inlineSnapshotAsset) {
+      throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
+        source: 'case_resolver.node_file_asset_sanitize',
+        assetId: inlineSnapshotAsset.id,
+      });
+    }
+  }
+
+  return assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile =>
+    hasInlineNodeFileSnapshotText(asset)
+      ? {
+          ...asset,
+          textContent: '',
+        }
+      : asset
   );
-  return assets;
 };
 
 export const sanitizeCaseResolverGraphNodeFileRelations = ({
@@ -219,11 +215,6 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
 }): CaseResolverGraph => {
-  assertNoInlineNodeFileSnapshotTextInAssets(
-    assets,
-    'case_resolver.node_file_graph_sanitize'
-  );
-
   const validNodeIds = new Set<string>(
     graph.nodes
       .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))

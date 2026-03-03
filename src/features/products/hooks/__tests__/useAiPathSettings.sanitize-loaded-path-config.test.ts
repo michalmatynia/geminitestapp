@@ -1,11 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { sanitizeLoadedPathConfig } from '@/features/products/hooks/useAiPathSettings';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import {
+  createNodeInstanceId,
+  resolveNodeTypeId,
+} from '@/shared/lib/ai-paths/core/utils/node-identity';
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 
-const buildNode = (patch: Partial<AiNode>): AiNode =>
-  ({
-    id: 'node',
+const usedNodeIds = new Set<string>();
+
+const buildNode = (patch: Partial<AiNode>): AiNode => {
+  const id = patch.id ?? createNodeInstanceId(usedNodeIds);
+  const baseNode = {
     type: 'viewer',
     title: 'Node',
     description: '',
@@ -14,7 +21,15 @@ const buildNode = (patch: Partial<AiNode>): AiNode =>
     position: { x: 0, y: 0 },
     data: {},
     ...patch,
-  }) as AiNode;
+    id,
+  } as AiNode;
+
+  return {
+    ...baseNode,
+    instanceId: patch.instanceId ?? id,
+    nodeTypeId: patch.nodeTypeId ?? resolveNodeTypeId(baseNode, palette),
+  } as AiNode;
+};
 
 const buildConfig = (nodes: AiNode[], edges: Edge[]): PathConfig =>
   ({
@@ -29,11 +44,16 @@ const buildConfig = (nodes: AiNode[], edges: Edge[]): PathConfig =>
   }) as PathConfig;
 
 describe('sanitizeLoadedPathConfig', () => {
+  beforeEach(() => {
+    usedNodeIds.clear();
+  });
+
   it('rejects deprecated database schemaSnapshot payloads', () => {
     const config = buildConfig(
       [
         buildNode({
-          id: 'node-db-1',
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
           type: 'database',
           config: {
             database: {
@@ -58,7 +78,8 @@ describe('sanitizeLoadedPathConfig', () => {
     const config = buildConfig(
       [
         buildNode({
-          id: 'node-db-1',
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
           type: 'database',
           config: {
             database: {
@@ -78,16 +99,74 @@ describe('sanitizeLoadedPathConfig', () => {
     );
   });
 
-  it('rejects legacy trigger data edges', () => {
+  it('rejects deprecated collection aliases', () => {
     const config = buildConfig(
       [
         buildNode({
-          id: 'node-trigger-1',
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'query',
+              query: {
+                collection: 'product_draft',
+              },
+            },
+          },
+        }),
+      ],
+      []
+    );
+
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
+      /deprecated collection aliases/i
+    );
+  });
+
+  it('rejects legacy node identities', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'node-legacy-trigger',
+          instanceId: 'node-legacy-trigger',
           type: 'trigger',
           outputs: ['trigger'],
         }),
         buildNode({
-          id: 'node-parser-1',
+          id: 'node-legacy-parser',
+          instanceId: 'node-legacy-parser',
+          type: 'parser',
+          inputs: ['trigger'],
+          outputs: ['value'],
+        }),
+      ],
+      [
+        {
+          id: 'edge-trigger-parser',
+          from: 'node-legacy-trigger',
+          to: 'node-legacy-parser',
+          fromPort: 'trigger',
+          toPort: 'trigger',
+        },
+      ]
+    );
+
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/legacy node identities/i);
+  });
+
+  it('rejects legacy trigger data edges', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
+          type: 'trigger',
+          outputs: ['trigger'],
+        }),
+        buildNode({
+          id: 'node-deadbeef0011223344556677',
+          instanceId: 'node-deadbeef0011223344556677',
           type: 'parser',
           inputs: ['context'],
           outputs: ['value'],
@@ -96,8 +175,8 @@ describe('sanitizeLoadedPathConfig', () => {
       [
         {
           id: 'edge-legacy-trigger-context',
-          from: 'node-trigger-1',
-          to: 'node-parser-1',
+          from: 'node-c0ffee001122334455667788',
+          to: 'node-deadbeef0011223344556677',
           fromPort: 'context',
           toPort: 'context',
         },
@@ -109,16 +188,18 @@ describe('sanitizeLoadedPathConfig', () => {
     );
   });
 
-  it('keeps canonical path configs loadable', () => {
+  it('rejects invalid or non-canonical edges', () => {
     const config = buildConfig(
       [
         buildNode({
-          id: 'node-trigger-1',
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
           type: 'trigger',
           outputs: ['trigger'],
         }),
         buildNode({
-          id: 'node-parser-1',
+          id: 'node-deadbeef0011223344556677',
+          instanceId: 'node-deadbeef0011223344556677',
           type: 'parser',
           inputs: ['trigger'],
           outputs: ['value'],
@@ -127,8 +208,41 @@ describe('sanitizeLoadedPathConfig', () => {
       [
         {
           id: 'edge-trigger-parser',
-          from: 'node-trigger-1',
-          to: 'node-parser-1',
+          from: 'node-c0ffee001122334455667788',
+          to: 'node-missing001122334455667788',
+          fromPort: 'trigger',
+          toPort: 'trigger',
+        },
+      ]
+    );
+
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
+      /invalid or non-canonical edges/i
+    );
+  });
+
+  it('keeps canonical path configs loadable', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
+          type: 'trigger',
+          outputs: ['trigger'],
+        }),
+        buildNode({
+          id: 'node-deadbeef0011223344556677',
+          instanceId: 'node-deadbeef0011223344556677',
+          type: 'parser',
+          inputs: ['trigger'],
+          outputs: ['value'],
+        }),
+      ],
+      [
+        {
+          id: 'edge-trigger-parser',
+          from: 'node-c0ffee001122334455667788',
+          to: 'node-deadbeef0011223344556677',
           fromPort: 'trigger',
           toPort: 'trigger',
         },

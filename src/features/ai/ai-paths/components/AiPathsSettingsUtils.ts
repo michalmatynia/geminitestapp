@@ -28,8 +28,8 @@ import {
   safeJsonStringify as sharedSafeJsonStringify,
   sanitizeEdges,
   updaterSampleStateSchema,
-  repairPathNodeIdentities,
   stableStringify,
+  validateCanonicalPathNodeIdentities,
   EMPTY_RUNTIME_STATE,
 } from '@/shared/lib/ai-paths';
 import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
@@ -344,8 +344,15 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
 };
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
-  const migrated = migratePathConfigCollections(config).config;
-  const contractBackfilled = backfillPathConfigNodeContracts(migrated).config;
+  const migrated = migratePathConfigCollections(config);
+  if (migrated.changed) {
+    throw validationError('AI Path config contains deprecated collection aliases.', {
+      source: 'ai_paths.path_config',
+      reason: 'deprecated_collection_aliases',
+      pathId: config.id,
+    });
+  }
+  const contractBackfilled = backfillPathConfigNodeContracts(config).config;
   const sanitizedNodes = contractBackfilled.nodes.map((node: AiNode): AiNode => {
     if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
       return node;
@@ -456,36 +463,44 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       },
     };
   });
-  const identityRepair = repairPathNodeIdentities(
+  const identityIssues = validateCanonicalPathNodeIdentities(
     {
       ...contractBackfilled,
       nodes: sanitizedNodes,
     },
     { palette }
   );
-  if (identityRepair.warnings.length > 0) {
-    console.warn('[AI Paths] Node identity repair applied.', {
+  if (identityIssues.length > 0) {
+    throw validationError('AI Path config contains legacy node identities.', {
+      source: 'ai_paths.path_config',
+      reason: 'deprecated_node_identities',
       pathId: config.id,
-      warnings: identityRepair.warnings,
+      issues: identityIssues,
     });
   }
-  const repairedConfig = identityRepair.config;
-  const normalizedNodes = normalizeNodes(repairedConfig.nodes);
-  const rawEdges = Array.isArray(repairedConfig.edges) ? repairedConfig.edges : [];
+  const normalizedNodes = normalizeNodes(sanitizedNodes);
+  const rawEdges = Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : [];
   assertNoLegacyTriggerDataGraph(normalizedNodes, rawEdges);
   const graphNodes = normalizeNodes(normalizedNodes);
   const normalizedEdges = sanitizeEdges(graphNodes, rawEdges);
-  const uiState = repairedConfig.uiState ? { ...repairedConfig.uiState } : undefined;
+  if (stableStringify(normalizedEdges) !== stableStringify(rawEdges)) {
+    throw validationError('AI Path config contains invalid or non-canonical edges.', {
+      source: 'ai_paths.path_config',
+      reason: 'invalid_edges',
+      pathId: config.id,
+    });
+  }
+  const uiState = contractBackfilled.uiState ? { ...contractBackfilled.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
-    ...repairedConfig,
+    ...contractBackfilled,
     nodes: graphNodes,
     edges: normalizedEdges,
     uiState,
     runtimeState: buildPersistedRuntimeState(
-      parseRuntimeState(repairedConfig.runtimeState),
+      parseRuntimeState(contractBackfilled.runtimeState),
       graphNodes
     ),
   };

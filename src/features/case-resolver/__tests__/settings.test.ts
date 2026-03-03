@@ -706,7 +706,7 @@ describe('case-resolver settings', () => {
     expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
   });
 
-  it('rejects legacy relation graph edge keys', () => {
+  it('canonicalizes legacy relation graph edge keys during workspace parse', () => {
     const raw = JSON.stringify({
       version: 2,
       workspaceRevision: 0,
@@ -761,9 +761,26 @@ describe('case-resolver settings', () => {
       activeFileId: 'case-a',
     });
 
-    expect(() => parseCaseResolverWorkspace(raw)).toThrowError(
-      /Legacy Case Resolver edge fields are no longer supported/i
-    );
+    const parsed = parseCaseResolverWorkspace(raw);
+
+    expect(
+      parsed.relationGraph.edges.some((edge) => {
+        return (
+          edge.id === 'legacy-edge' &&
+          edge.source === 'case:case-a' &&
+          edge.target === 'custom-link' &&
+          edge.sourceHandle === 'out' &&
+          edge.targetHandle === 'in'
+        );
+      })
+    ).toBe(true);
+    expect(parsed.relationGraph.edges.find((edge) => edge.id === 'legacy-edge')).toMatchObject({
+      id: 'legacy-edge',
+      source: 'case:case-a',
+      target: 'custom-link',
+      sourceHandle: 'out',
+      targetHandle: 'in',
+    });
   });
 
   it('synchronizes relation graph structure and preserves custom links', () => {

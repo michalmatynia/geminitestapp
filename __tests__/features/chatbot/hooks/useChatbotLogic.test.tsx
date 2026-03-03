@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import * as chatbotApi from '@/features/ai/chatbot/api';
@@ -102,6 +102,12 @@ describe('useChatbotLogic', () => {
 
   it('initializes with default values', async () => {
     const { result } = renderHook(() => useChatbotLogic(), { wrapper });
+
+    await waitFor(() => {
+      expect(chatbotApi.fetchChatbotSessions).toHaveBeenCalledTimes(1);
+      expect(chatbotApi.fetchChatbotSettings).toHaveBeenCalledTimes(1);
+      expect(result.current.sessionsLoading).toBe(false);
+    });
 
     expect(result.current.messages).toEqual([]);
     expect(result.current.input).toBe('');

@@ -39,6 +39,33 @@ import {
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
 
+type ProductListCacheValue =
+  | ProductWithImages[]
+  | { products: ProductWithImages[] }
+  | null
+  | undefined;
+
+const patchProductListCacheValue = (
+  cacheValue: ProductListCacheValue,
+  savedProduct: ProductWithImages
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+    );
+  }
+  if (Array.isArray(cacheValue.products)) {
+    return {
+      ...cacheValue,
+      products: cacheValue.products.map((product: ProductWithImages) =>
+        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
 const isValidAdvancedFilterPayload = (payload: string): boolean => {
   try {
     const parsed: unknown = JSON.parse(payload);
@@ -214,20 +241,7 @@ export function useUpdateProductMutation(): UseMutationResult<
         setTimeout(() => {
           queryClient.setQueriesData(
             { queryKey: QUERY_KEYS.products.lists() },
-            (old: any) => {
-              if (Array.isArray(old)) {
-                return old.map((p: any) => (p.id === savedProduct.id ? { ...p, ...savedProduct } : p));
-              }
-              if (old?.products && Array.isArray(old.products)) {
-                return {
-                  ...old,
-                  products: old.products.map((p: any) =>
-                    p.id === savedProduct.id ? { ...p, ...savedProduct } : p
-                  ),
-                };
-              }
-              return old;
-            }
+            (old: ProductListCacheValue) => patchProductListCacheValue(old, savedProduct)
           );
         }, 0);
         

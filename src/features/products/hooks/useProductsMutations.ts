@@ -26,6 +26,35 @@ interface UpdateProductPayload {
   data: Partial<ProductWithImages>;
 }
 
+type ProductListCacheValue =
+  | ProductWithImages[]
+  | { items: ProductWithImages[] }
+  | null
+  | undefined;
+
+const patchProductListCacheValue = (
+  cacheValue: ProductListCacheValue,
+  productId: string,
+  field: keyof ProductWithImages,
+  value: ProductWithImages[keyof ProductWithImages]
+): ProductListCacheValue => {
+  if (!cacheValue) return cacheValue;
+  if (Array.isArray(cacheValue)) {
+    return cacheValue.map((product: ProductWithImages) =>
+      product.id === productId ? { ...product, [field]: value } : product
+    );
+  }
+  if (Array.isArray(cacheValue.items)) {
+    return {
+      ...cacheValue,
+      items: cacheValue.items.map((product: ProductWithImages) =>
+        product.id === productId ? { ...product, [field]: value } : product
+      ),
+    };
+  }
+  return cacheValue;
+};
+
 // Retry only transient/network errors — not validation (400) or not-found (404)
 const isTransientError = (error: Error): boolean => {
   if (error instanceof AppError) return error.retryable;
@@ -197,29 +226,19 @@ export function useUpdateProductField(): UpdateMutation<
       ]);
 
       // Snapshot the previous values
-      const previousLists = queryClient.getQueryData(listKey);
-      const previousDetail = queryClient.getQueryData(detailKey);
+      const previousLists = queryClient.getQueryData<unknown>(listKey);
+      const previousDetail = queryClient.getQueryData<ProductWithImages>(detailKey);
 
       // Optimistically update lists
       queryClient.setQueriesData(
         { queryKey: listKey },
-        (old: any) => {
-          if (!old) return old;
-          if (Array.isArray(old)) {
-            return old.map((p: any) => (p.id === id ? { ...p, [field]: value } : p));
-          }
-          if (old.items && Array.isArray(old.items)) {
-            return {
-              ...old,
-              items: old.items.map((p: any) => (p.id === id ? { ...p, [field]: value } : p)),
-            };
-          }
-          return old;
-        }
+        (old: ProductListCacheValue) => patchProductListCacheValue(old, id, field, value)
       );
 
       // Optimistically update detail
-      queryClient.setQueryData(detailKey, (old: any) => (old ? { ...old, [field]: value } : old));
+      queryClient.setQueryData(detailKey, (old: ProductWithImages | undefined) =>
+        old ? { ...old, [field]: value } : old
+      );
 
       return { previousLists, previousDetail };
     },

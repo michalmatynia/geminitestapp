@@ -18,6 +18,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
+  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   hasCaseResolverWorkspaceFilesArray,
@@ -98,7 +99,9 @@ export function AdminCaseResolverCasesProvider({
     [preferencesQuery.data]
   );
 
-  const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
+  const rawWorkspace =
+    settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ??
+    settingsStore.get(CASE_RESOLVER_LEGACY_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -308,7 +311,8 @@ export function AdminCaseResolverCasesProvider({
     const shouldFetchWorkspace =
       shouldForceRecordFetch ||
       metadata === null ||
-      (metadata.exists !== false && metadata.revision >= currentRevision);
+      metadata.exists === false ||
+      metadata.revision >= currentRevision;
     if (!shouldFetchWorkspace) {
       toast('Workspace already up to date.', { variant: 'success' });
       return;

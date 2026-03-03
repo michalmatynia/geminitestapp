@@ -78,13 +78,19 @@ export function ComponentTreePanel(): React.ReactNode {
 
   const sectionIndexById = useMemo(() => {
     const next = new Map<string, number>();
-    hierarchy.childrenByParent.forEach((sectionIds: string[]) => {
+    CMS_ZONE_ORDER.forEach((zone: PageZone) => {
+      rootSectionsByZone[zone].forEach((section: SectionInstance, index: number) => {
+        next.set(section.id, index);
+      });
+    });
+    hierarchy.childrenByParent.forEach((sectionIds: string[], parentId: string | null) => {
+      if (parentId === null) return;
       sectionIds.forEach((sectionId: string, index: number) => {
         next.set(sectionId, index);
       });
     });
     return next;
-  }, [hierarchy.childrenByParent]);
+  }, [hierarchy.childrenByParent, rootSectionsByZone]);
 
   const masterNodes = useMemo(
     (): MasterTreeNode[] => buildCmsMasterNodes(state.sections),
@@ -275,7 +281,7 @@ export function ComponentTreePanel(): React.ReactNode {
               controller={structureController}
               enableDnd={false}
               className='space-y-0.5'
-              renderNode={({ node, hasChildren, isExpanded, toggleExpand }) => {
+              renderNode={({ node, depth, hasChildren, isExpanded, toggleExpand }) => {
                 const zoneFromNode = fromCmsZoneNodeId(node.id);
                 if (zoneFromNode) {
                   const zoneSections = rootSectionsByZone[zoneFromNode];
@@ -306,8 +312,13 @@ export function ComponentTreePanel(): React.ReactNode {
                   const section = sectionById.get(sectionId);
                   if (!section) return null;
                   const sectionIndex = sectionIndexById.get(sectionId) ?? 0;
+                  const nestedOffset = Math.max(0, depth - 1) * 16;
                   return (
-                    <div className='px-2'>
+                    <div
+                      className='px-2'
+                      style={{ marginLeft: `${nestedOffset}px` }}
+                      data-cms-tree-depth={String(Math.max(0, depth - 1))}
+                    >
                       <SectionDropTarget
                         zone={section.zone}
                         toParentSectionId={section.parentSectionId ?? null}

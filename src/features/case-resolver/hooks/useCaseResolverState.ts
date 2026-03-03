@@ -9,7 +9,10 @@ import {
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
 } from '@/features/case-resolver-capture/settings';
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/features/filemaker/settings';
+import {
+  FILEMAKER_DATABASE_KEY,
+  parseFilemakerDatabaseForCaseResolver,
+} from '@/features/filemaker/settings';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import type {
   CaseResolverCategory,
@@ -29,6 +32,7 @@ import {
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
+  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
   CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -130,7 +134,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedPromptExploderSessionId.length > 0 &&
     (requestedFileId?.trim() ?? '').length > 0;
 
-  const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
+  const rawWorkspaceFromStore =
+    settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ??
+    settingsStore.get(CASE_RESOLVER_LEGACY_WORKSPACE_KEY) ??
+    null;
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -214,7 +221,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     };
   }, [rawCaseResolverDefaultDocumentFormat, rawCaseResolverSettings]);
   const filemakerDatabase = useMemo(
-    () => parseFilemakerDatabase(rawFilemakerDatabase),
+    () => parseFilemakerDatabaseForCaseResolver(rawFilemakerDatabase),
     [rawFilemakerDatabase]
   );
   const caseResolverCaptureSettings = useMemo(

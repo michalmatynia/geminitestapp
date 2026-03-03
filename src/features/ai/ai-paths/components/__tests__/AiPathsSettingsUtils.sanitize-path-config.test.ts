@@ -6,90 +6,88 @@ import {
   sanitizePathConfig,
 } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
+import { resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils/node-identity';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
-  ({
-    id: 'node',
-    type: 'viewer',
-    title: 'Node',
-    description: '',
-    inputs: [],
-    outputs: [],
-    position: { x: 0, y: 0 },
-    data: {},
-    ...patch,
-  }) as AiNode;
+  {
+    const baseNode = createDefaultPathConfig('path-node-fixture').nodes[0] as AiNode;
+    const nextId = typeof patch.id === 'string' ? patch.id : baseNode.id;
+    return {
+      ...baseNode,
+      ...patch,
+      id: nextId,
+      instanceId: typeof patch.instanceId === 'string' ? patch.instanceId : nextId,
+      nodeTypeId:
+        typeof patch.nodeTypeId === 'string'
+          ? patch.nodeTypeId
+          : resolveNodeTypeId(
+              {
+                ...baseNode,
+                ...patch,
+                id: nextId,
+              } as AiNode,
+              palette
+            ),
+    } as AiNode;
+  };
 
-const buildConfig = (edges: Edge[]): PathConfig =>
-  ({
-    id: 'path-1',
-    version: 1,
-    name: 'Path 1',
-    description: '',
-    trigger: 'manual',
-    updatedAt: new Date().toISOString(),
-    nodes: [
-      buildNode({
-        id: 'node-6bb64bd12ced85746705fc69',
-        type: 'mapper',
-        title: 'Mapper',
-        inputs: ['context'],
-        outputs: ['value'],
-      }),
-      buildNode({
-        id: 'node-837e17bdcefe87fe18d92cd5',
-        type: 'compare',
-        title: 'Compare',
-        inputs: ['value'],
-        outputs: ['valid'],
-      }),
-    ],
+const buildConfig = (edges: Edge[]): PathConfig => {
+  const config = createDefaultPathConfig('path-1');
+  return {
+    ...config,
     edges,
-  }) as PathConfig;
+  };
+};
 
 describe('sanitizePathConfig', () => {
-  it('drops dangling edges and rewires compatible edge ports', () => {
-    const config = buildConfig([
+  it('rejects dangling and incompatible edges instead of dropping them', () => {
+    const config = createDefaultPathConfig('path-invalid-edges');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
       {
         id: 'edge-valid',
-        from: 'node-6bb64bd12ced85746705fc69',
-        to: 'node-837e17bdcefe87fe18d92cd5',
-        fromPort: 'value',
-        toPort: 'value',
+        from: fromNode.id,
+        to: toNode.id,
+        fromPort: 'entityJson',
+        toPort: 'entityJson',
       },
       {
         id: 'edge-dangling',
-        from: 'node-6bb64bd12ced85746705fc69',
+        from: fromNode.id,
         to: 'missing-node',
-        fromPort: 'value',
-        toPort: 'value',
+        fromPort: 'entityJson',
+        toPort: 'entityJson',
       },
       {
-        id: 'edge-rewire',
-        from: 'node-6bb64bd12ced85746705fc69',
-        to: 'node-837e17bdcefe87fe18d92cd5',
+        id: 'edge-invalid-port',
+        from: fromNode.id,
+        to: toNode.id,
         fromPort: 'unknown',
-        toPort: 'value',
+        toPort: 'entityJson',
       },
-    ]);
+    ];
 
-    const sanitized = sanitizePathConfig(config);
-
-    expect(sanitized.edges).toHaveLength(1);
-    expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-dangling')).toBeUndefined();
-    expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-rewire')).toBeUndefined();
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /invalid or non-canonical edges/i
+    );
   });
 
   it('keeps already canonical edges unchanged', () => {
-    const config = buildConfig([
+    const config = createDefaultPathConfig('path-canonical-edges');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
       {
         id: 'edge-valid',
-        from: 'node-6bb64bd12ced85746705fc69',
-        to: 'node-837e17bdcefe87fe18d92cd5',
-        fromPort: 'value',
-        toPort: 'value',
+        from: fromNode.id,
+        to: toNode.id,
+        fromPort: 'entityJson',
+        toPort: 'entityJson',
       },
-    ]);
+    ];
 
     const sanitized = sanitizePathConfig(config);
 
@@ -102,29 +100,29 @@ describe('sanitizePathConfig', () => {
       ...buildConfig([
         {
           id: 'edge-trigger-parser-context',
-          from: 'node-trigger-111111111111111111111111',
-          to: 'node-parser-111111111111111111111111',
+          from: 'node-111111111111111111111111',
+          to: 'node-222222222222222222222222',
           fromPort: 'context',
           toPort: 'context',
         },
         {
           id: 'edge-trigger-parser-entity',
-          from: 'node-trigger-111111111111111111111111',
-          to: 'node-parser-111111111111111111111111',
+          from: 'node-111111111111111111111111',
+          to: 'node-222222222222222222222222',
           fromPort: 'entityId',
           toPort: 'entityId',
         },
       ]),
       nodes: [
         buildNode({
-          id: 'node-trigger-111111111111111111111111',
+          id: 'node-111111111111111111111111',
           type: 'trigger',
           title: 'Trigger',
           inputs: [],
           outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
         }),
         buildNode({
-          id: 'node-parser-111111111111111111111111',
+          id: 'node-222222222222222222222222',
           type: 'parser',
           title: 'Parser',
           inputs: ['context', 'entityId'],
@@ -139,25 +137,24 @@ describe('sanitizePathConfig', () => {
   });
 
   it('rejects deprecated database schemaSnapshot in path configs', () => {
-    const config = {
-      ...buildConfig([]),
-      nodes: [
-        buildNode({
-          id: 'node-db-111111111111111111111111',
-          type: 'database',
-          title: 'Database',
-          config: {
-            database: {
-              operation: 'query',
-              schemaSnapshot: {
-                collections: [],
-                sources: {},
+    const config = createDefaultPathConfig('path-db-schema-snapshot');
+    config.nodes = config.nodes.map((node: AiNode): AiNode =>
+      node.type === 'database'
+        ? {
+            ...node,
+            config: {
+              ...(node.config ?? {}),
+              database: {
+                operation: 'query',
+                schemaSnapshot: {
+                  collections: [],
+                  sources: {},
+                },
               },
             },
-          },
-        }),
-      ],
-    } as PathConfig;
+          }
+        : node
+    );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
       /deprecated database schemaSnapshot/i
@@ -165,28 +162,41 @@ describe('sanitizePathConfig', () => {
   });
 
   it('rejects deprecated database query provider \"all\" in path configs', () => {
-    const config = {
-      ...buildConfig([]),
-      nodes: [
-        buildNode({
-          id: 'node-db-111111111111111111111111',
-          type: 'database',
-          title: 'Database',
-          config: {
-            database: {
-              operation: 'query',
-              query: {
-                provider: 'all',
+    const config = createDefaultPathConfig('path-db-provider-all');
+    config.nodes = config.nodes.map((node: AiNode): AiNode =>
+      node.type === 'database'
+        ? {
+            ...node,
+            config: {
+              ...(node.config ?? {}),
+              database: {
+                operation: 'query',
+                query: {
+                  provider: 'all',
+                },
               },
             },
-          },
-        }),
-      ],
-    } as PathConfig;
+          }
+        : node
+    );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
       /deprecated database query provider \"all\"/i
     );
+  });
+
+  it('rejects legacy node identity repair candidates instead of backfilling them', () => {
+    const config = createDefaultPathConfig('path-legacy-node-identities');
+    config.nodes = config.nodes.map((node: AiNode, index: number): AiNode =>
+      index === 0
+        ? {
+            ...node,
+            instanceId: undefined,
+          }
+        : node
+    );
+
+    expect(() => sanitizePathConfig(config)).toThrowError(/legacy node identities/i);
   });
 
   it('preserves shared object-backed ports when persisting runtime state', () => {

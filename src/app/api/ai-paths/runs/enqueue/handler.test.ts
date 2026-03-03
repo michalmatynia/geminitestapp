@@ -1,0 +1,156 @@
+import { NextRequest } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
+
+const {
+  requireAiPathsRunAccessMock,
+  enforceAiPathsRunRateLimitMock,
+  enqueuePathRunMock,
+  assertAiPathRunQueueReadyForEnqueueMock,
+  logSystemEventMock,
+} = vi.hoisted(() => ({
+  requireAiPathsRunAccessMock: vi.fn(),
+  enforceAiPathsRunRateLimitMock: vi.fn(),
+  enqueuePathRunMock: vi.fn(),
+  assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
+  logSystemEventMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/ai-paths/server', () => ({
+  requireAiPathsRunAccess: requireAiPathsRunAccessMock,
+  enforceAiPathsRunRateLimit: enforceAiPathsRunRateLimitMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
+  enqueuePathRun: enqueuePathRunMock,
+}));
+
+vi.mock('@/features/jobs/server', () => ({
+  assertAiPathRunQueueReadyForEnqueue: assertAiPathRunQueueReadyForEnqueueMock,
+}));
+
+vi.mock('@/shared/lib/observability/system-logger', () => ({
+  logSystemEvent: logSystemEventMock,
+}));
+
+import { POST_handler } from './handler';
+
+const makeRequest = (body: Record<string, unknown>): NextRequest =>
+  new NextRequest('http://localhost/api/ai-paths/runs/enqueue', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+describe('ai-paths runs enqueue handler', () => {
+  beforeEach(() => {
+    requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
+    enforceAiPathsRunRateLimitMock.mockReset().mockResolvedValue(undefined);
+    enqueuePathRunMock.mockReset().mockResolvedValue({ id: 'run-1', status: 'queued' });
+    assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
+    logSystemEventMock.mockReset().mockResolvedValue(undefined);
+  });
+
+  it('rejects legacy node identities before enqueueing the run', async () => {
+    const config = createDefaultPathConfig('path-legacy');
+    const legacyNodeId = 'node-legacy-parser';
+    const [firstNode, ...restNodes] = config.nodes;
+    if (!firstNode) {
+      throw new Error('Expected default path config to include at least one node.');
+    }
+    const nodes = [
+      {
+        ...firstNode,
+        id: legacyNodeId,
+        instanceId: legacyNodeId,
+      },
+      ...restNodes,
+    ];
+    const edges = config.edges.map((edge) =>
+      edge.from === firstNode.id
+        ? { ...edge, from: legacyNodeId }
+        : edge.to === firstNode.id
+          ? { ...edge, to: legacyNodeId }
+          : edge
+    );
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes,
+          edges,
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/legacy node identities/i);
+
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid edges before enqueueing the run', async () => {
+    const config = createDefaultPathConfig('path-invalid-edge');
+    const [firstEdge, ...restEdges] = config.edges;
+    if (!firstEdge) {
+      throw new Error('Expected default path config to include at least one edge.');
+    }
+    const edges = [
+      {
+        ...firstEdge,
+        to: 'node-missing001122334455667788',
+      },
+      ...restEdges,
+    ];
+
+    await expect(
+      POST_handler(
+        makeRequest({
+          pathId: config.id,
+          pathName: config.name,
+          nodes: config.nodes,
+          edges,
+        }),
+        {} as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/invalid or non-canonical edges/i);
+
+    expect(enqueuePathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('enqueues canonical graphs without identity repair metadata', async () => {
+    const config = createDefaultPathConfig('path-canonical');
+
+    const response = await POST_handler(
+      makeRequest({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        meta: {
+          aiPathsValidation: {
+            enabled: false,
+          },
+        },
+      }),
+      {} as Parameters<typeof POST_handler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ run: { id: 'run-1', status: 'queued' } });
+    expect(enqueuePathRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: config.id,
+        pathName: config.name,
+        nodes: config.nodes,
+        edges: config.edges,
+        meta: expect.not.objectContaining({
+          identityRepair: expect.anything(),
+        }),
+      })
+    );
+  });
+});

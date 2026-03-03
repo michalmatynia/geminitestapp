@@ -9,7 +9,6 @@ const COMPRESSIBLE_SETTING_KEYS = new Set<string>([CASE_RESOLVER_WORKSPACE_KEY])
 export const shouldCompressSettingValue = (key: string): boolean => COMPRESSIBLE_SETTING_KEYS.has(key);
 
 export const decodeSettingValue = (key: string, value: string): string => {
-  if (!shouldCompressSettingValue(key)) return value;
   if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;
   try {
     const encoded = value.slice(COMPRESSED_SETTING_PREFIX.length);

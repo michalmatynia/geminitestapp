@@ -44,6 +44,7 @@ import {
   BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
   BASE_IMPORT_LEASE_MS,
   BASE_IMPORT_MAX_ATTEMPTS,
+  type StartBaseImportRunInput,
   createRunIdempotencyKey,
   normalizeSelectedIds,
   nowIso,
@@ -66,7 +67,6 @@ import type {
   BaseImportStartResponse,
   ProductListing,
   ProductListingRepository,
-  StartBaseImportRunInput,
 } from '@/shared/contracts/integrations';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';

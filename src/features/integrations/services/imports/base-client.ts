@@ -6,6 +6,7 @@ import 'server-only';
  * Decomposed into modular units for maintainability.
  */
 
+export type { BaseProductRecord } from '@/shared/contracts/integrations';
 export * from './base-client/config';
 export * from './base-client/core';
 export * from './base-client/inventory';

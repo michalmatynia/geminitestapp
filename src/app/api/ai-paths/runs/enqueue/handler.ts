@@ -8,14 +8,15 @@ import {
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   palette,
-  repairPathNodeIdentities,
   sanitizeEdges,
+  stableStringify,
+  validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
+import { aiNodeSchema, edgeSchema, type PathConfig } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, serviceUnavailableError } from '@/shared/errors/app-error';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
@@ -105,30 +106,35 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const normalizedNodes = normalizeNodes(nodes);
-  const identityRepair = repairPathNodeIdentities(
-    {
-      id: rest.pathId,
-      version: 1,
-      name: rest.pathName?.trim() || rest.pathId,
-      description: '',
-      trigger: rest.triggerEvent?.trim() || 'manual',
-      nodes: normalizedNodes,
-      edges,
-      updatedAt: new Date().toISOString(),
-    },
-    { palette }
-  );
-  const repairedNodes = normalizeNodes(identityRepair.config.nodes);
-  const normalizedEdges = sanitizeEdges(repairedNodes, identityRepair.config.edges);
+  const validationConfig: PathConfig = {
+    id: rest.pathId,
+    version: 1,
+    name: rest.pathName?.trim() || rest.pathId,
+    description: '',
+    trigger: rest.triggerEvent?.trim() || 'manual',
+    nodes: normalizedNodes,
+    edges,
+    updatedAt: new Date().toISOString(),
+  };
+  const identityIssues = validateCanonicalPathNodeIdentities(validationConfig, {
+    palette,
+  });
+  if (identityIssues.length > 0) {
+    throw badRequestError('AI Paths run graph contains legacy node identities.');
+  }
+  const normalizedEdges = sanitizeEdges(normalizedNodes, edges);
+  if (stableStringify(normalizedEdges) !== stableStringify(edges)) {
+    throw badRequestError('AI Paths run graph contains invalid or non-canonical edges.');
+  }
   const metaRecord = normalizedMeta && typeof normalizedMeta === 'object' ? normalizedMeta : {};
-  const validationConfig = normalizeAiPathsValidationConfig(
+  const validationState = normalizeAiPathsValidationConfig(
     (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ?? undefined
   );
-  const nodeValidationEnabled = validationConfig.enabled !== false;
+  const nodeValidationEnabled = validationState.enabled !== false;
   const validationReport = evaluateAiPathsValidationPreflight({
-    nodes: repairedNodes,
+    nodes: normalizedNodes,
     edges: normalizedEdges,
-    config: validationConfig,
+    config: validationState,
   });
   if (nodeValidationEnabled && validationReport.blocked) {
     const finding = validationReport.findings[0];
@@ -140,22 +146,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   normalizedMeta = {
     ...metaRecord,
-    ...(identityRepair.warnings.length > 0
-      ? {
-        identityRepair: {
-          warnings: identityRepair.warnings,
-          repairedAt: new Date().toISOString(),
-        },
-      }
-      : {}),
-    aiPathsValidation: validationConfig,
+    aiPathsValidation: validationState,
     validationPreflight: validationReport,
   };
 
   const compileReport = await withTiming('compileMs', async () => {
     return nodeValidationEnabled
-      ? compileGraph(repairedNodes, normalizedEdges)
-      : compileGraph(repairedNodes, normalizedEdges, {
+      ? compileGraph(normalizedNodes, normalizedEdges)
+      : compileGraph(normalizedNodes, normalizedEdges, {
         scopeMode: 'reachable_from_roots',
         ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
       });
@@ -202,7 +200,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       userId: access.userId,
       pathId: rest.pathId,
       pathName: rest.pathName ?? null,
-      nodes: repairedNodes,
+      nodes: normalizedNodes,
       edges: normalizedEdges,
       ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
       ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),

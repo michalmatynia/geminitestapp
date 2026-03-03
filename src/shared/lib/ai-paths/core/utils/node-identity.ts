@@ -18,6 +18,23 @@ export type PathIdentityRepairResult = {
   warnings: PathIdentityRepairWarning[];
 };
 
+export type PathIdentityValidationIssue = {
+  code:
+    | 'missing_node_id'
+    | 'invalid_node_id'
+    | 'duplicate_node_id'
+    | 'invalid_instance_id'
+    | 'invalid_node_type_id'
+    | 'invalid_selected_node_id'
+    | 'invalid_parser_sample_node_id'
+    | 'invalid_updater_sample_node_id'
+    | 'invalid_runtime_state_node_id';
+  message: string;
+  nodeId?: string;
+  expected?: string;
+  location?: string;
+};
+
 type PathIdentityRepairOptions = {
   palette?: NodeDefinition[];
 };
@@ -302,6 +319,162 @@ const remapRuntimeState = (
     runtimeState: remapped.runtimeState,
     changed: remapped.changed,
   };
+};
+
+const collectNodeKeyReferenceIssues = (
+  value: unknown,
+  nodeIds: Set<string>,
+  location: string,
+  code:
+    | 'invalid_parser_sample_node_id'
+    | 'invalid_updater_sample_node_id'
+    | 'invalid_runtime_state_node_id'
+): PathIdentityValidationIssue[] => {
+  if (!isObjectRecord(value)) return [];
+
+  const issues: PathIdentityValidationIssue[] = [];
+  Object.keys(value).forEach((rawNodeId: string): void => {
+    const trimmedNodeId = rawNodeId.trim();
+    if (trimmedNodeId.length > 0 && rawNodeId === trimmedNodeId && nodeIds.has(trimmedNodeId)) {
+      return;
+    }
+    issues.push({
+      code,
+      nodeId: rawNodeId || undefined,
+      location,
+      message: `Non-canonical node reference "${rawNodeId}" found at ${location}.`,
+    });
+  });
+  return issues;
+};
+
+const parseRuntimeStateRecord = (runtimeState: unknown): Record<string, unknown> | null => {
+  if (isObjectRecord(runtimeState)) return runtimeState;
+  if (typeof runtimeState !== 'string' || runtimeState.trim().length === 0) return null;
+  try {
+    const parsed = JSON.parse(runtimeState) as unknown;
+    return isObjectRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+export const validateCanonicalPathNodeIdentities = (
+  pathConfig: PathConfig,
+  options?: PathIdentityRepairOptions
+): PathIdentityValidationIssue[] => {
+  const palette = options?.palette ?? [];
+  const issues: PathIdentityValidationIssue[] = [];
+  const usedIds = new Set<string>();
+
+  (pathConfig.nodes ?? []).forEach((node: AiNode): void => {
+    const rawId = typeof node.id === 'string' ? node.id : '';
+    const trimmedId = rawId.trim();
+    if (!trimmedId) {
+      issues.push({
+        code: 'missing_node_id',
+        message: `Node "${node.title || node.type}" is missing a canonical node id.`,
+      });
+      return;
+    }
+
+    if (rawId !== trimmedId || !isHashedNodeInstanceId(trimmedId)) {
+      issues.push({
+        code: 'invalid_node_id',
+        nodeId: rawId,
+        expected: 'node-[a-f0-9]{24}',
+        message: `Node "${node.title || node.type}" uses non-canonical id "${rawId}".`,
+      });
+    }
+
+    if (usedIds.has(trimmedId)) {
+      issues.push({
+        code: 'duplicate_node_id',
+        nodeId: trimmedId,
+        message: `Duplicate node id "${trimmedId}" is not supported.`,
+      });
+    } else {
+      usedIds.add(trimmedId);
+    }
+
+    const instanceId = asTrimmedString((node as { instanceId?: unknown }).instanceId);
+    if (instanceId !== trimmedId) {
+      issues.push({
+        code: 'invalid_instance_id',
+        nodeId: trimmedId,
+        expected: trimmedId,
+        message: `Node "${trimmedId}" must persist instanceId "${trimmedId}".`,
+      });
+    }
+
+    const expectedNodeTypeId = resolveNodeTypeId(node, palette);
+    if (asTrimmedString(node.nodeTypeId) !== expectedNodeTypeId) {
+      issues.push({
+        code: 'invalid_node_type_id',
+        nodeId: trimmedId,
+        expected: expectedNodeTypeId,
+        message: `Node "${trimmedId}" uses non-canonical nodeTypeId.`,
+      });
+    }
+  });
+
+  const selectedNodeId = typeof pathConfig.uiState?.selectedNodeId === 'string'
+    ? pathConfig.uiState.selectedNodeId
+    : null;
+  if (selectedNodeId) {
+    const trimmedSelectedNodeId = selectedNodeId.trim();
+    if (selectedNodeId !== trimmedSelectedNodeId || !usedIds.has(trimmedSelectedNodeId)) {
+      issues.push({
+        code: 'invalid_selected_node_id',
+        nodeId: selectedNodeId,
+        location: 'uiState.selectedNodeId',
+        message: `Non-canonical selected node reference "${selectedNodeId}" is not supported.`,
+      });
+    }
+  }
+
+  issues.push(
+    ...collectNodeKeyReferenceIssues(
+      pathConfig.parserSamples,
+      usedIds,
+      'parserSamples',
+      'invalid_parser_sample_node_id'
+    )
+  );
+  issues.push(
+    ...collectNodeKeyReferenceIssues(
+      pathConfig.updaterSamples,
+      usedIds,
+      'updaterSamples',
+      'invalid_updater_sample_node_id'
+    )
+  );
+
+  const runtimeState = parseRuntimeStateRecord(pathConfig.runtimeState);
+  if (runtimeState) {
+    (
+      [
+        'inputs',
+        'outputs',
+        'history',
+        'hashes',
+        'hashTimestamps',
+        'nodeStatuses',
+        'nodeOutputs',
+      ] as const
+    ).forEach((location) => {
+      issues.push(
+        ...collectNodeKeyReferenceIssues(
+          runtimeState[location],
+          usedIds,
+          `runtimeState.${location}`,
+          'invalid_runtime_state_node_id'
+        )
+      );
+    });
+  }
+
+  return issues;
 };
 
 export const repairPathNodeIdentities = (

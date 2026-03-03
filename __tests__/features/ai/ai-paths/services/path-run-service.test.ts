@@ -58,7 +58,7 @@ describe('PathRunService', () => {
   ];
   const disconnectedCompileNodes: AiNode[] = [
     {
-      id: 'trigger-1',
+      id: 'node-aaaaaaaaaaaaaaaaaaaaaaaa',
       type: 'trigger',
       title: 'Trigger',
       description: '',
@@ -68,7 +68,7 @@ describe('PathRunService', () => {
       config: { trigger: { event: 'manual' } },
     },
     {
-      id: 'model-1',
+      id: 'node-bbbbbbbbbbbbbbbbbbbbbbbb',
       type: 'model',
       title: 'Model',
       description: '',
@@ -82,7 +82,7 @@ describe('PathRunService', () => {
       config: {},
     },
     {
-      id: 'viewer-1',
+      id: 'node-cccccccccccccccccccccccc',
       type: 'viewer',
       title: 'Viewer',
       description: '',
@@ -95,8 +95,8 @@ describe('PathRunService', () => {
   const disconnectedCompileEdges: Edge[] = [
     {
       id: 'edge-model-viewer',
-      from: 'model-1',
-      to: 'viewer-1',
+      from: 'node-bbbbbbbbbbbbbbbbbbbbbbbb',
+      to: 'node-cccccccccccccccccccccccc',
       fromPort: 'result',
       toPort: 'result',
     },

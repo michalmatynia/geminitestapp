@@ -457,8 +457,11 @@ export const parseBrainProviderCatalog = (
     normalizedParsed['entries'] = parsedRecord['entries'];
   }
   if (legacyEntries.length > 0) {
-    normalizedParsed['entries'] = Array.isArray(parsedRecord['entries'])
-      ? [...parsedRecord['entries'], ...legacyEntries]
+    const existingEntries = Array.isArray(parsedRecord['entries'])
+      ? (parsedRecord['entries'] as unknown[])
+      : null;
+    normalizedParsed['entries'] = existingEntries
+      ? [...existingEntries, ...legacyEntries]
       : parsedRecord['entries'] === undefined
         ? legacyEntries
         : parsedRecord['entries'];

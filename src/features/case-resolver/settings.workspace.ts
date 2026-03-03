@@ -9,7 +9,6 @@ import {
 import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
 import {
   normalizeCaseResolverFileType,
-  normalizeFolderPath,
   normalizeFolderPaths,
   normalizeOptionalTimestamp,
   normalizeTimestamp,
@@ -270,6 +269,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
     assets,
     files: filesWithSanitizedGraph,
+    mode: 'reject',
   });
 
   const sanitizedFiles = filesWithSanitizedGraph.map((file: CaseResolverFile): CaseResolverFile => {

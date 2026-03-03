@@ -33,7 +33,6 @@ import {
 } from './lookup-resolvers';
 import { 
   getAllImageUrls, 
-  getImageList, 
   getImageSlotUrl 
 } from '../base-exporter-images';
 
@@ -100,13 +99,13 @@ export const getProductValue = (
   }
 
   if (normalized === 'images_list' || normalized === 'image_list') {
-    return getImageList(product, imageBaseUrl, diagnostics);
+    return getAllImageUrls(product, imageBaseUrl, diagnostics);
   }
 
   const imageSlotMatch = /^(?:image|img)(?:_url)?_(\d+)$/i.exec(normalized);
   if (imageSlotMatch) {
     const slotIndex = Number.parseInt(imageSlotMatch[1]!, 10);
-    return getImageSlotUrl(product, slotIndex, imageBaseUrl, diagnostics);
+    return getImageSlotUrl(product, slotIndex, 'slot', imageBaseUrl, diagnostics);
   }
 
   const record = product as unknown as Record<string, unknown>;

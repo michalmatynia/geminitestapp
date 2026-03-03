@@ -360,12 +360,14 @@ export async function buildBaseProductData(
     const templateData = applyExportTemplateMappings(
       product,
       exportMappings,
-      options?.imageBaseUrl ?? null,
-      options?.imageDiagnostics,
-      options?.producerNameById ?? null,
-      options?.producerExternalIdByInternalId ?? null,
-      options?.tagNameById ?? null,
-      options?.tagExternalIdByInternalId ?? null
+      {
+        imageBaseUrl: options?.imageBaseUrl ?? null,
+        diagnostics: options?.imageDiagnostics,
+        producerNameById: options?.producerNameById ?? null,
+        producerExternalIdByInternalId: options?.producerExternalIdByInternalId ?? null,
+        tagNameById: options?.tagNameById ?? null,
+        tagExternalIdByInternalId: options?.tagExternalIdByInternalId ?? null,
+      }
     );
     mergeTextFields(baseData, templateData);
     mergeNumericFields(templateData, 'prices');

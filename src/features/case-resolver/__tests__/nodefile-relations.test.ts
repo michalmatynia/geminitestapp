@@ -251,7 +251,7 @@ describe('case-resolver nodefile relations', () => {
     });
   });
 
-  it('rejects inline snapshot payloads in relation/sanitizer pipelines', () => {
+  it('strips inline snapshot payloads in relation/sanitizer pipelines', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -277,14 +277,22 @@ describe('case-resolver nodefile relations', () => {
       nodeFileAssetIdByNode: { n1: 'node-asset-inline' },
     });
 
-    expect(() => buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files })).toThrow(
-      /Inline Case Resolver node-file snapshots are no longer supported\./
-    );
-    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrow(
-      /Inline Case Resolver node-file snapshots are no longer supported\./
-    );
-    expect(() => sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files })).toThrow(
-      /Inline Case Resolver node-file snapshots are no longer supported\./
-    );
+    const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files });
+    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
+    const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
+
+    expect(index).toEqual({
+      nodeIdsByDocumentFileId: {},
+      nodeFileAssetIdsByDocumentFileId: {},
+      documentFileIdsByNodeFileAssetId: {},
+      nodeIdsByNodeFileAssetId: {},
+    });
+    expect(sanitizedAssets).toEqual([
+      expect.objectContaining({
+        id: 'node-asset-inline',
+        textContent: '',
+      }),
+    ]);
+    expect(sanitizedGraph).toBe(graph);
   });
 });

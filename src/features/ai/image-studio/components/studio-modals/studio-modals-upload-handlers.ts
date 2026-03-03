@@ -40,9 +40,9 @@ type AsyncMutation<TInput, TResult> = {
 type TemporaryObjectUploadDraft = {
   id: string;
   filepath: string;
-  filename: string;
-  width: number | null;
-  height: number | null;
+  filename?: string;
+  width?: number | null;
+  height?: number | null;
 };
 
 type CreateUploadHandlersDeps = {

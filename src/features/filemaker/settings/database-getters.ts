@@ -47,6 +47,20 @@ export const parseFilemakerDatabase = (raw: string | null | undefined): Filemake
   });
 };
 
+export const parseFilemakerDatabaseForCaseResolver = (
+  raw: string | null | undefined
+): FilemakerDatabase => {
+  try {
+    const parsed = parseFilemakerDatabasePayload(raw);
+    return normalizeFilemakerDatabase(parsed, {
+      rejectLegacyInlinePayloads: false,
+      stripCompatibilityFields: true,
+    });
+  } catch {
+    return normalizeFilemakerDatabase(null);
+  }
+};
+
 export const getFilemakerAddressById = (
   database: FilemakerDatabase,
   addressId: string | null | undefined

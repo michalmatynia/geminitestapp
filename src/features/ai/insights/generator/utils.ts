@@ -1,5 +1,10 @@
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
 export const sanitizeEvents = (
   events: AnalyticsSummaryDto['recent'] | undefined
 ): Record<string, unknown>[] =>
@@ -40,12 +45,16 @@ export const collectErrorMessages = (error: unknown): string[] => {
       messages.push(current.message);
       if (current.cause) queue.push(current.cause);
     } else if (typeof current === 'object') {
-      if ('message' in current && typeof (current as any).message === 'string') {
-        messages.push((current as any).message);
+      const record = asRecord(current);
+      if (!record) continue;
+      if (typeof record['message'] === 'string') {
+        messages.push(record['message']);
       }
-      if ('error' in current) queue.push((current as any).error);
-      if ('errors' in current && Array.isArray((current as any).errors)) {
-        queue.push(...(current as any).errors);
+      if ('error' in record) queue.push(record['error']);
+      if (Array.isArray(record['errors'])) {
+        for (const nestedError of record['errors'] as unknown[]) {
+          queue.push(nestedError);
+        }
       }
     } else if (typeof current === 'string') {
       messages.push(current);

@@ -552,6 +552,55 @@ const resolveDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
   return deprecatedKeys;
 };
 
+const sanitizeDeprecatedImageStudioSnapshotKeys = (
+  value: unknown
+): {
+  sanitized: unknown;
+  deprecatedKeys: string[];
+} => {
+  const deprecatedKeys = resolveDeprecatedImageStudioSnapshotKeys(value);
+  if (deprecatedKeys.length === 0 || !isPlainObject(value)) {
+    return {
+      sanitized: value,
+      deprecatedKeys,
+    };
+  }
+
+  const sanitizedRoot: Record<string, unknown> = { ...value };
+
+  if (isPlainObject(value['promptExtraction'])) {
+    const promptExtraction = { ...value['promptExtraction'] };
+    if (isPlainObject(promptExtraction['gpt'])) {
+      const gpt = { ...promptExtraction['gpt'] };
+      delete gpt['model'];
+      promptExtraction['gpt'] = gpt;
+    }
+    sanitizedRoot['promptExtraction'] = promptExtraction;
+  }
+
+  if (isPlainObject(value['uiExtractor'])) {
+    const uiExtractor = { ...value['uiExtractor'] };
+    delete uiExtractor['model'];
+    sanitizedRoot['uiExtractor'] = uiExtractor;
+  }
+
+  if (isPlainObject(value['targetAi'])) {
+    const targetAi = { ...value['targetAi'] };
+    if (isPlainObject(targetAi['openai'])) {
+      const openai = { ...targetAi['openai'] };
+      delete openai['model'];
+      delete openai['modelPresets'];
+      targetAi['openai'] = openai;
+    }
+    sanitizedRoot['targetAi'] = targetAi;
+  }
+
+  return {
+    sanitized: sanitizedRoot,
+    deprecatedKeys,
+  };
+};
+
 export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
   if (!raw.trim()) return defaultImageStudioSettings;
@@ -567,19 +616,9 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
     });
   }
 
-  const deprecatedKeys = resolveDeprecatedImageStudioSnapshotKeys(parsed);
-  if (deprecatedKeys.length > 0) {
-    throw validationError(
-      'Image Studio settings contain deprecated AI snapshot keys.',
-      {
-        source: 'image_studio.settings',
-        reason: 'deprecated_snapshot_keys',
-        keys: deprecatedKeys,
-      }
-    );
-  }
+  const { sanitized: sanitizedParsed } = sanitizeDeprecatedImageStudioSnapshotKeys(parsed);
 
-  const result = imageStudioSettingsSchema.safeParse(parsed);
+  const result = imageStudioSettingsSchema.safeParse(sanitizedParsed);
   if (!result.success) {
     throw validationError('Invalid Image Studio settings payload.', {
       reason: 'schema_validation_failed',

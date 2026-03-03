@@ -6,8 +6,9 @@ import {
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   palette,
-  repairPathNodeIdentities,
   sanitizeEdges,
+  stableStringify,
+  validateCanonicalPathNodeIdentities,
 } from '@/shared/lib/ai-paths';
 import {
   evaluateDisabledNodeTypesPolicy,
@@ -36,6 +37,7 @@ import type {
   PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
+import { validationError } from '@/shared/errors/app-error';
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -169,7 +171,7 @@ const resolveRequestId = (input: EnqueueRunInput): string | null => {
   return null;
 };
 
-const buildIdentityRepairSeed = (
+const buildRunGraphValidationConfig = (
   input: EnqueueRunInput,
   nodes: AiNode[],
   edges: Edge[]
@@ -189,6 +191,42 @@ const buildIdentityRepairSeed = (
   edges,
   updatedAt: new Date().toISOString(),
 });
+
+const assertCanonicalRunGraph = ({
+  input,
+  nodes,
+  edges,
+}: {
+  input: EnqueueRunInput;
+  nodes: AiNode[];
+  edges: Edge[];
+}): Edge[] => {
+  const identityIssues = validateCanonicalPathNodeIdentities(
+    buildRunGraphValidationConfig(input, nodes, edges),
+    {
+      palette,
+    }
+  );
+  if (identityIssues.length > 0) {
+    throw validationError('AI Paths run graph contains legacy node identities.', {
+      source: 'ai_paths.run',
+      reason: 'deprecated_node_identities',
+      pathId: input.pathId,
+      issues: identityIssues,
+    });
+  }
+
+  const canonicalEdges = sanitizeEdges(nodes, edges);
+  if (stableStringify(canonicalEdges) !== stableStringify(edges)) {
+    throw validationError('AI Paths run graph contains invalid or non-canonical edges.', {
+      source: 'ai_paths.run',
+      reason: 'invalid_edges',
+      pathId: input.pathId,
+    });
+  }
+
+  return canonicalEdges;
+};
 
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   const requestId = resolveRequestId(input);
@@ -229,12 +267,12 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
 
     const rawEdges = input.edges ?? [];
     const normalizedNodes = normalizeNodes(input.nodes ?? []);
-    const identityRepair = repairPathNodeIdentities(
-      buildIdentityRepairSeed(input, normalizedNodes, rawEdges),
-      { palette }
-    );
-    const nodes = normalizeNodes(identityRepair.config.nodes);
-    const edges = sanitizeEdges(nodes, identityRepair.config.edges);
+    const nodes = normalizedNodes;
+    const edges = assertCanonicalRunGraph({
+      input,
+      nodes,
+      edges: rawEdges,
+    });
     const validationConfig = normalizeAiPathsValidationConfig(
       (input.meta as Record<string, unknown> | null)?.['aiPathsValidation'] as
         | Record<string, unknown>
@@ -263,14 +301,6 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const meta = withRuntimeFingerprintMeta({
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
-      ...(identityRepair.warnings.length > 0
-        ? {
-          identityRepair: {
-            warnings: identityRepair.warnings,
-            repairedAt: new Date().toISOString(),
-          },
-        }
-        : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
       nodePolicy:

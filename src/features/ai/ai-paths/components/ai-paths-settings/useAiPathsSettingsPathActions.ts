@@ -27,12 +27,10 @@ import {
   createDefaultPathConfig,
   createPathId,
   createPathMeta,
-  EMPTY_RUNTIME_STATE,
+  duplicatePathConfig,
   normalizeAiPathsValidationConfig,
   normalizeNodes,
   sanitizeEdges,
-  migratePathConfigCollections,
-  repairPathNodeIdentities,
   triggers,
 } from '@/shared/lib/ai-paths';
 import {
@@ -45,6 +43,7 @@ import {
   normalizeParserSamples,
   normalizeUpdaterSamples,
   parseRuntimeState,
+  sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
 
 type ConfirmFn = (input: {
@@ -185,8 +184,7 @@ export function useAiPathsSettingsPathActions({
 
   const applyPathConfigState = useCallback(
     (config: PathConfig): void => {
-      const migratedConfig = migratePathConfigCollections(config).config;
-      const repairedConfig = repairPathNodeIdentities(migratedConfig).config;
+      const repairedConfig = sanitizePathConfig(config);
       const normalized = normalizeNodes(repairedConfig.nodes);
       setNodes(normalized);
       setEdges(sanitizeEdges(normalized, repairedConfig.edges));
@@ -224,19 +222,7 @@ export function useAiPathsSettingsPathActions({
       setAiPathsValidation(normalizeAiPathsValidationConfig(repairedConfig.aiPathsValidation));
       setParserSamples(normalizeParserSamples(repairedConfig.parserSamples));
       setUpdaterSamples(normalizeUpdaterSamples(repairedConfig.updaterSamples));
-      let nextRuntimeState: RuntimeState = EMPTY_RUNTIME_STATE;
-      try {
-        nextRuntimeState = parseRuntimeState(repairedConfig.runtimeState);
-      } catch (error) {
-        console.warn(
-          '[AI Paths] Failed to parse runtime state while applying path config. Using empty state.',
-          {
-            context: 'useAiPathsSettingsPathActions.applyPathConfigState',
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-      }
-      setRuntimeState(nextRuntimeState);
+      setRuntimeState(parseRuntimeState(repairedConfig.runtimeState));
       setLastRunAt(repairedConfig.lastRunAt ?? null);
       setIsPathLocked(Boolean(repairedConfig.isLocked));
       setIsPathActive(repairedConfig.isActive !== false);
@@ -405,43 +391,12 @@ export function useAiPathsSettingsPathActions({
       const duplicateName = resolveDuplicatePathName(
         sourceMeta?.name || sourceConfig.name || `Path ${sourceId.slice(0, 6)}`
       );
-      const duplicateBaseConfig: PathConfig = {
-        ...sourceConfig,
-        id: duplicateId,
-        name: duplicateName,
-        nodes: JSON.parse(JSON.stringify(sourceConfig.nodes ?? [])) as AiNode[],
-        edges: JSON.parse(JSON.stringify(sourceConfig.edges ?? [])) as Edge[],
+      const duplicateConfig = duplicatePathConfig({
+        sourceConfig,
+        duplicateId,
+        duplicateName,
         updatedAt: now,
-        isLocked: false,
-        runtimeState: {},
-        lastRunAt: null,
-        runCount: 0,
-        uiState: {
-          selectedNodeId: sourceConfig.uiState?.selectedNodeId ?? null,
-          configOpen: false,
-        },
-      };
-      const repairedDuplicateConfig = repairPathNodeIdentities(
-        migratePathConfigCollections(duplicateBaseConfig).config
-      ).config;
-      const duplicatedNodes = normalizeNodes(repairedDuplicateConfig.nodes);
-      const duplicatedEdges = sanitizeEdges(duplicatedNodes, repairedDuplicateConfig.edges);
-      const selectedNodeId = repairedDuplicateConfig.uiState?.selectedNodeId ?? null;
-      const resolvedSelectedNodeId =
-        selectedNodeId &&
-        duplicatedNodes.some((node: AiNode): boolean => node.id === selectedNodeId)
-          ? selectedNodeId
-          : (duplicatedNodes[0]?.id ?? null);
-
-      const duplicateConfig: PathConfig = {
-        ...repairedDuplicateConfig,
-        nodes: duplicatedNodes,
-        edges: duplicatedEdges,
-        uiState: {
-          selectedNodeId: resolvedSelectedNodeId,
-          configOpen: false,
-        },
-      };
+      });
       const duplicateMeta: PathMeta = {
         id: duplicateId,
         name: duplicateName,
@@ -620,9 +575,7 @@ export function useAiPathsSettingsPathActions({
             }
           }
 
-          config = migratePathConfigCollections(config).config;
-          config = repairPathNodeIdentities(config).config;
-          config.nodes = normalizeNodes(config.nodes);
+          config = sanitizePathConfig(config);
 
           setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
             ...prev,
@@ -645,9 +598,7 @@ export function useAiPathsSettingsPathActions({
                   'Failed to parse fallback selected path config:'
                 );
               }
-              recoveredConfig = migratePathConfigCollections(recoveredConfig).config;
-              recoveredConfig = repairPathNodeIdentities(recoveredConfig).config;
-              recoveredConfig.nodes = normalizeNodes(recoveredConfig.nodes);
+              recoveredConfig = sanitizePathConfig(recoveredConfig);
               setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
                 ...prev,
                 [value]: recoveredConfig,

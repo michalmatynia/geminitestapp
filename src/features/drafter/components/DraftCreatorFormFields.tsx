@@ -269,170 +269,170 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
     <FormSection title='Default Product Values' className='p-4'>
       <div className='space-y-6'>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <FormField label='SKU' id='sku'>
-          <Input
-            id='sku'
-            value={sku}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
-            placeholder='Product SKU'
-          />
-        </FormField>
-        <FormField label='Product Identifier'>
-          <div className='flex gap-2'>
-            <SelectSimple
-              size='sm'
-              options={[
-                { value: 'ean', label: 'EAN' },
-                { value: 'gtin', label: 'GTIN' },
-                { value: 'asin', label: 'ASIN' },
-              ]}
-              value={identifierType}
-              onValueChange={(value: string): void =>
-                setIdentifierType(value as 'ean' | 'gtin' | 'asin')
-              }
-              placeholder='Select type'
-              className='w-[100px]'
+          <FormField label='SKU' id='sku'>
+            <Input
+              id='sku'
+              value={sku}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
+              placeholder='Product SKU'
             />
-            {identifierType === 'ean' ? (
-              <Input
-                id='ean'
-                value={ean}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
-                placeholder='Enter EAN'
+          </FormField>
+          <FormField label='Product Identifier'>
+            <div className='flex gap-2'>
+              <SelectSimple
+                size='sm'
+                options={[
+                  { value: 'ean', label: 'EAN' },
+                  { value: 'gtin', label: 'GTIN' },
+                  { value: 'asin', label: 'ASIN' },
+                ]}
+                value={identifierType}
+                onValueChange={(value: string): void =>
+                  setIdentifierType(value as 'ean' | 'gtin' | 'asin')
+                }
+                placeholder='Select type'
+                className='w-[100px]'
               />
-            ) : null}
-            {identifierType === 'gtin' ? (
-              <Input
-                id='gtin'
-                value={gtin}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
-                placeholder='Enter GTIN'
-              />
-            ) : null}
-            {identifierType === 'asin' ? (
-              <Input
-                id='asin'
-                value={asin}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
-                placeholder='Enter ASIN'
-              />
-            ) : null}
-          </div>
-        </FormField>
-      </div>
+              {identifierType === 'ean' ? (
+                <Input
+                  id='ean'
+                  value={ean}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setEan(e.target.value)}
+                  placeholder='Enter EAN'
+                />
+              ) : null}
+              {identifierType === 'gtin' ? (
+                <Input
+                  id='gtin'
+                  value={gtin}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setGtin(e.target.value)}
+                  placeholder='Enter GTIN'
+                />
+              ) : null}
+              {identifierType === 'asin' ? (
+                <Input
+                  id='asin'
+                  value={asin}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setAsin(e.target.value)}
+                  placeholder='Enter ASIN'
+                />
+              ) : null}
+            </div>
+          </FormField>
+        </div>
 
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-        <FormField label='Weight (kg)' id='weight'>
-          <Input
-            id='weight'
-            type='number'
-            step='0.01'
-            value={weight}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
-            placeholder='0.00'
-          />
-        </FormField>
-        <FormField label='Length (cm)' id='sizeLength'>
-          <Input
-            id='sizeLength'
-            type='number'
-            step='0.01'
-            value={sizeLength}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setSizeLength(e.target.value)
-            }
-            placeholder='0.00'
-          />
-        </FormField>
-        <FormField label='Width (cm)' id='sizeWidth'>
-          <Input
-            id='sizeWidth'
-            type='number'
-            step='0.01'
-            value={sizeWidth}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setSizeWidth(e.target.value)
-            }
-            placeholder='0.00'
-          />
-        </FormField>
-        <FormField label='Height (cm)' id='length'>
-          <Input
-            id='length'
-            type='number'
-            step='0.01'
-            value={length}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
-            placeholder='0.00'
-          />
-        </FormField>
-      </div>
+        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+          <FormField label='Weight (kg)' id='weight'>
+            <Input
+              id='weight'
+              type='number'
+              step='0.01'
+              value={weight}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
+              placeholder='0.00'
+            />
+          </FormField>
+          <FormField label='Length (cm)' id='sizeLength'>
+            <Input
+              id='sizeLength'
+              type='number'
+              step='0.01'
+              value={sizeLength}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                setSizeLength(e.target.value)
+              }
+              placeholder='0.00'
+            />
+          </FormField>
+          <FormField label='Width (cm)' id='sizeWidth'>
+            <Input
+              id='sizeWidth'
+              type='number'
+              step='0.01'
+              value={sizeWidth}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                setSizeWidth(e.target.value)
+              }
+              placeholder='0.00'
+            />
+          </FormField>
+          <FormField label='Height (cm)' id='length'>
+            <Input
+              id='length'
+              type='number'
+              step='0.01'
+              value={length}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
+              placeholder='0.00'
+            />
+          </FormField>
+        </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        <FormField label='Name (English)' id='nameEn'>
-          <Input
-            id='nameEn'
-            value={nameEn}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
-            placeholder='Product name'
-          />
-        </FormField>
-        <FormField label='Name (Polish)' id='namePl'>
-          <Input
-            id='namePl'
-            value={namePl}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
-            placeholder='Nazwa produktu'
-          />
-        </FormField>
-        <FormField label='Name (German)' id='nameDe'>
-          <Input
-            id='nameDe'
-            value={nameDe}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
-            placeholder='Produktname'
-          />
-        </FormField>
-      </div>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <FormField label='Name (English)' id='nameEn'>
+            <Input
+              id='nameEn'
+              value={nameEn}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
+              placeholder='Product name'
+            />
+          </FormField>
+          <FormField label='Name (Polish)' id='namePl'>
+            <Input
+              id='namePl'
+              value={namePl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
+              placeholder='Nazwa produktu'
+            />
+          </FormField>
+          <FormField label='Name (German)' id='nameDe'>
+            <Input
+              id='nameDe'
+              value={nameDe}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
+              placeholder='Produktname'
+            />
+          </FormField>
+        </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-        <FormField label='Description (English)' id='descEn'>
-          <Textarea
-            id='descEn'
-            value={descEn}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-              setDescEn(e.target.value)
-            }
-            placeholder='Product description'
-            rows={3}
-          />
-        </FormField>
-        <FormField label='Description (Polish)' id='descPl'>
-          <Textarea
-            id='descPl'
-            value={descPl}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-              setDescPl(e.target.value)
-            }
-            placeholder='Opis produktu'
-            rows={3}
-          />
-        </FormField>
-        <FormField label='Description (German)' id='descDe'>
-          <Textarea
-            id='descDe'
-            value={descDe}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
-              setDescDe(e.target.value)
-            }
-            placeholder='Produktbeschreibung'
-            rows={3}
-          />
-        </FormField>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <FormField label='Description (English)' id='descEn'>
+            <Textarea
+              id='descEn'
+              value={descEn}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                setDescEn(e.target.value)
+              }
+              placeholder='Product description'
+              rows={3}
+            />
+          </FormField>
+          <FormField label='Description (Polish)' id='descPl'>
+            <Textarea
+              id='descPl'
+              value={descPl}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                setDescPl(e.target.value)
+              }
+              placeholder='Opis produktu'
+              rows={3}
+            />
+          </FormField>
+          <FormField label='Description (German)' id='descDe'>
+            <Textarea
+              id='descDe'
+              value={descDe}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                setDescDe(e.target.value)
+              }
+              placeholder='Produktbeschreibung'
+              rows={3}
+            />
+          </FormField>
+        </div>
       </div>
-    </div>
-  </FormSection>
-);
+    </FormSection>
+  );
 }
 
 export function DraftCreatorPricingSupplierSection(): React.JSX.Element {

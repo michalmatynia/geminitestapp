@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { FileText, GitBranch, Lock, Pin, ScanText } from 'lucide-react';
-import { Button } from '@/shared/ui';
+import { FileText, GitBranch, Lock, Pin, ScanText, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button, StatusBadge, Badge, Input, Tooltip } from '@/shared/ui';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
@@ -12,6 +12,7 @@ import {
   fromCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
 import { parseBoolean, formatCaseTimestamp } from '../case-list-utils';
+import { cn } from '@/shared/utils';
 
 type FolderIconComponent = React.ComponentType<{ className?: string }>;
 type CaseListNodeItemController = Pick<
@@ -127,13 +128,14 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   if (isCaseContentFolderNode) {
     return (
       <div
-        className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
+        className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         {hasChildren ? (
-          <button
-            type='button'
-            className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/60'
+          <Button
+            variant='ghost'
+            size='sm'
+            className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
             onClick={(event): void => {
               event.preventDefault();
               event.stopPropagation();
@@ -141,8 +143,8 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             }}
             aria-label={isExpanded ? 'Collapse folder' : 'Expand folder'}
           >
-            {isExpanded ? '▾' : '▸'}
-          </button>
+            {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+          </Button>
         ) : (
           <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>
             •
@@ -150,10 +152,9 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
         )}
         {iconNode}
         <div className='min-w-0 flex flex-1 items-center gap-2'>
-          <button
-            type='button'
-            draggable={false}
-            className='min-w-0 truncate text-left text-sm text-gray-200 hover:underline focus:outline-none focus:underline'
+          <Button
+            variant='link'
+            className='h-auto min-w-0 justify-start p-0 truncate text-left text-sm text-gray-200 hover:text-white hover:no-underline focus:outline-none'
             onClick={(event): void => {
               event.preventDefault();
               event.stopPropagation();
@@ -163,11 +164,11 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             }}
             title={`Folder: ${node.name}`}
           >
-            {node.name}
-          </button>
-          <span className='shrink-0 rounded border border-border/60 bg-card/30 px-1.5 py-0.5 text-[10px] text-gray-400'>
+            <span className='truncate'>{node.name}</span>
+          </Button>
+          <Badge variant='neutral' className='shrink-0 border-border/60 bg-card/30 text-[10px] h-4 px-1'>
             Folder
-          </span>
+          </Badge>
         </div>
       </div>
     );
@@ -179,7 +180,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
       caseContentFile?.fileType === 'scanfile' || node.kind === 'case_content_file_scan';
     return (
       <div
-        className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
+        className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
@@ -190,10 +191,9 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
         )}
         {isLocked ? <Lock className='size-3.5 shrink-0 text-amber-300' /> : null}
         <div className='min-w-0 flex flex-1 items-center gap-2'>
-          <button
-            type='button'
-            draggable={false}
-            className='min-w-0 truncate text-left font-medium text-gray-100 hover:underline focus:outline-none focus:underline'
+          <Button
+            variant='link'
+            className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-gray-100 hover:text-white hover:no-underline focus:outline-none'
             onMouseEnter={(): void => {
               if (!fileId) return;
               handlePrefetchFile(fileId);
@@ -210,8 +210,8 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             }}
             title={`Open file: ${caseContentFile?.name ?? node.name}`}
           >
-            {caseContentFile?.name ?? node.name}
-          </button>
+            <span className='truncate'>{caseContentFile?.name ?? node.name}</span>
+          </Button>
           <span className='min-w-0 truncate text-[10px] opacity-70'>
             Modified: {caseContentUpdatedAtLabel}
           </span>
@@ -222,13 +222,14 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
 
   return (
     <div
-      className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
+      className={cn('group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
     >
       {hasChildren ? (
-        <button
-          type='button'
-          className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/60'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -236,8 +237,8 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
           }}
           aria-label={isExpanded ? 'Collapse case' : 'Expand case'}
         >
-          {isExpanded ? '▾' : '▸'}
-        </button>
+          {isExpanded ? <ChevronDown className='size-3.5' /> : <ChevronRight className='size-3.5' />}
+        </Button>
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
       )}
@@ -246,16 +247,16 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
 
       <div className='min-w-0 flex flex-1 items-center gap-2'>
         {isRenaming ? (
-          <input
+          <Input
             autoFocus
             value={controller.renameDraft}
-            onChange={(event): void => {
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               controller.updateRenameDraft(event.target.value);
             }}
             onBlur={(): void => {
               void controller.commitRename();
             }}
-            onKeyDown={(event): void => {
+            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
               event.stopPropagation();
               if (event.key === 'Enter') {
                 event.preventDefault();
@@ -265,19 +266,18 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                 controller.cancelRename();
               }
             }}
-            onClick={(event): void => {
+            onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
               event.stopPropagation();
             }}
-            className='min-w-0 flex-1 rounded border border-blue-500 bg-gray-800 px-1.5 py-0.5 text-sm text-white outline-none'
+            className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
           />
         ) : (
           <>
             <div className='min-w-0 flex flex-1 flex-col'>
               {caseFile ? (
-                <button
-                  type='button'
-                  draggable={false}
-                  className='min-w-0 truncate text-left font-medium text-inherit hover:underline focus:outline-none focus:underline'
+                <Button
+                  variant='link'
+                  className='h-auto min-w-0 justify-start p-0 truncate text-left font-medium text-inherit hover:text-white hover:no-underline focus:outline-none'
                   onMouseEnter={(): void => {
                     handlePrefetchCase(caseFile.id);
                   }}
@@ -291,8 +291,8 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                   }}
                   title={`Open case: ${caseFile.name}`}
                 >
-                  {caseFile.name}
-                </button>
+                  <span className='truncate'>{caseFile.name}</span>
+                </Button>
               ) : (
                 <span className='min-w-0 truncate font-medium'>{node.name}</span>
               )}
@@ -300,37 +300,34 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                 Created: {createdAtLabel} · Modified: {modifiedAtLabel}
               </span>
             </div>
-            <button
-              type='button'
-              draggable={false}
-              className={`${
-                caseStatus === 'completed'
-                  ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
-                  : 'border-amber-500/40 bg-amber-500/15 text-amber-200'
-              } inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium capitalize transition ${isStatusToggleDisabled ? 'cursor-not-allowed opacity-60' : 'hover:brightness-110'}`}
-              disabled={isStatusToggleDisabled}
-              onClick={(event): void => {
-                event.preventDefault();
-                event.stopPropagation();
-                if (!caseFile) return;
-                handleToggleCaseStatus(caseFile.id).catch((): void => {});
-              }}
-              title={
+            <Tooltip
+              content={
                 isLocked
                   ? 'Locked cases cannot be status-toggled from the list.'
                   : 'Click to toggle status'
               }
             >
-              {caseStatus}
-            </button>
-            <button
-              type='button'
-              draggable={false}
-              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition ${
+              <StatusBadge
+                status={caseStatus}
+                size='sm'
+                variant={caseStatus === 'completed' ? 'success' : 'warning'}
+                className={cn('h-5 font-bold uppercase', !isStatusToggleDisabled && 'cursor-pointer hover:brightness-110')}
+                onClick={(): void => {
+                  if (isStatusToggleDisabled) return;
+                  if (!caseFile) return;
+                  handleToggleCaseStatus(caseFile.id).catch((): void => {});
+                }}
+              />
+            </Tooltip>
+            <Button
+              variant='outline'
+              size='sm'
+              className={cn(
+                'h-5 gap-1 px-1.5 text-[10px] font-bold uppercase',
                 isHeldCase
                   ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-100'
                   : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:border-cyan-400/50 hover:text-cyan-100'
-              }`}
+              )}
               onClick={(event): void => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -339,18 +336,19 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               }}
               title={isHeldCase ? 'Unhold case' : 'Hold case at top'}
             >
-              <Pin className='size-3' />
+              <Pin className='size-2.5' />
               {isHeldCase ? 'Held' : 'Hold'}
-            </button>
+            </Button>
             {canShowNestHeldAction ? (
-              <button
-                type='button'
-                draggable={false}
-                className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium transition ${
+              <Button
+                variant='outline'
+                size='sm'
+                className={cn(
+                  'h-5 px-1.5 text-[10px] font-bold uppercase',
                   canNestHeldHere
                     ? 'border-blue-500/40 bg-blue-500/15 text-blue-100 hover:brightness-110'
                     : 'cursor-not-allowed border-blue-500/20 bg-blue-500/5 text-blue-200/50'
-                }`}
+                )}
                 disabled={!canNestHeldHere}
                 title={
                   canNestHeldHere
@@ -364,27 +362,28 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                   handleNestHeldCase(caseFile.id);
                 }}
               >
-                Nest held here
-              </button>
+                Nest
+              </Button>
             ) : null}
             {caseFile?.tagId ? (
-              <span className='max-w-[220px] truncate text-[10px] text-cyan-200/80'>
+              <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'>
                 {caseTagPathById.get(caseFile.tagId) ?? caseFile.tagId}
-              </span>
+              </Badge>
             ) : null}
             {caseIdentifierLabel ? (
-              <span
-                className='inline-flex max-w-[280px] items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-200'
-                title={caseIdentifierLabel}
+              <Badge
+                variant='outline'
+                className='bg-amber-500/5 text-amber-200 border-amber-500/20 text-[10px] h-5 px-1.5 max-w-[180px] truncate gap-1'
+                title={`Signature: ${caseIdentifierLabel}`}
               >
-                <GitBranch className='size-3 shrink-0' />
-                <span className='truncate'>Signature: {caseIdentifierLabel}</span>
-              </span>
+                <GitBranch className='size-2.5 shrink-0' />
+                <span className='truncate'>{caseIdentifierLabel}</span>
+              </Badge>
             ) : null}
             {caseFile?.categoryId ? (
-              <span className='max-w-[220px] truncate text-[10px] text-emerald-200/80'>
+              <Badge variant='outline' className='bg-emerald-500/5 text-emerald-200 border-emerald-500/20 text-[10px] h-5 px-1.5 max-w-[120px] truncate'>
                 {caseCategoryPathById.get(caseFile.categoryId) ?? caseFile.categoryId}
-              </span>
+              </Badge>
             ) : null}
           </>
         )}

@@ -154,6 +154,9 @@ export const deserializeSemanticCanvasToPathConfig = (
     aiPathsValidation: normalizeAiPathsValidationConfig(
       semanticDocument.validation ?? base.aiPathsValidation
     ),
+    ...(semanticDocument.extensions && typeof semanticDocument.extensions === 'object'
+      ? { extensions: semanticDocument.extensions }
+      : {}),
     uiState: {
       selectedNodeId: nodes[0]?.id ?? null,
       configOpen: false,

@@ -1,10 +1,10 @@
 import type {
-  PromptValidationTimingNameDto as PromptValidationTimingName,
-  PromptValidationErrorNameDto as PromptValidationErrorName,
-  PromptValidationCounterNameDto as PromptValidationCounterName,
-  PromptValidationRuntimeSloTargetsDto as PromptValidationRuntimeSloTargets,
-  PromptValidationRuntimeHealthDto as PromptValidationRuntimeHealth,
-  PromptValidationObservabilitySnapshotDto as PromptValidationObservabilitySnapshot,
+  PromptValidationTimingName,
+  PromptValidationErrorName,
+  PromptValidationCounterName,
+  PromptValidationRuntimeSloTargets,
+  PromptValidationRuntimeHealth,
+  PromptValidationObservabilitySnapshot,
 } from '@/shared/contracts/prompt-engine';
 
 type PromptValidationTimingMetric = {

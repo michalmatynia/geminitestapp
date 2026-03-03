@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 
 import {
   type CaseResolverFile,
@@ -54,7 +54,7 @@ interface DocumentRelationSearchContextType {
   resultHeight: ResultHeight;
   setResultHeight: (height: ResultHeight) => void;
   showFiltersBar: boolean;
-  setShowFiltersBar: (show: boolean) => void;
+  setShowFiltersBar: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFileIds: Set<string>;
   setSelectedFileIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   previewFileId: string | null;
@@ -70,13 +70,18 @@ interface DocumentRelationSearchContextType {
 
   // Computed
   isDrillMode: boolean;
+  isAllCases: boolean;
   showDocTable: boolean;
   drillSignatureLabel: string;
   caseTagOptions: SelectOption[];
   caseCategoryOptions: SelectOption[];
   documentSearchRows: NodeFileDocumentSearchRow[];
   visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
-  visibleCaseRows: any[];
+  visibleCaseRows: Array<{
+    file: CaseResolverFile;
+    signatureLabel: string;
+    docCount: number;
+  }>;
   currentDocRows: NodeFileDocumentSearchRow[];
   currentFolderPaths: string[];
   filtersActiveCount: number;
@@ -87,6 +92,7 @@ interface DocumentRelationSearchContextType {
 }
 
 const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextType | null>(null);
+export type DocumentRelationSearchContextValue = DocumentRelationSearchContextType;
 
 export function useDocumentRelationSearchContext(): DocumentRelationSearchContextType {
   const context = useContext(DocumentRelationSearchContext);
@@ -115,8 +121,8 @@ export function DocumentRelationSearchProvider({
   defaultScope,
   defaultSort,
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
-  const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } =
-    useCaseResolverViewContext();
+  const { state } = useCaseResolverViewContext();
+  const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } = state;
 
   const [resultHeight, setResultHeight] = useState<ResultHeight>('normal');
   const [showFiltersBar, setShowFiltersBar] = useState(false);
@@ -153,6 +159,7 @@ export function DocumentRelationSearchProvider({
   }, [documentSearchScope, documentSearchQuery, dateFrom, dateTo, tagIdFilter, categoryIdFilter]);
 
   const isDrillMode = documentSearchScope === 'all_cases' && selectedDrillCaseId !== null;
+  const isAllCases = documentSearchScope === 'all_cases';
   const showDocTable = documentSearchScope === 'case_scope' || isDrillMode;
 
   const drillRows = useMemo((): NodeFileDocumentSearchRow[] => {
@@ -201,7 +208,7 @@ export function DocumentRelationSearchProvider({
     [caseResolverTags]
   );
   const caseCategoryOptions = useMemo(
-    () => caseResolverCategories.map((c) => ({ value: c.id, label: c.label })),
+    () => caseResolverCategories.map((c) => ({ value: c.id, label: c.name })),
     [caseResolverCategories]
   );
 
@@ -259,6 +266,7 @@ export function DocumentRelationSearchProvider({
       onLinkFile,
       isLocked,
       isDrillMode,
+      isAllCases,
       showDocTable,
       drillSignatureLabel,
       caseTagOptions,
@@ -284,6 +292,7 @@ export function DocumentRelationSearchProvider({
       onLinkFile,
       isLocked,
       isDrillMode,
+      isAllCases,
       showDocTable,
       drillSignatureLabel,
       caseTagOptions,

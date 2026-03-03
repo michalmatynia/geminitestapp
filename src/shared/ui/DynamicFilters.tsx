@@ -2,24 +2,13 @@
 
 import React from 'react';
 
+import { FilterField } from '@/shared/contracts/ui';
 import { FiltersContainer } from './filters-container';
 import { Input } from './input';
 import { Label } from './label';
 import { MultiSelect } from './multi-select';
 import { SearchInput } from './search-input';
 import { SelectSimple } from './select-simple';
-
-export type FilterFieldType = 'text' | 'search' | 'select' | 'multi-select' | 'date' | 'number';
-
-export interface FilterField {
-  key: string;
-  label: string;
-  type: FilterFieldType;
-  placeholder?: string;
-  options?: Array<{ value: string; label: string }>;
-  className?: string;
-  colSpan?: string; // Tailwind grid col-span e.g. "col-span-2"
-}
 
 interface DynamicFiltersProps {
   fields: FilterField[];
@@ -33,6 +22,7 @@ interface DynamicFiltersProps {
 }
 
 /**
+ * @deprecated Use FilterPanel from @/shared/ui/templates/FilterPanel instead.
  * A generic filtering component that renders a grid of filter fields based on configuration.
  * Consolidates the usage of FiltersContainer, Input, Label, and Selects.
  */

@@ -21,6 +21,7 @@ import {
   aiJobsApi,
   backfillPathConfigNodeContracts,
   getValueAtMappingPath,
+  migrateLegacyDbQueryProvider,
   migratePathConfigCollections,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
@@ -34,6 +35,8 @@ import {
   EMPTY_RUNTIME_STATE,
 } from '@/shared/lib/ai-paths';
 import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
+import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
+import { validationError } from '@/shared/errors/app-error';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 
@@ -84,17 +87,45 @@ export const safeJsonStringify = (value: unknown): string => sharedSafeJsonStrin
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  if (typeof value === 'string') {
-    const parsed = safeParseJson(value).value;
-    if (parsed && typeof parsed === 'object') {
-      return parsed as RuntimeState;
+  const assertNoLegacyRunIdentity = (record: Record<string, unknown>): void => {
+    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key) => key in record);
+    if (deprecatedKeys.length > 0) {
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'deprecated_runtime_identity_fields',
+        deprecatedKeys,
+      });
     }
-    return EMPTY_RUNTIME_STATE;
+  };
+  const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
+    assertNoLegacyRunIdentity(parsed);
+    const merged = {
+      ...EMPTY_RUNTIME_STATE,
+      ...parsed,
+    };
+    const validated = runtimeStateSchema.safeParse(merged);
+    if (!validated.success) {
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'schema_validation_failed',
+        issues: validated.error.flatten(),
+      });
+    }
+    return validated.data as RuntimeState;
+  };
+  if (typeof value === 'string') {
+    const parsed = safeParseJson(value).value as unknown;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return normalizeParsedRuntimeState(parsed as Record<string, unknown>);
+    }
+    throw validationError('Invalid AI Paths runtime state payload.', {
+      reason: 'json_parse_failed',
+    });
   }
-  if (typeof value === 'object') {
-    return value as RuntimeState;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return normalizeParsedRuntimeState(value as Record<string, unknown>);
   }
-  return EMPTY_RUNTIME_STATE;
+  throw validationError('Invalid AI Paths runtime state payload.', {
+    reason: 'invalid_shape',
+  });
 };
 
 const normalizeSampleRecord = <TSample>(
@@ -205,11 +236,23 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
       );
     }
   });
+  const currentRun =
+    state.currentRun && typeof state.currentRun.id === 'string'
+      ? {
+        id: state.currentRun.id,
+        status: state.currentRun.status,
+        startedAt: state.currentRun.startedAt ?? null,
+        finishedAt: state.currentRun.finishedAt ?? null,
+        pathId: state.currentRun.pathId ?? null,
+        pathName: state.currentRun.pathName ?? null,
+        createdAt: state.currentRun.createdAt,
+        updatedAt: state.currentRun.updatedAt ?? null,
+      }
+      : null;
   const payload: Record<string, unknown> = {
     inputs,
     outputs,
-    ...(state.runId ? { runId: state.runId } : {}),
-    ...(state.runStartedAt ? { runStartedAt: state.runStartedAt } : {}),
+    ...(currentRun ? { currentRun } : {}),
   };
   if (Object.keys(history).length > 0) {
     payload['history'] = history;
@@ -233,18 +276,72 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     if (!databaseConfig || typeof databaseConfig !== 'object') {
       return node;
     }
-    if (!('schemaSnapshot' in (databaseConfig as Record<string, unknown>))) {
-      return node;
-    }
-    const operation = (databaseConfig as Record<string, unknown>)['operation'];
+    const databaseRecord = databaseConfig as Record<string, unknown>;
+    const queryConfig =
+      databaseRecord['query'] && typeof databaseRecord['query'] === 'object'
+        ? (databaseRecord['query'] as Record<string, unknown>)
+        : null;
+    const operation = databaseRecord['operation'];
     const nextDatabaseConfig = {
       ...(databaseConfig as Partial<DatabaseConfig>),
       operation: isDatabaseOperation(operation) ? operation : 'query',
       writeOutcomePolicy: {
-        onZeroAffected:
-          (databaseConfig as Partial<DatabaseConfig>).writeOutcomePolicy?.onZeroAffected ?? 'fail',
+        onZeroAffected: databaseRecord['writeOutcomePolicy'] &&
+          typeof databaseRecord['writeOutcomePolicy'] === 'object' &&
+          !Array.isArray(databaseRecord['writeOutcomePolicy']) &&
+          ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
+            'warn' ||
+            (databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
+              'ignore')
+          ? ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)[
+            'onZeroAffected'
+          ] as 'warn' | 'ignore')
+          : 'fail',
       },
     } as DatabaseConfig;
+    if (queryConfig) {
+      nextDatabaseConfig.query = migrateLegacyDbQueryProvider({
+        provider:
+          queryConfig['provider'] === 'auto' ||
+          queryConfig['provider'] === 'mongodb' ||
+          queryConfig['provider'] === 'prisma'
+            ? queryConfig['provider']
+            : 'auto',
+        collection:
+          typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
+        mode:
+          queryConfig['mode'] === 'preset' || queryConfig['mode'] === 'custom'
+            ? queryConfig['mode']
+            : 'custom',
+        preset:
+          queryConfig['preset'] === 'by_id' ||
+          queryConfig['preset'] === 'by_productId' ||
+          queryConfig['preset'] === 'by_entityId' ||
+          queryConfig['preset'] === 'by_field'
+            ? queryConfig['preset']
+            : 'by_id',
+        field: typeof queryConfig['field'] === 'string' ? queryConfig['field'] : '_id',
+        idType:
+          queryConfig['idType'] === 'string' || queryConfig['idType'] === 'objectId'
+            ? queryConfig['idType']
+            : 'string',
+        queryTemplate:
+          typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'] : '',
+        limit:
+          typeof queryConfig['limit'] === 'number' && Number.isFinite(queryConfig['limit'])
+            ? queryConfig['limit']
+            : 20,
+        sort: typeof queryConfig['sort'] === 'string' ? queryConfig['sort'] : '',
+        ...(typeof queryConfig['sortPresetId'] === 'string'
+          ? { sortPresetId: queryConfig['sortPresetId'] }
+          : {}),
+        projection: typeof queryConfig['projection'] === 'string' ? queryConfig['projection'] : '',
+        ...(typeof queryConfig['projectionPresetId'] === 'string'
+          ? { projectionPresetId: queryConfig['projectionPresetId'] }
+          : {}),
+        single: queryConfig['single'] === true,
+      });
+    }
     delete (nextDatabaseConfig as { schemaSnapshot?: unknown })['schemaSnapshot'];
     return {
       ...node,

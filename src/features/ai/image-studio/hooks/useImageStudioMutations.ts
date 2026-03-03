@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {
@@ -208,6 +209,8 @@ export function useCreateStudioSlots(
 export function useUpdateStudioSlot(
   projectId: string
 ): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
+  const queryClient = useQueryClient();
+
   return createUpdateMutationV2<
     ImageStudioSlotRecord,
     { id: string; data: Partial<ImageStudioSlotRecord> },
@@ -230,10 +233,7 @@ export function useUpdateStudioSlot(
       }
       return response.slot;
     },
-    onMutate: async (
-      { id, data },
-      { queryClient }
-    ) => {
+    onMutate: async ({ id, data }) => {
       const slotsQueryKey = QUERY_KEYS.imageStudio.slots(projectId);
       const slotCandidates = new Set(resolveStudioSlotIdCandidates(id));
       if (slotCandidates.size === 0) {
@@ -282,11 +282,11 @@ export function useUpdateStudioSlot(
 
       return { previous };
     },
-    onError: (_error, _variables, context, { queryClient }) => {
+    onError: (_error, _variables, context) => {
       if (!context?.previous) return;
       patchImageStudioSlotsCache(queryClient, projectId, () => context.previous);
     },
-    onSuccess: (updatedSlot: ImageStudioSlotRecord, _variables, _context, { queryClient }) => {
+    onSuccess: (updatedSlot: ImageStudioSlotRecord) => {
       patchImageStudioSlotsCache(queryClient, projectId, (current) => {
         if (!current?.slots?.length) return current;
         return {
@@ -313,6 +313,7 @@ export function useUpdateStudioSlot(
 }
 
 export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, string> {
+  const queryClient = useQueryClient();
   const deletedIdsByRequestRef = useRef<Map<string, string[]>>(new Map());
   const deleteTimingsByRequestRef = useRef<Map<string, unknown>>(new Map());
   const timeoutFallbackIdsRef = useRef<Set<string>>(new Set());
@@ -470,7 +471,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       mutationKey: slotsQueryKey,
       tags: ['image-studio', 'slots', 'delete'],
     },
-    onMutate: async (deletedSlotRawId: string, { queryClient }) => {
+    onMutate: async (deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
       const deleteCandidates = new Set<string>(
         resolveStudioSlotIdCandidates(normalizedDeletedSlotId)
@@ -488,9 +489,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
     onError: (
       error: Error,
       deletedSlotRawId: string,
-      _snapshot: unknown,
-      context: unknown,
-      { queryClient }
+      context: unknown
     ) => {
       const typedContext = context as { previousSlots?: StudioSlotsResponse } | undefined;
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
@@ -508,7 +507,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         message: error.message,
       });
     },
-    onSuccess: (_result: void, deletedSlotRawId: string, _context, { queryClient }) => {
+    onSuccess: (_result: void, deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
       const isTimeoutFallback = timeoutFallbackIdsRef.current.has(normalizedDeletedSlotId);
       const timings = deleteTimingsByRequestRef.current.get(normalizedDeletedSlotId);

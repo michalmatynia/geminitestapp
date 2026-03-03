@@ -7,7 +7,7 @@ import type {
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { serializePathConfigToSemanticCanvas } from './serialize';
-import { createNodeInstanceId, resolveNodeTypeId } from '../utils';
+import { createNodeInstanceId, resolveNodeTypeId } from '../utils/node-identity';
 
 export type BuildSemanticSubgraphOptions = {
   selectedNodeIds: string[];

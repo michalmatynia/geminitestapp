@@ -198,6 +198,9 @@ export const handleAgent: NodeHandler = async ({
       throw new Error(enqueueResult.error || 'Failed to enqueue agent run.');
     }
     const runIdRaw = (enqueueResult.data as any).runId;
+    if (typeof runIdRaw !== 'string' || runIdRaw.trim().length === 0) {
+      throw new Error('Agent run enqueue response did not include a valid run id.');
+    }
     runId = runIdRaw;
     executed.ai.add(node.id);
     toast('Agent run queued.', { variant: 'success' });

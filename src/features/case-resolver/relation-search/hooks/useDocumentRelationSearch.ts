@@ -8,6 +8,7 @@ import type {
   DocumentRelationFileTypeFilter,
   DocumentRelationSortMode,
 } from '@/shared/contracts/case-resolver';
+export type { DocumentRelationFileTypeFilter, DocumentRelationSortMode };
 import {
   collectScopedCaseIds,
   normalizeFolderPathSegments,

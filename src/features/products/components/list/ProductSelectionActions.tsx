@@ -40,6 +40,7 @@ import {
   SelectionBar,
   useToast,
   JSONImportModal,
+  Chip,
 } from '@/shared/ui';
 import {
   buildPresetBundle,
@@ -395,15 +396,13 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         rightActions={
           <div className='flex items-center gap-2'>
             {activePreset ? (
-              <button
-                type='button'
+              <Chip
+                label={activePreset.name}
+                active
                 onClick={() => setAdvancedFilterState('', null)}
-                className='inline-flex h-8 items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 text-xs font-medium text-primary hover:bg-primary/20'
-                aria-label={`Clear applied preset ${activePreset.name}`}
-              >
-                <span className='max-w-[180px] truncate'>{activePreset.name}</span>
-                <X className='h-3.5 w-3.5' />
-              </button>
+                icon={X}
+                className='h-8 max-w-[240px]'
+              />
             ) : null}
             <ActionMenu
               align='end'

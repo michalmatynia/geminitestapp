@@ -144,29 +144,12 @@ export const compileGraph = (
       } else if (recStack.has(v)) {
         // Cycle detected
         const cycleNodes = path.slice(path.indexOf(v));
-        const firstId = cycleNodes[0]!;
-        const secondId = cycleNodes[1]!;
-        const isTriggerSimulationHandshake =
-          cycleNodes.length === 2 &&
-          ((nodeMap.get(firstId)?.type === 'trigger' &&
-            nodeMap.get(secondId)?.type === 'simulation') ||
-            (nodeMap.get(secondId)?.type === 'trigger' &&
-              nodeMap.get(firstId)?.type === 'simulation'));
-
         const isAllowedLoop = cycleNodes.some((id) => {
           const type = nodeMap.get(id)?.type;
           return type === 'iterator' || type === 'delay' || type === 'poll';
         });
 
-        if (isTriggerSimulationHandshake) {
-          findings.push({
-            code: 'cycle_detected',
-            severity: 'warning',
-            message:
-              'Trigger/Simulation handshake loop detected. This pattern is supported but Trigger -> Fetcher -> Context Filter is preferred.',
-            metadata: { legacyTriggerSimulationHandshake: true, nodeIds: cycleNodes },
-          });
-        } else if (isAllowedLoop) {
+        if (isAllowedLoop) {
           findings.push({
             code: 'cycle_detected',
             severity: 'warning',

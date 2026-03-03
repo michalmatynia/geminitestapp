@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/contracts';
-import { StatusBadge, ResourceCard, AiInsightList } from '@/shared/ui';
+import { StatusBadge, ResourceCard, DocumentationList } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
   const warnings = insight.warnings ?? [];
@@ -14,15 +14,17 @@ export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JS
       className='text-xs text-gray-300'
     >
       <div className='text-sm text-white'>{insight.summary}</div>
-      <AiInsightList
+      <DocumentationList
         title='Warnings'
         items={warnings}
         variant='warning'
+        size='sm'
       />
-      <AiInsightList
+      <DocumentationList
         title='Recommendations'
         items={recommendations}
         variant='recommendation'
+        size='sm'
       />
     </ResourceCard>
   );

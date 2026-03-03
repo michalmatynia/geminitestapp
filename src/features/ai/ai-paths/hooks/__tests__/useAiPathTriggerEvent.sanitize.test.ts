@@ -74,4 +74,74 @@ describe('sanitizeTriggerPathConfig', () => {
       expect(parsed.success).toBe(true);
     });
   });
+
+  it('does not rewrite renamed legacy EN->PL translation paths before trigger preflight', () => {
+    const config = createDefaultPathConfig('path_translation_v2');
+    config.name = 'Translation EN->PL Description + Parameters v2';
+    config.nodes = [
+      {
+        id: 'node-regex-translate-en-pl',
+        type: 'regex',
+        title: 'Regex JSON Extract',
+        description: '',
+        position: { x: 0, y: 0 },
+        data: {},
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+      } as AiNode,
+      {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Query',
+        description: '',
+        position: { x: 320, y: 0 },
+        data: {},
+        inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
+        outputs: ['result', 'bundle'],
+        config: {
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      } as AiNode,
+    ];
+    config.edges = [
+      {
+        id: 'edge-legacy-regex-db',
+        from: 'node-regex-translate-en-pl',
+        to: 'node-db-update-translate-en-pl',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const sanitized = sanitizeTriggerPathConfig(config);
+    const databaseNode = sanitized.nodes.find(
+      (node: AiNode): boolean => node.id === 'node-db-update-translate-en-pl'
+    );
+
+    expect(databaseNode?.config?.database?.updatePayloadMode).not.toBe('custom');
+    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
+      '"description_pl": "{{value.description_pl}}"'
+    );
+    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
+      '"parameters": {{value.parameters}}'
+    );
+  });
 });

@@ -27,7 +27,7 @@ export const DOCS_OVERVIEW_SNIPPET = [
   'Core node roles:',
   '- Trigger: start signal + triggerName (initiator only).',
   '- Fetcher: resolve context from live trigger payloads or a simulated entity ID.',
-  '- Simulation (legacy): pre-seed context by entity ID for backward-compatible paths.',
+  '- Simulation: pre-seed context by entity ID for controlled test runs.',
   '- Context / Parser: select an entity and shape it into structured fields.',
   '- Mapper / Mutator / Template / Math / Compare / Gate / Router / Validator / Validation Pattern: transform, validate, and branch.',
   '- Prompt / Model: build prompts and run LLM or vision tasks (inline or async).',

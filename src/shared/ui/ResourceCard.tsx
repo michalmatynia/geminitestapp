@@ -15,11 +15,13 @@ interface ResourceCardProps {
   children?: ReactNode; // Main body content
   onClick?: () => void;
   className?: string;
+  variant?: 'default' | 'subtle' | 'glass' | 'outline';
 }
 
 /**
  * A unified card component for resources like Products, Assets, and Notes.
  * It provides a standardized layout with a top media area, header actions, and a footer.
+ * Leverages the base Card component for consistent theme application.
  */
 export function ResourceCard({
   title,
@@ -32,10 +34,11 @@ export function ResourceCard({
   children,
   onClick,
   className,
+  variant = 'default',
 }: ResourceCardProps): React.JSX.Element {
   return (
     <Card
-      variant='default'
+      variant={variant}
       padding='none'
       onClick={onClick}
       className={cn(
@@ -47,7 +50,7 @@ export function ResourceCard({
       {/* Header */}
       <div className='flex items-start justify-between gap-2 p-3 pb-0'>
         <div className='min-w-0 flex-1'>
-          <h3 className='text-sm font-medium truncate' title={title}>
+          <h3 className='text-sm font-medium truncate text-white' title={title}>
             {title}
           </h3>
           {description && (

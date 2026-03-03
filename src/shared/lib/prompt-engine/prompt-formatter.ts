@@ -1,12 +1,12 @@
 import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-observability';
 import type {
-  PromptAutofixOperationDto as PromptAutofixOperation,
-  PromptValidationRuleDto as PromptValidationRule,
-  PromptValidationSettingsDto as PromptValidationSettings,
-  PromptValidationSimilarDto as PromptValidationSimilarPattern,
-  PromptAppliedFixDto as AppliedFix,
-  FormatPromptResultDto as FormatPromptResult,
-  FormatPromptOptionsDto as FormatPromptOptions,
+  PromptAutofixOperation,
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptValidationSimilar as PromptValidationSimilarPattern,
+  PromptAppliedFix as AppliedFix,
+  FormatPromptResult,
+  FormatPromptOptions,
 } from '@/shared/contracts/prompt-engine';
 
 import {

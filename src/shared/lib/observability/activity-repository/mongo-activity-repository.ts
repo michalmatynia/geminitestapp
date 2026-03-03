@@ -1,6 +1,6 @@
 import { ObjectId, Filter } from 'mongodb';
 
-import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
+import type { ActivityRepository, ActivityFiltersDto } from '@/shared/contracts/system';
 import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -31,7 +31,7 @@ const toActivityDto = (doc: ActivityLogDoc): ActivityLogDto => ({
 });
 
 export const mongoActivityRepository: ActivityRepository = {
-  async listActivity(filters: ActivityFilters): Promise<ActivityLogDto[]> {
+  async listActivity(filters: ActivityFiltersDto): Promise<ActivityLogDto[]> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
 
@@ -54,7 +54,7 @@ export const mongoActivityRepository: ActivityRepository = {
     return logs.map(toActivityDto);
   },
 
-  async countActivity(filters: ActivityFilters): Promise<number> {
+  async countActivity(filters: ActivityFiltersDto): Promise<number> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
 

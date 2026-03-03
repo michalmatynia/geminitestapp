@@ -59,18 +59,33 @@ export function useAdminCaseResolverRelationActions({
       sourceFileId: string | null;
       sourceFileName: string | null;
       sourceFileType: 'document' | 'scanfile' | null;
-      sourceFolder: string | null;
-      activeCanvasFileId: string;
     }): string => {
-      const targetNode = input.graph.nodes.find((node) => node.id === input.nodeId) ?? null;
       const connectedEdges = input.graph.edges
-        .filter((edge): boolean => edge.from === input.nodeId || edge.to === input.nodeId)
+        .filter(
+          (edge): boolean => edge.source === input.nodeId || edge.target === input.nodeId
+        )
         .sort((left, right) => left.id.localeCompare(right.id));
-      const relatedNodeIds = Array.from(
-        new Set(connectedEdges.flatMap((edge): string[] => [edge.from ?? '', edge.to ?? '']))
-      )
-        .filter((nodeId: string): boolean => nodeId !== input.nodeId && nodeId.length > 0)
-        .sort((left: string, right: string) => left.localeCompare(right));
+      const connectedNodeIds = new Set<string>([input.nodeId]);
+      connectedEdges.forEach((edge): void => {
+        if (typeof edge.source === 'string' && edge.source.trim().length > 0) {
+          connectedNodeIds.add(edge.source);
+        }
+        if (typeof edge.target === 'string' && edge.target.trim().length > 0) {
+          connectedNodeIds.add(edge.target);
+        }
+      });
+      const snapshotNodes = input.graph.nodes.filter((node): boolean => connectedNodeIds.has(node.id));
+      const snapshotNodeMeta = Object.fromEntries(
+        Object.entries(input.graph.nodeMeta ?? {}).filter(([nodeId]): boolean =>
+          connectedNodeIds.has(nodeId)
+        )
+      );
+      const connectedEdgeIds = new Set(connectedEdges.map((edge): string => edge.id));
+      const snapshotEdgeMeta = Object.fromEntries(
+        Object.entries(input.graph.edgeMeta ?? {}).filter(([edgeId]): boolean =>
+          connectedEdgeIds.has(edgeId)
+        )
+      );
 
       const nodeFileMeta = (() => {
         if (!input.sourceFileId || !input.nodeId) return {};
@@ -87,16 +102,10 @@ export function useAdminCaseResolverRelationActions({
         {
           kind: 'case_resolver_node_file_snapshot_v1',
           source: 'manual',
-          activeCanvasFileId: input.activeCanvasFileId,
-          sourceFileId: input.sourceFileId,
-          sourceFileName: input.sourceFileName,
-          sourceFileType: input.sourceFileType,
-          sourceFolder: input.sourceFolder,
-          nodeId: input.nodeId,
-          nodeMeta: input.graph.nodeMeta?.[input.nodeId] ?? null,
-          relatedNodeIds,
-          nodes: targetNode ? [targetNode] : [],
+          nodes: snapshotNodes,
           edges: connectedEdges,
+          nodeMeta: snapshotNodeMeta,
+          edgeMeta: snapshotEdgeMeta,
           nodeFileMeta,
         },
         null,
@@ -155,8 +164,6 @@ export function useAdminCaseResolverRelationActions({
             sourceFileId,
             sourceFileName: sourceFile?.name ?? null,
             sourceFileType: sourceFile?.fileType === 'scanfile' ? 'scanfile' : 'document',
-            sourceFolder: sourceFile?.folder ?? null,
-            activeCanvasFileId: activeFileLocal.id,
           });
           const createdAsset = createCaseResolverAssetFile({
             id: createdAssetId,

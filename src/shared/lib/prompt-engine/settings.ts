@@ -1,35 +1,45 @@
 import { z } from 'zod';
 
 import {
-  PromptValidationSeverityDto,
-  PromptValidationChainModeDto,
-  PromptValidationScopeDto,
-  PromptValidationLaunchScopeBehaviorDto,
-  PromptValidationLaunchOperatorDto,
-  PromptExploderCaptureApplyToDto,
-  PromptExploderCaptureNormalizeDto,
-  PromptValidationSimilarDto,
-  PromptAutofixOperationDto,
-  PromptAutofixDto,
-  PromptValidationRuleDto,
-  PromptValidationSettingsDto,
-  PromptEngineSettingsDto,
   promptEngineSettingsSchema,
   promptValidationRuleSchema,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/shared/contracts/prompt-engine';
-import { PromptExploderSegmentTypeDto } from '@/shared/contracts/prompt-exploder';
+import type {
+  PromptValidationSeverity,
+  PromptValidationChainMode,
+  PromptValidationScope,
+  PromptValidationLaunchScopeBehavior,
+  PromptValidationLaunchOperator,
+  PromptExploderCaptureApplyTo,
+  PromptExploderCaptureNormalize,
+  PromptValidationSimilar,
+  PromptAutofixOperation,
+  PromptAutofix,
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptEngineSettings,
+} from '@/shared/contracts/prompt-engine';
+import type { PromptExploderSegmentType } from '@/shared/contracts/prompt-exploder';
 
 export { PROMPT_ENGINE_SETTINGS_KEY };
+export type {
+  PromptValidationSeverity,
+  PromptValidationChainMode,
+  PromptValidationScope,
+  PromptValidationLaunchScopeBehavior,
+  PromptValidationLaunchOperator,
+  PromptExploderCaptureApplyTo,
+  PromptExploderCaptureNormalize,
+  PromptValidationSimilar,
+  PromptAutofixOperation,
+  PromptAutofix,
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptEngineSettings,
+};
 
-export type PromptValidationSeverity = PromptValidationSeverityDto;
-export type PromptValidationChainMode = PromptValidationChainModeDto;
-export type PromptValidationScope = PromptValidationScopeDto;
-export type PromptValidationLaunchScopeBehavior = PromptValidationLaunchScopeBehaviorDto;
-export type PromptValidationLaunchOperator = PromptValidationLaunchOperatorDto;
-export type PromptExploderRuleSegmentType = PromptExploderSegmentTypeDto;
-export type PromptExploderCaptureApplyTo = PromptExploderCaptureApplyToDto;
-export type PromptExploderCaptureNormalize = PromptExploderCaptureNormalizeDto;
+export type PromptExploderRuleSegmentType = PromptExploderSegmentType;
 
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_prompt',
@@ -81,17 +91,9 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   global: 'Global',
 };
 
-export type PromptValidationSimilarPattern = PromptValidationSimilarDto;
+export type PromptValidationSimilarPattern = PromptValidationSimilar;
 
-export type PromptAutofixOperation = PromptAutofixOperationDto;
-
-export type PromptAutofixConfig = PromptAutofixDto;
-
-export type PromptValidationRule = PromptValidationRuleDto;
-
-export type PromptValidationSettings = PromptValidationSettingsDto;
-
-export type PromptEngineSettings = PromptEngineSettingsDto;
+export type PromptAutofixConfig = PromptAutofix;
 
 export const defaultPromptValidationRules: PromptValidationRule[] = [
   {

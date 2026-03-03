@@ -42,7 +42,8 @@ import {
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModal';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModal';
 import { ParamRow } from './ParamRow';
-import { flattenParams, type ParamSpec } from '@/shared/lib/prompt-engine';
+import { flattenParams } from '@/shared/lib/prompt-engine';
+import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 

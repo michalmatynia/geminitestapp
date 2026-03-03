@@ -32,6 +32,10 @@ import {
   type RunDetail,
   type StreamConnectionStatus,
 } from './job-queue-panel-utils';
+import {
+  DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL,
+  normalizeJobQueueAutoRefreshInterval,
+} from './job-queue-auto-refresh';
 import { internalError } from '@/shared/errors/app-error';
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -100,7 +104,6 @@ export type JobQueueContextValue = {
 
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
-const DEFAULT_AUTO_REFRESH_INTERVAL = 10000;
 const ACTIVE_RUN_REFRESH_INTERVAL_MS = 1000;
 const IDLE_RUN_REFRESH_MIN_MS = 30000;
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
@@ -150,7 +153,9 @@ export function JobQueueProvider({
   const previousQueueSignatureRef = useRef<string | null>(null);
   const [pausedStreams, setPausedStreams] = useState<Set<string>>(new Set());
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
-  const [autoRefreshInterval, setAutoRefreshInterval] = useState(DEFAULT_AUTO_REFRESH_INTERVAL);
+  const [autoRefreshInterval, setAutoRefreshIntervalState] = useState<number>(
+    DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL
+  );
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   const [isWindowFocused, setIsWindowFocused] = useState(true);
@@ -193,15 +198,21 @@ export function JobQueueProvider({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const setAutoRefreshInterval = useCallback((interval: number): void => {
+    setAutoRefreshIntervalState(normalizeJobQueueAutoRefreshInterval(interval));
+  }, []);
+
   // Preferences hydration
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedEnabled = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
     setAutoRefreshEnabled(savedEnabled === 'true');
     const savedInterval = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
-    if (savedInterval) setAutoRefreshInterval(Number.parseInt(savedInterval, 10));
+    if (savedInterval) {
+      setAutoRefreshInterval(normalizeJobQueueAutoRefreshInterval(savedInterval));
+    }
     setPreferencesHydrated(true);
-  }, []);
+  }, [setAutoRefreshInterval]);
 
   // Save preferences
   useEffect(() => {
@@ -772,6 +783,7 @@ export function JobQueueProvider({
       pausedStreams,
       autoRefreshEnabled,
       autoRefreshInterval,
+      setAutoRefreshInterval,
       showMetricsPanel,
       queueHistory,
       clearScope,

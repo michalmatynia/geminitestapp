@@ -27,18 +27,7 @@ export const agentPersonaSettingsSchema = z.object({
   modelId: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
-  executorModel: z.string().optional(),
-  plannerModel: z.string().optional(),
-  selfCheckModel: z.string().optional(),
-  extractionValidationModel: z.string().optional(),
-  toolRouterModel: z.string().optional(),
-  memoryValidationModel: z.string().optional(),
-  memorySummarizationModel: z.string().optional(),
-  loopGuardModel: z.string().optional(),
-  approvalGateModel: z.string().optional(),
-  selectorInferenceModel: z.string().optional(),
-  outputNormalizationModel: z.string().optional(),
-});
+}).strict();
 
 export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;
 export type AgentPersonaSettings = AgentPersonaSettingsDto;

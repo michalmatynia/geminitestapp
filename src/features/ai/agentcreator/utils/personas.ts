@@ -5,8 +5,12 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
-import type { AgentPersona, AgentPersonaSettings } from '@/shared/contracts/agents';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
+import {
+  agentPersonaSettingsSchema,
+  type AgentPersona,
+  type AgentPersonaSettings,
+} from '@/shared/contracts/agents';
+import { isAppError, validationError } from '@/shared/errors/app-error';
 
 export const createAgentPersonaId = (): string => {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -36,10 +40,20 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
       const createdAt =
         typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
       const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
-      const settings =
-        raw.settings && typeof raw.settings === 'object'
-          ? buildAgentPersonaSettings(raw.settings as Partial<AgentPersonaSettings>)
-          : buildAgentPersonaSettings();
+      const parsedSettingsResult =
+        raw.settings === undefined
+          ? null
+          : agentPersonaSettingsSchema.safeParse(raw.settings);
+      if (parsedSettingsResult && !parsedSettingsResult.success) {
+        throw validationError('Invalid Agent Persona settings payload.', {
+          reason: 'schema_validation_failed',
+          personaId: id,
+          issues: parsedSettingsResult.error.flatten(),
+        });
+      }
+      const settings = parsedSettingsResult
+        ? buildAgentPersonaSettings(parsedSettingsResult.data)
+        : buildAgentPersonaSettings();
       const description = typeof raw.description === 'string' ? raw.description : null;
 
       return {
@@ -54,9 +68,32 @@ export const normalizeAgentPersonas = (value: unknown): AgentPersona[] => {
     .filter((item: AgentPersona | null): item is AgentPersona => Boolean(item));
 };
 
+const parseStoredAgentPersonas = (rawValue: string | undefined): unknown[] => {
+  if (!rawValue || !rawValue.trim()) return [];
+  try {
+    const parsed = JSON.parse(rawValue) as unknown;
+    if (!Array.isArray(parsed)) {
+      throw validationError('Invalid Agent Persona settings payload.', {
+        reason: 'schema_validation_failed',
+        key: AGENT_PERSONA_SETTINGS_KEY,
+      });
+    }
+    return parsed;
+  } catch (error) {
+    if (isAppError(error)) {
+      throw error;
+    }
+    throw validationError('Invalid Agent Persona settings payload.', {
+      reason: 'json_parse_failed',
+      key: AGENT_PERSONA_SETTINGS_KEY,
+      cause: error instanceof Error ? error.message : String(error),
+    });
+  }
+};
+
 export const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   const data = await fetchSettingsCached({ scope: 'heavy' });
   const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
-  const stored = parseJsonSetting<AgentPersona[]>(map.get(AGENT_PERSONA_SETTINGS_KEY), []);
+  const stored = parseStoredAgentPersonas(map.get(AGENT_PERSONA_SETTINGS_KEY));
   return normalizeAgentPersonas(stored);
 };

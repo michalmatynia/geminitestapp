@@ -86,6 +86,10 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () => ({
+      prepare: async (tx: MasterFolderTreeTransaction) => ({
+        tx,
+        preparedAt: Date.now(),
+      }),
       apply: async (tx: MasterFolderTreeTransaction) => {
         const nextItems = rebuildPromptExploderListFromMasterNodes({
           nodes: tx.nextNodes,
@@ -97,6 +101,8 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           appliedAt: Date.now(),
         };
       },
+      commit: async () => {},
+      rollback: async () => {},
     }),
     []
   );

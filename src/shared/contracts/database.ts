@@ -656,7 +656,7 @@ export const settingsBackfillRequestSchema = z.object({
 
 export type SettingsBackfillRequestDto = z.infer<typeof settingsBackfillRequestSchema>;
 
-// Backward-compatible DTO aliases used across API/UI modules.
+// DTO aliases used across API/UI modules.
 export type DatabaseTypeDto = DatabaseType;
 export type DatabaseSyncDirectionDto = DatabaseSyncDirection;
 export type DatabasePreviewModeDto = DatabasePreviewMode;

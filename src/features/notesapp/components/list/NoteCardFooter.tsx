@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
@@ -9,7 +8,7 @@ import type {
   RelatedNoteDto as RelatedNote,
   NoteRelationDto,
 } from '@/shared/contracts/notes';
-import { BreadcrumbScroller, Button } from '@/shared/ui';
+import { Breadcrumbs } from '@/shared/ui';
 import { buildBreadcrumbPath, darkenColor } from '../../utils';
 
 type BreadcrumbItem = { id: string | null; name: string };
@@ -107,25 +106,17 @@ export function NoteCardFooter({
       )}
       {showBreadcrumbs && (
         <div className={showTimestamps ? 'mt-3' : ''}>
-          <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
-            {breadcrumbs.map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
-              <React.Fragment key={index}>
-                <Button
-                  variant='link'
-                  onClick={(e: React.MouseEvent): void => {
-                    e.stopPropagation();
-                    if (crumb.id) {
-                      onSelectFolder(crumb.id);
-                    }
-                  }}
-                  className='h-auto p-0 text-xs text-inherit cursor-pointer hover:underline whitespace-nowrap'
-                >
-                  {crumb.name}
-                </Button>
-                {index < array.length - 1 && <ChevronRight size={10} className='flex-shrink-0' />}
-              </React.Fragment>
-            ))}
-          </BreadcrumbScroller>
+          <Breadcrumbs
+            scrollable
+            backgroundColor={darkenColor(backgroundColor, 20)}
+            items={breadcrumbs.map((crumb) => ({
+              label: crumb.name,
+              onClick: (e) => {
+                e.stopPropagation();
+                if (crumb.id) onSelectFolder(crumb.id);
+              },
+            }))}
+          />
         </div>
       )}
 

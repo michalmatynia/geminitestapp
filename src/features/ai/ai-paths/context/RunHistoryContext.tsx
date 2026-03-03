@@ -19,8 +19,7 @@ export type RunHistoryFilter =
   | 'dead'
   | 'completed'
   | 'running'
-  | 'queued'
-  | 'cancelled';
+  | 'queued';
 
 export type RunStreamStatus = 'connecting' | 'live' | 'stopped' | 'paused';
 

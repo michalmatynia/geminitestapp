@@ -9,10 +9,10 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 import type {
-  PromptAppliedFixDto,
-  PromptValidationIssueDto,
-  PromptValidationRuleDto,
-  PromptValidationScopeDto,
+  PromptAppliedFix,
+  PromptValidationIssue,
+  PromptValidationRule,
+  PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
 import {
   coerceInput,
@@ -52,8 +52,8 @@ export const handleValidator: NodeHandler = ({
   };
 };
 
-type ValidationPatternIssue = PromptValidationIssueDto;
-type ValidationPatternRule = PromptValidationRuleDto;
+type ValidationPatternIssue = PromptValidationIssue;
+type ValidationPatternRule = PromptValidationRule;
 
 const VALIDATION_PATTERN_DEFAULTS = {
   source: 'global_stack',
@@ -218,13 +218,13 @@ export const handleValidationPattern: NodeHandler = ({
     rules: runtimeRules,
     learnedRules: runtimeLearnedRules,
   };
-  const scope: PromptValidationScopeDto = (config.scope as PromptValidationScopeDto) ?? 'global';
+  const scope: PromptValidationScope = (config.scope as PromptValidationScope) ?? 'global';
   const runtime = preparePromptValidationRuntime(validationSettings, { scope });
 
   try {
     let workingText = sourceText;
     let issues = validateProgrammaticPromptWithRuntime(workingText, runtime);
-    const appliedFixes: PromptAppliedFixDto[] = [];
+    const appliedFixes: PromptAppliedFix[] = [];
     const maxAutofixPasses = Math.max(
       1,
       Math.min(

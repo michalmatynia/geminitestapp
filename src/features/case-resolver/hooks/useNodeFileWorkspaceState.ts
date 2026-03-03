@@ -125,7 +125,7 @@ export function useNodeFileWorkspaceState({
     );
     const incomingEdgesByNodeId = new Map<string, typeof edges>();
     edges.forEach((edge): void => {
-      const targetNodeId = (edge.to ?? edge.target ?? '').trim();
+      const targetNodeId = (edge.target ?? '').trim();
       if (!targetNodeId) return;
       const incomingEdges = incomingEdgesByNodeId.get(targetNodeId) ?? [];
       incomingEdges.push(edge);
@@ -170,9 +170,9 @@ export function useNodeFileWorkspaceState({
       const incomingEdges = graphCompileIndex.incomingEdgesByNodeId.get(normalizedNodeId) ?? [];
       const variables: Record<string, string> = {};
       incomingEdges.forEach((edge): void => {
-        const sourceNodeId = (edge.from || edge.source || '').trim();
+        const sourceNodeId = (edge.source || '').trim();
         if (!sourceNodeId) return;
-        const toPort = edge.toPort || edge.targetHandle;
+        const toPort = edge.targetHandle;
         if (!toPort) return;
         variables[toPort] = resolveNodeValue(sourceNodeId);
       });

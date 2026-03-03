@@ -210,7 +210,7 @@ const validateTextNodeEdgePorts = (
       direction: 'sourceHandle' | 'targetHandle'
     ): void => {
       if (!textNodeIds.has(nodeId)) return;
-      const allowedPorts = explanatoryNodeIds.has(nodeId)
+      const allowedPorts: readonly string[] = explanatoryNodeIds.has(nodeId)
         ? direction === 'sourceHandle'
           ? CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS
           : CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS

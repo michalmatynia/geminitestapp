@@ -3,7 +3,7 @@ import 'server-only';
 import type {
   CreateActivityLogDto,
   ActivityLogDto,
-  ActivityFilters,
+  ActivityFiltersDto,
 } from '@/shared/contracts/system';
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
@@ -52,7 +52,7 @@ export async function logActivity(data: CreateActivityLogDto): Promise<ActivityL
 /**
  * List activity logs with optional filtering.
  */
-export async function listActivity(filters: ActivityFilters = {}): Promise<ActivityLogDto[]> {
+export async function listActivity(filters: ActivityFiltersDto = {}): Promise<ActivityLogDto[]> {
   const repository = await getActivityRepository();
   return repository.listActivity(filters);
 }

@@ -56,18 +56,18 @@ export function SqlHistoryDropdown({
           </div>
           <div className='overflow-y-auto max-h-56 divide-y divide-white/5 custom-scrollbar'>
             {history.map((item: string, i: number) => (
-              <button
+              <Button
                 key={i}
-                type='button'
+                variant='ghost'
                 onClick={(): void => {
                   onSelectQuery(item);
                   setShowHistory(false);
                 }}
-                className='w-full truncate px-3 py-2.5 text-left text-xs font-mono text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
+                className='h-auto w-full justify-start rounded-none px-3 py-2.5 text-left text-xs font-mono text-gray-300 hover:bg-white/5 hover:text-white transition-colors'
                 title={item}
               >
-                {item}
-              </button>
+                <span className='truncate'>{item}</span>
+              </Button>
             ))}
           </div>
         </Card>

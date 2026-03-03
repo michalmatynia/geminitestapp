@@ -42,7 +42,7 @@ export const toIsoString = (value?: Date | string | null): string | null => {
  * Resolve when a run started
  */
 export const resolveRunStartedAt = (run: AiPathRunRecord, parsed: RuntimeState): string | null => {
-  if (parsed.runStartedAt) return parsed.runStartedAt;
+  if (parsed.currentRun?.startedAt) return parsed.currentRun.startedAt;
   return toIsoString(run.startedAt);
 };
 
@@ -64,8 +64,7 @@ export const resolveRunAt = (run: AiPathRunRecord): string => {
 export const mergeRuntimeStateSnapshot = (
   current: RuntimeState,
   incoming: RuntimeState,
-  runId?: string | null,
-  runStartedAt?: string
+  currentRun?: AiPathRunRecord | null
 ): RuntimeState => {
   const nextInputs: Record<string, RuntimePortValues> = {
     ...(current.inputs ?? {}),
@@ -93,8 +92,7 @@ export const mergeRuntimeStateSnapshot = (
     ...incoming,
     inputs: nextInputs,
     outputs: nextOutputs,
-    ...(runId ? { runId } : {}),
-    ...(runStartedAt ? { runStartedAt } : {}),
+    currentRun: currentRun ?? incoming.currentRun ?? current.currentRun ?? null,
   };
   if (mergedHashes !== undefined) {
     next.hashes = mergedHashes;

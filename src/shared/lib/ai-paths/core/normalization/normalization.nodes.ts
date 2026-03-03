@@ -8,7 +8,8 @@ import {
 } from '../constants';
 import { palette } from '../definitions';
 import { createDefaultPlaywrightConfig } from '../playwright/default-config';
-import { createParserMappings, createViewerOutputs, resolveNodeTypeId } from '../utils';
+import { createParserMappings, createViewerOutputs } from '../utils/graph.nodes';
+import { resolveNodeTypeId } from '../utils/node-identity';
 import { backfillNodePortContracts } from './normalization.helpers';
 
 import { normalizeContextNode } from './nodes/context';

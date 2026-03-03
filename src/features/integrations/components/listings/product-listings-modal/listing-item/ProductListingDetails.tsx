@@ -6,8 +6,9 @@ import type {
   ProductListingWithDetails,
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
-import { StatusBadge, Card, MetadataItem, Hint } from '@/shared/ui';
+import { StatusBadge, Card, MetadataItem, Hint, Button } from '@/shared/ui';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
   if (!value) return '—';
@@ -46,6 +47,8 @@ export function ProductListingDetails({
     if (product.stock !== null && product.stock !== undefined) fields.push('Stock');
     return fields.length > 0 ? fields.join(', ') : 'No exportable fields detected';
   };
+
+  const isHistoryOpen = historyOpenByListing[listing.id] ?? false;
 
   return (
     <div className='flex-1 min-w-0'>
@@ -87,24 +90,32 @@ export function ProductListingDetails({
 
       {listing.exportHistory && listing.exportHistory.length > 0 ? (
         <Card variant='glass' padding='none' className='mt-4 bg-white/5 overflow-hidden'>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='sm'
             onClick={(): void =>
               setHistoryOpenByListing((prev: Record<string, boolean>) => ({
                 ...prev,
-                [listing.id]: !(prev[listing.id] ?? false),
+                [listing.id]: !isHistoryOpen,
               }))
             }
-            className='flex w-full items-center justify-between p-2 hover:bg-white/5 transition-colors group'
+            className='flex w-full items-center justify-between rounded-none h-10 px-3 hover:bg-white/5 transition-colors group'
           >
             <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 group-hover:text-gray-400'>
               Export history ({listing.exportHistory?.length ?? 0})
             </span>
-            <span className='text-[10px] text-gray-500 font-bold uppercase'>
-              {(historyOpenByListing[listing.id] ?? false) ? 'Hide' : 'Show'}
-            </span>
-          </button>
-          {(historyOpenByListing[listing.id] ?? false) ? (
+            <div className='flex items-center gap-2'>
+              <span className='text-[10px] text-gray-500 font-bold uppercase'>
+                {isHistoryOpen ? 'Hide' : 'Show'}
+              </span>
+              {isHistoryOpen ? (
+                <ChevronUp className='size-3 text-gray-500' />
+              ) : (
+                <ChevronDown className='size-3 text-gray-500' />
+              )}
+            </div>
+          </Button>
+          {isHistoryOpen ? (
             <div className='p-3 space-y-3 border-t border-white/5 max-h-60 overflow-y-auto'>
               {(listing.exportHistory ?? [])
                 .slice(0, 10)

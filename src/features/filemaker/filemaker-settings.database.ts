@@ -196,8 +196,6 @@ export const normalizeFilemakerDatabase = (
   const rawPersons = getRecordList(valueRecord['persons']);
   const rawOrganizations = getRecordList(valueRecord['organizations']);
   const rawEvents = getRecordList(valueRecord['events']);
-  const hasAddressLinksArray = Array.isArray(valueRecord['addressLinks']);
-  const hasPhoneNumberLinksArray = Array.isArray(valueRecord['phoneNumberLinks']);
   const rawAddressLinks = getRecordList(valueRecord['addressLinks']);
   const rawPhoneNumberLinks = getRecordList(valueRecord['phoneNumberLinks']);
   const rawEmailLinks = getRecordList(valueRecord['emailLinks']);
@@ -207,7 +205,7 @@ export const normalizeFilemakerDatabase = (
   }
 
   if (
-    !hasAddressLinksArray &&
+    rawAddressLinks.length === 0 &&
     [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)
   ) {
     throw validationError(
@@ -216,7 +214,7 @@ export const normalizeFilemakerDatabase = (
   }
 
   if (
-    !hasPhoneNumberLinksArray &&
+    rawPhoneNumberLinks.length === 0 &&
     rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
   ) {
     throw validationError(
@@ -225,7 +223,7 @@ export const normalizeFilemakerDatabase = (
   }
 
   if (
-    !hasPhoneNumberLinksArray &&
+    rawPhoneNumberLinks.length === 0 &&
     rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
   ) {
     throw validationError(
@@ -272,15 +270,15 @@ export const normalizeFilemakerDatabase = (
         firstName: normalizeString(entry['firstName']),
         lastName: normalizeString(entry['lastName']),
         addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
         nip: normalizeString(entry['nip']),
         regon: normalizeString(entry['regon']),
-        phoneNumbers: entry['phoneNumbers'],
+        phoneNumbers: [],
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -297,12 +295,12 @@ export const normalizeFilemakerDatabase = (
         id,
         name: normalizeString(entry['name']),
         addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -319,12 +317,12 @@ export const normalizeFilemakerDatabase = (
         id,
         eventName: normalizeString(entry['eventName']),
         addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });

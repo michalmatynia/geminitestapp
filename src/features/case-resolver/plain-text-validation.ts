@@ -1,15 +1,15 @@
 import { type ValidatorPatternList } from '@/shared/contracts/admin';
 import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import {
-  type PromptEngineSettings,
-  type PromptValidationRule,
-} from '@/shared/lib/prompt-engine/settings';
-import {
   preparePromptValidationRuntime,
   validateProgrammaticPromptWithRuntime,
 } from '@/shared/lib/prompt-engine';
 import { type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
-import { type PromptValidationScopeDto as PromptValidationScope } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptEngineSettings,
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/contracts/prompt-engine';
 
 export const CASE_RESOLVER_PLAIN_TEXT_VALIDATOR_SCOPE = 'case-resolver-plain-text' as const;
 export const CASE_RESOLVER_PLAIN_TEXT_PROMPT_SCOPE = 'case_resolver_plain_text' as const;

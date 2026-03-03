@@ -5,7 +5,7 @@ import {
   DESCRIPTION_OUTPUT_PORTS,
   MODEL_OUTPUT_PORTS,
 } from '../../constants';
-import { ensureUniquePorts } from '../../utils';
+import { ensureUniquePorts } from '../../utils/graph.ports';
 
 export const normalizeAiDescriptionNode = (node: AiNode): AiNode => {
   return {

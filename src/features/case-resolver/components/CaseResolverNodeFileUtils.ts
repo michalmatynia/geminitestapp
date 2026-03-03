@@ -18,12 +18,10 @@ export type {
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
 } from '@/shared/contracts/case-resolver';
 
 export const PREVIEW_MAX_CHARS = 400;
 export const SEARCHABLE_CONTENT_MAX_CHARS = 6000;
-export const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
 export const NODEFILE_JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   newline: '\n',
   tab: '\t',
@@ -140,12 +138,10 @@ export const collectScopedCaseIds = (
 };
 
 export const isDocumentTextfieldPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0];
 
 export const isDocumentPlaintextContentPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ||
-  port === CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT ||
-  !port;
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] || !port;
 
 export const isDocumentPlainTextPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];

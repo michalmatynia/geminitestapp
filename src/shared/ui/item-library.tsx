@@ -3,10 +3,10 @@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { AppModal } from './app-modal';
 import { Button } from './button';
 import { ConfirmDialog } from './confirm-dialog';
 import { EmptyState } from './empty-state';
+import { FormModal } from './FormModal';
 import { Input } from './input';
 import { Label } from './label';
 import { ResourceCard } from './ResourceCard';
@@ -220,26 +220,14 @@ export function ItemLibrary<T extends LibraryItem>({
         variant='destructive'
       />
 
-      <AppModal
+      <FormModal
         open={modalOpen}
         onClose={closeModal}
         title={editingItem ? `Edit ${entityName}` : `New ${entityName}`}
-        footer={
-          <>
-            <Button type='button' variant='outline' onClick={closeModal} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button
-              type='button'
-              variant='default'
-              onClick={handleSave}
-              disabled={isSaving || !draft.name?.trim()}
-              className='min-w-[120px]'
-            >
-              {isSaving ? 'Saving...' : `Save ${entityName.toLowerCase()}`}
-            </Button>
-          </>
-        }
+        onSave={handleSave}
+        isSaving={isSaving}
+        isSaveDisabled={!draft.name?.trim()}
+        saveText={editingItem ? 'Save Changes' : `Create ${entityName}`}
       >
         <div className='space-y-6'>
           <div className='grid gap-4 md:grid-cols-2'>
@@ -264,7 +252,7 @@ export function ItemLibrary<T extends LibraryItem>({
 
           {renderExtraFields?.(draft as T, (updates) => setDraft({ ...draft, ...updates }))}
         </div>
-      </AppModal>
+      </FormModal>
     </div>
   );
 }

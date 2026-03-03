@@ -4,6 +4,7 @@ import React from 'react';
 import { FileText, Folder, FolderOpen, ScanText } from 'lucide-react';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeSearchResult } from './useMasterFolderTreeSearch';
+import { Button } from '@/shared/ui';
 
 export type MasterFolderTreeSearchResultsProps = {
   results: MasterFolderTreeSearchResult[];
@@ -41,11 +42,11 @@ export function MasterFolderTreeSearchResults({
         const breadcrumb = pathSegments.length > 1 ? pathSegments.slice(0, -1).join(' / ') : null;
 
         return (
-          <button
+          <Button
             key={node.id}
-            type='button'
-            className='flex w-full items-start gap-2 px-3 py-1.5 text-left hover:bg-muted/30 active:bg-muted/50'
+            variant='ghost'
             onClick={(): void => onSelect(node)}
+            className='flex h-auto w-full items-start justify-start gap-2 rounded-none px-3 py-1.5 text-left font-normal hover:bg-muted/30 active:bg-muted/50 transition-colors'
           >
             <Icon className='mt-0.5 size-3.5 shrink-0 text-muted-foreground/70' />
             <div className='min-w-0 flex-1'>
@@ -54,7 +55,7 @@ export function MasterFolderTreeSearchResults({
                 <div className='truncate text-[10px] text-muted-foreground/60'>{breadcrumb}</div>
               )}
             </div>
-          </button>
+          </Button>
         );
       })}
     </div>

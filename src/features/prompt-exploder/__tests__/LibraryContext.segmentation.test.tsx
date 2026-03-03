@@ -17,8 +17,8 @@ import {
 } from '@/features/prompt-exploder/segmentation-library';
 import {
   promptExploderDocumentSchema,
-  type PromptExploderDocumentDto as PromptExploderDocument,
-  type PromptExploderSegmentDto as PromptExploderSegment,
+  type PromptExploderDocument,
+  type PromptExploderSegment,
 } from '@/shared/contracts/prompt-exploder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

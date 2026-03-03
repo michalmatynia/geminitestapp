@@ -57,6 +57,10 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () => ({
+      prepare: async (tx: MasterFolderTreeTransaction) => ({
+        tx,
+        preparedAt: Date.now(),
+      }),
       apply: async (tx: MasterFolderTreeTransaction) => {
         const nextSubsections = rebuildPromptExploderSubsectionsFromMasterNodes({
           nodes: tx.nextNodes,
@@ -71,6 +75,8 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
           appliedAt: Date.now(),
         };
       },
+      commit: async () => {},
+      rollback: async () => {},
     }),
     [selectedSegment.id, updateSegment]
   );

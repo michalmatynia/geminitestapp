@@ -9,7 +9,7 @@ import { getLastUserAction } from '@/shared/utils/observability/user-action-trac
 
 import { Button } from './button';
 
-function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+export function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const category = classifyError(error);
   const actions = getSuggestedActions(category, error);
   const errorMessage =

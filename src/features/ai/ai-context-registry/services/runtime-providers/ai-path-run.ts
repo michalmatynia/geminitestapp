@@ -32,7 +32,7 @@ const MAX_ERROR_MESSAGE_LENGTH = 220;
 const MAX_SAMPLE_LENGTH = 180;
 
 const COMPLETED_NODE_STATUSES = new Set(['completed', 'cached']);
-const FAILED_NODE_STATUSES = new Set(['failed', 'timeout', 'canceled', 'cancelled']);
+const FAILED_NODE_STATUSES = new Set(['failed', 'timeout', 'canceled']);
 const WARNING_NODE_STATUSES = new Set(['blocked', 'skipped']);
 const RECENT_ERROR_EVENT_LEVELS = new Set(['error', 'fatal', 'warn']);
 

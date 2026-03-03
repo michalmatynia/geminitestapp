@@ -10,7 +10,6 @@ import {
   fetchChatbotSessions,
   fetchChatbotSession,
   fetchChatbotSettings,
-  fetchOllamaModels,
   fetchChatbotMemory,
   fetchChatbotModels,
 } from '../api';
@@ -174,30 +173,6 @@ export function useChatbotModels(options?: {
       domain: 'chatbot',
       queryKey,
       tags: ['brain', 'models'],
-    },
-  });
-}
-
-/**
- * Query hook for fetching Ollama models from a custom base URL
- */
-export function useOllamaModels(
-  baseUrl: string,
-  options?: { enabled?: boolean }
-): ListQuery<string> {
-  const queryKey = chatbotKeys.ollamaModels(baseUrl);
-  return createListQueryV2({
-    queryKey,
-    queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
-    enabled: (options?.enabled ?? true) && !!baseUrl,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    meta: {
-      source: 'chatbot.hooks.useOllamaModels',
-      operation: 'list',
-      resource: 'chatbot.models.ollama',
-      domain: 'chatbot',
-      queryKey,
-      tags: ['chatbot', 'models', 'ollama'],
     },
   });
 }

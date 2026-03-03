@@ -87,31 +87,11 @@ const normalizePathId = (value: unknown): string | null | undefined => {
   return normalized.length > 0 ? normalized : null;
 };
 
-const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') {
-    if (value === 1) return true;
-    if (value === 0) return false;
-    return undefined;
-  }
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === 'true' || normalized === '1') return true;
-    if (normalized === 'false' || normalized === '0') return false;
-  }
-  return undefined;
-};
-
 const normalizeDisplayForRead = (value: unknown): AiTriggerButtonDisplayMode | undefined => {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const showLabel = coerceOptionalBoolean((value as Record<string, unknown>)['showLabel']);
-    return showLabel === false ? 'icon' : 'icon_label';
-  }
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'icon') return 'icon';
   if (normalized === 'icon_label') return 'icon_label';
-  if (normalized === 'label') return 'icon_label';
   return undefined;
 };
 
@@ -122,28 +102,13 @@ const normalizeModeForRead = (value: unknown): AiTriggerButtonMode | undefined =
   return parsed.success ? parsed.data : undefined;
 };
 
-const normalizeLocationsForRead = (value: unknown): AiTriggerButtonLocation[] | undefined => {
-  const source = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
-  const seen = new Set<AiTriggerButtonLocation>();
-  source.forEach((entry: unknown) => {
-    if (typeof entry !== 'string') return;
-    const normalized = entry.trim();
-    const parsed = aiTriggerButtonLocationSchema.safeParse(normalized);
-    if (!parsed.success) return;
-    seen.add(parsed.data);
-  });
-  return seen.size > 0 ? Array.from(seen) : undefined;
-};
-
 export const aiTriggerButtonRecordValidatorSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1),
   iconId: z.string().trim().min(1).nullable().optional(),
   pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
-  enabled: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
-  locations: z
-    .preprocess(normalizeLocationsForRead, z.array(aiTriggerButtonLocationSchema))
-    .optional(),
+  enabled: z.boolean().optional(),
+  locations: z.array(aiTriggerButtonLocationSchema).optional(),
   mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema).optional(),
   display: z
     .preprocess((value: unknown): unknown => {

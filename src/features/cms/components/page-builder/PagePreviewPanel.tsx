@@ -18,6 +18,7 @@ import { useThemeSettings } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
+import { normalizePageSlugValues } from '../../utils/slug-utils';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
@@ -34,20 +35,6 @@ import {
 import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
-const normalizePageSlugValues = (slugs: unknown): string[] => {
-  if (!Array.isArray(slugs)) return [];
-  return slugs
-    .map((entry: unknown): string => {
-      if (typeof entry === 'string') return entry;
-      if (!entry || typeof entry !== 'object') return '';
-      const candidate = (entry as { slug?: unknown }).slug;
-      if (typeof candidate === 'string') return candidate;
-      if (!candidate || typeof candidate !== 'object') return '';
-      const nested = (candidate as { slug?: unknown }).slug;
-      return typeof nested === 'string' ? nested : '';
-    })
-    .filter((value: string) => value.trim().length > 0);
-};
 
 export function PagePreviewPanel(): React.ReactNode {
   const state = usePageBuilderState();
@@ -255,7 +242,7 @@ export function PagePreviewPanel(): React.ReactNode {
         order: index,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
       })),
-      slugs: slugValues,
+      slugIds: slugValues,
     };
 
     await updatePage.mutateAsync({

@@ -28,7 +28,6 @@ import { createFolderTreeStore, type FolderTreeStore } from '../store/createFold
 import { useFolderTreeStoreSelector } from '../store/useFolderTreeStoreSelector';
 import type {
   FolderTreeAppliedTransaction,
-  FolderTreePreparedTransaction,
   FolderTreeState,
   FolderTreeTransaction,
 } from '../types';
@@ -125,11 +124,6 @@ const toUndoEntry = (
 
 const createTxId = (): string =>
   `mftx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-
-const createPreparedTx = (tx: FolderTreeTransaction): FolderTreePreparedTransaction => ({
-  tx,
-  preparedAt: Date.now(),
-});
 
 const createAppliedTx = (tx: FolderTreeTransaction): FolderTreeAppliedTransaction => ({
   tx,

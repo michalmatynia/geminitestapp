@@ -46,7 +46,7 @@ export function CaseResolverPartySelectField({
         <SegmentedControl
           size='xs'
           value={filter}
-          onChange={(v) => setFilter(v as PartyKindFilter)}
+          onChange={(v) => setFilter(v)}
           options={[
             { value: 'all', label: 'All' },
             { value: 'person', label: 'Person', icon: User },

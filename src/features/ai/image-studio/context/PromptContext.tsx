@@ -14,10 +14,8 @@ import {
   extractParamsFromPrompt,
   inferParamSpecs,
   setDeepValue,
-  type ParamIssue,
-  type ParamSpec,
-  type ExtractParamsResult,
 } from '@/shared/utils/prompt-params';
+import type { ExtractParamsResult, ParamIssue, ParamSpec } from '@/shared/contracts/prompt-engine';
 import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
 import { consumePromptExploderApplyPrompt } from '@/features/prompt-exploder/bridge';
 import { useSettingsMap } from '@/shared/hooks/use-settings';

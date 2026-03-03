@@ -1,41 +1,53 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  BASE_EXPORT_BLWO_PATH_ID,
-  buildBaseExportBlwoPathConfigValue,
-} from '@/features/ai/ai-paths/server/settings-store-base-export-workflow';
-import {
-  buildDescriptionInferenceLitePathConfigValue,
-  DESCRIPTION_INFERENCE_LITE_PATH_ID,
-} from '@/features/ai/ai-paths/server/settings-store-description-inference';
-import {
-  buildParameterInferencePathConfigValue,
-  PARAMETER_INFERENCE_PATH_ID,
-} from '@/features/ai/ai-paths/server/settings-store-parameter-inference';
 import { __testOnly } from '@/features/ai/ai-paths/server/settings-store';
+import {
+  countPendingStarterWorkflowDefaults,
+  ensureStarterWorkflowDefaults,
+} from '@/features/ai/ai-paths/server/starter-workflows-settings';
+import {
+  AI_PATHS_CONFIG_KEY_PREFIX,
+  AI_PATHS_INDEX_KEY,
+  AI_PATHS_TRIGGER_BUTTONS_KEY,
+} from '@/features/ai/ai-paths/server/settings-store.constants';
+import {
+  getStarterWorkflowTemplateById,
+  materializeStarterWorkflowPathConfig,
+} from '@/shared/lib/ai-paths/core/starter-workflows';
 
 describe('settings-store flag preservation and read-time seeding policy', () => {
   it('preserves path activation and lock flags when seeded defaults are rewritten', () => {
-    const timestamp = '2026-02-24T00:00:00.000Z';
     const existingFlags = JSON.stringify({
       id: 'path_custom',
       isActive: false,
       isLocked: true,
     });
-    const seededConfigs: Array<{ pathId: string; raw: string }> = [
+    const seededConfigs = [
       {
-        pathId: PARAMETER_INFERENCE_PATH_ID,
-        raw: buildParameterInferencePathConfigValue(timestamp),
+        templateId: 'starter_parameter_inference',
+        pathId: 'path_syr8f4',
       },
       {
-        pathId: DESCRIPTION_INFERENCE_LITE_PATH_ID,
-        raw: buildDescriptionInferenceLitePathConfigValue(timestamp),
+        templateId: 'starter_description_inference_lite',
+        pathId: 'path_descv3lite',
       },
       {
-        pathId: BASE_EXPORT_BLWO_PATH_ID,
-        raw: buildBaseExportBlwoPathConfigValue(timestamp),
+        templateId: 'starter_base_export_blwo',
+        pathId: 'path_base_export_blwo_v1',
       },
-    ];
+    ].map((entry) => {
+      const template = getStarterWorkflowTemplateById(entry.templateId);
+      if (!template) throw new Error(`Missing template ${entry.templateId}`);
+      return {
+        pathId: entry.pathId,
+        raw: JSON.stringify(
+          materializeStarterWorkflowPathConfig(template, {
+            pathId: entry.pathId,
+            seededDefault: true,
+          })
+        ),
+      };
+    });
 
     seededConfigs.forEach((seededConfig) => {
       const preservedRaw = __testOnly.preservePathConfigFlagsOnSeed(
@@ -90,5 +102,106 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
 
   it('treats missing env override as no read-time auto-seeding', () => {
     expect(__testOnly.resolveAutoApplyDefaultSeedsOnRead(undefined)).toBe(false);
+  });
+
+  it('generically seeds auto-seeded starter workflows from the registry', () => {
+    const initial = [
+      { key: AI_PATHS_INDEX_KEY, value: '[]' },
+      { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
+    ];
+
+    expect(countPendingStarterWorkflowDefaults(initial)).toBeGreaterThan(0);
+
+    const seeded = ensureStarterWorkflowDefaults(initial);
+
+    expect(seeded.affectedCount).toBeGreaterThan(0);
+    expect(
+      seeded.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`
+      )
+    ).toBe(true);
+    expect(
+      seeded.nextRecords.some(
+        (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_base_export_blwo_v1`
+      )
+    ).toBe(true);
+
+    const triggerButtonsRecord = seeded.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    expect(
+      triggerButtons.some((button) => button['id'] === '0ef40981-7ac6-416e-9205-7200289f851c')
+    ).toBe(true);
+    expect(
+      triggerButtons.some((button) => button['id'] === '5f36f340-3d89-4f6f-a08f-2387f380b90b')
+    ).toBe(true);
+  });
+
+  it('refreshes stale seeded starter configs through legacy lineage matching when provenance is missing', () => {
+    const template = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!template) throw new Error('Missing starter_parameter_inference template');
+
+    const stale = materializeStarterWorkflowPathConfig(template, {
+      pathId: 'path_syr8f4',
+      seededDefault: true,
+    });
+    const staleWithoutProvenance = {
+      ...stale,
+      extensions: {},
+    };
+    const initial = [
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: JSON.stringify([
+          {
+            id: 'path_syr8f4',
+            name: stale.name,
+            createdAt: '2026-03-03T10:00:00.000Z',
+            updatedAt: '2026-03-03T10:00:00.000Z',
+          },
+        ]),
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: JSON.stringify([
+          {
+            id: '0ef40981-7ac6-416e-9205-7200289f851c',
+            name: 'Infer Parameters',
+            pathId: 'path_syr8f4',
+            locations: ['product_modal'],
+            mode: 'click',
+            display: { label: 'Infer Parameters', showLabel: true },
+            enabled: true,
+            sortIndex: 20,
+            createdAt: '2026-03-03T10:00:00.000Z',
+            updatedAt: '2026-03-03T10:00:00.000Z',
+          },
+        ]),
+      },
+      {
+        key: `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`,
+        value: JSON.stringify(staleWithoutProvenance),
+      },
+    ];
+
+    expect(countPendingStarterWorkflowDefaults(initial)).toBeGreaterThan(0);
+
+    const refreshed = ensureStarterWorkflowDefaults(initial);
+    expect(refreshed.affectedCount).toBeGreaterThan(0);
+
+    const configRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_syr8f4`
+    );
+    if (!configRecord) throw new Error('Expected path_syr8f4 config record');
+    const parsed = JSON.parse(configRecord.value) as Record<string, unknown>;
+    const starterExtension = (parsed['extensions'] as Record<string, unknown>)?.['aiPathsStarter'];
+    expect(starterExtension).toEqual(
+      expect.objectContaining({
+        starterKey: 'parameter_inference',
+        templateId: 'starter_parameter_inference',
+      })
+    );
   });
 });

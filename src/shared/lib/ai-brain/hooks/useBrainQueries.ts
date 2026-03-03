@@ -4,10 +4,10 @@ import type { AiPathRuntimeAnalyticsSummaryDto as AiPathRuntimeAnalyticsSummary 
 import type { AnalyticsSummaryDto as AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type {
-  BrainOperationsOverviewResponseDto as BrainOperationsOverviewResponse,
+  BrainOperationsOverviewResponse,
   BrainOperationsRange,
-  BrainModelsResponseDto as BrainModelsResponse,
-  InsightsSnapshotDto as InsightsSnapshot,
+  BrainModelsResponse,
+  InsightsSnapshot,
 } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';

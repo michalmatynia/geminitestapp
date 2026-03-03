@@ -44,6 +44,10 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () => ({
+      prepare: async (tx: MasterFolderTreeTransaction) => ({
+        tx,
+        preparedAt: Date.now(),
+      }),
       apply: async (tx: MasterFolderTreeTransaction) => {
         const nextSegments = rebuildPromptExploderSegmentsFromMasterNodes({
           nodes: tx.nextNodes,
@@ -55,6 +59,8 @@ export function PromptExploderSegmentsTreeEditor(): React.JSX.Element {
           appliedAt: Date.now(),
         };
       },
+      commit: async () => {},
+      rollback: async () => {},
     }),
     [replaceSegments]
   );

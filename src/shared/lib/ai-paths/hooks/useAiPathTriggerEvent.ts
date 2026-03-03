@@ -230,7 +230,9 @@ export const sanitizeTriggerPathConfig = (config: PathConfig): PathConfig => {
       : new Date().toISOString();
   const migratedConfig = migratePathConfigCollections(config).config;
   const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
-  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(sanitizeTriggerDatabaseNode);
+  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(
+    sanitizeTriggerDatabaseNode
+  );
   const identityRepair = repairPathNodeIdentities(
     {
       ...contractBackfilledConfig,

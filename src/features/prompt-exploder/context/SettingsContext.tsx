@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState, useContext } from 'react';
 
 import { parseValidatorPatternLists } from '@/shared/contracts/validator';
 import { VALIDATOR_PATTERN_LISTS_KEY } from '@/shared/contracts/admin';
@@ -18,7 +18,7 @@ import {
   useUpdateSetting,
   useUpdateSettingsBulk,
 } from '@/shared/hooks/use-settings';
-import { useToast } from '@/shared/ui';
+import { Alert, Button, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -48,7 +48,11 @@ import type {
   PromptExploderLearnedTemplate,
   PromptExploderRuntimeValidationScope,
 } from '@/shared/contracts/prompt-exploder';
-import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
+import {
+  defaultPromptExploderSettings,
+  parsePromptExploderSettingsResult,
+  PROMPT_EXPLODER_SETTINGS_KEY,
+} from '../settings';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
@@ -114,6 +118,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [hasUnsavedParserTuningDrafts, setHasUnsavedParserTuningDrafts] = useState(false);
   const [incomingBridgeSource, setIncomingBridgeSource] = useState<string | null>(null);
   const [learningDraftHydratedFrom, setLearningDraftHydratedFrom] = useState<string | null>(null);
+  const settingsParseErrorRef = useRef<string | null>(null);
 
   const setLearningDraft = useCallback((value: React.SetStateAction<LearningDraft>) => {
     setHasUnsavedLearningDraft(true);
@@ -131,15 +136,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const rawPromptSettings = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsMap.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
   const rawValidatorPatternLists = settingsMap.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const hasPersistedPromptExploderSettingsPayload = Boolean(rawExploderSettings?.trim());
 
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
   );
-  const promptExploderSettings = useMemo(
-    () => parsePromptExploderSettings(rawExploderSettings),
+  const promptExploderSettingsResult = useMemo(
+    () => parsePromptExploderSettingsResult(rawExploderSettings),
     [rawExploderSettings]
   );
+  const promptExploderSettings = promptExploderSettingsResult.settings;
+  const promptExploderSettingsValidationError = hasPersistedPromptExploderSettingsPayload
+    ? promptExploderSettingsResult.error
+    : null;
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
     [rawValidatorPatternLists]
@@ -151,6 +161,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const preferredValidatorScope = shouldPreferCaseResolverValidationStack
     ? 'case-resolver-prompt-exploder'
     : 'prompt-exploder';
+  useEffect(() => {
+    const error = promptExploderSettingsResult.error;
+    const raw = rawExploderSettings?.trim() ?? '';
+    if (!error || !raw) return;
+    const signature = `${raw}::${error.code}::${error.message}`;
+    if (settingsParseErrorRef.current === signature) return;
+    settingsParseErrorRef.current = signature;
+    logClientError(error, {
+      context: {
+        source: 'PromptExploderSettingsContext',
+        action: 'parsePromptExploderSettings',
+        settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
+      },
+    });
+    toast(error.message, { variant: 'error' });
+  }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
   const validatorPatternListsHydrationSignature = useMemo(
     () => validatorPatternLists.map((list) => `${list.id}:${list.scope}:${list.updatedAt}`).join('|'),
     [validatorPatternLists]
@@ -682,6 +708,27 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const isBusy = updateSetting.isPending || updateSettingsBulk.isPending;
 
+  const handleResetInvalidSettings = useCallback(async (): Promise<void> => {
+    if (!promptExploderSettingsValidationError) return;
+    try {
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SETTINGS_KEY,
+        value: serializeSetting(defaultPromptExploderSettings),
+      });
+      await settingsQuery.refetch();
+      toast('Prompt Exploder settings were reset to canonical defaults.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to reset Prompt Exploder settings.', {
+        variant: 'error',
+      });
+    }
+  }, [
+    promptExploderSettingsValidationError,
+    settingsQuery,
+    toast,
+    updateSetting,
+  ]);
+
   const coreValue = useMemo(
     () => ({
       settingsMap,
@@ -800,6 +847,40 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       updateSettingsBulk,
     ]
   );
+
+  if (promptExploderSettingsValidationError) {
+    return (
+      <div className='space-y-3'>
+        <Alert variant='error'>
+          {promptExploderSettingsValidationError.message}
+          {' '}
+          Prompt Exploder is blocked until this persisted payload is repaired.
+        </Alert>
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleResetInvalidSettings();
+            }}
+            disabled={updateSetting.isPending}
+          >
+            {updateSetting.isPending ? 'Resetting...' : 'Reset Settings to Defaults'}
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            onClick={() => {
+              void settingsQuery.refetch();
+            }}
+            disabled={settingsQuery.isFetching}
+          >
+            {settingsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SettingsCoreContext.Provider value={coreValue}>

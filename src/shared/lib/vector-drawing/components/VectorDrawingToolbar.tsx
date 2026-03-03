@@ -21,10 +21,9 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import type { VectorToolMode } from '@/shared/contracts/vector';
 
 import { useOptionalVectorDrawing } from '../context/VectorDrawingContext';
-
-import type { VectorToolMode } from '../types';
 
 export type VectorDrawingToolbarVariant = 'full' | 'min';
 

@@ -58,7 +58,8 @@ import { useSettingsState } from '../../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
-import { type ParamSpec, flattenParams } from '@/features/ai/image-studio/utils/prompt-params';
+import { flattenParams } from '@/features/ai/image-studio/utils/prompt-params';
+import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 
 import type {
   CompositeTabImageViewModel as CompositeTabImage,

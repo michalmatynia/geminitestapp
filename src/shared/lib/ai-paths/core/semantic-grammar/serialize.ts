@@ -198,6 +198,9 @@ export const serializePathConfigToSemanticCanvas = (
       ...(typeof pathConfig.runCount === 'number' ? { runCount: pathConfig.runCount } : {}),
     },
     ...(pathConfig.aiPathsValidation ? { validation: pathConfig.aiPathsValidation } : {}),
+    ...(pathConfig.extensions && typeof pathConfig.extensions === 'object'
+      ? { extensions: pathConfig.extensions }
+      : {}),
     provenance: {
       source: 'ai-paths',
       exportedAt: options?.exportedAt ?? new Date().toISOString(),

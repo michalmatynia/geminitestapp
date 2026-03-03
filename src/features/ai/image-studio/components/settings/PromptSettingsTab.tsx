@@ -68,12 +68,12 @@ export function PromptSettingsTab(): React.JSX.Element {
               label='Model'
               description='Brain-managed via Image Studio Prompt Extract capability.'
             >
-                <Input
-                  value={
-                    promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'
-                  }
-                  readOnly
-                  disabled
+              <Input
+                value={
+                  promptExtractModel.effectiveModelId.trim() || 'Not configured in AI Brain'
+                }
+                readOnly
+                disabled
                 className='cursor-not-allowed'
                 placeholder='Not configured in AI Brain'
               />

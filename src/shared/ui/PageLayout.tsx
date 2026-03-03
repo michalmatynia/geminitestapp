@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
 
-import { Button } from './button';
+import { FormActions } from './FormActions';
 import { SectionHeader } from './section-header';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
 
@@ -94,20 +94,18 @@ export function PageLayout({
       {onSave && (
         <div
           className={cn(
-            'flex justify-end mt-6',
+            'mt-6',
             stickyFooter &&
               'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
           )}
         >
-          <div className={cn(stickyFooter && 'container mx-auto flex justify-end')}>
-            <Button
-              onClick={() => void onSave()}
-              disabled={isSaving}
-              variant='default'
-              className='min-w-[140px]'
-            >
-              {isSaving ? 'Saving...' : saveText}
-            </Button>
+          <div className={cn(stickyFooter && 'container mx-auto')}>
+            <FormActions
+              onSave={() => void onSave()}
+              isSaving={isSaving}
+              saveText={saveText}
+              className={cn(stickyFooter ? 'justify-end' : '')}
+            />
           </div>
         </div>
       )}

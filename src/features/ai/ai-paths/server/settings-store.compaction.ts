@@ -76,11 +76,25 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
     outputs: compactRuntimePorts(parsedRuntimeState['outputs']),
   };
 
-  if (typeof parsedRuntimeState['runId'] === 'string') {
-    compacted['runId'] = parsedRuntimeState['runId'];
-  }
-  if (typeof parsedRuntimeState['runStartedAt'] === 'string') {
-    compacted['runStartedAt'] = parsedRuntimeState['runStartedAt'];
+  const currentRunCandidate = parsedRuntimeState['currentRun'];
+  if (currentRunCandidate && typeof currentRunCandidate === 'object') {
+    const currentRun = currentRunCandidate as Record<string, unknown>;
+    if (typeof currentRun['id'] === 'string' && currentRun['id'].trim().length > 0) {
+      compacted['currentRun'] = {
+        id: currentRun['id'],
+        status: currentRun['status'],
+        startedAt:
+          typeof currentRun['startedAt'] === 'string' ? currentRun['startedAt'] : null,
+        finishedAt:
+          typeof currentRun['finishedAt'] === 'string' ? currentRun['finishedAt'] : null,
+        pathId: typeof currentRun['pathId'] === 'string' ? currentRun['pathId'] : null,
+        pathName: typeof currentRun['pathName'] === 'string' ? currentRun['pathName'] : null,
+        createdAt:
+          typeof currentRun['createdAt'] === 'string' ? currentRun['createdAt'] : undefined,
+        updatedAt:
+          typeof currentRun['updatedAt'] === 'string' ? currentRun['updatedAt'] : null,
+      };
+    }
   }
 
   return JSON.stringify(compacted);

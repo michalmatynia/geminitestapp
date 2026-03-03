@@ -1,9 +1,8 @@
 import { edgeSchema, type Edge } from '@/shared/contracts/ai-paths-core/nodes';
-import { CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
 
 const LEGACY_CASE_RESOLVER_EDGE_KEYS = new Set(['from', 'to', 'fromPort', 'toPort']);
-const LEGACY_CASE_RESOLVER_TEXTFIELD_PORT = 'textfield';
+const LEGACY_CASE_RESOLVER_PORTS = new Set(['textfield', 'content']);
 
 const buildInvalidCaseResolverEdgeError = (
   message: string,
@@ -16,11 +15,10 @@ const buildInvalidCaseResolverEdgeError = (
     ...(meta ?? {}),
   });
 
-const isLegacyCaseResolverPortValue = (value: unknown): boolean =>
-  value === LEGACY_CASE_RESOLVER_TEXTFIELD_PORT ||
-  value === CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
-
-export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): Edge => {
+export const parseCanonicalCaseResolverEdge = (
+  input: unknown,
+  context: string
+): Edge => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
       reason: 'edge_not_object',
@@ -59,24 +57,47 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
     );
   }
 
+  const normalizeHandle = (value: unknown): string | null => {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  };
+  const sourceHandle = normalizeHandle(edge.sourceHandle);
+  const targetHandle = normalizeHandle(edge.targetHandle);
   if (
-    isLegacyCaseResolverPortValue(edge.sourceHandle) ||
-    isLegacyCaseResolverPortValue(edge.targetHandle)
+    (sourceHandle !== null && LEGACY_CASE_RESOLVER_PORTS.has(sourceHandle)) ||
+    (targetHandle !== null && LEGACY_CASE_RESOLVER_PORTS.has(targetHandle))
   ) {
     throw buildInvalidCaseResolverEdgeError(
       'Legacy Case Resolver edge port names are no longer supported.',
       context,
       {
         edgeId: edge.id,
-        sourceHandle: edge.sourceHandle ?? null,
-        targetHandle: edge.targetHandle ?? null,
+        sourceHandle: sourceHandle ?? null,
+        targetHandle: targetHandle ?? null,
       }
     );
   }
 
+  const {
+    from: _from,
+    to: _to,
+    fromPort: _fromPort,
+    toPort: _toPort,
+    ...edgeRecord
+  } = edge as Edge & {
+    from?: unknown;
+    to?: unknown;
+    fromPort?: unknown;
+    toPort?: unknown;
+  };
   return {
-    ...edge,
+    ...edgeRecord,
     source,
     target,
+    sourceHandle: sourceHandle ?? null,
+    targetHandle: targetHandle ?? null,
   };
 };

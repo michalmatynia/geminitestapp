@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildPersistedRuntimeState,
+  parseRuntimeState,
   sanitizePathConfig,
 } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
 import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
+import { isAppError } from '@/shared/errors/app-error';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
@@ -74,13 +76,9 @@ describe('sanitizePathConfig', () => {
 
     const sanitized = sanitizePathConfig(config);
 
-    expect(sanitized.edges).toHaveLength(2);
+    expect(sanitized.edges).toHaveLength(1);
     expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-dangling')).toBeUndefined();
-    expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-rewire')).toMatchObject({
-      id: 'edge-rewire',
-      fromPort: 'value',
-      toPort: 'value',
-    });
+    expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-rewire')).toBeUndefined();
   });
 
   it('keeps already canonical edges unchanged', () => {
@@ -177,6 +175,17 @@ describe('sanitizePathConfig', () => {
       color: 'red',
     };
     const runtimeState = {
+      currentRun: {
+        id: 'run-1',
+        status: 'running',
+        startedAt: '2026-03-03T10:00:00.000Z',
+        finishedAt: null,
+        pathId: 'path-1',
+        pathName: 'Path 1',
+        createdAt: '2026-03-03T10:00:00.000Z',
+        updatedAt: '2026-03-03T10:01:00.000Z',
+        result: { ignored: true },
+      },
       inputs: {
         'node-6bb64bd12ced85746705fc69': {
           value: sharedValue,
@@ -199,9 +208,41 @@ describe('sanitizePathConfig', () => {
     const parsed = JSON.parse(persisted) as Record<string, unknown>;
     const inputs = parsed['inputs'] as Record<string, Record<string, unknown>>;
     const outputs = parsed['outputs'] as Record<string, Record<string, unknown>>;
+    const currentRun = parsed['currentRun'] as Record<string, unknown>;
 
     expect(inputs['node-6bb64bd12ced85746705fc69']?.['value']).toEqual(sharedValue);
     expect(outputs['node-6bb64bd12ced85746705fc69']?.['value']).toEqual(sharedValue);
     expect(outputs['node-837e17bdcefe87fe18d92cd5']?.['value']).toEqual(sharedValue);
+    expect(parsed).not.toHaveProperty('runId');
+    expect(parsed).not.toHaveProperty('runStartedAt');
+    expect(currentRun).toMatchObject({
+      id: 'run-1',
+      status: 'running',
+      startedAt: '2026-03-03T10:00:00.000Z',
+      pathId: 'path-1',
+      pathName: 'Path 1',
+    });
+    expect(currentRun).not.toHaveProperty('result');
+  });
+
+  it('rejects legacy runtime identity fields in persisted runtime state payloads', () => {
+    try {
+      parseRuntimeState(
+        JSON.stringify({
+          status: 'running',
+          nodeStatuses: {},
+          nodeOutputs: {},
+          variables: {},
+          events: [],
+          inputs: {},
+          outputs: {},
+          runId: 'legacy-run-id',
+          runStartedAt: '2026-03-03T10:00:00.000Z',
+        })
+      );
+      throw new Error('Expected parseRuntimeState to throw.');
+    } catch (error) {
+      expect(isAppError(error)).toBe(true);
+    }
   });
 });

@@ -5,7 +5,7 @@ import type { Template, TemplateMapping } from '@/shared/contracts/data-import-e
 import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
-  type BaseImportParameterImportSettings,
+  type ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import type { useToast } from '@/shared/ui';
@@ -31,7 +31,7 @@ export function useImportExportTemplates({
     { sourceKey: '', targetField: '' },
   ]);
   const [importTemplateParameterImport, setImportTemplateParameterImport] =
-    useState<BaseImportParameterImportSettings>(defaultBaseImportParameterImportSettings);
+    useState<ImportTemplateParameterImport>(defaultBaseImportParameterImportSettings);
   const [exportTemplateMappings, setExportTemplateMappings] = useState<TemplateMapping[]>([
     { sourceKey: '', targetField: '' },
   ]);

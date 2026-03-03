@@ -378,26 +378,26 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   {activeNodeOptions.map((option) => {
                     const isSelected = selectedNodeId === option.value;
                     return (
-                      <button
+                      <Button
                         key={option.value}
-                        type='button'
+                        variant='outline'
                         onClick={() => selectNode(option.value)}
                         className={cn(
-                          'w-full rounded-md border p-2.5 text-left transition-all',
+                          'w-full flex-col items-start gap-1 h-auto p-2.5 text-left transition-all',
                           isSelected
-                            ? 'border-blue-500/50 bg-blue-500/10'
+                            ? 'border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/15'
                             : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
                         )}
                       >
-                        <div className='truncate text-xs font-medium text-gray-200'>
+                        <div className='truncate text-xs font-medium text-gray-200 w-full'>
                           {option.label}
                         </div>
                         {option.description && (
-                          <div className='mt-1 truncate text-[10px] text-gray-500'>
+                          <div className='truncate text-[10px] text-gray-500 w-full'>
                             {option.description}
                           </div>
                         )}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>

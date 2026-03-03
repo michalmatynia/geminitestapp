@@ -1,5 +1,5 @@
 import type { UserPreferences } from '@/shared/contracts/auth';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { type CaseListViewDefaults } from './types';
 
 export const CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS = 15;
@@ -122,3 +122,39 @@ export const getCaseResolverWorkspaceRevision = (workspace: {
   if (candidate <= 0) return 0;
   return Math.floor(candidate);
 };
+
+export const isPlaceholderCaseResolverWorkspace = (workspace: CaseResolverWorkspace): boolean => {
+  const hasContent =
+    workspace.files.length > 0 ||
+    workspace.assets.length > 0 ||
+    workspace.folders.length > 0 ||
+    (workspace.folderRecords?.length ?? 0) > 0;
+  if (hasContent) return false;
+  const normalizedWorkspaceId = workspace.id.trim().toLowerCase();
+  return normalizedWorkspaceId === '' || normalizedWorkspaceId === 'empty';
+};
+
+export const shouldAdoptIncomingCaseResolverCasesWorkspace = ({
+  current,
+  incoming,
+}: {
+  current: CaseResolverWorkspace;
+  incoming: CaseResolverWorkspace;
+}): boolean => {
+  const currentRevision = getCaseResolverWorkspaceRevision(current);
+  const incomingRevision = getCaseResolverWorkspaceRevision(incoming);
+  if (incomingRevision > currentRevision) return true;
+
+  const currentIsPlaceholder = isPlaceholderCaseResolverWorkspace(current);
+  const incomingIsPlaceholder = isPlaceholderCaseResolverWorkspace(incoming);
+  if (currentIsPlaceholder && !incomingIsPlaceholder) return true;
+  if (incomingRevision === currentRevision && currentIsPlaceholder && !incomingIsPlaceholder) {
+    return true;
+  }
+
+  return false;
+};
+
+export const shouldBootstrapCaseResolverCasesFromRecord = (
+  workspace: CaseResolverWorkspace
+): boolean => isPlaceholderCaseResolverWorkspace(workspace);

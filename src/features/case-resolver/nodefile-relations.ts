@@ -186,23 +186,14 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
       .map((file: CaseResolverFile): string => file.id.trim())
       .filter(Boolean)
   );
-  const validCaseFileIds = new Set<string>(
-    files
-      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): string => file.id.trim())
-      .filter(Boolean)
-  );
   const now = new Date().toISOString();
   let changed = false;
 
   const nextAssets = assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile => {
     if (asset.kind !== 'node_file') return asset;
+    const snapshot = parseNodeFileSnapshotFromAsset(asset);
+    if (!snapshot) return asset;
     const rawText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-    if (!rawText) return asset;
-
-    const snapshot = parseNodeFileSnapshot(rawText);
-    const existingSourceFileId =
-      typeof asset.sourceFileId === 'string' ? asset.sourceFileId.trim() : '';
     const normalizedNodeFileMeta = Object.fromEntries(
       Object.entries(snapshot.nodeFileMeta).filter(([, meta]): boolean =>
         validDocumentFileIds.has(meta.fileId)
@@ -229,13 +220,6 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
       );
       if (fileIds.length === 1) {
         return fileIds[0] ?? null;
-      }
-      if (
-        fileIds.length === 0 &&
-        existingSourceFileId.length > 0 &&
-        validCaseFileIds.has(existingSourceFileId)
-      ) {
-        return existingSourceFileId;
       }
       return null;
     })();

@@ -1,0 +1,1377 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_syr8f4",
+    "version": 12,
+    "name": "Parameter Inference",
+    "description": "Infer product parameter values from name and images, then update product parameters.",
+    "trigger": "Product Modal - Infer Parameters",
+    "updatedAt": "2026-03-03T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-fetcher-params",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve context, metadata, and entity identity from trigger input.",
+      "position": {
+        "x": 280,
+        "y": 520
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-trigger-fetcher",
+            "fromNodeId": "node-trigger-params",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-params",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-01",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-parser-params",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-params-02",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-query-params",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-params-07",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityId",
+            "toNodeId": "node-seed-params",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-params-08",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityType",
+            "toNodeId": "node-seed-params",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-params-15",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-params",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-params-16",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-params",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-params-fetcher-update-ctx",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-update-params",
+            "toPort": "context"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-3bbfe935aaaf54a0c63ad75d",
+          "instanceId": "node-fetcher-params"
+        }
+      }
+    },
+    {
+      "id": "node-lc-template-params",
+      "type": "logical_condition",
+      "title": "LC: Check Template",
+      "description": "Check that the cleaned template JSON is not empty.",
+      "position": {
+        "x": 2100,
+        "y": 40
+      },
+      "inputs": [
+        "value",
+        "result",
+        "context",
+        "bundle"
+      ],
+      "outputs": [
+        "value",
+        "valid",
+        "errors"
+      ],
+      "config": {
+        "logicalCondition": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "check-template-not-empty",
+              "inputPort": "value",
+              "operator": "notEmpty"
+            }
+          ]
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-vp-lc",
+            "fromNodeId": "node-vp-template-params",
+            "fromPort": "value",
+            "toNodeId": "node-lc-template-params",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-lc-router-valid",
+            "fromNodeId": "node-lc-template-params",
+            "fromPort": "valid",
+            "toNodeId": "node-router-seed-params",
+            "toPort": "valid"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-f34d97c7522a86c2adcac7cf",
+          "instanceId": "node-lc-template-params"
+        }
+      }
+    },
+    {
+      "id": "node-model-params",
+      "type": "model",
+      "title": "Model",
+      "description": "Run vision model to infer parameters.",
+      "position": {
+        "x": 1540,
+        "y": 560
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.2,
+          "maxTokens": 900,
+          "vision": true,
+          "waitForResult": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-11",
+            "fromNodeId": "node-prompt-params",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-params",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-params-12",
+            "fromNodeId": "node-prompt-params",
+            "fromPort": "images",
+            "toNodeId": "node-model-params",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-13",
+            "fromNodeId": "node-model-params",
+            "fromPort": "result",
+            "toNodeId": "node-regex-params",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-ffa89deaeb342b4faa9fb092",
+          "instanceId": "node-model-params"
+        }
+      }
+    },
+    {
+      "id": "node-model-template-params",
+      "type": "model",
+      "title": "Model",
+      "description": "Create parameter template rows from definitions.",
+      "position": {
+        "x": 1460,
+        "y": 40
+      },
+      "inputs": [
+        "prompt",
+        "context",
+        "images"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0,
+          "maxTokens": 900,
+          "vision": false,
+          "waitForResult": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-04",
+            "fromNodeId": "node-prompt-template-params",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-template-params",
+            "toPort": "prompt"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-05",
+            "fromNodeId": "node-model-template-params",
+            "fromPort": "result",
+            "toNodeId": "node-vp-template-params",
+            "toPort": "result"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-ffa89deaeb342b4faa9fb092",
+          "instanceId": "node-model-template-params"
+        }
+      }
+    },
+    {
+      "id": "node-parser-params",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract fields into outputs or a single bundle.",
+      "position": {
+        "x": 540,
+        "y": 520
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "images"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "catalogId": "$.catalogs[0].catalogId",
+            "content_en": "",
+            "images": "",
+            "productId": "",
+            "title": ""
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        },
+        "notes": {
+          "text": "Grab product name, description and images."
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-01",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-parser-params",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-00",
+            "fromNodeId": "node-parser-params",
+            "fromPort": "bundle",
+            "toNodeId": "node-query-params",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-params-09",
+            "fromNodeId": "node-parser-params",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-params",
+            "toPort": "bundle"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-8369940084c3670fed0cd8f8",
+          "instanceId": "node-parser-params"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-params",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build prompt for parameter inference.",
+      "position": {
+        "x": 1080,
+        "y": 320
+      },
+      "inputs": [
+        "bundle",
+        "title",
+        "images",
+        "result",
+        "entityId"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "Infer product PARAMETERS in ENGLISH from the product data below.\nProduct name: \"{{title}}\"\nProduct description: \"{{content_en}}\"\nAvailable parameters JSON (objects with id/label/selectorType/options): {{result}}\n\nRules:\n1. Return ONLY valid JSON array.\n2. Output schema per item: {\"parameterId\":\"<id>\",\"value\":\"<english value>\"}.\n3. parameterId MUST exactly match an \"id\" from Available parameters JSON.\n4. Never invent semantic IDs like \"size\", \"material\", \"color\".\n5. Skip parameters you cannot infer confidently.\n6. No markdown, no explanations, no code fences.\n7. If nothing can be inferred, return [].\n8. For any multi-value parameter, return ONE string joined with \"|\" and no spaces around \"|\", e.g. \"Black|Red|Blue\".\n9. Capitalize value tokens in Title Case (e.g. \"Black\", \"Stainless Steel\")."
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-09",
+            "fromNodeId": "node-parser-params",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-params",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-params-10",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-prompt-params",
+            "toPort": "result"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-11",
+            "fromNodeId": "node-prompt-params",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-params",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-params-12",
+            "fromNodeId": "node-prompt-params",
+            "fromPort": "images",
+            "toNodeId": "node-model-params",
+            "toPort": "images"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-0059114b7671d782dd226b13",
+          "instanceId": "node-prompt-params"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-template-params",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Build parameter template rows for products with empty parameters.",
+      "position": {
+        "x": 1040,
+        "y": 40
+      },
+      "inputs": [
+        "result"
+      ],
+      "outputs": [
+        "prompt"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You create PRODUCT parameter template rows from parameter definitions JSON.\nParameter definitions JSON (array): {{result}}\n\nRules:\n1. Return ONLY valid JSON array.\n2. Output one item per definition with id.\n3. Item schema: {\"parameterId\":\"<id>\",\"value\":\"\"}.\n4. parameterId must exactly match definition id.\n5. Skip definitions with missing/empty id.\n6. Do not include extra keys.\n7. No markdown, no explanations, no code fences.\n8. If input has no valid definitions, return []."
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-03",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-prompt-template-params",
+            "toPort": "result"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-04",
+            "fromNodeId": "node-prompt-template-params",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-template-params",
+            "toPort": "prompt"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-0059114b7671d782dd226b13",
+          "instanceId": "node-prompt-template-params"
+        }
+      }
+    },
+    {
+      "id": "node-query-params",
+      "type": "database",
+      "title": "Database Query",
+      "description": "Load available parameters for product catalog (with fallback by product parameter IDs).",
+      "position": {
+        "x": 560,
+        "y": 110
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "aiPrompt",
+        "content_en"
+      ],
+      "config": {
+        "database": {
+          "operation": "query",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "query": {
+            "provider": "auto",
+            "collection": "product_parameters",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"catalogId\": \"{{bundle.catalogId}}\"\n}",
+            "limit": 200,
+            "sort": "",
+            "projection": "",
+            "single": false
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "distinctField": "",
+          "updateTemplate": "",
+          "skipEmpty": true,
+          "trimStrings": false,
+          "aiPrompt": "",
+          "validationRuleIds": [],
+          "updateStrategy": "one",
+          "updatePayloadMode": "custom",
+          "useMongoActions": false,
+          "mappings": [],
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-00",
+            "fromNodeId": "node-parser-params",
+            "fromPort": "bundle",
+            "toNodeId": "node-query-params",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-params-02",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-query-params",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-03",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-prompt-template-params",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-params-10",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-prompt-params",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-params-17",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-update-params",
+            "toPort": "result"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-52deb61aa96ee2271e8693b2",
+          "instanceId": "node-query-params"
+        }
+      }
+    },
+    {
+      "id": "node-regex-params",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Extract JSON array from model response.",
+      "position": {
+        "x": 2000,
+        "y": 560
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\[[\\s\\S]*\\]",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-13",
+            "fromNodeId": "node-model-params",
+            "fromPort": "result",
+            "toNodeId": "node-regex-params",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-14",
+            "fromNodeId": "node-regex-params",
+            "fromPort": "value",
+            "toNodeId": "node-update-params",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-4a16cd5ffba5be3e872f0307",
+          "instanceId": "node-regex-params"
+        }
+      }
+    },
+    {
+      "id": "node-router-seed-params",
+      "type": "router",
+      "title": "Router: Seed Gate",
+      "description": "Only pass template JSON to seed when it is non-empty.",
+      "position": {
+        "x": 2260,
+        "y": 40
+      },
+      "inputs": [
+        "context",
+        "bundle",
+        "prompt",
+        "result",
+        "value",
+        "valid",
+        "errors"
+      ],
+      "outputs": [
+        "context",
+        "bundle",
+        "prompt",
+        "result",
+        "value",
+        "valid",
+        "errors"
+      ],
+      "config": {
+        "router": {
+          "mode": "valid",
+          "matchMode": "truthy",
+          "compareTo": ""
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-lc-router-valid",
+            "fromNodeId": "node-lc-template-params",
+            "fromPort": "valid",
+            "toNodeId": "node-router-seed-params",
+            "toPort": "valid"
+          },
+          {
+            "edgeId": "edge-params-vp-router-value",
+            "fromNodeId": "node-vp-template-params",
+            "fromPort": "value",
+            "toNodeId": "node-router-seed-params",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-router-seed",
+            "fromNodeId": "node-router-seed-params",
+            "fromPort": "value",
+            "toNodeId": "node-seed-params",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-d7ca602bf163180a7e03f163",
+          "instanceId": "node-router-seed-params"
+        }
+      }
+    },
+    {
+      "id": "node-seed-params",
+      "type": "database",
+      "title": "Database Query",
+      "description": "Seed product parameter rows when parameters are missing/empty.",
+      "position": {
+        "x": 2480,
+        "y": 40
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "content_en",
+        "aiPrompt"
+      ],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "findOneAndUpdate",
+          "mappings": [
+            {
+              "targetPath": "parameters",
+              "sourcePort": "value"
+            }
+          ],
+          "updatePayloadMode": "custom",
+          "query": {
+            "provider": "auto",
+            "collection": "products",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "_id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"id\": \"{{entityId}}\",\n  \"$or\": [\n    { \"parameters\": { \"$exists\": false } },\n    { \"parameters\": { \"$size\": 0 } }\n  ]\n}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "distinctField": "",
+          "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+          "skipEmpty": true,
+          "trimStrings": false,
+          "aiPrompt": "",
+          "validationRuleIds": [],
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-07",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityId",
+            "toNodeId": "node-seed-params",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-params-08",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityType",
+            "toNodeId": "node-seed-params",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-params-router-seed",
+            "fromNodeId": "node-router-seed-params",
+            "fromPort": "value",
+            "toNodeId": "node-seed-params",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": []
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-52deb61aa96ee2271e8693b2",
+          "instanceId": "node-seed-params"
+        }
+      }
+    },
+    {
+      "id": "node-trigger-params",
+      "type": "trigger",
+      "title": "Trigger: Infer Parameters",
+      "description": "User trigger button (0ef40981-7ac6-416e-9205-7200289f851c).",
+      "position": {
+        "x": 24,
+        "y": 520
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "0ef40981-7ac6-416e-9205-7200289f851c",
+          "contextMode": "trigger_only"
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-trigger-fetcher",
+            "fromNodeId": "node-trigger-params",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-params",
+            "toPort": "trigger"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-dff9c882bb670577004a37ea",
+          "instanceId": "node-trigger-params"
+        }
+      }
+    },
+    {
+      "id": "node-update-params",
+      "type": "database",
+      "title": "Database Query",
+      "description": "Update product parameters with inferred values.",
+      "position": {
+        "x": 2460,
+        "y": 560
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "content_en",
+        "aiPrompt"
+      ],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "mappings": [
+            {
+              "targetPath": "parameters",
+              "sourcePort": "value"
+            }
+          ],
+          "updatePayloadMode": "custom",
+          "query": {
+            "provider": "auto",
+            "collection": "products",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "_id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "distinctField": "",
+          "updateTemplate": "{\n  \"$set\": {\n    \"parameters\": {{value}}\n  }\n}",
+          "skipEmpty": true,
+          "trimStrings": false,
+          "aiPrompt": "",
+          "validationRuleIds": [],
+          "parameterInferenceGuard": {
+            "enabled": true,
+            "targetPath": "parameters",
+            "definitionsPort": "result",
+            "definitionsPath": "",
+            "enforceOptionLabels": false,
+            "allowUnknownParameterIds": false
+          },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-14",
+            "fromNodeId": "node-regex-params",
+            "fromPort": "value",
+            "toNodeId": "node-update-params",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-params-15",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-params",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-params-16",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-params",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-params-17",
+            "fromNodeId": "node-query-params",
+            "fromPort": "result",
+            "toNodeId": "node-update-params",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-params-fetcher-update-ctx",
+            "fromNodeId": "node-fetcher-params",
+            "fromPort": "context",
+            "toNodeId": "node-update-params",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": []
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-52deb61aa96ee2271e8693b2",
+          "instanceId": "node-update-params"
+        }
+      }
+    },
+    {
+      "id": "node-vp-template-params",
+      "type": "validation_pattern",
+      "title": "VP: JSON Cleaner",
+      "description": "Clean raw model JSON output by stripping markdown fences and surrounding text.",
+      "position": {
+        "x": 1880,
+        "y": 40
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "result",
+        "context"
+      ],
+      "outputs": [
+        "value",
+        "result",
+        "context",
+        "valid",
+        "errors",
+        "bundle"
+      ],
+      "config": {
+        "validationPattern": {
+          "source": "path_local",
+          "stackId": "",
+          "scope": "global",
+          "includeLearnedRules": true,
+          "runtimeMode": "validate_and_autofix",
+          "failPolicy": "report_only",
+          "inputPort": "result",
+          "outputPort": "value",
+          "maxAutofixPasses": 3,
+          "includeRuleIds": [],
+          "localListName": "param-template-json-cleaner",
+          "localListDescription": "Cleans catalog parameter template JSON from model response",
+          "rules": [
+            {
+              "id": "strip-code-fences",
+              "kind": "regex",
+              "enabled": true,
+              "severity": "warning",
+              "title": "Strip markdown code fences",
+              "description": null,
+              "message": "Model response contains markdown code fences",
+              "similar": [],
+              "pattern": "```(?:json)?\\s*",
+              "flags": "gi",
+              "autofix": {
+                "enabled": true,
+                "operations": [
+                  {
+                    "kind": "replace",
+                    "pattern": "```(?:json)?\\s*",
+                    "flags": "gi",
+                    "replacement": ""
+                  }
+                ]
+              }
+            },
+            {
+              "id": "strip-before-bracket",
+              "kind": "regex",
+              "enabled": true,
+              "severity": "warning",
+              "title": "Strip text before opening bracket",
+              "description": null,
+              "message": "Response contains text before JSON array",
+              "similar": [],
+              "pattern": "^\\[^\\[]+",
+              "flags": "",
+              "autofix": {
+                "enabled": true,
+                "operations": [
+                  {
+                    "kind": "replace",
+                    "pattern": "^\\[^\\[]+",
+                    "flags": "",
+                    "replacement": ""
+                  }
+                ]
+              }
+            },
+            {
+              "id": "strip-after-bracket",
+              "kind": "regex",
+              "enabled": true,
+              "severity": "warning",
+              "title": "Strip text after closing bracket",
+              "description": null,
+              "message": "Response contains text after JSON array",
+              "similar": [],
+              "pattern": "\\][^\\]]+$",
+              "flags": "",
+              "autofix": {
+                "enabled": true,
+                "operations": [
+                  {
+                    "kind": "replace",
+                    "pattern": "\\][^\\]]+$",
+                    "flags": "",
+                    "replacement": "]"
+                  }
+                ]
+              }
+            }
+          ],
+          "learnedRules": []
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "updatedAt": "2026-03-03T00:00:00.000Z",
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-params-05",
+            "fromNodeId": "node-model-template-params",
+            "fromPort": "result",
+            "toNodeId": "node-vp-template-params",
+            "toPort": "result"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-params-vp-lc",
+            "fromNodeId": "node-vp-template-params",
+            "fromPort": "value",
+            "toNodeId": "node-lc-template-params",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-params-vp-router-value",
+            "fromNodeId": "node-vp-template-params",
+            "fromPort": "value",
+            "toNodeId": "node-router-seed-params",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-a57bb78d81a107aca22310b5",
+          "instanceId": "node-vp-template-params"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-params-00",
+      "fromNodeId": "node-parser-params",
+      "toNodeId": "node-query-params",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-params-01",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-parser-params",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-params-02",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-query-params",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-params-03",
+      "fromNodeId": "node-query-params",
+      "toNodeId": "node-prompt-template-params",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-params-04",
+      "fromNodeId": "node-prompt-template-params",
+      "toNodeId": "node-model-template-params",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-params-05",
+      "fromNodeId": "node-model-template-params",
+      "toNodeId": "node-vp-template-params",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-params-07",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-seed-params",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-params-08",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-seed-params",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-params-09",
+      "fromNodeId": "node-parser-params",
+      "toNodeId": "node-prompt-params",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-params-10",
+      "fromNodeId": "node-query-params",
+      "toNodeId": "node-prompt-params",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-params-11",
+      "fromNodeId": "node-prompt-params",
+      "toNodeId": "node-model-params",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-params-12",
+      "fromNodeId": "node-prompt-params",
+      "toNodeId": "node-model-params",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-params-13",
+      "fromNodeId": "node-model-params",
+      "toNodeId": "node-regex-params",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-params-14",
+      "fromNodeId": "node-regex-params",
+      "toNodeId": "node-update-params",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-params-15",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-update-params",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-params-16",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-update-params",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-params-17",
+      "fromNodeId": "node-query-params",
+      "toNodeId": "node-update-params",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-params-fetcher-update-ctx",
+      "fromNodeId": "node-fetcher-params",
+      "toNodeId": "node-update-params",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-params-lc-router-valid",
+      "fromNodeId": "node-lc-template-params",
+      "toNodeId": "node-router-seed-params",
+      "fromPort": "valid",
+      "toPort": "valid"
+    },
+    {
+      "id": "edge-params-router-seed",
+      "fromNodeId": "node-router-seed-params",
+      "toNodeId": "node-seed-params",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-params-trigger-fetcher",
+      "fromNodeId": "node-trigger-params",
+      "toNodeId": "node-fetcher-params",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-params-vp-lc",
+      "fromNodeId": "node-vp-template-params",
+      "toNodeId": "node-lc-template-params",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-params-vp-router-value",
+      "fromNodeId": "node-vp-template-params",
+      "toNodeId": "node-router-seed-params",
+      "fromPort": "value",
+      "toPort": "value"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {}
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-03-03T05:11:10.159Z",
+    "pathId": "path_syr8f4"
+  }
+}

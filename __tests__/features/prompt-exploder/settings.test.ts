@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defaultPromptExploderSettings,
+  parsePromptExploderSettingsResult,
   parsePromptExploderSettings,
 } from '@/features/prompt-exploder/settings';
 
@@ -11,8 +12,20 @@ describe('prompt exploder settings schema', () => {
     expect(parsed).toEqual(defaultPromptExploderSettings);
   });
 
-  it('backfills new governance fields from legacy settings', () => {
-    const legacyRaw = JSON.stringify({
+  it('throws on non-empty invalid payloads', () => {
+    expect(() => parsePromptExploderSettings('{bad-json')).toThrow();
+    expect(() =>
+      parsePromptExploderSettings(
+        JSON.stringify({
+          version: 1,
+          ai: { operationMode: 'rules_only' },
+        })
+      )
+    ).toThrow();
+  });
+
+  it('rejects partial non-empty payloads instead of filling missing sections', () => {
+    const partialRaw = JSON.stringify({
       version: 1,
       learning: {
         enabled: true,
@@ -33,26 +46,28 @@ describe('prompt exploder settings schema', () => {
       },
     });
 
-    const parsed = parsePromptExploderSettings(legacyRaw);
-    expect(parsed.runtime.ruleProfile).toBe('all');
-    expect(parsed.runtime.validationRuleStack).toBe('prompt-exploder');
-    expect(parsed.runtime.orchestratorEnabled).toBe(true);
-    expect(parsed.runtime.benchmarkSuite).toBe('default');
-    expect(parsed.runtime.benchmarkLowConfidenceThreshold).toBe(0.55);
-    expect(parsed.runtime.benchmarkSuggestionLimit).toBe(4);
-    expect(parsed.learning.templateMergeThreshold).toBe(0.63);
-    expect(parsed.learning.benchmarkSuggestionUpsertTemplates).toBe(true);
-    expect(parsed.runtime.customBenchmarkCases).toEqual([]);
-    expect(parsed.learning.minApprovalsForMatching).toBe(1);
-    expect(parsed.learning.maxTemplates).toBe(1000);
-    expect(parsed.learning.autoActivateLearnedTemplates).toBe(true);
-    expect(parsed.learning.templates[0]?.state).toBe('active');
-    expect(parsed.ai.operationMode).toBe('rules_only');
-    expect(parsed.ai.provider).toBe('auto');
-    expect(parsed.ai.modelId).toBe('');
-    expect(parsed.ai.fallbackModelId).toBe('');
-    expect(parsed.ai.temperature).toBe(0.2);
-    expect(parsed.ai.maxTokens).toBe(1200);
-    expect(parsed.patternSnapshots).toEqual([]);
+    const parsed = parsePromptExploderSettingsResult(partialRaw);
+    expect(parsed.settings).toEqual(defaultPromptExploderSettings);
+    expect(parsed.error?.code).toBe('invalid_shape');
+  });
+
+  it('rejects deprecated persisted AI snapshot keys', () => {
+    const result = parsePromptExploderSettingsResult(
+      JSON.stringify({
+        version: 1,
+        runtime: defaultPromptExploderSettings.runtime,
+        learning: defaultPromptExploderSettings.learning,
+        ai: {
+          operationMode: 'hybrid',
+          modelId: 'legacy-model',
+          fallbackModelId: 'legacy-fallback',
+          temperature: 0.7,
+        },
+      })
+    );
+
+    expect(result.settings).toEqual(defaultPromptExploderSettings);
+    expect(result.error?.code).toBe('deprecated_ai_keys');
+    expect(result.error?.deprecatedKeys).toEqual(['modelId', 'fallbackModelId', 'temperature']);
   });
 });

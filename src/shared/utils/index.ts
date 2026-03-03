@@ -9,6 +9,5 @@ export * from './drag-drop';
 export * from './sanitization';
 export * from './tree-operations';
 export * from './folder-tree-profiles-v2';
-export * from './folder-tree-ui-state-v1';
 export * from './master-folder-tree-contract';
 export * from './master-folder-tree-engine';

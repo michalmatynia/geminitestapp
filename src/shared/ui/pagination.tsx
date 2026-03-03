@@ -1,96 +1,149 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '@/shared/utils';
-
 import { Button } from './button';
 import { Label } from './label';
 import { SelectSimple } from './select-simple';
 
 interface PaginationProps {
   page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  totalPages?: number;
+  totalCount?: number;
   pageSize?: number;
+  onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
   showPageSize?: boolean;
+  showInfo?: boolean;
+  isLoading?: boolean;
   className?: string;
   showLabels?: boolean;
-  variant?: 'default' | 'compact';
+  variant?: 'default' | 'compact' | 'panel';
 }
 
+/**
+ * Pagination - A unified component for navigating paginated data.
+ * Merges functionality from basic Pagination and PanelPagination.
+ */
 export function Pagination({
   page,
-  totalPages,
-  onPageChange,
+  totalPages: propTotalPages,
+  totalCount,
   pageSize,
+  onPageChange,
   onPageSizeChange,
   pageSizeOptions = [10, 25, 50, 100],
   showPageSize = false,
+  showInfo = false,
+  isLoading = false,
   className,
   showLabels = true,
   variant = 'default',
-}: PaginationProps): React.JSX.Element {
+}: PaginationProps): React.JSX.Element | null {
+  const calculatedTotalPages = totalCount && pageSize ? Math.ceil(totalCount / pageSize) : 0;
+  const totalPages = propTotalPages ?? calculatedTotalPages;
+
+  if (totalCount === 0 || (totalPages <= 1 && !showPageSize)) {
+    return null;
+  }
+
+  const startItem = totalCount && pageSize ? (page - 1) * pageSize + 1 : 0;
+  const endItem = totalCount && pageSize ? Math.min(page * pageSize, totalCount) : 0;
+
+  const isPanel = variant === 'panel';
   const isCompact = variant === 'compact';
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-3', className)}>
-      <div className='flex items-center gap-3'>
-        {showLabels && !isCompact && (
-          <span className='text-sm font-medium text-muted-foreground'>Page</span>
-        )}
-        <Button
-          type='button'
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={page <= 1}
-          variant='outline'
-          size='sm'
-          className='h-8 w-8 p-0'
-          aria-label='Previous page'
-        >
-          <ChevronLeft className='h-4 w-4' />
-        </Button>
-        <div className='flex items-center gap-2 px-2'>
-          <span className='min-w-fit text-sm font-medium'>{page}</span>
-          <span className='text-sm text-muted-foreground'>/</span>
-          <span className='min-w-fit text-sm text-muted-foreground'>{totalPages}</span>
-        </div>
-        <Button
-          type='button'
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={page >= totalPages}
-          variant='outline'
-          size='sm'
-          className='h-8 w-8 p-0'
-          aria-label='Next page'
-        >
-          <ChevronRight className='h-4 w-4' />
-        </Button>
-      </div>
-
-      {showPageSize && onPageSizeChange && pageSize !== undefined && (
-        <div className='flex items-center gap-2'>
-          {showLabels && !isCompact && (
-            <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>
+    <div
+      className={cn(
+        'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between',
+        isPanel && 'rounded-lg border border-border/60 bg-card/40 px-4 py-3',
+        className
+      )}
+    >
+      {/* Info Section */}
+      {(showInfo || isPanel) && totalCount !== undefined && (
+        <div className='text-sm text-gray-400'>
+          {isLoading ? (
+            <div className='flex items-center gap-2'>
+              <Loader2 className='h-4 w-4 animate-spin text-blue-500' />
+              <span>Loading...</span>
+            </div>
+          ) : (
+            <>
+              Showing{' '}
+              <span className='font-medium text-white'>
+                {startItem}-{endItem}
+              </span>{' '}
+              of <span className='font-medium text-white'>{totalCount}</span> results
+            </>
           )}
-          <SelectSimple
-            size='sm'
-            value={String(pageSize)}
-            onValueChange={(value) => {
-              onPageSizeChange(Number(value));
-              onPageChange(1);
-            }}
-            options={pageSizeOptions.map((size) => ({
-              value: String(size),
-              label: String(size),
-            }))}
-            triggerClassName='h-8 w-24 text-xs'
-          />
         </div>
       )}
+
+      {/* Controls Section */}
+      <div className={cn('flex flex-wrap items-center gap-4', !showInfo && !isPanel && 'w-full justify-between')}>
+        {/* Page Size Selector */}
+        {(showPageSize || isPanel) && onPageSizeChange && pageSize !== undefined && (
+          <div className='flex items-center gap-2'>
+            <Label className='text-xs font-medium text-gray-400 whitespace-nowrap'>
+              {showLabels && !isCompact ? 'Items per page:' : ''}
+            </Label>
+            <SelectSimple
+              size='sm'
+              value={String(pageSize)}
+              onValueChange={(value) => {
+                onPageSizeChange(Number(value));
+                onPageChange(1);
+              }}
+              options={pageSizeOptions.map((size) => ({
+                value: String(size),
+                label: String(size),
+              }))}
+              triggerClassName='h-8 w-20 text-xs'
+            />
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className='flex items-center gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page <= 1 || isLoading}
+            className='h-8 w-8 p-0'
+            aria-label='Previous page'
+          >
+            <ChevronLeft className='h-4 w-4' />
+          </Button>
+
+          <div className='text-xs font-medium text-gray-400 min-w-[80px] text-center'>
+            {isCompact ? (
+              <span>{page} / {totalPages}</span>
+            ) : (
+              <>
+                Page <span className='font-bold text-white'>{page}</span> of{' '}
+                <span className='font-bold text-white'>{totalPages}</span>
+              </>
+            )}
+          </div>
+
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages || isLoading}
+            className='h-8 w-8 p-0'
+            aria-label='Next page'
+          >
+            <ChevronRight className='h-4 w-4' />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

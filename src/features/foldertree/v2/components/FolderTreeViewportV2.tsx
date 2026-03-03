@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { FolderTreeNodeView } from '../types';
 
 import type { MasterFolderTreeController, MasterTreeNodeStatus } from '@/shared/contracts/master-folder-tree';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState, Button } from '@/shared/ui';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import type {
   MasterTreeDropPosition,
@@ -21,6 +21,7 @@ import type { FolderTreeContextMenuItem } from './FolderTreeContextMenu';
 
 import { flattenVisibleNodesV2 } from '../core/engine';
 import { useMasterFolderTreeRuntime } from '../runtime/MasterFolderTreeRuntimeProvider';
+import { cn } from '@/shared/utils';
 
 const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
 
@@ -177,7 +178,7 @@ const DefaultRow = ({
   toggleExpand,
 }: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
   const stateClassName = isSelected
-    ? 'bg-blue-600 text-white'
+    ? 'bg-blue-600 text-white shadow-sm'
     : isMultiSelected
       ? 'bg-blue-500/20 text-blue-100 ring-1 ring-inset ring-blue-400/40'
       : dropPosition === 'before'
@@ -189,11 +190,14 @@ const DefaultRow = ({
             : 'text-gray-300 hover:bg-muted/40';
 
   return (
-    <button
-      type='button'
-      className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${stateClassName}`}
-      style={{ paddingLeft: `${depth * 16 + 8}px` }}
+    <Button
+      variant='ghost'
       onClick={select}
+      className={cn(
+        'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-all h-auto font-normal justify-start',
+        stateClassName
+      )}
+      style={{ paddingLeft: `${depth * 16 + 8}px` }}
     >
       {hasChildren ? (
         <span
@@ -214,12 +218,15 @@ const DefaultRow = ({
       {nodeStatus ? (
         <span
           aria-label={nodeStatus}
-          className={`ml-auto shrink-0 text-xs ${isSelected ? 'text-white/80' : STATUS_COLOR_CLASSES[nodeStatus]}`}
+          className={cn(
+            'ml-auto shrink-0 text-xs',
+            isSelected ? 'text-white/80' : STATUS_COLOR_CLASSES[nodeStatus]
+          )}
         >
           {STATUS_ICON_CHARS[nodeStatus]}
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 };
 
@@ -716,7 +723,6 @@ export function FolderTreeViewportV2({
                           } else if (autoExpandTargetRef.current !== node.id) {
                             if (autoExpandTimerRef.current) {
                               clearTimeout(autoExpandTimerRef.current);
-                              autoExpandTimerRef.current = null;
                             }
                             autoExpandTargetRef.current = null;
                           }

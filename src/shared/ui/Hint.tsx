@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
+import { Label } from './label';
 
 interface HintProps {
   children: ReactNode;
@@ -11,6 +12,10 @@ interface HintProps {
   uppercase?: boolean;
 }
 
+/**
+ * Hint - A small, informational text component for metadata or secondary context.
+ * Leverages the shared Label component for consistent base styling.
+ */
 export function Hint({
   children,
   className,
@@ -33,8 +38,9 @@ export function Hint({
   }[variant];
 
   return (
-    <div
+    <Label
       className={cn(
+        'font-normal', // Hint is usually not bold like standard labels
         sizeClasses,
         variantClasses,
         italic && 'italic',
@@ -43,6 +49,6 @@ export function Hint({
       )}
     >
       {children}
-    </div>
+    </Label>
   );
 }

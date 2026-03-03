@@ -19,6 +19,7 @@ import {
 } from '../runtime';
 import {
   buildMasterNodesFromCaseResolverWorkspace,
+  buildMasterCaseNodesFromCaseResolverWorkspace,
   fromCaseResolverCaseNodeId,
   toCaseResolverCaseNodeId,
   toCaseResolverFileNodeId,
@@ -155,6 +156,19 @@ const nowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
     ? performance.now()
     : Date.now();
+
+export const resolveCaseResolverRootTreeNodes = ({
+  workspace,
+  activeCaseId,
+}: {
+  workspace: CaseResolverWorkspace;
+  activeCaseId: string | null;
+}): MasterTreeNode[] => {
+  if (activeCaseId?.trim()) {
+    return buildMasterNodesFromCaseResolverWorkspace(workspace);
+  }
+  return buildMasterCaseNodesFromCaseResolverWorkspace(workspace);
+};
 
 export function CaseResolverFolderTreeProvider({
   children,
@@ -464,8 +478,12 @@ export function CaseResolverFolderTreeProvider({
   const unresolvedAssetIdSet = assetDerivations.unresolvedAssetIdSet;
 
   const baseMasterNodes = useMemo(
-    (): MasterTreeNode[] => buildMasterNodesFromCaseResolverWorkspace(treeWorkspace),
-    [treeWorkspace]
+    (): MasterTreeNode[] =>
+      resolveCaseResolverRootTreeNodes({
+        workspace: treeWorkspace,
+        activeCaseId: rootActiveCaseId || null,
+      }),
+    [rootActiveCaseId, treeWorkspace]
   );
 
   const masterNodes = useMemo((): MasterTreeNode[] => {

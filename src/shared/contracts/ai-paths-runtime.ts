@@ -25,8 +25,6 @@ export const aiPathNodeStatusSchema = z.enum([
 
 export type AiPathNodeStatus = z.infer<typeof aiPathNodeStatusSchema>;
 export type AiPathNodeStatusDto = AiPathNodeStatus;
-
-// Alias for compatibility
 export const aiPathRuntimeNodeStatusSchema = aiPathNodeStatusSchema;
 export type AiPathRuntimeNodeStatus = AiPathNodeStatus;
 
@@ -162,8 +160,6 @@ export const runtimeEventInputSchema = z.object({
   kind: z.string().optional(),
   level: z.enum(['info', 'warn', 'error', 'debug']).optional(),
   message: z.string(),
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
   nodeId: z.string().nullable().optional(),
   nodeType: z.string().nullable().optional(),
   nodeTitle: z.string().nullable().optional(),
@@ -179,8 +175,6 @@ export const setNodeStatusInputSchema = z.object({
   nodeId: z.string(),
   status: aiPathNodeStatusSchema,
   source: z.enum(['local', 'server']),
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
   iteration: z.number().optional(),
   nodeType: z.string().nullable().optional(),
   nodeTitle: z.string().nullable().optional(),
@@ -245,8 +239,6 @@ export type RuntimeHistoryEntry = z.infer<typeof runtimeHistoryEntrySchema>;
 
 export const runtimeStateSchema = z.object({
   status: runStatusSchema,
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
   nodeStatuses: aiPathRuntimeNodeStatusMapSchema,
   nodeOutputs: z.record(z.string(), runtimePortValuesSchema),
   variables: z.record(z.string(), z.unknown()),
@@ -261,8 +253,6 @@ export const runtimeStateSchema = z.object({
 });
 
 export type RuntimeState = z.infer<typeof runtimeStateSchema> & {
-  runId: string | null;
-  runStartedAt: string | null;
   history?: Record<string, RuntimeHistoryEntry[]> | undefined;
   hashes?: Record<string, string> | undefined;
   hashTimestamps?: Record<string, number> | undefined;

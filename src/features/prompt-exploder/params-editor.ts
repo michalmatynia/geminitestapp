@@ -4,8 +4,8 @@ import {
   inferParamSpecs,
 } from '@/shared/utils/prompt-params';
 import type {
-  ParamSpecDto as ParamSpec,
-  ParamSpecKindDto as ParamSpecKind,
+  ParamSpec,
+  ParamSpecKind,
 } from '@/shared/contracts/prompt-engine';
 
 import type {

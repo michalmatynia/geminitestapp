@@ -15,7 +15,7 @@ import type {
   FilemakerAddressDto as FilemakerAddress,
   FilemakerDatabaseDto as FilemakerDatabase,
 } from '@/shared/contracts/filemaker';
-import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;

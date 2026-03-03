@@ -14,12 +14,12 @@ import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-import { type PromptValidationIssue, validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/shared/lib/prompt-engine/settings';
-import type { PromptValidationSettingsDto as PromptValidationSettings } from '@/shared/contracts/prompt-engine';
+import type { PromptValidationIssue, PromptValidationSettings } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

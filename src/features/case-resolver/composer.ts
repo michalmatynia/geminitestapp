@@ -8,7 +8,6 @@ import {
   type Edge,
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
-  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverEdgeMeta,
@@ -20,7 +19,7 @@ import {
 export type CaseResolverPlainTextTransformInput = {
   nodeId: string;
   nodeMeta: CaseResolverNodeMeta;
-  output: 'plainText' | 'plaintextContent' | 'content';
+  output: 'plainText' | 'plaintextContent';
   value: string;
 };
 
@@ -40,8 +39,6 @@ const DOCUMENT_PLAINTEXT_CONTENT_PORT =
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
-const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
-const LEGACY_DOCUMENT_CONTENT_PORT = CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
 
 const resolveNodeMeta = (
   nodeId: string,
@@ -166,10 +163,8 @@ const appendWithJoin = (current: string, value: string, joinMode: CaseResolverJo
 
 const sortEdgesBySourcePosition = (edges: Edge[], nodeById: Map<string, AiNode>): Edge[] => {
   return [...edges].sort((left: Edge, right: Edge) => {
-    const leftFrom = left.from ?? left.source;
-    const rightFrom = right.from ?? right.source;
-    const leftNode = leftFrom ? nodeById.get(leftFrom) : undefined;
-    const rightNode = rightFrom ? nodeById.get(rightFrom) : undefined;
+    const leftNode = left.source ? nodeById.get(left.source) : undefined;
+    const rightNode = right.source ? nodeById.get(right.source) : undefined;
     if (leftNode && rightNode) {
       if (leftNode.position.y !== rightNode.position.y) {
         return leftNode.position.y - rightNode.position.y;
@@ -201,10 +196,10 @@ const resolveSourceOutputValue = (
   fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
 ): string => {
   if (!sourceOutputs) return '';
-  if (fromPort === DOCUMENT_TEXTFIELD_PORT || fromPort === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
+  if (fromPort === DOCUMENT_TEXTFIELD_PORT) {
     return sourceOutputs.textfield;
   }
-  if (fromPort === DOCUMENT_PLAINTEXT_CONTENT_PORT || fromPort === LEGACY_DOCUMENT_CONTENT_PORT) {
+  if (fromPort === DOCUMENT_PLAINTEXT_CONTENT_PORT) {
     return sourceOutputs.plaintextContent;
   }
   if (fromPort === DOCUMENT_PLAIN_TEXT_PORT) {
@@ -223,10 +218,10 @@ const resolveSourceOutputValue = (
 };
 
 const isTextfieldInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_TEXTFIELD_PORT || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
+  port === DOCUMENT_TEXTFIELD_PORT;
 
 const isPlaintextContentInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_PLAINTEXT_CONTENT_PORT || port === LEGACY_DOCUMENT_CONTENT_PORT || !port;
+  port === DOCUMENT_PLAINTEXT_CONTENT_PORT || !port;
 
 const isPlainTextInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_PLAIN_TEXT_PORT;
@@ -256,17 +251,15 @@ export const compileCaseResolverPrompt = (
     });
 
     graphEdges.forEach((edge: Edge) => {
-      const from = edge.from ?? edge.source;
-      const to = edge.to ?? edge.target;
-      if (!from || !to) return;
-      if (!nodeById.has(from) || !nodeById.has(to)) return;
-      const outgoing = outgoingByNode.get(from) ?? [];
+      if (!edge.source || !edge.target) return;
+      if (!nodeById.has(edge.source) || !nodeById.has(edge.target)) return;
+      const outgoing = outgoingByNode.get(edge.source) ?? [];
       outgoing.push(edge);
-      outgoingByNode.set(from, outgoing);
-      const incoming = incomingByNode.get(to) ?? [];
+      outgoingByNode.set(edge.source, outgoing);
+      const incoming = incomingByNode.get(edge.target) ?? [];
       incoming.push(edge);
-      incomingByNode.set(to, incoming);
-      incomingCount.set(to, (incomingCount.get(to) ?? 0) + 1);
+      incomingByNode.set(edge.target, incoming);
+      incomingCount.set(edge.target, (incomingCount.get(edge.target) ?? 0) + 1);
     });
 
     const sortedNodeIds = sortNodeIdsByPosition(graphNodes);
@@ -290,10 +283,8 @@ export const compileCaseResolverPrompt = (
       visitOrder.push({ nodeId, incomingEdgeId });
 
       const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: Edge, right: Edge) => {
-        const leftTo = left.to ?? left.target;
-        const rightTo = right.to ?? right.target;
-        const leftNode = leftTo ? nodeById.get(leftTo) : undefined;
-        const rightNode = rightTo ? nodeById.get(rightTo) : undefined;
+        const leftNode = left.target ? nodeById.get(left.target) : undefined;
+        const rightNode = right.target ? nodeById.get(right.target) : undefined;
         if (!leftNode || !rightNode) return left.id.localeCompare(right.id);
         if (leftNode.position.y !== rightNode.position.y) {
           return leftNode.position.y - rightNode.position.y;
@@ -305,9 +296,8 @@ export const compileCaseResolverPrompt = (
       });
 
       outgoing.forEach((edge: Edge) => {
-        const to = edge.to ?? edge.target;
-        if (!to) return;
-        visit(to, edge.id);
+        if (!edge.target) return;
+        visit(edge.target, edge.id);
       });
     };
 
@@ -345,17 +335,16 @@ export const compileCaseResolverPrompt = (
         incomingEdges.forEach((edge: Edge): void => {
           const acceptsEdge =
             type === 'textfield'
-              ? isTextfieldInputPort(edge.toPort)
+              ? isTextfieldInputPort(edge.targetHandle)
               : type === 'plaintextContent'
-                ? isPlaintextContentInputPort(edge.toPort)
+                ? isPlaintextContentInputPort(edge.targetHandle)
                 : type === 'plainText'
-                  ? isPlainTextInputPort(edge.toPort)
-                  : isWysiwygContentInputPort(edge.toPort);
+                  ? isPlainTextInputPort(edge.targetHandle)
+                  : isWysiwygContentInputPort(edge.targetHandle);
           if (!acceptsEdge) return;
-          const edgeFromNodeId = edge.from ?? edge.source;
-          if (!edgeFromNodeId) return;
-          const sourceOutputs = outputsByNode[edgeFromNodeId];
-          const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
+          if (!edge.source) return;
+          const sourceOutputs = outputsByNode[edge.source];
+          const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.sourceHandle, type);
           const sourceValue = type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
           if (!sourceValue) return;
           const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode ?? 'newline';
@@ -488,9 +477,8 @@ export const compileCaseResolverPrompt = (
         .filter((nodeId: string): boolean => {
           const outgoing = outgoingByNode.get(nodeId) ?? [];
           return !outgoing.some((edge: Edge): boolean => {
-            const edgeToNodeId = edge.to ?? edge.target;
-            if (!edgeToNodeId) return false;
-            return visitedNodeIds.has(edgeToNodeId);
+            const targetNodeId = edge.target;
+            return typeof targetNodeId === 'string' && visitedNodeIds.has(targetNodeId);
           });
         });
       const dedupedLeafOutputs: string[] = [];

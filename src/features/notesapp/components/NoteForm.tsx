@@ -7,7 +7,7 @@ import React from 'react';
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/shared/contracts/notes';
-import { Button, Input, FormField, Dialog, DialogContent, DialogTitle } from '@/shared/ui';
+import { Button, Input, FormField, Dialog, DialogContent, DialogTitle, FormSection } from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
@@ -56,35 +56,36 @@ function NoteFormInner(): React.JSX.Element {
         onSubmit={(e: React.FormEvent): void => {
           void handleSubmit(e);
         }}
-        className='space-y-6'
       >
-        <FormField label='Title'>
-          <Input
-            type='text'
-            placeholder='Enter note title'
-            value={title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
-            className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none h-12'
-            required
-          />
-        </FormField>
+        <FormSection className='p-0 border-none shadow-none bg-transparent space-y-6'>
+          <FormField label='Title'>
+            <Input
+              type='text'
+              placeholder='Enter note title'
+              value={title}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
+              className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none h-12'
+              required
+            />
+          </FormField>
 
-        <FormField label='Content'>
-          <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
-            <MarkdownToolbar />
-          </MarkdownToolbarActionsProvider>
-          <div className='mt-2'>
-            {editorMode === 'markdown' || editorMode === 'code' ? (
-              <MarkdownEditor isCodeMode={editorMode === 'code'} />
-            ) : (
-              <WysiwygEditor />
-            )}
-          </div>
-        </FormField>
+          <FormField label='Content'>
+            <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
+              <MarkdownToolbar />
+            </MarkdownToolbarActionsProvider>
+            <div className='mt-2'>
+              {editorMode === 'markdown' || editorMode === 'code' ? (
+                <MarkdownEditor isCodeMode={editorMode === 'code'} />
+              ) : (
+                <WysiwygEditor />
+              )}
+            </div>
+          </FormField>
 
-        <FileAttachments />
+          <FileAttachments />
 
-        <NoteMetadata showTitle={false} />
+          <NoteMetadata showTitle={false} />
+        </FormSection>
       </form>
 
       <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>

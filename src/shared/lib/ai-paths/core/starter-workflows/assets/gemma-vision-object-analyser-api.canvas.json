@@ -1,0 +1,637 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "template_gemma_api",
+    "version": 1,
+    "name": "Gemma Vision Analyser (Custom API)",
+    "description": "Image Studio → Fetcher → custom vision REST API → bounds extraction → canvas repositioning. Fill in your API URL and auth in the \"Vision API Call\" node. Edit the bodyTemplate to change detection instructions. Supports Ollama, Google Gemini REST, HuggingFace, and any OpenAI-compatible endpoint.",
+    "trigger": "image_studio_object_analysis",
+    "updatedAt": "2026-03-03T05:11:10.161Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": false,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-10bb206ccd8e1839f7dea804",
+      "type": "bounds_normalizer",
+      "title": "Normalise Bounds",
+      "description": "Converts API coordinates to standard {left,top,width,height}. Change inputFormat to match your API output.",
+      "position": {
+        "x": 1460,
+        "y": 400
+      },
+      "inputs": [
+        "value",
+        "context"
+      ],
+      "outputs": [
+        "value"
+      ],
+      "config": {
+        "boundsNormalizer": {
+          "inputFormat": "pixels_tlwh",
+          "boundsPath": "objectBounds",
+          "confidencePath": "confidence",
+          "labelPath": "label"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e3",
+            "fromNodeId": "node-4b500118c7ee57b5535a9a50",
+            "fromPort": "context",
+            "toNodeId": "node-10bb206ccd8e1839f7dea804",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "e5",
+            "fromNodeId": "node-cc869a199c139b6073d9b971",
+            "fromPort": "result",
+            "toNodeId": "node-10bb206ccd8e1839f7dea804",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "e6",
+            "fromNodeId": "node-10bb206ccd8e1839f7dea804",
+            "fromPort": "value",
+            "toNodeId": "node-e551cfe41bd67ee1917ae45c",
+            "toPort": "context"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-4f75d348a17987558861fa00",
+          "instanceId": "node-10bb206ccd8e1839f7dea804"
+        }
+      }
+    },
+    {
+      "id": "node-4b500118c7ee57b5535a9a50",
+      "type": "fetcher",
+      "title": "Resolve Trigger Context",
+      "description": "Resolves the live trigger context (imageUrl, imageWidth, imageHeight, slotId, projectId) into a structured output for downstream nodes.",
+      "position": {
+        "x": 440,
+        "y": 400
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e1",
+            "fromNodeId": "node-69983ac905e0f112f3b67d91",
+            "fromPort": "trigger",
+            "toNodeId": "node-4b500118c7ee57b5535a9a50",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "e3",
+            "fromNodeId": "node-4b500118c7ee57b5535a9a50",
+            "fromPort": "context",
+            "toNodeId": "node-10bb206ccd8e1839f7dea804",
+            "toPort": "context"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-3bbfe935aaaf54a0c63ad75d",
+          "instanceId": "node-4b500118c7ee57b5535a9a50"
+        }
+      }
+    },
+    {
+      "id": "node-68d148be492eab21c31603d6",
+      "type": "api_advanced",
+      "title": "Vision API Call",
+      "description": "Configure URL and auth here in the node config panel. Edit the bodyTemplate to change the system prompt or model name. Use {{ context.imageUrl }} to reference the image URL from the trigger context. Example Gemini body: {\"contents\":[{\"parts\":[{\"text\":\"You are a product analysis system...\"},{\"file_data\":{\"mime_type\":\"image/jpeg\",\"file_uri\":\"{{ context.imageUrl }}\"}}]}]}",
+      "position": {
+        "x": 780,
+        "y": 400
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "value",
+        "bundle"
+      ],
+      "config": {
+        "apiAdvanced": {
+          "url": "http://localhost:11434/api/generate",
+          "method": "POST",
+          "authMode": "none",
+          "headersJson": "{\"Content-Type\":\"application/json\"}",
+          "bodyTemplate": "{\"model\":\"gemma3\",\"prompt\":\"You are a product image analysis system. Detect the main product or object in the image. Return ONLY valid JSON with NO additional text or markdown: {\\\"objectBounds\\\":{\\\"left\\\":0,\\\"top\\\":0,\\\"width\\\":0,\\\"height\\\":0},\\\"confidence\\\":0.0,\\\"label\\\":\\\"object\\\"}. All pixel values must be integers representing the bounding box in source image pixel coordinates.\",\"images\":[\"{{ context.imageUrl }}\"],\"stream\":false}",
+          "responsePath": "response",
+          "retryEnabled": true,
+          "retryAttempts": 1
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e2",
+            "fromNodeId": "node-69983ac905e0f112f3b67d91",
+            "fromPort": "context",
+            "toNodeId": "node-68d148be492eab21c31603d6",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "e4",
+            "fromNodeId": "node-68d148be492eab21c31603d6",
+            "fromPort": "value",
+            "toNodeId": "node-cc869a199c139b6073d9b971",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-fccc73be2aedac330e08dcc6",
+          "instanceId": "node-68d148be492eab21c31603d6"
+        }
+      }
+    },
+    {
+      "id": "node-69983ac905e0f112f3b67d91",
+      "type": "trigger",
+      "title": "Image Studio Trigger",
+      "description": "Receives imageUrl, imageWidth, imageHeight, slotId, projectId from Image Studio object analysis.",
+      "position": {
+        "x": 100,
+        "y": 400
+      },
+      "inputs": [],
+      "outputs": [
+        "context",
+        "trigger"
+      ],
+      "config": {
+        "trigger": {
+          "event": "image_studio_object_analysis",
+          "contextMode": "trigger_only"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "e1",
+            "fromNodeId": "node-69983ac905e0f112f3b67d91",
+            "fromPort": "trigger",
+            "toNodeId": "node-4b500118c7ee57b5535a9a50",
+            "toPort": "trigger"
+          },
+          {
+            "edgeId": "e2",
+            "fromNodeId": "node-69983ac905e0f112f3b67d91",
+            "fromPort": "context",
+            "toNodeId": "node-68d148be492eab21c31603d6",
+            "toPort": "context"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-243fd663333907c000bc5dcb",
+          "instanceId": "node-69983ac905e0f112f3b67d91"
+        }
+      }
+    },
+    {
+      "id": "node-c32f4d10d8b04435082a6c28",
+      "type": "canvas_output",
+      "title": "Canvas Output",
+      "description": "Image Studio terminal node. Emits bounds at image_studio_bounds in run.result — no manual field mapping required.",
+      "position": {
+        "x": 2140,
+        "y": 400
+      },
+      "inputs": [
+        "value",
+        "confidence",
+        "label"
+      ],
+      "outputs": [
+        "value"
+      ],
+      "config": {
+        "canvasOutput": {
+          "outputKey": "image_studio_bounds",
+          "confidencePath": "confidence",
+          "labelPath": "label"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e7",
+            "fromNodeId": "node-e551cfe41bd67ee1917ae45c",
+            "fromPort": "context",
+            "toNodeId": "node-c32f4d10d8b04435082a6c28",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": []
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-5ba8c5a412a3bdf14d17faac",
+          "instanceId": "node-c32f4d10d8b04435082a6c28"
+        }
+      }
+    },
+    {
+      "id": "node-cc869a199c139b6073d9b971",
+      "type": "regex",
+      "title": "Extract Bounds JSON",
+      "description": "Pulls the JSON object out of the API response text.",
+      "position": {
+        "x": 1120,
+        "y": 400
+      },
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "result"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "",
+          "mode": "extract_json",
+          "matchMode": "first",
+          "outputMode": "object"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e4",
+            "fromNodeId": "node-68d148be492eab21c31603d6",
+            "fromPort": "value",
+            "toNodeId": "node-cc869a199c139b6073d9b971",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "e5",
+            "fromNodeId": "node-cc869a199c139b6073d9b971",
+            "fromPort": "result",
+            "toNodeId": "node-10bb206ccd8e1839f7dea804",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-4a16cd5ffba5be3e872f0307",
+          "instanceId": "node-cc869a199c139b6073d9b971"
+        }
+      }
+    },
+    {
+      "id": "node-e551cfe41bd67ee1917ae45c",
+      "type": "validator",
+      "title": "Validate Bounds",
+      "description": "Ensures all four bounding-box fields are present before passing downstream.",
+      "position": {
+        "x": 1800,
+        "y": 400
+      },
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "context",
+        "valid",
+        "errors"
+      ],
+      "config": {
+        "validator": {
+          "requiredPaths": [
+            "left",
+            "top",
+            "width",
+            "height"
+          ],
+          "mode": "all"
+        }
+      },
+      "data": {},
+      "createdAt": "2026-03-03T05:11:10.161Z",
+      "updatedAt": null,
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "e6",
+            "fromNodeId": "node-10bb206ccd8e1839f7dea804",
+            "fromPort": "value",
+            "toNodeId": "node-e551cfe41bd67ee1917ae45c",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "e7",
+            "fromNodeId": "node-e551cfe41bd67ee1917ae45c",
+            "fromPort": "context",
+            "toNodeId": "node-c32f4d10d8b04435082a6c28",
+            "toPort": "value"
+          }
+        ]
+      },
+      "extensions": {
+        "aiPathsIdentity": {
+          "nodeTypeId": "nt-492a3f1addc4354b2dd0dce2",
+          "instanceId": "node-e551cfe41bd67ee1917ae45c"
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNodeId": "node-69983ac905e0f112f3b67d91",
+      "toNodeId": "node-4b500118c7ee57b5535a9a50",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "e2",
+      "fromNodeId": "node-69983ac905e0f112f3b67d91",
+      "toNodeId": "node-68d148be492eab21c31603d6",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "e3",
+      "fromNodeId": "node-4b500118c7ee57b5535a9a50",
+      "toNodeId": "node-10bb206ccd8e1839f7dea804",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "e4",
+      "fromNodeId": "node-68d148be492eab21c31603d6",
+      "toNodeId": "node-cc869a199c139b6073d9b971",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "e5",
+      "fromNodeId": "node-cc869a199c139b6073d9b971",
+      "toNodeId": "node-10bb206ccd8e1839f7dea804",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "e6",
+      "fromNodeId": "node-10bb206ccd8e1839f7dea804",
+      "toNodeId": "node-e551cfe41bd67ee1917ae45c",
+      "fromPort": "value",
+      "toPort": "context"
+    },
+    {
+      "id": "e7",
+      "fromNodeId": "node-e551cfe41bd67ee1917ae45c",
+      "toNodeId": "node-c32f4d10d8b04435082a6c28",
+      "fromPort": "context",
+      "toPort": "value"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "validation": {
+    "schemaVersion": 2,
+    "enabled": true,
+    "policy": "block_below_threshold",
+    "warnThreshold": 70,
+    "blockThreshold": 50,
+    "baseScore": 100,
+    "collectionMap": {
+      "product": "products",
+      "note": "notes"
+    },
+    "docsSources": [
+      "ai-paths:node-docs",
+      "ai-paths:quick-wiring",
+      "ai-paths:description-flow",
+      "ai-paths:jobs-flow",
+      "docs/ai-paths/parameter-inference-workflow.md",
+      "docs/ai-paths/description-inference-v3-longform-ui-runbook.md"
+    ],
+    "rules": [
+      {
+        "id": "graph.requires_trigger",
+        "title": "Path has trigger node",
+        "description": "A runnable path must include at least one Trigger node.",
+        "enabled": true,
+        "severity": "error",
+        "module": "graph",
+        "sequence": 10,
+        "conditionMode": "all",
+        "conditions": [
+          {
+            "id": "graph-trigger-exists",
+            "operator": "jsonpath_exists",
+            "valuePath": "counts.byType.trigger"
+          },
+          {
+            "id": "graph-trigger-non-empty",
+            "operator": "jsonpath_equals",
+            "valuePath": "counts.byType.trigger",
+            "expected": 1
+          }
+        ],
+        "weight": 50,
+        "forceProbabilityIfFailed": 0,
+        "recommendation": "Add a Trigger node and connect it to the workflow entry branch.",
+        "docsBindings": [
+          "ai-paths:node-docs",
+          "ai-paths:quick-wiring",
+          "ai-paths:description-flow",
+          "ai-paths:jobs-flow",
+          "docs/ai-paths/parameter-inference-workflow.md",
+          "docs/ai-paths/description-inference-v3-longform-ui-runbook.md"
+        ]
+      },
+      {
+        "id": "simulation.requires_id_and_collection",
+        "title": "Simulation requires entity ID and mapped collection",
+        "description": "Simulation nodes used for preflight/testing need an entity ID and a resolvable collection map entry.",
+        "enabled": true,
+        "severity": "error",
+        "module": "simulation",
+        "appliesToNodeTypes": [
+          "simulation"
+        ],
+        "sequence": 20,
+        "conditionMode": "all",
+        "conditions": [
+          {
+            "id": "simulation-resolves",
+            "operator": "entity_collection_resolves"
+          }
+        ],
+        "weight": 60,
+        "forceProbabilityIfFailed": 0,
+        "recommendation": "Set Simulation.entityId (or productId) and define mapping for Simulation.entityType in Validation settings.",
+        "docsBindings": [
+          "ai-paths:node-docs",
+          "ai-paths:quick-wiring",
+          "ai-paths:description-flow",
+          "ai-paths:jobs-flow",
+          "docs/ai-paths/parameter-inference-workflow.md",
+          "docs/ai-paths/description-inference-v3-longform-ui-runbook.md"
+        ]
+      },
+      {
+        "id": "database.query.collection_declared",
+        "title": "Database query has collection",
+        "description": "Database nodes must target a valid collection.",
+        "enabled": true,
+        "severity": "error",
+        "module": "database",
+        "appliesToNodeTypes": [
+          "database"
+        ],
+        "sequence": 30,
+        "conditionMode": "all",
+        "conditions": [
+          {
+            "id": "database-collection-exists",
+            "operator": "collection_exists",
+            "field": "config.database.query.collection"
+          }
+        ],
+        "weight": 35,
+        "recommendation": "Choose a known collection in Database node config or provide a valid custom collection.",
+        "docsBindings": [
+          "ai-paths:node-docs",
+          "ai-paths:jobs-flow",
+          "ai-paths:quick-wiring",
+          "ai-paths:description-flow",
+          "docs/ai-paths/parameter-inference-workflow.md",
+          "docs/ai-paths/description-inference-v3-longform-ui-runbook.md"
+        ]
+      },
+      {
+        "id": "database.update.identity_wired",
+        "title": "Database update/delete has identity input",
+        "description": "Write operations should have explicit identity wiring to avoid hidden fallback updates.",
+        "enabled": true,
+        "severity": "error",
+        "module": "database",
+        "appliesToNodeTypes": [
+          "database"
+        ],
+        "sequence": 40,
+        "conditionMode": "any",
+        "conditions": [
+          {
+            "id": "database-op-is-not-write",
+            "operator": "in",
+            "field": "config.database.operation",
+            "list": [
+              "update",
+              "delete"
+            ],
+            "negate": true
+          },
+          {
+            "id": "database-write-has-incoming-id-port",
+            "operator": "has_incoming_port",
+            "port": "entityId"
+          },
+          {
+            "id": "database-write-has-incoming-product-id-port",
+            "operator": "has_incoming_port",
+            "port": "productId"
+          }
+        ],
+        "weight": 40,
+        "recommendation": "Wire Parser/Context output into Database.entityId (or productId) for deterministic writes.",
+        "docsBindings": [
+          "ai-paths:node-docs",
+          "ai-paths:quick-wiring",
+          "ai-paths:description-flow",
+          "ai-paths:jobs-flow",
+          "docs/ai-paths/parameter-inference-workflow.md",
+          "docs/ai-paths/description-inference-v3-longform-ui-runbook.md"
+        ]
+      }
+    ],
+    "inferredCandidates": [],
+    "docsSyncState": {
+      "lastSyncStatus": "idle",
+      "sourceCount": 0,
+      "candidateCount": 0,
+      "lastSyncWarnings": []
+    },
+    "lastEvaluatedAt": null
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-03-03T05:11:10.161Z",
+    "pathId": "template_gemma_api"
+  }
+}

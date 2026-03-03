@@ -217,7 +217,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     }
 
     setSendingToAi(true);
-    const startedAt = new Date().toISOString();
     let directJobId: string | null = null;
 
     try {
@@ -283,16 +282,11 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
       if (!result) throw new Error('AI prompt timed out.');
 
-      const resolvedRunId = createRunId();
-      const resolvedRunStartedAt = startedAt;
-
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
         const aiOutputs = prev.outputs?.[aiNode.id] ?? {};
 
         return {
           ...prev,
-          runId: resolvedRunId,
-          runStartedAt: resolvedRunStartedAt,
           outputs: {
             ...(prev.outputs ?? {}),
             [aiNode.id]: {

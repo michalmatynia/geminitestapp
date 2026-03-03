@@ -43,8 +43,6 @@ export function useAiPathsRuntimeState() {
       kind: input.kind,
       level: input.level,
       message: input.message,
-      ...(input.runId !== undefined ? { runId: input.runId } : {}),
-      ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
       ...(input.nodeId != null ? { nodeId: input.nodeId } : {}),
       ...(input.nodeType != null ? { nodeType: input.nodeType } : {}),
       ...(input.nodeTitle != null ? { nodeTitle: input.nodeTitle } : {}),
@@ -163,8 +161,6 @@ export function useAiPathsRuntimeState() {
         message:
           input.message ??
           `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
-        ...(input.runId !== undefined ? { runId: input.runId } : {}),
-        ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
         nodeId: input.nodeId,
         ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
         ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),

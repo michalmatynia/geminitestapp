@@ -64,13 +64,15 @@ export function Model3DBlock(): React.ReactNode {
           showGround,
           enableContactShadows,
           enableVignette,
+          transform: {
+            position,
+            rotation,
+            scale,
+          },
         }}
         autoFit={autoFit}
         presentationMode={presentationMode}
         allowUserControls={false}
-        modelPosition={position}
-        modelRotation={rotation}
-        modelScale={scale}
         className='h-full w-full'
       />
     </div>

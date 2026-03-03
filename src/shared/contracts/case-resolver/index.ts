@@ -1061,7 +1061,6 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
   { value: 'none', label: 'No Separator' },
 ];
 
-export const CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT: CaseResolverDocumentNodePort = 'content';
 export const CASE_RESOLVER_PLAINTEXT_CONTENT_PORT: CaseResolverDocumentNodePort =
   'plaintextContent';
 export const CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT: CaseResolverDocumentNodePort =

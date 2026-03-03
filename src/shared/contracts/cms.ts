@@ -561,7 +561,7 @@ export const cmsPageSchema = dtoBaseSchema
         order: z.number(),
       })
     ),
-    slugs: z.union([z.array(z.string()), z.array(cmsSlugSchema)]),
+    slugs: z.array(cmsSlugSchema),
   })
   .merge(cmsPageSeoSchema);
 

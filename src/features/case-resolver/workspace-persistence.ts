@@ -89,13 +89,6 @@ type PersistWorkspaceInput = {
   source: string;
 };
 
-type ExternalizeNodeFileSnapshotsResult = {
-  workspace: CaseResolverWorkspace;
-  migratedCount: number;
-  failedCount: number;
-  migratedBytes: number;
-};
-
 const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {
   const scope = globalThis as typeof globalThis & {
     [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
@@ -334,18 +327,6 @@ const readCaseResolverNodeFileSnapshotStorageMode = (
   return typeof candidate === 'string' && candidate.trim().length > 0 ? candidate.trim() : null;
 };
 
-const markCaseResolverNodeFileSnapshotAsKeyed = (
-  asset: CaseResolverAssetFile
-): CaseResolverAssetFile => ({
-  ...asset,
-  textContent: '',
-  metadata: {
-    ...(asset.metadata ?? {}),
-    [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]:
-      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED,
-  },
-});
-
 const fetchSettingsPayloadWithTimeout = async (input: {
   url: string;
   timeoutMs: number;
@@ -504,7 +485,7 @@ export const fetchCaseResolverNodeFileSnapshot = async (
       action: 'node_file_snapshot_validation_failed',
       message: `asset_id=${assetId} ${error instanceof Error ? error.message : 'unknown_error'}`,
     });
-    throw error;
+    return null;
   }
 };
 
@@ -998,73 +979,15 @@ const summarizeWorkspacePersistPayload = (workspace: CaseResolverWorkspace): {
   };
 };
 
-const externalizeInlineNodeFileSnapshotsForPersist = async (
-  workspace: CaseResolverWorkspace,
-  source: string
-): Promise<ExternalizeNodeFileSnapshotsResult> => {
-  if (!Array.isArray(workspace.assets) || workspace.assets.length === 0) {
-    return {
-      workspace,
-      migratedCount: 0,
-      failedCount: 0,
-      migratedBytes: 0,
-    };
-  }
-
-  let didChange = false;
-  let migratedCount = 0;
-  let failedCount = 0;
-  let migratedBytes = 0;
-
-  const nextAssets = await Promise.all(
-    workspace.assets.map(async (asset): Promise<CaseResolverAssetFile> => {
-      if (asset.kind !== 'node_file') return asset;
-
-      const inlineText = typeof asset.textContent === 'string' ? asset.textContent : '';
-      const trimmedInlineText = inlineText.trim();
-      const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
-      const isKeyed = storageMode === CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
-
-      if (trimmedInlineText.length === 0) {
-        if (!inlineText && !isKeyed) return asset;
-        didChange = didChange || inlineText.length > 0;
-        return {
-          ...asset,
-          textContent: '',
-        };
-      }
-
-      if (isKeyed) {
-        didChange = true;
-        return {
-          ...asset,
-          textContent: '',
-        };
-      }
-
-      const didPersist = await persistCaseResolverNodeFileSnapshotText({
-        assetId: asset.id,
-        textContent: inlineText,
-        source: `${source}_node_file_externalize`,
-      });
-      if (!didPersist) {
-        failedCount += 1;
-        return asset;
-      }
-
-      migratedCount += 1;
-      migratedBytes += inlineText.length;
-      didChange = true;
-      return markCaseResolverNodeFileSnapshotAsKeyed(asset);
+const findInlineNodeFileSnapshotAssetIds = (workspace: CaseResolverWorkspace): string[] => {
+  if (!Array.isArray(workspace.assets) || workspace.assets.length === 0) return [];
+  return workspace.assets
+    .filter((asset): boolean => {
+      if (asset.kind !== 'node_file') return false;
+      const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
+      return inlineText.length > 0;
     })
-  );
-
-  return {
-    workspace: didChange ? { ...workspace, assets: nextAssets } : workspace,
-    migratedCount,
-    failedCount,
-    migratedBytes,
-  };
+    .map((asset) => asset.id);
 };
 
 /**
@@ -1149,6 +1072,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
 ): Promise<PersistCaseResolverWorkspaceResult> => {
   const startedAt = Date.now();
   const normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
+  let workspaceForPersistPipeline = normalizedWorkspace;
   const normalizationDiagnostics =
     getCaseResolverWorkspaceNormalizationDiagnostics(normalizedWorkspace);
   logCaseResolverWorkspaceEvent({
@@ -1160,27 +1084,32 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `ownership_repaired_count=${normalizationDiagnostics.ownershipRepairedCount}`,
       `ownership_unresolved_count=${normalizationDiagnostics.ownershipUnresolvedCount}`,
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
-    ].join(' '),
+      ].join(' '),
   });
-  const externalizedNodeFiles = await externalizeInlineNodeFileSnapshotsForPersist(
-    normalizedWorkspace,
-    input.source
+  const inlineNodeFileSnapshotAssetIds = findInlineNodeFileSnapshotAssetIds(
+    workspaceForPersistPipeline
   );
-  if (externalizedNodeFiles.migratedCount > 0 || externalizedNodeFiles.failedCount > 0) {
+  if (inlineNodeFileSnapshotAssetIds.length > 0) {
+    const message = [
+      'Case Resolver workspace contains unsupported inline node-file snapshots.',
+      'Inline node-file snapshot text is no longer supported in workspace payloads.',
+      `Asset IDs: ${inlineNodeFileSnapshotAssetIds.join(', ')}.`,
+    ].join(' ');
     logCaseResolverWorkspaceEvent({
       source: input.source,
-      action: 'node_file_snapshot_externalize',
+      action: 'persist_rejected_inline_node_file_snapshots',
       mutationId: input.mutationId,
-      workspaceRevision: getCaseResolverWorkspaceRevision(externalizedNodeFiles.workspace),
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
       durationMs: Date.now() - startedAt,
-      message: [
-        `migrated_count=${externalizedNodeFiles.migratedCount}`,
-        `failed_count=${externalizedNodeFiles.failedCount}`,
-        `migrated_bytes=${externalizedNodeFiles.migratedBytes}`,
-      ].join(' '),
+      message,
     });
+    return {
+      ok: false,
+      conflict: false,
+      error: message,
+    };
   }
-  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(externalizedNodeFiles.workspace);
+  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(workspaceForPersistPipeline);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);
   const payloadBytes = serializedWorkspace.length;
   logCaseResolverWorkspaceEvent({
@@ -1278,7 +1207,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       mutationId: input.mutationId,
       expectedRevision: input.expectedRevision,
       currentRevision,
-      workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
       payloadBytes,
       durationMs: Date.now() - startedAt,
     });
@@ -1300,7 +1229,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     action: 'persist_failed',
     mutationId: input.mutationId,
     expectedRevision: input.expectedRevision,
-    workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+    workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
     payloadBytes,
     durationMs: Date.now() - startedAt,
     message,

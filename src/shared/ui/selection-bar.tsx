@@ -6,6 +6,7 @@ import React from 'react';
 import { cn } from '@/shared/utils';
 
 import { ActionMenu } from './ActionMenu';
+import { Badge } from './badge';
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './dropdown-menu';
 
 interface SelectionBarProps<T> {
@@ -49,9 +50,9 @@ export function SelectionBar<T>({
             <CheckSquare className='h-3.5 w-3.5' />
             <span className='text-xs font-medium'>{label}</span>
             {selectedCount > 0 && (
-              <span className='rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary border border-primary/20'>
+              <Badge variant='secondary' className='px-1.5 py-0 h-4 text-[9px] font-bold'>
                 {selectedCount}
-              </span>
+              </Badge>
             )}
           </div>
         }

@@ -48,7 +48,10 @@ import {
   resolvePromptValidationRuntime,
 } from '../prompt-validation-orchestrator';
 import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../runtime-load-shedder';
-import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
+import {
+  parsePromptExploderSettingsResult,
+  PROMPT_EXPLODER_SETTINGS_KEY,
+} from '../settings';
 import {
   buildCaseResolverSegmentCaptureRules,
   resolveCaseResolverBridgePayloadForTransfer,
@@ -144,6 +147,7 @@ export function usePromptExploderState() {
     signature: string;
     document: PromptExploderDocument;
   } | null>(null);
+  const settingsParseErrorRef = useRef<string | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const returnTarget = returnTo.startsWith('/admin/case-resolver')
@@ -154,6 +158,7 @@ export function usePromptExploderState() {
 
   const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const hasPersistedExploderSettingsPayload = Boolean(rawExploderSettings?.trim());
   const rawPromptLibrary = settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
   const rawValidatorPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
 
@@ -161,10 +166,14 @@ export function usePromptExploderState() {
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
   );
-  const promptExploderSettings = useMemo(
-    () => parsePromptExploderSettings(rawExploderSettings),
+  const promptExploderSettingsResult = useMemo(
+    () => parsePromptExploderSettingsResult(rawExploderSettings),
     [rawExploderSettings]
   );
+  const promptExploderSettingsValidationError = hasPersistedExploderSettingsPayload
+    ? promptExploderSettingsResult.error
+    : null;
+  const promptExploderSettings = promptExploderSettingsResult.settings;
   const promptLibraryState = useMemo(
     () => parsePromptExploderLibrary(rawPromptLibrary),
     [rawPromptLibrary]
@@ -177,6 +186,22 @@ export function usePromptExploderState() {
     () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
     [validatorPatternLists]
   );
+  useEffect(() => {
+    const error = promptExploderSettingsResult.error;
+    const raw = rawExploderSettings?.trim() ?? '';
+    if (!error || !raw) return;
+    const signature = `${raw}::${error.code}::${error.message}`;
+    if (settingsParseErrorRef.current === signature) return;
+    settingsParseErrorRef.current = signature;
+    logClientError(error, {
+      context: {
+        source: 'usePromptExploderState',
+        action: 'parsePromptExploderSettings',
+        settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
+      },
+    });
+    toast(error.message, { variant: 'error' });
+  }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
   const promptLibraryItems = useMemo(
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
@@ -302,6 +327,10 @@ export function usePromptExploderState() {
   }, [promptExploderSettings, shouldPreferCaseResolverValidationStack, validatorPatternLists]);
 
   const handleExplode = useCallback((): void => {
+    if (promptExploderSettingsValidationError) {
+      toast(promptExploderSettingsValidationError.message, { variant: 'error' });
+      return;
+    }
     const trimmed = promptText.trim();
     if (!trimmed) {
       toast('Enter a prompt first.', { variant: 'info' });
@@ -429,6 +458,7 @@ export function usePromptExploderState() {
     runtimeResolution.runtime,
     learningDraft.similarityThreshold,
     promptExploderSettings.runtime.orchestratorEnabled,
+    promptExploderSettingsValidationError,
     toast,
   ]);
 

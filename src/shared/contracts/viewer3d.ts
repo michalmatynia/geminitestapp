@@ -146,8 +146,15 @@ export const viewer3DStateSchema = z.object({
 export type Viewer3DStateDto = z.infer<typeof viewer3DStateSchema>;
 export type Viewer3DState = Viewer3DStateDto;
 
+export type Viewer3DTransform = {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number | [number, number, number];
+};
+
 export type Viewer3DSettings = Partial<Viewer3DState> & {
   enableAntiAliasing?: boolean;
+  transform?: Viewer3DTransform;
 };
 
 export type Supported3DExtension = '.glb' | '.gltf';

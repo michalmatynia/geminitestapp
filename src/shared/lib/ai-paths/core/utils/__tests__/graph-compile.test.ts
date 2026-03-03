@@ -530,7 +530,7 @@ describe('compileGraph', () => {
     expect(report.findings.some((finding) => finding.code === 'unsupported_cycle')).toBe(false);
   });
 
-  it('reports the trigger-simulation handshake cycle pattern as explicit warning', () => {
+  it('treats trigger-simulation handshake cycles as unsupported', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'trigger-1',
@@ -563,13 +563,10 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    const cycleFinding = report.findings.find((finding) => finding.code === 'cycle_detected');
-    expect(report.ok).toBe(true);
-    expect(cycleFinding).toBeDefined();
-    expect(cycleFinding?.message).toContain('Trigger/Simulation handshake loop');
-    expect(cycleFinding?.message).toContain('Trigger -> Fetcher -> Context Filter');
-    expect(cycleFinding?.metadata?.['legacyTriggerSimulationHandshake']).toBe(true);
-    expect(report.findings.some((finding) => finding.code === 'unsupported_cycle')).toBe(false);
+    const unsupported = report.findings.find((finding) => finding.code === 'unsupported_cycle');
+    expect(report.ok).toBe(false);
+    expect(unsupported).toBeDefined();
+    expect(unsupported?.severity).toBe('error');
     expect(report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')).toBe(
       false
     );
@@ -792,7 +789,7 @@ describe('compileGraph', () => {
     expect(finding?.message).toContain('Trigger -> Fetcher');
   });
 
-  it('normalizes legacy Trigger.context -> Fetcher.context wiring to Trigger.trigger -> Fetcher.trigger', () => {
+  it('drops legacy Trigger.context -> Fetcher.context wiring and reports missing required trigger input', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'trigger-1',
@@ -827,13 +824,7 @@ describe('compileGraph', () => {
     ];
 
     const sanitized = sanitizeEdges(nodes, edges);
-    expect(sanitized).toHaveLength(1);
-    expect(sanitized[0]).toMatchObject({
-      from: 'trigger-1',
-      to: 'fetcher-1',
-      fromPort: 'trigger',
-      toPort: 'trigger',
-    });
+    expect(sanitized).toEqual([]);
 
     const report = compileGraph(nodes, edges);
     expect(
@@ -843,10 +834,10 @@ describe('compileGraph', () => {
           finding.nodeId === 'fetcher-1' &&
           finding.port === 'trigger'
       )
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it('keeps exactly one canonical Trigger.trigger -> Fetcher.trigger edge when duplicate trigger-fetcher links exist', () => {
+  it('keeps only explicit valid trigger-fetcher edges', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'trigger-1',
@@ -883,14 +874,13 @@ describe('compileGraph', () => {
     const sanitized = sanitizeEdges(nodes, edges);
     expect(sanitized).toHaveLength(1);
     expect(sanitized[0]).toMatchObject({
-      from: 'trigger-1',
-      to: 'fetcher-1',
+      id: 'edge-trigger-fetcher-explicit',
       fromPort: 'trigger',
       toPort: 'trigger',
     });
   });
 
-  it('preserves source port intent when invalid edges can align by either side', () => {
+  it('drops invalid cross-wired edges instead of auto-aligning ports', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'parser-1',
@@ -925,24 +915,10 @@ describe('compileGraph', () => {
     ];
 
     const sanitized = sanitizeEdges(nodes, edges);
-    expect(sanitized).toHaveLength(2);
-    expect(sanitized).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'edge-bundle-cross',
-          fromPort: 'bundle',
-          toPort: 'bundle',
-        }),
-        expect.objectContaining({
-          id: 'edge-images-cross',
-          fromPort: 'images',
-          toPort: 'images',
-        }),
-      ])
-    );
+    expect(sanitized).toEqual([]);
   });
 
-  it('coerces legacy object-map edge payloads instead of throwing', () => {
+  it('rejects legacy object-map edge payloads', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'parser-1',
@@ -970,14 +946,7 @@ describe('compileGraph', () => {
     } as unknown as Edge[];
 
     const sanitized = sanitizeEdges(nodes, edgesMapPayload);
-    expect(sanitized).toHaveLength(1);
-    expect(sanitized[0]).toMatchObject({
-      id: 'edge_1',
-      from: 'parser-1',
-      to: 'prompt-1',
-      fromPort: 'bundle',
-      toPort: 'bundle',
-    });
+    expect(sanitized).toEqual([]);
   });
 
   it('treats missing edge payload as an empty graph', () => {

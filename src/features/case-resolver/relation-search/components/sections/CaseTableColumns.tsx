@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
-import { StatusBadge, Tooltip } from '@/shared/ui';
+import { StatusBadge, Tooltip, Button, Badge } from '@/shared/ui';
 import type { CaseRow } from '@/shared/contracts/case-resolver';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 
@@ -49,9 +49,9 @@ export const getCaseTableColumns = ({
     accessorKey: 'docCount',
     header: 'Docs',
     cell: ({ row }: { row: Row<CaseRow> }): React.JSX.Element => (
-      <span className='rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] text-blue-300'>
+      <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5'>
         {row.original.docCount}
-      </span>
+      </Badge>
     ),
   },
   {
@@ -59,13 +59,14 @@ export const getCaseTableColumns = ({
     header: '',
     cell: ({ row }: { row: Row<CaseRow> }): React.JSX.Element => (
       <Tooltip content={getCaseResolverDocTooltip('browseCaseDocs')} side='left'>
-        <button
-          type='button'
-          className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-7 p-0 text-gray-400 hover:bg-cyan-500/15 hover:text-cyan-300'
           onClick={() => onDrillInto(row.original.file.id)}
         >
           <ChevronRight className='size-3.5' />
-        </button>
+        </Button>
       </Tooltip>
     ),
     size: 40,

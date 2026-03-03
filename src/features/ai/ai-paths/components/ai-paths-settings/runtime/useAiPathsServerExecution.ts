@@ -267,16 +267,12 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           source: 'server',
           kind: 'run_started',
           level: 'info',
-          runId,
-          runStartedAt,
           message: 'Server run queued.',
         });
         args.setNodeStatus({
           nodeId: triggerNode.id,
           status: 'queued',
           source: 'server',
-          runId,
-          runStartedAt,
           nodeType: triggerNode.type,
           nodeTitle: triggerNode.title ?? null,
           kind: 'node_status',
@@ -286,9 +282,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
 
         if (runPayload?.runtimeState) {
           const initialState = parseRuntimeState(runPayload.runtimeState);
-          args.setRuntimeState((prev) =>
-            mergeRuntimeStateSnapshot(prev, initialState, runId, runStartedAt ?? undefined)
-          );
+          args.setRuntimeState((prev) => mergeRuntimeStateSnapshot(prev, initialState, runPayload));
         }
 
         let terminalHandled = false;
@@ -308,12 +302,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           const finishedAt =
             options?.finishedAt ??
             (runFromOptions ? resolveRunAt(runFromOptions) : new Date().toISOString());
-          const resolvedRunStartedAt =
-            (runFromOptions
-              ? resolveRunStartedAt(runFromOptions, args.runtimeStateRef.current)
-              : null) ??
-            args.currentRunStartedAtRef?.current ??
-            runStartedAt;
           const kind =
             terminalStatus === 'completed'
               ? 'run_completed'
@@ -338,8 +326,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             source: 'server',
             kind,
             level,
-            runId,
-            runStartedAt: resolvedRunStartedAt,
             timestamp: finishedAt,
             message,
           });
@@ -412,9 +398,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             }
             if (run.runtimeState) {
               const nextState = parseRuntimeState(run.runtimeState);
-              args.setRuntimeState((prev) =>
-                mergeRuntimeStateSnapshot(prev, nextState, runId, latestRunStartedAt ?? undefined)
-              );
+              args.setRuntimeState((prev) => mergeRuntimeStateSnapshot(prev, nextState, run));
             }
             const runStatus = asString(run.status);
             if (runStatus === 'running') {
@@ -422,8 +406,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 nodeId: triggerNode.id,
                 status: 'running',
                 source: 'server',
-                runId,
-                runStartedAt: latestRunStartedAt,
                 nodeType: triggerNode.type,
                 nodeTitle: triggerNode.title ?? null,
                 kind: 'node_started',
@@ -488,6 +470,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 asString(nodeUpdate.startedAt) ??
                 args.currentRunStartedAtRef?.current ??
                 runStartedAt;
+              const resolvedRunId = asString(nodeUpdate.runId) ?? runId;
               const iteration = asNumber(nodeUpdate.attempt);
               const isFailed = status === 'failed';
               const isWarningStatus = status === 'blocked' || status === 'skipped';
@@ -495,8 +478,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 nodeId,
                 status,
                 source: 'server',
-                runId: asString(nodeUpdate.runId) ?? runId,
-                runStartedAt: runStartedAtForNode,
                 nodeType: runtimeNode?.type ?? nodeUpdate.nodeType,
                 nodeTitle: nodeTitle ?? null,
                 iteration: iteration ?? undefined,
@@ -525,10 +506,15 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   status,
                   ...(isFailed && errorMessage ? { error: errorMessage } : {}),
                 };
+                const nextCurrentRun = {
+                  ...(prev.currentRun ?? {}),
+                  id: resolvedRunId,
+                  status: 'running',
+                  startedAt: runStartedAtForNode ?? prev.currentRun?.startedAt ?? null,
+                } as AiPathRunRecord;
                 const next = {
                   ...prev,
-                  runId,
-                  ...(runStartedAtForNode ? { runStartedAt: runStartedAtForNode } : {}),
+                  currentRun: nextCurrentRun,
                   inputs: nextInputs,
                   outputs: {
                     ...(prev.outputs ?? {}),
@@ -678,7 +664,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               source: 'server',
               kind: 'run_warning',
               level: 'warn',
-              runId,
               message: 'Stream disconnected — attempting to reconnect...',
             });
             return;

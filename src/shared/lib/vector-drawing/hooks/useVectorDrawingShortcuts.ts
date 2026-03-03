@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { VectorToolMode } from '../types';
+import type { VectorToolMode } from '@/shared/contracts/vector';
 
 export type VectorDrawingShortcutsProps = {
   onUndo: () => void;

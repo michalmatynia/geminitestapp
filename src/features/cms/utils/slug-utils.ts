@@ -20,6 +20,5 @@ export const normalizePageSlugLinks = (rawSlugs: unknown): NormalizedPageSlugLin
   });
 };
 
-export const normalizePageSlugValues = (
-  slugs: NormalizedPageSlugLink[] | null | undefined
-): string[] => normalizePageSlugLinks(slugs).map((slug: NormalizedPageSlugLink): string => slug.slug);
+export const normalizePageSlugValues = (slugs: unknown): string[] =>
+  normalizePageSlugLinks(slugs).map((slug: NormalizedPageSlugLink): string => slug.slug);

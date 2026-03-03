@@ -300,8 +300,17 @@ export const unlinkFilemakerPhoneNumberFromParty = (
     return database;
   }
 
+  const nextPersons =
+    nextPhoneNumberLinks.length === 0
+      ? database.persons.map((person: FilemakerPerson): FilemakerPerson => ({
+        ...person,
+        phoneNumbers: [],
+      }))
+      : database.persons;
+
   return normalizeFilemakerDatabase({
     ...database,
+    persons: nextPersons,
     phoneNumberLinks: nextPhoneNumberLinks,
   });
 };

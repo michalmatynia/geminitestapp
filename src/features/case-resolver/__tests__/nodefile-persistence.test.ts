@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverAssetFile,
   createDefaultCaseResolverWorkspace,
   createEmptyNodeFileSnapshot,
 } from '@/features/case-resolver/settings';
 import {
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   buildCaseResolverNodeFileSnapshotKey,
   deleteCaseResolverNodeFileSnapshot,
   fetchCaseResolverNodeFileSnapshot,
@@ -77,7 +75,7 @@ describe('case resolver nodefile persistence', () => {
     expect(resolvedSnapshot).toBeNull();
   });
 
-  it('rejects non-empty legacy keyed nodefile snapshots', async () => {
+  it('treats invalid keyed nodefile snapshots as missing without throwing', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
@@ -91,9 +89,8 @@ describe('case resolver nodefile persistence', () => {
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
-    await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 'test')).rejects.toThrowError(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
-    );
+    const snapshot = await fetchCaseResolverNodeFileSnapshot('asset-1', 'test');
+    expect(snapshot).toBeNull();
   });
 
   it('clears keyed nodefile snapshots via blank writes', async () => {
@@ -110,7 +107,7 @@ describe('case resolver nodefile persistence', () => {
     });
   });
 
-  it('externalizes inline nodefile snapshots before persisting the workspace', async () => {
+  it('rejects inline nodefile snapshots during workspace persist', async () => {
     const inlineSnapshot = JSON.stringify({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
@@ -147,17 +144,7 @@ describe('case resolver nodefile persistence', () => {
       ],
     };
 
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(toJsonResponse(200, { ok: true }))
-      .mockImplementationOnce(async (_url: string, init?: RequestInit) => {
-        const payload = JSON.parse(String(init?.body)) as { key: string; value: string };
-        const persistedWorkspace = JSON.parse(payload.value) as typeof workspace;
-        return toJsonResponse(200, {
-          key: payload.key,
-          value: JSON.stringify(persistedWorkspace),
-        });
-      });
+    const fetchMock = vi.fn();
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await persistCaseResolverWorkspaceSnapshot({
@@ -167,29 +154,10 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-
-    const nodeSnapshotPersistBody = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
-      key: string;
-      value: string;
-    };
-    expect(nodeSnapshotPersistBody.key).toBe(buildCaseResolverNodeFileSnapshotKey('asset-1'));
-    expect(JSON.parse(nodeSnapshotPersistBody.value)).toEqual(JSON.parse(inlineSnapshot));
-
-    const workspacePersistBody = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body)) as {
-      key: string;
-      value: string;
-    };
-    const persistedWorkspace = JSON.parse(workspacePersistBody.value) as typeof workspace;
-    expect(workspacePersistBody.key).toBe(CASE_RESOLVER_WORKSPACE_KEY);
-    expect(persistedWorkspace.assets[0]).toMatchObject({
-      id: 'asset-1',
-      kind: 'node_file',
-      metadata: {
-        [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
-      },
-    });
-    expect('textContent' in persistedWorkspace.assets[0]).toBe(false);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/unsupported inline node-file snapshots/i);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

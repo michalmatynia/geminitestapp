@@ -14,7 +14,6 @@ import {
   useAsset3DTags,
   useDeleteAsset3DMutation,
   useReindexAssets3DMutation,
-  invalidateAsset3d,
 } from '../hooks/useAsset3dQueries';
 
 export type ViewMode = Asset3dViewMode;
@@ -58,13 +57,13 @@ export function useAdmin3DAssetsState() {
     (_asset: Asset3DRecord) => {
       setShowUploader(false);
     },
-    [queryClient]
+    []
   );
 
   const handleEdit = useCallback(
     (_updated: Asset3DRecord) => {
     },
-    [queryClient]
+    []
   );
 
   const handleDelete = useCallback(

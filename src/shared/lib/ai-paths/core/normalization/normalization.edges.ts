@@ -1,7 +1,7 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 import { FETCHER_INPUT_PORTS, FETCHER_OUTPUT_PORTS } from '../constants';
-import { normalizePortName } from '../utils';
+import { normalizePortName } from '../utils/graph.ports';
 
 export type TriggerToFetcherMigrationResult = {
   nodes: AiNode[];

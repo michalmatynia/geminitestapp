@@ -20,7 +20,6 @@ export type CaseResolverJoinMode = z.infer<typeof caseResolverJoinModeSchema>;
  */
 export const caseResolverDocumentNodePortSchema = z.enum([
   'wysiwygText',
-  'content',
   'plaintextContent',
   'plainText',
   'wysiwygContent',

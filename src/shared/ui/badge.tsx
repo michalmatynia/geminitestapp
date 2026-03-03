@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/shared/utils';
@@ -24,6 +25,8 @@ const badgeVariants = cva(
         removed: 'border-gray-500/40 bg-gray-500/20 text-gray-300 hover:bg-gray-500/30',
         error: 'border-rose-500/40 bg-rose-500/20 text-rose-300 hover:bg-rose-500/30',
         processing: 'border-blue-500/40 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30',
+        cyan: 'border-cyan-500/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25',
+        amber: 'border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25',
       },
     },
     defaultVariants: {
@@ -33,10 +36,47 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {
+  icon?: React.ReactNode;
+  onRemove?: () => void;
+  removeLabel?: string;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+/**
+ * Badge - A unified badge component used as a base for Tags, StatusBadges, and Chips.
+ * Supports icons, semantic variants, and integrated removal functionality.
+ */
+function Badge({ className, variant, icon, onRemove, removeLabel, children, onClick, ...props }: BadgeProps) {
+  const isClickable = !!onClick;
+
+  return (
+    <div
+      className={cn(
+        badgeVariants({ variant }),
+        isClickable && 'cursor-pointer hover:brightness-110 active:opacity-80 transition-all',
+        className
+      )}
+      onClick={onClick}
+      {...props}
+    >
+      {icon && <span className='mr-1.5 shrink-0'>{icon}</span>}
+      {children}
+      {onRemove && (
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className='ml-1.5 -mr-1 rounded-full p-0.5 hover:bg-black/10 focus:outline-none transition-colors'
+          aria-label={removeLabel || 'Remove'}
+        >
+          <X className='size-3' />
+        </button>
+      )}
+    </div>
+  );
 }
 
 export { Badge, badgeVariants };

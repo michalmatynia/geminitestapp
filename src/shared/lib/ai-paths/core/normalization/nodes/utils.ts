@@ -5,7 +5,8 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../../constants';
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
-import { createViewerOutputs, ensureUniquePorts } from '../../utils';
+import { createViewerOutputs } from '../../utils/graph.nodes';
+import { ensureUniquePorts } from '../../utils/graph.ports';
 
 export const normalizeValidatorNode = (node: AiNode): AiNode => {
   return {

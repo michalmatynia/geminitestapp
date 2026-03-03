@@ -1,79 +1,31 @@
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import {
   AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
+  AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES,
   AI_PATHS_MAINTENANCE_ACTION_IDS,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceActionReport,
   type AiPathsMaintenanceReport,
+  type AiPathsMaintenanceRequestedActionId,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
 import { compactPathConfigValue } from './settings-store.compaction';
-import { parsePathConfigFlags, parsePathMetas } from './settings-store.parsing';
-import {
-  BASE_EXPORT_BLWO_PATH_ID,
-  needsBaseExportBlwoConfigUpgrade,
-} from './settings-store-base-export-workflow';
-import {
-  DESCRIPTION_INFERENCE_LITE_PATH_ID,
-  needsDescriptionInferenceLiteConfigUpgrade,
-} from './settings-store-description-inference';
+import { parsePathMetas } from './settings-store.parsing';
 import {
   needsServerExecutionModeConfigUpgrade,
   upgradeServerExecutionModeConfig,
 } from './settings-store-execution-mode-server';
 import {
-  needsParameterInferenceConfigUpgrade,
-  PARAMETER_INFERENCE_PATH_ID,
-} from './settings-store-parameter-inference';
-import {
-  needsTranslationEnPlConfigUpgrade,
-  TRANSLATION_EN_PL_PATH_ID,
-} from './settings-store-translation-en-pl';
-import {
   needsRuntimeInputContractsUpgrade,
   upgradeRuntimeInputContractsConfig,
 } from './settings-store-runtime-input-contracts';
-
-export const buildTriggerButtonDisplay = (name: string): Record<string, unknown> => ({
-  label: name,
-  showLabel: true,
-});
-
-export const logSeedRewriteFlags = (input: {
-  actionId:
-    | 'ensure_parameter_inference_defaults'
-    | 'ensure_description_inference_defaults'
-    | 'ensure_base_export_defaults';
-  pathId: string;
-  previousRaw: string | undefined;
-  nextRaw: string;
-}): void => {
-  const previousFlags = parsePathConfigFlags(input.previousRaw);
-  const nextFlags = parsePathConfigFlags(input.nextRaw);
-  const previousActive = previousFlags.isActive ?? null;
-  const previousLocked = previousFlags.isLocked ?? null;
-  const nextActive = nextFlags.isActive ?? null;
-  const nextLocked = nextFlags.isLocked ?? null;
-  void logSystemEvent({
-    level: 'info',
-    message: '[ai-paths-settings] Seeded path config rewrite',
-    source: 'ai-paths-settings-maintenance',
-    context: {
-      actionId: input.actionId,
-      pathId: input.pathId,
-      previousFlags: {
-        isActive: previousActive,
-        isLocked: previousLocked,
-      },
-      nextFlags: {
-        isActive: nextActive,
-        isLocked: nextLocked,
-      },
-    },
-  });
-};
+import {
+  countPendingLegacyStarterWorkflowMigrations,
+  countPendingStarterWorkflowDefaults,
+  ensureStarterWorkflowDefaults,
+  migrateLegacyStarterWorkflows,
+} from './starter-workflows-settings';
 
 export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[]): number => {
   if (records.length === 0) return 0;
@@ -107,30 +59,6 @@ export const countPendingRuntimeInputContractUpgrades = (
     if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
     return needsRuntimeInputContractsUpgrade(entry.value) ? count + 1 : count;
   }, 0);
-};
-
-export const hasBaseExportBlwoDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  return metas.some((m) => m.id === BASE_EXPORT_BLWO_PATH_ID);
-};
-
-export const hasDescriptionInferenceLiteDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  return metas.some((m) => m.id === DESCRIPTION_INFERENCE_LITE_PATH_ID);
-};
-
-export const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  return metas.some((m) => m.id === PARAMETER_INFERENCE_PATH_ID);
-};
-
-export const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-  const metas = parsePathMetas(indexEntry?.value);
-  return metas.some((m) => m.id === TRANSLATION_EN_PL_PATH_ID);
 };
 
 export const needsPathIndexConsistencyRepair = (records: AiPathsSettingRecord[]): boolean => {
@@ -174,14 +102,24 @@ export const repairPathIndexFromConfigs = (records: AiPathsSettingRecord[]): str
 
 export const resolveRequestedMaintenanceActionIds = (
   report: AiPathsMaintenanceReport,
-  requestedIds: string[] | undefined
+  requestedIds: AiPathsMaintenanceRequestedActionId[] | undefined
 ): AiPathsMaintenanceActionId[] => {
   if (!requestedIds || requestedIds.length === 0) {
     return report.actions.filter((a) => a.status === 'pending').map((a) => a.id);
   }
-  return requestedIds.filter((id): id is AiPathsMaintenanceActionId =>
-    AI_PATHS_MAINTENANCE_ACTION_IDS.includes(id as AiPathsMaintenanceActionId)
-  );
+  const allowed = new Set<string>(AI_PATHS_MAINTENANCE_ACTION_IDS);
+  const normalized = requestedIds
+    .map((id): AiPathsMaintenanceActionId | null => {
+      if (allowed.has(id)) {
+        return id as AiPathsMaintenanceActionId;
+      }
+      const mapped = AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES[
+        id as keyof typeof AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES
+      ];
+      return mapped && allowed.has(mapped) ? mapped : null;
+    })
+    .filter((id): id is AiPathsMaintenanceActionId => Boolean(id));
+  return Array.from(new Set(normalized));
 };
 
 export const buildAiPathsMaintenanceReport = (
@@ -213,36 +151,29 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
-  if (!hasParameterInferenceDefaults(records)) {
+  const starterDefaultsCount = countPendingStarterWorkflowDefaults(records);
+  if (starterDefaultsCount > 0) {
     actions.push({
-      id: 'ensure_parameter_inference_defaults',
-      title: 'Ensure Parameter Inference Defaults',
-      description: 'Add the default Parameter Inference path if it is missing.',
+      id: 'ensure_starter_workflow_defaults',
+      title: 'Ensure Starter Workflow Defaults',
+      description:
+        'Add missing seeded starter workflows, index entries, and trigger buttons from the semantic starter registry.',
       blocking: false,
       status: 'pending',
-      affectedRecords: 1,
+      affectedRecords: starterDefaultsCount,
     });
   }
 
-  if (!hasDescriptionInferenceLiteDefaults(records)) {
+  const legacyStarterMigrationCount = countPendingLegacyStarterWorkflowMigrations(records);
+  if (legacyStarterMigrationCount > 0) {
     actions.push({
-      id: 'ensure_description_inference_defaults',
-      title: 'Ensure Description Inference Defaults',
-      description: 'Add the default Description Inference Lite path if it is missing.',
-      blocking: false,
+      id: 'migrate_legacy_starter_workflows',
+      title: 'Migrate Legacy Starter Workflows',
+      description:
+        `Migrate ${legacyStarterMigrationCount} starter workflow config(s) to the current semantic asset overlay and starter provenance format.`,
+      blocking: true,
       status: 'pending',
-      affectedRecords: 1,
-    });
-  }
-
-  if (!hasBaseExportBlwoDefaults(records)) {
-    actions.push({
-      id: 'ensure_base_export_defaults',
-      title: 'Ensure Base Export Defaults',
-      description: 'Add the default Base Export workflow if it is missing.',
-      blocking: false,
-      status: 'pending',
-      affectedRecords: 1,
+      affectedRecords: legacyStarterMigrationCount,
     });
   }
 
@@ -343,80 +274,17 @@ export const runMaintenanceAction = (args: {
       });
       break;
 
-    case 'ensure_base_export_defaults': {
-      const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-      const metas = parsePathMetas(indexEntry?.value);
-      const baseExportPath = metas.find((m) => m.id === BASE_EXPORT_BLWO_PATH_ID);
-      const baseExportConfigEntry = args.records.find(
-        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`
-      );
-
-      const needsUpgrade = baseExportConfigEntry
-        ? needsBaseExportBlwoConfigUpgrade(baseExportConfigEntry.value)
-        : true;
-
-      if (!baseExportPath || needsUpgrade) {
-        // Logic to add/upgrade base export path would go here
-        affectedCount = 1;
-      }
-      nextRecords.push(...args.records);
+    case 'ensure_starter_workflow_defaults': {
+      const result = ensureStarterWorkflowDefaults(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
       break;
     }
 
-    case 'ensure_description_inference_defaults': {
-      const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-      const metas = parsePathMetas(indexEntry?.value);
-      const descInfPath = metas.find((m) => m.id === DESCRIPTION_INFERENCE_LITE_PATH_ID);
-      const descInfConfigEntry = args.records.find(
-        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`
-      );
-
-      const needsUpgrade = descInfConfigEntry
-        ? needsDescriptionInferenceLiteConfigUpgrade(descInfConfigEntry.value)
-        : true;
-
-      if (!descInfPath || needsUpgrade) {
-        affectedCount = 1;
-      }
-      nextRecords.push(...args.records);
-      break;
-    }
-
-    case 'ensure_parameter_inference_defaults': {
-      const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-      const metas = parsePathMetas(indexEntry?.value);
-      const paramInfPath = metas.find((m) => m.id === PARAMETER_INFERENCE_PATH_ID);
-      const paramInfConfigEntry = args.records.find(
-        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`
-      );
-
-      const needsUpgrade = paramInfConfigEntry
-        ? needsParameterInferenceConfigUpgrade(paramInfConfigEntry.value)
-        : true;
-
-      if (!paramInfPath || needsUpgrade) {
-        affectedCount = 1;
-      }
-      nextRecords.push(...args.records);
-      break;
-    }
-
-    case 'upgrade_translation_en_pl': {
-      const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
-      const metas = parsePathMetas(indexEntry?.value);
-      const transPath = metas.find((m) => m.id === TRANSLATION_EN_PL_PATH_ID);
-      const transConfigEntry = args.records.find(
-        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${TRANSLATION_EN_PL_PATH_ID}`
-      );
-
-      const needsUpgrade = transConfigEntry
-        ? needsTranslationEnPlConfigUpgrade(transConfigEntry.value)
-        : true;
-
-      if (!transPath || needsUpgrade) {
-        affectedCount = 1;
-      }
-      nextRecords.push(...args.records);
+    case 'migrate_legacy_starter_workflows': {
+      const result = migrateLegacyStarterWorkflows(args.records);
+      nextRecords.push(...result.nextRecords);
+      affectedCount = result.affectedCount;
       break;
     }
 
@@ -454,7 +322,16 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
   const reports: MaintenanceActionApplyResult[] = [];
   let currentRecords = [...records];
 
-  AI_PATHS_MAINTENANCE_ACTION_IDS.forEach((actionId: AiPathsMaintenanceActionId) => {
+  (
+    [
+      'compact_oversized_configs',
+      'repair_path_index',
+      'ensure_starter_workflow_defaults',
+      'migrate_legacy_starter_workflows',
+      'upgrade_runtime_input_contracts',
+      'upgrade_server_execution_mode',
+    ] as AiPathsMaintenanceActionId[]
+  ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });
     reports.push(report);
     currentRecords = report.nextRecords;

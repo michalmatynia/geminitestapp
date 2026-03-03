@@ -8,9 +8,12 @@ import {
 } from '@/shared/lib/ai-paths/core/constants';
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
+  backfillPathConfigNodeContracts,
+  migrateLegacyDbQueryProvider,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
 } from '@/shared/lib/ai-paths/core/normalization';
+import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
@@ -20,6 +23,7 @@ import {
   fetchAiPathsSettingsCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
+import type { DatabaseOperation } from '@/shared/contracts/ai-paths-core';
 import { fetchQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -27,6 +31,14 @@ import type { QueryClient } from '@tanstack/react-query';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_SELECTIVE_TIMEOUT_MS = 8_000;
+
+const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
+  value === 'query' ||
+  value === 'update' ||
+  value === 'insert' ||
+  value === 'delete' ||
+  value === 'action' ||
+  value === 'distinct';
 
 const resolvePreferredActivePathId = (
   data: { aiPathsActivePathId?: unknown } | null | undefined
@@ -51,8 +63,94 @@ export type FindTriggerPathOptions = {
   requireServerExecution?: boolean;
 };
 
-const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
-  const identityRepair = repairPathNodeIdentities(config, { palette });
+const sanitizeLoadedDatabaseNode = (node: AiNode): AiNode => {
+  if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
+    return node;
+  }
+  const configRecord = node.config as Record<string, unknown>;
+  const databaseConfig =
+    configRecord['database'] && typeof configRecord['database'] === 'object'
+      ? (configRecord['database'] as Record<string, unknown>)
+      : null;
+  if (!databaseConfig) {
+    return node;
+  }
+  const queryConfig =
+    databaseConfig['query'] && typeof databaseConfig['query'] === 'object'
+      ? (databaseConfig['query'] as Record<string, unknown>)
+      : null;
+  const nextDatabaseConfig: Record<string, unknown> = { ...databaseConfig };
+  if (queryConfig) {
+    nextDatabaseConfig['query'] = migrateLegacyDbQueryProvider({
+      provider:
+        queryConfig['provider'] === 'auto' ||
+        queryConfig['provider'] === 'mongodb' ||
+        queryConfig['provider'] === 'prisma'
+          ? queryConfig['provider']
+          : 'auto',
+      collection:
+        typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
+      mode:
+        queryConfig['mode'] === 'preset' || queryConfig['mode'] === 'custom'
+          ? queryConfig['mode']
+          : 'custom',
+      preset:
+        queryConfig['preset'] === 'by_id' ||
+        queryConfig['preset'] === 'by_productId' ||
+        queryConfig['preset'] === 'by_entityId' ||
+        queryConfig['preset'] === 'by_field'
+          ? queryConfig['preset']
+          : 'by_id',
+      field: typeof queryConfig['field'] === 'string' ? queryConfig['field'] : '_id',
+      idType:
+        queryConfig['idType'] === 'string' || queryConfig['idType'] === 'objectId'
+          ? queryConfig['idType']
+          : 'string',
+      queryTemplate:
+        typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'] : '',
+      limit:
+        typeof queryConfig['limit'] === 'number' && Number.isFinite(queryConfig['limit'])
+          ? queryConfig['limit']
+          : 20,
+      sort: typeof queryConfig['sort'] === 'string' ? queryConfig['sort'] : '',
+      ...(typeof queryConfig['sortPresetId'] === 'string'
+        ? { sortPresetId: queryConfig['sortPresetId'] }
+        : {}),
+      projection: typeof queryConfig['projection'] === 'string' ? queryConfig['projection'] : '',
+      ...(typeof queryConfig['projectionPresetId'] === 'string'
+        ? { projectionPresetId: queryConfig['projectionPresetId'] }
+        : {}),
+      single: queryConfig['single'] === true,
+    });
+  }
+  delete nextDatabaseConfig['schemaSnapshot'];
+  return {
+    ...node,
+    config: {
+      ...configRecord,
+      database: {
+        ...nextDatabaseConfig,
+        operation: isDatabaseOperation(nextDatabaseConfig['operation'])
+          ? nextDatabaseConfig['operation']
+          : 'query',
+      },
+    },
+  };
+};
+
+export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
+  const migratedConfig = migratePathConfigCollections(config).config;
+  const contractBackfilledConfig = backfillPathConfigNodeContracts(migratedConfig).config;
+  const sanitizedDatabaseNodes = (contractBackfilledConfig.nodes ?? []).map(
+    sanitizeLoadedDatabaseNode
+  );
+  const identityRepair = repairPathNodeIdentities(
+    {
+      ...contractBackfilledConfig,
+      nodes: sanitizedDatabaseNodes,
+    },
+    { palette }
+  );
   const repaired = identityRepair.config;
   const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
   const migrated = migrateTriggerToFetcherGraph(

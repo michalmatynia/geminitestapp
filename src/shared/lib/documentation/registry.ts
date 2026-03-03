@@ -1,6 +1,9 @@
 import { DOCUMENTATION_CATALOG } from './catalogs';
-
-import type { DocumentationEntry, DocumentationEntryKey, DocumentationModuleId } from './types';
+import type {
+  DocumentationEntry,
+  DocumentationEntryKey,
+  DocumentationModuleId,
+} from '@/shared/contracts/documentation';
 
 const normalize = (value: string): string =>
   value

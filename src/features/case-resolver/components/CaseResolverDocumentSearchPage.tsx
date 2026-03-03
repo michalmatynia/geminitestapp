@@ -414,15 +414,15 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
           return (
             <Card key={file.id} variant='subtle' padding='md' className='bg-card/45'>
               <div className='mb-1 flex items-start justify-between gap-2'>
-                <button
-                  type='button'
-                  className='line-clamp-2 text-left text-sm font-semibold text-white hover:text-cyan-200'
+                <Button
+                  variant='link'
+                  className='h-auto p-0 line-clamp-2 justify-start text-left text-sm font-semibold text-white hover:text-cyan-200 hover:no-underline'
                   onClick={(): void => {
                     onOpenFileFromSearch(file.id);
                   }}
                 >
-                  {file.name}
-                </button>
+                  <span className='line-clamp-2'>{file.name}</span>
+                </Button>
                 <Badge
                   variant='neutral'
                   className='shrink-0 border-border/60 bg-black/30 font-normal uppercase'

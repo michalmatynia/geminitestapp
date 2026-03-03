@@ -604,7 +604,6 @@ export const promptExploderCaseResolverPartyCandidateSchema = z.object({
 export type PromptExploderCaseResolverPartyCandidate = z.infer<
   typeof promptExploderCaseResolverPartyCandidateSchema
 >;
-export type PromptExploderCaseResolverPartyCandidateDto = PromptExploderCaseResolverPartyCandidate;
 
 export const promptExploderCaseResolverPartyConfigSchema = z.object({
   role: z.enum(['other', 'reference', 'addresser', 'addressee', 'subject']),
@@ -1022,56 +1021,3 @@ export type PromptExploderPatternPackResult = {
   addedRuleIds: string[];
   updatedRuleIds: string[];
 };
-
-/**
- * DTO Aliases for compatibility
- */
-export type PromptExploderSegmentTypeDto = PromptExploderSegmentType;
-export type PromptExploderListItemDto = PromptExploderListItem;
-export type PromptExploderLogicalOperatorDto = PromptExploderLogicalOperator;
-export type PromptExploderLogicalComparatorDto = PromptExploderLogicalComparator;
-export type PromptExploderLogicalJoinDto = PromptExploderLogicalJoin;
-export type PromptExploderLogicalConditionDto = PromptExploderLogicalCondition;
-export type PromptExploderLogicalJoinGroupDto = PromptExploderLogicalJoinGroup;
-export type PromptExploderSubsectionDto = PromptExploderSubsection;
-export type PromptExploderBindingTypeDto = PromptExploderBindingType;
-export type PromptExploderBindingOriginDto = PromptExploderBindingOrigin;
-export type PromptExploderParamUiControlDto = PromptExploderParamUiControl;
-export type PromptExploderBindingDto = PromptExploderBinding;
-export type PromptExploderSegmentDto = PromptExploderSegment;
-export type PromptExploderDocumentDto = PromptExploderDocument;
-export type PromptExploderPatternRuleMapDto = PromptExploderPatternRuleMap;
-export type PromptExploderLearnedTemplateDto = PromptExploderLearnedTemplate;
-export type PromptExploderPatternSnapshotDto = PromptExploderPatternSnapshot;
-export type PromptExploderBenchmarkCaseConfigDto = PromptExploderBenchmarkCaseConfig;
-export type PromptExploderBenchmarkSuiteDto = PromptExploderBenchmarkSuite;
-export type PromptExploderBenchmarkSuggestionDto = PromptExploderBenchmarkSuggestion;
-export type PromptExploderOperationModeDto = PromptExploderOperationMode;
-export type PromptExploderCaseResolverCaptureModeDto = PromptExploderCaseResolverCaptureMode;
-export type PromptExploderSettingsDto = PromptExploderSettings;
-export type PromptExploderBindingDtoAlias = PromptExploderBindingDto;
-export type PromptExploderBindingOriginDtoAlias = PromptExploderBindingOriginDto;
-export type PromptExploderBindingTypeDtoAlias = PromptExploderBindingTypeDto;
-export type PromptExploderCaseResolverCaptureModeDtoAlias =
-  PromptExploderCaseResolverCaptureModeDto;
-export type PromptExploderDocumentDtoAlias = PromptExploderDocumentDto;
-export type PromptExploderLearnedTemplateDtoAlias = PromptExploderLearnedTemplateDto;
-export type PromptExploderListItemDtoAlias = PromptExploderListItemDto;
-export type PromptExploderLogicalComparatorDtoAlias = PromptExploderLogicalComparatorDto;
-export type PromptExploderLogicalConditionDtoAlias = PromptExploderLogicalConditionDto;
-export type PromptExploderLogicalJoinDtoAlias = PromptExploderLogicalJoinDto;
-export type PromptExploderLogicalOperatorDtoAlias = PromptExploderLogicalOperatorDto;
-export type PromptExploderOperationModeDtoAlias = PromptExploderOperationModeDto;
-export type PromptExploderParamUiControlDtoAlias = PromptExploderParamUiControlDto;
-export type PromptExploderPatternRuleMapDtoAlias = PromptExploderPatternRuleMapDto;
-export type PromptExploderPatternSnapshotDtoAlias = PromptExploderPatternSnapshotDto;
-export type PromptExploderSegmentDtoAlias = PromptExploderSegmentDto;
-export type PromptExploderSegmentTypeDtoAlias = PromptExploderSegmentTypeDto;
-export type PromptExploderSettingsDtoAlias = PromptExploderSettingsDto;
-export type PromptExploderSubsectionDtoAlias = PromptExploderSubsectionDto;
-export type PromptExploderBenchmarkSuggestionDtoAlias = PromptExploderBenchmarkSuggestionDto;
-export type PromptExploderBenchmarkSuiteDtoAlias = PromptExploderBenchmarkSuiteDto;
-export type PromptExploderValidationStackResolutionDto = PromptExploderValidationStackResolution;
-export type PromptExploderRuntimeValidationScopeDto = PromptExploderRuntimeValidationScope;
-export type PromptExploderValidationStackResolutionReasonDto =
-  PromptExploderValidationStackResolutionReason;

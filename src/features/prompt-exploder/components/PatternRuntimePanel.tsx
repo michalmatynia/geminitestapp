@@ -304,7 +304,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
               ? 'rules only (UI-defined capture rules)'
-              : 'rules with heuristics (legacy fallback enabled)'}
+              : 'rules with heuristics enabled'}
           </div>
         </Card>
       </div>

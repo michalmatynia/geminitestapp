@@ -12,7 +12,7 @@ export {
   type UpdateIntegrationTemplate,
 } from './templates';
 export * from './base-com';
-export type { ImportTemplateParameterImport as BaseImportParameterImportSettings } from '../data-import-export';
+export type { ImportTemplateParameterImport } from '../data-import-export';
 
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';

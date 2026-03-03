@@ -1,28 +1,22 @@
 import { recordPromptValidationTiming } from '@/shared/lib/prompt-core/runtime-observability';
 import type {
-  PromptValidationScopeDto as PromptValidationScope,
-  PromptValidationRuleDto as PromptValidationRule,
-  PromptValidationSettingsDto as PromptValidationSettings,
-  PromptValidationSeverityDto as PromptValidationSeverity,
-  PromptValidationSimilarDto as PromptValidationSimilarPattern,
-  PromptValidationLaunchOperatorDto as PromptValidationLaunchOperator,
-  PromptValidationChainModeDto as PromptValidationChainMode,
-  PromptValidationSuggestionDto,
-  PromptValidationIssueDto,
-  PromptValidationExecutionContextDto,
-  PromptValidationPreparedRuntimeDto,
+  PromptValidationScope,
+  PromptValidationRule,
+  PromptValidationSettings,
+  PromptValidationSeverity,
+  PromptValidationSimilar as PromptValidationSimilarPattern,
+  PromptValidationLaunchOperator,
+  PromptValidationChainMode,
+  PromptValidationSuggestion,
+  PromptValidationIssue,
+  PromptValidationExecutionContext,
+  PromptValidationPreparedRuntime,
 } from '@/shared/contracts/prompt-engine';
 
 import { extractParamsFromPrompt } from './prompt-params';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
 
-export type PromptValidationSuggestion = PromptValidationSuggestionDto;
-
-export type PromptValidationIssue = PromptValidationIssueDto;
-
-export type PromptValidationExecutionContext = PromptValidationExecutionContextDto;
-
-export type PromptValidationPreparedRuntime = PromptValidationPreparedRuntimeDto;
+export type { PromptValidationExecutionContext };
 
 export type PromptValidationRuntimeEvaluateOptions = {
   includeRuleIds?: Set<string> | string[] | null | undefined;

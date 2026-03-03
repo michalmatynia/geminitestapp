@@ -7,26 +7,12 @@ import { useCmsDomainSelection } from '../../../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdateSlug } from '../../../../hooks/useCmsQueries';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import type { PageStatus, Slug } from '../../../../types';
+import { normalizePageSlugValues } from '../../../../utils/slug-utils';
 
 const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
   { label: 'Draft', value: 'draft' },
   { label: 'Published', value: 'published' },
 ];
-
-const normalizePageSlugValues = (slugs: unknown): string[] => {
-  if (!Array.isArray(slugs)) return [];
-  return slugs
-    .map((entry: unknown): string => {
-      if (typeof entry === 'string') return entry;
-      if (!entry || typeof entry !== 'object') return '';
-      const candidate = (entry as { slug?: unknown }).slug;
-      if (typeof candidate === 'string') return candidate;
-      if (!candidate || typeof candidate !== 'object') return '';
-      const nested = (candidate as { slug?: unknown }).slug;
-      return typeof nested === 'string' ? nested : '';
-    })
-    .filter((value: string) => value.trim().length > 0);
-};
 
 export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();

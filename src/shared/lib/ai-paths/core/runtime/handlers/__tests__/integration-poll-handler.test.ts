@@ -99,6 +99,21 @@ describe('handlePoll', () => {
     );
   });
 
+  it('does not classify cancelled spelling as canonical canceled status', async () => {
+    vi.mocked(pollGraphJob).mockRejectedValueOnce(new Error('AI job was cancelled.'));
+
+    const result = await handlePoll(buildContext(buildNode(), { jobId: 'job-cancelled' }));
+
+    expect(result['status']).toBe('failed');
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        reason: 'poll_unknown',
+        retryable: true,
+      })
+    );
+  });
+
   it('classifies job timeout as timeout status', async () => {
     vi.mocked(pollGraphJob).mockRejectedValueOnce(new Error('AI job timed out.'));
 

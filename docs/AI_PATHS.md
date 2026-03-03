@@ -90,6 +90,28 @@ under `src/app/api/ai-paths/trigger-buttons/`.
 Typical trigger context includes entity identifiers such as product, note, or
 other record scope depending on where the button is mounted.
 
+## Starter Workflow Registry
+
+Shipped starter workflows are data assets, not workflow-specific TypeScript
+builders.
+
+- starter logic is represented by semantic canvas JSON assets in
+  `src/shared/lib/ai-paths/core/starter-workflows/assets/`
+- metadata and seed policy are declared in
+  `src/shared/lib/ai-paths/core/starter-workflows/registry.ts`
+- template creation in the editor and default seeding on the server use the same
+  registry/materializer path
+
+Starter provenance is carried on `PathConfig.extensions.aiPathsStarter` and is
+used only for generic starter maintenance/migration, not runtime execution.
+
+### Authoring Rule For Shipped Workflows
+
+- add new shipped workflows by exporting from the UI as semantic assets and
+  registering metadata in the starter registry
+- do not add workflow-specific `settings-store-*.ts` modules
+- do not add runtime/sanitizer behavior keyed to workflow id or name
+
 ## Runtime Guarantees and Constraints
 
 - validation and graph safety checks run before risky execution paths

@@ -10,6 +10,8 @@ import {
   fromNoteMasterNodeId,
 } from '@/features/notesapp/utils/master-folder-tree';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import { Button, Input, Tooltip } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 export type NotesAppTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   controller: MasterFolderTreeController;
@@ -52,9 +54,10 @@ export function NotesAppTreeNode({
 
   return (
     <div
-      className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${
-        isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-muted/40'
-      }`}
+      className={cn(
+        'group flex items-center gap-1 rounded px-2 py-1.5 text-sm transition-colors',
+        isSelected ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-300 hover:bg-muted/40'
+      )}
       style={{ marginLeft: `${depth * 16}px` }}
       onClick={(): void => {
         select();
@@ -67,29 +70,31 @@ export function NotesAppTreeNode({
         }
       }}
     >
-      <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
+      <DragHandleIcon className='size-3 shrink-0 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100' />
       {canToggle ? (
-        <button
-          type='button'
+        <Button
+          variant='ghost'
+          size='sm'
           onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
             event.stopPropagation();
             toggleExpand();
           }}
-          className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/40'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           aria-label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
         >
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
-        </button>
+        </Button>
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>•</span>
       )}
       <Icon className='size-3.5 shrink-0' />
       {isRenaming ? (
-        <input
+        <Input
+          autoFocus
           value={controller.renameDraft}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-            controller.updateRenameDraft(event.target.value)
-          }
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            controller.updateRenameDraft(event.target.value);
+          }}
           onBlur={(): void => {
             void controller.commitRename();
           }}
@@ -103,7 +108,7 @@ export function NotesAppTreeNode({
             }
           }}
           onClick={(event: React.MouseEvent<HTMLInputElement>): void => event.stopPropagation()}
-          className='flex-1 rounded border border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
+          className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
         />
       ) : (
         <span className='flex-1 truncate'>{node.name}</span>
@@ -113,73 +118,83 @@ export function NotesAppTreeNode({
         <div className='ml-auto hidden items-center gap-1 group-hover:flex'>
           {folderId ? (
             <>
-              <button
-                type='button'
-                title='Add note'
-                onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                  event.stopPropagation();
-                  setSelectedFolderId(folderId);
-                  setSelectedNote(null);
-                  setIsCreating(true);
-                }}
-                className='rounded p-1 text-gray-300 hover:bg-muted/50'
-              >
-                <FilePlus className='size-3' />
-              </button>
-              <button
-                type='button'
-                title='Add subfolder'
-                onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                  event.stopPropagation();
-                  void operations.handleCreateFolder(folderId);
-                }}
-                className='rounded p-1 text-gray-300 hover:bg-muted/50'
-              >
-                <FolderPlus className='size-3' />
-              </button>
+              <Tooltip content='Add note'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                    event.stopPropagation();
+                    setSelectedFolderId(folderId);
+                    setSelectedNote(null);
+                    setIsCreating(true);
+                  }}
+                  className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
+                >
+                  <FilePlus className='size-3' />
+                </Button>
+              </Tooltip>
+              <Tooltip content='Add subfolder'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                    event.stopPropagation();
+                    void operations.handleCreateFolder(folderId);
+                  }}
+                  className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
+                >
+                  <FolderPlus className='size-3' />
+                </Button>
+              </Tooltip>
             </>
           ) : null}
           {noteId ? (
-            <button
-              type='button'
-              title='Duplicate note'
+            <Tooltip content='Duplicate note'>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                  event.stopPropagation();
+                  void operations.handleDuplicateNote(noteId);
+                }}
+                className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
+              >
+                <Copy className='size-3' />
+              </Button>
+            </Tooltip>
+          ) : null}
+          <Tooltip content='Rename'>
+            <Button
+              variant='ghost'
+              size='sm'
               onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                 event.stopPropagation();
-                void operations.handleDuplicateNote(noteId);
+                startRename();
               }}
-              className='rounded p-1 text-gray-300 hover:bg-muted/50'
+              className='size-6 p-0 text-gray-400 hover:bg-white/10 hover:text-white'
             >
-              <Copy className='size-3' />
-            </button>
-          ) : null}
-          <button
-            type='button'
-            title='Rename'
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              startRename();
-            }}
-            className='rounded p-1 text-gray-300 hover:bg-muted/50'
-          >
-            <Edit2 className='size-3' />
-          </button>
-          <button
-            type='button'
-            title='Delete'
-            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-              event.stopPropagation();
-              if (folderId) {
-                void operations.handleDeleteFolder(folderId);
-                return;
-              }
-              if (noteId) {
-                void operations.handleDeleteNoteFromTree(noteId);
-              }
-            }}
-            className='rounded p-1 text-red-400 hover:bg-red-500/20'
-          >
-            <Trash2 className='size-3' />
-          </button>
+              <Edit2 className='size-3' />
+            </Button>
+          </Tooltip>
+          <Tooltip content='Delete'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                if (folderId) {
+                  void operations.handleDeleteFolder(folderId);
+                  return;
+                }
+                if (noteId) {
+                  void operations.handleDeleteNoteFromTree(noteId);
+                }
+              }}
+              className='size-6 p-0 text-rose-400 hover:bg-red-500/20 hover:text-rose-300'
+            >
+              <Trash2 className='size-3' />
+            </Button>
+          </Tooltip>
         </div>
       )}
     </div>

@@ -13,7 +13,7 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import { MasterTreeSettingsButton } from '@/shared/ui';
+import { MasterTreeSettingsButton, Button, StatusBadge, Badge } from '@/shared/ui';
 
 import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
 import {
@@ -54,9 +54,9 @@ function FileSubRow({
   return (
     <div className='flex items-center gap-2 rounded px-2 py-1 pl-8 text-[12px] text-gray-400 hover:bg-muted/30'>
       {resolveFileIcon(file.fileType)}
-      <button
-        type='button'
-        className='min-w-0 flex-1 truncate text-left text-gray-300 hover:underline focus:outline-none'
+      <Button
+        variant='link'
+        className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left text-gray-300 hover:text-white hover:no-underline focus:outline-none'
         onMouseEnter={(): void => {
           onPrefetchFile(file);
         }}
@@ -70,8 +70,8 @@ function FileSubRow({
         }}
         title={`Open case for: ${file.name}`}
       >
-        {file.name}
-      </button>
+        <span className='truncate'>{file.name}</span>
+      </Button>
       {file.isLocked === true ? <Lock className='size-3 shrink-0 text-amber-300' /> : null}
       {folderPath ? (
         <span className='max-w-[160px] shrink-0 truncate text-[10px] text-gray-500'>
@@ -107,9 +107,10 @@ function CaseAccordionRow({
   return (
     <div>
       <div className='group flex items-center gap-2 rounded px-2 py-1.5 text-sm text-gray-300 hover:bg-muted/50'>
-        <button
-          type='button'
-          className='inline-flex size-4 shrink-0 items-center justify-center rounded hover:bg-muted/60'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 shrink-0 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -122,7 +123,7 @@ function CaseAccordionRow({
           ) : (
             <ChevronRight className='size-3.5' />
           )}
-        </button>
+        </Button>
 
         {isExpanded ? (
           <FolderOpen className='size-4 shrink-0 text-amber-300/70' />
@@ -130,9 +131,9 @@ function CaseAccordionRow({
           <Folder className='size-4 shrink-0 text-amber-300/70' />
         )}
 
-        <button
-          type='button'
-          className='min-w-0 flex-1 truncate text-left font-medium text-gray-200 hover:underline focus:outline-none'
+        <Button
+          variant='link'
+          className='h-auto min-w-0 flex-1 justify-start p-0 truncate text-left font-medium text-gray-200 hover:text-white hover:no-underline focus:outline-none'
           onMouseEnter={(): void => {
             onPrefetchCase(caseFile.id);
           }}
@@ -146,28 +147,25 @@ function CaseAccordionRow({
           }}
           title={`Open case: ${caseFile.name}`}
         >
-          {caseFile.name}
-        </button>
+          <span className='truncate'>{caseFile.name}</span>
+        </Button>
 
-        <span
-          className={`shrink-0 inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium capitalize ${
-            caseStatus === 'completed'
-              ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
-              : 'border-amber-500/40 bg-amber-500/15 text-amber-200'
-          }`}
-        >
-          {caseStatus}
-        </span>
+        <StatusBadge
+          status={caseStatus}
+          size='sm'
+          className='h-5 font-bold uppercase'
+        />
 
         {hasFiles ? (
-          <span className='shrink-0 rounded border border-sky-500/30 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-300'>
+          <Badge variant='outline' className='bg-sky-500/5 text-sky-300 border-sky-500/20 text-[10px] h-5 px-1.5'>
             {matchedFiles.length} {matchedFiles.length === 1 ? 'file' : 'files'}
-          </span>
+          </Badge>
         ) : null}
 
-        <button
-          type='button'
-          className='shrink-0 opacity-0 transition-opacity group-hover:opacity-100 inline-flex size-5 items-center justify-center rounded hover:bg-muted/60 text-gray-400 hover:text-gray-200'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='shrink-0 opacity-0 transition-opacity group-hover:opacity-100 size-5 p-0 text-gray-400 hover:text-gray-200 hover:bg-white/10'
           onMouseEnter={(): void => {
             onPrefetchCase(caseFile.id);
           }}
@@ -183,7 +181,7 @@ function CaseAccordionRow({
           aria-label='Open case'
         >
           <ExternalLink className='size-3.5' />
-        </button>
+        </Button>
       </div>
 
       {isExpanded && hasFiles ? (
@@ -258,13 +256,13 @@ export function CaseListSearchPanel({
           ) : null}
         </span>
         {entries.length > 0 ? (
-          <button
-            type='button'
-            className='text-[11px] text-sky-400 hover:underline'
+          <Button
+            variant='link'
+            className='h-auto p-0 text-[11px] text-sky-400 hover:text-sky-300 hover:no-underline'
             onClick={allExpanded ? collapseAll : expandAll}
           >
             {allExpanded ? 'Collapse all' : 'Expand all'}
-          </button>
+          </Button>
         ) : null}
       </div>
 

@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
-
 import { Badge } from './badge';
 
 export type StatusVariant =
@@ -61,6 +60,11 @@ const statusToVariant = (status: string): StatusVariant => {
   return 'neutral';
 };
 
+/**
+ * StatusBadge - A specialized badge for displaying operational statuses.
+ * Provides automatic mapping from status strings to visual variants.
+ * Leverages the shared Badge component for consistent design.
+ */
 export function StatusBadge({
   status,
   label,
@@ -77,19 +81,16 @@ export function StatusBadge({
 
   return (
     <Badge
-      variant={resolvedVariant}
+      variant={resolvedVariant as any}
       className={cn(
         'gap-1 uppercase tracking-wider',
         size === 'sm' ? 'text-[9px] px-1 py-0 h-4' : 'text-[10px] px-2 py-0.5 h-5',
-        onClick && 'cursor-pointer hover:opacity-80 transition-opacity',
         className
       )}
       title={title}
       onClick={onClick}
+      icon={icon}
     >
-      {icon && (
-        <span className={cn('flex-shrink-0', size === 'sm' ? 'size-2.5' : 'size-3')}>{icon}</span>
-      )}
       {!hideLabel && displayLabel ? <span>{displayLabel}</span> : null}
     </Badge>
   );

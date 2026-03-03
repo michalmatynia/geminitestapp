@@ -29,7 +29,7 @@ const classifyPollError = (error: unknown, mode: 'job' | 'database'): PollFailur
       error: message,
     };
   }
-  if (normalized.includes('was canceled') || normalized.includes('was cancelled')) {
+  if (normalized.includes('was canceled')) {
     return {
       status: 'canceled',
       reason: 'poll_job_canceled',

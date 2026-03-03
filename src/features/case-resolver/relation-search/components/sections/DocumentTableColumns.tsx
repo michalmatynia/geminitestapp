@@ -2,7 +2,7 @@ import React from 'react';
 import { Lock, Plus } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
-import { Checkbox, Tooltip } from '@/shared/ui';
+import { Checkbox, Tooltip, Button } from '@/shared/ui';
 import type { NodeFileDocumentSearchRow } from '../../../components/CaseResolverNodeFileUtils';
 import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
@@ -69,12 +69,13 @@ export const getDocumentTableColumns = ({
       header: 'Name',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
         <Tooltip content={row.original.file.name} side='top'>
-          <span
-            className='block cursor-pointer truncate text-gray-200 hover:text-cyan-300 hover:underline'
+          <Button
+            variant='link'
+            className='h-auto w-full justify-start p-0 truncate text-gray-200 hover:text-cyan-300 hover:no-underline'
             onClick={() => setPreviewFileId(row.original.file.id)}
           >
-            {row.original.file.name}
-          </span>
+            <span className='truncate'>{row.original.file.name}</span>
+          </Button>
         </Tooltip>
       ),
     },
@@ -149,17 +150,18 @@ export const getDocumentTableColumns = ({
       header: '',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
         <Tooltip content={getCaseResolverDocTooltip('linkDocument')} side='left'>
-          <button
-            type='button'
+          <Button
+            variant='ghost'
+            size='sm'
             disabled={isLocked}
-            className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300 disabled:pointer-events-none disabled:opacity-40'
+            className='size-7 p-0 text-gray-400 hover:bg-cyan-500/15 hover:text-cyan-300 disabled:opacity-40'
             onClick={(e) => {
               e.stopPropagation();
               onLinkFile(row.original.file.id);
             }}
           >
             <Plus className='size-3.5' />
-          </button>
+          </Button>
         </Tooltip>
       ),
       size: 40,

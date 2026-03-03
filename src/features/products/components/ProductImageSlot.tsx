@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   Input,
   FileUploadTrigger,
+  Tooltip,
 } from '@/shared/ui';
 
 import { useProductImageManagerUI } from './ProductImageManagerUIContext';
@@ -203,23 +204,25 @@ export function ProductImageSlot({ index }: ProductImageSlotProps) {
                 </Button>
               )}
               {!minimalUi && (
-                <div className='absolute bottom-0 left-0 flex items-center rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400'>
+                <div className='absolute bottom-0 left-0 flex items-center rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400 overflow-hidden'>
                   <span className='px-1.5 py-0.5'>{index + 1}</span>
                   {displayUrl ? (
-                    <button
-                      type='button'
-                      onClick={(event): void => {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        if (typeof window === 'undefined') return;
-                        window.open(displayUrl, '_blank', 'noopener,noreferrer');
-                      }}
-                      className='inline-flex items-center border-l border-gray-700 px-1.5 py-0.5 text-gray-300 transition-colors hover:text-white'
-                      title='Open full preview in new tab'
-                      aria-label={`Open full preview for image slot ${index + 1} in new tab`}
-                    >
-                      <Eye className='h-3 w-3' />
-                    </button>
+                    <Tooltip content='Open full preview in new tab' side='top'>
+                      <Button
+                        variant='ghost'
+                        size='xs'
+                        onClick={(event: React.MouseEvent): void => {
+                          event.stopPropagation();
+                          event.preventDefault();
+                          if (typeof window === 'undefined') return;
+                          window.open(displayUrl, '_blank', 'noopener,noreferrer');
+                        }}
+                        className='h-5 w-6 rounded-none border-l border-gray-700 p-0 text-gray-300 hover:bg-white/10 hover:text-white'
+                        aria-label={`Open full preview for image slot ${index + 1} in new tab`}
+                      >
+                        <Eye className='size-3' />
+                      </Button>
+                    </Tooltip>
                   ) : null}
                 </div>
               )}
@@ -231,7 +234,7 @@ export function ProductImageSlot({ index }: ProductImageSlotProps) {
               <Button
                 type='button'
                 variant='ghost'
-                className='text-xs'
+                className='text-xs h-7 mt-1'
                 onClick={(e) => {
                   e.stopPropagation();
                   triggerFileManager(index);

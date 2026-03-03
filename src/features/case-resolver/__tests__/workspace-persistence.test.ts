@@ -128,6 +128,27 @@ describe('case-resolver workspace persistence', () => {
     }
   });
 
+  it('rejects deprecated inline node-file snapshots before persist', async () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      assets: [
+        createCaseResolverAssetFile({
+          id: 'node-file-inline',
+          name: 'Inline Snapshot Asset',
+          kind: 'node_file',
+          textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-inline"}]}',
+        }),
+      ],
+    };
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    expect(() =>
+      stampCaseResolverWorkspaceMutation(workspace, { baseRevision: 0, mutationId: 'mutation-inline' })
+    ).toThrowError(/Invalid Case Resolver node-file snapshot payload/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
     const workspace = createDefaultCaseResolverWorkspace();
     const fetchMock = vi.fn().mockResolvedValue(

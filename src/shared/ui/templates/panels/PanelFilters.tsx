@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 import { FilterField } from '@/shared/contracts/ui';
-import { Button, Label, SelectSimple } from '@/shared/ui';
+import { Button, Label, SelectSimple, SearchInput } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
@@ -226,7 +226,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
   // Debounce changes for text and number fields
   useEffect(() => {
-    if (field.type !== 'text' && field.type !== 'number' && field.type !== 'date') return;
+    if (field.type !== 'text' && field.type !== 'number' && field.type !== 'date' && field.type !== 'search') return;
     if (localValue === value) return;
 
     const timer = setTimeout(() => {
@@ -237,15 +237,16 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
   }, [localValue, value, onChange, field.type]);
 
   switch (field.type) {
+    case 'multi-select':
     case 'select': {
       const options = (field.options ?? []).map((option) => ({
         value: String(option.value),
         label: option.label,
       }));
 
-      if (field.multi) {
+      if (field.multi || field.type === 'multi-select') {
         return (
-          <div style={containerStyle} className='flex flex-col gap-1'>
+          <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
             <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
               {field.label}
             </Label>
@@ -261,7 +262,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       }
 
       return (
-        <div style={containerStyle} className='flex flex-col gap-1'>
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
             {field.label}
           </Label>
@@ -278,9 +279,29 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       );
     }
 
+    case 'search':
+      return (
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
+          <SearchInput
+            placeholder={field.placeholder ?? `Search ${field.label.toLowerCase()}...`}
+            value={String(localValue ?? '')}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onClear={() => {
+              setLocalValue('');
+              onChange('');
+            }}
+            variant='subtle'
+            size='sm'
+          />
+        </div>
+      );
+
     case 'checkbox':
       return (
-        <div style={containerStyle} className='flex items-center gap-2 py-1'>
+        <div style={containerStyle} className={cn('flex items-center gap-2 py-1', field.className)}>
           <Checkbox
             id={field.key}
             checked={(value as boolean) || false}
@@ -294,7 +315,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
     case 'number':
       return (
-        <div style={containerStyle} className='flex flex-col gap-1'>
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
             {field.label}
           </Label>
@@ -310,7 +331,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
     case 'date':
       return (
-        <div style={containerStyle} className='flex flex-col gap-1'>
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
             {field.label}
           </Label>
@@ -326,7 +347,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'dateRange': {
       const rangeValue = value as { from?: string; to?: string } | undefined;
       return (
-        <div style={containerStyle} className='flex flex-col gap-1'>
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
             {field.label}
           </Label>
@@ -363,7 +384,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'text':
     default:
       return (
-        <div style={containerStyle} className='flex flex-col gap-1'>
+        <div style={containerStyle} className={cn('flex flex-col gap-1', field.className)}>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
             {field.label}
           </Label>

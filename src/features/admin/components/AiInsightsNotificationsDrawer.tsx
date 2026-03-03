@@ -12,7 +12,7 @@ import {
   LoadingState,
   EmptyState,
   Drawer,
-  AiInsightList,
+  DocumentationList,
 } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
@@ -94,10 +94,11 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
                   />
                 </div>
                 <div className='mt-2 text-sm text-white'>{notification.summary}</div>
-                <AiInsightList
+                <DocumentationList
                   title='Issues'
                   items={notification.warnings ?? []}
                   variant='warning'
+                  size='sm'
                 />
               </div>
             ))}

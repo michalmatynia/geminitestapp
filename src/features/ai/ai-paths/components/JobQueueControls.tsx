@@ -3,9 +3,8 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { useJobQueueContext } from './JobQueueContext';
+import { JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS } from './job-queue-auto-refresh';
 import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
-
-const AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
 
 export function JobQueueControls(): React.JSX.Element {
   const {
@@ -84,7 +83,7 @@ export function JobQueueControls(): React.JSX.Element {
             value={String(autoRefreshInterval)}
             onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
             disabled={!autoRefreshEnabled}
-            options={[...AUTO_REFRESH_INTERVAL_OPTIONS].map((value: number) => ({
+            options={JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS.map((value: number) => ({
               value: String(value),
               label: `${value / 1000}s`,
             }))}

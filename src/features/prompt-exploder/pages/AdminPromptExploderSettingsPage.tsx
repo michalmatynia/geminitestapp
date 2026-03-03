@@ -2,7 +2,7 @@
 
 import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   parseValidatorPatternLists,
@@ -15,6 +15,7 @@ import {
   FormField,
   FormActions,
   FormSection,
+  Alert,
   Input,
   SectionHeader,
   Button,
@@ -26,11 +27,16 @@ import {
   type SettingsField,
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
-import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
+import {
+  defaultPromptExploderSettings,
+  parsePromptExploderSettingsResult,
+  PROMPT_EXPLODER_SETTINGS_KEY,
+} from '../settings';
 import {
   buildPromptExploderValidationRuleStackOptions,
   normalizePromptExploderValidationRuleStack,
@@ -73,10 +79,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
+  const lastSettingsErrorSignatureRef = useRef<string | null>(null);
 
   const rawSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const hasPersistedSettingsPayload = Boolean(rawSettings?.trim());
   const rawValidatorPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  const parsedSettings = useMemo(() => parsePromptExploderSettings(rawSettings), [rawSettings]);
+  const parsedSettingsResult = useMemo(
+    () => parsePromptExploderSettingsResult(rawSettings),
+    [rawSettings]
+  );
+  const settingsValidationError = hasPersistedSettingsPayload ? parsedSettingsResult.error : null;
+  const parsedSettings = parsedSettingsResult.settings;
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
     [rawValidatorPatternLists]
@@ -100,6 +113,23 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     });
     setLoadedFrom(raw);
   }, [draft, loadedFrom, parsedSettings, rawSettings, validatorPatternLists]);
+
+  useEffect(() => {
+    const error = parsedSettingsResult.error;
+    const raw = rawSettings?.trim() ?? '';
+    if (!error || !raw) return;
+    const signature = `${raw}::${error.code}::${error.message}`;
+    if (lastSettingsErrorSignatureRef.current === signature) return;
+    lastSettingsErrorSignatureRef.current = signature;
+    logClientError(error, {
+      context: {
+        source: 'AdminPromptExploderSettingsPage',
+        action: 'parsePromptExploderSettings',
+        settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
+      },
+    });
+    toast(error.message, { variant: 'error' });
+  }, [parsedSettingsResult.error, rawSettings, toast]);
 
   useEffect(() => {
     setDraft((previous) => {
@@ -261,6 +291,23 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
   const saveDisabled = !draft || settingsQuery.isLoading || updateSetting.isPending;
 
+  const handleResetInvalidSettings = async (): Promise<void> => {
+    if (!settingsValidationError) return;
+    try {
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SETTINGS_KEY,
+        value: serializeSetting(defaultPromptExploderSettings),
+      });
+      toast('Prompt Exploder settings were reset to defaults.', { variant: 'success' });
+      await settingsQuery.refetch();
+      brainModelOptions.refresh();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to reset Prompt Exploder settings.', {
+        variant: 'error',
+      });
+    }
+  };
+
   const handleSave = async (): Promise<void> => {
     if (!draft) return;
     if (draft.ai.operationMode !== 'rules_only' && !hasConfiguredBrainModel) {
@@ -319,6 +366,46 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       });
     }
   };
+
+  if (settingsValidationError) {
+    return (
+      <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
+        <SectionHeader
+          eyebrow='AI · Prompt Exploder'
+          title='Prompt Exploder Settings'
+          description='Persisted settings are invalid and cannot be loaded.'
+        />
+        <Alert variant='error'>{settingsValidationError.message}</Alert>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleResetInvalidSettings();
+            }}
+            disabled={updateSetting.isPending}
+          >
+            {updateSetting.isPending ? 'Resetting...' : 'Reset Settings to Defaults'}
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            onClick={() => {
+              void settingsQuery.refetch();
+              brainModelOptions.refresh();
+            }}
+            disabled={settingsQuery.isFetching}
+          >
+            {settingsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
+        <DocsTooltipEnhancer
+          rootId='prompt-exploder-settings-docs-root'
+          enabled={docsTooltipsEnabled}
+        />
+      </div>
+    );
+  }
 
   if (!draft) {
     return (

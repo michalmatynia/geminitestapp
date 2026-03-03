@@ -27,6 +27,10 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
   useBrainModelOptions: vi.fn(),
 }));
 
+vi.mock('@/shared/utils/observability/client-error-logger', () => ({
+  logClientError: vi.fn(),
+}));
+
 vi.mock('@/features/prompt-exploder/hooks/usePromptExploderDocsTooltips', () => ({
   usePromptExploderDocsTooltips: () => ({
     docsTooltipsEnabled: false,
@@ -147,6 +151,15 @@ const mockSettingsQuery = (settings: ReturnType<typeof buildSettings>): void => 
   } as unknown as SettingsMapReturn);
 };
 
+const mockSettingsQueryRaw = (rawSettings: string): void => {
+  vi.mocked(useSettingsMap).mockReturnValue({
+    data: new Map([[PROMPT_EXPLODER_SETTINGS_KEY, rawSettings]]),
+    isSuccess: true,
+    isLoading: false,
+    refetch: vi.fn(),
+  } as unknown as SettingsMapReturn);
+};
+
 const mockUpdateSetting = (mutateAsync = vi.fn().mockResolvedValue(undefined)): ReturnType<typeof vi.fn> => {
   vi.mocked(useUpdateSetting).mockReturnValue({
     isPending: false,
@@ -179,16 +192,11 @@ describe('AdminPromptExploderSettingsPage', () => {
     toastMock.mockReset();
   });
 
-  it('renders Brain-managed AI snapshot fields as read-only while keeping operation mode editable', async () => {
+  it('renders Brain-managed AI fields as read-only while keeping operation mode editable', async () => {
     mockSettingsQuery(
       buildSettings({
         ai: {
           operationMode: 'hybrid',
-          provider: 'ollama',
-          modelId: 'legacy-model',
-          fallbackModelId: 'legacy-fallback',
-          temperature: 0.25,
-          maxTokens: 800,
         },
       })
     );
@@ -213,21 +221,19 @@ describe('AdminPromptExploderSettingsPage', () => {
 
     const provider = screen.getByLabelText('Provider Snapshot');
     const primaryModel = screen.getByLabelText('Primary AI Model');
-    const fallback = screen.getByLabelText('Fallback Model Snapshot');
-    const temperature = screen.getByLabelText('Temperature Snapshot');
-    const maxTokens = screen.getByLabelText('Max Tokens Snapshot');
+    const temperature = screen.getByLabelText('Brain Temperature');
+    const maxTokens = screen.getByLabelText('Brain Max Tokens');
 
     expect(provider).toBeDisabled();
     expect(primaryModel).toBeDisabled();
-    expect(fallback).toBeDisabled();
     expect(temperature).toBeDisabled();
     expect(maxTokens).toBeDisabled();
 
     expect(provider).toHaveValue('openai');
     expect(primaryModel).toHaveValue('gpt-4o-mini');
-    expect(fallback).toHaveValue('legacy-fallback');
     expect(temperature).toHaveValue('0.7');
     expect(maxTokens).toHaveValue('2048');
+    expect(screen.queryByLabelText('Fallback Model Snapshot')).not.toBeInTheDocument();
 
     expect(vi.mocked(useBrainModelOptions)).toHaveBeenCalledWith({
       capability: 'prompt_engine.prompt_exploder',
@@ -268,16 +274,11 @@ describe('AdminPromptExploderSettingsPage', () => {
     expect(mutateAsync).not.toHaveBeenCalled();
   });
 
-  it('allows saving in rules-only mode without a Brain model and preserves existing compatibility snapshots', async () => {
+  it('allows saving in rules-only mode without persisting deprecated AI snapshot fields', async () => {
     mockSettingsQuery(
       buildSettings({
         ai: {
           operationMode: 'hybrid',
-          provider: 'ollama',
-          modelId: 'legacy-model',
-          fallbackModelId: 'legacy-fallback',
-          temperature: 0.35,
-          maxTokens: 900,
         },
       })
     );
@@ -307,23 +308,16 @@ describe('AdminPromptExploderSettingsPage', () => {
     const saved = JSON.parse(payload.value) as typeof defaultPromptExploderSettings;
 
     expect(saved.ai.operationMode).toBe('rules_only');
-    expect(saved.ai.provider).toBe('ollama');
-    expect(saved.ai.modelId).toBe('legacy-model');
-    expect(saved.ai.fallbackModelId).toBe('legacy-fallback');
-    expect(saved.ai.temperature).toBe(0.35);
-    expect(saved.ai.maxTokens).toBe(900);
+    expect(saved.ai).toEqual({
+      operationMode: 'rules_only',
+    });
   });
 
-  it('persists Brain-derived compatibility snapshots and preserves the legacy fallback model', async () => {
+  it('saves hybrid mode without persisting Brain-derived AI snapshots', async () => {
     mockSettingsQuery(
       buildSettings({
         ai: {
           operationMode: 'hybrid',
-          provider: 'ollama',
-          modelId: 'legacy-model',
-          fallbackModelId: 'legacy-fallback',
-          temperature: 0.25,
-          maxTokens: 800,
         },
       })
     );
@@ -343,6 +337,9 @@ describe('AdminPromptExploderSettingsPage', () => {
 
     render(<AdminPromptExploderSettingsPage />);
 
+    fireEvent.change(await screen.findByLabelText('Operation Mode'), {
+      target: { value: 'ai_assisted' },
+    });
     fireEvent.click(await screen.findByText('Save Prompt Exploder Settings'));
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
@@ -351,10 +348,32 @@ describe('AdminPromptExploderSettingsPage', () => {
     const saved = JSON.parse(payload.value) as typeof defaultPromptExploderSettings;
 
     expect(payload.key).toBe(PROMPT_EXPLODER_SETTINGS_KEY);
-    expect(saved.ai.provider).toBe('gemini');
-    expect(saved.ai.modelId).toBe('gemini-2.0-flash');
-    expect(saved.ai.fallbackModelId).toBe('legacy-fallback');
-    expect(saved.ai.temperature).toBe(0.8);
-    expect(saved.ai.maxTokens).toBe(2222);
+    expect(saved.ai).toEqual({
+      operationMode: 'ai_assisted',
+    });
+  });
+
+  it('surfaces deprecated persisted AI snapshot keys as an explicit error', async () => {
+    mockSettingsQueryRaw(
+      JSON.stringify({
+        ...defaultPromptExploderSettings,
+        ai: {
+          operationMode: 'hybrid',
+          modelId: 'legacy-model',
+          fallbackModelId: 'legacy-fallback',
+        },
+      })
+    );
+    mockUpdateSetting();
+    mockBrainOptions();
+
+    render(<AdminPromptExploderSettingsPage />);
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(
+        'Prompt Exploder settings contain deprecated AI snapshot keys: modelId, fallbackModelId.',
+        { variant: 'error' }
+      );
+    });
   });
 });

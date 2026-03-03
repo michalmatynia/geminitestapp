@@ -679,6 +679,66 @@ describe('case-resolver settings', () => {
     expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
   });
 
+  it('rejects legacy relation graph edge keys', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      files: [
+        {
+          id: 'case-a',
+          fileType: 'case',
+          name: 'Case A',
+          folder: '',
+          parentCaseId: null,
+          referenceCaseIds: [],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+      ],
+      assets: [],
+      relationGraph: {
+        nodes: [
+          {
+            id: 'case:case-a',
+            type: 'template',
+            title: 'Case: Case A',
+            description: '',
+            inputs: ['in'],
+            outputs: ['out'],
+            position: { x: 120, y: 120 },
+          },
+          {
+            id: 'custom-link',
+            type: 'template',
+            title: 'Custom Link',
+            description: '',
+            inputs: ['in'],
+            outputs: ['out'],
+            position: { x: 420, y: 120 },
+          },
+        ],
+        edges: [
+          {
+            id: 'legacy-edge',
+            from: 'case:case-a',
+            to: 'custom-link',
+            fromPort: 'out',
+            toPort: 'in',
+          },
+        ],
+        nodeMeta: {},
+        edgeMeta: {},
+      },
+      activeFileId: 'case-a',
+    });
+
+    expect(() => parseCaseResolverWorkspace(raw)).toThrowError(
+      /Legacy Case Resolver edge fields are no longer supported/i
+    );
+  });
+
   it('synchronizes relation graph structure and preserves custom links', () => {
     const raw = JSON.stringify({
       version: 2,
@@ -738,10 +798,10 @@ describe('case-resolver settings', () => {
         edges: [
           {
             id: 'custom-edge',
-            from: 'case:case-a',
-            to: 'custom-link',
-            fromPort: 'out',
-            toPort: 'in',
+            source: 'case:case-a',
+            target: 'custom-link',
+            sourceHandle: 'out',
+            targetHandle: 'in',
             label: 'cross',
           },
         ],
@@ -798,16 +858,16 @@ describe('case-resolver settings', () => {
     expect(
       relationGraph.edges.some(
         (edge: Edge): boolean =>
-          edge.from === 'case:case-a' &&
-          edge.to === 'case:case-b' &&
+          edge.source === 'case:case-a' &&
+          edge.target === 'case:case-b' &&
           relationGraph.edgeMeta?.[edge.id]?.relationType === 'parent_case'
       )
     ).toBe(true);
     expect(
       relationGraph.edges.some(
         (edge: Edge): boolean =>
-          edge.from === 'case:case-a' &&
-          edge.to === 'case:case-b' &&
+          edge.source === 'case:case-a' &&
+          edge.target === 'case:case-b' &&
           relationGraph.edgeMeta?.[edge.id]?.relationType === 'references'
       )
     ).toBe(true);
@@ -920,17 +980,17 @@ describe('case-resolver settings', () => {
         edges: [
           {
             id: 'stale-edge',
-            from: 'missing-node',
-            to: 'custom-a',
-            fromPort: 'out',
-            toPort: 'in',
+            source: 'missing-node',
+            target: 'custom-a',
+            sourceHandle: 'out',
+            targetHandle: 'in',
           },
           {
             id: 'custom-edge-keep',
-            from: 'custom-a',
-            to: 'custom-b',
-            fromPort: 'out',
-            toPort: 'in',
+            source: 'custom-a',
+            target: 'custom-b',
+            sourceHandle: 'out',
+            targetHandle: 'in',
           },
         ],
         nodeMeta: {
@@ -1574,6 +1634,30 @@ describe('case-resolver settings', () => {
         joinMode: 'tab',
       },
     });
+  });
+
+  it('rejects legacy node-file edge keys and ports', () => {
+    expect(() =>
+      parseNodeFileSnapshot(
+        JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [createPromptNode('legacy-node-a'), createPromptNode('legacy-node-b')],
+          edges: [
+            {
+              id: 'legacy-edge',
+              from: 'legacy-node-a',
+              to: 'legacy-node-b',
+              fromPort: 'textfield',
+              toPort: 'content',
+            },
+          ],
+          nodeMeta: {},
+          edgeMeta: {},
+          nodeFileMeta: {},
+        })
+      )
+    ).toThrowError(/Legacy Case Resolver edge fields are no longer supported/i);
   });
 
   it('returns isolated empty node-file snapshots per parse call', () => {

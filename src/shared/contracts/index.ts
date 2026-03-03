@@ -8,7 +8,7 @@ export * from './ai-insights';
 export * from './ai-paths-runtime';
 export * from './ai-paths-semantic-grammar';
 export * from './ai-paths';
-// Resolve TS2308: ai-paths.ts has legacy shims for these names; prefer the concrete types from ai-paths-runtime.
+// Resolve TS2308 by re-exporting the concrete runtime types explicitly.
 export type {
   PathExecutionMode,
   PathRunMode,

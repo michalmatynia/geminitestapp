@@ -15,7 +15,6 @@ import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shar
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   createEmptyNodeFileSnapshot,
-  parseNodeFileSnapshot,
 } from '../settings';
 import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
@@ -44,7 +43,7 @@ export type NodeFileSnapshotPersistOptions = {
 type ResolvedNodeFileSnapshotState = {
   isLoading: boolean;
   snapshot: CaseResolverNodeFileSnapshot;
-  source: 'keyed' | 'inline_legacy' | 'empty_default';
+  source: 'keyed' | 'empty_default';
   validationErrorMessage: string | null;
 };
 
@@ -331,8 +330,6 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   const { selectedAsset, onUpdateSelectedAsset } = useCaseResolverPageContext();
   const selectedAssetId = selectedAsset?.id ?? null;
   const selectedAssetKind = selectedAsset?.kind ?? null;
-  const selectedAssetTextContent =
-    typeof selectedAsset?.textContent === 'string' ? selectedAsset.textContent : '';
   const [resolvedSnapshot, setResolvedSnapshot] = React.useState<ResolvedNodeFileSnapshotState>({
     isLoading: false,
     snapshot: createEmptyNodeFileSnapshot(),
@@ -351,16 +348,10 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       return;
     }
 
-    const inlineText = selectedAssetTextContent;
-    const hasInlineSnapshot = inlineText.trim().length > 0;
-    const inlineSnapshot = hasInlineSnapshot
-      ? parseNodeFileSnapshot(inlineText)
-      : createEmptyNodeFileSnapshot();
-
     setResolvedSnapshot({
       isLoading: true,
-      snapshot: inlineSnapshot,
-      source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+      snapshot: createEmptyNodeFileSnapshot(),
+      source: 'empty_default',
       validationErrorMessage: null,
     });
 
@@ -382,8 +373,8 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       }
       setResolvedSnapshot({
         isLoading: false,
-        snapshot: inlineSnapshot,
-        source: hasInlineSnapshot ? 'inline_legacy' : 'empty_default',
+        snapshot: createEmptyNodeFileSnapshot(),
+        source: 'empty_default',
         validationErrorMessage: null,
       });
     })();
@@ -391,7 +382,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     return (): void => {
       isCancelled = true;
     };
-  }, [selectedAssetId, selectedAssetKind, selectedAssetTextContent]);
+  }, [selectedAssetId, selectedAssetKind]);
 
   const handleSnapshotChange = useCallback(
     async (
@@ -466,8 +457,6 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       initialLoading={false}
       initialRuntimeState={{
         status: 'idle',
-        runId: null,
-        runStartedAt: null,
         nodeStatuses: {},
         nodeOutputs: {},
         variables: {},

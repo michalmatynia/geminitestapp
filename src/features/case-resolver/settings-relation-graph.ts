@@ -14,6 +14,7 @@ import {
   type CaseResolverRelationGraph,
   type CaseResolverRelationNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
@@ -152,24 +153,20 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[
   const seen = new Set<string>();
   const edges: Edge[] = [];
   value.forEach((entry: unknown): void => {
-    if (!entry || typeof entry !== 'object') return;
-    const record = entry as Record<string, unknown>;
-    const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
-    const from = typeof record['from'] === 'string' ? record['from'].trim() : '';
-    const to = typeof record['to'] === 'string' ? record['to'].trim() : '';
-    if (!id || !from || !to || seen.has(id)) return;
-    if (!validNodeIds.has(from) || !validNodeIds.has(to)) return;
+    const edge = parseCanonicalCaseResolverEdge(entry, 'case_resolver.relation_graph');
+    const id = edge.id.trim();
+    const source = edge.source?.trim() ?? '';
+    const target = edge.target?.trim() ?? '';
+    if (!id || !source || !target || seen.has(id)) return;
+    if (!validNodeIds.has(source) || !validNodeIds.has(target)) return;
     seen.add(id);
-    const label = typeof record['label'] === 'string' ? record['label'] : undefined;
-    const fromPort = typeof record['fromPort'] === 'string' ? record['fromPort'] : undefined;
-    const toPort = typeof record['toPort'] === 'string' ? record['toPort'] : undefined;
     edges.push({
       id,
-      from,
-      to,
-      ...(label !== undefined ? { label } : {}),
-      ...(fromPort !== undefined ? { fromPort } : {}),
-      ...(toPort !== undefined ? { toPort } : {}),
+      source,
+      target,
+      ...(typeof edge.label === 'string' ? { label: edge.label } : {}),
+      ...(typeof edge.sourceHandle === 'string' ? { sourceHandle: edge.sourceHandle } : {}),
+      ...(typeof edge.targetHandle === 'string' ? { targetHandle: edge.targetHandle } : {}),
     });
   });
   return edges;
@@ -268,9 +265,9 @@ const sanitizeRelationEdgeMeta = (
 
 const structuralRelationEdgeId = (
   relationType: CaseResolverRelationEdgeKind,
-  from: string,
-  to: string
-): string => `struct:${relationType}:${encodeURIComponent(from)}:${encodeURIComponent(to)}`;
+  source: string,
+  target: string
+): string => `struct:${relationType}:${encodeURIComponent(source)}:${encodeURIComponent(target)}`;
 
 export const toCaseResolverRelationCaseNodeId = (caseId: string): string => `case:${caseId}`;
 export const toCaseResolverRelationFolderNodeId = (folderPath: string): string =>
@@ -570,32 +567,32 @@ export const buildCaseResolverRelationGraph = ({
 
   const upsertEdge = (input: {
     id: string;
-    from: string;
-    to: string;
+    source: string;
+    target: string;
     relationType: CaseResolverRelationEdgeKind;
     label: string;
     isStructural: boolean;
   }): void => {
     if (!input.id || usedEdgeIds.has(input.id)) return;
-    if (!nextNodeIdSet.has(input.from) || !nextNodeIdSet.has(input.to)) return;
+    if (!nextNodeIdSet.has(input.source) || !nextNodeIdSet.has(input.target)) return;
     usedEdgeIds.add(input.id);
     const existingEdge = existingEdgeById.get(input.id);
     const edgeLabel = input.label;
-    const fromPort =
-      typeof existingEdge?.fromPort === 'string' && existingEdge.fromPort.length > 0
-        ? existingEdge.fromPort
+    const sourceHandle =
+      typeof existingEdge?.sourceHandle === 'string' && existingEdge.sourceHandle.length > 0
+        ? existingEdge.sourceHandle
         : 'out';
-    const toPort =
-      typeof existingEdge?.toPort === 'string' && existingEdge.toPort.length > 0
-        ? existingEdge.toPort
+    const targetHandle =
+      typeof existingEdge?.targetHandle === 'string' && existingEdge.targetHandle.length > 0
+        ? existingEdge.targetHandle
         : 'in';
     nextEdges.push({
       id: input.id,
-      from: input.from,
-      to: input.to,
+      source: input.source,
+      target: input.target,
       ...(edgeLabel ? { label: edgeLabel } : {}),
-      fromPort,
-      toPort,
+      sourceHandle,
+      targetHandle,
     });
     const existingMeta = rawEdgeMeta[input.id];
     const createdAt = normalizeTimestamp(existingMeta?.createdAt, now);
@@ -624,12 +621,12 @@ export const buildCaseResolverRelationGraph = ({
     if (!parentEntityId) return;
     const childFolderPath = relationFolderPathFromEntityId(folderEntityId) ?? '';
     const parentFolderPath = relationFolderPathFromEntityId(parentEntityId) ?? '';
-    const from = toCaseResolverRelationFolderNodeId(parentFolderPath);
-    const to = toCaseResolverRelationFolderNodeId(childFolderPath);
+    const source = toCaseResolverRelationFolderNodeId(parentFolderPath);
+    const target = toCaseResolverRelationFolderNodeId(childFolderPath);
     upsertEdge({
-      id: structuralRelationEdgeId('contains', from, to),
-      from,
-      to,
+      id: structuralRelationEdgeId('contains', source, target),
+      source,
+      target,
       relationType: 'contains',
       label: 'contains folder',
       isStructural: true,
@@ -642,8 +639,8 @@ export const buildCaseResolverRelationGraph = ({
     const caseNodeId = toCaseResolverRelationCaseNodeId(file.id);
     upsertEdge({
       id: structuralRelationEdgeId('contains', folderNodeId, caseNodeId),
-      from: folderNodeId,
-      to: caseNodeId,
+      source: folderNodeId,
+      target: caseNodeId,
       relationType: 'contains',
       label: 'contains case',
       isStructural: true,
@@ -652,8 +649,8 @@ export const buildCaseResolverRelationGraph = ({
       const parentCaseNodeId = toCaseResolverRelationCaseNodeId(file.parentCaseId);
       upsertEdge({
         id: structuralRelationEdgeId('parent_case', parentCaseNodeId, caseNodeId),
-        from: parentCaseNodeId,
-        to: caseNodeId,
+        source: parentCaseNodeId,
+        target: caseNodeId,
         relationType: 'parent_case',
         label: 'parent case',
         isStructural: true,
@@ -665,8 +662,8 @@ export const buildCaseResolverRelationGraph = ({
         const referenceCaseNodeId = toCaseResolverRelationCaseNodeId(referenceId);
         upsertEdge({
           id: structuralRelationEdgeId('references', caseNodeId, referenceCaseNodeId),
-          from: caseNodeId,
-          to: referenceCaseNodeId,
+          source: caseNodeId,
+          target: referenceCaseNodeId,
           relationType: 'references',
           label: 'references',
           isStructural: true,
@@ -679,8 +676,8 @@ export const buildCaseResolverRelationGraph = ({
     const assetFileNodeId = toCaseResolverRelationAssetFileNodeId(asset.id);
     upsertEdge({
       id: structuralRelationEdgeId('contains', folderNodeId, assetFileNodeId),
-      from: folderNodeId,
-      to: assetFileNodeId,
+      source: folderNodeId,
+      target: assetFileNodeId,
       relationType: 'contains',
       label: 'contains file',
       isStructural: true,
@@ -690,16 +687,16 @@ export const buildCaseResolverRelationGraph = ({
   rawEdges.forEach((edge: Edge): void => {
     const existingMeta = rawEdgeMeta[edge.id];
     if (existingMeta?.isStructural) return;
-    const fromNodeId = edge.from;
-    const toNodeId = edge.to;
-    if (!fromNodeId || !toNodeId) return;
-    if (!nextNodeIdSet.has(fromNodeId) || !nextNodeIdSet.has(toNodeId)) return;
+    const sourceNodeId = edge.source?.trim() ?? '';
+    const targetNodeId = edge.target?.trim() ?? '';
+    if (!sourceNodeId || !targetNodeId) return;
+    if (!nextNodeIdSet.has(sourceNodeId) || !nextNodeIdSet.has(targetNodeId)) return;
     const relationType = existingMeta ? existingMeta.relationType : 'related';
     const label = existingMeta?.label ?? edge.label ?? '';
     upsertEdge({
       id: edge.id,
-      from: fromNodeId,
-      to: toNodeId,
+      source: sourceNodeId,
+      target: targetNodeId,
       relationType,
       label,
       isStructural: false,

@@ -3,15 +3,7 @@ import { isValidConnection, normalizePortName } from './graph.ports';
 import { arePortTypesCompatible, formatPortDataTypes, getPortDataTypes } from './port-types';
 
 const coerceEdgeList = (edges: unknown): Edge[] => {
-  if (Array.isArray(edges)) {
-    return edges as Edge[];
-  }
-  if (edges && typeof edges === 'object') {
-    return Object.values(edges as Record<string, unknown>).filter(
-      (value: unknown): value is Edge => Boolean(value) && typeof value === 'object'
-    );
-  }
-  return [];
+  return Array.isArray(edges) ? (edges as Edge[]) : [];
 };
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
@@ -50,23 +42,6 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     ...(fromPort ? { fromPort, sourceHandle: fromPort } : {}),
     ...(toPort ? { toPort, targetHandle: toPort } : {}),
   });
-  const triggerFetcherPairKey = (fromNodeId: string, toNodeId: string): string =>
-    `${fromNodeId}::${toNodeId}`;
-  const triggerFetcherPairsWithSignal = new Set<string>();
-  const emittedTriggerFetcherPairs = new Set<string>();
-  edgeList.forEach((edge: Edge): void => {
-    const fromNodeId = resolveNodeId(edge.from, edge.source);
-    const toNodeId = resolveNodeId(edge.to, edge.target);
-    if (!fromNodeId || !toNodeId) return;
-    const fromNode = nodeMap.get(fromNodeId);
-    const toNode = nodeMap.get(toNodeId);
-    if (fromNode?.type !== 'trigger' || toNode?.type !== 'fetcher') return;
-    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle);
-    const toPort = resolvePort(edge.toPort, edge.targetHandle);
-    if ((fromPort === 'trigger' || !fromPort) && (toPort === 'trigger' || !toPort)) {
-      triggerFetcherPairsWithSignal.add(triggerFetcherPairKey(fromNodeId, toNodeId));
-    }
-  });
   return edgeList.flatMap((edge: Edge) => {
     const fromNodeId = resolveNodeId(edge.from, edge.source);
     const toNodeId = resolveNodeId(edge.to, edge.target);
@@ -77,46 +52,13 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     const fromPort = resolvePort(edge.fromPort, edge.sourceHandle) ?? undefined;
     const toPort = resolvePort(edge.toPort, edge.targetHandle) ?? undefined;
 
-    if (from.type === 'trigger' && to.type === 'fetcher') {
-      const pairKey = triggerFetcherPairKey(from.id, to.id);
-      if (emittedTriggerFetcherPairs.has(pairKey)) return [];
-      const hasExplicitSignal = triggerFetcherPairsWithSignal.has(pairKey);
-      const isExplicitSignalEdge =
-        (fromPort === 'trigger' || !fromPort) && (toPort === 'trigger' || !toPort);
-      if (hasExplicitSignal && !isExplicitSignalEdge) {
-        return [];
-      }
-      emittedTriggerFetcherPairs.add(pairKey);
-      const canonical = toCanonicalEdge(edge, fromNodeId, toNodeId, 'trigger', 'trigger');
-      if (
-        isValidConnection(from, to, canonical.fromPort ?? undefined, canonical.toPort ?? undefined)
-      ) {
-        return [canonical];
-      }
-      return [];
-    }
-
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {
         return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, toPort)];
       }
-      const canAlignByFromPort = from.outputs.includes(fromPort) && to.inputs.includes(fromPort);
-      const canAlignByToPort = from.outputs.includes(toPort) && to.inputs.includes(toPort);
-      // Prefer the source port when both alignments are possible. This avoids
-      // accidental output inversions when only the target port drifts.
-      if (canAlignByFromPort) {
-        return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, fromPort)];
-      }
-      if (canAlignByToPort) {
-        return [toCanonicalEdge(edge, fromNodeId, toNodeId, toPort, toPort)];
-      }
       return [];
     }
-    const matches = from.outputs.filter((output: string) => to.inputs.includes(output));
-    if (matches.length !== 1) return [];
-    const port = matches[0];
-    if (!port) return [];
-    return [toCanonicalEdge(edge, fromNodeId, toNodeId, port, port)];
+    return [];
   });
 };
 

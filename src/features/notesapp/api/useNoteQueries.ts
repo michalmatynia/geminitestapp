@@ -18,7 +18,7 @@ import type {
   NoteThemeDto as ThemeRecord,
   RelatedNoteDto as RelatedNote,
   FetchNotesParams,
-  } from '@/shared/contracts/notes';
+} from '@/shared/contracts/notes';
 export type { FetchNotesParams };
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';

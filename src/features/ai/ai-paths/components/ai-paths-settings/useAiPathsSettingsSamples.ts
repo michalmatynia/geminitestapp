@@ -87,7 +87,7 @@ export function useAiPathsSettingsSamples({
           queryKey: getProductDetailQueryKey(entityId),
           queryFn: async () => {
             const result = await entityApi.getProduct(entityId);
-            return result.ok ? (result.data as Record<string, unknown>) : null;
+            return result.ok ? (result.data) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {
@@ -104,7 +104,7 @@ export function useAiPathsSettingsSamples({
           queryKey: QUERY_KEYS.notes.detail(entityId),
           queryFn: async () => {
             const result = await entityApi.getNote(entityId);
-            return result.ok ? (result.data as Record<string, unknown>) : null;
+            return result.ok ? (result.data) : null;
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
           meta: {

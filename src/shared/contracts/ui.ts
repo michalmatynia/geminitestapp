@@ -166,11 +166,13 @@ export interface ParseJsonOptions {
 export interface FilterField {
   key: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'dateRange' | 'checkbox' | 'number';
+  type: 'text' | 'search' | 'select' | 'multi-select' | 'date' | 'dateRange' | 'checkbox' | 'number';
   placeholder?: string;
-  options?: Array<{ label: string; value: string | number }>;
+  options?: Array<{ label: string; value: string }>;
   multi?: boolean;
   width?: string; // CSS width value
+  className?: string;
+  colSpan?: string; // Tailwind grid col-span e.g. "col-span-2"
 }
 
 export interface PanelStat {

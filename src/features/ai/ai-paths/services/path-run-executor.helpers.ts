@@ -3,7 +3,9 @@ import {
   type RuntimeState,
   type RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
+import { runtimeStateSchema } from '@/shared/contracts/ai-paths-runtime';
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { isAppError, validationError } from '@/shared/errors/app-error';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
@@ -64,51 +66,66 @@ export const isMissingRunUpdateError = (error: unknown): boolean => {
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',
-  runId: null,
-  runStartedAt: null,
   nodeStatuses: {},
   nodeOutputs: {},
   variables: {},
   events: [],
+  currentRun: null,
   inputs: {},
   outputs: {},
 };
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value) as RuntimeState;
-      return parsed && typeof parsed === 'object'
-        ? {
-          ...EMPTY_RUNTIME_STATE,
-          ...parsed,
-          inputs: parsed.inputs ?? {},
-          outputs: parsed.outputs ?? {},
-          nodeOutputs: parsed.nodeOutputs ?? {},
-          nodeStatuses: parsed.nodeStatuses ?? {},
-          variables: parsed.variables ?? {},
-          events: parsed.events ?? [],
-        }
-        : EMPTY_RUNTIME_STATE;
-    } catch {
-      return EMPTY_RUNTIME_STATE;
+  const assertNoLegacyRunIdentity = (record: Record<string, unknown>): void => {
+    const deprecatedKeys = ['runId', 'runStartedAt'].filter((key) => key in record);
+    if (deprecatedKeys.length > 0) {
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'deprecated_runtime_identity_fields',
+        deprecatedKeys,
+      });
     }
-  }
-  if (typeof value === 'object') {
-    const parsed = value as RuntimeState;
-    return {
+  };
+  const normalizeParsedRuntimeState = (parsed: Record<string, unknown>): RuntimeState => {
+    assertNoLegacyRunIdentity(parsed);
+    const merged = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,
-      inputs: parsed.inputs ?? {},
-      outputs: parsed.outputs ?? {},
-      nodeOutputs: parsed.nodeOutputs ?? {},
-      nodeStatuses: parsed.nodeStatuses ?? {},
-      variables: parsed.variables ?? {},
-      events: parsed.events ?? [],
     };
+    const validated = runtimeStateSchema.safeParse(merged);
+    if (!validated.success) {
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'schema_validation_failed',
+        issues: validated.error.flatten(),
+      });
+    }
+    return validated.data as RuntimeState;
+  };
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return normalizeParsedRuntimeState(parsed as Record<string, unknown>);
+      }
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'invalid_shape',
+      });
+    } catch (error) {
+      if (isAppError(error)) {
+        throw error;
+      }
+      throw validationError('Invalid AI Paths runtime state payload.', {
+        reason: 'json_parse_failed',
+        cause: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
-  return EMPTY_RUNTIME_STATE;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return normalizeParsedRuntimeState(value as Record<string, unknown>);
+  }
+  throw validationError('Invalid AI Paths runtime state payload.', {
+    reason: 'invalid_shape',
+  });
 };
 
 export const extractNodeErrorOutputs = (error: unknown): RuntimePortValues | null => {

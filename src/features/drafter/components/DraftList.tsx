@@ -98,7 +98,7 @@ export function DraftList(): React.JSX.Element {
           icon:
             draft.icon &&
             ((): React.JSX.Element | null => {
-              const IconComponent = ICON_LIBRARY_MAP[draft.icon!];
+              const IconComponent = ICON_LIBRARY_MAP[draft.icon];
               const iconColor = resolveDraftIconColor(draft);
               return IconComponent ? (
                 <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>

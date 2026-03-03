@@ -8,7 +8,7 @@ import {
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
 } from '../../constants';
-import { ensureUniquePorts } from '../../utils';
+import { ensureUniquePorts } from '../../utils/graph.ports';
 
 export const normalizeRouterNode = (node: AiNode): AiNode => {
   return {

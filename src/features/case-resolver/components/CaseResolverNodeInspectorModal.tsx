@@ -32,18 +32,6 @@ import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
-interface CompatEdge {
-  id: string;
-  from?: string | null | undefined;
-  to?: string | null | undefined;
-  source?: string | null | undefined;
-  target?: string | null | undefined;
-  fromPort?: string | null | undefined;
-  toPort?: string | null | undefined;
-  sourceHandle?: string | null | undefined;
-  targetHandle?: string | null | undefined;
-}
-
 export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   const {
     isNodeInspectorOpen: open,
@@ -88,10 +76,8 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   const selectedCanvasFileId = activeFile?.id ?? null;
   const selectedWorkspaceId = workspace?.id ?? null;
 
-  const edgeFromPort =
-    (selectedEdge as CompatEdge)?.fromPort ?? (selectedEdge as CompatEdge)?.sourceHandle;
-  const edgeToPort =
-    (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
+  const edgeFromPort = selectedEdge?.sourceHandle;
+  const edgeToPort = selectedEdge?.targetHandle;
   const handleCopyOutputPreview = React.useCallback(
     async (value: string): Promise<void> => {
       try {

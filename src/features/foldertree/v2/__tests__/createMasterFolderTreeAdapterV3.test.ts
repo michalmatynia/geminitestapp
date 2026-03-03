@@ -49,7 +49,7 @@ describe('createMasterFolderTreeAdapterV3', () => {
     );
   });
 
-  it('supports legacy loadNodes alias from fetchState', async () => {
+  it('loads nodes from fetchState', async () => {
     const nodes: MasterTreeNode[] = [
       {
         id: 'folder:root',

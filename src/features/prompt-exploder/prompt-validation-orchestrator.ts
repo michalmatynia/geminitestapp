@@ -12,7 +12,7 @@ import {
 import type { PromptValidationRule, PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import {
   type PromptValidationRuntimeSelection,
-  type PromptValidationRuntimeIdentityDto,
+  type PromptValidationRuntimeIdentity,
   type PromptExploderValidationRuleStack,
 } from '@/shared/contracts';
 
@@ -439,7 +439,7 @@ export const resolvePromptValidationRuntime = (
       settingsVersion,
       listVersion,
     });
-    const identity: PromptValidationRuntimeIdentityDto = {
+    const identity: PromptValidationRuntimeIdentity = {
       scope: stackResolution.scope ?? 'global',
       validatorScope: (stackResolution.validatorScope as ValidatorScope) ?? 'products',
       stack: resolveStackId(stackResolution.stack),

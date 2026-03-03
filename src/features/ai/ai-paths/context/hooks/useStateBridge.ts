@@ -57,9 +57,8 @@ import type { ViewState, PanState, DragState, ConnectingState } from '../CanvasC
 import type { SavePathConfigOptions } from '../PersistenceContext';
 import type { ClusterPresetDraft } from '../PresetsContext';
 import type { RunHistoryFilter } from '../RunHistoryContext';
-// Note: Using string for runFilter to accommodate different RunHistoryFilter types
-// (context uses "all" | "completed" | "failed" | "running" | "queued" | "cancelled"
-// while run-history-panel uses "all" | "active" | "failed" | "dead")
+// Note: Using string for runFilter to bridge the broader context filter union
+// with the compact run-history panel filter set during the context migration.
 
 // ---------------------------------------------------------------------------
 // Selection Sync

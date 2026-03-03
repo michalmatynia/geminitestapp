@@ -8,7 +8,7 @@ import { Badge } from './badge';
 import { Card } from './card';
 import { Checkbox } from './checkbox';
 import { Hint } from './Hint';
-import { Input } from './input';
+import { SearchInput } from './search-input';
 
 export interface SearchableListProps<T> {
   items: T[];
@@ -53,11 +53,12 @@ export function SearchableList<T>({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <Input
+      <SearchInput
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        onClear={() => setSearch('')}
         placeholder={searchPlaceholder}
-        className='h-8 text-xs'
+        size='sm'
       />
 
       <div className='space-y-2'>

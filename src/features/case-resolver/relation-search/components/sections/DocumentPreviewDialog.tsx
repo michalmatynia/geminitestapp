@@ -9,6 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Button,
+  Badge,
 } from '@/shared/ui';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
@@ -47,9 +49,9 @@ export function DocumentPreviewDialog(): React.JSX.Element {
                 <FileTypeIcon fileType={file.fileType} className='size-4' />
                 <span className='min-w-0 truncate'>{file.name}</span>
                 {file.isLocked && (
-                  <span className='ml-auto shrink-0 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-300'>
+                  <Badge variant='warning' className='ml-auto h-5 px-1.5 text-[10px] font-bold uppercase'>
                     LOCKED
-                  </span>
+                  </Badge>
                 )}
               </DialogTitle>
               <DialogDescription className='sr-only'>
@@ -97,24 +99,24 @@ export function DocumentPreviewDialog(): React.JSX.Element {
             </div>
 
             <DialogFooter>
-              <button
-                type='button'
+              <Button
+                variant='outline'
+                size='sm'
                 onClick={onClose}
-                className='rounded border border-border/50 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:text-gray-200'
+                className='h-8 px-3 text-xs'
               >
                 Cancel
-              </button>
-              <button
-                type='button'
+              </Button>
+              <Button
                 disabled={isLocked}
                 onClick={() => {
                   onLink(file.id);
                 }}
-                className='flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cyan-500 disabled:pointer-events-none disabled:opacity-40'
+                className='flex items-center gap-1.5 h-8 px-3 text-xs font-medium'
               >
                 Link this document
                 <ChevronRight className='size-3' />
-              </button>
+              </Button>
             </DialogFooter>
           </>
         )}

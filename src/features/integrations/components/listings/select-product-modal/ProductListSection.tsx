@@ -1,7 +1,8 @@
 import React from 'react';
 
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import { FormSection, SearchInput } from '@/shared/ui';
+import { FormSection, SearchInput, LoadingState, Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
 
@@ -22,35 +23,37 @@ export function ProductListSection(): React.JSX.Element {
         value={productSearch}
         onChange={(e) => setProductSearch(e.target.value)}
         onClear={() => setProductSearch('')}
+        size='sm'
       />
 
       <div className='space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border mt-4'>
         {isLoadingProducts ? (
-          <p className='p-4 text-center text-xs text-gray-500'>Loading products...</p>
+          <LoadingState message='Loading products...' size='sm' className='py-12' />
         ) : (products || []).length === 0 ? (
           <p className='p-4 text-center text-xs text-gray-500'>No products found.</p>
         ) : (
           (products || []).map((product: ProductWithImages) => (
-            <button
+            <Button
               key={product.id}
-              type='button'
+              variant='ghost'
               onClick={() => setSelectedProductId(product.id)}
-              className={`w-full flex items-center justify-between p-3 text-left transition-colors border-b border-border last:border-0 ${
+              className={cn(
+                'w-full flex items-center justify-between p-3 h-auto text-left transition-colors border-b border-border last:border-0 rounded-none font-normal',
                 selectedProductId === product.id
                   ? 'bg-primary/10 border-l-2 border-l-primary'
                   : 'hover:bg-muted/50'
-              }`}
+              )}
             >
-              <div>
-                <p className='text-sm font-medium text-white line-clamp-1'>
+              <div className='min-w-0 flex-1'>
+                <p className='text-sm font-medium text-white truncate'>
                   {product.name_en || product.name_pl || 'Unnamed Product'}
                 </p>
                 <p className='text-xs text-gray-500'>SKU: {product.sku || '—'}</p>
               </div>
               {selectedProductId === product.id && (
-                <div className='size-2 rounded-full bg-primary' />
+                <div className='size-2 rounded-full bg-primary shrink-0 ml-2' />
               )}
-            </button>
+            </Button>
           ))
         )}
       </div>

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-
-import type { VectorShape, VectorToolMode } from '../types';
+import type { VectorShape, VectorToolMode } from '@/shared/contracts/vector';
 
 export interface VectorDrawingContextValue {
   shapes: VectorShape[];

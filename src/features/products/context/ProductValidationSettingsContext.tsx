@@ -65,7 +65,7 @@ export function useProductValidationActions(): ProductValidationActionsValue {
   return ctx;
 }
 
-// ── Combined type & backward-compatible hook ─────────────────────────────────
+// ── Combined type & hook ─────────────────────────────────────────────────────
 
 export interface ProductValidationSettingsValue
   extends ProductValidationStateValue, ProductValidationActionsValue {}

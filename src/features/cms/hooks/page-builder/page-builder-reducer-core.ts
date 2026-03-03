@@ -801,11 +801,25 @@ export function reducePageBuilderStateCore(
 
     case 'UPDATE_PAGE_SLUGS': {
       if (!state.currentPage) return state;
+      const nextSlugs = action.slugValues.map((slugValue: string, index: number) => {
+        const slugId = action.slugIds[index] ?? slugValue;
+        const existingSlug = state.currentPage?.slugs.find(
+          (slug) => slug.id === slugId || slug.slug === slugValue
+        );
+        return {
+          id: slugId,
+          slug: slugValue,
+          pageId: state.currentPage?.id ?? null,
+          isDefault: existingSlug?.isDefault ?? false,
+          createdAt: existingSlug?.createdAt,
+          updatedAt: existingSlug?.updatedAt,
+        };
+      });
       return {
         ...state,
         currentPage: {
           ...state.currentPage,
-          slugs: action.slugValues,
+          slugs: nextSlugs,
         },
       };
     }

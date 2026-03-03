@@ -1,0 +1,1167 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_descv3lite",
+    "version": 4,
+    "name": "Description Inference v3 Lite",
+    "description": "Single-model, evidence-first ecommerce description workflow optimized for laptop runtime.",
+    "trigger": "Product Modal - Infer Description Lite",
+    "updatedAt": "2026-03-03T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-bundle-desc-lite",
+      "type": "bundle",
+      "title": "Bundle",
+      "description": "Combine product data, metadata lookup, and controls for one prompt pass.",
+      "position": {
+        "x": 830,
+        "y": 330
+      },
+      "inputs": [
+        "context",
+        "meta",
+        "trigger",
+        "triggerName",
+        "result",
+        "entityJson",
+        "entityId",
+        "entityType",
+        "value",
+        "errors",
+        "valid",
+        "description_en",
+        "prompt",
+        "bundle"
+      ],
+      "outputs": [
+        "bundle"
+      ],
+      "config": {
+        "bundle": {
+          "includePorts": [
+            "bundle",
+            "result",
+            "value",
+            "meta",
+            "entityId",
+            "entityType"
+          ]
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-03",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-desc-lite-04",
+            "fromNodeId": "node-metadata-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-05",
+            "fromNodeId": "node-controls-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-06",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "meta",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "meta"
+          },
+          {
+            "edgeId": "edge-desc-lite-07",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-desc-lite-08",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityType",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "entityType"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-09",
+            "fromNodeId": "node-bundle-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-compare-desc-lite",
+      "type": "compare",
+      "title": "Compare",
+      "description": "Quality monitor (observability only).",
+      "position": {
+        "x": 2780,
+        "y": 500
+      },
+      "inputs": [
+        "value"
+      ],
+      "outputs": [
+        "value",
+        "valid",
+        "errors"
+      ],
+      "config": {
+        "compare": {
+          "operator": "gte",
+          "compareTo": "0.80",
+          "caseSensitive": false,
+          "message": "qualityScore below 0.80"
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-17",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-compare-desc-lite",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-25",
+            "fromNodeId": "node-compare-desc-lite",
+            "fromPort": "valid",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "valid"
+          },
+          {
+            "edgeId": "edge-desc-lite-26",
+            "fromNodeId": "node-compare-desc-lite",
+            "fromPort": "errors",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "errors"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-controls-desc-lite",
+      "type": "constant",
+      "title": "Constant",
+      "description": "Editable policy controls (tone, length, threshold, claim safety).",
+      "position": {
+        "x": 420,
+        "y": 350
+      },
+      "inputs": [],
+      "outputs": [
+        "value"
+      ],
+      "config": {
+        "constant": {
+          "valueType": "json",
+          "value": "{\"language\":\"en\",\"tone\":\"clear, factual, ecommerce\",\"targetWordCount\":120,\"maxWordCount\":180,\"minQualityScore\":0.8,\"forbiddenClaims\":[\"brand or franchise claims unless explicit in title, fields, or clearly visible image text\",\"character names unless explicit evidence exists\",\"material or dimensions unless explicit evidence exists\"],\"modelCallBudget\":1,\"metadataFetchBudget\":1}"
+        }
+      },
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-05",
+            "fromNodeId": "node-controls-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-fetcher-desc-lite",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve context, metadata, and entity identity from trigger input.",
+      "position": {
+        "x": 220,
+        "y": 520
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-00",
+            "fromNodeId": "node-trigger-desc-lite",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-desc-lite",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-01",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "context",
+            "toNodeId": "node-parser-desc-lite",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-desc-lite-06",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "meta",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "meta"
+          },
+          {
+            "edgeId": "edge-desc-lite-07",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-desc-lite-08",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityType",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-desc-lite-12",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-desc-lite-19",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-desc-lite-20",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "entityType"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-mapper-desc-lite",
+      "type": "mapper",
+      "title": "JSON Mapper",
+      "description": "Map selected description and scoring payload.",
+      "position": {
+        "x": 2410,
+        "y": 500
+      },
+      "inputs": [
+        "context",
+        "result",
+        "bundle",
+        "value"
+      ],
+      "outputs": [
+        "result",
+        "value",
+        "bundle"
+      ],
+      "config": {
+        "mapper": {
+          "outputs": [
+            "result",
+            "value",
+            "bundle"
+          ],
+          "mappings": {
+            "result": "value.selectedDescription",
+            "value": "value.qualityScore",
+            "bundle": "value"
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-16",
+            "fromNodeId": "node-regex-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-mapper-desc-lite",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-17",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-compare-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-18",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-22",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-23",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-24",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "context"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-metadata-desc-lite",
+      "type": "http",
+      "title": "HTTP Fetch",
+      "description": "Single metadata call (category + parameter definitions).",
+      "position": {
+        "x": 430,
+        "y": 180
+      },
+      "inputs": [
+        "context",
+        "bundle",
+        "prompt",
+        "result",
+        "value",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "value",
+        "bundle"
+      ],
+      "config": {
+        "http": {
+          "url": "/api/products/ai-paths/description-context?catalogId={{bundle.catalogId}}&categoryId={{bundle.categoryId}}",
+          "method": "GET",
+          "headers": "{}",
+          "bodyTemplate": "",
+          "responseMode": "json",
+          "responsePath": ""
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-02",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-metadata-desc-lite",
+            "toPort": "bundle"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-04",
+            "fromNodeId": "node-metadata-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "result"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-model-desc-lite",
+      "type": "model",
+      "title": "Model",
+      "description": "Single Ollama call for extraction + generation.",
+      "position": {
+        "x": 1660,
+        "y": 500
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 1100,
+          "vision": true,
+          "waitForResult": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-13",
+            "fromNodeId": "node-prompt-desc-lite",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-desc-lite",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-desc-lite-14",
+            "fromNodeId": "node-prompt-desc-lite",
+            "fromPort": "images",
+            "toNodeId": "node-model-desc-lite",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-15",
+            "fromNodeId": "node-model-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-regex-desc-lite",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-parser-desc-lite",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract product fields for prompt context.",
+      "position": {
+        "x": 430,
+        "y": 520
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "images",
+        "title",
+        "entityId"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "productId": "",
+            "entityId": "",
+            "sku": "",
+            "title": "",
+            "content_en": "",
+            "categoryId": "",
+            "catalogId": "",
+            "parameters": "",
+            "images": ""
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        },
+        "notes": {
+          "text": "Use product context as primary truth source."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-01",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "context",
+            "toNodeId": "node-parser-desc-lite",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-02",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-metadata-desc-lite",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-desc-lite-03",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-bundle-desc-lite",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-desc-lite-10",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-desc-lite-11",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "title",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "title"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-prompt-desc-lite",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Single-call grounded generation contract (JSON response).",
+      "position": {
+        "x": 1250,
+        "y": 330
+      },
+      "inputs": [
+        "bundle",
+        "title",
+        "images",
+        "result",
+        "entityId"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You are an ecommerce description generator.\\nOutput language: English only.\\nUse only evidence from product data, metadata, and images.\\n\\nProduct JSON:\\n{{bundle.bundle}}\\n\\nMetadata JSON:\\n{{bundle.result}}\\n\\nControls JSON:\\n{{bundle.value}}\\n\\nReturn ONLY valid JSON object with this exact schema:\\n{\"facts\":[{\"text\":\"\",\"source\":\"title|existing_field|metadata|image\",\"confidence\":0.0}],\"finalDescription\":\"\",\"fallbackDescription\":\"\",\"qualityScore\":0.0,\"unsupportedClaims\":[],\"selectedDescription\":\"\"}\\n\\nRules:\\n1. No markdown, no commentary, JSON only.\\n2. No unsupported brand/franchise/character/material/dimension claims.\\n3. selectedDescription MUST be deterministic:\\n   if qualityScore >= {{bundle.value.minQualityScore}} use finalDescription, else fallbackDescription.\\n4. Keep finalDescription concise and shopper-friendly (~{{bundle.value.targetWordCount}} words, hard max {{bundle.value.maxWordCount}})."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-09",
+            "fromNodeId": "node-bundle-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-desc-lite-10",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-desc-lite-11",
+            "fromNodeId": "node-parser-desc-lite",
+            "fromPort": "title",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "title"
+          },
+          {
+            "edgeId": "edge-desc-lite-12",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-prompt-desc-lite",
+            "toPort": "entityId"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-13",
+            "fromNodeId": "node-prompt-desc-lite",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-desc-lite",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-desc-lite-14",
+            "fromNodeId": "node-prompt-desc-lite",
+            "fromPort": "images",
+            "toNodeId": "node-model-desc-lite",
+            "toPort": "images"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-regex-desc-lite",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse model JSON envelope.",
+      "position": {
+        "x": 2030,
+        "y": 500
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-15",
+            "fromNodeId": "node-model-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-regex-desc-lite",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-16",
+            "fromNodeId": "node-regex-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-mapper-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-21",
+            "fromNodeId": "node-regex-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-trigger-desc-lite",
+      "type": "trigger",
+      "title": "Trigger: Infer Description Lite",
+      "description": "User trigger button (4c07d35b-ea92-4d1f-b86b-c586359f68de).",
+      "position": {
+        "x": 24,
+        "y": 520
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "4c07d35b-ea92-4d1f-b86b-c586359f68de"
+        }
+      },
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-00",
+            "fromNodeId": "node-trigger-desc-lite",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-desc-lite",
+            "toPort": "trigger"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-update-desc-lite",
+      "type": "database",
+      "title": "Database Query",
+      "description": "Update product description_en using selectedDescription.",
+      "position": {
+        "x": 3160,
+        "y": 500
+      },
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "content_en",
+        "aiPrompt"
+      ],
+      "config": {
+        "database": {
+          "operation": "update",
+          "entityType": "product",
+          "idField": "entityId",
+          "mode": "replace",
+          "updateStrategy": "one",
+          "useMongoActions": true,
+          "actionCategory": "update",
+          "action": "updateOne",
+          "mappings": [
+            {
+              "targetPath": "description_en",
+              "sourcePort": "result"
+            }
+          ],
+          "query": {
+            "provider": "auto",
+            "collection": "products",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "_id",
+            "idType": "string",
+            "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeSource": "bundle",
+          "writeSourcePath": "",
+          "dryRun": false,
+          "distinctField": "",
+          "updateTemplate": "",
+          "skipEmpty": true,
+          "trimStrings": true,
+          "aiPrompt": "",
+          "validationRuleIds": []
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-18",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-19",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityId",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-desc-lite-20",
+            "fromNodeId": "node-fetcher-desc-lite",
+            "fromPort": "entityType",
+            "toNodeId": "node-update-desc-lite",
+            "toPort": "entityType"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-desc-lite-27",
+            "fromNodeId": "node-update-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "meta"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-view-desc-lite",
+      "type": "viewer",
+      "title": "Result Viewer",
+      "description": "Inspect output JSON, selected text, score, and quality monitor.",
+      "position": {
+        "x": 3520,
+        "y": 500
+      },
+      "inputs": [
+        "result",
+        "value",
+        "bundle",
+        "valid",
+        "errors",
+        "context",
+        "meta",
+        "trigger",
+        "triggerName",
+        "entityId",
+        "entityType",
+        "entityJson",
+        "description_en",
+        "prompt"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "result": "",
+            "value": "",
+            "bundle": "",
+            "valid": "",
+            "errors": ""
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-desc-lite-21",
+            "fromNodeId": "node-regex-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-desc-lite-22",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "result"
+          },
+          {
+            "edgeId": "edge-desc-lite-23",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "value",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "value"
+          },
+          {
+            "edgeId": "edge-desc-lite-24",
+            "fromNodeId": "node-mapper-desc-lite",
+            "fromPort": "bundle",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-desc-lite-25",
+            "fromNodeId": "node-compare-desc-lite",
+            "fromPort": "valid",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "valid"
+          },
+          {
+            "edgeId": "edge-desc-lite-26",
+            "fromNodeId": "node-compare-desc-lite",
+            "fromPort": "errors",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "errors"
+          },
+          {
+            "edgeId": "edge-desc-lite-27",
+            "fromNodeId": "node-update-desc-lite",
+            "fromPort": "result",
+            "toNodeId": "node-view-desc-lite",
+            "toPort": "meta"
+          }
+        ],
+        "outgoing": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-desc-lite-00",
+      "fromNodeId": "node-trigger-desc-lite",
+      "toNodeId": "node-fetcher-desc-lite",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-desc-lite-01",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-parser-desc-lite",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-desc-lite-02",
+      "fromNodeId": "node-parser-desc-lite",
+      "toNodeId": "node-metadata-desc-lite",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-desc-lite-03",
+      "fromNodeId": "node-parser-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-desc-lite-04",
+      "fromNodeId": "node-metadata-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "value",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-desc-lite-05",
+      "fromNodeId": "node-controls-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-desc-lite-06",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "meta",
+      "toPort": "meta"
+    },
+    {
+      "id": "edge-desc-lite-07",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-desc-lite-08",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-bundle-desc-lite",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-desc-lite-09",
+      "fromNodeId": "node-bundle-desc-lite",
+      "toNodeId": "node-prompt-desc-lite",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-desc-lite-10",
+      "fromNodeId": "node-parser-desc-lite",
+      "toNodeId": "node-prompt-desc-lite",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-desc-lite-11",
+      "fromNodeId": "node-parser-desc-lite",
+      "toNodeId": "node-prompt-desc-lite",
+      "fromPort": "title",
+      "toPort": "title"
+    },
+    {
+      "id": "edge-desc-lite-12",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-prompt-desc-lite",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-desc-lite-13",
+      "fromNodeId": "node-prompt-desc-lite",
+      "toNodeId": "node-model-desc-lite",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-desc-lite-14",
+      "fromNodeId": "node-prompt-desc-lite",
+      "toNodeId": "node-model-desc-lite",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-desc-lite-15",
+      "fromNodeId": "node-model-desc-lite",
+      "toNodeId": "node-regex-desc-lite",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-desc-lite-16",
+      "fromNodeId": "node-regex-desc-lite",
+      "toNodeId": "node-mapper-desc-lite",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-desc-lite-17",
+      "fromNodeId": "node-mapper-desc-lite",
+      "toNodeId": "node-compare-desc-lite",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-desc-lite-18",
+      "fromNodeId": "node-mapper-desc-lite",
+      "toNodeId": "node-update-desc-lite",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-desc-lite-19",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-update-desc-lite",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-desc-lite-20",
+      "fromNodeId": "node-fetcher-desc-lite",
+      "toNodeId": "node-update-desc-lite",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-desc-lite-21",
+      "fromNodeId": "node-regex-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-desc-lite-22",
+      "fromNodeId": "node-mapper-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "result",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-desc-lite-23",
+      "fromNodeId": "node-mapper-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-desc-lite-24",
+      "fromNodeId": "node-mapper-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "bundle",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-desc-lite-25",
+      "fromNodeId": "node-compare-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "valid",
+      "toPort": "valid"
+    },
+    {
+      "id": "edge-desc-lite-26",
+      "fromNodeId": "node-compare-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "errors",
+      "toPort": "errors"
+    },
+    {
+      "id": "edge-desc-lite-27",
+      "fromNodeId": "node-update-desc-lite",
+      "toNodeId": "node-view-desc-lite",
+      "fromPort": "result",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {}
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-03-03T05:11:10.160Z",
+    "pathId": "path_descv3lite"
+  }
+}

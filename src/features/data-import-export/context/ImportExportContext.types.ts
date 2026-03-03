@@ -17,7 +17,7 @@ import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
   ImageRetryPreset,
-  BaseImportParameterImportSettings,
+  ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';
@@ -59,8 +59,8 @@ export interface ImportExportContextType {
   setExportTemplateDescription: (desc: string) => void;
   importTemplateMappings: TemplateMapping[];
   setImportTemplateMappings: Dispatch<SetStateAction<TemplateMapping[]>>;
-  importTemplateParameterImport: BaseImportParameterImportSettings;
-  setImportTemplateParameterImport: Dispatch<SetStateAction<BaseImportParameterImportSettings>>;
+  importTemplateParameterImport: ImportTemplateParameterImport;
+  setImportTemplateParameterImport: Dispatch<SetStateAction<ImportTemplateParameterImport>>;
   exportTemplateMappings: TemplateMapping[];
   setExportTemplateMappings: Dispatch<SetStateAction<TemplateMapping[]>>;
   exportImagesAsBase64: boolean;

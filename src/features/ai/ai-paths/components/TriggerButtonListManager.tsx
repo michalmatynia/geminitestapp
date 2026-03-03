@@ -11,10 +11,10 @@ import type { ColumnDef, Row } from '@tanstack/react-table';
 
 // Define the record type for clarity as it's used extensively
 export type AiTriggerButtonRecord = AiTriggerButtonDto & {
-  pathName?: string;
-  pathId?: string;
-  pathNames?: string[];
-  pathIds?: string[];
+  usedPaths?: Array<{
+    id: string;
+    name: string;
+  }>;
 };
 
 type TriggerButtonListManagerProps = {
@@ -278,42 +278,34 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         },
       },
       {
-        accessorKey: 'pathName',
+        id: 'aiPaths',
         header: 'AI Paths',
         cell: ({ row }) => {
-          const rawNames = Array.isArray(row.original.pathNames) ? row.original.pathNames : [];
-          const rawPathIds = Array.isArray(row.original.pathIds) ? row.original.pathIds : [];
-          const linkedPaths = rawNames
-            .map((name: string, index: number): { name: string; pathId: string | null } => {
-              const normalizedName = name.trim();
-              const maybePathId = rawPathIds[index];
-              const normalizedPathId =
-                typeof maybePathId === 'string' && maybePathId.trim().length > 0
-                  ? maybePathId.trim()
-                  : null;
-              return { name: normalizedName, pathId: normalizedPathId };
-            })
-            .filter(
-              (entry: { name: string; pathId: string | null }): boolean => entry.name.length > 0
-            );
+          const linkedPaths = Array.isArray(row.original.usedPaths)
+            ? row.original.usedPaths
+              .map((entry: { id: string; name: string }) => ({
+                id: typeof entry.id === 'string' ? entry.id.trim() : '',
+                name: typeof entry.name === 'string' ? entry.name.trim() : '',
+              }))
+              .filter((entry: { id: string; name: string }): boolean => entry.name.length > 0)
+            : [];
           if (linkedPaths.length === 0) {
             return <span className='text-xs text-gray-500'>Not linked</span>;
           }
           return (
             <div className='flex max-w-[360px] flex-wrap gap-1'>
               {linkedPaths.map(
-                (entry: { name: string; pathId: string | null }, idx: number): React.JSX.Element =>
+                (entry: { id: string; name: string }, idx: number): React.JSX.Element =>
                   (() => {
-                    const pathId = entry.pathId;
-                    if (pathId && onOpenPath) {
+                    if (entry.id && onOpenPath) {
                       return (
                         <button
-                          key={`${entry.name}-${pathId}-${idx}`}
+                          key={`${entry.name}-${entry.id}-${idx}`}
                           type='button'
                           className='cursor-pointer'
                           title={`Open AI Path: ${entry.name}`}
                           onClick={() => {
-                            onOpenPath(pathId);
+                            onOpenPath(entry.id);
                           }}
                         >
                           <StatusBadge

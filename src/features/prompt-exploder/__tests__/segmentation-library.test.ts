@@ -10,8 +10,8 @@ import {
 } from '@/features/prompt-exploder/segmentation-library';
 import {
   promptExploderDocumentSchema,
-  type PromptExploderDocumentDto as PromptExploderDocument,
-  type PromptExploderSegmentDto as PromptExploderSegment,
+  type PromptExploderDocument,
+  type PromptExploderSegment,
 } from '@/shared/contracts/prompt-exploder';
 
 const buildSegment = (id: string, patch: Partial<PromptExploderSegment> = {}): PromptExploderSegment => ({
@@ -178,4 +178,3 @@ describe('prompt exploder segmentation library', () => {
     expect(context.records[0]?.segments[0]?.matchedPatternLabels).toEqual(['Pipeline']);
   });
 });
-

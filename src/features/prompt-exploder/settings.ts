@@ -2,12 +2,40 @@ import { promptExploderSettingsSchema } from '@/shared/contracts/prompt-exploder
 
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-  normalizePromptExploderValidationRuleStack,
 } from './validation-stack';
 
 import type { PromptExploderSettings } from './types';
 
 export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
+
+const DEPRECATED_PROMPT_EXPLODER_AI_KEYS = [
+  'provider',
+  'modelId',
+  'fallbackModelId',
+  'temperature',
+  'maxTokens',
+] as const;
+
+export class PromptExploderSettingsValidationError extends Error {
+  code: 'invalid_json' | 'invalid_shape' | 'deprecated_ai_keys';
+  deprecatedKeys: string[];
+
+  constructor(args: {
+    code: 'invalid_json' | 'invalid_shape' | 'deprecated_ai_keys';
+    message: string;
+    deprecatedKeys?: string[];
+  }) {
+    super(args.message);
+    this.name = 'PromptExploderSettingsValidationError';
+    this.code = args.code;
+    this.deprecatedKeys = args.deprecatedKeys ?? [];
+  }
+}
+
+export type PromptExploderSettingsParseResult = {
+  settings: PromptExploderSettings;
+  error: PromptExploderSettingsValidationError | null;
+};
 
 export const defaultPromptExploderSettings: PromptExploderSettings = {
   version: 1,
@@ -38,62 +66,60 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   patternSnapshots: [],
 };
 
-export function parsePromptExploderSettings(
+export function parsePromptExploderSettingsResult(
   rawValue: string | null | undefined
-): PromptExploderSettings {
-  if (!rawValue?.trim()) return defaultPromptExploderSettings;
+): PromptExploderSettingsParseResult {
+  if (!rawValue?.trim()) {
+    return {
+      settings: defaultPromptExploderSettings,
+      error: null,
+    };
+  }
 
   try {
     const rawParsed = JSON.parse(rawValue) as unknown;
     if (!rawParsed || typeof rawParsed !== 'object' || Array.isArray(rawParsed)) {
-      return defaultPromptExploderSettings;
+      return {
+        settings: defaultPromptExploderSettings,
+        error: new PromptExploderSettingsValidationError({
+          code: 'invalid_shape',
+          message: 'Prompt Exploder settings payload must be a JSON object.',
+        }),
+      };
     }
     const record = rawParsed as Record<string, unknown>;
 
-    const runtimeRecord = getNestedObject(record, 'runtime');
-    const learningRecord = getNestedObject(record, 'learning');
     const aiRecord = getNestedObject(record, 'ai');
-    if (
-      ['provider', 'modelId', 'fallbackModelId', 'temperature', 'maxTokens'].some(
-        (key: string): boolean => key in aiRecord
-      )
-    ) {
-      return defaultPromptExploderSettings;
+    const deprecatedAiKeys = DEPRECATED_PROMPT_EXPLODER_AI_KEYS.filter(
+      (key: string): boolean => key in aiRecord
+    );
+    if (deprecatedAiKeys.length > 0) {
+      return {
+        settings: defaultPromptExploderSettings,
+        error: new PromptExploderSettingsValidationError({
+          code: 'deprecated_ai_keys',
+          message: `Prompt Exploder settings contain deprecated AI snapshot keys: ${deprecatedAiKeys.join(', ')}.`,
+          deprecatedKeys: deprecatedAiKeys,
+        }),
+      };
     }
-    const templates = Array.isArray(learningRecord['templates'])
-      ? (learningRecord['templates'] as unknown[])
-      : [];
-
-    const merged = {
-      version: record['version'],
-      runtime: {
-        ...defaultPromptExploderSettings.runtime,
-        ...runtimeRecord,
-      },
-      learning: {
-        ...defaultPromptExploderSettings.learning,
-        ...learningRecord,
-        templates,
-      },
-      ai: {
-        ...defaultPromptExploderSettings.ai,
-        ...aiRecord,
-      },
-      patternSnapshots: record['patternSnapshots'],
-    };
-
-    const result = promptExploderSettingsSchema.safeParse(merged);
+    const result = promptExploderSettingsSchema.safeParse(rawParsed);
     if (!result.success) {
-      return defaultPromptExploderSettings;
+      return {
+        settings: defaultPromptExploderSettings,
+        error: new PromptExploderSettingsValidationError({
+          code: 'invalid_shape',
+          message: 'Prompt Exploder settings failed validation.',
+        }),
+      };
     }
     const normalized: PromptExploderSettings = {
       ...result.data,
+      patternSnapshots: result.data.patternSnapshots ?? [],
       runtime: {
         ...result.data.runtime,
         ruleProfile: result.data.runtime.ruleProfile,
-        validationRuleStack: normalizePromptExploderValidationRuleStack(
-          result.data.runtime.validationRuleStack
-        ),
+        validationRuleStack: result.data.runtime.validationRuleStack,
         allowValidationStackFallback: result.data.runtime.allowValidationStackFallback ?? false,
         caseResolverCaptureMode: result.data.runtime.caseResolverCaptureMode ?? 'rules_only',
       },
@@ -105,10 +131,30 @@ export function parsePromptExploderSettings(
         })),
       },
     };
-    return normalized;
+    return {
+      settings: normalized,
+      error: null,
+    };
   } catch {
-    return defaultPromptExploderSettings;
+    return {
+      settings: defaultPromptExploderSettings,
+      error: new PromptExploderSettingsValidationError({
+        code: 'invalid_json',
+        message: 'Prompt Exploder settings are not valid JSON.',
+      }),
+    };
   }
+}
+
+export function parsePromptExploderSettings(
+  rawValue: string | null | undefined
+): PromptExploderSettings {
+  const parsed = parsePromptExploderSettingsResult(rawValue);
+  const hasPersistedPayload = Boolean(rawValue?.trim());
+  if (parsed.error && hasPersistedPayload) {
+    throw parsed.error;
+  }
+  return parsed.settings;
 }
 
 function getNestedObject(

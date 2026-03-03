@@ -9,7 +9,7 @@ import {
   useCaseResolverFolderTreeDataContext,
   useCaseResolverFolderTreeUiContext,
   isCaseResolverVirtualSectionNode,
-  isUnassignedNode,
+  isUnassignedNode as isCaseResolverUnassignedNode,
 } from '../context/CaseResolverFolderTreeContext';
 import {
   fromCaseResolverFolderNodeId,
@@ -17,6 +17,8 @@ import {
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
 import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
+import { Button, Badge, Input } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   armDragHandle: (nodeId: string) => void;
@@ -101,7 +103,7 @@ export function CaseResolverTreeNode({
   const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
   const isNodeFileAsset = Boolean(assetId) && node.kind === 'node_file';
   const isVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
-  const isUnassignedSectionNode = isUnassignedNode(node);
+  const isUnassignedSectionNode = isCaseResolverUnassignedNode(node);
   const isDraggableFileNode = isCaseResolverDraggableFileNode({
     nodeType: node.type,
     fileType,
@@ -224,7 +226,11 @@ export function CaseResolverTreeNode({
 
   return (
     <div
-      className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${isCaseEntryNode ? 'cursor-default' : 'cursor-pointer'} ${stateClassName}`}
+      className={cn(
+        'group flex items-center gap-1 rounded px-2 py-1.5 text-sm',
+        isCaseEntryNode ? 'cursor-default' : 'cursor-pointer',
+        stateClassName
+      )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
       role='button'
       tabIndex={0}
@@ -282,9 +288,10 @@ export function CaseResolverTreeNode({
         />
       </span>
       {canToggle ? (
-        <button
-          type='button'
-          className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/50'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -293,7 +300,7 @@ export function CaseResolverTreeNode({
           aria-label={isExpanded ? 'Collapse folder' : 'Expand folder'}
         >
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
-        </button>
+        </Button>
       ) : (
         <span
           className={`inline-flex size-4 items-center justify-center text-xs ${
@@ -309,17 +316,17 @@ export function CaseResolverTreeNode({
         <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
       ) : null}
       {isChildOwnedStructureNode ? (
-        <span
-          className='inline-flex size-4 shrink-0 items-center justify-center rounded border border-cyan-500/30 bg-cyan-500/10 text-cyan-200'
+        <Badge
+          variant='outline'
+          className='bg-cyan-500/5 text-cyan-200 border-cyan-500/20 size-4 p-0 flex items-center justify-center'
           title={childStructureHint}
-          aria-label={childStructureHint}
         >
           <GitBranch className='size-3' />
-        </span>
+        </Badge>
       ) : null}
       <div className='min-w-0 flex flex-1 items-center gap-1'>
         {isRenaming ? (
-          <input
+          <Input
             autoFocus
             value={renameDraft}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -344,25 +351,26 @@ export function CaseResolverTreeNode({
             onDoubleClick={(event: React.MouseEvent<HTMLInputElement>): void => {
               event.stopPropagation();
             }}
-            className='min-w-0 flex-1 rounded border border-blue-500 bg-gray-800 px-1.5 py-0.5 text-sm text-white outline-none'
+            className='h-7 min-w-0 flex-1 border-blue-500 bg-gray-800 text-sm text-white'
           />
         ) : (
           <>
             <span className='min-w-0 flex-1 truncate'>{node.name}</span>
             {isChildOwnedStructureNode ? (
-              <span
-                className='inline-flex max-w-[140px] shrink-0 items-center truncate rounded border border-cyan-500/30 bg-cyan-500/10 px-1 text-[10px] font-medium text-cyan-200'
+              <Badge
+                variant='outline'
+                className='bg-cyan-500/5 text-cyan-200 border-cyan-500/20 text-[10px] h-4 max-w-[140px] truncate'
                 title={childStructureHint}
               >
                 {childOwnerCaseNames.length === 1
                   ? childOwnerCaseNames[0]
                   : `${childOwnerCaseNames.length} child cases`}
-              </span>
+              </Badge>
             ) : null}
             {isLinkDropTarget ? (
-              <span className='shrink-0 rounded bg-teal-500/30 px-1 text-[10px] font-medium text-teal-200'>
+              <Badge variant='neutral' className='bg-teal-500/30 text-teal-200 text-[9px] h-4'>
                 Link →
-              </span>
+              </Badge>
             ) : null}
           </>
         )}
@@ -370,9 +378,10 @@ export function CaseResolverTreeNode({
 
       {!isRenaming && isFolder && folderPath !== null && !isVirtualSectionNode ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
-          <button
-            type='button'
-            className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
+          <Button
+            variant='outline'
+            size='sm'
+            className='size-6 p-0 border-border/60 bg-card/60 text-gray-300 hover:bg-white/10 hover:text-white'
             title={
               !folderHasCaseFiles
                 ? 'No case files in folder'
@@ -388,10 +397,11 @@ export function CaseResolverTreeNode({
             }}
           >
             {isFolderLocked ? <Unlock className='size-3.5' /> : <Lock className='size-3.5' />}
-          </button>
-          <button
-            type='button'
-            className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            className='size-6 p-0 border-border/60 bg-card/60 text-red-300 hover:bg-red-500/20 hover:text-red-200'
             title={folderHasLockedFiles ? 'Unlock folder files before removing' : 'Remove folder'}
             disabled={folderHasLockedFiles}
             onClick={(event): void => {
@@ -401,19 +411,21 @@ export function CaseResolverTreeNode({
             }}
           >
             <Trash2 className='size-3.5' />
-          </button>
+          </Button>
         </div>
       ) : null}
 
       {!isRenaming && isCaseFile && fileId ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
-          <button
-            type='button'
-            className={`inline-flex size-6 items-center justify-center rounded border transition ${
+          <Button
+            variant='outline'
+            size='sm'
+            className={cn(
+              'size-6 p-0 transition',
               isFileLocked
                 ? 'border-amber-400/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100'
-                : 'border-border/60 bg-card/60 text-gray-300 hover:bg-muted/60 hover:text-white'
-            }`}
+                : 'border-border/60 bg-card/60 text-gray-300 hover:bg-white/10 hover:text-white'
+            )}
             title={isFileLocked ? 'Unlock file' : 'Lock file'}
             onClick={(event): void => {
               event.preventDefault();
@@ -422,10 +434,11 @@ export function CaseResolverTreeNode({
             }}
           >
             {isFileLocked ? <Lock className='size-3.5' /> : <Unlock className='size-3.5' />}
-          </button>
-          <button
-            type='button'
-            className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            className='size-6 p-0 border-border/60 bg-card/60 text-red-300 hover:bg-red-500/20 hover:text-red-200'
             title={isFileLocked ? 'Unlock file before removing' : 'Remove file'}
             disabled={isFileLocked}
             onClick={(event): void => {
@@ -435,15 +448,16 @@ export function CaseResolverTreeNode({
             }}
           >
             <Trash2 className='size-3.5' />
-          </button>
+          </Button>
         </div>
       ) : null}
 
       {!isRenaming && isNodeFileAsset && assetId ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
-          <button
-            type='button'
-            className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200'
+          <Button
+            variant='outline'
+            size='sm'
+            className='size-6 p-0 border-border/60 bg-card/60 text-red-300 hover:bg-red-500/20 hover:text-red-200'
             title='Remove node file'
             onClick={(event): void => {
               event.preventDefault();
@@ -452,7 +466,7 @@ export function CaseResolverTreeNode({
             }}
           >
             <Trash2 className='size-3.5' />
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

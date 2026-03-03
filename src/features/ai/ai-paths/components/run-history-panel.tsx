@@ -57,7 +57,7 @@ export function RunHistoryPanel(): React.JSX.Element {
       return 'active';
     }
     if (rawRunFilter === 'failed') return 'failed';
-    if (rawRunFilter === 'dead' || rawRunFilter === 'cancelled') return 'dead';
+    if (rawRunFilter === 'dead') return 'dead';
     return 'all';
   }, [rawRunFilter]);
   const EmptyStateComponent = EmptyState;

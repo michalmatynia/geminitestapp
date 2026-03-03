@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { validationError } from '@/shared/errors/app-error';
+
 import type {
   FolderTreeBadgeSpec,
   FolderTreeIconSlot,
@@ -322,46 +324,57 @@ const nodeTypeSchema = z.enum(['folder', 'file']);
 const targetTypeSchema = z.enum(['folder', 'root']);
 const iconSlotSchema = z.string().trim().min(1).nullable();
 
-const iconSlotsSchema = z.object({
+const iconSlotsSchema = z
+  .object({
   folderClosed: iconSlotSchema.optional().default('Folder'),
   folderOpen: iconSlotSchema.optional().default('FolderOpen'),
   file: iconSlotSchema.optional().default('FileText'),
   root: iconSlotSchema.optional().default('Folder'),
   dragHandle: iconSlotSchema.optional().default('GripVertical'),
-});
+  })
+  .strict();
 
-const nestingRuleSchema = z.object({
+const nestingRuleSchema = z
+  .object({
   childType: nodeTypeSchema.optional().default('file'),
   childKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
   targetType: targetTypeSchema.optional().default('folder'),
   targetKinds: z.array(z.string().trim().min(1)).optional().default(['*']),
   allow: z.boolean().optional().default(false),
-});
+  })
+  .strict();
 
-const badgeSpecSchema: z.ZodType<FolderTreeBadgeSpec> = z.object({
+const badgeSpecSchema: z.ZodType<FolderTreeBadgeSpec> = z
+  .object({
   field: z.enum(['children_count', 'custom']).optional().default('children_count'),
   position: z.enum(['inline_after_name', 'trailing']).optional().default('trailing'),
   style: z.enum(['count', 'dot', 'status_icon']).optional().default('count'),
   statusMap: z
     .record(z.string(), z.enum(['info', 'warning', 'error', 'success']))
     .optional(),
-});
+  })
+  .strict();
 
-const keyboardConfigSchema: z.ZodType<Partial<FolderTreeKeyboardConfig>> = z.object({
+const keyboardConfigSchema: z.ZodType<Partial<FolderTreeKeyboardConfig>> = z
+  .object({
   enabled: z.boolean().optional(),
   arrowNavigation: z.boolean().optional(),
   enterToRename: z.boolean().optional(),
   deleteKey: z.boolean().optional(),
-});
+  })
+  .strict();
 
-const multiSelectConfigSchema: z.ZodType<Partial<FolderTreeMultiSelectConfig>> = z.object({
+const multiSelectConfigSchema: z.ZodType<Partial<FolderTreeMultiSelectConfig>> = z
+  .object({
   enabled: z.boolean().optional(),
   ctrlClick: z.boolean().optional(),
   shiftClick: z.boolean().optional(),
   selectAll: z.boolean().optional(),
-});
+  })
+  .strict();
 
-const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z.object({
+const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z
+  .object({
   enabled: z.boolean().optional(),
   debounceMs: z.number().optional(),
   filterMode: z.enum(['highlight', 'filter_tree']).optional(),
@@ -369,7 +382,8 @@ const searchConfigSchema: z.ZodType<Partial<FolderTreeSearchConfig>> = z.object(
     .array(z.enum(['name', 'path', 'metadata']))
     .optional(),
   minQueryLength: z.number().optional(),
-});
+  })
+  .strict();
 
 const nodeStatusValues: [MasterTreeNodeStatus, ...MasterTreeNodeStatus[]] = [
   'loading',
@@ -379,18 +393,21 @@ const nodeStatusValues: [MasterTreeNodeStatus, ...MasterTreeNodeStatus[]] = [
   'success',
 ];
 
-const statusIconsSchema: z.ZodType<Partial<Record<MasterTreeNodeStatus, string | null>>> = z.object({
+const statusIconsSchema: z.ZodType<Partial<Record<MasterTreeNodeStatus, string | null>>> = z
+  .object({
   loading: z.string().nullable().optional(),
   error: z.string().nullable().optional(),
   locked: z.string().nullable().optional(),
   warning: z.string().nullable().optional(),
   success: z.string().nullable().optional(),
-});
+  })
+  .strict();
 
 // Expose the valid status values for consumers
 export const masterTreeNodeStatusValues: readonly MasterTreeNodeStatus[] = nodeStatusValues;
 
-const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
+const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z
+  .object({
   version: z.literal(2).optional().default(2),
   placeholders: z
     .object({
@@ -400,6 +417,7 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
       rootDropLabel: z.string().trim().min(1).optional().default('Drop to Root'),
       inlineDropLabel: z.string().trim().min(1).optional().default('Drop here'),
     })
+    .strict()
     .optional()
     .default({
       preset: 'sublime',
@@ -419,6 +437,7 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
       }),
       byKind: z.record(z.string(), iconSlotSchema).optional().default({}),
     })
+    .strict()
     .optional()
     .default({
       slots: {
@@ -436,6 +455,7 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
       blockedTargetKinds: z.array(z.string().trim().min(1)).optional().default([]),
       rules: z.array(nestingRuleSchema).optional().default([]),
     })
+    .strict()
     .optional()
     .default({
       defaultAllow: false,
@@ -446,6 +466,7 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
     .object({
       selectionBehavior: selectionBehaviorSchema.optional().default('click_away'),
     })
+    .strict()
     .optional()
     .default({
       selectionBehavior: 'click_away',
@@ -456,7 +477,8 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
   multiSelect: multiSelectConfigSchema.optional(),
   search: searchConfigSchema.optional(),
   statusIcons: statusIconsSchema.optional(),
-});
+  })
+  .strict();
 
 const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
   if (!Array.isArray(values) || values.length === 0) return [...fallback];
@@ -1117,14 +1139,15 @@ const normalizeByKindIcons = (
   return normalized;
 };
 
-const coerceProfileV2 = (
-  candidate: unknown,
-  fallback: FolderTreeProfileV2
-): FolderTreeProfileV2 => {
-  const parsed = profileV2Schema.safeParse(candidate);
-  if (!parsed.success) {
-    return cloneProfileV2(fallback);
-  }
+const toCanonicalProfileV2 = ({
+  candidate,
+  parsed,
+  fallback,
+}: {
+  candidate: unknown;
+  parsed: FolderTreeProfileV2;
+  fallback: FolderTreeProfileV2;
+}): FolderTreeProfileV2 => {
   const sourceRecord =
     candidate && typeof candidate === 'object' && !Array.isArray(candidate)
       ? (candidate as Record<string, unknown>)
@@ -1134,26 +1157,26 @@ const coerceProfileV2 = (
   return {
     version: 2,
     placeholders: {
-      preset: parsed.data.placeholders.preset,
-      style: parsed.data.placeholders.style,
-      emphasis: parsed.data.placeholders.emphasis,
-      rootDropLabel: parsed.data.placeholders.rootDropLabel,
-      inlineDropLabel: parsed.data.placeholders.inlineDropLabel,
+      preset: parsed.placeholders.preset,
+      style: parsed.placeholders.style,
+      emphasis: parsed.placeholders.emphasis,
+      rootDropLabel: parsed.placeholders.rootDropLabel,
+      inlineDropLabel: parsed.placeholders.inlineDropLabel,
     },
     icons: {
       slots: {
-        folderClosed: parsed.data.icons.slots.folderClosed,
-        folderOpen: parsed.data.icons.slots.folderOpen,
-        file: parsed.data.icons.slots.file,
-        root: parsed.data.icons.slots.root,
-        dragHandle: parsed.data.icons.slots.dragHandle,
+        folderClosed: parsed.icons.slots.folderClosed,
+        folderOpen: parsed.icons.slots.folderOpen,
+        file: parsed.icons.slots.file,
+        root: parsed.icons.slots.root,
+        dragHandle: parsed.icons.slots.dragHandle,
       },
-      byKind: normalizeByKindIcons(parsed.data.icons.byKind, fallback.icons.byKind),
+      byKind: normalizeByKindIcons(parsed.icons.byKind, fallback.icons.byKind),
     },
     nesting: {
-      defaultAllow: parsed.data.nesting.defaultAllow,
-      blockedTargetKinds: normalizeKindList(parsed.data.nesting.blockedTargetKinds, []),
-      rules: parsed.data.nesting.rules.map((rule: FolderTreeNestingRuleV2) => ({
+      defaultAllow: parsed.nesting.defaultAllow,
+      blockedTargetKinds: normalizeKindList(parsed.nesting.blockedTargetKinds, []),
+      rules: parsed.nesting.rules.map((rule: FolderTreeNestingRuleV2) => ({
         childType: rule.childType,
         childKinds: normalizeKindList(rule.childKinds, ['*']),
         targetType: rule.targetType,
@@ -1163,15 +1186,157 @@ const coerceProfileV2 = (
     },
     interactions: {
       selectionBehavior: hasInteractionSettings
-        ? parsed.data.interactions.selectionBehavior
+        ? parsed.interactions.selectionBehavior
         : fallback.interactions.selectionBehavior,
     },
-    badges: parsed.data.badges,
-    keyboard: parsed.data.keyboard,
-    multiSelect: parsed.data.multiSelect,
-    search: parsed.data.search,
-    statusIcons: parsed.data.statusIcons,
+    badges: parsed.badges,
+    keyboard: parsed.keyboard,
+    multiSelect: parsed.multiSelect,
+    search: parsed.search,
+    statusIcons: parsed.statusIcons,
   };
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const pickKeys = (
+  source: Record<string, unknown>,
+  keys: ReadonlyArray<string>
+): Record<string, unknown> => {
+  const next: Record<string, unknown> = {};
+  keys.forEach((key: string): void => {
+    if (key in source) {
+      next[key] = source[key];
+    }
+  });
+  return next;
+};
+
+const stripUnknownProfileV2CandidateKeys = (candidate: unknown): unknown => {
+  const root = toRecord(candidate);
+  if (!root) return candidate;
+
+  const next = pickKeys(root, [
+    'version',
+    'placeholders',
+    'icons',
+    'nesting',
+    'interactions',
+    'badges',
+    'keyboard',
+    'multiSelect',
+    'search',
+    'statusIcons',
+  ]);
+
+  const placeholders = toRecord(root['placeholders']);
+  if (placeholders) {
+    next['placeholders'] = pickKeys(placeholders, [
+      'preset',
+      'style',
+      'emphasis',
+      'rootDropLabel',
+      'inlineDropLabel',
+    ]);
+  }
+
+  const icons = toRecord(root['icons']);
+  if (icons) {
+    const iconsNext = pickKeys(icons, ['slots', 'byKind']);
+    const slots = toRecord(icons['slots']);
+    if (slots) {
+      iconsNext['slots'] = pickKeys(slots, [
+        'folderClosed',
+        'folderOpen',
+        'file',
+        'root',
+        'dragHandle',
+      ]);
+    }
+    next['icons'] = iconsNext;
+  }
+
+  const nesting = toRecord(root['nesting']);
+  if (nesting) {
+    const nestingNext = pickKeys(nesting, ['defaultAllow', 'blockedTargetKinds', 'rules']);
+    if (Array.isArray(nesting['rules'])) {
+      nestingNext['rules'] = nesting['rules']
+        .map((rule: unknown): Record<string, unknown> | null => {
+          const ruleRecord = toRecord(rule);
+          if (!ruleRecord) return null;
+          return pickKeys(ruleRecord, ['childType', 'childKinds', 'targetType', 'targetKinds', 'allow']);
+        })
+        .filter((rule: Record<string, unknown> | null): rule is Record<string, unknown> => Boolean(rule));
+    }
+    next['nesting'] = nestingNext;
+  }
+
+  const interactions = toRecord(root['interactions']);
+  if (interactions) {
+    next['interactions'] = pickKeys(interactions, ['selectionBehavior']);
+  }
+
+  const badges = toRecord(root['badges']);
+  if (badges) {
+    next['badges'] = pickKeys(badges, ['field', 'position', 'style', 'statusMap']);
+  }
+
+  const keyboard = toRecord(root['keyboard']);
+  if (keyboard) {
+    next['keyboard'] = pickKeys(keyboard, ['enabled', 'arrowNavigation', 'enterToRename', 'deleteKey']);
+  }
+
+  const multiSelect = toRecord(root['multiSelect']);
+  if (multiSelect) {
+    next['multiSelect'] = pickKeys(multiSelect, ['enabled', 'ctrlClick', 'shiftClick', 'selectAll']);
+  }
+
+  const search = toRecord(root['search']);
+  if (search) {
+    next['search'] = pickKeys(search, ['enabled', 'debounceMs', 'filterMode', 'matchFields', 'minQueryLength']);
+  }
+
+  const statusIcons = toRecord(root['statusIcons']);
+  if (statusIcons) {
+    next['statusIcons'] = pickKeys(statusIcons, ['loading', 'error', 'locked', 'warning', 'success']);
+  }
+
+  return next;
+};
+
+const coerceProfileV2 = (
+  candidate: unknown,
+  fallback: FolderTreeProfileV2
+): FolderTreeProfileV2 => {
+  const parsed = profileV2Schema.safeParse(stripUnknownProfileV2CandidateKeys(candidate));
+  if (!parsed.success) {
+    return cloneProfileV2(fallback);
+  }
+  return toCanonicalProfileV2({
+    candidate,
+    parsed: parsed.data,
+    fallback,
+  });
+};
+
+export const parseFolderTreeProfileV2Strict = (
+  candidate: unknown,
+  fallback: FolderTreeProfileV2
+): FolderTreeProfileV2 => {
+  const parsed = profileV2Schema.safeParse(candidate);
+  if (!parsed.success) {
+    throw validationError('Invalid folder tree V2 profile payload.', {
+      issues: parsed.error.issues,
+    });
+  }
+  return toCanonicalProfileV2({
+    candidate,
+    parsed: parsed.data,
+    fallback,
+  });
 };
 
 export const parseFolderTreeProfilesV2 = (

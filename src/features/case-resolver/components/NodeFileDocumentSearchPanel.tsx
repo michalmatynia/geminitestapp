@@ -160,7 +160,7 @@ export function NodeFileDocumentSearchPanel({
           size='xs'
           value={documentSearchScope}
           onChange={(v) => {
-            setDocumentSearchScope(v as typeof documentSearchScope);
+            setDocumentSearchScope(v);
             setSelectedDrillCaseId(null);
           }}
           options={[

@@ -27,7 +27,6 @@ const buildNode = (overrides: Partial<AiNode> = {}): AiNode => ({
 
 const buildContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerContext => {
   const node = overrides.node ?? buildNode();
-  const variables: Record<string, unknown> = {};
   const context: NodeHandlerContext = {
     node,
     nodeInputs: { value: 1, delta: 1 },
@@ -67,11 +66,14 @@ const buildContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerC
       schema: new Set<string>(),
       mapper: new Set<string>(),
     },
-    variables,
-    setVariable: (key: string, value: unknown) => {
-      variables[key] = value;
-    },
+    variables: {},
+    setVariable: () => {},
     ...overrides,
+  };
+  const variables = (context.variables ?? {}) as Record<string, unknown>;
+  context.variables = variables;
+  context.setVariable = (key: string, value: unknown) => {
+    variables[key] = value;
   };
   return context;
 };
@@ -144,5 +146,4 @@ describe('handleStateNode', () => {
     expect(result.delta).toBe(2);
     expect(context.variables['counter']).toBe(7);
   });
-}
-
+});

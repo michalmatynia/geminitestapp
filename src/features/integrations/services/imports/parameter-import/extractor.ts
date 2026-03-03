@@ -1,4 +1,4 @@
-import type { BaseImportParameterImportSettings } from '@/shared/contracts/integrations';
+import type { ImportTemplateParameterImport } from '@/shared/contracts/integrations';
 import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
@@ -213,7 +213,7 @@ const collectCollectionByLanguage = (
 };
 
 const toAllowedMappedSources = (
-  settings: BaseImportParameterImportSettings,
+  settings: ImportTemplateParameterImport,
   templateMappings: Array<{ sourceKey: string; targetField: string }>
 ): Set<string> | null => {
   if (settings.mode !== 'mapped') return null;
@@ -249,7 +249,7 @@ const toAllowedMappedSources = (
 
 export const extractBaseParameters = (input: {
   record: BaseProductRecord;
-  settings: BaseImportParameterImportSettings;
+  settings: ImportTemplateParameterImport;
   templateMappings: Array<{ sourceKey: string; targetField: string }>;
 }): ExtractedBaseParameter[] => {
   const byKey = new Map<string, MutableExtractedParameter>();

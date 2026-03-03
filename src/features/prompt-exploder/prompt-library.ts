@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import type {
-  PromptExploderBindingDto as PromptExploderBinding,
-  PromptExploderDocumentDto as PromptExploderDocument,
+  PromptExploderBinding,
+  PromptExploderDocument,
 } from '@/shared/contracts/prompt-exploder';
 import { promptExploderDocumentSchema } from '@/shared/contracts/prompt-exploder';
 

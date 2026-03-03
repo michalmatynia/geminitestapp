@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PromptExploderLibraryTab } from '@/features/prompt-exploder/components/PromptExploderLibraryTab';
 import {
   promptExploderDocumentSchema,
-  type PromptExploderDocumentDto as PromptExploderDocument,
-  type PromptExploderSegmentDto as PromptExploderSegment,
+  type PromptExploderDocument,
+  type PromptExploderSegment,
 } from '@/shared/contracts/prompt-exploder';
 
 const buildSegment = (id: string): PromptExploderSegment => ({

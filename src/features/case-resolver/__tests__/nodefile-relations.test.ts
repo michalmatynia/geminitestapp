@@ -379,7 +379,7 @@ describe('case-resolver nodefile relations', () => {
     );
   });
 
-  it('preserves case ownership for manual unbound node-file snapshots', () => {
+  it('removes case ownership fallback for unbound node-file snapshots', () => {
     const files = [
       createCaseResolverFile({
         id: 'case-a',
@@ -418,7 +418,7 @@ describe('case-resolver nodefile relations', () => {
     });
     expect(sanitizedAssets).toHaveLength(1);
     const asset = sanitizedAssets[0];
-    expect(asset?.sourceFileId).toBe('case-a');
+    expect(asset?.sourceFileId).toBeNull();
   });
 
   it('preserves node and edge metadata when sanitizing canonical node-file snapshots', () => {

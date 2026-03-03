@@ -1,6 +1,5 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '@/shared/utils';
@@ -64,16 +63,11 @@ export function FormActions({
           size={size}
           onClick={onSave}
           disabled={isDisabled || isSaving}
+          loading={isSaving}
+          loadingText='Saving...'
         >
           {saveIcon && !isSaving && <span className='mr-2'>{saveIcon}</span>}
-          {isSaving ? (
-            <>
-              <Loader2 className='mr-2 size-4 animate-spin' />
-              Saving...
-            </>
-          ) : (
-            saveText
-          )}
+          {!isSaving && saveText}
         </Button>
       )}
     </div>

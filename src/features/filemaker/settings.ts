@@ -388,8 +388,17 @@ export const removeFilemakerPhoneNumber = (
     return database;
   }
 
+  const nextPersons =
+    nextLinks.length === 0
+      ? database.persons.map((person: FilemakerPerson): FilemakerPerson => ({
+        ...person,
+        phoneNumbers: [],
+      }))
+      : database.persons;
+
   return normalizeFilemakerDatabase({
     ...database,
+    persons: nextPersons,
     phoneNumbers: nextPhoneNumbers,
     phoneNumberLinks: nextLinks,
   });
@@ -409,8 +418,17 @@ export const removeFilemakerPartyPhoneNumberLinks = (
   );
   if (nextLinks.length === database.phoneNumberLinks.length) return database;
 
+  const nextPersons =
+    nextLinks.length === 0
+      ? database.persons.map((person: FilemakerPerson): FilemakerPerson => ({
+        ...person,
+        phoneNumbers: [],
+      }))
+      : database.persons;
+
   return normalizeFilemakerDatabase({
     ...database,
+    persons: nextPersons,
     phoneNumberLinks: nextLinks,
   });
 };

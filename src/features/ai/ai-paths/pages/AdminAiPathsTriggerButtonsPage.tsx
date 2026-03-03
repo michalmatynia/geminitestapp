@@ -656,17 +656,11 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     return list.map(
       (btn: AiTriggerButtonDto): AiTriggerButtonRecord => ({
         ...btn,
-        pathName: (triggerButtonPathUsageMap.get(btn.id) ?? [])
-          .map((entry: TriggerButtonPathUsage) => entry.name)
-          .join(', '),
-        pathId: (triggerButtonPathUsageMap.get(btn.id) ?? [])
-          .map((entry: TriggerButtonPathUsage) => entry.id)
-          .join(', '),
-        pathNames: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
-          (entry: TriggerButtonPathUsage) => entry.name
-        ),
-        pathIds: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
-          (entry: TriggerButtonPathUsage) => entry.id
+        usedPaths: (triggerButtonPathUsageMap.get(btn.id) ?? []).map(
+          (entry: TriggerButtonPathUsage) => ({
+            id: entry.id,
+            name: entry.name,
+          })
         ),
       })
     );

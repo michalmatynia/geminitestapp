@@ -1,6 +1,6 @@
 import { type AiNode, type DatabaseConfig, type DbQueryConfig } from '@/shared/contracts/ai-paths';
 import { DATABASE_INPUT_PORTS } from '../../constants';
-import { ensureUniquePorts } from '../../utils';
+import { ensureUniquePorts } from '../../utils/graph.ports';
 import { migrateLegacyDbQueryProvider, normalizeTemplateText } from '../normalization.helpers';
 
 export const normalizeDatabaseNode = (node: AiNode): AiNode => {

@@ -6,7 +6,6 @@ export * from './button';
 export * from './card';
 export * from './client-only';
 export * from './checkbox';
-export * from './CollapsibleSection';
 export * from './collapsible';
 export * from './dialog';
 export * from './dropdown-menu';
@@ -47,8 +46,8 @@ export * from './pagination';
 export * from './RefreshButton';
 export * from './list-panel';
 export * from './copy-button';
-export * from './breadcrumb-scroller';
 export * from './item-library';
+export * from './JsonViewer';
 export * from './theme-toggle';
 export * from './table-skeleton';
 export * from './QueryDevPanel';
@@ -88,6 +87,7 @@ export {
   usePanelState,
 } from './templates/panels';
 export type {
+  FilterField,
   PanelStat,
   PanelAction,
   ColumnDef,
@@ -100,7 +100,6 @@ export type {
 } from './templates/panels';
 export * from './templates/pickers';
 export * from './templates/modals';
-export * from './AiInsightList';
 export * from './DocumentationList';
 export * from './SearchableList';
 export * from './segmented-control';

@@ -188,5 +188,4 @@ describe('handleFunctionNode', () => {
     expect(result.errorCode).toBe('FUNCTION_SCRIPT_RUNTIME_ERROR');
     expect(result.error).toContain('Boom');
   });
-}
-
+});

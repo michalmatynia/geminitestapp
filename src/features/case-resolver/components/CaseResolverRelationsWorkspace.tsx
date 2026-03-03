@@ -33,21 +33,9 @@ import {
   buildCaseResolverRelationGraph,
   toCaseResolverRelationCaseNodeId,
 } from '../settings-relation-graph';
+import { parseCanonicalCaseResolverEdge } from '../settings.edge-validation';
 import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
-
-type CompatEdge = {
-  id: string;
-  from?: string | null | undefined;
-  to?: string | null | undefined;
-  source?: string | null | undefined;
-  target?: string | null | undefined;
-  label?: string | null | undefined;
-  fromPort?: string | null | undefined;
-  toPort?: string | null | undefined;
-  sourceHandle?: string | null | undefined;
-  targetHandle?: string | null | undefined;
-};
 
 type CaseResolverRelationsWorkspaceProps = {
   focusCaseId?: string | null;
@@ -168,25 +156,29 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
     .filter((node): node is AiNode => node !== null);
 
 const toStrictEdges = (inputEdges: Edge[]): CaseResolverRelationGraph['edges'] => {
-  return (inputEdges as unknown as CompatEdge[])
-    .map((edge: CompatEdge): CaseResolverRelationGraph['edges'][number] | null => {
-      const from = edge.from ?? edge.source;
-      const to = edge.to ?? edge.target;
-      if (!from || !to) return null;
+  return inputEdges
+    .map((edge: Edge): CaseResolverRelationGraph['edges'][number] => {
+      const canonicalEdge = parseCanonicalCaseResolverEdge(edge, 'case_resolver.relations_workspace');
       return {
-        id: edge.id,
-        from,
-        to,
-        ...(edge.label ? { label: edge.label } : {}),
-        ...((edge.fromPort ?? edge.sourceHandle)
-          ? { fromPort: (edge.fromPort ?? edge.sourceHandle) || undefined }
+        id: canonicalEdge.id,
+        source: canonicalEdge.source ?? '',
+        target: canonicalEdge.target ?? '',
+        ...(typeof canonicalEdge.label === 'string' ? { label: canonicalEdge.label } : {}),
+        ...(typeof canonicalEdge.sourceHandle === 'string'
+          ? { sourceHandle: canonicalEdge.sourceHandle }
           : {}),
-        ...((edge.toPort ?? edge.targetHandle)
-          ? { toPort: (edge.toPort ?? edge.targetHandle) || undefined }
+        ...(typeof canonicalEdge.targetHandle === 'string'
+          ? { targetHandle: canonicalEdge.targetHandle }
           : {}),
       };
     })
-    .filter((edge): edge is CaseResolverRelationGraph['edges'][number] => edge !== null);
+    .filter(
+      (edge): edge is CaseResolverRelationGraph['edges'][number] =>
+        typeof edge.source === 'string' &&
+        edge.source.trim().length > 0 &&
+        typeof edge.target === 'string' &&
+        edge.target.trim().length > 0
+    );
 };
 
 const readRelationNodeMetaMap = (
@@ -214,13 +206,13 @@ const isCaseRelationNode = (
   return nodeId.startsWith('case:');
 };
 
-const readEdgeEndpoints = (edge: unknown): { id: string; from: string; to: string } | null => {
+const readEdgeEndpoints = (edge: unknown): { id: string; source: string; target: string } | null => {
   if (!isObjectRecord(edge)) return null;
   const id = typeof edge['id'] === 'string' ? edge['id'].trim() : '';
-  const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
-  const to = typeof edge['to'] === 'string' ? edge['to'].trim() : '';
-  if (!id || !from || !to) return null;
-  return { id, from, to };
+  const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';
+  const target = typeof edge['target'] === 'string' ? edge['target'].trim() : '';
+  if (!id || !source || !target) return null;
+  return { id, source, target };
 };
 
 const projectCaseOnlyRelationGraph = (
@@ -241,7 +233,7 @@ const projectCaseOnlyRelationGraph = (
   const caseEdges = toStrictEdges(graph.edges as unknown as Edge[]).filter((edge): boolean => {
     const endpoints = readEdgeEndpoints(edge);
     if (!endpoints) return false;
-    return caseNodeIds.has(endpoints.from) && caseNodeIds.has(endpoints.to);
+    return caseNodeIds.has(endpoints.source) && caseNodeIds.has(endpoints.target);
   });
 
   const caseNodeMeta: Record<string, CaseResolverRelationNodeMeta> = {};

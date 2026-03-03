@@ -50,6 +50,10 @@ export function BrainCatalogTree({
 
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () => ({
+      prepare: async (tx: MasterFolderTreeTransaction) => ({
+        tx,
+        preparedAt: Date.now(),
+      }),
       apply: async (tx: MasterFolderTreeTransaction) => {
         const reordered = resolveBrainCatalogOrderFromNodes(tx.nextNodes, entryByNodeIdRef.current);
         onChangeRef.current(reordered);
@@ -58,6 +62,8 @@ export function BrainCatalogTree({
           appliedAt: Date.now(),
         };
       },
+      commit: async () => {},
+      rollback: async () => {},
     }),
     []
   );

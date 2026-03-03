@@ -87,13 +87,15 @@ export const MemoizedViewer3D = memo(function MemoizedViewer3D({
           showGround,
           enableContactShadows,
           enableVignette,
+          transform: {
+            position,
+            rotation,
+            scale,
+          },
         }}
         autoFit={autoFit}
         presentationMode={presentationMode}
         allowUserControls={false}
-        modelPosition={position}
-        modelRotation={rotation}
-        modelScale={scale}
         className='h-full w-full'
       />
     </div>

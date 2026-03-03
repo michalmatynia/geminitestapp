@@ -266,12 +266,12 @@ export const executePathRun = async (
 
     const { strictFlowMode, nodeValidationEnabled } = preflight;
 
-    const cancelledBeforeExecution = await monitor.start();
-    if (cancelledBeforeExecution) {
+    const canceledBeforeExecution = await monitor.start();
+    if (canceledBeforeExecution) {
       return;
     }
 
-    let runtimeHaltReason: 'step_limit' | 'completed' | 'cancelled' | 'blocked' | null = null;
+    let runtimeHaltReason: 'step_limit' | 'completed' | 'canceled' | 'blocked' | null = null;
     await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
@@ -559,7 +559,7 @@ export const executePathRun = async (
       control: {
         mode: 'run',
         signal: runAbortController.signal,
-        onHalt: (halt: { reason: 'step_limit' | 'completed' | 'cancelled' | 'blocked' }) => {
+        onHalt: (halt: { reason: 'step_limit' | 'completed' | 'canceled' | 'blocked' }) => {
           runtimeHaltReason = halt.reason;
         },
       },
@@ -573,7 +573,7 @@ export const executePathRun = async (
     let finalStatus: AiPathRunStatus = 'completed';
     let finalError = null;
 
-    if (runtimeHaltReason === 'cancelled') {
+    if (runtimeHaltReason === 'canceled') {
       finalStatus = 'canceled';
     } else if (runtimeHaltReason === 'blocked') {
       if (

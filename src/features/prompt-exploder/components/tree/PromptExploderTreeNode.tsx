@@ -12,6 +12,8 @@ import {
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import { Button, Badge } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import {
   readPromptExploderTreeMetadata,
@@ -56,7 +58,7 @@ export function PromptExploderTreeNode({
   const metadata = readPromptExploderTreeMetadata(node);
   const Icon = resolveNodeIcon(metadata?.kind ?? null);
   const stateClassName = isSelected
-    ? 'bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40'
+    ? 'bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40 shadow-sm'
     : isMultiSelected
       ? 'bg-blue-500/15 text-blue-100 ring-1 ring-inset ring-blue-400/25'
       : dropPosition === 'before'
@@ -80,7 +82,10 @@ export function PromptExploderTreeNode({
 
   return (
     <div
-      className={`group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition ${stateClassName}`}
+      className={cn(
+        'group flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-all',
+        stateClassName
+      )}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
       role='button'
       tabIndex={0}
@@ -102,14 +107,15 @@ export function PromptExploderTreeNode({
           armDragHandle(node.id);
         }}
         onMouseUp={releaseDragHandle}
-        className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-card/60 hover:text-gray-100 active:cursor-grabbing'
+        className='inline-flex size-5 shrink-0 items-center justify-center rounded cursor-grab text-gray-400 transition hover:bg-white/10 hover:text-gray-100 active:cursor-grabbing'
       >
         <GripVertical className='size-3.5' />
       </span>
       {hasChildren ? (
-        <button
-          type='button'
-          className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/50'
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-4 p-0 text-gray-500 hover:bg-white/10 hover:text-gray-300'
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -118,16 +124,19 @@ export function PromptExploderTreeNode({
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
           {isExpanded ? <ChevronDown className='size-3' /> : <ChevronRight className='size-3' />}
-        </button>
+        </Button>
       ) : (
         <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
       )}
       <Icon className='size-4 shrink-0 text-sky-200/80' />
       <span className='min-w-0 flex-1 truncate'>{node.name}</span>
       {badgeLabel ? (
-        <span className='inline-flex shrink-0 items-center rounded border border-border/60 bg-card/40 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.04em] text-gray-400'>
+        <Badge
+          variant='neutral'
+          className='shrink-0 border-border/60 bg-card/40 text-[10px] h-4 px-1 uppercase tracking-wider'
+        >
           {badgeLabel}
-        </span>
+        </Badge>
       ) : null}
     </div>
   );

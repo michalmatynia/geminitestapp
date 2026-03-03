@@ -22,7 +22,6 @@ import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
 import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import {
-  invalidateBackups,
   useCreateBackupMutation,
   useDatabaseBackups,
   useDeleteBackupMutation,
@@ -121,7 +120,7 @@ export function useDatabaseBackupsState() {
   const closeLogModal = useCallback((): void => {
     setIsLogModalOpen(false);
     setLogModalContent('');
-  }, [queryClient, activeTab]);
+  }, []);
 
   const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {
     setSelectedBackupForRestore(backup.name);

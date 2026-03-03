@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type ParamSpec } from '@/shared/lib/prompt-engine';
+import type { ParamSpec } from '@/shared/contracts/prompt-engine';
 import type { VectorShape, VectorToolMode } from '@/shared/lib/vector-drawing';
 
 import {

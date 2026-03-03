@@ -38,7 +38,7 @@ import type {
 import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
-  type BaseImportParameterImportSettings,
+  type ImportTemplateParameterImport,
 } from '@/shared/contracts/integrations';
 import type {
   ParameterRepository,
@@ -490,7 +490,7 @@ export const importSingleItem = async (input: {
   inventoryId: string;
   mode: BaseImportMode;
   allowDuplicateSku: boolean;
-  parameterImportSettings?: BaseImportParameterImportSettings;
+  parameterImportSettings?: ImportTemplateParameterImport;
   catalogLanguageCodes?: string[];
   defaultLanguageCode?: string | null;
   prefetchedParameters?: ProductParameter[];

@@ -52,9 +52,6 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_completed',
           level: 'info',
-          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
-          runStartedAt:
-            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
           message: 'Run completed.',
         });
@@ -122,9 +119,6 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_failed',
           level: 'error',
-          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
-          runStartedAt:
-            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
           message:
             outcome.error instanceof Error ? `Run failed: ${outcome.error.message}` : 'Run failed.',
@@ -185,13 +179,10 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_canceled',
           level: 'info',
-          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
-          runStartedAt:
-            args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
-          message: 'Run cancelled.',
+          message: 'Run canceled.',
         });
-        args.toast('Run cancelled.', { variant: 'info' });
+        args.toast('Run canceled.', { variant: 'info' });
         args.setLastRunAt(finishedAt);
         if (args.activePathId) {
           args.setPathConfigs((prev: Record<string, PathConfig>) => ({
@@ -234,7 +225,7 @@ export function useLocalRunOutcome(args: LocalExecutionArgs) {
           durationMs: Date.now() - (meta['startedAtMs'] ?? 0),
           nodeCount: args.normalizedNodes.length,
           nodeDurations: outcome.state.nodeDurations ?? null,
-          error: 'Run cancelled',
+          error: 'Run canceled',
           source: 'ai_paths_ui',
         });
       }

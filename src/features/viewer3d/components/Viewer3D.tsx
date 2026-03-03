@@ -319,12 +319,6 @@ export interface Viewer3DProps {
   presentationMode?: boolean;
   /** Allow user interaction (orbit/pan/zoom) */
   allowUserControls?: boolean;
-  /** Model position [x, y, z] */
-  modelPosition?: [number, number, number];
-  /** Model rotation [x, y, z] in radians */
-  modelRotation?: [number, number, number];
-  /** Model scale (number or [x, y, z]) */
-  modelScale?: number | [number, number, number];
   /** Provide capture ref to grab screenshots from the WebGL canvas */
   captureRef?: React.MutableRefObject<(() => string | null) | null>;
 }
@@ -359,9 +353,6 @@ export function Viewer3D({
   autoFit = true,
   presentationMode = false,
   allowUserControls = true,
-  modelPosition,
-  modelRotation,
-  modelScale,
   captureRef,
 }: Viewer3DProps): React.JSX.Element {
   const context = useOptionalViewer3D();
@@ -402,6 +393,10 @@ export function Viewer3D({
   const enableContactShadows = getSetting('enableContactShadows', true);
   const autoRotate = getSetting('autoRotate', true);
   const autoRotateSpeed = getSetting('autoRotateSpeed', 2);
+  const modelTransform = propSettings?.transform;
+  const modelPosition = modelTransform?.position;
+  const modelRotation = modelTransform?.rotation;
+  const modelScale = modelTransform?.scale;
 
   const hasPostProcessing =
     enableDithering ||

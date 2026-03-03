@@ -1,9 +1,9 @@
 import type {
+  PromptValidationSimilar as PromptValidationSimilarPattern,
   PromptValidationRule,
   PromptValidationSettings,
   PromptValidationSeverity,
-  PromptValidationSimilarPattern,
-} from '@/shared/lib/prompt-engine/settings';
+} from '@/shared/contracts/prompt-engine';
 
 import { extractParamsFromPrompt } from './prompt-params';
 

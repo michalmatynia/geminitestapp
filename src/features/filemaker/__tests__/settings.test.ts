@@ -389,6 +389,54 @@ describe('filemaker settings', () => {
     ).toThrowError(/Legacy Filemaker fullAddress payloads are no longer supported/);
   });
 
+  it('rejects inline address fields when canonical address links are missing', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              street: 'Main Street',
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
+  });
+
+  it('rejects inline person phoneNumbers when canonical phone links are missing', () => {
+    expect(() =>
+      parseFilemakerDatabase(
+        JSON.stringify({
+          version: 2,
+          persons: [
+            createPersonRecord({
+              phoneNumbers: ['+48 111 222 333'],
+            }),
+          ],
+          organizations: [],
+          events: [],
+          addresses: [],
+          addressLinks: [],
+          phoneNumbers: [{ id: 'ph-1', phoneNumber: '+48111222333' }],
+          phoneNumberLinks: [],
+          emails: [],
+          emailLinks: [],
+          eventOrganizationLinks: [],
+        })
+      )
+    ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
+  });
+
   it('normalizes email records and email links', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({

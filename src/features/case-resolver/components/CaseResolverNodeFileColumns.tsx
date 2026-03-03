@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge, Button, Tooltip, Badge } from '@/shared/ui';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
 
@@ -74,17 +74,19 @@ export const getNodeFileDocumentColumns = ({
       id: 'actions',
       header: '',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <button
-          type='button'
-          title='Add to canvas center'
-          className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddDocument(row.original.file);
-          }}
-        >
-          <Plus className='size-3.5' />
-        </button>
+        <Tooltip content='Add to canvas center' side='left'>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='size-7 p-0 text-gray-400 hover:bg-cyan-500/15 hover:text-cyan-300'
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddDocument(row.original.file);
+            }}
+          >
+            <Plus className='size-3.5' />
+          </Button>
+        </Tooltip>
       ),
       size: 40,
     }
@@ -131,21 +133,25 @@ export const getNodeFileCaseColumns = ({
     accessorKey: 'docCount',
     header: 'Docs',
     cell: ({ row }): React.JSX.Element => (
-      <span className='text-gray-400'>{row.original.docCount}</span>
+      <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20 text-[10px] h-5 px-1.5'>
+        {row.original.docCount}
+      </Badge>
     ),
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }): React.JSX.Element => (
-      <button
-        type='button'
-        title='Browse documents in this case'
-        className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
-        onClick={() => onDrillInto(row.original.file.id)}
-      >
-        <ChevronRight className='size-3.5' />
-      </button>
+      <Tooltip content='Browse documents in this case' side='left'>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='size-7 p-0 text-gray-400 hover:bg-cyan-500/15 hover:text-cyan-300'
+          onClick={() => onDrillInto(row.original.file.id)}
+        >
+          <ChevronRight className='size-3.5' />
+        </Button>
+      </Tooltip>
     ),
     size: 40,
   },

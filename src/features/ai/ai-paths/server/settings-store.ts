@@ -6,6 +6,7 @@ import {
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsMaintenanceActionId,
   type AiPathsMaintenanceApplyResult,
+  type AiPathsMaintenanceRequestedActionId,
   type AiPathsMaintenanceReport,
   type AiPathsSettingRecord,
   type ParsedPathMeta,
@@ -19,7 +20,6 @@ import {
 import { parsePathMetas, preservePathConfigFlagsOnSeed } from './settings-store.parsing';
 import {
   buildAiPathsMaintenanceReport,
-  buildTriggerButtonDisplay,
   resolveRequestedMaintenanceActionIds,
   runMaintenanceAction,
 } from './settings-store.maintenance';
@@ -29,21 +29,7 @@ import {
   upsertMongoAiPathsSettings,
   ensureMongoIndexes,
 } from './settings-store.repository';
-import {
-  buildBaseExportBlwoPathConfigValue,
-  BASE_EXPORT_BLWO_PATH_ID,
-  BASE_EXPORT_BLWO_PATH_NAME,
-} from './settings-store-base-export-workflow';
-import {
-  buildParameterInferencePathConfigValue,
-  PARAMETER_INFERENCE_PATH_ID,
-  PARAMETER_INFERENCE_PATH_NAME,
-} from './settings-store-parameter-inference';
-import {
-  TRANSLATION_EN_PL_PATH_ID,
-  TRANSLATION_EN_PL_PATH_NAME,
-  buildTranslationEnPlPathConfigValue,
-} from './settings-store-translation-en-pl';
+import { ensureStarterWorkflowDefaults } from './starter-workflows-settings';
 
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
@@ -170,103 +156,16 @@ async function maybeAutoApplyDefaultSeedsOnRead(
   }
 
   const result = [...existingRecords];
-  let changed = false;
-  const now = new Date().toISOString();
-
-  // 1. Ensure Trigger Buttons
-  if (requestedKeys.includes(AI_PATHS_TRIGGER_BUTTONS_KEY)) {
-    const hasButtons = existingRecords.some((r) => r.key === AI_PATHS_TRIGGER_BUTTONS_KEY);
-    if (!hasButtons) {
-      const defaultButtons: Array<Record<string, unknown>> = [
-        {
-          id: 'base-export-blwo',
-          name: BASE_EXPORT_BLWO_PATH_NAME,
-          pathId: BASE_EXPORT_BLWO_PATH_ID,
-          display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_PATH_NAME),
-        },
-        {
-          id: 'parameter-inference',
-          name: PARAMETER_INFERENCE_PATH_NAME,
-          pathId: PARAMETER_INFERENCE_PATH_ID,
-          display: buildTriggerButtonDisplay(PARAMETER_INFERENCE_PATH_NAME),
-        },
-        {
-          id: 'translation-en-pl',
-          name: TRANSLATION_EN_PL_PATH_NAME,
-          pathId: TRANSLATION_EN_PL_PATH_ID,
-          display: buildTriggerButtonDisplay(TRANSLATION_EN_PL_PATH_NAME),
-        },
-      ];
-      const newValue = JSON.stringify(defaultButtons);
-      result.push({ key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: newValue });
-      changed = true;
+  const requestedDefaultKeys = requestedKeys.filter((key) => {
+    if (key === AI_PATHS_INDEX_KEY || key === AI_PATHS_TRIGGER_BUTTONS_KEY) return true;
+    return key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX);
+  });
+  if (requestedDefaultKeys.length > 0) {
+    const seeded = ensureStarterWorkflowDefaults(result);
+    if (seeded.affectedCount > 0) {
+      await upsertAiPathsSettings(seeded.nextRecords);
+      return seeded.nextRecords;
     }
-  }
-
-  // 2. Ensure Core Path Configs
-  const corePaths = [
-    {
-      id: BASE_EXPORT_BLWO_PATH_ID,
-      name: BASE_EXPORT_BLWO_PATH_NAME,
-      factory: () => buildBaseExportBlwoPathConfigValue(now),
-    },
-    {
-      id: PARAMETER_INFERENCE_PATH_ID,
-      name: PARAMETER_INFERENCE_PATH_NAME,
-      factory: () => buildParameterInferencePathConfigValue(now),
-    },
-    {
-      id: TRANSLATION_EN_PL_PATH_ID,
-      name: TRANSLATION_EN_PL_PATH_NAME,
-      factory: () => buildTranslationEnPlPathConfigValue(),
-    },
-  ];
-
-  for (const core of corePaths) {
-    const configKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${core.id}`;
-    if (requestedKeys.includes(configKey)) {
-      const hasConfig = existingRecords.some((r) => r.key === configKey);
-      if (!hasConfig) {
-        const newValue = core.factory();
-        result.push({ key: configKey, value: newValue });
-        changed = true;
-      }
-    }
-  }
-
-  // 3. Ensure Index contains core paths
-  if (requestedKeys.includes(AI_PATHS_INDEX_KEY)) {
-    const indexRecord = result.find((r) => r.key === AI_PATHS_INDEX_KEY);
-    const existingMetas = parsePathMetas(indexRecord?.value);
-    const nextMetas = [...existingMetas];
-    let indexChanged = false;
-
-    for (const core of corePaths) {
-      if (!nextMetas.some((m) => m.id === core.id)) {
-        nextMetas.push({
-          id: core.id,
-          name: core.name,
-          version: 1,
-          createdAt: now,
-          updatedAt: now,
-        });
-        indexChanged = true;
-      }
-    }
-
-    if (indexChanged) {
-      const newValue = JSON.stringify(nextMetas);
-      if (indexRecord) {
-        indexRecord.value = newValue;
-      } else {
-        result.push({ key: AI_PATHS_INDEX_KEY, value: newValue });
-      }
-      changed = true;
-    }
-  }
-
-  if (changed) {
-    await upsertAiPathsSettings(result);
   }
 
   return result;
@@ -302,7 +201,7 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
 }
 
 export const runAiPathsMaintenance = async (
-  actionIds?: AiPathsMaintenanceActionId[]
+  actionIds?: AiPathsMaintenanceRequestedActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {
   const allSettings = await getAllAiPathsSettings();
   const report = buildAiPathsMaintenanceReport(allSettings);
@@ -338,7 +237,7 @@ export const inspectAiPathsSettingsMaintenance = async (): Promise<AiPathsMainte
 };
 
 export const applyAiPathsSettingsMaintenance = async (
-  actionIds?: AiPathsMaintenanceActionId[]
+  actionIds?: AiPathsMaintenanceRequestedActionId[]
 ): Promise<AiPathsMaintenanceApplyResult> => {
   return runAiPathsMaintenance(actionIds);
 };

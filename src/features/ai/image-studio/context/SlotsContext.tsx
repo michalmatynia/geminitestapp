@@ -304,11 +304,11 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   });
 
   const handleMoveFolder = useCallback(async (_source: string, _target: string) => {
-     // Implementation omitted
+    // Implementation omitted
   }, []);
 
   const handleRenameFolder = useCallback(async (_source: string, _nextName: string) => {
-     // Implementation omitted
+    // Implementation omitted
   }, []);
 
   const handleDeleteFolder = useCallback(
@@ -377,7 +377,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       isLoading: slotsQuery.isLoading || loadingSettings,
       isFetching: slotsQuery.isFetching,
       slotsQuery,
-      error: (slotsQuery.error as Error | null) || null,
+      error: (slotsQuery.error) || null,
       selectedSlotId,
       setSelectedSlotId,
       workingSlotId,

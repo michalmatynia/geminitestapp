@@ -59,7 +59,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             args.currentRunStartedAtMsRef.current = Number.isNaN(parsed) ? Date.now() : parsed;
           }
           const haltRef = {
-            reason: 'completed' as 'completed' | 'step_limit' | 'cancelled' | 'blocked',
+            reason: 'completed' as 'completed' | 'step_limit' | 'canceled' | 'blocked',
           };
           const nextState = await evaluateGraph({
             nodes: args.normalizedNodes,
@@ -102,8 +102,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 nodeId: node.id,
                 status: 'running',
                 source: 'local',
-                runId: callbackRunId,
-                runStartedAt: callbackRunStartedAt,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 iteration,
@@ -116,8 +114,12 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 const prevOutputs = prev.outputs ?? {};
                 const next: RuntimeState = {
                   ...prev,
-                  runId: callbackRunId,
-                  runStartedAt: callbackRunStartedAt,
+                  currentRun: {
+                    ...(prev.currentRun ?? {}),
+                    id: callbackRunId,
+                    status: 'running',
+                    startedAt: callbackRunStartedAt,
+                  },
                   inputs: {
                     ...prevInputs,
                     [node.id]: nodeInputs,
@@ -160,8 +162,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 nodeId: node.id,
                 status: normalizedStatus,
                 source: 'local',
-                runId: callbackRunId,
-                runStartedAt: callbackRunStartedAt,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 iteration,
@@ -181,8 +181,12 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 } as RuntimePortValues;
                 const next: RuntimeState = {
                   ...prev,
-                  runId: callbackRunId,
-                  runStartedAt: callbackRunStartedAt,
+                  currentRun: {
+                    ...(prev.currentRun ?? {}),
+                    id: callbackRunId,
+                    status: 'running',
+                    startedAt: callbackRunStartedAt,
+                  },
                   inputs: {
                     ...(prev.inputs ?? {}),
                     [node.id]: nodeInputs,
@@ -218,8 +222,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 nodeId: node.id,
                 status: 'failed',
                 source: 'local',
-                runId: callbackRunId,
-                runStartedAt: callbackRunStartedAt,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 iteration,
@@ -231,8 +233,12 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const next: RuntimeState = {
                   ...prev,
-                  runId: callbackRunId,
-                  runStartedAt: callbackRunStartedAt,
+                  currentRun: {
+                    ...(prev.currentRun ?? {}),
+                    id: callbackRunId,
+                    status: 'running',
+                    startedAt: callbackRunStartedAt,
+                  },
                   inputs: {
                     ...(prev.inputs ?? {}),
                     [node.id]: nodeInputs,
@@ -264,7 +270,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               stepLimit,
               signal: args.abortControllerRef.current?.signal,
               onHalt: (payload: {
-                reason: 'completed' | 'step_limit' | 'cancelled' | 'blocked';
+                reason: 'completed' | 'step_limit' | 'canceled' | 'blocked';
                 iteration?: number;
               }) => {
                 haltRef.reason = payload.reason;
@@ -300,8 +306,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
               source: 'local',
               kind: 'run_blocked',
               level: failOnBlocked ? 'error' : 'warn',
-              runId,
-              runStartedAt,
               timestamp: new Date().toISOString(),
               message:
                 firstBlockedMessage ||

@@ -26,17 +26,17 @@ const createPromptNode = (input: {
 
 const createEdge = (input: {
   id: string;
-  from: string;
-  to: string;
-  fromPort?: string;
-  toPort?: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
 }): Edge =>
   ({
     id: input.id,
-    from: input.from,
-    to: input.to,
-    fromPort: input.fromPort,
-    toPort: input.toPort,
+    source: input.source,
+    target: input.target,
+    sourceHandle: input.sourceHandle,
+    targetHandle: input.targetHandle,
   }) as Edge;
 
 describe('case-resolver composer', () => {
@@ -48,8 +48,8 @@ describe('case-resolver composer', () => {
       createPromptNode({ id: 'd', title: 'D', template: 'Detached', x: 0, y: 120 }),
     ];
     const edges: Edge[] = [
-      createEdge({ id: 'e1', from: 'a', to: 'b' }),
-      createEdge({ id: 'e2', from: 'b', to: 'c' }),
+      createEdge({ id: 'e1', source: 'a', target: 'b' }),
+      createEdge({ id: 'e2', source: 'b', target: 'c' }),
     ];
     const graph: CaseResolverGraph = {
       nodes,
@@ -159,10 +159,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'content-flow',
-          from: 'doc-a',
-          to: 'doc-b',
-          fromPort: 'plaintextContent',
-          toPort: 'plaintextContent',
+          source: 'doc-a',
+          target: 'doc-b',
+          sourceHandle: 'plaintextContent',
+          targetHandle: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -225,10 +225,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'plain-flow',
-          from: 'source',
-          to: 'target',
-          fromPort: 'plaintextContent',
-          toPort: 'plainText',
+          source: 'source',
+          target: 'target',
+          sourceHandle: 'plaintextContent',
+          targetHandle: 'plainText',
         }),
       ],
       nodeMeta: {
@@ -292,17 +292,17 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'source-to-scan-plain',
-          from: 'source',
-          to: 'scan-edit',
-          fromPort: 'plainText',
-          toPort: 'plainText',
+          source: 'source',
+          target: 'scan-edit',
+          sourceHandle: 'plainText',
+          targetHandle: 'plainText',
         }),
         createEdge({
           id: 'scan-to-next-plain',
-          from: 'scan-edit',
-          to: 'next',
-          fromPort: 'plainText',
-          toPort: 'plainText',
+          source: 'scan-edit',
+          target: 'next',
+          sourceHandle: 'plainText',
+          targetHandle: 'plainText',
         }),
       ],
       nodeMeta: {
@@ -373,10 +373,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'plain-flow',
-          from: 'source',
-          to: 'note',
-          fromPort: 'plainText',
-          toPort: 'plainText',
+          source: 'source',
+          target: 'note',
+          sourceHandle: 'plainText',
+          targetHandle: 'plainText',
         }),
       ],
       nodeMeta: {
@@ -432,10 +432,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'flow',
-          from: 'source',
-          to: 'note',
-          fromPort: 'plaintextContent',
-          toPort: 'plaintextContent',
+          source: 'source',
+          target: 'note',
+          sourceHandle: 'plaintextContent',
+          targetHandle: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -492,10 +492,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'flow',
-          from: 'source',
-          to: 'note',
-          fromPort: 'plaintextContent',
-          toPort: 'plaintextContent',
+          source: 'source',
+          target: 'note',
+          sourceHandle: 'plaintextContent',
+          targetHandle: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -550,10 +550,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'flow',
-          from: 'source',
-          to: 'note',
-          fromPort: 'wysiwygText',
-          toPort: 'wysiwygText',
+          source: 'source',
+          target: 'note',
+          sourceHandle: 'wysiwygText',
+          targetHandle: 'wysiwygText',
         }),
       ],
       nodeMeta: {
@@ -610,10 +610,10 @@ describe('case-resolver composer', () => {
       edges: [
         createEdge({
           id: 'wysiwyg-flow',
-          from: 'note-a',
-          to: 'note-b',
-          fromPort: 'wysiwygContent',
-          toPort: 'wysiwygContent',
+          source: 'note-a',
+          target: 'note-b',
+          sourceHandle: 'wysiwygContent',
+          targetHandle: 'wysiwygContent',
         }),
       ],
       nodeMeta: {

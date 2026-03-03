@@ -1,17 +1,11 @@
 import type {
-  ExtractParamsResultDto,
-  ParamSpecDto,
-  ParamIssueDto,
-  ParamIssueSeverityDto,
+  ExtractParamsResult,
+  ParamSpec,
+  ParamIssue,
   ParamLeaf,
 } from '@/shared/contracts/prompt-engine';
 
 import { isObjectRecord } from './object-utils';
-
-export type ExtractParamsResult = ExtractParamsResultDto;
-export type ParamSpec = ParamSpecDto;
-export type ParamIssue = ParamIssueDto;
-export type ParamIssueSeverity = ParamIssueSeverityDto;
 
 type ScanState = {
   inSingle: boolean;

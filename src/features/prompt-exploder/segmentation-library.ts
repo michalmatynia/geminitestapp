@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 import {
   promptExploderDocumentSchema,
-  type PromptExploderDocumentDto as PromptExploderDocument,
-  type PromptExploderSegmentDto as PromptExploderSegment,
-  type PromptExploderSubsectionDto as PromptExploderSubsection,
+  type PromptExploderDocument,
+  type PromptExploderSegment,
+  type PromptExploderSubsection,
 } from '@/shared/contracts/prompt-exploder';
 
 import { reassemblePromptSegments } from './parser';
@@ -303,4 +303,3 @@ export const buildPromptExploderSegmentationAnalysisContextJson = (args: {
   records: PromptExploderSegmentationRecord[];
   now?: string;
 }): string => JSON.stringify(buildPromptExploderSegmentationAnalysisContext(args), null, 2);
-

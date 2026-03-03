@@ -3,16 +3,22 @@ import { z } from 'zod';
 
 import {
   AI_PATHS_MAINTENANCE_ACTION_IDS,
+  AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES,
   applyAiPathsSettingsMaintenance,
   inspectAiPathsSettingsMaintenance,
-  type AiPathsMaintenanceActionId,
+  type AiPathsMaintenanceRequestedActionId,
 } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const applyMaintenancePayloadSchema = z.object({
-  actionIds: z.array(z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS)).optional(),
+  actionIds: z.array(z.string()).optional(),
 });
+
+const MAINTENANCE_REQUESTED_ACTION_IDS = new Set<string>([
+  ...AI_PATHS_MAINTENANCE_ACTION_IDS,
+  ...Object.keys(AI_PATHS_MAINTENANCE_ACTION_ID_ALIASES),
+]);
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const report = await inspectAiPathsSettingsMaintenance();
@@ -40,10 +46,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const actionIds = parsed.data.actionIds?.filter(
-    (value: AiPathsMaintenanceActionId): boolean => value.trim().length > 0
+    (value: string): boolean => value.trim().length > 0 && MAINTENANCE_REQUESTED_ACTION_IDS.has(value)
   );
   const result = await applyAiPathsSettingsMaintenance(
-    actionIds && actionIds.length > 0 ? actionIds : undefined
+    actionIds && actionIds.length > 0
+      ? (actionIds as AiPathsMaintenanceRequestedActionId[])
+      : undefined
   );
   return NextResponse.json(result);
 }

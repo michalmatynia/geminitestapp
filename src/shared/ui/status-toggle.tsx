@@ -3,8 +3,7 @@
 import React from 'react';
 
 import { cn } from '@/shared/utils';
-
-import { Button } from './button';
+import { Badge } from './badge';
 
 export interface StatusToggleProps {
   enabled: boolean;
@@ -18,6 +17,10 @@ export interface StatusToggleProps {
   className?: string;
 }
 
+/**
+ * StatusToggle - A button that toggles between two states (ON/OFF).
+ * Refactored to leverage the shared Badge component for consistent semantic styling.
+ */
 export function StatusToggle({
   enabled,
   onToggle,
@@ -29,41 +32,35 @@ export function StatusToggle({
   disabled,
   className,
 }: StatusToggleProps): React.JSX.Element {
-  const getEnabledStyles = () => {
-    switch (enabledVariant) {
-      case 'cyan':
-        return 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25';
-      case 'blue':
-        return 'border-blue-500/60 bg-blue-500/15 text-blue-100 hover:bg-blue-500/25';
-      default:
-        return 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25';
-    }
-  };
-
-  const getDisabledStyles = () => {
-    switch (disabledVariant) {
-      case 'slate':
-        return 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20';
-      case 'gray':
-        return 'border-gray-500/40 bg-gray-500/10 text-gray-300 hover:bg-gray-500/20';
-      default:
-        return 'border-red-500/60 bg-red-500/15 text-red-200 hover:bg-red-500/25';
+  // Map StatusToggle variants to Badge variants
+  const getBadgeVariant = () => {
+    if (enabled) {
+      switch (enabledVariant) {
+        case 'cyan': return 'cyan';
+        case 'blue': return 'processing';
+        default: return 'active';
+      }
+    } else {
+      switch (disabledVariant) {
+        case 'slate': return 'removed';
+        case 'gray': return 'neutral';
+        default: return 'failed';
+      }
     }
   };
 
   return (
-    <Button
-      type='button'
-      onClick={(): void => onToggle(!enabled)}
-      disabled={disabled}
+    <Badge
+      variant={getBadgeVariant() as any}
+      onClick={disabled ? undefined : () => onToggle(!enabled)}
       className={cn(
-        size === 'sm' ? 'h-7 px-2 text-[10px]' : 'h-8 px-2.5 text-[10px]',
-        'rounded border font-semibold tracking-wide transition-colors',
-        enabled ? getEnabledStyles() : getDisabledStyles(),
+        'cursor-pointer select-none font-bold transition-all border',
+        size === 'sm' ? 'h-6 px-2 text-[9px]' : 'h-7 px-2.5 text-[10px]',
+        disabled && 'opacity-50 pointer-events-none',
         className
       )}
     >
       {enabled ? enabledLabel : disabledLabel}
-    </Button>
+    </Badge>
   );
 }

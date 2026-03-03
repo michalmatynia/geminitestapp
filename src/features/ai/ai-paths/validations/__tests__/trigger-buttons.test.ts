@@ -126,13 +126,13 @@ describe('trigger button validation', () => {
     ]);
   });
 
-  it('infers display.label from button name', () => {
+  it('infers display.label from button name for canonical display modes', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
           id: 'btn-display-label',
           name: 'Display Label',
-          display: { label: 'Old Label' },
+          display: 'icon_label',
         },
       ])
     );
@@ -154,27 +154,33 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.display.showLabel).toBe(false);
   });
 
-  it('maps legacy label display mode into showLabel=true', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-legacy-display',
-          name: 'Legacy Display',
-          display: 'label',
-        },
-      ])
-    );
-
-    expect(parsed[0]?.display.showLabel).toBe(true);
+  it('rejects legacy label display mode', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-legacy-display',
+        name: 'Legacy Display',
+        display: 'label',
+      },
+    ]);
   });
 
-  it('preserves canonical stored name even when display.label differs', () => {
+  it('rejects legacy display object payloads', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-display-object',
+        name: 'Legacy Display',
+        display: { label: 'Friendly Trigger Name', showLabel: true },
+      },
+    ]);
+  });
+
+  it('preserves canonical stored name for canonical display mode payloads', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
           id: 'btn-opaque-name',
           name: '90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f',
-          display: { label: 'Friendly Trigger Name', showLabel: true },
+          display: 'icon_label',
         },
       ])
     );
@@ -183,32 +189,24 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.display.label).toBe('90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f');
   });
 
-  it('parses string enabled values without dropping the record', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-enabled-string',
-          name: 'Enabled String',
-          enabled: 'false',
-        },
-      ])
-    );
-
-    expect(parsed[0]?.enabled).toBe(false);
+  it('rejects non-boolean enabled values', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-enabled-string',
+        name: 'Enabled String',
+        enabled: 'false',
+      },
+    ]);
   });
 
-  it('filters invalid locations and keeps valid ones', () => {
-    const parsed = parseAiTriggerButtonsRaw(
-      JSON.stringify([
-        {
-          id: 'btn-locations',
-          name: 'Locations',
-          locations: ['product_modal', 'invalid_location', 'product_modal'],
-        },
-      ])
-    );
-
-    expect(parsed[0]?.locations).toEqual(['product_modal']);
+  it('rejects invalid location values instead of filtering them', () => {
+    expectStoredPayloadToThrow([
+      {
+        id: 'btn-locations',
+        name: 'Locations',
+        locations: ['product_modal', 'invalid_location', 'product_modal'],
+      },
+    ]);
   });
 
   it('preserves stored pathId', () => {

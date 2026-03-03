@@ -611,7 +611,6 @@ export function useLocalExecutionTriggers(
             nodeId: triggerNode.id,
             status: 'queued',
             source: 'local',
-            runId: args.currentRunIdRef.current ?? null,
             nodeType: triggerNode.type,
             nodeTitle: triggerNode.title ?? null,
             kind: 'node_status',
@@ -635,8 +634,6 @@ export function useLocalExecutionTriggers(
         source: 'local',
         kind: 'run_started',
         level: 'info',
-        runId,
-        runStartedAt: startedAt,
         timestamp: startedAt,
         message: mode === 'step' ? 'Step run started.' : 'Run started.',
       });
@@ -649,8 +646,6 @@ export function useLocalExecutionTriggers(
         nodeId: triggerNode.id,
         status: 'running',
         source: 'local',
-        runId,
-        runStartedAt: startedAt,
         nodeType: triggerNode.type,
         nodeTitle: triggerNode.title ?? null,
         kind: 'node_started',
@@ -670,8 +665,13 @@ export function useLocalExecutionTriggers(
         });
         const nextState: RuntimeState = {
           ...previousState,
-          runId,
-          runStartedAt: startedAt,
+          currentRun: {
+            id: runId,
+            status: 'running',
+            startedAt,
+            pathId: args.activePathId ?? null,
+            pathName: args.pathName,
+          },
           inputs: {},
           outputs: nextOutputs,
           history: {},
@@ -690,8 +690,6 @@ export function useLocalExecutionTriggers(
           source: 'local',
           kind: 'run_paused',
           level: 'info',
-          runId,
-          runStartedAt: startedAt,
           message: 'Run paused.',
         });
         return;
@@ -774,8 +772,6 @@ export function useLocalExecutionTriggers(
     args.resetRuntimeNodeStatuses({});
     const clearedState: RuntimeState = {
       status: 'idle',
-      runId: null,
-      runStartedAt: null,
       nodeStatuses: {},
       nodeOutputs: {},
       variables: {},

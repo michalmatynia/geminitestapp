@@ -1,10 +1,9 @@
 'use client';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils';
 
 import { AppModal } from './app-modal';
-import { Button } from './button';
+import { FormActions } from './FormActions';
 
 import type { ReactNode } from 'react';
 
@@ -22,6 +21,8 @@ interface FormModalProps extends Partial<ModalStateProps> {
   hasUnsavedChanges?: boolean;
   saveText?: string;
   cancelText?: string;
+  saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  saveIcon?: ReactNode;
   showSaveButton?: boolean;
   showCancelButton?: boolean;
   formRef?: React.RefObject<HTMLFormElement | null>;
@@ -46,6 +47,8 @@ export function FormModal({
   hasUnsavedChanges,
   saveText = 'Save',
   cancelText = 'Cancel',
+  saveVariant,
+  saveIcon,
   showSaveButton = true,
   showCancelButton = true,
   formRef,
@@ -67,41 +70,35 @@ export function FormModal({
       handleRequestClose();
     }
   };
-  const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
-  const isSaveButtonDisabled = isSaving || isSaveDisabled || hasUnsavedChanges === false;
-  const saveButtonClassName = cn(
-    'min-w-[100px] rounded-md border text-xs transition-colors',
-    shouldHighlightSave
-      ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-      : 'border-border/60 text-gray-500 hover:bg-transparent'
-  );
 
-  const saveButton = formRef ? (
-    <Button
-      type='button'
-      onClick={() => formRef.current?.requestSubmit()}
-      disabled={isSaveButtonDisabled}
-      size='sm'
-      className={saveButtonClassName}
-    >
-      {isSaving ? 'Saving...' : saveText}
-    </Button>
-  ) : (
-    <Button
-      onClick={onSave}
-      disabled={isSaveButtonDisabled}
-      size='sm'
-      className={saveButtonClassName}
-    >
-      {isSaving ? 'Saving...' : saveText}
-    </Button>
-  );
+  const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
+  const isSaveButtonDisabled = isSaveDisabled || hasUnsavedChanges === false;
+
+  const resolvedSaveVariant = saveVariant ?? (shouldHighlightSave ? 'success' : 'outline');
+
+  const handleSave = (): void => {
+    if (formRef) {
+      formRef.current?.requestSubmit();
+    } else {
+      onSave();
+    }
+  };
 
   const header = (
     <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
       <div className='min-w-0'>
         <div className='flex min-w-0 items-center gap-2'>
-          {showSaveButton ? saveButton : null}
+          {showSaveButton && (
+            <FormActions
+              onSave={handleSave}
+              saveText={saveText}
+              saveVariant={resolvedSaveVariant as any}
+              saveIcon={saveIcon}
+              isSaving={isSaving}
+              isDisabled={isSaveButtonDisabled}
+              className='mr-2'
+            />
+          )}
           <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{title}</h2>
         </div>
         {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
@@ -109,15 +106,12 @@ export function FormModal({
       <div className='flex flex-wrap items-center justify-end gap-2'>
         {actions}
         {showCancelButton ? (
-          <Button
-            type='button'
-            onClick={handleRequestClose}
-            disabled={isCloseLocked}
-            variant='outline'
-            className='min-w-[100px]'
-          >
-            {cancelText}
-          </Button>
+          <FormActions
+            onCancel={handleRequestClose}
+            cancelText={cancelText}
+            isSaving={isSaving}
+            isDisabled={isCloseLocked}
+          />
         ) : null}
       </div>
     </div>

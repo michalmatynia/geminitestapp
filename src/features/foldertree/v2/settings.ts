@@ -1,9 +1,10 @@
 import {
   defaultFolderTreeProfilesV2,
-  parseFolderTreeProfilesV2,
+  parseFolderTreeProfileV2Strict,
   type FolderTreeInstance,
   type FolderTreeProfileV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
+import { validationError } from '@/shared/errors/app-error';
 
 import {
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
@@ -51,12 +52,12 @@ export const parseFolderTreeUiStateV2Entry = (
   }
   const expandedNodeIds = Array.isArray(rawExpandedNodeIds)
     ? Array.from(
-        new Set(
-          rawExpandedNodeIds
-            .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
-            .filter(Boolean)
-        )
+      new Set(
+        rawExpandedNodeIds
+          .map((value: unknown): string => (typeof value === 'string' ? value.trim() : ''))
+          .filter(Boolean)
       )
+    )
     : [];
   const panelCollapsed = record['panelCollapsed'];
   if (panelCollapsed !== undefined && typeof panelCollapsed !== 'boolean') {
@@ -73,17 +74,22 @@ export const parseFolderTreeProfileV2Entry = (
   raw: string | null | undefined
 ): FolderTreeProfileV2 => {
   if (!raw) return defaultFolderTreeProfilesV2[instance];
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(raw);
-    const reconstructed = parseFolderTreeProfilesV2(
-      JSON.stringify({
-        [instance]: parsed,
-      })
-    );
-    return reconstructed[instance];
+    parsed = JSON.parse(raw);
   } catch {
-    return defaultFolderTreeProfilesV2[instance];
+    throw validationError('Invalid folder tree V2 profile payload.', {
+      instance,
+      reason: 'invalid_json',
+    });
   }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw validationError('Invalid folder tree V2 profile payload.', {
+      instance,
+      reason: 'invalid_shape',
+    });
+  }
+  return parseFolderTreeProfileV2Strict(parsed, defaultFolderTreeProfilesV2[instance]);
 };
 
 export const serializeFolderTreeUiStateV2Entry = (value: FolderTreeUiStateV2Entry): string =>

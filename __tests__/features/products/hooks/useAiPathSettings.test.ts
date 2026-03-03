@@ -1,5 +1,8 @@
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import { findTriggerPath } from '@/features/products/hooks/useAiPathSettings';
+import {
+  findTriggerPath,
+  sanitizeLoadedPathConfig,
+} from '@/features/products/hooks/useAiPathSettings';
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 
 import { describe, expect, it } from 'vitest';
@@ -108,5 +111,75 @@ describe('findTriggerPath', () => {
     });
 
     expect(selected?.id).toBe('path-second');
+  });
+
+  it('does not rewrite renamed legacy EN->PL translation paths for product-side loading', () => {
+    const config = createDefaultPathConfig('path_translation_v2');
+    config.name = 'Translation EN->PL Description + Parameters v2';
+    config.nodes = [
+      {
+        id: 'node-regex-translate-en-pl',
+        type: 'regex',
+        title: 'Regex JSON Extract',
+        description: '',
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        position: { x: 0, y: 0 },
+        data: {},
+      } as unknown as AiNode,
+      {
+        id: 'node-db-update-translate-en-pl',
+        type: 'database',
+        title: 'Database Query',
+        description: '',
+        inputs: ['entityId', 'entityType', 'value', 'result', 'bundle'],
+        outputs: ['result', 'bundle'],
+        position: { x: 320, y: 0 },
+        data: {},
+        config: {
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            updatePayloadMode: 'mapping',
+            updateTemplate: '',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      } as unknown as AiNode,
+    ];
+    config.edges = [
+      {
+        id: 'edge-legacy-regex-db',
+        from: 'node-regex-translate-en-pl',
+        to: 'node-db-update-translate-en-pl',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const sanitized = sanitizeLoadedPathConfig(config);
+    const databaseNode = sanitized.nodes.find(
+      (node: AiNode): boolean => node.id === 'node-db-update-translate-en-pl'
+    );
+
+    expect(databaseNode?.config?.database?.updatePayloadMode).not.toBe('custom');
+    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
+      '"description_pl": "{{value.description_pl}}"'
+    );
+    expect(String(databaseNode?.config?.database?.updateTemplate ?? '')).not.toContain(
+      '"parameters": {{value.parameters}}'
+    );
   });
 });

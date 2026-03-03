@@ -1,10 +1,10 @@
 import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
 import type {
   PromptAutofixOperation,
+  PromptValidationSimilar as PromptValidationSimilarPattern,
   PromptValidationRule,
   PromptValidationSettings,
-  PromptValidationSimilarPattern,
-} from '@/shared/lib/prompt-engine/settings';
+} from '@/shared/contracts/prompt-engine';
 
 type AppliedFix = {
   ruleId: string;

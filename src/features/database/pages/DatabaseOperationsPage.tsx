@@ -15,6 +15,7 @@ import {
   SelectSimple,
   EmptyState,
   Card,
+  LoadingState,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -72,9 +73,10 @@ function DatabaseOperationsContent(): React.JSX.Element {
 
         <TabsContent value='crud'>
           {previewLoading && (
-            <Card variant='subtle' padding='lg' className='border-border/60 bg-card/50'>
-              <p className='text-xs text-gray-400'>Loading table metadata...</p>
-            </Card>
+            <LoadingState
+              message='Loading table metadata...'
+              className='py-12'
+            />
           )}
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState

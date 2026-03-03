@@ -38,10 +38,27 @@ const mockViewState = {
           parentCaseId: 'case-1',
           folder: '',
         },
+        {
+          id: 'case-2',
+          fileType: 'case',
+          name: 'Case B',
+          caseIdentifierId: 'id-2',
+        },
+        {
+          id: 'doc-outside',
+          fileType: 'document',
+          name: 'Outside Case Document',
+          parentCaseId: 'case-2',
+          folder: '',
+        },
       ],
     })
   ),
-  caseResolverIdentifiers: [{ id: 'id-1', label: 'SIG/1' }],
+  caseResolverIdentifiers: [
+    { id: 'id-1', label: 'SIG/1' },
+    { id: 'id-2', label: 'SIG/2' },
+  ],
+  activeCaseId: 'case-1',
   caseResolverTags: [],
   caseResolverCategories: [],
 };
@@ -53,6 +70,19 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
 }));
 
 describe('DocumentRelationSearchPanel tree integration', () => {
+  it('scopes results to active case by default', () => {
+    const onLinkFile = vi.fn();
+
+    render(
+      <MasterFolderTreeRuntimeProvider>
+        <DocumentRelationSearchPanel draftFileId='doc-a' isLocked={false} onLinkFile={onLinkFile} />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    expect(screen.getByText('Related Document')).toBeInTheDocument();
+    expect(screen.queryByText('Outside Case Document')).not.toBeInTheDocument();
+  });
+
   it('supports single and bulk linking from tree rows', () => {
     const onLinkFile = vi.fn();
 

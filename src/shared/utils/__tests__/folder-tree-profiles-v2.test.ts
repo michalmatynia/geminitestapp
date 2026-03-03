@@ -16,6 +16,9 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.cms_page_builder.version).toBe(2);
     expect(parsed.case_resolver.version).toBe(2);
     expect(parsed.case_resolver_cases.version).toBe(2);
+    expect(parsed.case_resolver_document_relations.version).toBe(2);
+    expect(parsed.case_resolver_nodefile_relations.version).toBe(2);
+    expect(parsed.case_resolver_scanfile_relations.version).toBe(2);
     expect(parsed.validator_list_tree.version).toBe(2);
     expect(parsed.validator_pattern_tree.version).toBe(2);
     expect(parsed.prompt_exploder_segments.version).toBe(2);

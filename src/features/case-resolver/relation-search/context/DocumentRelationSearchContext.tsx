@@ -130,6 +130,16 @@ export function DocumentRelationSearchProvider({
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
   const { state } = useCaseResolverViewContext();
   const { workspace, caseResolverIdentifiers, caseResolverTags, caseResolverCategories } = state;
+  const draftFile = useMemo(
+    () => workspace.files.find((file) => file.id === draftFileId) ?? null,
+    [draftFileId, workspace.files]
+  );
+  const resolvedActiveCaseId = useMemo(() => {
+    const activeCaseId = state.activeCaseId?.trim() ?? '';
+    if (activeCaseId.length > 0) return activeCaseId;
+    const parentCaseId = draftFile?.parentCaseId?.trim() ?? '';
+    return parentCaseId.length > 0 ? parentCaseId : null;
+  }, [draftFile?.parentCaseId, state.activeCaseId]);
 
   const [resultHeight, setResultHeight] = useState<ResultHeight>('normal');
   const [showFiltersBar, setShowFiltersBar] = useState(false);
@@ -138,7 +148,7 @@ export function DocumentRelationSearchProvider({
 
   const searchProps = useDocumentRelationSearch({
     workspace,
-    activeCaseId: null, // Global search for relations
+    activeCaseId: resolvedActiveCaseId,
     caseResolverIdentifiers,
     excludeFileIds: [draftFileId],
     initialScope: defaultScope,

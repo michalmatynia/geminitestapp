@@ -11,7 +11,7 @@ import { BlockContextProvider } from '@/features/cms/components/page-builder/pre
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import type { BlockInstance } from '@/shared/contracts/cms';
-import { EmptyState } from '@/shared/ui';
+import { EmptyState, Button } from '@/shared/ui';
 
 export function PreviewRichTextSection() {
   const { colorSchemes, layout } = useCmsPageContext();

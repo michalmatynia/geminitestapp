@@ -16,6 +16,14 @@ import type {
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 
+const areNodeIdListsEqual = (left: string[], right: string[]): boolean => {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false;
+  }
+  return true;
+};
+
 type RelationTreeBrowserProps = {
   instance: RelationTreeInstance;
   mode: RelationBrowserMode;
@@ -62,6 +70,8 @@ export function RelationTreeBrowser({
 
   const dragArmedFileIdRef = useRef<string | null>(null);
   const dropRejectLoggedRef = useRef<boolean>(false);
+  const nonSearchExpandedNodeIdsRef = useRef<string[] | null>(null);
+  const wasSearchingRef = useRef<boolean>(false);
 
   const clearDragHandleArm = useCallback((): void => {
     dragArmedFileIdRef.current = null;
@@ -110,18 +120,60 @@ export function RelationTreeBrowser({
     () => nodes.filter((node) => node.parentId === null).map((node) => node.id),
     [nodes]
   );
+  const nodeIdSet = useMemo(() => new Set(nodes.map((node) => node.id)), [nodes]);
   const allFolderNodeIds = useMemo(
     () => nodes.filter((node) => node.type === 'folder').map((node) => node.id),
     [nodes]
   );
+  const normalizedSearchQuery = searchQuery?.trim() ?? '';
+  const isSearching = normalizedSearchQuery.length > 0;
 
   useEffect(() => {
-    if (searchQuery && searchQuery.trim().length > 0) {
-      controller.setExpandedNodeIds(allFolderNodeIds);
+    const currentExpandedNodeIds = Array.from(controller.expandedNodeIds).filter((nodeId) =>
+      nodeIdSet.has(nodeId)
+    );
+    const ensureExpandedState = (nextExpandedNodeIds: string[]): void => {
+      if (areNodeIdListsEqual(currentExpandedNodeIds, nextExpandedNodeIds)) return;
+      controller.setExpandedNodeIds(nextExpandedNodeIds);
+    };
+
+    if (isSearching) {
+      if (!wasSearchingRef.current) {
+        nonSearchExpandedNodeIdsRef.current = currentExpandedNodeIds;
+      }
+      wasSearchingRef.current = true;
+      ensureExpandedState(allFolderNodeIds);
       return;
     }
-    controller.setExpandedNodeIds(rootNodeIds);
-  }, [allFolderNodeIds, controller.setExpandedNodeIds, rootNodeIds, searchQuery]);
+
+    if (wasSearchingRef.current) {
+      wasSearchingRef.current = false;
+      const restoredExpandedNodeIds =
+        nonSearchExpandedNodeIdsRef.current?.filter((nodeId) => nodeIdSet.has(nodeId)) ?? [];
+      const fallbackExpandedNodeIds = restoredExpandedNodeIds.length > 0 ? restoredExpandedNodeIds : rootNodeIds;
+      nonSearchExpandedNodeIdsRef.current = fallbackExpandedNodeIds;
+      ensureExpandedState(fallbackExpandedNodeIds);
+      return;
+    }
+
+    if (nonSearchExpandedNodeIdsRef.current === null) {
+      const initialExpandedNodeIds = currentExpandedNodeIds.length > 0 ? currentExpandedNodeIds : rootNodeIds;
+      nonSearchExpandedNodeIdsRef.current = initialExpandedNodeIds;
+      ensureExpandedState(initialExpandedNodeIds);
+      return;
+    }
+
+    if (!areNodeIdListsEqual(nonSearchExpandedNodeIdsRef.current, currentExpandedNodeIds)) {
+      nonSearchExpandedNodeIdsRef.current = currentExpandedNodeIds;
+    }
+  }, [
+    allFolderNodeIds,
+    controller.expandedNodeIds,
+    controller.setExpandedNodeIds,
+    isSearching,
+    nodeIdSet,
+    rootNodeIds,
+  ]);
 
   const handleArmDragHandle = useCallback((fileId: string): void => {
     if (mode !== 'add_to_node_canvas') return;

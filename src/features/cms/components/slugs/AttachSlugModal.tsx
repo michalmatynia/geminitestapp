@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal, FormField, LoadingState, SearchableList } from '@/shared/ui';
+import { FormModal, FormField, LoadingState, SearchableList, Button } from '@/shared/ui';
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   onAttach: (selectedIds: string[]) => Promise<void>;

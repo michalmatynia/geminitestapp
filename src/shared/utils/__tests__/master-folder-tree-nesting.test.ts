@@ -344,6 +344,50 @@ describe('cross-profile nesting rules', () => {
     });
   });
 
+  (
+    [
+      'case_resolver_document_relations',
+      'case_resolver_nodefile_relations',
+      'case_resolver_scanfile_relations',
+    ] as const
+  ).forEach((instance) => {
+    describe(`${instance} profile`, () => {
+      const profile = defaultFolderTreeProfilesV2[instance];
+
+      it('allows relation files inside relation folders', () => {
+        const nodes: MasterTreeNode[] = [
+          node({ id: 'case-1', type: 'folder', kind: 'relation_case', name: 'SIG/1' }),
+          node({ id: 'folder-1', type: 'folder', kind: 'relation_folder', name: 'Inbound', parentId: 'case-1' }),
+          node({ id: 'file-1', type: 'file', kind: 'relation_file', name: 'Doc 1', parentId: 'case-1' }),
+        ];
+        const result = canDropMasterTreeNode({
+          nodes,
+          nodeId: 'file-1',
+          targetId: 'folder-1',
+          position: 'inside',
+          profile,
+        });
+        expect(result.ok).toBe(true);
+      });
+
+      it('blocks relation files from dropping to root', () => {
+        const nodes: MasterTreeNode[] = [
+          node({ id: 'case-1', type: 'folder', kind: 'relation_case', name: 'SIG/1' }),
+          node({ id: 'file-1', type: 'file', kind: 'relation_file', name: 'Doc 1', parentId: 'case-1' }),
+        ];
+        const result = canDropMasterTreeNode({
+          nodes,
+          nodeId: 'file-1',
+          targetId: null,
+          position: 'inside',
+          profile,
+        });
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+      });
+    });
+  });
+
   describe('validator_list_tree profile', () => {
     const profile = defaultFolderTreeProfilesV2.validator_list_tree;
 

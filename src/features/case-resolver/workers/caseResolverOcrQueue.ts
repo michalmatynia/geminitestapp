@@ -257,7 +257,7 @@ const ocrQueue = createManagedQueue<CaseResolverOcrQueueJobData>('case-resolver-
 
 export const enqueueCaseResolverOcrJob = async (
   data: CaseResolverOcrQueueJobData
-): Promise<void> => {
+): Promise<'queued' | 'inline'> => {
   const brain = await getBrainAssignmentForFeature('case_resolver');
   if (!brain.enabled) {
     throw new Error('Case Resolver is disabled in Brain settings.');
@@ -277,7 +277,7 @@ export const enqueueCaseResolverOcrJob = async (
         console.error('[CaseResolverOcr] Inline processing failed:', error);
       }
     })();
-    return;
+    return 'inline';
   }
 
   await ocrQueue.add(data.jobId, data, {
@@ -290,8 +290,12 @@ export const enqueueCaseResolverOcrJob = async (
     removeOnComplete: true,
     removeOnFail: false,
   });
+
+  return 'queued';
 };
 
 export const startCaseResolverOcrWorker = (): void => {
   ocrQueue.startWorker();
 };
+
+export const startCaseResolverOcrQueue = startCaseResolverOcrWorker;

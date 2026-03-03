@@ -128,7 +128,7 @@ export function createSingleQueryV2<
 
   return useQueryFactoryV2<TData, Error, TTransformedData, TQueryKey>({
     ...rest,
-    queryKey: resolvedQueryKey as TQueryKey,
+    queryKey: resolvedQueryKey,
     ...(guardedEnabled !== undefined ? { enabled: guardedEnabled } : {}),
   }) as SingleQuery<TTransformedData>;
 }
@@ -197,7 +197,7 @@ export function createMultiQueryV2<
           combine(results as MultiQueryResultsV2<TQueries>),
       }
       : {}),
-  }) as TCombine;
+  });
 }
 
 export function createSuspenseQueryV2<
@@ -260,7 +260,7 @@ export function createSuspenseMultiQueryV2<
           combine(results as SuspenseMultiQueryResultsV2<TQueries>),
       }
       : {}),
-  }) as TCombine;
+  });
 }
 
 export function createSaveMutationV2<

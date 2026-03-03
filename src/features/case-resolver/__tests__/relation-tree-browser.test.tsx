@@ -19,24 +19,31 @@ const createRow = (input: {
   name: string;
   caseId: string;
   signature: string;
-}): NodeFileDocumentSearchRow =>
-  ({
+  folderPath?: string;
+}): NodeFileDocumentSearchRow => {
+  const folderPath = input.folderPath ?? '';
+  const folderSegments = folderPath
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+  return {
     file: {
       id: input.fileId,
       name: input.name,
       fileType: 'document',
       parentCaseId: input.caseId,
-      folder: '',
+      folder: folderPath,
       isLocked: false,
       documentDate: null,
     },
     signatureLabel: input.signature,
     addresserLabel: '',
     addresseeLabel: '',
-    folderPath: '',
-    folderSegments: [],
-    searchable: input.name.toLowerCase(),
-  }) as unknown as NodeFileDocumentSearchRow;
+    folderPath,
+    folderSegments,
+    searchable: `${input.name.toLowerCase()} ${folderPath.toLowerCase()}`.trim(),
+  } as unknown as NodeFileDocumentSearchRow;
+};
 
 const createDataTransfer = () => {
   const store = new Map<string, string>();
@@ -59,6 +66,61 @@ describe('RelationTreeBrowser', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('preserves manual folder expansion after rerender and search clear', () => {
+    const rows = [
+      createRow({
+        fileId: 'file-folder',
+        name: 'Doc In Folder',
+        caseId: 'case-1',
+        signature: 'SIG/1',
+        folderPath: 'alpha',
+      }),
+    ];
+    const relationTree = buildRelationMasterTree({ rows });
+
+    const { rerender } = render(
+      <MasterFolderTreeRuntimeProvider>
+        <RelationTreeBrowser
+          instance='case_resolver_document_relations'
+          mode='link_relations'
+          nodes={relationTree.nodes}
+          lookup={relationTree.lookup}
+          searchQuery=''
+        />
+      </MasterFolderTreeRuntimeProvider>
+    );
+
+    expect(screen.queryByText('Doc In Folder')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('alpha'));
+    expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
+
+    rerender(
+      <MasterFolderTreeRuntimeProvider>
+        <RelationTreeBrowser
+          instance='case_resolver_document_relations'
+          mode='link_relations'
+          nodes={relationTree.nodes}
+          lookup={relationTree.lookup}
+          searchQuery='Doc'
+        />
+      </MasterFolderTreeRuntimeProvider>
+    );
+    expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
+
+    rerender(
+      <MasterFolderTreeRuntimeProvider>
+        <RelationTreeBrowser
+          instance='case_resolver_document_relations'
+          mode='link_relations'
+          nodes={relationTree.nodes}
+          lookup={relationTree.lookup}
+          searchQuery=''
+        />
+      </MasterFolderTreeRuntimeProvider>
+    );
+    expect(screen.getByText('Doc In Folder')).toBeInTheDocument();
   });
 
   it('rejects row-body drag start and allows drag start from handle only', async () => {

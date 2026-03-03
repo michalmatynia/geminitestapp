@@ -304,6 +304,9 @@ export function usePromptExploderState() {
 
   // Handle auto-settings sync
   useEffect(() => {
+    if (promptExploderSettingsValidationError) {
+      return;
+    }
     const persistedStack = normalizePromptExploderValidationRuleStack(
       promptExploderSettings.runtime.validationRuleStack,
       validatorPatternLists
@@ -324,7 +327,12 @@ export function usePromptExploderState() {
       maxTemplates: promptExploderSettings.learning.maxTemplates,
       autoActivateLearnedTemplates: promptExploderSettings.learning.autoActivateLearnedTemplates,
     });
-  }, [promptExploderSettings, shouldPreferCaseResolverValidationStack, validatorPatternLists]);
+  }, [
+    promptExploderSettings,
+    promptExploderSettingsValidationError,
+    shouldPreferCaseResolverValidationStack,
+    validatorPatternLists,
+  ]);
 
   const handleExplode = useCallback((): void => {
     if (promptExploderSettingsValidationError) {

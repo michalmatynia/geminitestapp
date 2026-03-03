@@ -130,34 +130,56 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
 
 const normalizeProducerRelations = (
   producers: unknown,
-  fallbackProductId: string,
-  fallbackAssignedAt: string
+  rootProductId: string
 ): NonNullable<ProductWithImages['producers']> => {
-  if (!Array.isArray(producers)) return [];
+  if (producers === undefined || producers === null) return [];
+  if (!Array.isArray(producers)) {
+    throw validationError('Invalid product producer relations payload.', {
+      productId: rootProductId,
+      field: 'producers',
+      reason: 'not_array',
+    });
+  }
   const normalized: NonNullable<ProductWithImages['producers']> = [];
   const seen = new Set<string>();
-  for (const entry of producers) {
-    if (!entry || typeof entry !== 'object') continue;
+  for (let index = 0; index < producers.length; index += 1) {
+    const entry = producers[index];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw validationError('Invalid product producer relation entry payload.', {
+        productId: rootProductId,
+        field: 'producers',
+        index,
+        reason: 'entry_not_object',
+      });
+    }
     const record = entry as Record<string, unknown>;
-    const producerId =
-      toTrimmedString(record['producerId']) ??
-      toTrimmedString(record['producer_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
+    const legacyKeys = ['producer_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
+      (key: string): boolean => key in record
+    );
+    if (legacyKeys.length > 0) {
+      throw validationError('Legacy product producer relation shape is no longer supported.', {
+        productId: rootProductId,
+        field: 'producers',
+        index,
+        legacyKeys,
+      });
+    }
+
+    const producerId = toTrimmedString(record['producerId']);
     if (!producerId || seen.has(producerId)) continue;
     seen.add(producerId);
 
-    const relationProductId =
-      toTrimmedString(record['productId']) ??
-      toTrimmedString(record['product_id']) ??
-      fallbackProductId;
-
-    const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt: string;
-    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
-      assignedAt = rawAssignedAt.toISOString();
-    } else {
-      assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
+    const relationProductId = toTrimmedString(record['productId']);
+    const rawAssignedAt = record['assignedAt'];
+    const assignedAt =
+      rawAssignedAt instanceof Date ? rawAssignedAt.toISOString() : toTrimmedString(rawAssignedAt);
+    if (!relationProductId || !assignedAt) {
+      throw validationError('Invalid product producer relation payload.', {
+        productId: rootProductId,
+        field: 'producers',
+        index,
+        reason: 'missing_required_fields',
+      });
     }
 
     const relation: NonNullable<ProductWithImages['producers']>[number] = {
@@ -178,34 +200,56 @@ const normalizeProducerRelations = (
 
 const normalizeTagRelations = (
   tags: unknown,
-  fallbackProductId: string,
-  fallbackAssignedAt: string
+  rootProductId: string
 ): NonNullable<ProductRecord['tags']> => {
-  if (!Array.isArray(tags)) return [];
+  if (tags === undefined || tags === null) return [];
+  if (!Array.isArray(tags)) {
+    throw validationError('Invalid product tag relations payload.', {
+      productId: rootProductId,
+      field: 'tags',
+      reason: 'not_array',
+    });
+  }
   const normalized: NonNullable<ProductRecord['tags']> = [];
   const seen = new Set<string>();
-  for (const entry of tags) {
-    if (!entry || typeof entry !== 'object') continue;
+  for (let index = 0; index < tags.length; index += 1) {
+    const entry = tags[index];
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw validationError('Invalid product tag relation entry payload.', {
+        productId: rootProductId,
+        field: 'tags',
+        index,
+        reason: 'entry_not_object',
+      });
+    }
     const record = entry as Record<string, unknown>;
-    const tagId =
-      toTrimmedString(record['tagId']) ??
-      toTrimmedString(record['tag_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
+    const legacyKeys = ['tag_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
+      (key: string): boolean => key in record
+    );
+    if (legacyKeys.length > 0) {
+      throw validationError('Legacy product tag relation shape is no longer supported.', {
+        productId: rootProductId,
+        field: 'tags',
+        index,
+        legacyKeys,
+      });
+    }
+
+    const tagId = toTrimmedString(record['tagId']);
     if (!tagId || seen.has(tagId)) continue;
     seen.add(tagId);
 
-    const relationProductId =
-      toTrimmedString(record['productId']) ??
-      toTrimmedString(record['product_id']) ??
-      fallbackProductId;
-
-    const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt: string;
-    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
-      assignedAt = rawAssignedAt.toISOString();
-    } else {
-      assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
+    const relationProductId = toTrimmedString(record['productId']);
+    const rawAssignedAt = record['assignedAt'];
+    const assignedAt =
+      rawAssignedAt instanceof Date ? rawAssignedAt.toISOString() : toTrimmedString(rawAssignedAt);
+    if (!relationProductId || !assignedAt) {
+      throw validationError('Invalid product tag relation payload.', {
+        productId: rootProductId,
+        field: 'tags',
+        index,
+        reason: 'missing_required_fields',
+      });
     }
 
     const relation: NonNullable<ProductRecord['tags']>[number] = {
@@ -238,12 +282,8 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     pl: doc.description_pl,
     de: doc.description_de,
   });
-  const fallbackAssignedAt =
-    doc.updatedAt instanceof Date
-      ? doc.updatedAt.toISOString()
-      : String(doc.updatedAt) || new Date().toISOString();
-  const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
+  const tags = normalizeTagRelations(doc.tags, productId);
+  const producers = normalizeProducerRelations(doc.producers, productId);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
 
   return {
@@ -302,12 +342,8 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     de: doc.description_de,
   });
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
-  const fallbackAssignedAt =
-    doc.updatedAt instanceof Date
-      ? doc.updatedAt.toISOString()
-      : String(doc.updatedAt) || new Date().toISOString();
-  const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
+  const tags = normalizeTagRelations(doc.tags, productId);
+  const producers = normalizeProducerRelations(doc.producers, productId);
 
   return {
     id: productId,

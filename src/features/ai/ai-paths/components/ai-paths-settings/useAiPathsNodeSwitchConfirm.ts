@@ -27,7 +27,7 @@ type UseAiPathsNodeSwitchConfirmInput = {
 };
 
 export type UseAiPathsNodeSwitchConfirmReturn = {
-  confirmNodeSwitch: (nextNodeId: string) => Promise<boolean>;
+  confirmNodeSwitch: (nextNodeId: string) => boolean | Promise<boolean>;
 };
 
 export function useAiPathsNodeSwitchConfirm({
@@ -39,9 +39,9 @@ export function useAiPathsNodeSwitchConfirm({
   toast,
 }: UseAiPathsNodeSwitchConfirmInput): UseAiPathsNodeSwitchConfirmReturn {
   const confirmNodeSwitch = useCallback(
-    (nextNodeId: string): Promise<boolean> => {
-      if (!configOpen || !nodeConfigDirty) return Promise.resolve(true);
-      if (nextNodeId === selectedNodeId) return Promise.resolve(true);
+    (nextNodeId: string): boolean | Promise<boolean> => {
+      if (!configOpen || !nodeConfigDirty) return true;
+      if (nextNodeId === selectedNodeId) return true;
 
       return new Promise((resolve) => {
         confirm({

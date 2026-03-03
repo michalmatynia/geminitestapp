@@ -31,5 +31,5 @@ export const startBaseImportRunResponse = async (
   input: StartBaseImportRunInput
 ): Promise<BaseImportStartResponse> => {
   const run = await startBaseImportRun(input);
-  return toStartResponse(run) as BaseImportStartResponse;
+  return toStartResponse(run);
 };

@@ -100,10 +100,11 @@ export function reduceBlockActions(
         return s;
       });
       if (!movedBlock) return state;
+      const movedBlockValue = movedBlock;
       const sectionsAfterInsert = sectionsAfterRemove.map((s: SectionInstance) => {
         if (s.id === (action as any).toSectionId) {
           const newBlocks = [...s.blocks];
-          newBlocks.splice((action as any).toIndex, 0, movedBlock);
+          newBlocks.splice((action as any).toIndex, 0, movedBlockValue);
           return { ...s, blocks: newBlocks };
         }
         return s;

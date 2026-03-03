@@ -3,9 +3,10 @@ import {
   type MasterFolderTreeActionResult,
   type MasterTreeDropPositionDto,
   type MasterFolderTreePersistOperation,
+  type FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
 import { FolderTreeStore } from '../../store/createFolderTreeStore';
-import { FolderTreeState, FolderTreeProfileV2 } from '../../types';
+import type { FolderTreeState } from '../../types';
 import {
   canDropNodeV2,
   moveNodeV2,

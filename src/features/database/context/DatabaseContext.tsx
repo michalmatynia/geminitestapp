@@ -3,13 +3,8 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 import type {
-  DatabaseTableDetail,
   DatabaseType,
   DatabasePreviewMode,
-  DatabasePreviewGroup,
-  DatabasePreviewTable,
-  DatabaseTablePreviewData,
-  DatabaseEnumInfo,
   DatabaseConfig,
   DatabaseData,
   DatabasePagination,

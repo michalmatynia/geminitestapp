@@ -16,6 +16,7 @@ import {
   buildSectionSettings,
   TEXT_ATOM_BLOCK_TYPE,
 } from '../block-helpers';
+import { moveSectionSubtree, removeSectionSubtree } from '../section-hierarchy';
 import {
   getSectionDefinition,
   getBlockDefinition,
@@ -23,6 +24,7 @@ import {
 import type {
   PageBuilderState,
   PageBuilderAction,
+  PageZone,
   SectionInstance,
   BlockInstance,
 } from '../../../types/page-builder';
@@ -69,6 +71,7 @@ export function reduceSectionActions(
         id: uid(),
         type: sectionType,
         zone: (action as any).zone,
+        parentSectionId: null,
         settings,
         blocks: initialBlocks,
       };
@@ -80,7 +83,7 @@ export function reduceSectionActions(
     }
 
     case 'REMOVE_SECTION': {
-      const filtered = state.sections.filter((s: SectionInstance) => s.id !== (action as any).sectionId);
+      const filtered = removeSectionSubtree(state.sections, (action as any).sectionId);
       return {
         ...state,
         sections: filtered,
@@ -110,11 +113,20 @@ export function reduceSectionActions(
     }
 
     case 'REORDER_SECTIONS': {
-      const newSections = [...state.sections];
-      const [moved] = newSections.splice((action as any).fromIndex, 1);
+      const zone = (action as any).zone as PageZone;
+      const rootSectionsInZone = state.sections.filter(
+        (section: SectionInstance) => section.zone === zone && !section.parentSectionId
+      );
+      const moved = rootSectionsInZone[(action as any).fromIndex] ?? null;
       if (!moved) return state;
-      newSections.splice((action as any).toIndex, 0, moved);
-      return { ...state, sections: newSections };
+      const result = moveSectionSubtree(state.sections, {
+        sectionId: moved.id,
+        toZone: zone,
+        toParentSectionId: null,
+        toIndex: (action as any).toIndex,
+      });
+      if (!result.ok) return state;
+      return { ...state, sections: result.sections };
     }
 
     default:

@@ -1,11 +1,11 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
  
  
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+ 
+ 
 
 import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
 import { reducePageActions } from './page-builder-reducer/page-actions';
@@ -15,17 +15,17 @@ import { reduceGridActions } from './page-builder-reducer/grid-actions';
 import { reduceComplexActions } from './page-builder-reducer/complex-actions';
 import {
   cloneBlock,
-  cloneSection,
+  uid,
   findSection,
   findBlock,
   insertBlockIntoColumnBlocks,
 } from './block-helpers';
+import { buildHierarchyIndexes, cloneSectionSubtree, moveSectionSubtree } from './section-hierarchy';
 
 import type {
   PageBuilderState,
   PageBuilderAction,
   SectionInstance,
-  BlockInstance,
 } from '../../types/page-builder';
 
 export function reducePageBuilderStateCore(
@@ -109,26 +109,59 @@ export function reducePageBuilderStateCore(
     case 'COPY_SECTION': {
       const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
+      const hierarchy = buildHierarchyIndexes(state.sections);
+      const subtree: SectionInstance[] = [];
+      const visit = (sectionId: string): void => {
+        const node = hierarchy.nodeById.get(sectionId);
+        if (!node) return;
+        subtree.push(node);
+        const childIds = hierarchy.childrenByParent.get(sectionId) ?? [];
+        childIds.forEach((childId: string) => visit(childId));
+      };
+      visit(section.id);
       return {
         ...state,
         clipboard: {
-          type: 'section',
-          data: section,
+          type: 'section_hierarchy',
+          data: {
+            rootSectionId: section.id,
+            sections: subtree,
+          },
         },
       };
     }
 
     case 'PASTE_SECTION': {
-      if (state.clipboard?.type !== 'section') return state;
-      const source = state.clipboard.data as SectionInstance;
-      const nextSection = {
-        ...cloneSection(source),
-        zone: action.zone,
-      };
+      let sourceSections: SectionInstance[] = [];
+      let sourceRootId: string | null = null;
+      if (state.clipboard?.type === 'section_hierarchy') {
+        sourceSections = state.clipboard.data.sections;
+        sourceRootId = (state.clipboard.data.rootSectionId) ?? null;
+      } else if (state.clipboard?.type === 'section') {
+        const source = state.clipboard.data;
+        sourceSections = [source];
+        sourceRootId = source.id;
+      } else {
+        return state;
+      }
+
+      if (!sourceRootId || sourceSections.length === 0) return state;
+
+      const clonedSubtree = cloneSectionSubtree(sourceSections, sourceRootId, uid);
+      const clonedRoot = clonedSubtree[0];
+      if (!clonedRoot) return state;
+      const sectionsWithClone = [...state.sections, ...clonedSubtree];
+      const moveResult = moveSectionSubtree(sectionsWithClone, {
+        sectionId: clonedRoot.id,
+        toZone: action.zone,
+        toParentSectionId: null,
+        toIndex: Number.MAX_SAFE_INTEGER,
+      });
+
       return {
         ...state,
-        sections: [...state.sections, nextSection],
-        selectedNodeId: nextSection.id,
+        sections: moveResult.ok ? moveResult.sections : sectionsWithClone,
+        selectedNodeId: clonedRoot.id,
       };
     }
 
@@ -146,7 +179,7 @@ export function reducePageBuilderStateCore(
 
     case 'PASTE_BLOCK': {
       if (state.clipboard?.type !== 'block') return state;
-      const nextBlock = cloneBlock(state.clipboard.data as BlockInstance);
+      const nextBlock = cloneBlock(state.clipboard.data);
       const nextSections = state.sections.map((section) => {
         if (section.id !== action.sectionId) return section;
         if (action.columnId) {

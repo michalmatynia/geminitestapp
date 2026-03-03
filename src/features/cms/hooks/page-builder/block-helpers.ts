@@ -2,6 +2,7 @@ import {
   getSectionDefinition,
   getBlockDefinition,
 } from '../../components/page-builder/section-registry';
+import { sanitizeSectionHierarchy } from './section-hierarchy';
 
 import type { SectionInstance, BlockInstance, SettingsField } from '../../types/page-builder';
 
@@ -456,7 +457,7 @@ export function updateSectionNestedBlocks(
 
 export function normalizeSections(sections: SectionInstance[]): SectionInstance[] {
   const seen = new Set<string>();
-  return sections.map((section: SectionInstance): SectionInstance => {
+  const normalized = sections.map((section: SectionInstance): SectionInstance => {
     const normalizedId = ensureUniqueId(section.id, seen);
     const baseSection = ensureGridRows({ ...section, id: normalizedId });
     const normalizedBlocks = normalizeBlocks(baseSection.blocks ?? [], seen);
@@ -473,14 +474,17 @@ export function normalizeSections(sections: SectionInstance[]): SectionInstance[
       );
       return {
         ...baseSection,
+        parentSectionId: baseSection.parentSectionId ?? null,
         blocks: updatedBlock.blocks ?? [],
       };
     }
     return {
       ...baseSection,
+      parentSectionId: baseSection.parentSectionId ?? null,
       blocks: normalizedBlocks,
     };
   });
+  return sanitizeSectionHierarchy(normalized);
 }
 
 // ---------------------------------------------------------------------------
@@ -607,6 +611,7 @@ export function cloneSection(section: SectionInstance): SectionInstance {
     id: uid(),
     type: section.type,
     zone: section.zone,
+    parentSectionId: section.parentSectionId ?? null,
     settings: { ...section.settings },
     blocks: section.blocks.map(cloneBlock),
   };

@@ -57,19 +57,19 @@ export type EntityUpdatePayload = {
 };
 
 export async function databaseAction<T>(payload: DbActionPayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/databases/action', payload);
+  return apiPost<T>('/api/ai-paths/db-action', payload);
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/databases/query', payload);
+  return apiPost<T>('/api/ai-paths/db-query', payload);
 }
 
 export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/databases/update', payload);
+  return apiPost<T>('/api/ai-paths/db-update', payload);
 }
 
 export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/databases/entity-update', payload);
+  return apiPost<T>('/api/ai-paths/update', payload);
 }
 
 export async function fetchSchema(args?: {

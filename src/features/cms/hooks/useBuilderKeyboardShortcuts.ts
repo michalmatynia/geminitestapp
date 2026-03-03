@@ -67,7 +67,7 @@ export function useBuilderKeyboardShortcuts(): void {
       if (isMod && key === 'v') {
         if (!state.clipboard) return;
         event.preventDefault();
-        if (state.clipboard.type === 'section') {
+        if (state.clipboard.type === 'section' || state.clipboard.type === 'section_hierarchy') {
           const zone = selectedSection?.zone ?? 'template';
           dispatch({ type: 'PASTE_SECTION', zone });
           return;

@@ -12,8 +12,6 @@ import {
   createRowBlock,
   splitGridBlocks,
   ensureGridRows,
-  updateColumnBlocks,
-  updateRowBlocks,
 } from '../block-helpers';
 import type {
   PageBuilderState,
@@ -100,20 +98,6 @@ export function reduceGridActions(
           ...normalized,
           blocks: [...nextRows, ...extras],
           settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow },
-        };
-      });
-      return { ...state, sections: updatedSections };
-    }
-
-    case 'UPDATE_GRID_BLOCKS': {
-      const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId || s.type !== 'Grid') return s;
-        const nextRows = updateRowBlocks(s.blocks, (action as any).rows);
-        const nextCols = updateColumnBlocks(nextRows, (action as any).columns);
-        return {
-          ...s,
-          blocks: nextCols,
-          settings: { ...s.settings, rows: (action as any).rows, columns: (action as any).columns },
         };
       });
       return { ...state, sections: updatedSections };

@@ -27,6 +27,7 @@ import {
   createDefaultPathConfig,
   createPathId,
   createPathMeta,
+  EMPTY_RUNTIME_STATE,
   normalizeAiPathsValidationConfig,
   normalizeNodes,
   sanitizeEdges,
@@ -223,7 +224,19 @@ export function useAiPathsSettingsPathActions({
       setAiPathsValidation(normalizeAiPathsValidationConfig(repairedConfig.aiPathsValidation));
       setParserSamples(normalizeParserSamples(repairedConfig.parserSamples));
       setUpdaterSamples(normalizeUpdaterSamples(repairedConfig.updaterSamples));
-      setRuntimeState(parseRuntimeState(repairedConfig.runtimeState));
+      let nextRuntimeState: RuntimeState = EMPTY_RUNTIME_STATE;
+      try {
+        nextRuntimeState = parseRuntimeState(repairedConfig.runtimeState);
+      } catch (error) {
+        console.warn(
+          '[AI Paths] Failed to parse runtime state while applying path config. Using empty state.',
+          {
+            context: 'useAiPathsSettingsPathActions.applyPathConfigState',
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
+      }
+      setRuntimeState(nextRuntimeState);
       setLastRunAt(repairedConfig.lastRunAt ?? null);
       setIsPathLocked(Boolean(repairedConfig.isLocked));
       setIsPathActive(repairedConfig.isActive !== false);

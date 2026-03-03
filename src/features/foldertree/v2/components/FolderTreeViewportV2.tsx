@@ -1,8 +1,8 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
+ 
  
  
  
@@ -605,7 +605,7 @@ export function FolderTreeViewportV2({
                         : undefined
                     }
                   >
-                    <FolderTreeContextMenu items={menuItems} controller={controller}>
+                    <FolderTreeContextMenu node={node} items={menuItems} controller={controller}>
                       {rowNode}
                     </FolderTreeContextMenu>
                   </div>

@@ -21,7 +21,6 @@ import {
   aiJobsApi,
   backfillPathConfigNodeContracts,
   getValueAtMappingPath,
-  migrateLegacyDbQueryProvider,
   migratePathConfigCollections,
   normalizeNodes,
   parserSampleStateSchema,
@@ -331,7 +330,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
     const sourcePort = resolveEdgeSourcePort(edge);
     if (!sourceNodeId || !sourcePort) return;
     const sourceNode = nodeById.get(sourceNodeId);
-    if (!sourceNode || sourceNode.type !== 'trigger') return;
+    if (sourceNode?.type !== 'trigger') return;
     if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
     throw validationError('Legacy AI Paths trigger data edges are no longer supported.', {
       source: 'ai_paths.path_config',
@@ -361,6 +360,13 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       databaseRecord['query'] && typeof databaseRecord['query'] === 'object'
         ? (databaseRecord['query'] as Record<string, unknown>)
         : null;
+    if (Object.prototype.hasOwnProperty.call(databaseRecord, 'schemaSnapshot')) {
+      throw validationError('AI Path config contains deprecated database schemaSnapshot.', {
+        source: 'ai_paths.path_config',
+        reason: 'deprecated_database_schema_snapshot',
+        nodeId: node.id,
+      });
+    }
     const operation = databaseRecord['operation'];
     const nextDatabaseConfig = {
       ...(databaseConfig as Partial<DatabaseConfig>),
@@ -380,13 +386,33 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       },
     } as DatabaseConfig;
     if (queryConfig) {
-      nextDatabaseConfig.query = migrateLegacyDbQueryProvider({
-        provider:
-          queryConfig['provider'] === 'auto' ||
-          queryConfig['provider'] === 'mongodb' ||
-          queryConfig['provider'] === 'prisma'
-            ? queryConfig['provider']
-            : 'auto',
+      const provider = queryConfig['provider'];
+      if (provider === 'all') {
+        throw validationError(
+          'AI Path config contains deprecated database query provider "all".',
+          {
+            source: 'ai_paths.path_config',
+            reason: 'deprecated_database_query_provider',
+            nodeId: node.id,
+            provider,
+          }
+        );
+      }
+      if (
+        provider !== undefined &&
+        provider !== 'auto' &&
+        provider !== 'mongodb' &&
+        provider !== 'prisma'
+      ) {
+        throw validationError('AI Path config contains invalid database query provider.', {
+          source: 'ai_paths.path_config',
+          reason: 'invalid_database_query_provider',
+          nodeId: node.id,
+          provider,
+        });
+      }
+      nextDatabaseConfig.query = {
+        provider: provider ?? 'auto',
         collection:
           typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
         mode:
@@ -420,9 +446,8 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
           ? { projectionPresetId: queryConfig['projectionPresetId'] }
           : {}),
         single: queryConfig['single'] === true,
-      });
+      };
     }
-    delete (nextDatabaseConfig as { schemaSnapshot?: unknown })['schemaSnapshot'];
     return {
       ...node,
       config: {

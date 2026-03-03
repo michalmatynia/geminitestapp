@@ -156,4 +156,84 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(true);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
   });
+
+  it('converts viewport pointer coordinates to world coordinates when view is transformed', async () => {
+    const props = buildHookProps();
+    props.nodes = [buildNode({ position: { x: 100, y: 100 } })];
+    props.view = { x: 40, y: 20, scale: 2 };
+    const target = document.createElement('div');
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      // World (100,100) maps to viewport (240,220) at scale=2 and translate (40,20)
+      await result.current.handlePointerDownNode(
+        createPointerEvent(target, { clientX: 240, clientY: 220 }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      // Move +40 px in viewport => +20 in world at scale=2
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: 280,
+          clientY: 220,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerUpNode(
+        createPointerEvent(target, {
+          clientX: 280,
+          clientY: 220,
+        }),
+        'node-1'
+      );
+    });
+
+    expect(props.startDrag).toHaveBeenCalledWith('node-1', 0, 0);
+    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
+      position: { x: 120, y: 100 },
+    });
+  });
+
+  it('does not clamp node drag movement to the legacy 2000x2000 bounds', async () => {
+    const props = buildHookProps();
+    props.nodes = [buildNode({ position: { x: 1900, y: 1900 } })];
+    const target = document.createElement('div');
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(
+        createPointerEvent(target, { clientX: 1910, clientY: 1910 }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: 2110,
+          clientY: 2110,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      result.current.handlePointerUpNode(
+        createPointerEvent(target, {
+          clientX: 2110,
+          clientY: 2110,
+        }),
+        'node-1'
+      );
+    });
+
+    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
+      position: { x: 2100, y: 2100 },
+    });
+  });
 });

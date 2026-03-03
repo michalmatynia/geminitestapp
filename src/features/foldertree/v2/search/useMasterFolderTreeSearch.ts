@@ -52,7 +52,7 @@ export function useMasterFolderTreeSearch(
   );
 
   const [debouncedQuery, setDebouncedQuery] = useState<string>(query);
-  useEffect((): void => {
+  useEffect(() => {
     const delay = Math.max(0, resolvedConfig.debounceMs);
     if (delay === 0) {
       setDebouncedQuery(query);
@@ -63,7 +63,7 @@ export function useMasterFolderTreeSearch(
       setDebouncedQuery(query);
     }, delay);
 
-    return (): void => {
+    return () => {
       window.clearTimeout(timerId);
     };
   }, [query, resolvedConfig.debounceMs]);

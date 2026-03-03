@@ -148,6 +148,17 @@ export function useCanvasInteractionsNodes({
   ensureNodeVisible: (node: AiNode) => void;
   toast: Toast;
 }): UseCanvasInteractionsNodesValue {
+  const toWorldPoint = useCallback(
+    (point: { x: number; y: number }): { x: number; y: number } => {
+      const scale = Number.isFinite(view.scale) && view.scale > 0 ? view.scale : 1;
+      return {
+        x: (point.x - view.x) / scale,
+        y: (point.y - view.y) / scale,
+      };
+    },
+    [view.scale, view.x, view.y]
+  );
+
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
   const dragSelectionRef = useRef<DragSelectionState | null>(null);
   const dragCandidateRef = useRef<DragCandidateState | null>(null);
@@ -262,8 +273,9 @@ export function useCanvasInteractionsNodes({
       if (!node) return;
       const pointerCanvas = updateLastPointerCanvasPosFromClient(clientX, clientY);
       if (!pointerCanvas) return;
-      const canvasX = pointerCanvas.x;
-      const canvasY = pointerCanvas.y;
+      const pointerWorld = toWorldPoint(pointerCanvas);
+      const canvasX = pointerWorld.x;
+      const canvasY = pointerWorld.y;
       const hasSelectionToggleModifier = event.shiftKey || event.metaKey || event.ctrlKey;
       const isNodeSelected = selectedNodeIdSet.has(nodeId);
       const shouldGroupDrag =
@@ -320,8 +332,9 @@ export function useCanvasInteractionsNodes({
     (event: React.PointerEvent<Element>, nodeId: string): void => {
       const pointerCanvas = updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
       if (!pointerCanvas) return;
-      const canvasX = pointerCanvas.x;
-      const canvasY = pointerCanvas.y;
+      const pointerWorld = toWorldPoint(pointerCanvas);
+      const canvasX = pointerWorld.x;
+      const canvasY = pointerWorld.y;
       let activeDragSession =
         activeDragSessionRef.current?.nodeId === nodeId &&
         activeDragSessionRef.current.pointerId === event.pointerId
@@ -362,30 +375,16 @@ export function useCanvasInteractionsNodes({
           prev.map((item: AiNode): AiNode => {
             const base = dragSelection.basePositions.get(item.id);
             if (!base) return item;
-            const nextX = Math.min(
-              Math.max(base.x + deltaX, 16),
-              2000 - 200 - 16 // CANVAS_WIDTH - NODE_WIDTH - 16
-            );
-            const nextY = Math.min(
-              Math.max(base.y + deltaY, 16),
-              2000 - 100 - 16 // CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
-            );
             return {
               ...item,
-              position: { x: nextX, y: nextY },
+              position: { x: base.x + deltaX, y: base.y + deltaY },
             };
           })
         );
         return;
       }
-      const nextY = Math.min(
-        Math.max(canvasY - activeOffsetY, 16),
-        2000 - 100 - 16 // CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
-      );
-      const nextX = Math.min(
-        Math.max(canvasX - activeOffsetX, 16),
-        2000 - 200 - 16 // CANVAS_WIDTH - NODE_WIDTH - 16
-      );
+      const nextY = canvasY - activeOffsetY;
+      const nextX = canvasX - activeOffsetX;
 
       // RAF throttling
       pendingDragRef.current = { nodeId, x: nextX, y: nextY };
@@ -585,7 +584,6 @@ export function useCanvasInteractionsNodes({
 
       const viewport = viewportRef.current?.getBoundingClientRect();
       if (!viewport) return;
-      const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
 
       const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
       if (!raw) return;
@@ -600,16 +598,13 @@ export function useCanvasInteractionsNodes({
 
       if (!payload?.type) return;
 
-      const localX = canvasRect
-        ? (event.clientX - canvasRect.left) / view.scale
-        : (event.clientX - viewport.left - view.x) / view.scale;
-      const localY = canvasRect
-        ? (event.clientY - canvasRect.top) / view.scale
-        : (event.clientY - viewport.top - view.y) / view.scale;
+      const scale = Number.isFinite(view.scale) && view.scale > 0 ? view.scale : 1;
+      const localX = (event.clientX - viewport.left - view.x) / scale;
+      const localY = (event.clientY - viewport.top - view.y) / scale;
       updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
 
-      const nextX = Math.min(Math.max(localX - 200 / 2, 16), 2000 - 200 - 16); // NODE_WIDTH
-      const nextY = Math.min(Math.max(localY - 100 / 2, 16), 2000 - 100 - 16); // NODE_MIN_HEIGHT
+      const nextX = localX - 200 / 2; // NODE_WIDTH
+      const nextY = localY - 100 / 2; // NODE_MIN_HEIGHT
 
       const defaultConfig = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
       const mergedConfig = payload.config ? { ...defaultConfig, ...payload.config } : defaultConfig;

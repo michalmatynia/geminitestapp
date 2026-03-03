@@ -138,6 +138,57 @@ describe('sanitizePathConfig', () => {
     );
   });
 
+  it('rejects deprecated database schemaSnapshot in path configs', () => {
+    const config = {
+      ...buildConfig([]),
+      nodes: [
+        buildNode({
+          id: 'node-db-111111111111111111111111',
+          type: 'database',
+          title: 'Database',
+          config: {
+            database: {
+              operation: 'query',
+              schemaSnapshot: {
+                collections: [],
+                sources: {},
+              },
+            },
+          },
+        }),
+      ],
+    } as PathConfig;
+
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /deprecated database schemaSnapshot/i
+    );
+  });
+
+  it('rejects deprecated database query provider \"all\" in path configs', () => {
+    const config = {
+      ...buildConfig([]),
+      nodes: [
+        buildNode({
+          id: 'node-db-111111111111111111111111',
+          type: 'database',
+          title: 'Database',
+          config: {
+            database: {
+              operation: 'query',
+              query: {
+                provider: 'all',
+              },
+            },
+          },
+        }),
+      ],
+    } as PathConfig;
+
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /deprecated database query provider \"all\"/i
+    );
+  });
+
   it('preserves shared object-backed ports when persisting runtime state', () => {
     const sharedValue = {
       color: 'red',
@@ -193,7 +244,7 @@ describe('sanitizePathConfig', () => {
     expect(currentRun).not.toHaveProperty('result');
   });
 
-  it('rejects legacy runtime identity fields', () => {
+  it('rejects legacy runtime identity fields in runtime state payloads', () => {
     expect(() =>
       parseRuntimeState(
         JSON.stringify({
@@ -205,13 +256,12 @@ describe('sanitizePathConfig', () => {
           inputs: {},
           outputs: {},
           runId: 'legacy-run-id',
-          runStartedAt: '2026-03-03T10:00:00.000Z',
         })
       )
     ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
   });
 
-  it('rejects legacy runtime identity fields nested in events and history entries', () => {
+  it('rejects nested legacy runtime identity fields in runtime state payloads', () => {
     expect(() =>
       parseRuntimeState(
         JSON.stringify({
@@ -253,7 +303,7 @@ describe('sanitizePathConfig', () => {
     ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
   });
 
-  it('rejects path configs with legacy runtime identity fields', () => {
+  it('rejects legacy runtime identity fields while sanitizing path configs', () => {
     const config = {
       ...buildConfig([]),
       runtimeState: JSON.stringify({
@@ -274,62 +324,29 @@ describe('sanitizePathConfig', () => {
     );
   });
 
-  it('rejects legacy runtime identity fields nested inside runtime events', () => {
-    expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [
-            {
-              id: 'evt-1',
-              timestamp: '2026-03-03T10:00:00.000Z',
-              type: 'status',
-              message: 'Run started.',
-              runId: 'legacy-run-id',
-            },
-          ],
-          inputs: {},
-          outputs: {},
-        })
-      )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
-  });
-
-  it('rejects legacy runtime identity fields nested inside runtime history entries', () => {
-    expect(() =>
-      parseRuntimeState(
-        JSON.stringify({
-          status: 'running',
-          nodeStatuses: {},
-          nodeOutputs: {},
-          variables: {},
-          events: [],
-          inputs: {},
-          outputs: {},
-          history: {
-            'node-1': [
-              {
-                timestamp: '2026-03-03T10:00:00.000Z',
-                pathId: 'path-1',
-                pathName: 'Path 1',
-                nodeId: 'node-1',
-                nodeType: 'prompt',
-                nodeTitle: 'Node 1',
-                status: 'completed',
-                iteration: 1,
-                inputs: {},
-                outputs: {},
-                inputHash: null,
-                runStartedAt: '2026-03-03T10:00:00.000Z',
-              },
-            ],
+  it('rejects malformed runtime payloads while sanitizing path configs', () => {
+    const config = {
+      ...buildConfig([]),
+      runtimeState: JSON.stringify({
+        status: 'running',
+        nodeStatuses: {},
+        nodeOutputs: {},
+        variables: {},
+        events: [
+          {
+            id: 'evt-1',
+            timestamp: '2026-03-03T10:00:00.000Z',
+            type: 'status',
+            message: 'Node cancelled.',
+            status: 'cancelled',
           },
-        })
-      )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+        ],
+        inputs: {},
+        outputs: {},
+      }),
+    } as PathConfig;
+
+    expect(() => sanitizePathConfig(config)).toThrowError(/Invalid AI Paths runtime state payload\./i);
   });
 
   it('rejects legacy "cancelled" status spelling in runtime events', () => {

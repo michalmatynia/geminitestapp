@@ -7,13 +7,13 @@ import {
   findBlock,
   TEXT_ATOM_BLOCK_TYPE,
 } from './block-helpers';
+import { moveSectionSubtree } from './section-hierarchy';
 import { getBlockDefinition } from '../../components/page-builder/section-registry';
 
 import type {
   PageBuilderAction,
   PageBuilderState,
   BlockInstance,
-  PageZone,
   SectionInstance,
 } from '../../types/page-builder';
 
@@ -21,6 +21,9 @@ export function reducePageBuilderMoveActions(
   state: PageBuilderState,
   action: PageBuilderAction
 ): PageBuilderState | null {
+  const hasChildSections = (sectionId: string): boolean =>
+    state.sections.some((section: SectionInstance) => section.parentSectionId === sectionId);
+
   switch (action.type) {
     case 'MOVE_BLOCK_TO_COLUMN': {
       // Remove block from source (section direct, column, row, or nested inside a parent block)
@@ -378,6 +381,7 @@ export function reducePageBuilderMoveActions(
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
+      if (hasChildSections(action.sectionId)) return state;
       // Prevent dropping into its own frames
       if (action.sectionId === action.toSectionId) return state;
 
@@ -489,28 +493,26 @@ export function reducePageBuilderMoveActions(
         id: uid(),
         type: sectionType,
         zone: action.toZone,
+        parentSectionId: null,
         settings: baseSettings,
         blocks: resolvedBlocks,
       };
-
-      const zoneOrder: PageZone[] = ['header', 'template', 'footer'];
-      const grouped: Record<PageZone, SectionInstance[]> = { header: [], template: [], footer: [] };
-      for (const s of sectionsAfterRemove) {
-        grouped[s.zone].push(s);
-      }
-      const targetList = [...grouped[action.toZone]];
-      const insertIndex = Math.min(Math.max(action.toIndex, 0), targetList.length);
-      targetList.splice(insertIndex, 0, newSection);
-      grouped[action.toZone] = targetList;
-      const rebuilt = zoneOrder.flatMap((z: PageZone) => grouped[z]);
-
-      return { ...state, sections: rebuilt, selectedNodeId: newSection.id };
+      const sectionsWithNew = [...sectionsAfterRemove, newSection];
+      const moveResult = moveSectionSubtree(sectionsWithNew, {
+        sectionId: newSection.id,
+        toZone: action.toZone,
+        toParentSectionId: null,
+        toIndex: action.toIndex,
+      });
+      if (!moveResult.ok) return { ...state, sections: sectionsWithNew, selectedNodeId: newSection.id };
+      return { ...state, sections: moveResult.sections, selectedNodeId: newSection.id };
     }
 
     case 'CONVERT_SECTION_TO_BLOCK': {
       if (action.sectionId === action.toSectionId) return state;
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
+      if (hasChildSections(action.sectionId)) return state;
       if (
         sourceSection.type !== 'TextElement' &&
         sourceSection.type !== 'ImageElement' &&
@@ -571,6 +573,7 @@ export function reducePageBuilderMoveActions(
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
+      if (hasChildSections(action.sectionId)) return state;
       // Prevent dropping a Grid into its own columns
       if (action.sectionId === action.toSectionId) return state;
 
@@ -602,6 +605,28 @@ export function reducePageBuilderMoveActions(
       });
 
       return { ...state, sections: updatedSections, selectedNodeId: convertedBlock.id };
+    }
+
+    case 'MOVE_SECTION_TO_ZONE': {
+      const moveResult = moveSectionSubtree(state.sections, {
+        sectionId: action.sectionId,
+        toZone: action.toZone,
+        toParentSectionId: null,
+        toIndex: action.toIndex,
+      });
+      if (!moveResult.ok) return state;
+      return { ...state, sections: moveResult.sections };
+    }
+
+    case 'MOVE_SECTION_IN_TREE': {
+      const moveResult = moveSectionSubtree(state.sections, {
+        sectionId: action.sectionId,
+        toZone: action.toZone,
+        toParentSectionId: action.toParentSectionId ?? null,
+        toIndex: action.toIndex,
+      });
+      if (!moveResult.ok) return state;
+      return { ...state, sections: moveResult.sections };
     }
 
     default:

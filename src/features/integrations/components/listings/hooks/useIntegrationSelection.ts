@@ -94,17 +94,22 @@ export function useIntegrationSelection(
     ] as const,
   });
 
-  const [preferredConnectionQuery, integrationsQuery] = results;
+  const preferredConnectionQuery = results[0];
+  const integrationsQuery = results[1];
+  const integrationsData = integrationsQuery?.data;
 
-  const loading = integrationsQuery.isPending && !integrationsQuery.data;
+  const loading = Boolean(integrationsQuery?.isPending && !integrationsData);
   const integrations = useMemo((): IntegrationWithConnections[] => {
-    const data = integrationsQuery.data ?? [];
+    const data = integrationsData ?? [];
     return Array.isArray(data)
       ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0)
       : [];
-  }, [integrationsQuery.data]);
+  }, [integrationsData]);
 
-  const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
+  const preferredConnectionData = preferredConnectionQuery?.data as
+    | { connectionId?: string | null }
+    | undefined;
+  const preferredConnectionId = preferredConnectionData?.connectionId ?? null;
 
   useEffect(() => {
     if (initializedRef.current || loading || integrations.length === 0) return;

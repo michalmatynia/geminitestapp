@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
+  EMPTY_RUNTIME_STATE,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   STORAGE_VERSION,
@@ -48,13 +49,33 @@ export function usePathPersistence(
   pathConfigsRef.current = args.pathConfigs;
   pathsRef.current = args.paths;
 
+  const sanitizePathConfigWithRuntimeFallback = useCallback((config: PathConfig): PathConfig => {
+    try {
+      return sanitizePathConfig(config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const shouldRetryWithEmptyRuntime =
+        message.includes('Legacy AI Paths runtime identity fields are no longer supported') ||
+        message.includes('Invalid AI Paths runtime state payload');
+      if (!shouldRetryWithEmptyRuntime) {
+        throw error;
+      }
+      const normalizedNodesForRuntime = normalizeNodes(config.nodes);
+      const recoveredConfig: PathConfig = {
+        ...config,
+        runtimeState: buildPersistedRuntimeState(EMPTY_RUNTIME_STATE, normalizedNodesForRuntime),
+      };
+      return sanitizePathConfig(recoveredConfig);
+    }
+  }, []);
+
   const persistPathSettings = useCallback(
     async (
       nextPaths: PathMeta[],
       configId: string,
       config: PathConfig
     ): Promise<PathConfig | null> => {
-      const sanitizedConfig = sanitizePathConfig(config);
+      const sanitizedConfig = sanitizePathConfigWithRuntimeFallback(config);
       const payloadKey = stableStringify({
         index: nextPaths,
         configId,
@@ -92,13 +113,13 @@ export function usePathPersistence(
       }
       return sanitizedConfig;
     },
-    [core]
+    [core, sanitizePathConfigWithRuntimeFallback]
   );
 
   const persistRuntimePathState = useCallback(
     async (configId: string, config: PathConfig): Promise<void> => {
       const payload = core.stringifyForStorage(
-        sanitizePathConfig(config),
+        sanitizePathConfigWithRuntimeFallback(config),
         `runtime path config (${configId})`
       );
       await core.enqueueSettingsWrite(async (): Promise<void> => {
@@ -107,7 +128,7 @@ export function usePathPersistence(
         ]);
       });
     },
-    [core]
+    [core, sanitizePathConfigWithRuntimeFallback]
   );
 
   const buildNodesForAutoSave = useCallback(

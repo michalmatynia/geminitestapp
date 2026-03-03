@@ -11,6 +11,7 @@ import {
   AI_PATHS_LAST_ERROR_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
+  EMPTY_RUNTIME_STATE,
   createDefaultPathConfig,
   normalizeNodes,
   sanitizeEdges,
@@ -267,7 +268,16 @@ export function useAiPathsPersistence(
         setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
         setParserSamples(normalizeParserSamples(config.parserSamples));
         setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
-        setRuntimeState(parseRuntimeState(config.runtimeState));
+        let nextRuntimeState = EMPTY_RUNTIME_STATE;
+        try {
+          nextRuntimeState = parseRuntimeState(config.runtimeState);
+        } catch (error) {
+          console.warn('[AI Paths] Failed to parse runtime state while loading path config.', {
+            context: 'useAiPathsPersistence.loadConfig',
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        setRuntimeState(nextRuntimeState);
         setLastRunAt(config.lastRunAt ?? null);
         setIsPathLocked(Boolean(config.isLocked));
         setIsPathActive(config.isActive !== false);

@@ -9,8 +9,6 @@ import {
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
   backfillPathConfigNodeContracts,
-  migrateLegacyDbQueryProvider,
-  migrateTriggerToFetcherGraph,
   normalizeNodes,
 } from '@/shared/lib/ai-paths/core/normalization';
 import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
@@ -18,6 +16,7 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { isAppError, validationError } from '@/shared/errors/app-error';
 import {
   fetchAiPathsSettingsByKeysCached,
   fetchAiPathsSettingsCached,
@@ -39,6 +38,8 @@ const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
   value === 'delete' ||
   value === 'action' ||
   value === 'distinct';
+
+const LEGACY_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);
 
 const resolvePreferredActivePathId = (
   data: { aiPathsActivePathId?: unknown } | null | undefined
@@ -75,19 +76,46 @@ const sanitizeLoadedDatabaseNode = (node: AiNode): AiNode => {
   if (!databaseConfig) {
     return node;
   }
+  if (Object.prototype.hasOwnProperty.call(databaseConfig, 'schemaSnapshot')) {
+    throw validationError('AI Path config contains deprecated database schemaSnapshot.', {
+      source: 'ai_paths.path_settings',
+      reason: 'deprecated_database_schema_snapshot',
+      nodeId: node.id,
+    });
+  }
   const queryConfig =
     databaseConfig['query'] && typeof databaseConfig['query'] === 'object'
       ? (databaseConfig['query'] as Record<string, unknown>)
       : null;
   const nextDatabaseConfig: Record<string, unknown> = { ...databaseConfig };
   if (queryConfig) {
-    nextDatabaseConfig['query'] = migrateLegacyDbQueryProvider({
-      provider:
-        queryConfig['provider'] === 'auto' ||
-        queryConfig['provider'] === 'mongodb' ||
-        queryConfig['provider'] === 'prisma'
-          ? queryConfig['provider']
-          : 'auto',
+    const provider = queryConfig['provider'];
+    if (provider === 'all') {
+      throw validationError(
+        'AI Path config contains deprecated database query provider "all".',
+        {
+          source: 'ai_paths.path_settings',
+          reason: 'deprecated_database_query_provider',
+          nodeId: node.id,
+          provider,
+        }
+      );
+    }
+    if (
+      provider !== undefined &&
+      provider !== 'auto' &&
+      provider !== 'mongodb' &&
+      provider !== 'prisma'
+    ) {
+      throw validationError('AI Path config contains invalid database query provider.', {
+        source: 'ai_paths.path_settings',
+        reason: 'invalid_database_query_provider',
+        nodeId: node.id,
+        provider,
+      });
+    }
+    nextDatabaseConfig['query'] = {
+      provider: provider ?? 'auto',
       collection:
         typeof queryConfig['collection'] === 'string' ? queryConfig['collection'] : 'products',
       mode:
@@ -121,9 +149,8 @@ const sanitizeLoadedDatabaseNode = (node: AiNode): AiNode => {
         ? { projectionPresetId: queryConfig['projectionPresetId'] }
         : {}),
       single: queryConfig['single'] === true,
-    });
+    };
   }
-  delete nextDatabaseConfig['schemaSnapshot'];
   return {
     ...node,
     config: {
@@ -136,6 +163,59 @@ const sanitizeLoadedDatabaseNode = (node: AiNode): AiNode => {
       },
     },
   };
+};
+
+const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
+  const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
+  if (from) return from;
+  const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';
+  return source;
+};
+
+const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
+  const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';
+  if (fromPort) return fromPort;
+  const sourceHandle =
+    typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
+  return sourceHandle;
+};
+
+const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
+  const nodeById = new Map<string, AiNode>(
+    nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+  );
+
+  nodes.forEach((node: AiNode): void => {
+    if (node.type !== 'trigger') return;
+    const outputs = Array.isArray(node.outputs) ? node.outputs : [];
+    const legacyPorts = outputs.filter((port: string): boolean => LEGACY_TRIGGER_DATA_PORTS.has(port));
+    if (legacyPorts.length === 0) return;
+    throw validationError('Legacy AI Paths trigger data outputs are no longer supported.', {
+      source: 'ai_paths.path_settings',
+      reason: 'deprecated_trigger_outputs',
+      nodeId: node.id,
+      outputs: legacyPorts,
+    });
+  });
+
+  edges.forEach((edgeValue: unknown, index: number): void => {
+    if (!edgeValue || typeof edgeValue !== 'object' || Array.isArray(edgeValue)) return;
+    const edge = edgeValue as Record<string, unknown>;
+    const sourceNodeId = resolveEdgeSourceNodeId(edge);
+    const sourcePort = resolveEdgeSourcePort(edge);
+    if (!sourceNodeId || !sourcePort) return;
+    const sourceNode = nodeById.get(sourceNodeId);
+    if (sourceNode?.type !== 'trigger') return;
+    if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
+    throw validationError('Legacy AI Paths trigger data edges are no longer supported.', {
+      source: 'ai_paths.path_settings',
+      reason: 'deprecated_trigger_data_edge',
+      edgeIndex: index,
+      edgeId: typeof edge['id'] === 'string' ? edge['id'] : null,
+      sourceNodeId,
+      sourcePort,
+    });
+  });
 };
 
 export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
@@ -153,12 +233,10 @@ export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
   );
   const repaired = identityRepair.config;
   const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
-  const migrated = migrateTriggerToFetcherGraph(
-    normalized,
-    Array.isArray(repaired.edges) ? repaired.edges : []
-  );
-  const graphNodes = normalizeNodes(migrated.nodes);
-  const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
+  const rawEdges = Array.isArray(repaired.edges) ? repaired.edges : [];
+  assertNoLegacyTriggerDataGraph(normalized, rawEdges);
+  const graphNodes = normalizeNodes(normalized);
+  const graphEdges = sanitizeEdges(graphNodes, rawEdges);
   return {
     ...repaired,
     nodes: graphNodes,
@@ -247,35 +325,53 @@ export async function fetchPathSettings(
   if (indexRaw) {
     try {
       const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
-      if (Array.isArray(parsedIndex)) {
-        settingsPathOrder = parsedIndex
-          .map((meta: PathMeta) => meta?.id)
-          .filter(
-            (id: string | undefined): id is string => typeof id === 'string' && id.length > 0
-          );
-        parsedIndex.forEach((meta: PathMeta) => {
-          if (!meta?.id) return;
-          const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-          if (!configRaw) {
-            configs[meta.id] = createDefaultPathConfig(meta.id);
-            return;
-          }
-          try {
-            const parsedConfig = JSON.parse(configRaw) as PathConfig;
-            const mergedConfig: PathConfig = {
-              ...createDefaultPathConfig(meta.id),
-              ...parsedConfig,
-              id: meta.id,
-              name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
-            };
-            configs[meta.id] = sanitizeLoadedPathConfig(mergedConfig);
-          } catch {
-            configs[meta.id] = createDefaultPathConfig(meta.id);
-          }
+      if (!Array.isArray(parsedIndex)) {
+        throw validationError('Invalid AI Paths index payload.', {
+          source: 'ai_paths.path_settings',
+          reason: 'path_index_not_array',
         });
       }
-    } catch {
-      settingsPathOrder = [];
+      settingsPathOrder = parsedIndex
+        .map((meta: PathMeta) => meta?.id)
+        .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+      parsedIndex.forEach((meta: PathMeta) => {
+        if (!meta?.id) return;
+        const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+        if (!configRaw) {
+          throw validationError('AI Paths index references a missing path config payload.', {
+            source: 'ai_paths.path_settings',
+            reason: 'missing_path_config',
+            pathId: meta.id,
+          });
+        }
+        let parsedConfig: PathConfig;
+        try {
+          parsedConfig = JSON.parse(configRaw) as PathConfig;
+        } catch (error) {
+          throw validationError('Invalid AI Paths path config payload.', {
+            source: 'ai_paths.path_settings',
+            reason: 'path_config_json_parse_failed',
+            pathId: meta.id,
+            cause: error instanceof Error ? error.message : 'unknown_error',
+          });
+        }
+        const mergedConfig: PathConfig = {
+          ...createDefaultPathConfig(meta.id),
+          ...parsedConfig,
+          id: meta.id,
+          name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
+        };
+        configs[meta.id] = sanitizeLoadedPathConfig(mergedConfig);
+      });
+    } catch (error) {
+      if (isAppError(error)) {
+        throw error;
+      }
+      throw validationError('Invalid AI Paths settings payload.', {
+        source: 'ai_paths.path_settings',
+        reason: 'path_index_parse_failed',
+        cause: error instanceof Error ? error.message : 'unknown_error',
+      });
     }
   }
 

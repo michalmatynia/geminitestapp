@@ -156,7 +156,7 @@ const loadPathConfigsFromSettings = async (
     data.map((item: { key: string; value: string }) => [item.key, item.value])
   );
   const indexRaw = map.get(PATH_INDEX_KEY);
-  if (!indexRaw || !indexRaw.trim()) {
+  if (!indexRaw?.trim()) {
     return { configs: {}, settingsPathOrder: [] };
   }
 
@@ -196,7 +196,7 @@ const loadPathConfigsFromSettings = async (
   normalizedMetas.forEach((meta: PathMeta): void => {
     if (!meta?.id) return;
     const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-    if (!configRaw || !configRaw.trim()) {
+    if (!configRaw?.trim()) {
       throw validationError('AI Paths index references missing config payload.', {
         source: 'ai_paths.trigger_payload',
         reason: 'missing_path_config',
@@ -319,9 +319,11 @@ const resolveTriggerSelection = async (
     settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
   );
   const uiStateRaw = map.get(AI_PATHS_UI_STATE_KEY);
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
-  const uiStateParsed = uiStateRaw ? (safeParseJson<{ value: unknown }>(uiStateRaw) as any)?.value : null;
-  /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+  const uiStateEnvelope = uiStateRaw
+    ? safeParseJson<{ value?: unknown }>(uiStateRaw).value
+    : null;
+  const uiStateParsed =
+    uiStateEnvelope && typeof uiStateEnvelope === 'object' ? uiStateEnvelope['value'] : null;
   const uiState =
     uiStateParsed && typeof uiStateParsed === 'object'
       ? (uiStateParsed as Record<string, unknown>)
@@ -627,6 +629,21 @@ export function useAiPathTriggerEvent(): {
         return;
       }
 
+      let entityJson: Record<string, unknown> | null = null;
+      if (typeof args.getEntityJson === 'function') {
+        try {
+          entityJson = args.getEntityJson();
+        } catch (entityJsonError) {
+          logClientError(entityJsonError, {
+            context: {
+              source: 'useAiPathTriggerEvent',
+              action: 'getEntityJson',
+              triggerEventId,
+            },
+          });
+        }
+      }
+
       const historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
       const triggerNode = selectedConfig.nodes.find((node: AiNode) => {
         if (node.type !== 'trigger') return false;
@@ -644,24 +661,27 @@ export function useAiPathTriggerEvent(): {
         return;
       }
 
-      /* eslint-disable @typescript-eslint/no-unsafe-argument */
       const preflightStartedAt = performance.now();
       const validationConfig = normalizeAiPathsValidationConfig(
-        selectedConfig.validationConfig ?? null
+        selectedConfig.aiPathsValidation ?? null
       );
       const preflight = evaluateRunPreflight({
-        config: selectedConfig,
-        validationConfig: validationConfig as any,
+        nodes: selectedConfig.nodes,
+        edges: selectedConfig.edges,
+        aiPathsValidation: validationConfig,
+        strictFlowMode: selectedConfig.strictFlowMode ?? true,
+        triggerNodeId: triggerNode.id,
+        mode: 'full',
       });
-      /* eslint-enable @typescript-eslint/no-unsafe-argument */
       const preflightDurationMs = performance.now() - preflightStartedAt;
 
-      if (!preflight.ok) {
-        toast(`Path validation failed: ${preflight.error || 'Unknown error'}`, { variant: 'error' });
+      if (preflight.shouldBlock) {
+        const preflightMessage = preflight.blockMessage ?? 'Unknown preflight error.';
+        toast(`Path validation failed: ${preflightMessage}`, { variant: 'error' });
         args.onProgress?.({
           status: 'error',
           error: 'preflight_failed',
-          message: preflight.error as string | undefined,
+          message: preflightMessage,
           node: null,
         });
         return;
@@ -674,7 +694,7 @@ export function useAiPathTriggerEvent(): {
         triggerLabel: args.triggerLabel,
         entityType: args.entityType,
         entityId: args.entityId,
-        entityJson: args.entityJson,
+        entityJson,
         event: args.event,
         pathInfo: { id: selectedConfig.id, name: selectedConfig.name },
         source: args.source,
@@ -682,9 +702,8 @@ export function useAiPathTriggerEvent(): {
       });
       const contextDurationMs = performance.now() - contextStartedAt;
 
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
       const apiStartedAt = performance.now();
-      const runResult = (await enqueueAiPathRun({
+      const runResult = await enqueueAiPathRun({
         pathId: selectedConfig.id,
         pathName: selectedConfig.name,
         nodes: selectedConfig.nodes,
@@ -714,7 +733,7 @@ export function useAiPathTriggerEvent(): {
             },
           },
         },
-      })) as any;
+      });
       const apiDurationMs = performance.now() - apiStartedAt;
 
       if (!runResult.ok) {
@@ -728,8 +747,18 @@ export function useAiPathTriggerEvent(): {
         return;
       }
 
-      const runId = runResult.data.run as string;
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+      const runIdValue = runResult.data.run;
+      if (typeof runIdValue !== 'string' || runIdValue.trim().length === 0) {
+        toast('Failed to start AI Path: invalid run identifier from API.', { variant: 'error' });
+        args.onProgress?.({
+          status: 'error',
+          error: 'api_error',
+          message: 'Invalid run identifier returned by enqueue endpoint.',
+          node: null,
+        });
+        return;
+      }
+      const runId = runIdValue;
 
       const totalPrepMs = performance.now() - phaseStartedAt;
 

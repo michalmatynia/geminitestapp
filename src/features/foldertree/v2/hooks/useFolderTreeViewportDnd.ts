@@ -1,8 +1,8 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
+ 
  
  
  
@@ -11,7 +11,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { 
   MasterFolderTreeController, 
   MasterTreeId,
-  MasterTreeDropPosition,
+  MasterTreeDropPositionDto,
 } from '@/shared/contracts/master-folder-tree';
 import { 
   getMasterTreeDragNodeData, 
@@ -24,7 +24,7 @@ export function useFolderTreeViewportDnd(args: {
   enableDnd: boolean;
   canDrop?: (input: any, controller: MasterFolderTreeController) => boolean;
   onNodeDrop?: (input: any, controller: MasterFolderTreeController) => Promise<void> | void;
-  resolveDropPosition?: (event: any, input: any, controller: MasterFolderTreeController) => MasterTreeDropPosition;
+  resolveDropPosition?: (event: any, input: any, controller: MasterFolderTreeController) => MasterTreeDropPositionDto;
   resolveDraggedNodeId?: (event: React.DragEvent<HTMLElement>) => MasterTreeId | null;
 }) {
   const { controller, canDrop, resolveDropPosition, resolveDraggedNodeId } = args;
@@ -55,7 +55,7 @@ export function useFolderTreeViewportDnd(args: {
   const resolveDropAllowance = useCallback((
     draggedNodeId: MasterTreeId,
     targetId: MasterTreeId | null,
-    position: MasterTreeDropPosition
+    position: MasterTreeDropPositionDto
   ): boolean => {
     const defaultCheck = controller.canDropNode(draggedNodeId, targetId, position);
     if (defaultCheck.ok) {
@@ -86,7 +86,7 @@ export function useFolderTreeViewportDnd(args: {
     event: React.DragEvent<HTMLDivElement>,
     draggedNodeId: MasterTreeId,
     targetNode: MasterTreeViewNode
-  ): MasterTreeDropPosition | null => {
+  ): MasterTreeDropPositionDto | null => {
     const targetRect = event.currentTarget.getBoundingClientRect();
     const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
       thresholdRatio: 0.34,

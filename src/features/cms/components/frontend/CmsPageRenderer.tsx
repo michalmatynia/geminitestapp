@@ -3,9 +3,10 @@ import {
   isCmsSectionHidden,
   normalizePageZone,
 } from '@/features/cms/utils/page-builder-normalization';
+import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
-import type { PageComponent, BlockInstance, PageZone } from '@/shared/contracts/cms';
+import type { PageComponent, BlockInstance, PageZone, SectionInstance } from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 import { CmsPageProvider } from './CmsPageContext';
@@ -36,6 +37,8 @@ interface SectionContent {
   zone?: PageZone;
   settings?: Record<string, unknown>;
   blocks?: BlockInstance[];
+  sectionId?: string;
+  parentSectionId?: string | null;
 }
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
@@ -61,66 +64,81 @@ export function CmsPageRenderer({
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
 
-  const sections = components
+  const sections: SectionInstance[] = components
     .map((comp: PageComponent, idx: number) => {
       const content = (comp.content ?? {}) as SectionContent;
+      const sectionId =
+        typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
+          ? content.sectionId
+          : `section-${idx}`;
+      const parentSectionId =
+        typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
+          ? content.parentSectionId
+          : null;
       return {
-        key: `section-${idx}`,
-        id: `section-${idx}`,
+        id: sectionId,
         type: comp.type,
         zone: normalizePageZone(content.zone),
+        parentSectionId,
         settings: content.settings ?? {},
         blocks: content.blocks ?? [],
       };
-    })
-    .filter(
-      (section: {
-        key: string;
-        id: string;
-        type: string;
-        zone: PageZone;
-        settings: Record<string, unknown>;
-        blocks: BlockInstance[];
-      }) => !isCmsSectionHidden(section.settings['isHidden'])
-    );
+    });
 
-  const sectionsByZone: Record<PageZone, typeof sections> = {
+  const hierarchy = buildHierarchyIndexes(sections);
+  const rootSectionIdsByZone: Record<PageZone, string[]> = {
     header: [],
     template: [],
     footer: [],
   };
-
-  for (const s of sections) {
-    sectionsByZone[s.zone].push(s);
-  }
+  (hierarchy.childrenByParent.get(null) ?? []).forEach((rootId: string) => {
+    const root = hierarchy.nodeById.get(rootId);
+    if (!root) return;
+    rootSectionIdsByZone[root.zone].push(rootId);
+  });
 
   return (
     <MediaStylesProvider value={mediaStyles ?? null}>
       <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={layout ?? {}}>
         <div className='cms-page cms-hover-scope' style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
           {ZONE_ORDER.map((zone: PageZone) =>
-            sectionsByZone[zone].map((section: (typeof sections)[number]) => {
-              return (
-                <GsapAnimationWrapper
-                  key={section.key}
-                  config={
-                    section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined
-                  }
-                >
-                  <CssAnimationWrapper
-                    config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
-                  >
-                    <EventEffectsWrapper settings={section.settings}>
-                      <SectionRenderer
-                        type={section.type}
-                        sectionId={section.id}
-                        settings={section.settings}
-                        blocks={section.blocks}
-                      />
-                    </EventEffectsWrapper>
-                  </CssAnimationWrapper>
-                </GsapAnimationWrapper>
-              );
+            rootSectionIdsByZone[zone].map((rootId: string) => {
+              const renderSectionSubtree = (sectionId: string, depth: number): React.ReactNode => {
+                const section = hierarchy.nodeById.get(sectionId);
+                if (!section) return null;
+                if (isCmsSectionHidden(section.settings['isHidden'])) return null;
+                const childIds = hierarchy.childrenByParent.get(section.id) ?? [];
+
+                return (
+                  <div key={section.id}>
+                    <GsapAnimationWrapper
+                      config={
+                        section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined
+                      }
+                    >
+                      <CssAnimationWrapper
+                        config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
+                      >
+                        <EventEffectsWrapper settings={section.settings}>
+                          <SectionRenderer
+                            type={section.type}
+                            sectionId={section.id}
+                            settings={section.settings}
+                            blocks={section.blocks}
+                          />
+                        </EventEffectsWrapper>
+                      </CssAnimationWrapper>
+                    </GsapAnimationWrapper>
+                    {childIds.length > 0 ? (
+                      <div className={depth === 1 ? 'ml-4 border-l border-white/10 pl-3' : 'ml-5 border-l border-white/10 pl-3'}>
+                        {childIds.map((childId: string) => renderSectionSubtree(childId, depth + 1))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              };
+
+              return renderSectionSubtree(rootId, 1);
             })
           )}
         </div>

@@ -39,6 +39,9 @@ const mockCatalogs = [
   { id: '2', name: 'Sale Catalog', description: 'Sale products catalog' },
 ];
 
+const mockAsset3dCategories = [{ id: 'furniture', name: 'Furniture' }];
+const mockAsset3dTags = [{ id: 'wood', name: 'Wood' }];
+
 const mockSettings = [
   { key: 'SITE_NAME', value: 'My Store' },
   { key: 'SITE_DESCRIPTION', value: 'Test Description' },
@@ -154,6 +157,18 @@ export const handlers = [
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
     }
     return HttpResponse.json(product);
+  }),
+
+  http.get('/api/products/:id/studio', () => {
+    return HttpResponse.json({
+      config: {
+        projectId: null,
+      },
+    });
+  }),
+
+  http.get('/api/products/categories/tree', () => {
+    return HttpResponse.json([]);
   }),
 
   http.post('/api/products', async ({ request }: RequestContext) => {
@@ -378,6 +393,33 @@ export const handlers = [
         relistScheduler: null,
       },
     });
+  }),
+
+  // Observability endpoints
+  http.post('/api/query-telemetry', () => {
+    return HttpResponse.json({ accepted: true });
+  }),
+
+  http.post('/api/client-errors', () => {
+    return HttpResponse.json({ accepted: true });
+  }),
+
+  // AI paths settings
+  http.get('/api/ai-paths/settings', () => {
+    return HttpResponse.json([]);
+  }),
+
+  // 3D assets
+  http.get('/api/assets3d', () => {
+    return HttpResponse.json([]);
+  }),
+
+  http.get('/api/assets3d/categories', () => {
+    return HttpResponse.json(mockAsset3dCategories);
+  }),
+
+  http.get('/api/assets3d/tags', () => {
+    return HttpResponse.json(mockAsset3dTags);
   }),
 
   // Health check

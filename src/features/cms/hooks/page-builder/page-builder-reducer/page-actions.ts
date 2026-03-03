@@ -13,6 +13,7 @@ import {
   normalizeSections,
   buildSectionSettings,
 } from '../block-helpers';
+import { sanitizeSectionHierarchy } from '../section-hierarchy';
 import { normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
 import type {
   PageBuilderState,
@@ -42,17 +43,28 @@ export function reducePageActions(
             zone?: PageZone;
             settings?: Record<string, unknown>;
             blocks?: BlockInstance[];
+            sectionId?: string;
+            parentSectionId?: string | null;
           };
+          const resolvedSectionId =
+            typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
+              ? content.sectionId
+              : `loaded-${idx}-${uid()}`;
+          const resolvedParentSectionId =
+            typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
+              ? content.parentSectionId
+              : null;
           return {
-            id: `loaded-${idx}-${uid()}`,
+            id: resolvedSectionId,
             type: comp.type,
             zone: normalizePageZone(content.zone),
+            parentSectionId: resolvedParentSectionId,
             settings: buildSectionSettings(comp.type, content.settings ?? {}),
             blocks: content.blocks ?? [],
           };
         }
       );
-      const normalizedSections = normalizeSections(reconstructedSections);
+      const normalizedSections = sanitizeSectionHierarchy(normalizeSections(reconstructedSections));
       syncNextIdFromSections(normalizedSections);
       return {
         ...state,

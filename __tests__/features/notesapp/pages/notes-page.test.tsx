@@ -17,13 +17,14 @@ import { ToastProvider } from '@/shared/ui/toast';
 
 const now = new Date().toISOString();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-});
+  });
 
 const baseTags: TagRecord[] = [
   {
@@ -100,7 +101,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
 });
 
 const renderNotesPage = () => {
-  queryClient.clear();
+  const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <AdminLayoutProvider>

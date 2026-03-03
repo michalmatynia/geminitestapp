@@ -26,6 +26,52 @@ type AgentRunRecord = {
 
 type AiTerminalStatus = 'blocked' | 'skipped';
 
+type PersonaModelSettings = {
+  executorModel?: string;
+  plannerModel?: string;
+  selfCheckModel?: string;
+  extractionValidationModel?: string;
+  toolRouterModel?: string;
+  memoryValidationModel?: string;
+  memorySummarizationModel?: string;
+  loopGuardModel?: string;
+  approvalGateModel?: string;
+  selectorInferenceModel?: string;
+  outputNormalizationModel?: string;
+};
+
+const toOptionalModelSetting = (
+  settings: Record<string, unknown>,
+  key: keyof PersonaModelSettings
+): string | undefined => {
+  const value = settings[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+};
+
+const toPersonaModelSettings = (value: unknown): PersonaModelSettings => {
+  const settingsRecord = coercePayloadObject(value) ?? {};
+  return {
+    executorModel: toOptionalModelSetting(settingsRecord, 'executorModel'),
+    plannerModel: toOptionalModelSetting(settingsRecord, 'plannerModel'),
+    selfCheckModel: toOptionalModelSetting(settingsRecord, 'selfCheckModel'),
+    extractionValidationModel: toOptionalModelSetting(settingsRecord, 'extractionValidationModel'),
+    toolRouterModel: toOptionalModelSetting(settingsRecord, 'toolRouterModel'),
+    memoryValidationModel: toOptionalModelSetting(settingsRecord, 'memoryValidationModel'),
+    memorySummarizationModel: toOptionalModelSetting(settingsRecord, 'memorySummarizationModel'),
+    loopGuardModel: toOptionalModelSetting(settingsRecord, 'loopGuardModel'),
+    approvalGateModel: toOptionalModelSetting(settingsRecord, 'approvalGateModel'),
+    selectorInferenceModel: toOptionalModelSetting(settingsRecord, 'selectorInferenceModel'),
+    outputNormalizationModel: toOptionalModelSetting(settingsRecord, 'outputNormalizationModel'),
+  };
+};
+
+const toLearnerChatResult = (value: unknown): { message: string; sources: unknown[] } => {
+  const data = coercePayloadObject(value) ?? {};
+  const message = typeof data['message'] === 'string' ? data['message'] : '';
+  const sources = Array.isArray(data['sources']) ? data['sources'] : [];
+  return { message, sources };
+};
+
 const buildAiTerminalOutputs = (options: {
   status: AiTerminalStatus;
   reason: string;
@@ -164,7 +210,7 @@ export const handleAgent: NodeHandler = async ({
   const persona = agentConfig.personaId
     ? personas.find((item: { id: string }) => item.id === agentConfig.personaId)
     : undefined;
-  const settings = (persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS) as any;
+  const settings = toPersonaModelSettings(persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS);
 
   const payload: AgentEnqueuePayload = {
     prompt,
@@ -197,7 +243,7 @@ export const handleAgent: NodeHandler = async ({
     if (!enqueueResult.ok) {
       throw new Error(enqueueResult.error || 'Failed to enqueue agent run.');
     }
-    const runIdRaw = (enqueueResult.data as any).runId;
+    const runIdRaw = enqueueResult.data.runId;
     if (typeof runIdRaw !== 'string' || runIdRaw.trim().length === 0) {
       throw new Error('Agent run enqueue response did not include a valid run id.');
     }
@@ -208,10 +254,10 @@ export const handleAgent: NodeHandler = async ({
     if (agentConfig.waitForResult === false) {
       return {
         jobId: runId,
-        status: (enqueueResult.data as any).status ?? 'queued',
+        status: 'queued',
         bundle: {
           runId,
-          status: (enqueueResult.data as any).status ?? 'queued',
+          status: 'queued',
           personaId: persona?.id ?? null,
           personaName: persona?.name ?? null,
           model: settings.executorModel ?? null,
@@ -362,17 +408,18 @@ export const handleLearnerAgent: NodeHandler = async ({
     if (!response.ok) {
       throw new Error(response.error || 'Learner agent chat failed.');
     }
+    const chatResult = toLearnerChatResult(response.data);
     executed.ai.add(node.id);
 
     const includeSources = learnerConfig.includeSources !== false;
     return {
-      result: response.data.message,
-      sources: includeSources ? response.data.sources : [],
+      result: chatResult.message,
+      sources: includeSources ? chatResult.sources : [],
       status: 'completed',
       bundle: {
         agentId,
-        message: response.data.message,
-        sources: includeSources ? response.data.sources : [],
+        message: chatResult.message,
+        sources: includeSources ? chatResult.sources : [],
       },
       payloadHash,
     };

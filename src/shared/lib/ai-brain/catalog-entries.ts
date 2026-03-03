@@ -87,7 +87,19 @@ export const catalogToEntries = (
     'entries' | keyof BrainCatalogArrays
   >
 ): AiBrainCatalogEntry[] => {
-  return sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
+  const canonicalEntries = sanitizeCatalogEntries(Array.isArray(catalog.entries) ? catalog.entries : []);
+  if (canonicalEntries.length > 0) return canonicalEntries;
+
+  return sanitizeCatalogEntries(
+    BRAIN_CATALOG_POOL_VALUES.flatMap((pool): AiBrainCatalogEntry[] => {
+      const poolValues = catalog[pool];
+      if (!Array.isArray(poolValues)) return [];
+      return poolValues.map((value) => ({
+        pool,
+        value: String(value ?? ''),
+      }));
+    })
+  );
 };
 
 export const hasCatalogPoolEntries = (

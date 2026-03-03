@@ -29,4 +29,22 @@ describe('server model catalog', () => {
 
     await expect(listBrainModels()).rejects.toThrow(/Invalid AI Brain provider catalog payload/i);
   });
+
+  it('supports legacy provider catalog pool arrays for backward compatibility', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({
+        modelPresets: ['gpt-4o-mini'],
+        paidModels: ['gpt-4.1'],
+        ollamaModels: ['llama3.1'],
+        agentModels: [],
+        deepthinkingAgents: [],
+        playwrightPersonas: [],
+      })
+    );
+
+    const payload = await listBrainModels();
+
+    expect(payload.models).toEqual(['gpt-4o-mini', 'gpt-4.1', 'llama3.1']);
+    expect(payload.sources?.configuredOllamaModels).toEqual(['llama3.1']);
+  });
 });

@@ -179,6 +179,7 @@ export function useSettingsDataImpl(args: {
 
   useEffect(() => {
     if (settingsQuery.isLoading) return;
+    if (promptExploderSettingsValidationError) return;
 
     const hydrationSignature = [
       rawExploderSettings ?? '__missing__',
@@ -214,6 +215,7 @@ export function useSettingsDataImpl(args: {
     promptExploderSettings,
     rawExploderSettings,
     settingsQuery.isLoading,
+    promptExploderSettingsValidationError,
     shouldPreferCaseResolverValidationStack,
     validatorPatternLists,
     validatorPatternListsHydrationSignature,
@@ -347,13 +349,19 @@ export function useSettingsDataImpl(args: {
 
   useEffect(() => {
     if (settingsQuery.isLoading) return;
+    if (promptExploderSettingsValidationError) return;
     const rulesJson = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY + '_rules');
     const rules = parsePromptValidationRules(rulesJson ?? '');
     if (rules && 'ok' in rules && rules.ok) {
       setSessionLearnedRules(rules.rules);
     }
     setSessionLearnedTemplates(promptExploderSettings.learning.templates);
-  }, [settingsQuery.isLoading, settingsMap, promptExploderSettings.learning.templates]);
+  }, [
+    settingsQuery.isLoading,
+    settingsMap,
+    promptExploderSettings.learning.templates,
+    promptExploderSettingsValidationError,
+  ]);
 
   useEffect(() => {
     const drafts = buildPromptExploderParserTuningDrafts({

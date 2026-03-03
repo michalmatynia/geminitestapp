@@ -1,6 +1,5 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { SlotsActions, SlotsState } from '../../context/SlotsContext';
 
 import { setImageStudioSlotImageLocked } from '@/features/ai/image-studio/utils/slot-image-lock';
 
@@ -25,13 +24,37 @@ type UploadAssetRecord = {
 type LocalUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
 type DriveImportMode = LocalUploadMode;
 
+type UploadResultFailure = { error?: string | null };
+
+type UploadMutationResult = {
+  uploaded?: UploadAssetRecord[] | null;
+  importedFiles?: UploadAssetRecord[] | null;
+  warnings?: string[] | null;
+  failures?: UploadResultFailure[] | null;
+};
+
+type AsyncMutation<TInput, TResult> = {
+  mutateAsync: (input: TInput) => Promise<TResult>;
+};
+
+type TemporaryObjectUploadDraft = {
+  id: string;
+  filepath: string;
+  filename: string;
+  width: number | null;
+  height: number | null;
+};
+
 type CreateUploadHandlersDeps = {
   applyEnvironmentReferenceDraft: (asset: UploadAssetRecord) => void;
   clearTemporaryUpload: (asset: { id: string; filepath: string }) => Promise<void>;
-  createSlots: SlotsActions['createSlots'];
+  createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
   driveImportMode: DriveImportMode;
   driveImportTargetId: string | null;
-  importFromDriveMutation: SlotsActions['importFromDriveMutation'];
+  importFromDriveMutation: AsyncMutation<
+    { files: ImageFileSelection[]; folder: string },
+    UploadMutationResult
+  >;
   localUploadMode: LocalUploadMode;
   localUploadTargetId: string | null;
   selectedFolder: string | null;
@@ -42,14 +65,17 @@ type CreateUploadHandlersDeps = {
   setLocalUploadMode: (mode: LocalUploadMode) => void;
   setLocalUploadTargetId: (targetId: string | null) => void;
   setSelectedSlotId: (slotId: string | null) => void;
-  setTemporaryObjectUpload: SlotsActions['setTemporaryObjectUpload'];
+  setTemporaryObjectUpload: (asset: TemporaryObjectUploadDraft | null) => void;
   slotHasRenderableImage: (slot: ImageStudioSlotRecord | null | undefined) => boolean;
   slotsCount: number;
-  temporaryObjectUpload: SlotsState['temporaryObjectUpload'];
+  temporaryObjectUpload: TemporaryObjectUploadDraft | null;
   toast: Toast;
   toSlotName: (filename: string, index: number) => string;
-  updateSlotMutation: SlotsActions['updateSlotMutation'];
-  uploadMutation: SlotsActions['uploadMutation'];
+  updateSlotMutation: AsyncMutation<
+    { id: string; data: Partial<ImageStudioSlotRecord> },
+    unknown
+  >;
+  uploadMutation: AsyncMutation<{ files: File[]; folder: string }, UploadMutationResult>;
 };
 
 type UploadHandlers = {
@@ -60,19 +86,33 @@ type UploadHandlers = {
 
 const toAssetDraft = (
   primary: UploadAssetRecord
-): {
-  id: string;
-  filepath: string;
-  filename: string;
-  width: number | null;
-  height: number | null;
-} => ({
+): TemporaryObjectUploadDraft => ({
   id: primary.id,
   filepath: primary.filepath,
   filename: primary.filename ?? '',
   width: typeof primary.width === 'number' ? primary.width : null,
   height: typeof primary.height === 'number' ? primary.height : null,
 });
+
+const getUploadedAssets = (result: UploadMutationResult): UploadAssetRecord[] => {
+  if (Array.isArray(result.importedFiles) && result.importedFiles.length > 0) {
+    return result.importedFiles;
+  }
+  if (Array.isArray(result.uploaded) && result.uploaded.length > 0) {
+    return result.uploaded;
+  }
+  return [];
+};
+
+const getUploadFailureMessage = (result: UploadMutationResult, fallback: string): string => {
+  const warning = Array.isArray(result.warnings) ? result.warnings[0] : null;
+  const failure =
+    Array.isArray(result.failures) && result.failures.length > 0
+      ? result.failures[0]?.error ?? null
+      : null;
+  const message = failure ?? warning;
+  return typeof message === 'string' && message.trim().length > 0 ? message : fallback;
+};
 
 export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHandlers => {
   const handleDriveSelection = async (files: ImageFileSelection[]): Promise<void> => {
@@ -85,9 +125,9 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
         files,
         folder: deps.selectedFolder ?? '',
       });
-      const imported = result.uploaded ?? [];
+      const imported = getUploadedAssets(result);
       if (imported.length === 0) {
-        throw new Error(result.failures?.[0]?.error || 'No files imported.');
+        throw new Error(getUploadFailureMessage(result, 'No files imported.'));
       }
 
       if (deps.driveImportMode === 'temporary-object') {
@@ -194,9 +234,9 @@ export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHand
         files,
         folder: deps.selectedFolder ?? '',
       });
-      const uploaded = result.uploaded ?? [];
+      const uploaded = getUploadedAssets(result);
       if (uploaded.length === 0) {
-        throw new Error(result.failures?.[0]?.error || 'No files uploaded.');
+        throw new Error(getUploadFailureMessage(result, 'No files uploaded.'));
       }
 
       if (deps.localUploadMode === 'temporary-object') {

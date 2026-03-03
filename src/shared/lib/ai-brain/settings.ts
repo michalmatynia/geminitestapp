@@ -17,7 +17,6 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
-  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
   entriesToCatalogArrays,
   sanitizeCatalogEntries,
@@ -427,18 +426,6 @@ export const parseBrainProviderCatalog = (
     throw validationError('Invalid AI Brain provider catalog payload.', {
       source: 'ai_brain.provider_catalog',
       reason: 'invalid_shape',
-    });
-  }
-
-  const parsedRecord = parsed as Record<string, unknown>;
-  const legacyPoolKeys = BRAIN_CATALOG_POOL_VALUES.filter(
-    (pool: string): boolean => Object.prototype.hasOwnProperty.call(parsedRecord, pool)
-  );
-  if (legacyPoolKeys.length > 0) {
-    throw validationError('Legacy AI Brain provider catalog pool arrays are no longer supported.', {
-      source: 'ai_brain.provider_catalog',
-      reason: 'deprecated_catalog_pool_arrays',
-      keys: legacyPoolKeys,
     });
   }
 

@@ -81,10 +81,22 @@ export type CmsThemeUpdateInput = UpdateCmsThemeDto;
 /**
  * CMS Component Contract
  */
+export const cmsPageBuilderComponentContentSchema = z
+  .object({
+    zone: z.lazy(() => pageZoneSchema).optional(),
+    settings: z.record(z.string(), z.unknown()).optional(),
+    blocks: z.array(z.lazy(() => cmsBlockInstanceSchema)).optional(),
+    sectionId: z.string().optional(),
+    parentSectionId: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export type CmsPageBuilderComponentContentDto = z.infer<typeof cmsPageBuilderComponentContentSchema>;
+
 export const cmsPageComponentSchema = dtoBaseSchema.extend({
   type: z.string(),
   order: z.number(),
-  content: z.record(z.string(), z.unknown()),
+  content: cmsPageBuilderComponentContentSchema,
   pageId: z.string(),
 });
 
@@ -199,6 +211,7 @@ export type CmsSectionInstanceDto = {
   id: string;
   type: string;
   zone: PageZone;
+  parentSectionId?: string | null;
   settings: Record<string, unknown>;
   blocks: CmsBlockInstanceDto[];
 };
@@ -207,6 +220,7 @@ export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.obje
   id: z.string(),
   type: z.string(),
   zone: pageZoneSchema,
+  parentSectionId: z.string().nullable().optional(),
   settings: z.record(z.string(), z.unknown()),
   blocks: z.array(cmsBlockInstanceSchema),
 });
@@ -238,10 +252,25 @@ export interface BlockDragData {
   parentBlockId?: string;
 }
 
-export const clipboardDataSchema = z.object({
-  type: z.enum(['section', 'block']),
-  data: z.union([cmsSectionInstanceSchema, cmsBlockInstanceSchema]),
+export const sectionHierarchyClipboardDataSchema = z.object({
+  rootSectionId: z.string(),
+  sections: z.array(cmsSectionInstanceSchema),
 });
+
+export const clipboardDataSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('section'),
+    data: cmsSectionInstanceSchema,
+  }),
+  z.object({
+    type: z.literal('block'),
+    data: cmsBlockInstanceSchema,
+  }),
+  z.object({
+    type: z.literal('section_hierarchy'),
+    data: sectionHierarchyClipboardDataSchema,
+  }),
+]);
 
 export type ClipboardDataDto = z.infer<typeof clipboardDataSchema>;
 export type ClipboardData = ClipboardDataDto;
@@ -490,6 +519,13 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
     type: z.literal('MOVE_SECTION_TO_ZONE'),
     sectionId: z.string(),
     toZone: pageZoneSchema,
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_SECTION_IN_TREE'),
+    sectionId: z.string(),
+    toZone: pageZoneSchema,
+    toParentSectionId: z.string().nullable().optional(),
     toIndex: z.number(),
   }),
   z.object({ type: z.literal('SET_PAGE_STATUS'), status: cmsPageStatusSchema }),

@@ -121,8 +121,9 @@ const readCreatedSlotIdsFromPayload = (payload: unknown): string[] => {
 };
 
 const extractCreatedSlotIdsFromRun = (runRecord: ImageStudioRunRecord): string[] => {
-  const run = runRecord as any;
-  const historyEvents = Array.isArray(run.historyEvents) ? [...run.historyEvents].reverse() : [];
+  const historyEvents = Array.isArray(runRecord.historyEvents)
+    ? [...runRecord.historyEvents].reverse()
+    : [];
   const createdSlotIds: string[] = [];
   const seen = new Set<string>();
 
@@ -161,22 +162,34 @@ const buildPendingLandingSlots = (
   }));
 };
 
+const toImageFileRecord = (
+  output: { id: string; filepath: string },
+  timestamp: string
+): ImageFileRecord => ({
+  id: output.id,
+  filepath: output.filepath,
+  filename: output.filepath.split('/').pop() || output.id,
+  mimetype: 'image/png',
+  size: 0,
+  tags: [],
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
+const toImageFileRecords = (
+  outputs: Array<{ id: string; filepath: string }>
+): ImageFileRecord[] => {
+  const timestamp = new Date().toISOString();
+  return outputs.map((output) => toImageFileRecord(output, timestamp));
+};
+
 const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingSlot[] => {
   const outputs = Array.isArray(run.outputs) ? run.outputs : [];
   const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);
   return Array.from({ length: slotCount }, (_value, index) => {
     const rawOutput = outputs[index] ?? null;
     const output: ImageFileRecord | null = rawOutput
-      ? {
-        id: rawOutput.id,
-        filepath: rawOutput.filepath,
-        filename: rawOutput.filepath.split('/').pop() || rawOutput.id,
-        mimetype: 'image/png', // Fallback, assuming PNG for generated variants
-        size: 0, // Unknown size for variants in this context
-        tags: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
+      ? toImageFileRecord(rawOutput, new Date().toISOString())
       : null;
     const status: GenerationLandingSlot['status'] = output
       ? 'completed'
@@ -187,7 +200,7 @@ const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingS
       id: `${run.id}:${index + 1}`,
       index: index + 1,
       status,
-      output: output as any,
+      output,
     };
   });
 };
@@ -209,11 +222,10 @@ const markLandingSlotsAsFailed = (
 };
 
 const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationRecord | null => {
-  const run = runRecord as any;
-  const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+  const outputs = Array.isArray(runRecord.outputs) ? runRecord.outputs : [];
   if (outputs.length === 0) return null;
 
-  const requestMask = run.request?.mask;
+  const requestMask = runRecord.request?.mask;
   const maskShapeCount =
     requestMask?.type === 'polygons'
       ? Array.isArray(requestMask.polygons)
@@ -228,24 +240,16 @@ const toGenerationRecordFromRun = (runRecord: ImageStudioRunRecord): GenerationR
   const maskFeather = requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;
 
   return {
-    id: run.id,
-    timestamp: run.finishedAt ?? run.updatedAt ?? run.createdAt,
-    prompt: run.request?.prompt ?? '',
+    id: runRecord.id,
+    timestamp: runRecord.finishedAt ?? runRecord.updatedAt ?? runRecord.createdAt,
+    prompt: runRecord.request?.prompt ?? '',
     maskShapeCount,
     maskInvert,
     maskFeather,
-    outputs: outputs.map((out: any) => ({
-      id: out.id,
-      filepath: out.filepath,
-      filename: out.filepath.split('/').pop() || out.id,
-      mimetype: 'image/png',
-      size: 0,
-      tags: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })),
-    slotId: run.request?.asset?.id ?? '',
-    slotName: run.request?.asset?.id ?? run.request?.asset?.filepath ?? run.id,
+    outputs: toImageFileRecords(outputs),
+    slotId: runRecord.request?.asset?.id ?? '',
+    slotName:
+      runRecord.request?.asset?.id ?? runRecord.request?.asset?.filepath ?? runRecord.id,
   };
 };
 
@@ -364,33 +368,34 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       };
 
       const applyRunSnapshot = (runRecord: ImageStudioRunRecord): boolean => {
-        const run = runRecord as any;
         if (token.cancelled || token.settled || pollTokenRef.current !== token) return true;
 
-        setActiveRunId(run.id);
-        setActiveRunSourceSlotId(run.request?.asset?.id?.trim() || null);
-        setActiveRunStatus(run.status);
-        setActiveRunError(run.errorMessage ?? null);
+        setActiveRunId(runRecord.id);
+        setActiveRunSourceSlotId(runRecord.request?.asset?.id?.trim() || null);
+        setActiveRunStatus(runRecord.status);
+        setActiveRunError(runRecord.errorMessage ?? null);
 
         const expectedOutputs = normalizeExpectedOutputs(
-          run.expectedOutputs,
+          runRecord.expectedOutputs,
           params.expectedOutputs
         );
-        if (run.status === 'completed') {
-          const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+        if (runRecord.status === 'completed') {
+          const outputs = Array.isArray(runRecord.outputs)
+            ? toImageFileRecords(runRecord.outputs)
+            : [];
           if (outputs.length === 0) {
             const message =
-              run.errorMessage?.trim() || 'Generation completed but returned no images.';
+              runRecord.errorMessage?.trim() || 'Generation completed but returned no images.';
             setActiveRunStatus('failed');
             setActiveRunError(message);
             setRunOutputs([]);
-            setLandingSlots(markLandingSlotsAsFailed([], run.id, expectedOutputs));
+            setLandingSlots(markLandingSlotsAsFailed([], runRecord.id, expectedOutputs));
             settle();
             toast(message, { variant: 'error' });
             return true;
           }
 
-          const createdSlotIds = extractCreatedSlotIdsFromRun(run);
+          const createdSlotIds = extractCreatedSlotIdsFromRun(runRecord);
           const generatedSourceSlotId = createdSlotIds[0] ?? null;
           const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;
 
@@ -400,14 +405,14 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           }
           setLandingSlots(
             buildLandingSlotsFromRun({
-              ...run,
+              ...runRecord,
               expectedOutputs,
             })
           );
 
           const record: GenerationRecord = {
-            id: run.id,
-            timestamp: run.finishedAt ?? new Date().toISOString(),
+            id: runRecord.id,
+            timestamp: runRecord.finishedAt ?? new Date().toISOString(),
             prompt: params.resolvedPrompt,
             maskShapeCount: params.maskShapeCount,
             maskInvert: params.submittedMaskInvert,
@@ -425,16 +430,20 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           return true;
         }
 
-        if (run.status === 'failed') {
-          const failedOutputs = Array.isArray(run.outputs) ? run.outputs : [];
+        if (runRecord.status === 'failed') {
+          const failedOutputs = Array.isArray(runRecord.outputs)
+            ? toImageFileRecords(runRecord.outputs)
+            : [];
           const failedLandingSlots = buildLandingSlotsFromRun({
-            ...run,
+            ...runRecord,
             expectedOutputs,
           });
           setRunOutputs(failedOutputs);
-          setLandingSlots(markLandingSlotsAsFailed(failedLandingSlots, run.id, expectedOutputs));
+          setLandingSlots(
+            markLandingSlotsAsFailed(failedLandingSlots, runRecord.id, expectedOutputs)
+          );
           settle();
-          toast(run.errorMessage || 'Generation failed.', { variant: 'error' });
+          toast(runRecord.errorMessage || 'Generation failed.', { variant: 'error' });
           return true;
         }
 
@@ -573,7 +582,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         const latestRunInFlight =
           runs.find((run) => run.status === 'queued' || run.status === 'running') ?? null;
         const latestRunRaw = latestRunInFlight ?? runs[0] ?? null;
-        const latestRun = latestRunRaw as any;
+        const latestRun = latestRunRaw;
         if (!latestRun) {
           setRunOutputs([]);
           setGenerationHistory([]);
@@ -585,7 +594,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           return;
         }
 
-        setRunOutputs(Array.isArray(latestRun.outputs) ? (latestRun.outputs) : []);
+        setRunOutputs(Array.isArray(latestRun.outputs) ? toImageFileRecords(latestRun.outputs) : []);
         setLandingSlots(buildLandingSlotsFromRun(latestRun));
         setActiveRunId(latestRun.id);
         setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
@@ -685,12 +694,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     setPendingSourceSlotId(null);
     setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
 
-    runMutation.mutate(requestPreview.payload as any, {
+    runMutation.mutate(requestPreview.payload, {
       onSuccess: (data) => {
         const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
         setActiveRunId(data.runId);
         setActiveRunSourceSlotId(submittedSlotId || null);
-        setActiveRunStatus(data.status as any);
+        setActiveRunStatus(data.status);
         setActiveRunError(null);
         setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
         if (data.dispatchMode === 'inline') {

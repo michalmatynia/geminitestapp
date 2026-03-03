@@ -3,10 +3,11 @@
 import React, { createContext, useContext } from 'react';
 
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils';
+import type { ClipboardData } from '@/shared/contracts/cms';
 
 import type { PageZone } from '../../../types/page-builder';
 
-type ComponentTreeClipboard = { type: 'section' | 'block'; data: unknown } | null;
+type ComponentTreeClipboard = ClipboardData | null;
 
 export type ComponentTreePanelContextValue = {
   currentPage: unknown;

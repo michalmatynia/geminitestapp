@@ -19,6 +19,8 @@ import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
 import { normalizePageSlugValues } from '../../utils/slug-utils';
+import { isCmsSectionHidden } from '../../utils/page-builder-normalization';
+import { buildHierarchyIndexes, flattenByZonePreorder } from '../../hooks/page-builder/section-hierarchy';
 import {
   usePageBuilderState,
   usePageBuilderDispatch,
@@ -226,6 +228,7 @@ export function PagePreviewPanel(): React.ReactNode {
 
     const page = state.currentPage;
     const slugValues = normalizePageSlugValues(page.slugs);
+    const orderedSections = flattenByZonePreorder(state.sections);
     const updatedPage = {
       ...page,
       name: page.name?.trim() || 'Untitled page',
@@ -237,10 +240,16 @@ export function PagePreviewPanel(): React.ReactNode {
       ...(page.seoOgImage && { seoOgImage: page.seoOgImage }),
       ...(page.seoCanonical && { seoCanonical: page.seoCanonical }),
       ...(page.robotsMeta && { robotsMeta: page.robotsMeta }),
-      components: state.sections.map((s: SectionInstance, index: number) => ({
+      components: orderedSections.map((s: SectionInstance, index: number) => ({
         type: s.type,
         order: index,
-        content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
+        content: {
+          zone: s.zone,
+          sectionId: s.id,
+          parentSectionId: s.parentSectionId ?? null,
+          settings: s.settings,
+          blocks: s.blocks,
+        },
       })),
       slugIds: slugValues,
     };
@@ -387,16 +396,19 @@ export function PagePreviewPanel(): React.ReactNode {
     previousPanelsRef.current = null;
   }, [isViewing, setPanelsCollapsed, state.leftPanelCollapsed, state.rightPanelCollapsed]);
 
-  // Group sections by zone
-  const sectionsByZone = ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
-    (acc: Record<PageZone, SectionInstance[]>, zone: PageZone) => {
-      acc[zone] = state.sections.filter((s: SectionInstance) => s.zone === zone);
-      return acc;
-    },
-    { header: [], template: [], footer: [] }
-  );
+  const hierarchy = useMemo(() => buildHierarchyIndexes(state.sections), [state.sections]);
+  const rootSectionIdsByZone = useMemo((): Record<PageZone, string[]> => {
+    const roots = hierarchy.childrenByParent.get(null) ?? [];
+    const grouped: Record<PageZone, string[]> = { header: [], template: [], footer: [] };
+    roots.forEach((id: string) => {
+      const section = hierarchy.nodeById.get(id);
+      if (!section) return;
+      grouped[section.zone].push(id);
+    });
+    return grouped;
+  }, [hierarchy.childrenByParent, hierarchy.nodeById]);
 
-  const hasSections = state.sections.length > 0;
+  const hasSections = hierarchy.nodeById.size > 0;
   const previewWidthClass = state.previewMode === 'mobile' ? 'max-w-[420px]' : 'w-full';
   const previewFrameClass =
     state.previewMode === 'mobile'
@@ -660,17 +672,37 @@ export function PagePreviewPanel(): React.ReactNode {
                     <CmsPageProvider colorSchemes={colorSchemes || {}} layout={previewLayout}>
                       <PreviewEditorProvider value={previewEditorValue}>
                         {ZONE_ORDER.map((zone: PageZone) => {
-                          const zoneSections = sectionsByZone[zone];
-                          if (zoneSections.length === 0) return null;
+                          const rootIds = rootSectionIdsByZone[zone];
+                          if (rootIds.length === 0) return null;
+
+                          const renderSectionSubtree = (
+                            sectionId: string,
+                            depth: number
+                          ): React.ReactNode => {
+                            const section = hierarchy.nodeById.get(sectionId);
+                            if (!section) return null;
+                            if (isCmsSectionHidden(section.settings['isHidden'])) return null;
+
+                            const childIds = hierarchy.childrenByParent.get(section.id) ?? [];
+                            return (
+                              <div key={section.id}>
+                                <PreviewSection section={section} />
+                                {childIds.length > 0 ? (
+                                  <div
+                                    className={depth === 1 ? 'ml-4 border-l border-white/10 pl-3' : 'ml-5 border-l border-white/10 pl-3'}
+                                  >
+                                    {childIds.map((childId: string) =>
+                                      renderSectionSubtree(childId, depth + 1)
+                                    )}
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          };
 
                           return (
                             <div key={zone}>
-                              {/* Zone sections */}
-                              <div>
-                                {zoneSections.map((section: SectionInstance) => (
-                                  <PreviewSection key={section.id} section={section} />
-                                ))}
-                              </div>
+                              <div>{rootIds.map((sectionId: string) => renderSectionSubtree(sectionId, 1))}</div>
                             </div>
                           );
                         })}

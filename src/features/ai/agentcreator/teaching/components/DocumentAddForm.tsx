@@ -19,20 +19,22 @@ export type DocumentAddFormProps = {
   collectionId: string | null;
 };
 
-export function DocumentAddForm({
-  title,
-  setTitle,
-  source,
-  setSource,
-  tags,
-  setTags,
-  text,
-  setText,
-  onAdd,
-  isAdding,
-  isDeleting,
-  collectionId,
-}: DocumentAddFormProps): React.JSX.Element {
+export function DocumentAddForm(props: DocumentAddFormProps): React.JSX.Element {
+  const {
+    title,
+    setTitle,
+    source,
+    setSource,
+    tags,
+    setTags,
+    text,
+    setText,
+    onAdd,
+    isAdding,
+    isDeleting,
+    collectionId,
+  } = props;
+
   return (
     <FormSection title='Add Document' variant='subtle' className='p-6'>
       <div className='space-y-4'>

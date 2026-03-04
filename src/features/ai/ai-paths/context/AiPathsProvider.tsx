@@ -71,21 +71,23 @@ interface AiPathsProviderProps {
  *
  * Components consume via hooks: useSelection(), useCanvas(), usePresets(), useRunHistory(), useGraph(), useRuntime(), usePersistence()
  */
-export function AiPathsProvider({
-  children,
-  initialSelectedNodeId,
-  initialView,
-  initialClusterPresets,
-  initialDbQueryPresets,
-  initialDbNodePresets,
-  initialNodes,
-  initialEdges,
-  initialPaths,
-  initialPathConfigs,
-  initialActivePathId,
-  initialRuntimeState,
-  initialLoading,
-}: AiPathsProviderProps): React.ReactNode {
+export function AiPathsProvider(props: AiPathsProviderProps): React.ReactNode {
+  const {
+    children,
+    initialSelectedNodeId,
+    initialView,
+    initialClusterPresets,
+    initialDbQueryPresets,
+    initialDbNodePresets,
+    initialNodes,
+    initialEdges,
+    initialPaths,
+    initialPathConfigs,
+    initialActivePathId,
+    initialRuntimeState,
+    initialLoading,
+  } = props;
+
   return (
     <SelectionProvider initialSelectedNodeId={initialSelectedNodeId}>
       <CanvasProvider initialView={initialView}>

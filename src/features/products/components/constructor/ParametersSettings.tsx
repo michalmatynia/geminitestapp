@@ -81,14 +81,9 @@ const optionLabelsToMultiline = (labels: string[] | null | undefined): string =>
 const getSelectorTypeLabel = (value: ParameterSelectorType): string =>
   SELECTOR_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
-export function ParametersSettings({
-  loading,
-  parameters,
-  catalogs,
-  selectedCatalogId,
-  onCatalogChange,
-  onRefresh,
-}: ParametersSettingsProps): React.JSX.Element {
+export function ParametersSettings(props: ParametersSettingsProps): React.JSX.Element {
+  const { loading, parameters, catalogs, selectedCatalogId, onCatalogChange, onRefresh } = props;
+
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingParameter, setEditingParameter] = useState<ProductParameter | null>(null);

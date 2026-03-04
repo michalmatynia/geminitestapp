@@ -35,14 +35,9 @@ const {
 
 export { BrainCatalogNodeItemRuntimeContext };
 
-export function BrainCatalogNodeItem({
-  node,
-  entry,
-  depth,
-  isSelected,
-  isDragging,
-  select,
-}: BrainCatalogNodeItemProps): React.JSX.Element {
+export function BrainCatalogNodeItem(props: BrainCatalogNodeItemProps): React.JSX.Element {
+  const { node, entry, depth, isSelected, isDragging, select } = props;
+
   const { onEdit, onRemove, isPending } = useBrainCatalogNodeItemRuntime();
   const poolLabel = BRAIN_CATALOG_POOL_LABELS[entry.pool] ?? entry.pool;
 

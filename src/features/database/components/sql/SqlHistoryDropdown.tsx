@@ -13,13 +13,9 @@ export type SqlHistoryDropdownProps = {
   onClearHistory: () => void;
 };
 
-export function SqlHistoryDropdown({
-  history,
-  showHistory,
-  setShowHistory,
-  onSelectQuery,
-  onClearHistory,
-}: SqlHistoryDropdownProps): React.JSX.Element {
+export function SqlHistoryDropdown(props: SqlHistoryDropdownProps): React.JSX.Element {
+  const { history, showHistory, setShowHistory, onSelectQuery, onClearHistory } = props;
+
   return (
     <div className='relative'>
       <Button

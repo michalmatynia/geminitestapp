@@ -10,13 +10,11 @@ export type CategoryMapperTableHeaderActionsProps = {
   pendingCount: number;
 };
 
-export function CategoryMapperTableHeaderActions({
-  onFetch,
-  isFetching,
-  onSave,
-  isSaving,
-  pendingCount,
-}: CategoryMapperTableHeaderActionsProps): React.JSX.Element {
+export function CategoryMapperTableHeaderActions(
+  props: CategoryMapperTableHeaderActionsProps
+): React.JSX.Element {
+  const { onFetch, isFetching, onSave, isSaving, pendingCount } = props;
+
   return (
     <div className='flex items-center gap-2'>
       <Button variant='outline' size='xs' className='h-8' onClick={onFetch} loading={isFetching}>

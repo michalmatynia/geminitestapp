@@ -10,13 +10,11 @@ export type GenericMapperHeaderActionsProps = {
   pendingCount: number;
 };
 
-export function GenericMapperHeaderActions({
-  onFetch,
-  isFetching,
-  onSave,
-  isSaving,
-  pendingCount,
-}: GenericMapperHeaderActionsProps): React.JSX.Element {
+export function GenericMapperHeaderActions(
+  props: GenericMapperHeaderActionsProps
+): React.JSX.Element {
+  const { onFetch, isFetching, onSave, isSaving, pendingCount } = props;
+
   return (
     <div className='flex items-center gap-3'>
       <Button variant='outline' size='sm' onClick={onFetch} loading={isFetching}>

@@ -84,7 +84,9 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   );
 
   const delegatedServerRoutes = apiRouteRecords.filter((record) =>
-    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/server['"]/.test(record.content)
+    /export\s*{\s*[^}]+\s*}\s*from\s*['"]@\/features\/[^'"]+\/(?:server|api\/[^'"]+\/(?:handler|route))['"]/.test(
+      record.content
+    )
   );
 
   const forceDynamicRoutes = apiRouteRecords.filter((record) =>
@@ -114,11 +116,13 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   );
 
   const appRecords = sourceRecords.filter((record) => record.path.startsWith('src/app/'));
-  const appFeatureBarrelImports = appRecords.reduce(
+  const appUiRecords = appRecords.filter((record) => !record.path.startsWith('src/app/api/'));
+
+  const appFeatureBarrelImports = appUiRecords.reduce(
     (sum, record) => sum + countMatches(record.content, /from\s+['"]@\/features\/[^/'"\n]+['"]/g),
     0
   );
-  const appFeatureDeepImports = appRecords.reduce(
+  const appFeatureDeepImports = appUiRecords.reduce(
     (sum, record) =>
       sum +
       countMatches(

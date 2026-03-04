@@ -7,7 +7,6 @@ import {
   createDefaultCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-import { CASE_RESOLVER_WORKSPACE_LEGACY_KEY } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import {
   CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   compactCaseResolverWorkspaceForPersist,
@@ -240,65 +239,9 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
-  it('recovers from legacy workspace key when v2 workspace key is missing', async () => {
-    const workspace = createDefaultCaseResolverWorkspace();
+  it('returns no_record when v2 workspace key is missing', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(
-        toJsonResponse(200, [
-          {
-            key: CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-            value: JSON.stringify(workspace),
-          },
-        ])
-      )
-      .mockResolvedValueOnce(
-        toJsonResponse(200, {
-          key: CASE_RESOLVER_WORKSPACE_KEY,
-          value: JSON.stringify(workspace),
-        })
-      )
-      .mockResolvedValueOnce(
-        toJsonResponse(200, {
-          key: CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-          value: '',
-        })
-      );
-    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
-
-    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
-
-    expect(result).not.toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(7);
-    expect(fetchMock.mock.calls[4]?.[0]).toBe(
-      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_LEGACY_KEY)}`
-    );
-    expect(fetchMock.mock.calls[5]?.[0]).toBe('/api/settings');
-    expect(fetchMock.mock.calls[6]?.[0]).toBe('/api/settings');
-    const migratePayload = JSON.parse((fetchMock.mock.calls[5]?.[1] as RequestInit).body as string) as {
-      key: string;
-      value: string;
-    };
-    const deletePayload = JSON.parse((fetchMock.mock.calls[6]?.[1] as RequestInit).body as string) as {
-      key: string;
-      value: string;
-    };
-    expect(migratePayload.key).toBe(CASE_RESOLVER_WORKSPACE_KEY);
-    expect(deletePayload.key).toBe(CASE_RESOLVER_WORKSPACE_LEGACY_KEY);
-    expect(deletePayload.value).toBe('');
-  });
-
-  it('returns no_record when both v2 and legacy workspace keys are missing', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
-      .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
       .mockResolvedValueOnce(toJsonResponse(200, []))
@@ -310,7 +253,7 @@ describe('case-resolver workspace persistence', () => {
     });
 
     expect(result.status).toBe('no_record');
-    expect(fetchMock).toHaveBeenCalledTimes(8);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('supports cached-only heavy fallback when fresh mode is disabled', async () => {
@@ -341,7 +284,12 @@ describe('case-resolver workspace persistence', () => {
   });
 
   it('uses context_fast attempt profile order for context-critical fetches', async () => {
-    const workspace = createDefaultCaseResolverWorkspace();
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-context-fast',
+      workspaceRevision: 1,
+      lastMutationId: 'context-fast-hit',
+    };
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(toJsonResponse(500, { error: 'light fresh failed' }))

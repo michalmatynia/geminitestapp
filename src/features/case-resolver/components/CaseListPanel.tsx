@@ -656,15 +656,6 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       isLoading={false}
       contentClassName='space-y-3'
     >
-      {casesLoadState === 'recovered_from_legacy' ? (
-        <Card
-          variant='subtle'
-          padding='sm'
-          className='border-amber-300/30 bg-amber-500/10 text-xs text-amber-200'
-        >
-          Workspace recovered from legacy key and migrated to v2.
-        </Card>
-      ) : null}
       {isSearchActive ? (
         <CaseListSearchPanel
           workspace={workspace}
@@ -743,11 +734,6 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
         >
           <Folder className='mb-4 size-10 text-muted-foreground/20' />
-          {casesLoadState === 'recovered_from_legacy' ? (
-            <p className='mb-2 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-300'>
-              Recovered From Legacy Workspace
-            </p>
-          ) : null}
           <p className='text-sm text-muted-foreground'>No cases found. Create your first case.</p>
           <Button
             variant='outline'

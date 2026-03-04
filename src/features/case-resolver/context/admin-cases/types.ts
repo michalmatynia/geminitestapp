@@ -48,8 +48,7 @@ export type CaseResolverCasesLoadState =
   | 'loading'
   | 'ready'
   | 'no_record'
-  | 'unavailable'
-  | 'recovered_from_legacy';
+  | 'unavailable';
 
 export type AdminCaseResolverCasesContextValue = {
   // State

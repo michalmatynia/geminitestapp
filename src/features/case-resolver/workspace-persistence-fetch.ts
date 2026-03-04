@@ -12,12 +12,9 @@ import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
-  CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-  resolveSettingRecordFromSettingsPayload,
   readWorkspaceMetadata,
   resolveWorkspaceRecordFromSettingsPayload,
   buildWorkspaceRecordFetchAttempts,
-  buildSettingRecordFetchAttempts,
   type WorkspaceMetadataLike,
 } from './utils/workspace-settings-persistence-helpers';
 
@@ -49,27 +46,6 @@ export type WorkspaceRecordAttemptResult =
       sawTransportFailure: boolean;
       budgetExhausted: boolean;
     };
-
-const upsertWorkspaceRecord = async (input: {
-  key: string;
-  value: string;
-}): Promise<boolean> => {
-  try {
-    const response = await fetch('/api/settings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key: input.key,
-        value: input.value,
-      }),
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-};
 
 const fetchWorkspaceRecordByKeyAttempts = async ({
   source,
@@ -131,10 +107,7 @@ const fetchWorkspaceRecordByKeyAttempts = async ({
         continue;
       }
       const payload = (await response.json()) as unknown;
-      const workspaceRecord =
-        workspaceKey === CASE_RESOLVER_WORKSPACE_KEY
-          ? resolveWorkspaceRecordFromSettingsPayload(payload)
-          : resolveSettingRecordFromSettingsPayload(payload, workspaceKey);
+      const workspaceRecord = resolveWorkspaceRecordFromSettingsPayload(payload);
       if (!workspaceRecord) {
         lastFailureMessage = `Attempt ${attempt.key} returned no workspace record.`;
         logCaseResolverWorkspaceEvent({
@@ -317,11 +290,11 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     };
   }
 
-  let lastFailureMessage = primaryResult.lastFailureMessage;
-  let sawWorkspaceRecordMissingRequiredFile = primaryResult.sawMissingRequiredFile;
-  let lastMissingRequiredAttemptKey = primaryResult.lastMissingRequiredAttemptKey;
-  let sawTransportFailure = primaryResult.sawTransportFailure;
-  let budgetExhausted = primaryResult.budgetExhausted;
+  const lastFailureMessage = primaryResult.lastFailureMessage;
+  const sawWorkspaceRecordMissingRequiredFile = primaryResult.sawMissingRequiredFile;
+  const lastMissingRequiredAttemptKey = primaryResult.lastMissingRequiredAttemptKey;
+  const sawTransportFailure = primaryResult.sawTransportFailure;
+  const budgetExhausted = primaryResult.budgetExhausted;
 
   if (budgetExhausted) {
     logCaseResolverWorkspaceEvent({
@@ -344,104 +317,6 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
       durationMs: Date.now() - startedAt,
       message: lastFailureMessage,
     };
-  }
-
-  const v2MissingRecord =
-    !sawTransportFailure && !budgetExhausted && !sawWorkspaceRecordMissingRequiredFile;
-  if (v2MissingRecord) {
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'cases_workspace_v2_missing',
-      durationMs: Date.now() - startedAt,
-      message: `attempt_profile=${attemptProfile} key=${CASE_RESOLVER_WORKSPACE_KEY}`,
-    });
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'cases_workspace_legacy_migration_started',
-      durationMs: Date.now() - startedAt,
-      message: `attempt_profile=${attemptProfile} key=${CASE_RESOLVER_WORKSPACE_LEGACY_KEY}`,
-    });
-    const legacyAttempts = buildSettingRecordFetchAttempts({
-      key: CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-      strategy: fetchStrategy,
-      fresh: fetchFresh,
-    });
-    const legacyResult = await fetchWorkspaceRecordByKeyAttempts({
-      source,
-      workspaceKey: CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-      attempts: legacyAttempts,
-      startedAt,
-      maxTotalMs,
-      attemptTimeoutMs,
-      requiredFileId,
-      logHeavyFallback: fetchStrategy === 'light_then_heavy',
-    });
-    if (legacyResult.status === 'resolved') {
-      const migratedWorkspace = legacyResult.workspace;
-      const migratedWorkspaceRaw = JSON.stringify(migratedWorkspace);
-      const persistToV2Ok = await upsertWorkspaceRecord({
-        key: CASE_RESOLVER_WORKSPACE_KEY,
-        value: migratedWorkspaceRaw,
-      });
-      if (persistToV2Ok) {
-        logCaseResolverWorkspaceEvent({
-          source,
-          action: 'cases_workspace_legacy_migration_succeeded',
-          workspaceRevision: getCaseResolverWorkspaceRevision(migratedWorkspace),
-          durationMs: Date.now() - startedAt,
-          message: `attempt=${legacyResult.attemptKey}`,
-        });
-        const deleteLegacyOk = await upsertWorkspaceRecord({
-          key: CASE_RESOLVER_WORKSPACE_LEGACY_KEY,
-          value: '',
-        });
-        if (deleteLegacyOk) {
-          logCaseResolverWorkspaceEvent({
-            source,
-            action: 'cases_workspace_legacy_key_deleted',
-            durationMs: Date.now() - startedAt,
-          });
-        }
-      } else {
-        logCaseResolverWorkspaceEvent({
-          source,
-          action: 'cases_workspace_legacy_migration_failed',
-          durationMs: Date.now() - startedAt,
-          message: 'failed_to_persist_v2_record',
-        });
-      }
-      return {
-        status: 'resolved',
-        workspace: migratedWorkspace,
-        attemptKey: legacyResult.attemptKey,
-        scope: legacyResult.scope,
-        source: 'resolved_legacy_migrated',
-        durationMs: Date.now() - startedAt,
-      };
-    }
-    if (
-      requiredFileId.length > 0 &&
-      legacyResult.sawMissingRequiredFile &&
-      !legacyResult.sawTransportFailure &&
-      !legacyResult.budgetExhausted
-    ) {
-      return {
-        status: 'missing_required_file',
-        attemptKey: legacyResult.lastMissingRequiredAttemptKey,
-        durationMs: Date.now() - startedAt,
-        message: legacyResult.lastFailureMessage,
-      };
-    }
-    if (!legacyResult.sawTransportFailure && !legacyResult.budgetExhausted) {
-      return {
-        status: 'no_record',
-        durationMs: Date.now() - startedAt,
-        message: legacyResult.lastFailureMessage,
-      };
-    }
-    sawTransportFailure = sawTransportFailure || legacyResult.sawTransportFailure;
-    budgetExhausted = budgetExhausted || legacyResult.budgetExhausted;
-    lastFailureMessage = legacyResult.lastFailureMessage;
   }
 
   if (!sawTransportFailure && !budgetExhausted) {

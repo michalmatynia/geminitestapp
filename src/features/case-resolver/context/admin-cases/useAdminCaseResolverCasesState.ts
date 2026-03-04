@@ -73,7 +73,7 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
   const [confirmation, setConfirmation] = useState<CaseResolverCaseListConfirmationState>(null);
-  const [casesLoadState, setCasesLoadState] = useState<CaseResolverCasesLoadState>('ready');
+  const [casesLoadState, setCasesLoadState] = useState<CaseResolverCasesLoadState>('loading');
   const [casesLoadMessage, setCasesLoadMessage] = useState<string | null>(null);
 
   const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {

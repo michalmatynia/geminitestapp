@@ -178,7 +178,12 @@ export function useCanvasInteractionsNodes({
   const activeDragSessionRef = useRef<ActiveDragSessionState | null>(null);
   const suppressedClickNodeIdRef = useRef<string | null>(null);
   const pointerCaptureRef = useRef<PointerCaptureState | null>(null);
+  const dragStateRef = useRef<typeof dragState>(dragState);
   const rafIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    dragStateRef.current = dragState;
+  }, [dragState]);
 
   const flushPendingDragUpdate = useCallback((): void => {
     if (rafIdRef.current !== null) {
@@ -206,17 +211,14 @@ export function useCanvasInteractionsNodes({
   const forceEndNodeDrag = useCallback(
     (pointerId?: number): void => {
       const activePointerCapture = pointerCaptureRef.current;
-      if (
-        activePointerCapture &&
-        (pointerId == null || pointerId === activePointerCapture.pointerId)
-      ) {
+      if (activePointerCapture) {
         releasePointerCaptureSafe(activePointerCapture.target, activePointerCapture.pointerId);
         pointerCaptureRef.current = null;
       }
 
       const hadActiveDrag =
         activeDragSessionRef.current !== null ||
-        dragState !== null ||
+        dragStateRef.current !== null ||
         pendingDragRef.current !== null ||
         rafIdRef.current !== null;
       dragCandidateRef.current = null;
@@ -227,7 +229,7 @@ export function useCanvasInteractionsNodes({
         endDrag();
       }
     },
-    [dragState, endDrag, flushPendingDragUpdate]
+    [endDrag, flushPendingDragUpdate]
   );
 
   useEffect(() => {
@@ -265,7 +267,7 @@ export function useCanvasInteractionsNodes({
       forceEndNodeDrag();
       suppressedClickNodeIdRef.current = null;
     };
-  }, [dragState, forceEndNodeDrag]);
+  }, [forceEndNodeDrag]);
 
   const handlePointerDownNode = useCallback(
     async (event: React.PointerEvent<Element>, nodeId: string): Promise<void> => {
@@ -294,9 +296,15 @@ export function useCanvasInteractionsNodes({
         target,
       };
       const node = nodes.find((item) => item.id === nodeId);
-      if (!node) return;
+      if (!node) {
+        forceEndNodeDrag(pointerId);
+        return;
+      }
       const pointerCanvas = updateLastPointerCanvasPosFromClient(clientX, clientY);
-      if (!pointerCanvas) return;
+      if (!pointerCanvas) {
+        forceEndNodeDrag(pointerId);
+        return;
+      }
       const pointerWorld = toWorldPoint(pointerCanvas);
       const canvasX = pointerWorld.x;
       const canvasY = pointerWorld.y;
@@ -349,6 +357,7 @@ export function useCanvasInteractionsNodes({
       setNodeSelection,
       stopViewAnimation,
       updateLastPointerCanvasPosFromClient,
+      forceEndNodeDrag,
     ]
   );
 

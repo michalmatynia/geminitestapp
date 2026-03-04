@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
@@ -21,11 +21,13 @@ import {
   CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  getCaseResolverWorkspaceSafeParseDiagnostics,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
   parseCaseResolverTags,
   safeParseCaseResolverWorkspace,
 } from '../settings';
+import { fetchCaseResolverWorkspaceRecordDetailed } from '../workspace-persistence';
 
 import {
   type CaseViewMode,
@@ -45,6 +47,12 @@ import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolv
 import {
   useAdminCaseResolverCasesActions,
 } from './admin-cases/useAdminCaseResolverCasesActions';
+import {
+  getCaseResolverWorkspaceRevision,
+  normalizeCaseListViewDefaults,
+  shouldAdoptIncomingCaseResolverCasesWorkspace,
+  shouldBootstrapCaseResolverCasesFromRecord,
+} from './admin-cases/utils';
 
 export type {
   CaseViewMode,
@@ -92,7 +100,11 @@ export function AdminCaseResolverCasesProvider({
     (): CaseResolverWorkspace => safeParseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
   );
-  
+  const workspaceSafeParseDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceSafeParseDiagnostics(parsedWorkspace),
+    [parsedWorkspace]
+  );
+
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
     [rawCaseResolverTags]
@@ -218,8 +230,13 @@ export function AdminCaseResolverCasesProvider({
     setCasesLoadMessage,
   } = state;
 
+  const workspaceRef = useRef(workspace);
+  workspaceRef.current = workspace;
+
   const settingsStoreRefetchRef = useRef(settingsStore.refetch);
   settingsStoreRefetchRef.current = settingsStore.refetch;
+  const workspaceBootstrapRequestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
   const toastForActions = useCallback(
     (message: string, options?: { variant?: string }): void => {
       const variant = normalizeToastVariant(options?.variant);
@@ -281,6 +298,178 @@ export function AdminCaseResolverCasesProvider({
     settingsStoreRefetchRef,
   });
 
+  const applyIncomingWorkspaceSnapshot = useCallback(
+    (incomingWorkspace: CaseResolverWorkspace): void => {
+      setWorkspace((currentWorkspace): CaseResolverWorkspace => {
+        if (
+          !shouldAdoptIncomingCaseResolverCasesWorkspace({
+            current: currentWorkspace,
+            incoming: incomingWorkspace,
+          })
+        ) {
+          return currentWorkspace;
+        }
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(incomingWorkspace);
+        lastPersistedWorkspaceRevisionRef.current = getCaseResolverWorkspaceRevision(
+          incomingWorkspace
+        );
+        return incomingWorkspace;
+      });
+    },
+    [
+      lastPersistedWorkspaceRevisionRef,
+      lastPersistedWorkspaceValueRef,
+      setWorkspace,
+    ]
+  );
+
+  const runWorkspaceBootstrap = useCallback(
+    async ({
+      source,
+      force,
+    }: {
+      source: string;
+      force: boolean;
+    }): Promise<void> => {
+      try {
+        const shouldBootstrapFromRecord =
+          force ||
+          shouldBootstrapCaseResolverCasesFromRecord(workspaceRef.current) ||
+          workspaceSafeParseDiagnostics.parseFallbackApplied;
+
+        if (!shouldBootstrapFromRecord) {
+          setCasesLoadState((currentState) => (currentState === 'loading' ? 'ready' : currentState));
+          if (!workspaceSafeParseDiagnostics.parseFallbackApplied) {
+            setCasesLoadMessage(null);
+          }
+          return;
+        }
+
+        const requestId = workspaceBootstrapRequestIdRef.current + 1;
+        workspaceBootstrapRequestIdRef.current = requestId;
+        setCasesLoadState('loading');
+        if (force) {
+          setCasesLoadMessage(null);
+        }
+
+        const bootstrapTimeoutMs = 16_000;
+        let bootstrapTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
+        const bootstrapTimeoutPromise = new Promise<
+          Awaited<ReturnType<typeof fetchCaseResolverWorkspaceRecordDetailed>>
+        >((resolve): void => {
+          bootstrapTimeoutHandle = setTimeout(() => {
+            resolve({
+              status: 'unavailable',
+              reason: 'budget_exhausted',
+              durationMs: bootstrapTimeoutMs,
+              message: 'Case Resolver workspace bootstrap timed out.',
+            });
+          }, bootstrapTimeoutMs);
+        });
+        const result = await Promise.race([
+          fetchCaseResolverWorkspaceRecordDetailed(source, {
+            attemptProfile: 'context_fast',
+            requiredFileId: null,
+            maxTotalMs: 15_000,
+            attemptTimeoutMs: 5_000,
+          }),
+          bootstrapTimeoutPromise,
+        ]);
+        if (bootstrapTimeoutHandle !== null) {
+          clearTimeout(bootstrapTimeoutHandle);
+        }
+        if (!isMountedRef.current || requestId !== workspaceBootstrapRequestIdRef.current) {
+          return;
+        }
+
+        if (result.status === 'resolved') {
+          applyIncomingWorkspaceSnapshot(result.workspace);
+          setCasesLoadState('ready');
+          setCasesLoadMessage(null);
+          return;
+        }
+
+        if (result.status === 'no_record') {
+          const hasExistingCases = workspaceRef.current.files.some(
+            (file): boolean => file.fileType === 'case'
+          );
+          if (hasExistingCases) {
+            setCasesLoadState('ready');
+            setCasesLoadMessage(null);
+            return;
+          }
+          setCasesLoadState('no_record');
+          if (workspaceSafeParseDiagnostics.parseFallbackApplied) {
+            setCasesLoadMessage(
+              `Workspace parse fallback applied: ${
+                workspaceSafeParseDiagnostics.parseFallbackReason ?? 'workspace_parse_failed'
+              }`
+            );
+          } else {
+            setCasesLoadMessage(result.message || 'Case Resolver workspace key is missing.');
+          }
+          return;
+        }
+
+        setCasesLoadState('unavailable');
+        setCasesLoadMessage(result.message || 'Could not load cases workspace.');
+      } catch (error: unknown) {
+        if (!isMountedRef.current) return;
+        setCasesLoadState('unavailable');
+        setCasesLoadMessage(error instanceof Error ? error.message : 'Could not load cases workspace.');
+      }
+    },
+    [
+      applyIncomingWorkspaceSnapshot,
+      setCasesLoadMessage,
+      setCasesLoadState,
+      workspaceSafeParseDiagnostics.parseFallbackApplied,
+      workspaceSafeParseDiagnostics.parseFallbackReason,
+    ]
+  );
+
+  useEffect((): (() => void) => {
+    isMountedRef.current = true;
+    return (): void => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect((): void => {
+    applyIncomingWorkspaceSnapshot(parsedWorkspace);
+  }, [applyIncomingWorkspaceSnapshot, parsedWorkspace]);
+
+  useEffect((): void => {
+    void runWorkspaceBootstrap({
+      source: 'cases_page_bootstrap',
+      force: false,
+    });
+  }, [runWorkspaceBootstrap]);
+
+  useEffect((): void => {
+    if (didHydrateCaseListViewDefaults) return;
+    if (preferencesQuery.isLoading) return;
+    const defaults = normalizeCaseListViewDefaults(preferencesQuery.data);
+    setCaseViewMode(defaults.viewMode);
+    setCaseSortBy(defaults.sortBy);
+    setCaseSortOrder(defaults.sortOrder);
+    setCaseSearchScope(defaults.searchScope);
+    setCaseFilterPanelDefaultExpanded(!defaults.filtersCollapsedByDefault);
+    setCaseShowNestedContent(defaults.showNestedContent);
+    setDidHydrateCaseListViewDefaults(true);
+  }, [
+    didHydrateCaseListViewDefaults,
+    preferencesQuery.data,
+    preferencesQuery.isLoading,
+    setCaseFilterPanelDefaultExpanded,
+    setCaseSearchScope,
+    setCaseShowNestedContent,
+    setCaseSortBy,
+    setCaseSortOrder,
+    setCaseViewMode,
+    setDidHydrateCaseListViewDefaults,
+  ]);
+
   const caseIdentifierOptions = useMemo<Array<{ value: string; label: string }>>(
     () =>
       caseResolverIdentifiers.map((identifierRecord: CaseResolverIdentifier) => {
@@ -326,12 +515,7 @@ export function AdminCaseResolverCasesProvider({
       .map((folder) => ({ value: folder, label: folder }));
   }, [workspace.files]);
 
-  const isRouteWorkspaceSyncing = false; 
-  const isLoading =
-    settingsStore.isLoading ||
-    isRouteWorkspaceSyncing ||
-    casesLoadState === 'loading' ||
-    preferencesQuery.isLoading;
+  const isLoading = casesLoadState === 'loading';
 
   const handleToggleCaseCollapse = useCallback(
     (caseId: string): void => {
@@ -360,9 +544,11 @@ export function AdminCaseResolverCasesProvider({
   }, [setHeldCaseId]);
 
   const handleRefreshWorkspace = useCallback(async (): Promise<void> => {
-    setCasesLoadMessage(null);
-    settingsStoreRefetchRef.current();
-  }, [setCasesLoadMessage]);
+    await runWorkspaceBootstrap({
+      source: 'cases_page_manual_refresh',
+      force: true,
+    });
+  }, [runWorkspaceBootstrap]);
 
   const handleSaveListViewDefaults = useCallback(async (): Promise<void> => {
     try {

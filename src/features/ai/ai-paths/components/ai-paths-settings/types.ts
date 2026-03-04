@@ -292,7 +292,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleImportPresets: (mode: 'merge' | 'replace') => Promise<void>;
   simulationOpenNodeId: string | null;
   ConfirmationModal: React.ComponentType;
-  confirmNodeSwitch: (nextNodeId: string) => Promise<boolean>;
+  confirmNodeSwitch: (nextNodeId: string) => boolean | Promise<boolean>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,

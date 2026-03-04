@@ -241,7 +241,10 @@ export function GraphProvider({
     ): void => {
       const reason = mutationMeta?.reason ?? 'unknown';
       const shouldEnforceNodeCountInvariant =
-        reason === 'drag' || reason === 'select' || reason === 'bridge_sync';
+        reason === 'drag' ||
+        reason === 'select' ||
+        reason === 'bridge_sync' ||
+        reason === 'load_path';
       pendingMutationMetaRef.current = mutationMeta ?? { reason };
       let changedNodes = false;
       setNodesInternal((prev: AiNode[]): AiNode[] => {
@@ -377,7 +380,11 @@ export function GraphProvider({
     }) => {
       const normalizedNodes = normalizeNodes(data.nodes);
       const sanitizedEdges = sanitizeEdges(normalizedNodes, data.edges);
-      setNodes(normalizedNodes, { reason: 'load_path', source: 'graph.loadGraph' });
+      setNodes(normalizedNodes, {
+        reason: 'load_path',
+        source: 'graph.loadGraph',
+        allowNodeCountDecrease: true,
+      });
       setEdges(sanitizedEdges, { reason: 'load_path', source: 'graph.loadGraph' });
       if (data.pathName !== undefined) setPathNameInternal(data.pathName);
       if (data.pathDescription !== undefined) setPathDescriptionInternal(data.pathDescription);
@@ -393,7 +400,11 @@ export function GraphProvider({
   );
 
   const resetGraph = useCallback(() => {
-    setNodes(initialNodes, { reason: 'load_path', source: 'graph.resetGraph' });
+    setNodes(initialNodes, {
+      reason: 'load_path',
+      source: 'graph.resetGraph',
+      allowNodeCountDecrease: true,
+    });
     setEdges(initialEdges, { reason: 'load_path', source: 'graph.resetGraph' });
     setPathNameInternal(DEFAULT_PATH_NAME);
     setPathDescriptionInternal(DEFAULT_PATH_DESCRIPTION);

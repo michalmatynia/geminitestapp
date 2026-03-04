@@ -257,6 +257,70 @@ function BridgePathSwitchDelayedGraphHarness(): React.JSX.Element {
   );
 }
 
+function BridgeTransitionGateDropProtectionHarness(): React.JSX.Element {
+  const [sourceActivePathId, setSourceActivePathId] = React.useState<string | null>('path-a');
+  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([buildNode('path-a-node-1', 80, 96)]);
+  const [sourceEdges, setSourceEdges] = React.useState<Edge[]>([]);
+  const { nodes: contextNodes } = useGraphState();
+  const { setNodes } = useGraphActions();
+
+  useStateBridgeGraph({
+    nodes: sourceNodes,
+    edges: sourceEdges,
+    activePathId: sourceActivePathId,
+    onNodesChangeFromContext: setSourceNodes,
+    onEdgesChangeFromContext: setSourceEdges,
+  });
+
+  return (
+    <div>
+      <output data-testid='transition-source-path'>{sourceActivePathId ?? 'none'}</output>
+      <output data-testid='transition-source-nodes'>{serializeNodes(sourceNodes)}</output>
+      <output data-testid='transition-context-nodes'>{serializeNodes(contextNodes)}</output>
+      <button type='button' onClick={() => setSourceActivePathId('path-b')}>
+        transition-switch-path-only
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          setNodes((prev: AiNode[]) => [...prev, buildNode('path-b-node-2', 240, 220)], {
+            reason: 'drop',
+            source: 'test.transition-gate.drop',
+          })
+        }
+      >
+        transition-context-add-node
+      </button>
+      <button
+        type='button'
+        onClick={() =>
+          setNodes(
+            (prev: AiNode[]) =>
+              prev.map((node: AiNode): AiNode =>
+                node.id === 'path-b-node-2' ? { ...node, position: { x: 360, y: 300 } } : node
+              ),
+            {
+              reason: 'drag',
+              source: 'test.transition-gate.drag',
+            }
+          )
+        }
+      >
+        transition-context-move-node
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          setSourceNodes([buildNode('path-b-node-1', 640, 420)]);
+          setSourceEdges([]);
+        }}
+      >
+        transition-apply-path-b-graph
+      </button>
+    </div>
+  );
+}
+
 describe('AI Paths state bridge drop/click race protections', () => {
   it('prevents stale source->context sync from dropping a freshly added node', async () => {
     const { getByRole, getByTestId } = render(
@@ -412,6 +476,52 @@ describe('AI Paths state bridge drop/click race protections', () => {
       expect(getByTestId('delayed-source-path')).toHaveTextContent('path-b');
       expect(getByTestId('delayed-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
       expect(getByTestId('delayed-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
+    });
+  });
+
+  it('does not drop context-added nodes during a stalled path transition gate', async () => {
+    const { getByRole, getByTestId } = render(
+      <AiPathsProvider initialNodes={[buildNode('path-a-node-1', 80, 96)]} initialEdges={[]}>
+        <BridgeTransitionGateDropProtectionHarness />
+      </AiPathsProvider>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('transition-source-path')).toHaveTextContent('path-a');
+      expect(getByTestId('transition-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('transition-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'transition-switch-path-only' }));
+
+    await waitFor(() => {
+      expect(getByTestId('transition-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('transition-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('transition-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'transition-context-add-node' }));
+
+    await waitFor(() => {
+      expect(getByTestId('transition-context-nodes')).toHaveTextContent(
+        'path-a-node-1:80,96|path-b-node-2:240,220'
+      );
+      expect(getByTestId('transition-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'transition-context-move-node' }));
+
+    await waitFor(() => {
+      expect(getByTestId('transition-context-nodes')).toHaveTextContent(
+        'path-a-node-1:80,96|path-b-node-2:360,300'
+      );
+    });
+
+    fireEvent.click(getByRole('button', { name: 'transition-apply-path-b-graph' }));
+
+    await waitFor(() => {
+      expect(getByTestId('transition-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
+      expect(getByTestId('transition-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
     });
   });
 });

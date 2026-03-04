@@ -214,12 +214,13 @@ export function useStateBridgeGraph({
   pathConfigs,
 }: StateBridgeGraphProps): void {
   const actions = useGraphActions();
-  const { nodes: contextNodes, edges: contextEdges, graphRevision } = useGraphState();
+  const { nodes: contextNodes, edges: contextEdges, graphRevision, lastMutation } = useGraphState();
   const activePathTransitionRef = useRef<{
     pathId: string | null;
     sourceNodesHash: string;
     sourceEdgesHash: string;
     holdContextToSource: boolean;
+    awaitingSourceGraphPayload: boolean;
   } | null>(null);
   const pendingContextNodesSyncRef = useRef<{
     hash: string;
@@ -256,11 +257,17 @@ export function useStateBridgeGraph({
   }
   if (sourcePathChangedThisRender) {
     lastSourcePathIdRef.current = activePathId;
+    const sourceGraphMatchesContext =
+      sourceNodesHash === contextNodesHash && sourceEdgesHash === contextEdgesHash;
     activePathTransitionRef.current = {
       pathId: normalizedActivePathId,
       sourceNodesHash,
       sourceEdgesHash,
-      holdContextToSource: true,
+      // If the source graph has already changed for the new path, allow one
+      // authoritative source->context handoff immediately. Otherwise keep the
+      // gate active but wait for the source graph payload to arrive.
+      holdContextToSource: !sourceGraphMatchesContext,
+      awaitingSourceGraphPayload: sourceGraphMatchesContext,
     };
     pendingContextNodesSyncRef.current = null;
     pendingContextEdgesSyncRef.current = null;
@@ -273,6 +280,7 @@ export function useStateBridgeGraph({
         pathId: normalizedActivePathId,
         sourceNodesHash: sourceNodesHash.slice(0, 48),
         sourceEdgesHash: sourceEdgesHash.slice(0, 48),
+        awaitingSourceGraphPayload: sourceGraphMatchesContext,
       });
     }
   }
@@ -287,9 +295,28 @@ export function useStateBridgeGraph({
       ...activeTransition,
       sourceNodesHash,
       sourceEdgesHash,
+      // Re-arm one authoritative source->context pass when source graph payload changes
+      // during an active path transition (for example delayed path graph hydration).
+      holdContextToSource: true,
+      awaitingSourceGraphPayload: false,
     };
   }
   const transitionGateActive = activePathTransitionRef.current?.pathId === normalizedActivePathId;
+  const isBridgeSourceMutation =
+    typeof lastMutation?.source === 'string' &&
+    lastMutation.source.startsWith('state_bridge.source_to_context.');
+  const isGraphLoadPathMutation =
+    lastMutation?.source === 'graph.loadGraph' || lastMutation?.source === 'graph.resetGraph';
+  const isUserOwnedGraphMutationDuringTransition =
+    transitionGateActive &&
+    Boolean(
+      lastMutation &&
+        (lastMutation.reason === 'drop' ||
+          lastMutation.reason === 'drag' ||
+          lastMutation.reason === 'update') &&
+        !isBridgeSourceMutation &&
+        !isGraphLoadPathMutation
+    );
 
   useEffect(() => {
     const transition = activePathTransitionRef.current;
@@ -298,11 +325,7 @@ export function useStateBridgeGraph({
       activePathTransitionRef.current = null;
       return;
     }
-    if (transition.holdContextToSource) {
-      activePathTransitionRef.current = {
-        ...transition,
-        holdContextToSource: false,
-      };
+    if (transition.awaitingSourceGraphPayload) {
       return;
     }
     if (
@@ -329,8 +352,40 @@ export function useStateBridgeGraph({
     sourceNodesHash,
   ]);
 
+  useLayoutEffect((): void => {
+    if (!isUserOwnedGraphMutationDuringTransition) return;
+    activePathTransitionRef.current = null;
+    pendingContextNodesSyncRef.current = null;
+    pendingContextEdgesSyncRef.current = null;
+    lastBlockedNodeSyncRef.current = null;
+    lastBlockedEdgeSyncRef.current = null;
+    lastSuppressedNodeSyncRef.current = null;
+    lastSuppressedEdgeSyncRef.current = null;
+    if (shouldLogBridgeBlock) {
+      console.debug('[ai-paths-bridge] path_transition_released_by_user_mutation', {
+        pathId: normalizedActivePathId,
+        revision: graphRevision,
+        reason: lastMutation?.reason ?? null,
+        source: lastMutation?.source ?? null,
+      });
+    }
+  }, [
+    graphRevision,
+    isUserOwnedGraphMutationDuringTransition,
+    lastMutation?.reason,
+    lastMutation?.source,
+    normalizedActivePathId,
+    shouldLogBridgeBlock,
+  ]);
+
   useEffect(() => {
-    if (onNodesChangeFromContext && !transitionGateActive) {
+    const transition = activePathTransitionRef.current;
+    const isTransitionGateActiveForSync = transition?.pathId === normalizedActivePathId;
+    const isAwaitingSourceGraphPayload =
+      isTransitionGateActiveForSync && transition?.awaitingSourceGraphPayload === true;
+    if (isAwaitingSourceGraphPayload) return;
+
+    if (onNodesChangeFromContext && !isTransitionGateActiveForSync) {
       const pendingSync = pendingContextNodesSyncRef.current;
       if (pendingSync) {
         if (pendingSync.pathId !== normalizedActivePathId) {
@@ -356,10 +411,14 @@ export function useStateBridgeGraph({
     }
     if (sourceNodesHash === contextNodesHash) return;
     lastBlockedNodeSyncRef.current = null;
+    const transitionAllowsDestructiveNodeSync =
+      isTransitionGateActiveForSync && transition?.holdContextToSource === true;
     actions.setNodes(nodes, {
-      reason: transitionGateActive ? 'load_path' : 'bridge_sync',
+      reason: isTransitionGateActiveForSync ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.nodes',
-      allowNodeCountDecrease: transitionGateActive || sourceNodesChangedThisRender,
+      allowNodeCountDecrease:
+        transitionAllowsDestructiveNodeSync ||
+        (!isTransitionGateActiveForSync && sourceNodesChangedThisRender),
     });
   }, [
     actions,
@@ -374,7 +433,13 @@ export function useStateBridgeGraph({
   ]);
 
   useEffect(() => {
-    if (onEdgesChangeFromContext && !transitionGateActive) {
+    const transition = activePathTransitionRef.current;
+    const isTransitionGateActiveForSync = transition?.pathId === normalizedActivePathId;
+    const isAwaitingSourceGraphPayload =
+      isTransitionGateActiveForSync && transition?.awaitingSourceGraphPayload === true;
+    if (isAwaitingSourceGraphPayload) return;
+
+    if (onEdgesChangeFromContext && !isTransitionGateActiveForSync) {
       const pendingSync = pendingContextEdgesSyncRef.current;
       if (pendingSync) {
         if (pendingSync.pathId !== normalizedActivePathId) {
@@ -401,7 +466,7 @@ export function useStateBridgeGraph({
     if (sourceEdgesHash === contextEdgesHash) return;
     lastBlockedEdgeSyncRef.current = null;
     actions.setEdges(edges, {
-      reason: transitionGateActive ? 'load_path' : 'bridge_sync',
+      reason: isTransitionGateActiveForSync ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.edges',
     });
   }, [
@@ -418,7 +483,9 @@ export function useStateBridgeGraph({
 
   useLayoutEffect((): void => {
     if (!onNodesChangeFromContext) return;
-    if (transitionGateActive) {
+    const transition = activePathTransitionRef.current;
+    const isTransitionGateActiveForSync = transition?.pathId === normalizedActivePathId;
+    if (isTransitionGateActiveForSync) {
       const blockedKey = `${normalizedActivePathId ?? 'none'}:${sourceNodesHash.slice(0, 24)}:${contextNodesHash.slice(0, 24)}`;
       if (shouldLogBridgeBlock && lastSuppressedNodeSyncRef.current !== blockedKey) {
         lastSuppressedNodeSyncRef.current = blockedKey;
@@ -456,7 +523,9 @@ export function useStateBridgeGraph({
 
   useLayoutEffect((): void => {
     if (!onEdgesChangeFromContext) return;
-    if (transitionGateActive) {
+    const transition = activePathTransitionRef.current;
+    const isTransitionGateActiveForSync = transition?.pathId === normalizedActivePathId;
+    if (isTransitionGateActiveForSync) {
       const blockedKey = `${normalizedActivePathId ?? 'none'}:${sourceEdgesHash.slice(0, 24)}:${contextEdgesHash.slice(0, 24)}`;
       if (shouldLogBridgeBlock && lastSuppressedEdgeSyncRef.current !== blockedKey) {
         lastSuppressedEdgeSyncRef.current = blockedKey;

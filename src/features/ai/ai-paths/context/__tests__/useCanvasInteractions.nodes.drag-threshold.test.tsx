@@ -46,6 +46,15 @@ const createPointerEvent = (
     ...patch,
   }) as React.PointerEvent<Element>;
 
+const dispatchWindowPointerEvent = (type: 'pointerup' | 'pointercancel', pointerId: number): void => {
+  const event = new Event(type) as PointerEvent;
+  Object.defineProperty(event, 'pointerId', {
+    value: pointerId,
+    configurable: true,
+  });
+  window.dispatchEvent(event);
+};
+
 const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
   const node = buildNode();
   return {
@@ -84,6 +93,8 @@ const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
     toast: vi.fn(),
   };
 };
+
+type HookProps = Parameters<typeof useCanvasInteractionsNodes>[0];
 
 const resolveLastSetNodesMutation = (
   props: Parameters<typeof useCanvasInteractionsNodes>[0],
@@ -143,6 +154,35 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
   });
 
+  it('releases stale pointer capture even when window pointerup arrives for a different pointer id', async () => {
+    const props = buildHookProps();
+    const target = document.createElement('div');
+    const setPointerCapture = vi.fn();
+    const releasePointerCapture = vi.fn();
+    const hasPointerCapture = vi.fn(() => true);
+    Object.assign(target, {
+      setPointerCapture,
+      releasePointerCapture,
+      hasPointerCapture,
+    });
+    const { result } = renderHook(() => useCanvasInteractionsNodes(props));
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(
+        createPointerEvent(target, {
+          pointerId: 1,
+        }),
+        'node-1'
+      );
+    });
+
+    act(() => {
+      dispatchWindowPointerEvent('pointerup', 2);
+    });
+
+    expect(releasePointerCapture).toHaveBeenCalledWith(1);
+  });
+
   it('starts a drag after threshold crossing and suppresses the trailing click', async () => {
     const props = buildHookProps();
     const target = document.createElement('div');
@@ -182,6 +222,41 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     expect(props.endDrag).toHaveBeenCalledTimes(1);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(true);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
+  });
+
+  it('does not force-end drag when dragState transitions to active during pointer move', async () => {
+    const target = document.createElement('div');
+    const props: HookProps = buildHookProps();
+    const { result, rerender } = renderHook(
+      (nextProps: HookProps) => useCanvasInteractionsNodes(nextProps),
+      { initialProps: props }
+    );
+
+    await act(async () => {
+      await result.current.handlePointerDownNode(createPointerEvent(target), 'node-1');
+    });
+
+    act(() => {
+      result.current.handlePointerMoveNode(
+        createPointerEvent(target, {
+          clientX: 110,
+          clientY: 110,
+        }),
+        'node-1'
+      );
+    });
+
+    expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
+    expect(props.endDrag).not.toHaveBeenCalled();
+
+    act(() => {
+      rerender({
+        ...props,
+        dragState: { nodeId: 'node-1', offsetX: 60, offsetY: 60 },
+      });
+    });
+
+    expect(props.endDrag).not.toHaveBeenCalled();
   });
 
   it('converts viewport pointer coordinates to world coordinates when view is transformed', async () => {

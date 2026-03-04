@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { useAiPathsNodeSwitchConfirm } from '@/features/ai/ai-paths/components/ai-paths-settings/useAiPathsNodeSwitchConfirm';
 
 describe('useAiPathsNodeSwitchConfirm', () => {
-  it('returns allow result when config is not dirty/open', async () => {
+  it('returns synchronous allow result when config is not dirty/open', () => {
     const confirm = vi.fn();
     const toast = vi.fn();
     const setNodeConfigDirty = vi.fn();
@@ -20,7 +20,7 @@ describe('useAiPathsNodeSwitchConfirm', () => {
       })
     );
 
-    const decision = await result.current.confirmNodeSwitch('node-2');
+    const decision = result.current.confirmNodeSwitch('node-2');
 
     expect(decision).toBe(true);
     expect(confirm).not.toHaveBeenCalled();

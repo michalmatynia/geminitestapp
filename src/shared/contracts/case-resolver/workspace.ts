@@ -69,7 +69,7 @@ export type CaseResolverWorkspaceRecordFetchResult =
       workspace: CaseResolverWorkspace;
       attemptKey: string;
       scope: 'light' | 'heavy';
-      source: 'resolved_v2' | 'resolved_legacy_migrated';
+      source: 'resolved_v2';
       durationMs: number;
     }
   | {

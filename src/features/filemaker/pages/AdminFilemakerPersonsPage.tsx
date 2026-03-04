@@ -1,19 +1,11 @@
 'use client';
 
-import { Users, Database, Building2, CalendarDays, Mail } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
+import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  StandardDataTablePanel,
-  PanelHeader,
-  SearchInput,
-  EmptyState,
-  ActionMenu,
-  DropdownMenuItem,
-} from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,
@@ -21,6 +13,8 @@ import {
   parseFilemakerDatabase,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
+import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
+import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 
 import type { FilemakerPerson } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -129,78 +123,31 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <PanelHeader
-        title='Filemaker Persons'
-        description='Search and browse persons available for Case Resolver document addressing.'
-        icon={<Users className='size-4' />}
-        actions={[
-          {
-            key: 'organizations',
-            label: 'Organizations',
-            icon: <Building2 className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/organizations'),
-          },
-          {
-            key: 'emails',
-            label: 'Emails',
-            icon: <Mail className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
-          },
-          {
-            key: 'events',
-            label: 'Events',
-            icon: <CalendarDays className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/events'),
-          },
-          {
-            key: 'manage',
-            label: 'Manage Database',
-            icon: <Database className='size-4' />,
-            onClick: () => router.push('/admin/filemaker'),
-          },
-        ]}
-      />
-
-      <StandardDataTablePanel
-        filters={
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='text-[10px]'>
-                Persons: {persons.length}
-              </Badge>
-              <Badge variant='outline' className='text-[10px]'>
-                Total Addresses: {database.addresses.length}
-              </Badge>
-            </div>
-            <div className='w-full max-w-sm'>
-              <SearchInput
-                value={query}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setQuery(event.target.value);
-                }}
-                onClear={() => setQuery('')}
-                placeholder='Search name, address, NIP, REGON, phone...'
-                size='sm'
-              />
-            </div>
-          </div>
-        }
-        columns={columns}
-        data={persons}
-        isLoading={settingsStore.isLoading}
-        emptyState={
-          <EmptyState
-            title={query ? 'No persons found' : 'No persons found in database.'}
-            description={
-              query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'
-            }
-          />
-        }
-      />
-    </div>
+    <FilemakerEntityTablePage
+      title='Filemaker Persons'
+      description='Search and browse persons available for Case Resolver document addressing.'
+      icon={<Users className='size-4' />}
+      actions={buildFilemakerNavActions(router, 'persons')}
+      badges={
+        <>
+          <Badge variant='outline' className='text-[10px]'>
+            Persons: {persons.length}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Total Addresses: {database.addresses.length}
+          </Badge>
+        </>
+      }
+      query={query}
+      onQueryChange={setQuery}
+      queryPlaceholder='Search name, address, NIP, REGON, phone...'
+      columns={columns}
+      data={persons}
+      isLoading={settingsStore.isLoading}
+      emptyTitle={query ? 'No persons found' : 'No persons found in database.'}
+      emptyDescription={
+        query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'
+      }
+    />
   );
 }

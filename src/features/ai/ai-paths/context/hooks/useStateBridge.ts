@@ -215,6 +215,11 @@ export function useStateBridgeGraph({
 }: StateBridgeGraphProps): void {
   const actions = useGraphActions();
   const { nodes: contextNodes, edges: contextEdges, graphRevision } = useGraphState();
+  const activePathTransitionRef = useRef<{
+    pathId: string | null;
+    sourceNodesHash: string;
+    sourceEdgesHash: string;
+  } | null>(null);
   const pendingContextNodesSyncRef = useRef<{
     hash: string;
     revision: number;
@@ -227,6 +232,8 @@ export function useStateBridgeGraph({
   } | null>(null);
   const lastBlockedNodeSyncRef = useRef<string | null>(null);
   const lastBlockedEdgeSyncRef = useRef<string | null>(null);
+  const lastSuppressedNodeSyncRef = useRef<string | null>(null);
+  const lastSuppressedEdgeSyncRef = useRef<string | null>(null);
   const lastSourceNodesHashRef = useRef<string>(stableStringify(nodes));
   const lastSourceEdgesHashRef = useRef<string>(stableStringify(edges));
   const lastSourcePathIdRef = useRef<string | null | undefined>(activePathId);
@@ -234,6 +241,7 @@ export function useStateBridgeGraph({
   const sourceEdgesHash = stableStringify(edges);
   const contextNodesHash = stableStringify(contextNodes);
   const contextEdgesHash = stableStringify(contextEdges);
+  const normalizedActivePathId = activePathId ?? null;
   const shouldLogBridgeBlock = process.env.NODE_ENV !== 'test';
   const sourceNodesChangedThisRender = lastSourceNodesHashRef.current !== sourceNodesHash;
   const sourceEdgesChangedThisRender = lastSourceEdgesHashRef.current !== sourceEdgesHash;
@@ -247,17 +255,77 @@ export function useStateBridgeGraph({
   }
   if (sourcePathChangedThisRender) {
     lastSourcePathIdRef.current = activePathId;
+    activePathTransitionRef.current = {
+      pathId: normalizedActivePathId,
+      sourceNodesHash,
+      sourceEdgesHash,
+    };
     pendingContextNodesSyncRef.current = null;
     pendingContextEdgesSyncRef.current = null;
     lastBlockedNodeSyncRef.current = null;
     lastBlockedEdgeSyncRef.current = null;
+    lastSuppressedNodeSyncRef.current = null;
+    lastSuppressedEdgeSyncRef.current = null;
+    if (shouldLogBridgeBlock) {
+      console.debug('[ai-paths-bridge] path_transition_started', {
+        pathId: normalizedActivePathId,
+        sourceNodesHash: sourceNodesHash.slice(0, 48),
+        sourceEdgesHash: sourceEdgesHash.slice(0, 48),
+      });
+    }
   }
 
+  const activeTransition = activePathTransitionRef.current;
+  if (
+    activeTransition &&
+    activeTransition.pathId === normalizedActivePathId &&
+    (activeTransition.sourceNodesHash !== sourceNodesHash ||
+      activeTransition.sourceEdgesHash !== sourceEdgesHash)
+  ) {
+    activePathTransitionRef.current = {
+      ...activeTransition,
+      sourceNodesHash,
+      sourceEdgesHash,
+    };
+  }
+  const transitionGateActive = activePathTransitionRef.current?.pathId === normalizedActivePathId;
+
   useEffect(() => {
-    if (onNodesChangeFromContext) {
+    const transition = activePathTransitionRef.current;
+    if (!transition) return;
+    if (transition.pathId !== normalizedActivePathId) {
+      activePathTransitionRef.current = null;
+      return;
+    }
+    if (
+      transition.sourceNodesHash === contextNodesHash &&
+      transition.sourceEdgesHash === contextEdgesHash
+    ) {
+      activePathTransitionRef.current = null;
+      lastSuppressedNodeSyncRef.current = null;
+      lastSuppressedEdgeSyncRef.current = null;
+      if (shouldLogBridgeBlock) {
+        console.debug('[ai-paths-bridge] path_transition_sync_complete', {
+          pathId: normalizedActivePathId,
+          sourceNodesHash: sourceNodesHash.slice(0, 48),
+          sourceEdgesHash: sourceEdgesHash.slice(0, 48),
+        });
+      }
+    }
+  }, [
+    contextEdgesHash,
+    contextNodesHash,
+    normalizedActivePathId,
+    shouldLogBridgeBlock,
+    sourceEdgesHash,
+    sourceNodesHash,
+  ]);
+
+  useEffect(() => {
+    if (onNodesChangeFromContext && !transitionGateActive) {
       const pendingSync = pendingContextNodesSyncRef.current;
       if (pendingSync) {
-        if (pendingSync.pathId !== (activePathId ?? null)) {
+        if (pendingSync.pathId !== normalizedActivePathId) {
           pendingContextNodesSyncRef.current = null;
         } else if (sourceNodesHash === pendingSync.hash) {
           pendingContextNodesSyncRef.current = null;
@@ -265,8 +333,9 @@ export function useStateBridgeGraph({
           const blockedKey = `${pendingSync.revision}:${pendingSync.pathId ?? 'none'}:${sourceNodesHash.slice(0, 24)}:${contextNodesHash.slice(0, 24)}`;
           if (shouldLogBridgeBlock && lastBlockedNodeSyncRef.current !== blockedKey) {
             lastBlockedNodeSyncRef.current = blockedKey;
-            console.debug('[ai-paths-bridge] blocked stale source->context node sync', {
-              activePathId: activePathId ?? null,
+            console.debug('[ai-paths-bridge] blocked_same_path_pending_sync', {
+              channel: 'nodes',
+              activePathId: normalizedActivePathId,
               pendingPathId: pendingSync.pathId,
               pendingRevision: pendingSync.revision,
               sourceHash: sourceNodesHash.slice(0, 48),
@@ -280,27 +349,27 @@ export function useStateBridgeGraph({
     if (sourceNodesHash === contextNodesHash) return;
     lastBlockedNodeSyncRef.current = null;
     actions.setNodes(nodes, {
-      reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
+      reason: transitionGateActive ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.nodes',
-      allowNodeCountDecrease: sourcePathChangedThisRender || sourceNodesChangedThisRender,
+      allowNodeCountDecrease: transitionGateActive || sourceNodesChangedThisRender,
     });
   }, [
-    activePathId,
     actions,
     contextNodesHash,
+    normalizedActivePathId,
     nodes,
     onNodesChangeFromContext,
     sourceNodesChangedThisRender,
     sourceNodesHash,
-    sourcePathChangedThisRender,
     shouldLogBridgeBlock,
+    transitionGateActive,
   ]);
 
   useEffect(() => {
-    if (onEdgesChangeFromContext) {
+    if (onEdgesChangeFromContext && !transitionGateActive) {
       const pendingSync = pendingContextEdgesSyncRef.current;
       if (pendingSync) {
-        if (pendingSync.pathId !== (activePathId ?? null)) {
+        if (pendingSync.pathId !== normalizedActivePathId) {
           pendingContextEdgesSyncRef.current = null;
         } else if (sourceEdgesHash === pendingSync.hash) {
           pendingContextEdgesSyncRef.current = null;
@@ -308,8 +377,9 @@ export function useStateBridgeGraph({
           const blockedKey = `${pendingSync.revision}:${pendingSync.pathId ?? 'none'}:${sourceEdgesHash.slice(0, 24)}:${contextEdgesHash.slice(0, 24)}`;
           if (shouldLogBridgeBlock && lastBlockedEdgeSyncRef.current !== blockedKey) {
             lastBlockedEdgeSyncRef.current = blockedKey;
-            console.debug('[ai-paths-bridge] blocked stale source->context edge sync', {
-              activePathId: activePathId ?? null,
+            console.debug('[ai-paths-bridge] blocked_same_path_pending_sync', {
+              channel: 'edges',
+              activePathId: normalizedActivePathId,
               pendingPathId: pendingSync.pathId,
               pendingRevision: pendingSync.revision,
               sourceHash: sourceEdgesHash.slice(0, 48),
@@ -323,67 +393,95 @@ export function useStateBridgeGraph({
     if (sourceEdgesHash === contextEdgesHash) return;
     lastBlockedEdgeSyncRef.current = null;
     actions.setEdges(edges, {
-      reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
+      reason: transitionGateActive ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.edges',
     });
   }, [
-    activePathId,
     actions,
     contextEdgesHash,
     edges,
+    normalizedActivePathId,
     onEdgesChangeFromContext,
     sourceEdgesChangedThisRender,
     sourceEdgesHash,
-    sourcePathChangedThisRender,
     shouldLogBridgeBlock,
+    transitionGateActive,
   ]);
 
   useLayoutEffect((): void => {
     if (!onNodesChangeFromContext) return;
-    if (sourcePathChangedThisRender) return;
+    if (transitionGateActive) {
+      const blockedKey = `${normalizedActivePathId ?? 'none'}:${sourceNodesHash.slice(0, 24)}:${contextNodesHash.slice(0, 24)}`;
+      if (shouldLogBridgeBlock && lastSuppressedNodeSyncRef.current !== blockedKey) {
+        lastSuppressedNodeSyncRef.current = blockedKey;
+        console.debug('[ai-paths-bridge] suppressed_context_to_source_during_path_transition', {
+          channel: 'nodes',
+          pathId: normalizedActivePathId,
+          sourceHash: sourceNodesHash.slice(0, 48),
+          contextHash: contextNodesHash.slice(0, 48),
+        });
+      }
+      return;
+    }
     if (sourceNodesHash === contextNodesHash) return;
     const pendingSync = pendingContextNodesSyncRef.current;
-    if (pendingSync?.hash === contextNodesHash && pendingSync.pathId === (activePathId ?? null)) {
+    if (pendingSync?.hash === contextNodesHash && pendingSync.pathId === normalizedActivePathId) {
       return;
     }
     pendingContextNodesSyncRef.current = {
       hash: contextNodesHash,
       revision: graphRevision,
-      pathId: activePathId ?? null,
+      pathId: normalizedActivePathId,
     };
+    lastSuppressedNodeSyncRef.current = null;
     onNodesChangeFromContext(contextNodes);
   }, [
-    activePathId,
     contextNodes,
     contextNodesHash,
     graphRevision,
+    normalizedActivePathId,
     onNodesChangeFromContext,
-    sourcePathChangedThisRender,
     sourceNodesHash,
+    shouldLogBridgeBlock,
+    transitionGateActive,
   ]);
 
   useLayoutEffect((): void => {
     if (!onEdgesChangeFromContext) return;
-    if (sourcePathChangedThisRender) return;
+    if (transitionGateActive) {
+      const blockedKey = `${normalizedActivePathId ?? 'none'}:${sourceEdgesHash.slice(0, 24)}:${contextEdgesHash.slice(0, 24)}`;
+      if (shouldLogBridgeBlock && lastSuppressedEdgeSyncRef.current !== blockedKey) {
+        lastSuppressedEdgeSyncRef.current = blockedKey;
+        console.debug('[ai-paths-bridge] suppressed_context_to_source_during_path_transition', {
+          channel: 'edges',
+          pathId: normalizedActivePathId,
+          sourceHash: sourceEdgesHash.slice(0, 48),
+          contextHash: contextEdgesHash.slice(0, 48),
+        });
+      }
+      return;
+    }
     if (sourceEdgesHash === contextEdgesHash) return;
     const pendingSync = pendingContextEdgesSyncRef.current;
-    if (pendingSync?.hash === contextEdgesHash && pendingSync.pathId === (activePathId ?? null)) {
+    if (pendingSync?.hash === contextEdgesHash && pendingSync.pathId === normalizedActivePathId) {
       return;
     }
     pendingContextEdgesSyncRef.current = {
       hash: contextEdgesHash,
       revision: graphRevision,
-      pathId: activePathId ?? null,
+      pathId: normalizedActivePathId,
     };
+    lastSuppressedEdgeSyncRef.current = null;
     onEdgesChangeFromContext(contextEdges);
   }, [
-    activePathId,
     contextEdges,
     contextEdgesHash,
     graphRevision,
+    normalizedActivePathId,
     onEdgesChangeFromContext,
-    sourcePathChangedThisRender,
     sourceEdgesHash,
+    shouldLogBridgeBlock,
+    transitionGateActive,
   ]);
 
   useEffect(() => {

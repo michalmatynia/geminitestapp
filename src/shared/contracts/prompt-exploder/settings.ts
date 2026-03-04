@@ -13,6 +13,7 @@ import {
 } from './base';
 
 export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
+export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 /**
  * Prompt Exploder Pattern & Template DTOs

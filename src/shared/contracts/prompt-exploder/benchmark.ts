@@ -4,9 +4,28 @@ import {
   type PromptExploderSegmentType,
 } from './base';
 
+import { type PromptValidationRule } from '../prompt-engine';
+import { type PromptExploderLearnedTemplate } from './settings';
+
 /**
  * Prompt Exploder Benchmark DTOs
  */
+
+export type ApplyBenchmarkSuggestionsResult = {
+  nextLearnedRules: PromptValidationRule[];
+  appliedRules: PromptValidationRule[];
+  addedCount: number;
+  updatedCount: number;
+  nextTemplates: PromptExploderLearnedTemplate[];
+  touchedTemplateIds: string[];
+  invalidSegmentTitles: string[];
+};
+
+export type BenchmarkSuggestionPreparation = {
+  uniqueSuggestions: PromptExploderBenchmarkSuggestion[];
+  validSuggestions: PromptExploderBenchmarkSuggestion[];
+  invalidSegmentTitles: string[];
+};
 
 export const promptExploderBenchmarkCaseConfigSchema = z.object({
   id: z.string(),

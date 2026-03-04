@@ -1,19 +1,11 @@
 'use client';
 
-import { CalendarDays, Building2, Users, Mail, Database } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
+import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  StandardDataTablePanel,
-  PanelHeader,
-  SearchInput,
-  EmptyState,
-  ActionMenu,
-  DropdownMenuItem,
-} from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,
@@ -21,6 +13,8 @@ import {
   parseFilemakerDatabase,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
+import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
+import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 
 import type { FilemakerEvent } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -121,81 +115,34 @@ export function AdminFilemakerEventsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <PanelHeader
-        title='Filemaker Events'
-        description='Search and browse events with linked organizations.'
-        icon={<CalendarDays className='size-4' />}
-        actions={[
-          {
-            key: 'organizations',
-            label: 'Organizations',
-            icon: <Building2 className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/organizations'),
-          },
-          {
-            key: 'persons',
-            label: 'Persons',
-            icon: <Users className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/persons'),
-          },
-          {
-            key: 'emails',
-            label: 'Emails',
-            icon: <Mail className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
-          },
-          {
-            key: 'manage',
-            label: 'Manage Database',
-            icon: <Database className='size-4' />,
-            onClick: () => router.push('/admin/filemaker'),
-          },
-        ]}
-      />
-
-      <StandardDataTablePanel
-        filters={
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='text-[10px]'>
-                Events: {events.length}
-              </Badge>
-              <Badge variant='outline' className='text-[10px]'>
-                Event Links: {database.eventOrganizationLinks.length}
-              </Badge>
-              <Badge variant='outline' className='text-[10px]'>
-                Total Addresses: {database.addresses.length}
-              </Badge>
-            </div>
-            <div className='w-full max-w-sm'>
-              <SearchInput
-                value={query}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setQuery(event.target.value);
-                }}
-                onClear={() => setQuery('')}
-                placeholder='Search event name and address...'
-                size='sm'
-              />
-            </div>
-          </div>
-        }
-        columns={columns}
-        data={events}
-        isLoading={settingsStore.isLoading}
-        emptyState={
-          <EmptyState
-            title={query ? 'No events found' : 'No events found in database.'}
-            description={
-              query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'
-            }
-          />
-        }
-      />
-    </div>
+    <FilemakerEntityTablePage
+      title='Filemaker Events'
+      description='Search and browse events with linked organizations.'
+      icon={<CalendarDays className='size-4' />}
+      actions={buildFilemakerNavActions(router, 'events')}
+      badges={
+        <>
+          <Badge variant='outline' className='text-[10px]'>
+            Events: {events.length}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Event Links: {database.eventOrganizationLinks.length}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Total Addresses: {database.addresses.length}
+          </Badge>
+        </>
+      }
+      query={query}
+      onQueryChange={setQuery}
+      queryPlaceholder='Search event name and address...'
+      columns={columns}
+      data={events}
+      isLoading={settingsStore.isLoading}
+      emptyTitle={query ? 'No events found' : 'No events found in database.'}
+      emptyDescription={
+        query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'
+      }
+    />
   );
 }

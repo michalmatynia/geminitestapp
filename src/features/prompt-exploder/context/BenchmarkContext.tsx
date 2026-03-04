@@ -25,6 +25,7 @@ import {
   parseCustomBenchmarkCasesDraft,
   upsertCustomBenchmarkCase,
 } from '../custom-benchmark-cases';
+import type { ParseCustomBenchmarkCasesResult } from '@/shared/contracts/prompt-exploder';
 import {
   promptExploderBenchmarkSuiteLabel,
   promptExploderClampNumber,
@@ -53,7 +54,7 @@ export interface BenchmarkState {
   dismissedBenchmarkSuggestionIds: string[];
   benchmarkSuggestions: PromptExploderBenchmarkSuggestion[];
   visibleBenchmarkSuggestions: PromptExploderBenchmarkSuggestion[];
-  parsedCustomBenchmarkCases: ReturnType<typeof parseCustomBenchmarkCasesDraft>;
+  parsedCustomBenchmarkCases: ParseCustomBenchmarkCasesResult;
 }
 
 export interface BenchmarkActions {
@@ -128,7 +129,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const parsedCustomBenchmarkCases = useMemo(
-    () => parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft),
+    (): ParseCustomBenchmarkCasesResult => parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft),
     [customBenchmarkCasesDraft]
   );
 
@@ -221,7 +222,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
         : ['assigned_text']
     ) as PromptExploderSegment['type'][];
     const minSegments = Math.max(1, documentState?.segments.length ?? 1);
-    const parsed = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
+    const parsed: ParseCustomBenchmarkCasesResult = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
     if (!parsed.ok) {
       toast(`Custom benchmark JSON is invalid: ${parsed.error}`, { variant: 'error' });
       return;
@@ -260,7 +261,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
 
   const handleAppendBenchmarkTemplateToCustom = useCallback(
     (suite: 'default' | 'extended') => {
-      const parsed = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
+      const parsed: ParseCustomBenchmarkCasesResult = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
       if (!parsed.ok) {
         toast(`Custom benchmark JSON is invalid: ${parsed.error}`, { variant: 'error' });
         return;
@@ -299,10 +300,10 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
         const shouldUpsertTemplates = learningDraft.benchmarkSuggestionUpsertTemplates;
         const benchmarkApply = applyBenchmarkSuggestions({
           suggestions: validSuggestions,
-          initialRules: [
+          initialRules: ([
             ...(basePromptSettings.promptValidation.learnedRules ?? []),
             ...sessionLearnedRules,
-          ],
+          ]) as unknown as PromptValidationRule[],
           initialTemplates: effectiveLearnedTemplates,
           shouldUpsertTemplates,
           templateMergeThreshold,

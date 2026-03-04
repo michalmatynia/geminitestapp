@@ -209,9 +209,11 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 Stack:{' '}
                 {typeof selectedSegmentationRecord.validationRuleStack === 'string'
                   ? selectedSegmentationRecord.validationRuleStack
-                  : (selectedSegmentationRecord.validationRuleStack as any)?.name ||
-                    (selectedSegmentationRecord.validationRuleStack as any)?.id ||
-                    '—'}
+                  : typeof selectedSegmentationRecord.validationRuleStack === 'object'
+                    ? selectedSegmentationRecord.validationRuleStack.name ||
+                      selectedSegmentationRecord.validationRuleStack.id ||
+                      '—'
+                    : '—'}
               </div>
               <div className='text-xs text-gray-300'>
                 Target: {selectedSegmentationRecord.returnTarget}

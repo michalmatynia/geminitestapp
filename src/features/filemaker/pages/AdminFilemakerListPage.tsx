@@ -23,13 +23,19 @@ import {
   formatFilemakerAddress,
   parseFilemakerDatabase,
 } from '../settings';
+import { includeQuery } from './filemaker-page-utils';
 
 import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
-const includeQuery = (values: string[], query: string): boolean => {
-  if (!query) return true;
-  return values.join(' ').toLowerCase().includes(query.toLowerCase());
+type EntityTabConfig<TData> = {
+  key: 'persons' | 'organizations' | 'events';
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  searchPlaceholder: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  badges: React.ReactNode;
 };
 
 export function AdminFilemakerListPage(): React.JSX.Element {
@@ -90,6 +96,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
         ),
     [database.organizations, deferredQuery]
   );
+
   const events = useMemo(
     () =>
       [...database.events]
@@ -136,7 +143,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
         cell: ({ row }) => {
           const person = row.original;
           return (
-            <div className='text-[11px] text-gray-500 space-y-0.5'>
+            <div className='space-y-0.5 text-[11px] text-gray-500'>
               <div>NIP: {person.nip || 'n/a'}</div>
               <div>
                 Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
@@ -205,6 +212,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
     ],
     [router]
   );
+
   const eventColumns = useMemo<ColumnDef<FilemakerEvent>[]>(
     () => [
       {
@@ -241,6 +249,34 @@ export function AdminFilemakerListPage(): React.JSX.Element {
       },
     ],
     [router]
+  );
+
+  const renderEntityTabPanel = <TData,>(config: EntityTabConfig<TData>): React.JSX.Element => (
+    <TabsContent value={config.key} className='m-0'>
+      <StandardDataTablePanel
+        filters={
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+            <div className='flex items-center gap-2'>{config.badges}</div>
+            <div className='w-full max-w-sm'>
+              <SearchInput
+                value={query}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setQuery(event.target.value);
+                }}
+                onClear={() => setQuery('')}
+                placeholder={config.searchPlaceholder}
+                size='sm'
+              />
+            </div>
+          </div>
+        }
+        columns={config.columns}
+        data={config.data}
+        isLoading={settingsStore.isLoading}
+        variant='flat'
+        emptyState={<EmptyState title={config.emptyTitle} description={config.emptyDescription} />}
+      />
+    </TabsContent>
   );
 
   return (
@@ -303,161 +339,98 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value='persons' className='m-0'>
-          <StandardDataTablePanel
-            filters={
-              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-                <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Persons: {persons.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Organizations: {organizations.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Events: {events.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Emails: {database.emails.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Addresses: {database.addresses.length}
-                  </Badge>
-                </div>
-                <div className='w-full max-w-sm'>
-                  <SearchInput
-                    value={query}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      setQuery(event.target.value);
-                    }}
-                    onClear={() => setQuery('')}
-                    placeholder='Search name, address, NIP, REGON, phone...'
-                    size='sm'
-                  />
-                </div>
-              </div>
-            }
-            columns={personColumns}
-            data={persons}
-            isLoading={settingsStore.isLoading}
-            variant='flat'
-            emptyState={
-              <EmptyState
-                title={query ? 'No persons found' : 'No persons yet'}
-                description={
-                  query
-                    ? 'Try adjusting your search terms.'
-                    : 'Add your first person to the database.'
-                }
-              />
-            }
-          />
-        </TabsContent>
+        {renderEntityTabPanel<FilemakerPerson>({
+          key: 'persons',
+          columns: personColumns,
+          data: persons,
+          searchPlaceholder: 'Search name, address, NIP, REGON, phone...',
+          emptyTitle: query ? 'No persons found' : 'No persons yet',
+          emptyDescription: query
+            ? 'Try adjusting your search terms.'
+            : 'Add your first person to the database.',
+          badges: (
+            <>
+              <Badge variant='outline' className='text-[10px]'>
+                Persons: {persons.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Organizations: {organizations.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Events: {events.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Emails: {database.emails.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Addresses: {database.addresses.length}
+              </Badge>
+            </>
+          ),
+        })}
 
-        <TabsContent value='organizations' className='m-0'>
-          <StandardDataTablePanel
-            filters={
-              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-                <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Persons: {persons.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Organizations: {organizations.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Events: {events.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Emails: {database.emails.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Addresses: {database.addresses.length}
-                  </Badge>
-                </div>
-                <div className='w-full max-w-sm'>
-                  <SearchInput
-                    value={query}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      setQuery(event.target.value);
-                    }}
-                    onClear={() => setQuery('')}
-                    placeholder='Search name, address, NIP, REGON, phone...'
-                    size='sm'
-                  />
-                </div>
-              </div>
-            }
-            columns={orgColumns}
-            data={organizations}
-            isLoading={settingsStore.isLoading}
-            variant='flat'
-            emptyState={
-              <EmptyState
-                title={query ? 'No organizations found' : 'No organizations yet'}
-                description={
-                  query
-                    ? 'Try adjusting your search terms.'
-                    : 'Add your first organization to the database.'
-                }
-              />
-            }
-          />
-        </TabsContent>
+        {renderEntityTabPanel<FilemakerOrganization>({
+          key: 'organizations',
+          columns: orgColumns,
+          data: organizations,
+          searchPlaceholder: 'Search name, address, NIP, REGON, phone...',
+          emptyTitle: query ? 'No organizations found' : 'No organizations yet',
+          emptyDescription: query
+            ? 'Try adjusting your search terms.'
+            : 'Add your first organization to the database.',
+          badges: (
+            <>
+              <Badge variant='outline' className='text-[10px]'>
+                Persons: {persons.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Organizations: {organizations.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Events: {events.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Emails: {database.emails.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Addresses: {database.addresses.length}
+              </Badge>
+            </>
+          ),
+        })}
 
-        <TabsContent value='events' className='m-0'>
-          <StandardDataTablePanel
-            filters={
-              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-                <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Persons: {persons.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Organizations: {organizations.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Events: {events.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Emails: {database.emails.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Event Links: {database.eventOrganizationLinks.length}
-                  </Badge>
-                  <Badge variant='outline' className='text-[10px]'>
-                    Addresses: {database.addresses.length}
-                  </Badge>
-                </div>
-                <div className='w-full max-w-sm'>
-                  <SearchInput
-                    value={query}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      setQuery(event.target.value);
-                    }}
-                    onClear={() => setQuery('')}
-                    placeholder='Search event name and address...'
-                    size='sm'
-                  />
-                </div>
-              </div>
-            }
-            columns={eventColumns}
-            data={events}
-            isLoading={settingsStore.isLoading}
-            variant='flat'
-            emptyState={
-              <EmptyState
-                title={query ? 'No events found' : 'No events yet'}
-                description={
-                  query
-                    ? 'Try adjusting your search terms.'
-                    : 'Add your first event to the database.'
-                }
-              />
-            }
-          />
-        </TabsContent>
+        {renderEntityTabPanel<FilemakerEvent>({
+          key: 'events',
+          columns: eventColumns,
+          data: events,
+          searchPlaceholder: 'Search event name and address...',
+          emptyTitle: query ? 'No events found' : 'No events yet',
+          emptyDescription: query
+            ? 'Try adjusting your search terms.'
+            : 'Add your first event to the database.',
+          badges: (
+            <>
+              <Badge variant='outline' className='text-[10px]'>
+                Persons: {persons.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Organizations: {organizations.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Events: {events.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Emails: {database.emails.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Event Links: {database.eventOrganizationLinks.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Addresses: {database.addresses.length}
+              </Badge>
+            </>
+          ),
+        })}
       </Tabs>
     </div>
   );

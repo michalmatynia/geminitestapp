@@ -57,16 +57,13 @@ export function parsePromptExploderSettings(raw: unknown): PromptExploderSetting
 
 export function parsePromptExploderSettingsResult(raw: unknown): {
   settings: PromptExploderSettings;
-  error: PromptExploderSettingsValidationError | null;
+  error: string | null;
 } {
   const result = promptExploderSettingsSchema.safeParse(raw);
   if (!result.success) {
     return {
       settings: defaultPromptExploderSettings,
-      error: {
-        message: result.error.message,
-        code: 'invalid_settings_json',
-      },
+      error: result.error.message,
     };
   }
   return {
@@ -75,7 +72,4 @@ export function parsePromptExploderSettingsResult(raw: unknown): {
   };
 }
 
-export type PromptExploderSettingsValidationError = {
-  message: string;
-  code: string;
-};
+export type PromptExploderSettingsValidationError = string;

@@ -59,7 +59,6 @@ import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource,
-  resolvePromptExploderValidationStack,
 } from '../validation-stack';
 
 import type {

@@ -373,7 +373,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           title='Prompt Exploder Settings'
           description='Persisted settings are invalid and cannot be loaded.'
         />
-        <Alert variant='error'>{settingsValidationError}</Alert>
+        <Alert variant='error'>{(settingsValidationError as any).message}</Alert>
         <div className='flex flex-wrap items-center gap-2'>
           <Button
             type='button'

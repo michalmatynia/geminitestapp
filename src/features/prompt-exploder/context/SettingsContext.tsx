@@ -126,6 +126,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       parserTuningDrafts: data.parserTuningDrafts,
       setParserTuningDrafts: data.setParserTuningDraftsState,
       hasUnsavedParserTuningDrafts: data.hasUnsavedParserTuningDrafts,
+      saveError: data.saveError,
+      setSaveError: data.setSaveError,
       isParserTuningOpen: data.isParserTuningOpen,
       setIsParserTuningOpen: data.setIsParserTuningOpen,
       sessionLearnedRules: data.sessionLearnedRules,

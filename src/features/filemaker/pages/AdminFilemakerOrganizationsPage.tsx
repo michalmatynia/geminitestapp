@@ -1,19 +1,11 @@
 'use client';
 
-import { Building2, Users, Database, CalendarDays, Mail } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
+import { Badge, ActionMenu, DropdownMenuItem } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Badge,
-  StandardDataTablePanel,
-  PanelHeader,
-  SearchInput,
-  EmptyState,
-  ActionMenu,
-  DropdownMenuItem,
-} from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,
@@ -21,6 +13,8 @@ import {
   parseFilemakerDatabase,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
+import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
+import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 
 import type { FilemakerOrganization } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -90,9 +84,7 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
               <DropdownMenuItem
                 onSelect={(event: Event): void => {
                   event.preventDefault();
-                  router.push(
-                    `/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`
-                  );
+                  router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`);
                 }}
               >
                 Edit Details
@@ -106,80 +98,31 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <PanelHeader
-        title='Filemaker Organizations'
-        description='Search and browse organizations available for Case Resolver document addressing.'
-        icon={<Building2 className='size-4' />}
-        actions={[
-          {
-            key: 'persons',
-            label: 'Persons',
-            icon: <Users className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/persons'),
-          },
-          {
-            key: 'emails',
-            label: 'Emails',
-            icon: <Mail className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/emails'),
-          },
-          {
-            key: 'events',
-            label: 'Events',
-            icon: <CalendarDays className='size-4' />,
-            variant: 'outline',
-            onClick: () => router.push('/admin/filemaker/events'),
-          },
-          {
-            key: 'manage',
-            label: 'Manage Database',
-            icon: <Database className='size-4' />,
-            onClick: () => router.push('/admin/filemaker'),
-          },
-        ]}
-      />
-
-      <StandardDataTablePanel
-        filters={
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='text-[10px]'>
-                Organizations: {organizations.length}
-              </Badge>
-              <Badge variant='outline' className='text-[10px]'>
-                Total Addresses: {database.addresses.length}
-              </Badge>
-            </div>
-            <div className='w-full max-w-sm'>
-              <SearchInput
-                value={query}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setQuery(event.target.value);
-                }}
-                onClear={() => setQuery('')}
-                placeholder='Search organization name and address...'
-                size='sm'
-              />
-            </div>
-          </div>
-        }
-        columns={columns}
-        data={organizations}
-        isLoading={settingsStore.isLoading}
-        emptyState={
-          <EmptyState
-            title={query ? 'No organizations found' : 'No organizations found in database.'}
-            description={
-              query
-                ? 'Try adjusting your search terms.'
-                : 'Add your first organization to the database.'
-            }
-          />
-        }
-      />
-    </div>
+    <FilemakerEntityTablePage
+      title='Filemaker Organizations'
+      description='Search and browse organizations available for Case Resolver document addressing.'
+      icon={<Building2 className='size-4' />}
+      actions={buildFilemakerNavActions(router, 'organizations')}
+      badges={
+        <>
+          <Badge variant='outline' className='text-[10px]'>
+            Organizations: {organizations.length}
+          </Badge>
+          <Badge variant='outline' className='text-[10px]'>
+            Total Addresses: {database.addresses.length}
+          </Badge>
+        </>
+      }
+      query={query}
+      onQueryChange={setQuery}
+      queryPlaceholder='Search organization name and address...'
+      columns={columns}
+      data={organizations}
+      isLoading={settingsStore.isLoading}
+      emptyTitle={query ? 'No organizations found' : 'No organizations found in database.'}
+      emptyDescription={
+        query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'
+      }
+    />
   );
 }

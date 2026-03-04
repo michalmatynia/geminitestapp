@@ -8,19 +8,21 @@ import {
   useGraphState,
 } from '@/features/ai/ai-paths/context';
 import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/hooks/useStateBridge';
-import type { AiNode, Edge } from '@/shared/lib/ai-paths';
+import { normalizeNodes, type AiNode, type Edge } from '@/shared/lib/ai-paths';
 
 const buildNode = (id: string, x: number, y: number): AiNode =>
-  ({
-    id,
-    type: 'template',
-    title: id,
-    description: '',
-    inputs: [],
-    outputs: [],
-    position: { x, y },
-    data: {},
-  }) as AiNode;
+  normalizeNodes([
+    {
+      id,
+      type: 'template',
+      title: id,
+      description: '',
+      inputs: [],
+      outputs: [],
+      position: { x, y },
+      data: {},
+    } as AiNode,
+  ])[0] as AiNode;
 
 const serializeNodes = (nodes: AiNode[]): string =>
   nodes
@@ -171,6 +173,55 @@ function BridgePathSwitchHarness(): React.JSX.Element {
   );
 }
 
+function BridgePathSwitchImmediateEchoHarness(): React.JSX.Element {
+  const [sourceActivePathId, setSourceActivePathId] = React.useState<string | null>('path-a');
+  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([buildNode('path-a-node-1', 80, 96)]);
+  const [sourceEdges, setSourceEdges] = React.useState<Edge[]>([]);
+  const [legacyTick, setLegacyTick] = React.useState(0);
+  const { nodes: contextNodes } = useGraphState();
+  const { setNodes } = useGraphActions();
+
+  useStateBridgeGraph({
+    nodes: sourceNodes,
+    edges: sourceEdges,
+    activePathId: sourceActivePathId,
+    onNodesChangeFromContext: setSourceNodes,
+    onEdgesChangeFromContext: setSourceEdges,
+  });
+
+  return (
+    <div data-testid='immediate-legacy-tick' data-value={legacyTick}>
+      <output data-testid='immediate-source-path'>{sourceActivePathId ?? 'none'}</output>
+      <output data-testid='immediate-source-nodes'>{serializeNodes(sourceNodes)}</output>
+      <output data-testid='immediate-context-nodes'>{serializeNodes(contextNodes)}</output>
+      <button
+        type='button'
+        onClick={() =>
+          setNodes((prev: AiNode[]) => [...prev, buildNode('path-a-node-2', 240, 220)], {
+            reason: 'drop',
+            source: 'test.path-switch-immediate.context-drop',
+          })
+        }
+      >
+        immediate-context-add-path-a-node
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          setSourceActivePathId('path-b');
+          setSourceNodes([buildNode('path-b-node-1', 640, 420)]);
+          setSourceEdges([]);
+        }}
+      >
+        immediate-source-switch-to-path-b
+      </button>
+      <button type='button' onClick={() => setLegacyTick((prev) => prev + 1)}>
+        immediate-legacy-rerender
+      </button>
+    </div>
+  );
+}
+
 describe('AI Paths state bridge drop/click race protections', () => {
   it('prevents stale source->context sync from dropping a freshly added node', async () => {
     const { getByRole, getByTestId } = render(
@@ -255,6 +306,47 @@ describe('AI Paths state bridge drop/click race protections', () => {
       expect(getByTestId('switch-source-path')).toHaveTextContent('path-b');
       expect(getByTestId('switch-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
       expect(getByTestId('switch-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
+    });
+  });
+
+  it('keeps path switch authoritative when context->source callbacks apply immediately', async () => {
+    const { getByRole, getByTestId } = render(
+      <AiPathsProvider initialNodes={[buildNode('path-a-node-1', 80, 96)]} initialEdges={[]}>
+        <BridgePathSwitchImmediateEchoHarness />
+      </AiPathsProvider>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('immediate-source-path')).toHaveTextContent('path-a');
+      expect(getByTestId('immediate-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('immediate-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'immediate-context-add-path-a-node' }));
+
+    await waitFor(() => {
+      expect(getByTestId('immediate-source-nodes')).toHaveTextContent(
+        'path-a-node-1:80,96|path-a-node-2:240,220'
+      );
+      expect(getByTestId('immediate-context-nodes')).toHaveTextContent(
+        'path-a-node-1:80,96|path-a-node-2:240,220'
+      );
+    });
+
+    fireEvent.click(getByRole('button', { name: 'immediate-source-switch-to-path-b' }));
+
+    await waitFor(() => {
+      expect(getByTestId('immediate-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('immediate-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
+      expect(getByTestId('immediate-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'immediate-legacy-rerender' }));
+
+    await waitFor(() => {
+      expect(getByTestId('immediate-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('immediate-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
+      expect(getByTestId('immediate-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
     });
   });
 });

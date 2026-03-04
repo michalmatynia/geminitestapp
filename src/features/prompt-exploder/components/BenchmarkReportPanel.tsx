@@ -36,6 +36,9 @@ export function BenchmarkReportPanel(): React.JSX.Element {
     visibleBenchmarkSuggestions,
     parsedCustomBenchmarkCases,
   } = useBenchmarkState();
+  const ok = parsedCustomBenchmarkCases.ok;
+  const cases = ok ? parsedCustomBenchmarkCases.cases : [];
+  const error = ok ? null : parsedCustomBenchmarkCases.error;
   const {
     setBenchmarkSuiteDraft,
     setBenchmarkLowConfidenceThresholdDraft,
@@ -199,11 +202,11 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               placeholder='[{"id":"case_1","prompt":"...","expectedTypes":["sequence"],"minSegments":1}]'
             />
             <div
-              className={`mt-1 text-[10px] ${parsedCustomBenchmarkCases.ok ? 'text-gray-500' : 'text-red-300'}`}
+              className={`mt-1 text-[10px] ${ok ? 'text-gray-500' : 'text-red-300'}`}
             >
-              {parsedCustomBenchmarkCases.ok
-                ? `Valid custom suite: ${parsedCustomBenchmarkCases.cases.length} case(s).`
-                : `Invalid custom suite: ${parsedCustomBenchmarkCases.error}`}
+              {ok
+                ? `Valid custom suite: ${cases?.length ?? 0} case(s).`
+                : `Invalid custom suite: ${error}`}
             </div>
           </FormField>
         ) : null}

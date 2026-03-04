@@ -1,4 +1,5 @@
 export * from './admin';
+export { VALIDATOR_PATTERN_LISTS_KEY } from './admin';
 export * from './agent-runtime';
 export * from './agent-teaching';
 export * from './agents';

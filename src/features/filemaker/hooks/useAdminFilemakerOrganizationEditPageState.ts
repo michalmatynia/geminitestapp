@@ -72,7 +72,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
 
-  const organizationId = decodeRouteParam(params['id']);
+  const organizationId = decodeRouteParam(params['organizationId']);
 
   const countriesQuery = useCountries();
   const countries = countriesQuery.data ?? [];

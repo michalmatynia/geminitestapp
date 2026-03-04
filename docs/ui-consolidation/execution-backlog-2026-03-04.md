@@ -154,6 +154,9 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
      - `.github/workflows/test-matrix.yml` (`ui-consolidation`)
    - Extended scanner CLI to support guardrail mode:
      - `scripts/architecture/scan-ui-consolidation.mjs` now supports `--summary-json`, `--no-write`, `--ci/--no-history`.
+   - Scanner cluster diagnostics hardened:
+     - thin re-export wrappers are now excluded from duplicate-name clustering to avoid alias-wrapper noise.
+     - scanner summary now includes `thinReExportWrapperCount`.
 
 ## Guardrails per migration PR
 
@@ -181,4 +184,5 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 - Current scan (`2026-03-04T20:36:09.950Z`): 0 opportunities, 0 high-priority.
 - Delta: `-12` opportunities after Wave 1 + early Wave 2 extraction.
 - Latest scan (`2026-03-04T23:33:39.803Z`): 0 opportunities, 0 high-priority.
+- Latest scan (`2026-03-04T23:41:01.602Z`): 0 opportunities, 0 high-priority, 0 duplicate-name clusters (`27` thin wrappers ignored).
 - Guardrail check (`2026-03-04T23:35+`): passed (`propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0`).

@@ -1,13 +1,14 @@
 # UI Consolidation Scan
 
-Generated at: 2026-03-04T23:33:39.803Z
+Generated at: 2026-03-04T23:41:01.602Z
 
 ## Snapshot
 
 - Scanned UI files: 1118
-- Duplicate-name clusters: 7
+- Duplicate-name clusters: 0
 - Prop-signature clusters: 0
 - Token-similarity clusters: 0
+- Thin re-export wrappers ignored: 27
 - Total consolidation opportunities: 0
 - High-priority opportunities (score >= 2000): 0
 
@@ -52,3 +53,17 @@ Generated at: 2026-03-04T23:33:39.803Z
 - Start with high score + low risk clusters.
 - Prefer migration to existing templates before creating new abstractions.
 - Re-run this scan after each migration wave and compare rank deltas.
+
+## Residual Clusters
+
+### Duplicate Name Clusters
+
+- None
+
+### Prop Signature Clusters
+
+- None
+
+### Token Similarity Clusters
+
+- None

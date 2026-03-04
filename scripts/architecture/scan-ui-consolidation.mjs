@@ -121,6 +121,9 @@ const STOP_WORDS = new Set([
   'tsxs',
 ]);
 
+const THIN_RE_EXPORT_RE =
+  /^export\s+(?:\{[\s\S]*?\}\s+from\s+['"][^'"]+['"]|(?:\*\s+from\s+['"][^'"]+['"]))\s*;?$/;
+
 const FAMILY_WEIGHTS = {
   Modal: 1.4,
   Dialog: 1.4,
@@ -194,6 +197,7 @@ const getFamily = (basename, relativePath) => {
 const isClusterEligible = (candidate) => {
   if (NON_CONSOLIDATION_NAME_RE.test(candidate.basename)) return false;
   if (!CLUSTER_FAMILY_ALLOWLIST.has(candidate.family)) return false;
+  if (candidate.thinReExportWrapper) return false;
   return true;
 };
 
@@ -222,6 +226,17 @@ const stripCommentsAndStrings = (content) =>
     .replace(/`(?:\\.|[^`])*`/g, ' ')
     .replace(/"(?:\\.|[^"])*"/g, ' ')
     .replace(/'(?:\\.|[^'])*'/g, ' ');
+
+const isThinReExportWrapper = (rawContent) => {
+  const normalized = rawContent
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+    .trim();
+  if (!normalized) return false;
+  const withoutUseClient = normalized.replace(/^['"]use client['"]\s*;?\s*/m, '').trim();
+  if (!withoutUseClient) return false;
+  return THIN_RE_EXPORT_RE.test(withoutUseClient);
+};
 
 const extractSimilarityTokens = (content) => {
   const stripped = stripCommentsAndStrings(content).toLowerCase();
@@ -359,6 +374,35 @@ const scoreCluster = ({ family, method, totalLines, fileCount, featureCount, tem
   return Math.round(base * familyWeight * methodWeight * crossFeatureWeight * templateGapWeight);
 };
 
+const toClusterDiagnostics = (clusters) =>
+  clusters
+    .map((cluster) => {
+      const files = cluster.files
+        .map((entry) => ({
+          path: entry.path,
+          lines: entry.lines,
+          scope: entry.scope,
+        }))
+        .sort((left, right) => right.lines - left.lines);
+      const scopes = [...new Set(files.map((file) => file.scope))].sort();
+      const totalLines = files.reduce((sum, file) => sum + file.lines, 0);
+      return {
+        method: cluster.method,
+        family: cluster.family,
+        clusterKey: cluster.clusterKey,
+        fileCount: files.length,
+        totalLines,
+        scopes,
+        similarity: cluster.similarity,
+        files,
+      };
+    })
+    .sort((left, right) => {
+      if (right.fileCount !== left.fileCount) return right.fileCount - left.fileCount;
+      if (right.totalLines !== left.totalLines) return right.totalLines - left.totalLines;
+      return left.clusterKey.localeCompare(right.clusterKey);
+    });
+
 const analyze = async () => {
   const srcFiles = await walk(path.join(root, 'src'));
   const candidates = [];
@@ -383,6 +427,7 @@ const analyze = async () => {
       uiPrimitiveImports: imports.filter((entry) => entry.startsWith('@/shared/ui/')).length,
       tokenSet: extractSimilarityTokens(raw),
       propsSignature: parsePropsSignature(raw),
+      thinReExportWrapper: isThinReExportWrapper(raw),
     };
 
     candidates.push(record);
@@ -578,6 +623,7 @@ const analyze = async () => {
     duplicateNameClusterCount: duplicateNameClusters.length,
     propSignatureClusterCount: propSignatureClusters.length,
     tokenSimilarityClusterCount: tokenClusters.length,
+    thinReExportWrapperCount: candidates.filter((entry) => entry.thinReExportWrapper).length,
     totalOpportunities: opportunities.length,
     highPriorityCount: opportunities.filter((entry) => entry.score >= 2000).length,
     familyCounts: [...familyCounts.entries()]
@@ -588,10 +634,16 @@ const analyze = async () => {
       .sort((left, right) => right.count - left.count),
   };
 
-  return { summary, candidates, opportunities };
+  const clusterDiagnostics = {
+    duplicateName: toClusterDiagnostics(duplicateNameClusters),
+    propSignature: toClusterDiagnostics(propSignatureClusters),
+    tokenSimilarity: toClusterDiagnostics(tokenClusters),
+  };
+
+  return { summary, candidates, opportunities, clusterDiagnostics };
 };
 
-const buildMarkdown = ({ summary, opportunities }) => {
+const buildMarkdown = ({ summary, opportunities, clusterDiagnostics }) => {
   const lines = [];
   lines.push('# UI Consolidation Scan');
   lines.push('');
@@ -603,6 +655,7 @@ const buildMarkdown = ({ summary, opportunities }) => {
   lines.push(`- Duplicate-name clusters: ${summary.duplicateNameClusterCount}`);
   lines.push(`- Prop-signature clusters: ${summary.propSignatureClusterCount}`);
   lines.push(`- Token-similarity clusters: ${summary.tokenSimilarityClusterCount}`);
+  lines.push(`- Thin re-export wrappers ignored: ${summary.thinReExportWrapperCount}`);
   lines.push(`- Total consolidation opportunities: ${summary.totalOpportunities}`);
   lines.push(`- High-priority opportunities (score >= 2000): ${summary.highPriorityCount}`);
   lines.push('');
@@ -664,6 +717,34 @@ const buildMarkdown = ({ summary, opportunities }) => {
   lines.push('- Start with high score + low risk clusters.');
   lines.push('- Prefer migration to existing templates before creating new abstractions.');
   lines.push('- Re-run this scan after each migration wave and compare rank deltas.');
+
+  lines.push('');
+  lines.push('## Residual Clusters');
+  lines.push('');
+  const residualGroups = [
+    { title: 'Duplicate Name Clusters', clusters: clusterDiagnostics.duplicateName },
+    { title: 'Prop Signature Clusters', clusters: clusterDiagnostics.propSignature },
+    { title: 'Token Similarity Clusters', clusters: clusterDiagnostics.tokenSimilarity },
+  ];
+
+  for (const group of residualGroups) {
+    lines.push(`### ${group.title}`);
+    lines.push('');
+    if (group.clusters.length === 0) {
+      lines.push('- None');
+      lines.push('');
+      continue;
+    }
+    for (const cluster of group.clusters.slice(0, 10)) {
+      lines.push(
+        `- \`${cluster.family}\` \`${cluster.method}\` files=${cluster.fileCount} loc=${cluster.totalLines} scopes=${cluster.scopes.join(', ')}`
+      );
+      for (const file of cluster.files.slice(0, 8)) {
+        lines.push(`  - \`${file.path}\` (${file.lines} LOC)`);
+      }
+    }
+    lines.push('');
+  }
 
   return `${lines.join('\n')}\n`;
 };

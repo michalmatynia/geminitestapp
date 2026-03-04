@@ -20,7 +20,10 @@ Final scan source: `docs/ui-consolidation/scan-latest.md`
 
 ## Validation run summary
 
-- `node scripts/architecture/scan-ui-consolidation.mjs`: passed, final `Opportunities: 0` (`2026-03-04T23:33:39.803Z`).
+- `node scripts/architecture/scan-ui-consolidation.mjs`: passed, final `Opportunities: 0` (`2026-03-04T23:41:01.602Z`).
+- Scanner diagnostics hardened to ignore thin re-export wrappers for duplicate-name clustering noise:
+  - `duplicateNameClusterCount: 0`
+  - `thinReExportWrapperCount: 27`
 - `node scripts/architecture/check-ui-consolidation.mjs`: passed, guardrail snapshot `propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0`.
 - CI enforcement enabled:
   - `.github/workflows/test-matrix.yml` job `ui-consolidation` now runs `node scripts/architecture/check-ui-consolidation.mjs`.

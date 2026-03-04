@@ -38,32 +38,63 @@ export function FormActions({
   children,
   size = 'sm',
 }: FormActionsProps): React.JSX.Element {
+  const actionRuntime = React.useMemo(
+    () => ({
+      onCancel,
+      onSave,
+      cancelText,
+      saveText,
+      isSaving,
+      isDisabled,
+      saveVariant,
+      cancelVariant,
+      saveIcon,
+      saveLoadingText,
+      size,
+    }),
+    [
+      onCancel,
+      onSave,
+      cancelText,
+      saveText,
+      isSaving,
+      isDisabled,
+      saveVariant,
+      cancelVariant,
+      saveIcon,
+      saveLoadingText,
+      size,
+    ]
+  );
+
   return (
     <div className={cn('flex items-center justify-end gap-3', className)}>
       {children}
-      {onCancel && (
+      {actionRuntime.onCancel && (
         <Button
           type='button'
-          variant={cancelVariant}
-          size={size}
-          onClick={onCancel}
-          disabled={isSaving}
+          variant={actionRuntime.cancelVariant}
+          size={actionRuntime.size}
+          onClick={actionRuntime.onCancel}
+          disabled={actionRuntime.isSaving}
         >
-          {cancelText}
+          {actionRuntime.cancelText}
         </Button>
       )}
-      {onSave && (
+      {actionRuntime.onSave && (
         <Button
           type='button'
-          variant={saveVariant}
-          size={size}
-          onClick={onSave}
-          disabled={isDisabled || isSaving}
-          loading={isSaving}
-          loadingText={saveLoadingText}
+          variant={actionRuntime.saveVariant}
+          size={actionRuntime.size}
+          onClick={actionRuntime.onSave}
+          disabled={actionRuntime.isDisabled || actionRuntime.isSaving}
+          loading={actionRuntime.isSaving}
+          loadingText={actionRuntime.saveLoadingText}
         >
-          {saveIcon && !isSaving && <span className='mr-2'>{saveIcon}</span>}
-          {!isSaving && saveText}
+          {actionRuntime.saveIcon && !actionRuntime.isSaving && (
+            <span className='mr-2'>{actionRuntime.saveIcon}</span>
+          )}
+          {!actionRuntime.isSaving && actionRuntime.saveText}
         </Button>
       )}
     </div>

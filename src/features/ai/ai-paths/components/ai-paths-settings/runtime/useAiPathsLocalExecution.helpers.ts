@@ -132,9 +132,6 @@ export const extractDatabaseRuntimeMetadata = (
       : typeof bundle['provider'] === 'string' && bundle['provider'].trim().length > 0
         ? bundle['provider']
         : null;
-  const providerFallback = isObjectRecord(bundle['providerFallback'])
-    ? bundle['providerFallback']
-    : null;
   const count =
     typeof bundle['count'] === 'number' && Number.isFinite(bundle['count'])
       ? bundle['count']
@@ -149,9 +146,6 @@ export const extractDatabaseRuntimeMetadata = (
   }
   if (resolvedProvider) {
     databaseMeta['resolvedProvider'] = resolvedProvider;
-  }
-  if (providerFallback) {
-    databaseMeta['providerFallback'] = providerFallback;
   }
   if (count !== null) {
     databaseMeta['count'] = count;

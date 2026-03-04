@@ -76,6 +76,7 @@ const parseArgs = (argv) => {
   const options = {
     environment: DEFAULT_ENVIRONMENT,
     run: false,
+    write: false,
     output: null,
     timeoutMs: DEFAULT_TIMEOUT_MS,
   };
@@ -83,6 +84,11 @@ const parseArgs = (argv) => {
   argv.forEach((arg) => {
     if (arg === '--run') {
       options.run = true;
+      return;
+    }
+    if (arg === '--write' || arg === '--apply') {
+      options.run = true;
+      options.write = true;
       return;
     }
     if (arg.startsWith('--env=')) {
@@ -205,6 +211,7 @@ const buildPendingCommandEntry = (definition) => ({
   id: definition.id,
   label: definition.label,
   command: definition.command,
+  baseCommand: definition.command,
   expectedMode: definition.expectedMode,
   status: 'pending',
   exitCode: null,
@@ -217,9 +224,10 @@ const buildPendingCommandEntry = (definition) => ({
   stderr: null,
 });
 
-const runCommand = (definition, timeoutMs) => {
+const runCommand = (definition, timeoutMs, writeMode) => {
+  const executableCommand = writeMode ? `${definition.command} -- --write` : definition.command;
   const startedAt = new Date();
-  const result = spawnSync(definition.command, {
+  const result = spawnSync(executableCommand, {
     cwd: ROOT,
     shell: true,
     encoding: 'utf8',
@@ -242,8 +250,9 @@ const runCommand = (definition, timeoutMs) => {
   return {
     id: definition.id,
     label: definition.label,
-    command: definition.command,
-    expectedMode: definition.expectedMode,
+    command: executableCommand,
+    baseCommand: definition.command,
+    expectedMode: writeMode ? 'write' : definition.expectedMode,
     status: exitCode === 0 ? 'success' : 'failed',
     exitCode,
     timedOut,
@@ -259,18 +268,30 @@ const runCommand = (definition, timeoutMs) => {
 const main = () => {
   const options = parseArgs(process.argv.slice(2));
   const environment = sanitizeEnvironment(options.environment || DEFAULT_ENVIRONMENT);
-  const defaultOutput = path.join(OUTPUT_DIR, `wave1-dry-run-${environment}.json`);
+  const defaultOutput = path.join(
+    OUTPUT_DIR,
+    options.write ? `wave1-write-${environment}.json` : `wave1-dry-run-${environment}.json`
+  );
   const outputPath = options.output ? options.output : defaultOutput;
   const absoluteOutputPath = path.resolve(ROOT, outputPath);
 
   const commands = options.run
-    ? WAVE1_COMMANDS.map((definition) => runCommand(definition, options.timeoutMs))
-    : WAVE1_COMMANDS.map((definition) => buildPendingCommandEntry(definition));
+    ? WAVE1_COMMANDS.map((definition) => runCommand(definition, options.timeoutMs, options.write))
+    : WAVE1_COMMANDS.map((definition) => ({
+        ...buildPendingCommandEntry(definition),
+        expectedMode: options.write ? 'write' : definition.expectedMode,
+      }));
 
   const report = {
     schemaVersion: 1,
     wave: 'wave1-data-canonicalization-verification',
-    reportMode: options.run ? 'dry-run-executed' : 'template',
+    reportMode: options.run
+      ? options.write
+        ? 'write-executed'
+        : 'dry-run-executed'
+      : options.write
+        ? 'write-template'
+        : 'template',
     environment,
     generatedAt: new Date().toISOString(),
     commandTimeoutMs: options.timeoutMs,

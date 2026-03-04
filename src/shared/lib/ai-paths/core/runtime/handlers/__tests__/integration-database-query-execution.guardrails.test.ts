@@ -55,6 +55,7 @@ describe('executeDatabaseQuery guardrail metadata', () => {
         items: [{ id: 'abc' }],
         count: 1,
         provider: 'mongodb',
+        fallback: { provider: 'prisma' },
       },
     });
 
@@ -87,6 +88,8 @@ describe('executeDatabaseQuery guardrail metadata', () => {
         provider: 'mongodb',
       })
     );
+    const bundle = result['bundle'] as Record<string, unknown>;
+    expect(bundle['providerFallback']).toBeUndefined();
   });
 
   it('does not perform parameter-id fallback query', async () => {

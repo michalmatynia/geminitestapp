@@ -40,10 +40,14 @@ export const formatDurationMs = (value: number | null | undefined): string => {
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
 export const formatStatusLabel = (status: string): string =>
-  status
-    .split('_')
-    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
-    .join(' ');
+  status === 'waiting_callback'
+    ? 'Waiting'
+    : status === 'advance_pending'
+      ? 'Processing'
+      : status
+          .split('_')
+          .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+          .join(' ');
 
 export const statusToVariant = (status: string): StatusVariant => {
   const s = status.toLowerCase();

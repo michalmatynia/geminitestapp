@@ -12,7 +12,6 @@ interface DbQueryResult {
   item?: unknown;
   count?: number;
   provider?: 'mongodb' | 'prisma';
-  fallback?: Record<string, unknown>;
 }
 
 export type ExecuteDatabaseQueryInput = {
@@ -114,9 +113,6 @@ export async function executeDatabaseQuery({
       : requestedProvider === 'auto'
         ? null
         : requestedProvider;
-  const providerFallback = isObjectRecord(queryResultData['fallback'])
-    ? queryResultData['fallback']
-    : null;
 
   let result: unknown = queryConfig.single
     ? (queryResultData['item'] ?? null)
@@ -144,7 +140,6 @@ export async function executeDatabaseQuery({
       resolvedProvider,
       ...(querySource ? { querySource } : {}),
       ...(resolvedProvider ? { provider: resolvedProvider } : {}),
-      ...(providerFallback ? { providerFallback } : {}),
     },
     aiPrompt,
   };

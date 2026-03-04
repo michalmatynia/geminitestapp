@@ -83,7 +83,11 @@ export class EngineStateManager {
         } else if (this.finishedNodes.has(node.id)) {
           acc[node.id] = 'completed';
         } else if (this.blockedNodes.has(node.id)) {
-          acc[node.id] = 'blocked';
+          const blockedStatus =
+            typeof this.outputs[node.id]?.['status'] === 'string'
+              ? String(this.outputs[node.id]?.['status']).trim().toLowerCase()
+              : 'blocked';
+          acc[node.id] = blockedStatus === 'waiting_callback' ? 'waiting_callback' : 'blocked';
         } else if (this.activeNodes.has(node.id)) {
           acc[node.id] = 'running';
         } else {

@@ -18,7 +18,6 @@ import type {
 } from '@/shared/lib/ai-paths';
 import {
   createPresetId,
-  migrateDatabaseConfigCollections,
   databaseConfigSchema,
 } from '@/shared/lib/ai-paths';
 import { isObjectRecord } from '@/shared/utils/object-utils';
@@ -204,14 +203,11 @@ export function PresetsProvider({
 
   const normalizeDbNodePreset = useCallback((raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
-    const baseConfig = normalizeDatabasePresetConfig(raw.config);
-    const migrationResult = migrateDatabaseConfigCollections(baseConfig);
-    const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
       description: typeof raw.description === 'string' ? raw.description : '',
-      config: migratedConfig,
+      config: normalizeDatabasePresetConfig(raw.config),
       createdAt: raw.createdAt ?? now,
       updatedAt: raw.updatedAt ?? now,
     };

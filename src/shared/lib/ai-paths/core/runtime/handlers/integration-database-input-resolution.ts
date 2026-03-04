@@ -18,46 +18,11 @@ export function resolveDatabaseInputs({
   const next: Record<string, unknown> = { ...nodeInputs };
   const pickString = (value: unknown): string | undefined =>
     typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
-  const pickCatalogIdFromCatalogs = (value: unknown): string | undefined => {
-    if (!Array.isArray(value)) return undefined;
-    for (const entry of value) {
-      const fromString = pickString(entry);
-      if (fromString) return fromString;
-      if (!entry || typeof entry !== 'object') continue;
-      const record = entry as Record<string, unknown>;
-      const nestedCatalog =
-        pickString(record['catalogId']) ??
-        pickString(record['id']) ??
-        pickString(record['_id']) ??
-        (record['catalog'] && typeof record['catalog'] === 'object'
-          ? (pickString((record['catalog'] as Record<string, unknown>)['catalogId']) ??
-            pickString((record['catalog'] as Record<string, unknown>)['id']) ??
-            pickString((record['catalog'] as Record<string, unknown>)['_id']))
-          : undefined);
-      if (nestedCatalog) return nestedCatalog;
-    }
-    return undefined;
-  };
   const pickCatalogId = (
     record: Record<string, unknown> | null | undefined
   ): string | undefined => {
     if (!record || typeof record !== 'object') return undefined;
-    return (
-      pickString(record['catalogId']) ??
-      pickCatalogIdFromCatalogs(record['catalogs']) ??
-      (record['entity'] && typeof record['entity'] === 'object'
-        ? pickCatalogId(record['entity'] as Record<string, unknown>)
-        : undefined) ??
-      (record['entityJson'] && typeof record['entityJson'] === 'object'
-        ? pickCatalogId(record['entityJson'] as Record<string, unknown>)
-        : undefined) ??
-      (record['product'] && typeof record['product'] === 'object'
-        ? pickCatalogId(record['product'] as Record<string, unknown>)
-        : undefined) ??
-      (record['bundle'] && typeof record['bundle'] === 'object'
-        ? pickCatalogId(record['bundle'] as Record<string, unknown>)
-        : undefined)
-    );
+    return pickString(record['catalogId']);
   };
   const pickFromContext = (ctx: Record<string, unknown> | null | undefined): void => {
     if (!ctx || typeof ctx !== 'object') return;

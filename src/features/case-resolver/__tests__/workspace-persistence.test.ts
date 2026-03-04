@@ -12,10 +12,6 @@ import {
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
 } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import {
-  CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V1,
-  CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1,
-} from '@/features/case-resolver/workspace-detached-contract-migration';
-import {
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
@@ -31,6 +27,10 @@ import {
 } from '@/features/case-resolver/workspace-persistence';
 
 const NODE_FILE_SNAPSHOT_STORAGE_KEY = 'nodeFileSnapshotStorage';
+const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1 =
+  'case_resolver_workspace_detached_history_v1';
+const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V1 =
+  'case_resolver_workspace_detached_documents_v1';
 
 const toJsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), {

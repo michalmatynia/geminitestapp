@@ -40,7 +40,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 import { GET_products_metadata_handler, POST_products_metadata_handler } from './handler';
 
-describe('v2 products metadata handler compatibility', () => {
+describe('v2 products metadata handler canonical contract', () => {
   beforeEach(() => {
     getProducerRepositoryMock.mockReset();
     getTagRepositoryMock.mockReset();
@@ -54,7 +54,7 @@ describe('v2 products metadata handler compatibility', () => {
     });
   });
 
-  it('returns price-groups with compatibility fields', async () => {
+  it('returns price-groups with canonical fields', async () => {
     prismaMock.priceGroup = {
       findMany: vi.fn().mockResolvedValue([
         {
@@ -78,7 +78,8 @@ describe('v2 products metadata handler compatibility', () => {
     const payload = (await response.json()) as Array<Record<string, unknown>>;
     expect(payload).toHaveLength(1);
     expect(payload[0]?.['currencyCode']).toBe('PLN');
-    expect(payload[0]?.['groupType']).toBe('standard');
+    expect(payload[0]?.['type']).toBe('standard');
+    expect(payload[0]?.['groupType']).toBeUndefined();
   });
 
   it('creates price-group from direct payload', async () => {
@@ -131,7 +132,8 @@ describe('v2 products metadata handler compatibility', () => {
       })
     );
     expect(payload['currencyCode']).toBe('PLN');
-    expect(payload['groupType']).toBe('standard');
+    expect(payload['type']).toBe('standard');
+    expect(payload['groupType']).toBeUndefined();
   });
 
   it('reads price-groups from mongo provider when product provider is mongodb', async () => {
@@ -190,5 +192,7 @@ describe('v2 products metadata handler compatibility', () => {
     expect(payload).toHaveLength(1);
     expect(payload[0]?.['id']).toBe('pg-mongo-1');
     expect(payload[0]?.['currencyCode']).toBe('PLN');
+    expect(payload[0]?.['type']).toBe('standard');
+    expect(payload[0]?.['groupType']).toBeUndefined();
   });
 });

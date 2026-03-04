@@ -593,6 +593,157 @@ Progress (2026-03-04):
       8. `enqueue/handler.test.ts`
       Result: `8` files passed, `45` tests passed.
    4. `npm run ai-paths:check:canonical` -> passed (`4218` files scanned).
+21. Pruned runtime node-status run-alias compatibility in seams 139-140 and re-validated canonical guards:
+   1. Removed run-status alias mapping from runtime node-status normalizers:
+      1. `src/features/ai/ai-paths/services/path-run-executor.logic.ts` no longer maps `paused -> running` or `dead_lettered -> failed` in `toRuntimeNodeStatus`.
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts` no longer maps `paused`/`dead_lettered` aliases when merging runtime node outputs.
+   2. Hardened runtime snapshot merge to drop unsupported incoming node status literals while preserving previous canonical status when present:
+      1. `mergeRuntimeNodeOutputsForStatus` now strips raw `status` from incoming payload and re-applies only normalized canonical status.
+   3. Added/updated regression coverage:
+      1. `src/features/ai/ai-paths/services/__tests__/path-run-executor.logic.test.ts` now asserts run-only statuses are rejected (`null`) by node-status normalization.
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/runtime-utils.test.ts` now asserts alias statuses are not remapped and unknown status values are dropped without previous canonical state.
+   4. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `paused`/`dead_lettered` node-status alias snippets in executor logic and runtime utils.
+   5. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/services/__tests__/path-run-executor.logic.test.ts`
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/runtime-utils.test.ts`
+      Result: `2` files passed, `14` tests passed.
+   6. `npm run ai-paths:check:canonical` -> passed (`4219` files scanned).
+22. Pruned PresetsContext collection-alias auto-migration compatibility in seams 141-142 and re-validated canonical guards:
+   1. Removed runtime DB collection alias auto-migration from preset normalization:
+      1. `src/features/ai/ai-paths/context/PresetsContext.tsx`
+      2. `normalizeDbNodePreset` now persists `normalizeDatabasePresetConfig(raw.config)` directly without calling `migrateDatabaseConfigCollections`.
+   2. Added regression coverage:
+      1. `src/features/ai/ai-paths/context/__tests__/PresetsContext.normalizeDbNodePreset.test.tsx`
+         now verifies legacy collection aliases (e.g. `product_parameter`) are not auto-canonicalized during runtime preset normalization.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `migrateDatabaseConfigCollections` usage in `PresetsContext.tsx` and requires canonical direct normalization snippet.
+   4. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/context/__tests__/PresetsContext.normalizeDbNodePreset.test.tsx`
+      2. `src/shared/lib/ai-paths/core/utils/__tests__/collection-names.test.ts`
+      Result: `2` files passed, `4` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4219` files scanned).
+23. Pruned validation-config legacy schema gating compatibility in seams 143-144 and re-validated canonical guards:
+   1. Removed schema-version-gated `lastEvaluatedAt` compatibility branch:
+      1. `src/shared/lib/ai-paths/core/validation-engine/defaults.ts`
+      2. `normalizeAiPathsValidationConfig` now preserves sanitized `lastEvaluatedAt` without nulling it for legacy `schemaVersion`.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/validation-engine/__tests__/defaults.normalization.test.ts`
+         verifies `lastEvaluatedAt` remains preserved for `schemaVersion: 1` payloads and remains `null` when absent.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `legacySchemaVersion`/schema-gated `lastEvaluatedAt` compatibility snippets in validation defaults and requires canonical `lastEvaluatedAt` normalization snippet.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/validation-engine/__tests__/defaults.normalization.test.ts`
+      2. `src/shared/lib/ai-paths/core/validation-engine/__tests__/docs-inference.test.ts`
+      3. `src/shared/lib/ai-paths/core/validation-engine/__tests__/semantic-grammar-operators.test.ts`
+      Result: `3` files passed, `13` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4220` files scanned).
+24. Retired dead collection-alias migration helper surface in seams 145-146 and re-validated canonical guards:
+   1. Removed unused migration-only helper exports from runtime collection utility module:
+      1. `src/shared/lib/ai-paths/core/utils/collection-names.ts`
+      2. deleted `migrateDatabaseConfigCollections` and `migratePathConfigCollections` (plus internal migration helpers), keeping canonical APIs:
+         1. `canonicalizeAiPathsCollectionName`
+         2. `findPathConfigCollectionAliasIssues`
+   2. Updated collection utility regressions to canonical-only expectations:
+      1. `src/shared/lib/ai-paths/core/utils/__tests__/collection-names.test.ts`
+      2. replaced migration-output assertions with canonical alias-issue detection and canonicalization behavior checks.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `migrateDatabaseConfigCollections` / `migratePathConfigCollections` exports in `collection-names.ts` and requires canonical alias APIs.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/utils/__tests__/collection-names.test.ts`
+      2. `src/features/ai/ai-paths/context/__tests__/PresetsContext.normalizeDbNodePreset.test.tsx`
+      Result: `2` files passed, `5` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4222` files scanned).
+25. Pruned settings-store backup payload legacy-shape compatibility in seams 147-148 and re-validated canonical guards:
+   1. Tightened backup payload parsing to canonical structured shape only:
+      1. `src/shared/lib/ai-paths/settings-store-client.ts`
+      2. `readBackupSettings` now accepts only object payloads with:
+         1. numeric `savedAt`
+         2. array `records`
+      3. removed legacy array-root backup payload parsing path.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+      2. verifies structured backup fallback works when API fetch fails and legacy array-root backup payloads are ignored.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of array-root backup payload compatibility parsing in `settings-store-client.ts` and requires canonical structured backup parsing snippets.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+      2. `src/shared/lib/ai-paths/core/utils/__tests__/collection-names.test.ts`
+      3. `src/shared/lib/ai-paths/core/validation-engine/__tests__/defaults.normalization.test.ts`
+      Result: `3` files passed, `7` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4223` files scanned).
+26. Pruned validation-admin path-meta fallback compatibility in seams 149-150 and re-validated canonical guards:
+   1. Removed config-record fallback meta synthesis from validation settings parsing:
+      1. `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+      2. `parseAiPathsSettings` now composes `pathMetas` from canonical `PATH_INDEX_KEY` entries only.
+   2. Added regression coverage:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. verifies legacy `ai_path_index` payloads and missing canonical index entries no longer synthesize selectable path metas.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `fallbackMetas` synthesis in admin validation parsing and requires canonical index-driven `pathMetas` assembly.
+   4. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+      Result: `2` files passed, `6` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4224` files scanned).
+27. Pruned validation collection-map legacy delimiter compatibility in seams 151-152 and re-validated canonical guards:
+   1. Removed `=` delimiter compatibility from validation collection-map parsing:
+      1. `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+      2. `parseCollectionMapText` now parses only canonical `entity:collection` lines.
+   2. Added regression coverage:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. verifies canonical `:` lines parse and legacy `=` lines are ignored.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `=` delimiter compatibility snippets in validation collection-map parsing and requires canonical `line.indexOf(':')` parsing.
+   4. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+      Result: `2` files passed, `8` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4226` files scanned).
+28. Pruned validation docs-sources legacy delimiter compatibility in seams 153-154 and re-validated canonical guards:
+   1. Removed comma-delimiter compatibility from docs-sources parsing:
+      1. `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+      2. `parseDocsSourcesText` now parses canonical newline-delimited sources and ignores comma-delimited lines.
+   2. Added regression coverage:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. verifies canonical newline parsing and legacy comma-delimited docs-source rejection.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of comma-delimiter docs-sources parsing and requires canonical newline parsing + comma-line rejection snippets.
+   4. Re-ran focused regression bundle:
+      1. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      2. `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+      Result: `2` files passed, `10` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4235` files scanned).
+29. Pruned database-template catalogId alias auto-promotion compatibility in seams 155-156 and re-validated canonical guards:
+   1. Removed template-context catalogId alias sync helpers:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts`
+      2. `prepareDatabaseTemplateContext` now keeps `catalogId` context/input wiring explicit and no longer infers/promotes it from nested `context/entity/catalogs` payloads.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-template-context.test.ts`
+      2. verifies nested catalog metadata does not auto-populate top-level `catalogId`, and canonical explicit `catalogId` input remains preserved.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of database-template catalogId alias helpers (`resolveCatalogIdFromTemplateInputs`, `applyCatalogIdAliases`, `syncCatalogId`) and requires canonical template-context assembly snippets.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-template-context.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-input-resolution.test.ts`
+      3. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      Result: `3` files passed, `14` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4235` files scanned).
+30. Pruned database-input nested catalogId alias compatibility in seams 157-158 and re-validated canonical guards:
+   1. Removed nested catalogId alias traversal from database input resolution:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts`
+      2. `resolveDatabaseInputs` now resolves `catalogId` from explicit `catalogId` fields only (no nested `entity/catalogs/entityJson/product/bundle` traversal).
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-input-resolution.test.ts`
+      2. verifies nested context catalog metadata no longer auto-populates top-level `catalogId`, while direct canonical fields remain preserved.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of nested catalog alias traversal helpers in database input resolution and requires canonical direct `catalogId` read.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-input-resolution.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-template-context.test.ts`
+      3. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+      Result: `3` files passed, `16` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4235` files scanned).
 
 ## Deprecation map
 

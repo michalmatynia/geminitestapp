@@ -46,7 +46,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
                   </Badge>
                 </div>
               ),
-              subtitle: `${group.currencyCode} · ${group.groupType}`,
+              subtitle: `${group.currencyCode} · ${group.type}`,
               description: group.description || 'No description',
               original: group,
             }))}

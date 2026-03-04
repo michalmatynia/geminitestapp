@@ -32,6 +32,7 @@ describe('executeDatabaseUpdate custom payload mode', () => {
         matchedCount: 1,
         modifiedCount: 1,
         provider: 'mongodb',
+        fallback: { provider: 'prisma' },
       },
     });
 
@@ -117,6 +118,7 @@ describe('executeDatabaseUpdate custom payload mode', () => {
         collection: 'products',
       })
     );
+    expect(result.executionMeta['providerFallback']).toBeUndefined();
     expect(result.writeOutcome).toEqual(
       expect.objectContaining({
         status: 'success',

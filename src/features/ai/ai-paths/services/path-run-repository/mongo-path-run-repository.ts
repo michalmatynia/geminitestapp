@@ -787,7 +787,20 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await db.collection<RunDocument>(RUNS_COLLECTION).updateMany(
-      { status: 'running', startedAt: { $lt: cutoff } },
+      {
+        status: 'running',
+        $or: [
+          { startedAt: { $lt: cutoff } },
+          {
+            $and: [
+              {
+                $or: [{ startedAt: null }, { startedAt: { $exists: false } }],
+              },
+              { updatedAt: { $lt: cutoff } },
+            ],
+          },
+        ],
+      },
       {
         $set: {
           status: 'failed',

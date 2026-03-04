@@ -19,3 +19,7 @@ Policy:
 1. Exceptions are temporary.
 2. Expired exceptions are CI failures.
 3. New compatibility paths must be added here in the same PR or they are rejected by guardrail checks.
+
+Current status (2026-03-04):
+
+- Active exceptions: `0`

@@ -5,14 +5,13 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms';
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
-import { Label, RadioGroup, RadioGroupItem, Button } from '@/shared/ui';
+import { Label, RadioGroup, RadioGroupItem, Button, SelectSimple } from '@/shared/ui';
 
 import { useOptionalSettingsForm } from './settings/SettingsFormContext';
 import {
   ColorField,
   NumberField,
   RangeField,
-  SelectField,
   TextField,
   ImagePickerField,
   Asset3DPickerField,
@@ -108,12 +107,17 @@ export function SettingsFieldRenderer({
   return (
     <div className='space-y-1.5'>
       {field.type === 'text' && (
-        <TextField
-          label={field.label}
-          value={(value as string) ?? ''}
-          onChange={handleChange}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <TextField
+            label={undefined}
+            value={(value as string) ?? ''}
+            onChange={handleChange}
+            disabled={isDisabled}
+          />
+        </>
       )}
 
       {field.type === 'link' && (
@@ -126,30 +130,44 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === 'number' && (
-        <NumberField
-          label={field.label}
-          value={(value as number) ?? 0}
-          onChange={handleChange}
-          disabled={isDisabled}
-          {...(field.min !== undefined && { min: field.min })}
-          {...(field.max !== undefined && { max: field.max })}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <NumberField
+            label={undefined}
+            value={(value as number) ?? 0}
+            onChange={handleChange}
+            disabled={isDisabled}
+            {...(field.min !== undefined && { min: field.min })}
+            {...(field.max !== undefined && { max: field.max })}
+          />
+        </>
       )}
 
       {field.type === 'select' && (
-        <SelectField
-          label={field.label}
-          value={
-            typeof value === 'string' && value.trim().length > 0
-              ? value
-              : typeof field.defaultValue === 'string'
-                ? field.defaultValue
-                : ''
-          }
-          onChange={handleChange}
-          options={field.options ?? []}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <SelectSimple
+            size='sm'
+            value={
+              typeof value === 'string' && value.trim().length > 0
+                ? value
+                : typeof field.defaultValue === 'string'
+                  ? field.defaultValue
+                  : ''
+            }
+            onValueChange={handleChange}
+            options={(field.options ?? []).map((option: SettingsFieldOption) => ({
+              label: option.label,
+              value: String(option.value),
+            }))}
+            disabled={isDisabled}
+            triggerClassName='h-7 bg-card/40 text-xs mt-1'
+          />
+        </>
       )}
 
       {field.type === 'alignment' && (
@@ -187,12 +205,17 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === 'asset3d' && (
-        <Asset3DPickerField
-          label={field.label}
-          value={(value as string) ?? ''}
-          onChange={handleChange}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <Asset3DPickerField
+            label={undefined}
+            value={(value as string) ?? ''}
+            onChange={handleChange}
+            disabled={isDisabled}
+          />
+        </>
       )}
 
       {field.type === 'radio' && (
@@ -225,33 +248,50 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === 'image' && (
-        <ImagePickerField
-          label={field.label}
-          value={imageValue}
-          onChange={handleChange}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <ImagePickerField
+            label={undefined}
+            value={imageValue}
+            onChange={handleChange}
+            disabled={isDisabled}
+          />
+        </>
       )}
 
       {field.type === 'range' && (
-        <RangeField
-          label={field.label}
-          value={(value as number) ?? field.min ?? 1}
-          onChange={handleChange}
-          min={field.min ?? 1}
-          max={field.max ?? 12}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <RangeField
+            label={undefined}
+            value={(value as number) ?? field.min ?? 1}
+            onChange={handleChange}
+            min={field.min ?? 1}
+            max={field.max ?? 12}
+            disabled={isDisabled}
+          />
+        </>
       )}
 
       {field.type === 'color-scheme' && (
         <div className='space-y-2'>
-          <SelectField
-            label={field.label}
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <SelectSimple
+            size='sm'
             value={(value as string) ?? 'scheme-1'}
-            onChange={handleChange}
-            options={colorSchemeOptions}
+            onValueChange={handleChange}
+            options={colorSchemeOptions.map((option: SettingsFieldOption) => ({
+              label: option.label,
+              value: String(option.value),
+            }))}
             disabled={isDisabled}
+            triggerClassName='h-7 bg-card/40 text-xs mt-1'
           />
           <div className='flex items-center justify-between text-[11px] text-gray-500'>
             <span>Need a new scheme?</span>
@@ -270,38 +310,55 @@ export function SettingsFieldRenderer({
       )}
 
       {field.type === 'color' && (
-        <ColorField
-          label={field.label}
-          value={(value as string) ?? '#ffffff'}
-          onChange={handleChange}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <ColorField
+            label={undefined}
+            value={(value as string) ?? '#ffffff'}
+            onChange={handleChange}
+            disabled={isDisabled}
+          />
+        </>
       )}
 
       {field.type === 'font-family' && (
-        <SelectField
-          label={field.label}
-          value={((): string => {
-            const fallback =
-              (typeof field.defaultValue === 'string' && field.defaultValue.trim().length > 0
-                ? field.defaultValue
-                : theme.bodyFont) || 'Inter, sans-serif';
-            return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
-          })()}
-          onChange={handleChange}
-          options={FONT_FAMILY_OPTIONS}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <SelectSimple
+            size='sm'
+            value={((): string => {
+              const fallback =
+                (typeof field.defaultValue === 'string' && field.defaultValue.trim().length > 0
+                  ? field.defaultValue
+                  : theme.bodyFont) || 'Inter, sans-serif';
+              return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
+            })()}
+            onValueChange={handleChange}
+            options={FONT_FAMILY_OPTIONS}
+            disabled={isDisabled}
+            triggerClassName='h-7 bg-card/40 text-xs mt-1'
+          />
+        </>
       )}
 
       {field.type === 'font-weight' && (
-        <SelectField
-          label={field.label}
-          value={String((value as string | number) ?? '400')}
-          onChange={handleChange}
-          options={FONT_WEIGHT_OPTIONS}
-          disabled={isDisabled}
-        />
+        <>
+          <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
+            {field.label}
+          </Label>
+          <SelectSimple
+            size='sm'
+            value={String((value as string | number) ?? '400')}
+            onValueChange={handleChange}
+            options={FONT_WEIGHT_OPTIONS}
+            disabled={isDisabled}
+            triggerClassName='h-7 bg-card/40 text-xs mt-1'
+          />
+        </>
       )}
 
       {field.type === 'spacing' && (

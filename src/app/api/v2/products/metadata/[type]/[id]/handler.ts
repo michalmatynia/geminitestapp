@@ -75,10 +75,9 @@ const mapPriceGroupResponse = <
   },
 >(
     group: T
-  ): T & { currencyCode: string; groupType: 'standard' | 'dependent' } => ({
+  ): T & { currencyCode: string } => ({
     ...group,
     currencyCode: group.currency?.code ?? group.currencyId,
-    groupType: resolveGroupType(group.type, group.sourceGroupId),
   });
 
 const mapMongoPriceGroupResponse = (
@@ -100,7 +99,6 @@ const mapMongoPriceGroupResponse = (
   updatedAt?: string;
   currency: { id: string; code: string; name: string; symbol: string | null };
   currencyCode: string;
-  groupType: 'standard' | 'dependent';
 } => {
   const id = String(group.id ?? group.groupId ?? '');
   const currencyId = String(group.currencyId ?? '');
@@ -131,7 +129,6 @@ const mapMongoPriceGroupResponse = (
       symbol: currencySymbol,
     },
     currencyCode,
-    groupType: resolveGroupType(type, sourceGroupId),
   };
 };
 

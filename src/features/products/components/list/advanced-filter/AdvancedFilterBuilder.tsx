@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   PRODUCT_ADVANCED_FILTER_MAX_DEPTH,
   type ProductAdvancedFilterCombinator,
@@ -40,9 +41,7 @@ interface AdvancedFilterValueOption {
 interface AdvancedFilterBuilderProps {
   group: ProductAdvancedFilterGroup;
   onChange: (group: ProductAdvancedFilterGroup) => void;
-  fieldValueOptions?:
-    | Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>>
-    | undefined;
+  fieldValueOptions?: AdvancedFilterBuilderFieldValueOptions;
 }
 
 interface GroupEditorProps {
@@ -56,9 +55,6 @@ interface GroupEditorProps {
   canMoveDown?: boolean | undefined;
   isRoot?: boolean | undefined;
   depth?: number | undefined;
-  fieldValueOptions?:
-    | Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>>
-    | undefined;
 }
 
 interface ConditionEditorProps {
@@ -71,8 +67,24 @@ interface ConditionEditorProps {
   canMoveUp: boolean;
   canMoveDown: boolean;
   disableRemove?: boolean | undefined;
-  valueOptions?: AdvancedFilterValueOption[] | undefined;
 }
+
+type AdvancedFilterBuilderFieldValueOptions =
+  | Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>>
+  | undefined;
+
+type AdvancedFilterValueOptionsRuntimeValue = {
+  fieldValueOptions: AdvancedFilterBuilderFieldValueOptions;
+};
+
+const {
+  Context: AdvancedFilterValueOptionsRuntimeContext,
+  useStrictContext: useAdvancedFilterValueOptionsRuntime,
+} = createStrictContext<AdvancedFilterValueOptionsRuntimeValue>({
+  hookName: 'useAdvancedFilterValueOptionsRuntime',
+  providerName: 'AdvancedFilterValueOptionsRuntimeProvider',
+  displayName: 'AdvancedFilterValueOptionsRuntimeContext',
+});
 
 const COMBINATOR_OPTIONS: SelectSimpleOption[] = [
   { value: 'and', label: 'AND' },
@@ -197,8 +209,9 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
   canMoveUp,
   canMoveDown,
   disableRemove = false,
-  valueOptions,
 }: ConditionEditorProps): React.JSX.Element {
+  const runtime = useAdvancedFilterValueOptionsRuntime();
+  const valueOptions = runtime.fieldValueOptions?.[condition.field];
   const fieldConfig = getFieldConfig(condition.field);
   const operatorOptions = useMemo<SelectSimpleOption[]>(
     () =>
@@ -512,7 +525,6 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
   canMoveDown = false,
   isRoot = false,
   depth = 1,
-  fieldValueOptions,
 }: GroupEditorProps): React.JSX.Element {
   const handleRuleChange = (ruleId: string, nextRule: ProductAdvancedFilterRule): void => {
     onChange({
@@ -669,7 +681,6 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
             <AdvancedFilterConditionEditor
               key={rule.id}
               condition={rule}
-              valueOptions={fieldValueOptions?.[rule.field]}
               onChange={(nextCondition: ProductAdvancedFilterCondition) =>
                 handleRuleChange(rule.id, nextCondition)
               }
@@ -686,7 +697,6 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
               key={rule.id}
               group={rule}
               depth={depth + 1}
-              fieldValueOptions={fieldValueOptions}
               onChange={(nextGroup: ProductAdvancedFilterGroup) =>
                 handleRuleChange(rule.id, nextGroup)
               }
@@ -726,14 +736,17 @@ export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder({
   onChange,
   fieldValueOptions,
 }: AdvancedFilterBuilderProps): React.JSX.Element {
+  const fieldValueOptionsRuntimeValue = useMemo<AdvancedFilterValueOptionsRuntimeValue>(
+    () => ({
+      fieldValueOptions,
+    }),
+    [fieldValueOptions]
+  );
+
   return (
-    <AdvancedFilterGroupEditor
-      group={group}
-      onChange={onChange}
-      fieldValueOptions={fieldValueOptions}
-      isRoot
-      depth={1}
-    />
+    <AdvancedFilterValueOptionsRuntimeContext.Provider value={fieldValueOptionsRuntimeValue}>
+      <AdvancedFilterGroupEditor group={group} onChange={onChange} isRoot depth={1} />
+    </AdvancedFilterValueOptionsRuntimeContext.Provider>
   );
 });
 

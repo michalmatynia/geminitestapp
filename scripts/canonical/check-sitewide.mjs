@@ -13,6 +13,36 @@ const REQUIRED_DOCS = [
 ];
 
 const EXCEPTION_REGISTER_PATH = 'docs/legacy-compatibility-exception-register-2026-03-04.json';
+const FORBIDDEN_LEGACY_ROUTE_DIRS = [
+  'src/app/api/import',
+  'src/app/api/catalogs/assign',
+  'src/app/api/ai-paths/legacy-compat/counters',
+];
+const FORBIDDEN_MIGRATION_HELPER_RUNTIME_FILES = [
+  'src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts',
+  'src/features/integrations/services/export-warehouse-preference-migration.ts',
+  'src/features/case-resolver/workspace-detached-contract-migration.ts',
+  'src/features/products/api/versioning.ts',
+  'src/features/products/api/routes/v2-products-route.ts',
+];
+const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
+  {
+    token: "LEGACY_PRODUCTS_PREFIX = '/api/products'",
+    reason: 'products legacy gateway token reintroduced',
+  },
+  {
+    token: 'Legacy imports/base action "import" is no longer supported.',
+    reason: 'integrations legacy action compatibility token reintroduced',
+  },
+  {
+    token: 'resolveLegacyProviderCatalogEntries',
+    reason: 'ai-brain legacy provider-catalog merge helper reintroduced',
+  },
+];
+const FORBIDDEN_PRODUCTS_LEGACY_API_UTILITY_FILES = [
+  'src/features/products/api/versioning.ts',
+  'src/features/products/api/routes/v2-products-route.ts',
+];
 
 const violations = [];
 
@@ -96,6 +126,44 @@ const checkRequiredDocs = () => {
   }
 };
 
+const checkForbiddenLegacyRouteDirs = () => {
+  for (const relative of FORBIDDEN_LEGACY_ROUTE_DIRS) {
+    const absolute = path.join(ROOT, relative);
+    if (!fs.existsSync(absolute)) continue;
+    const stat = fs.statSync(absolute);
+    if (!stat.isDirectory()) continue;
+    reportViolation(`forbidden legacy route namespace present: ${relative}`);
+  }
+};
+
+const checkForbiddenRuntimeMigrationHelpers = () => {
+  for (const relative of FORBIDDEN_MIGRATION_HELPER_RUNTIME_FILES) {
+    if (fs.existsSync(path.join(ROOT, relative))) {
+      reportViolation(`forbidden migration helper remains in runtime tree: ${relative}`);
+    }
+  }
+};
+
+const checkForbiddenRuntimeGuardTokens = (sourceFileMap) => {
+  for (const [relativeFile, content] of sourceFileMap.entries()) {
+    for (const entry of FORBIDDEN_RUNTIME_GUARD_TOKENS) {
+      if (content.includes(entry.token)) {
+        reportViolation(
+          `${entry.reason}: token="${entry.token}" file="${relativeFile}"`
+        );
+      }
+    }
+  }
+};
+
+const checkForbiddenProductsLegacyApiUtilities = () => {
+  for (const relative of FORBIDDEN_PRODUCTS_LEGACY_API_UTILITY_FILES) {
+    if (fs.existsSync(path.join(ROOT, relative))) {
+      reportViolation(`forbidden products legacy api utility present: ${relative}`);
+    }
+  }
+};
+
 const checkExceptionRegister = (register, sourceFileMap) => {
   const schemaVersion = register['schemaVersion'];
   if (typeof schemaVersion !== 'number') {
@@ -113,8 +181,11 @@ const checkExceptionRegister = (register, sourceFileMap) => {
   }
 
   const exceptions = register['exceptions'];
-  if (!Array.isArray(exceptions) || exceptions.length === 0) {
-    reportViolation('exception register exceptions must be a non-empty array');
+  if (!Array.isArray(exceptions)) {
+    reportViolation('exception register exceptions must be an array');
+    return;
+  }
+  if (exceptions.length === 0) {
     return;
   }
 
@@ -205,6 +276,9 @@ const checkExceptionRegister = (register, sourceFileMap) => {
 
 const main = () => {
   checkRequiredDocs();
+  checkForbiddenLegacyRouteDirs();
+  checkForbiddenRuntimeMigrationHelpers();
+  checkForbiddenProductsLegacyApiUtilities();
 
   const sourceFiles = collectSourceFiles(SRC_DIR);
   const runtimeFiles = sourceFiles
@@ -214,6 +288,8 @@ const main = () => {
   const sourceFileMap = new Map(
     runtimeFiles.map((relative) => [relative, fs.readFileSync(path.join(ROOT, relative), 'utf8')])
   );
+
+  checkForbiddenRuntimeGuardTokens(sourceFileMap);
 
   const register = readExceptionRegister();
   if (register) {

@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 
-import { parseAiPathsSettings } from '../AdminAiPathsValidationUtils';
+import {
+  parseAiPathsSettings,
+  parseCollectionMapText,
+  parseDocsSourcesText,
+} from '../AdminAiPathsValidationUtils';
 
 const toCanonicalPathConfig = (pathId: string) => {
   const config = createDefaultPathConfig(pathId);
@@ -63,9 +67,31 @@ describe('AdminAiPathsValidationUtils', () => {
       },
     ]);
 
-    expect(result.pathMetas).toHaveLength(1);
-    expect(result.pathMetas[0]?.id).toBe(config.id);
-    expect(result.pathMetas[0]?.name).toBe(config.name);
+    expect(result.pathMetas).toHaveLength(0);
+    expect(result.pathConfigs[config.id]?.id).toBe(config.id);
+  });
+
+  it('does not synthesize path metas from config records when index entry is missing', () => {
+    const config = toCanonicalPathConfig('path_missing_index_meta');
+    const result = parseAiPathsSettings([
+      {
+        key: `${PATH_CONFIG_PREFIX}${config.id}`,
+        value: JSON.stringify(config),
+      },
+      {
+        key: PATH_INDEX_KEY,
+        value: JSON.stringify([
+          {
+            id: 'path_other',
+            name: 'Other Path',
+            createdAt: config.updatedAt,
+            updatedAt: config.updatedAt,
+          },
+        ]),
+      },
+    ]);
+
+    expect(result.pathMetas).toHaveLength(0);
     expect(result.pathConfigs[config.id]?.id).toBe(config.id);
   });
 
@@ -94,5 +120,31 @@ describe('AdminAiPathsValidationUtils', () => {
         },
       ])
     ).toThrowError(/path config id does not match its settings key/i);
+  });
+
+  it('parses canonical entity:collection lines in collection-map draft', () => {
+    expect(parseCollectionMapText('product:product_parameters\nnote:notes')).toEqual({
+      product: 'product_parameters',
+      note: 'notes',
+    });
+  });
+
+  it('ignores legacy entity=collection lines in collection-map draft', () => {
+    expect(parseCollectionMapText('product=product_parameters\nnote:notes')).toEqual({
+      note: 'notes',
+    });
+  });
+
+  it('parses canonical docs sources one-per-line', () => {
+    expect(parseDocsSourcesText('ai-paths:node-docs:trigger\nai-paths:node-docs:database')).toEqual([
+      'ai-paths:node-docs:trigger',
+      'ai-paths:node-docs:database',
+    ]);
+  });
+
+  it('ignores legacy comma-delimited docs sources lines', () => {
+    expect(parseDocsSourcesText('ai-paths:node-docs:trigger,ai-paths:node-docs:database')).toEqual(
+      []
+    );
   });
 });

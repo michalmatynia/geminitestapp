@@ -5,7 +5,7 @@ import {
   CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1,
   migrateCaseResolverWorkspaceDetachedDocumentsSchemaToV2,
   migrateCaseResolverWorkspaceDetachedHistorySchemaToV2,
-} from '@/features/case-resolver/workspace-detached-contract-migration';
+} from '../../../../scripts/db/lib/case-resolver/workspace-detached-contract-migration';
 import { CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 } from '@/features/case-resolver/workspace-persistence-detached-documents';
 import { CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2 } from '@/features/case-resolver/workspace-persistence-detached-history';
 

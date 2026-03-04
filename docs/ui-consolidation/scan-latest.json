@@ -1,20 +1,20 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T20:03:10.212Z",
-    "scannedFileCount": 1099,
-    "duplicateNameClusterCount": 8,
-    "propSignatureClusterCount": 5,
-    "tokenSimilarityClusterCount": 3,
-    "totalOpportunities": 9,
-    "highPriorityCount": 3,
+    "generatedAt": "2026-03-04T20:36:09.950Z",
+    "scannedFileCount": 1117,
+    "duplicateNameClusterCount": 7,
+    "propSignatureClusterCount": 0,
+    "tokenSimilarityClusterCount": 0,
+    "totalOpportunities": 0,
+    "highPriorityCount": 0,
     "familyCounts": [
       {
         "family": "Unknown",
-        "count": 541
+        "count": 558
       },
       {
         "family": "Section",
-        "count": 138
+        "count": 139
       },
       {
         "family": "Page",
@@ -80,7 +80,7 @@
     "domainCounts": [
       {
         "domain": "feature",
-        "count": 788
+        "count": 805
       },
       {
         "domain": "app",
@@ -92,7 +92,7 @@
       },
       {
         "domain": "shared",
-        "count": 36
+        "count": 37
       }
     ]
   },
@@ -1169,10 +1169,10 @@
         "next/link",
         "react",
         "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui"
+        "@/shared/ui/button"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "error|reset"
     },
@@ -1810,10 +1810,10 @@
       "imports": [
         "react",
         "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui"
+        "@/shared/ui/button"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "error|reset"
     },
@@ -2566,10 +2566,10 @@
         "next/link",
         "react",
         "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui"
+        "@/shared/ui/button"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "error|reset"
     },
@@ -2769,10 +2769,10 @@
         "next/link",
         "react",
         "@/shared/utils/observability/client-error-logger",
-        "@/shared/ui"
+        "@/shared/ui/button"
       ],
       "templateImports": 0,
-      "uiPrimitiveImports": 0,
+      "uiPrimitiveImports": 1,
       "tokenSet": {},
       "propsSignature": "error|reset"
     },
@@ -2995,6 +2995,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 5,
+      "useClient": true,
+      "imports": [
+        "./AgentRunDetailModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/agentcreator/components/AgentRunDetailModalImpl.tsx",
+      "basename": "AgentRunDetailModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 113,
       "useClient": true,
       "imports": [
@@ -3137,7 +3153,7 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Unknown",
-      "lines": 305,
+      "lines": 309,
       "useClient": false,
       "imports": [
         "react",
@@ -4567,6 +4583,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./BoundsNormalizerNodeConfigSectionImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/ai-paths/components/node-config/dialog/BoundsNormalizerNodeConfigSectionImpl.tsx",
+      "basename": "BoundsNormalizerNodeConfigSectionImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 200,
       "useClient": true,
       "imports": [
@@ -4605,6 +4637,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./CanvasOutputNodeConfigSectionImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/ai-paths/components/node-config/dialog/CanvasOutputNodeConfigSectionImpl.tsx",
+      "basename": "CanvasOutputNodeConfigSectionImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 185,
       "useClient": true,
       "imports": [
@@ -5791,6 +5839,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 11,
+      "useClient": true,
+      "imports": [
+        "./ChatbotContextModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/chatbot/components/ChatbotContextModalImpl.tsx",
+      "basename": "ChatbotContextModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 227,
       "useClient": true,
       "imports": [
@@ -6881,6 +6945,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Section",
+      "lines": 5,
+      "useClient": true,
+      "imports": [
+        "./AiPathAnalysisTriggerSectionImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSectionImpl.tsx",
+      "basename": "AiPathAnalysisTriggerSectionImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 500,
       "useClient": true,
       "imports": [
@@ -7366,6 +7446,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./ExtractPromptParamsModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/image-studio/components/modals/ExtractPromptParamsModalImpl.tsx",
+      "basename": "ExtractPromptParamsModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 247,
       "useClient": true,
       "imports": [
@@ -7390,6 +7486,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./GenerationPreviewModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/image-studio/components/modals/GenerationPreviewModalImpl.tsx",
+      "basename": "GenerationPreviewModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 91,
       "useClient": true,
       "imports": [
@@ -7489,6 +7601,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./CanvasResizeModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/image-studio/components/right-sidebar/CanvasResizeModalImpl.tsx",
+      "basename": "CanvasResizeModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 235,
       "useClient": true,
       "imports": [
@@ -7515,6 +7643,22 @@
       "domain": "feature",
       "scope": "feature:ai",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./ControlPromptModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/ai/image-studio/components/right-sidebar/ControlPromptModalImpl.tsx",
+      "basename": "ControlPromptModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:ai",
+      "family": "Unknown",
       "lines": 344,
       "useClient": true,
       "imports": [
@@ -9062,7 +9206,23 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 94,
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./CaseResolverEntityModalVariants"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/case-resolver/components/modals/CaseResolverEntityModalVariants.tsx",
+      "basename": "CaseResolverEntityModalVariants.tsx",
+      "domain": "feature",
+      "scope": "feature:case-resolver",
+      "family": "Unknown",
+      "lines": 245,
       "useClient": true,
       "imports": [
         "react",
@@ -9074,7 +9234,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "formData|isOpen|isSaving|item|onClose|onSave|parentOptions|setFormData"
+      "propsSignature": "parentOptions|props"
     },
     {
       "path": "src/features/case-resolver/components/modals/CaseResolverEntitySettingsModal.tsx",
@@ -9100,19 +9260,15 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 90,
+      "lines": 4,
       "useClient": true,
       "imports": [
-        "react",
-        "@/shared/contracts/ui",
-        "@/shared/ui/templates/SettingsPanelBuilder",
-        "../../types",
-        "./CaseResolverEntitySettingsModal"
+        "./CaseResolverEntityModalVariants"
       ],
-      "templateImports": 1,
-      "uiPrimitiveImports": 1,
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "formData|isOpen|isSaving|item|onClose|onSave|parentIdentifierOptions|setFormData"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/modals/CaseResolverTagModal.tsx",
@@ -9120,19 +9276,15 @@
       "domain": "feature",
       "scope": "feature:case-resolver",
       "family": "Modal",
-      "lines": 87,
+      "lines": 4,
       "useClient": true,
       "imports": [
-        "react",
-        "@/shared/contracts/ui",
-        "@/shared/ui/templates/SettingsPanelBuilder",
-        "../../types",
-        "./CaseResolverEntitySettingsModal"
+        "./CaseResolverEntityModalVariants"
       ],
-      "templateImports": 1,
-      "uiPrimitiveImports": 1,
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "formData|isOpen|isSaving|item|onClose|onSave|parentTagOptions|setFormData"
+      "propsSignature": null
     },
     {
       "path": "src/features/case-resolver/components/page/CaseResolverCaptureMappingModal.tsx",
@@ -9650,15 +9802,17 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 219,
+      "lines": 258,
       "useClient": false,
       "imports": [
+        "react",
         "@/features/cms/components/shared/EventEffectsWrapper",
         "@/features/cms/utils/page-builder-normalization",
         "@/features/cms/hooks/page-builder/section-hierarchy",
         "@/features/gsap",
         "@/shared/contracts/cms",
         "@/shared/contracts/cms-theme",
+        "@/shared/lib/react/createStrictContext",
         "./CmsPageContext",
         "./CssAnimationWrapper",
         "./GsapAnimationWrapper",
@@ -9994,14 +10148,10 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 46,
+      "lines": 17,
       "useClient": true,
       "imports": [
-        "../theme-styles",
-        "./FrontendBlockRenderer",
-        "./SectionBlockContext",
-        "../CmsPageContext",
-        "../../../types/page-builder"
+        "./FrontendBlocksSection"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -10061,6 +10211,27 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": null
+    },
+    {
+      "path": "src/features/cms/components/frontend/sections/FrontendBlocksSection.tsx",
+      "basename": "FrontendBlocksSection.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Section",
+      "lines": 62,
+      "useClient": true,
+      "imports": [
+        "../../../types/page-builder",
+        "../CmsPageContext",
+        "../theme-styles",
+        "@/shared/utils",
+        "./FrontendBlockRenderer",
+        "./SectionBlockContext"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "contentClassName|emptyState|maxWidthClass|sectionClassName|withContentAlignmentJustify|withContentAlignmentStyles"
     },
     {
       "path": "src/features/cms/components/frontend/sections/FrontendButtonElementSection.tsx",
@@ -10301,14 +10472,10 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 33,
+      "lines": 14,
       "useClient": true,
       "imports": [
-        "@/shared/contracts/cms",
-        "../CmsPageContext",
-        "../theme-styles",
-        "./FrontendBlockRenderer",
-        "./SectionBlockContext"
+        "./FrontendBlocksSection"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -10617,7 +10784,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 100,
+      "lines": 88,
       "useClient": true,
       "imports": [
         "react",
@@ -10633,7 +10800,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "children|value"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/ColumnBlockPicker.tsx",
@@ -10641,11 +10808,12 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 78,
+      "lines": 109,
       "useClient": true,
       "imports": [
         "react",
         "@/features/app-embeds/lib/constants",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/ui",
         "@/shared/providers/SettingsStoreProvider",
         "@/shared/ui/templates/pickers",
@@ -10656,7 +10824,7 @@
       "templateImports": 1,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "allowedBlockTypes|onSelect"
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/ComponentSettingsPanel.tsx",
@@ -11051,7 +11219,7 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Unknown",
-      "lines": 364,
+      "lines": 421,
       "useClient": true,
       "imports": [
         "lucide-react",
@@ -11631,17 +11799,10 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 98,
+      "lines": 4,
       "useClient": true,
       "imports": [
-        "react",
-        "@/features/cms/components/frontend/theme-styles",
-        "@/features/cms/components/frontend/CmsPageContext",
-        "@/features/cms/components/frontend/media-styles-context",
-        "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
-        "@/features/cms/components/page-builder/preview/context/PreviewSectionContext",
-        "./PreviewSectionBlocks",
-        "./PreviewSectionMediaButton"
+        "./PreviewSectionVariants"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -11654,19 +11815,10 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 113,
+      "lines": 4,
       "useClient": true,
       "imports": [
-        "lucide-react",
-        "next/image",
-        "react",
-        "@/features/cms/components/frontend/theme-styles",
-        "@/features/cms/components/frontend/CmsPageContext",
-        "@/features/cms/components/frontend/media-styles-context",
-        "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
-        "@/features/cms/components/page-builder/preview/context/PreviewSectionContext",
-        "./PreviewSectionBlocks",
-        "./PreviewSectionMediaButton"
+        "./PreviewSectionVariants"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -11679,16 +11831,10 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Section",
-      "lines": 72,
+      "lines": 4,
       "useClient": true,
       "imports": [
-        "react",
-        "@/features/cms/components/frontend/theme-styles",
-        "@/features/cms/components/frontend/CmsPageContext",
-        "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
-        "@/features/cms/components/page-builder/preview/context/PreviewSectionContext",
-        "./PreviewSectionBlocks",
-        "./PreviewSectionMediaButton"
+        "./PreviewSectionVariants"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -11716,6 +11862,23 @@
       "propsSignature": "PreviewBlockItem|blocks|className|emptyState|showEmptyState"
     },
     {
+      "path": "src/features/cms/components/page-builder/preview/sections/PreviewSectionFrame.tsx",
+      "basename": "PreviewSectionFrame.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 60,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/shared/utils"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": "children|className|divider|dividerPosition|onSelect|renderSectionActions|sectionId|sectionStyles|selectedRing|topSlot|wrapInspector"
+    },
+    {
       "path": "src/features/cms/components/page-builder/preview/sections/PreviewSectionMediaButton.tsx",
       "basename": "PreviewSectionMediaButton.tsx",
       "domain": "feature",
@@ -11733,6 +11896,32 @@
       "uiPrimitiveImports": 0,
       "tokenSet": {},
       "propsSignature": "className|label|mediaKey|onOpenMedia|sectionId|show"
+    },
+    {
+      "path": "src/features/cms/components/page-builder/preview/sections/PreviewSectionVariants.tsx",
+      "basename": "PreviewSectionVariants.tsx",
+      "domain": "feature",
+      "scope": "feature:cms",
+      "family": "Unknown",
+      "lines": 246,
+      "useClient": true,
+      "imports": [
+        "lucide-react",
+        "next/image",
+        "react",
+        "@/features/cms/components/frontend/theme-styles",
+        "@/features/cms/components/frontend/CmsPageContext",
+        "@/features/cms/components/frontend/media-styles-context",
+        "@/features/cms/components/page-builder/preview/context/PreviewEditorContext",
+        "@/features/cms/components/page-builder/preview/context/PreviewSectionContext",
+        "./PreviewSectionBlocks",
+        "./PreviewSectionFrame",
+        "./PreviewSectionMediaButton"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
     },
     {
       "path": "src/features/cms/components/page-builder/preview/sections/PreviewSlideshowSection.tsx",
@@ -12880,10 +13069,11 @@
       "domain": "feature",
       "scope": "feature:cms",
       "family": "Picker",
-      "lines": 38,
+      "lines": 84,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "../BlockPicker",
         "../SectionPicker",
         "../../../types/page-builder"
@@ -13954,6 +14144,22 @@
       "domain": "feature",
       "scope": "feature:files",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./AssetPreviewModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/files/components/file-manager/AssetPreviewModalImpl.tsx",
+      "basename": "AssetPreviewModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:files",
+      "family": "Unknown",
       "lines": 82,
       "useClient": true,
       "imports": [
@@ -14852,6 +15058,22 @@
       "domain": "feature",
       "scope": "feature:integrations",
       "family": "Modal",
+      "lines": 5,
+      "useClient": true,
+      "imports": [
+        "./SelectIntegrationModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/integrations/components/listings/SelectIntegrationModalImpl.tsx",
+      "basename": "SelectIntegrationModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:integrations",
+      "family": "Unknown",
       "lines": 70,
       "useClient": true,
       "imports": [
@@ -15681,7 +15903,7 @@
         "@/shared/ui",
         "./editor/FileAttachments",
         "./editor/MarkdownEditor",
-        "./editor/MarkdownToolbar",
+        "./editor/NotesMarkdownToolbar",
         "./editor/NoteMetadata",
         "./editor/WysiwygEditor",
         "@/features/notesapp/hooks/useMarkdownEditor"
@@ -15893,26 +16115,6 @@
       "propsSignature": null
     },
     {
-      "path": "src/features/notesapp/components/editor/MarkdownToolbar.tsx",
-      "basename": "MarkdownToolbar.tsx",
-      "domain": "feature",
-      "scope": "feature:notesapp",
-      "family": "Toolbar",
-      "lines": 95,
-      "useClient": true,
-      "imports": [
-        "react",
-        "@/features/document-editor",
-        "@/features/notesapp/context/MarkdownToolbarActionsContext",
-        "@/features/notesapp/context/NoteFormContext",
-        "@/shared/contracts/notes"
-      ],
-      "templateImports": 0,
-      "uiPrimitiveImports": 0,
-      "tokenSet": {},
-      "propsSignature": null
-    },
-    {
       "path": "src/features/notesapp/components/editor/NoteMetadata.tsx",
       "basename": "NoteMetadata.tsx",
       "domain": "feature",
@@ -15926,6 +16128,26 @@
         "@/features/notesapp/context/NoteFormContext",
         "@/shared/contracts/notes",
         "@/shared/ui"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/notesapp/components/editor/NotesMarkdownToolbar.tsx",
+      "basename": "NotesMarkdownToolbar.tsx",
+      "domain": "feature",
+      "scope": "feature:notesapp",
+      "family": "Toolbar",
+      "lines": 95,
+      "useClient": true,
+      "imports": [
+        "react",
+        "@/features/document-editor",
+        "@/features/notesapp/context/MarkdownToolbarActionsContext",
+        "@/features/notesapp/context/NoteFormContext",
+        "@/shared/contracts/notes"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -17318,11 +17540,12 @@
       "domain": "feature",
       "scope": "feature:products",
       "family": "Unknown",
-      "lines": 741,
+      "lines": 754,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/contracts/products",
         "@/shared/ui",
         "@/shared/ui/select-simple",
@@ -17331,7 +17554,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 1,
       "tokenSet": {},
-      "propsSignature": "canMoveDown|canMoveUp|condition|disableRemove|onChange|onDuplicate|onMoveDown|onMoveUp|onRemove|valueOptions"
+      "propsSignature": "canMoveDown|canMoveUp|condition|disableRemove|onChange|onDuplicate|onMoveDown|onMoveUp|onRemove"
     },
     {
       "path": "src/features/products/components/list/advanced-filter/AdvancedFilterModal.tsx",
@@ -19214,6 +19437,22 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./Asset3DEditModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/viewer3d/components/Asset3DEditModalImpl.tsx",
+      "basename": "Asset3DEditModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:viewer3d",
+      "family": "Unknown",
       "lines": 214,
       "useClient": true,
       "imports": [
@@ -19238,6 +19477,22 @@
       "domain": "feature",
       "scope": "feature:viewer3d",
       "family": "Modal",
+      "lines": 4,
+      "useClient": true,
+      "imports": [
+        "./Asset3DPreviewModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/features/viewer3d/components/Asset3DPreviewModalImpl.tsx",
+      "basename": "Asset3DPreviewModalImpl.tsx",
+      "domain": "feature",
+      "scope": "feature:viewer3d",
+      "family": "Unknown",
       "lines": 141,
       "useClient": true,
       "imports": [
@@ -19938,6 +20193,22 @@
       "domain": "shared",
       "scope": "shared-lib",
       "family": "Modal",
+      "lines": 6,
+      "useClient": false,
+      "imports": [
+        "./ExportJobDetailModalImpl"
+      ],
+      "templateImports": 0,
+      "uiPrimitiveImports": 0,
+      "tokenSet": {},
+      "propsSignature": null
+    },
+    {
+      "path": "src/shared/lib/jobs/components/ExportJobDetailModalImpl.tsx",
+      "basename": "ExportJobDetailModalImpl.tsx",
+      "domain": "shared",
+      "scope": "shared-lib",
+      "family": "Unknown",
       "lines": 76,
       "useClient": false,
       "imports": [
@@ -20140,11 +20411,12 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 56,
+      "lines": 100,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui/button",
         "@/shared/ui/dropdown-menu",
         "@/shared/utils"
@@ -20481,11 +20753,12 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 43,
+      "lines": 81,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./button"
       ],
@@ -20500,12 +20773,13 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Card",
-      "lines": 84,
+      "lines": 148,
       "useClient": false,
       "imports": [
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
-        "./card",
-        "react"
+        "react",
+        "./card"
       ],
       "templateImports": 0,
       "uiPrimitiveImports": 0,
@@ -20764,10 +21038,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 51,
+      "lines": 113,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "./templates/modals/ConfirmModal"
       ],
       "templateImports": 0,
@@ -20952,7 +21227,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 129,
+      "lines": 139,
       "useClient": false,
       "imports": [
         "@/shared/utils",
@@ -21186,11 +21461,12 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 61,
+      "lines": 107,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./button",
         "./input"
@@ -21206,10 +21482,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 56,
+      "lines": 112,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "./multi-select"
       ],
       "templateImports": 0,
@@ -21223,10 +21500,9 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 171,
+      "lines": 141,
       "useClient": false,
       "imports": [
-        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./RefreshButton",
         "react"
@@ -21234,7 +21510,7 @@
       "templateImports": 0,
       "uiPrimitiveImports": 0,
       "tokenSet": {},
-      "propsSignature": "children|value"
+      "propsSignature": "actions|actionsClassName|children|className|eyebrow|icon|refresh|size|subtitle|subtitleClassName|title|titleClassName"
     },
     {
       "path": "src/shared/ui/segmented-control.tsx",
@@ -21259,10 +21535,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 143,
+      "lines": 211,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./select"
       ],
@@ -21371,11 +21648,12 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 74,
+      "lines": 106,
       "useClient": true,
       "imports": [
         "react",
         "class-variance-authority",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./badge"
       ],
@@ -21460,10 +21738,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 49,
+      "lines": 91,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "./badge"
       ],
@@ -21583,10 +21862,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 351,
+      "lines": 429,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/utils",
         "../checkbox",
         "../form-section",
@@ -21726,10 +22006,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 144,
+      "lines": 212,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui/alert-dialog",
         "@/shared/ui/button",
         "@/shared/ui/input",
@@ -21747,7 +22028,7 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 79,
+      "lines": 122,
       "useClient": true,
       "imports": [
         "react",
@@ -21783,10 +22064,11 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Modal",
-      "lines": 148,
+      "lines": 208,
       "useClient": true,
       "imports": [
         "react",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui/button",
         "@/shared/ui/form-section",
         "@/shared/ui/textarea",
@@ -21861,12 +22143,13 @@
       "domain": "shared-ui",
       "scope": "shared-ui",
       "family": "Unknown",
-      "lines": 410,
+      "lines": 433,
       "useClient": true,
       "imports": [
         "lucide-react",
         "react",
         "@/shared/contracts/ui",
+        "@/shared/lib/react/createStrictContext",
         "@/shared/ui",
         "@/shared/ui/checkbox",
         "@/shared/ui/input",
@@ -22342,390 +22625,5 @@
       "propsSignature": null
     }
   ],
-  "opportunities": [
-    {
-      "method": "prop_signature",
-      "family": "Modal",
-      "score": 7475,
-      "fileCount": 5,
-      "totalLines": 1030,
-      "maxLines": 344,
-      "featureCount": 1,
-      "scopes": [
-        "feature:ai"
-      ],
-      "templateUsers": 4,
-      "templateCoverage": 0.8,
-      "recommendation": "migrate-to-shared-modal-template",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/ai/image-studio/components/right-sidebar/ControlPromptModal.tsx",
-          "lines": 344,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/image-studio/components/modals/ExtractPromptParamsModal.tsx",
-          "lines": 247,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/image-studio/components/right-sidebar/CanvasResizeModal.tsx",
-          "lines": 235,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/agentcreator/components/AgentRunDetailModal.tsx",
-          "lines": 113,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/image-studio/components/modals/GenerationPreviewModal.tsx",
-          "lines": 91,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Modal",
-      "score": 3232,
-      "fileCount": 4,
-      "totalLines": 513,
-      "maxLines": 214,
-      "featureCount": 3,
-      "scopes": [
-        "feature:files",
-        "feature:viewer3d",
-        "shared-lib"
-      ],
-      "templateUsers": 4,
-      "templateCoverage": 1,
-      "recommendation": "migrate-to-shared-modal-template",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/viewer3d/components/Asset3DEditModal.tsx",
-          "lines": 214,
-          "scope": "feature:viewer3d",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/viewer3d/components/Asset3DPreviewModal.tsx",
-          "lines": 141,
-          "scope": "feature:viewer3d",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/files/components/file-manager/AssetPreviewModal.tsx",
-          "lines": 82,
-          "scope": "feature:files",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/shared/lib/jobs/components/ExportJobDetailModal.tsx",
-          "lines": 76,
-          "scope": "shared-lib",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": false
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Section",
-      "score": 2825,
-      "fileCount": 3,
-      "totalLines": 885,
-      "maxLines": 500,
-      "featureCount": 1,
-      "scopes": [
-        "feature:ai"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "high",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/ai/image-studio/components/analysis/sections/AiPathAnalysisTriggerSection.tsx",
-          "lines": 500,
-          "scope": "feature:ai",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/ai-paths/components/node-config/dialog/BoundsNormalizerNodeConfigSection.tsx",
-          "lines": 200,
-          "scope": "feature:ai",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/ai-paths/components/node-config/dialog/CanvasOutputNodeConfigSection.tsx",
-          "lines": 185,
-          "scope": "feature:ai",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Modal",
-      "score": 1154,
-      "fileCount": 2,
-      "totalLines": 458,
-      "maxLines": 231,
-      "featureCount": 2,
-      "scopes": [
-        "feature:ai",
-        "shared-ui"
-      ],
-      "templateUsers": 1,
-      "templateCoverage": 0.5,
-      "recommendation": "migrate-to-shared-modal-template",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/shared/ui/FormModal.tsx",
-          "lines": 231,
-          "scope": "shared-ui",
-          "family": "Modal",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/ai/chatbot/components/ChatbotContextModal.tsx",
-          "lines": 227,
-          "scope": "feature:ai",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Modal",
-      "score": 986,
-      "fileCount": 3,
-      "totalLines": 271,
-      "maxLines": 94,
-      "featureCount": 1,
-      "scopes": [
-        "feature:case-resolver"
-      ],
-      "templateUsers": 3,
-      "templateCoverage": 1,
-      "recommendation": "migrate-to-shared-modal-template",
-      "risk": "low",
-      "similarity": 0.717,
-      "files": [
-        {
-          "path": "src/features/case-resolver/components/modals/CaseResolverCategoryModal.tsx",
-          "lines": 94,
-          "scope": "feature:case-resolver",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/case-resolver/components/modals/CaseResolverIdentifierModal.tsx",
-          "lines": 90,
-          "scope": "feature:case-resolver",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        },
-        {
-          "path": "src/features/case-resolver/components/modals/CaseResolverTagModal.tsx",
-          "lines": 87,
-          "scope": "feature:case-resolver",
-          "family": "Modal",
-          "templateImports": 1,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Section",
-      "score": 979,
-      "fileCount": 3,
-      "totalLines": 283,
-      "maxLines": 113,
-      "featureCount": 1,
-      "scopes": [
-        "feature:cms"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "low",
-      "similarity": 0.681,
-      "files": [
-        {
-          "path": "src/features/cms/components/page-builder/preview/sections/PreviewImageWithTextSection.tsx",
-          "lines": 113,
-          "scope": "feature:cms",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/cms/components/page-builder/preview/sections/PreviewHeroSection.tsx",
-          "lines": 98,
-          "scope": "feature:cms",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/cms/components/page-builder/preview/sections/PreviewRichTextSection.tsx",
-          "lines": 72,
-          "scope": "feature:cms",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "duplicate_name",
-      "family": "Toolbar",
-      "score": 910,
-      "fileCount": 2,
-      "totalLines": 450,
-      "maxLines": 355,
-      "featureCount": 2,
-      "scopes": [
-        "feature:document-editor",
-        "feature:notesapp"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "extract-shared-layout-fragment",
-      "risk": "high",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/document-editor/components/MarkdownToolbar.tsx",
-          "lines": 355,
-          "scope": "feature:document-editor",
-          "family": "Toolbar",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/notesapp/components/editor/MarkdownToolbar.tsx",
-          "lines": 95,
-          "scope": "feature:notesapp",
-          "family": "Toolbar",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "prop_signature",
-      "family": "Modal",
-      "score": 696,
-      "fileCount": 2,
-      "totalLines": 276,
-      "maxLines": 206,
-      "featureCount": 2,
-      "scopes": [
-        "feature:cms",
-        "feature:integrations"
-      ],
-      "templateUsers": 1,
-      "templateCoverage": 0.5,
-      "recommendation": "migrate-to-shared-modal-template",
-      "risk": "medium",
-      "similarity": null,
-      "files": [
-        {
-          "path": "src/features/cms/components/page-builder/Asset3DPickerModal.tsx",
-          "lines": 206,
-          "scope": "feature:cms",
-          "family": "Modal",
-          "templateImports": 2,
-          "useClient": true
-        },
-        {
-          "path": "src/features/integrations/components/listings/SelectIntegrationModal.tsx",
-          "lines": 70,
-          "scope": "feature:integrations",
-          "family": "Modal",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    },
-    {
-      "method": "token_similarity",
-      "family": "Section",
-      "score": 137,
-      "fileCount": 2,
-      "totalLines": 79,
-      "maxLines": 46,
-      "featureCount": 1,
-      "scopes": [
-        "feature:cms"
-      ],
-      "templateUsers": 0,
-      "templateCoverage": 0,
-      "recommendation": "review-for-extraction",
-      "risk": "low",
-      "similarity": 0.704,
-      "files": [
-        {
-          "path": "src/features/cms/components/frontend/sections/FrontendAnnouncementBarSection.tsx",
-          "lines": 46,
-          "scope": "feature:cms",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        },
-        {
-          "path": "src/features/cms/components/frontend/sections/FrontendRichTextSection.tsx",
-          "lines": 33,
-          "scope": "feature:cms",
-          "family": "Section",
-          "templateImports": 0,
-          "useClient": true
-        }
-      ]
-    }
-  ]
+  "opportunities": []
 }

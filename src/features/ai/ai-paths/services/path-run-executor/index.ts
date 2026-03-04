@@ -460,25 +460,29 @@ export const executePathRun = async (
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeFinish' });
         }
       },
-      onNodeBlocked: async ({ node, reason, message }) => {
+      onNodeBlocked: async ({ node, reason, message, status, waitingOnPorts, waitingOnDetails }) => {
         try {
           const finishedAt = new Date().toISOString();
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
+          const runtimeStatus = status === 'waiting_callback' ? 'waiting_callback' : 'blocked';
           const safeOutputs: RuntimePortValues = {
-            status: 'blocked',
+            status: runtimeStatus,
             skipReason: reason,
             message,
+            blockedReason: reason,
+            ...(waitingOnPorts ? { waitingOnPorts } : {}),
+            ...(waitingOnDetails ? { waitingOnDetails } : {}),
           };
           accOutputs[node.id] = mergeNodeOutputsForStatus({
             previous: accOutputs[node.id],
             next: safeOutputs,
-            status: 'blocked',
+            status: runtimeStatus,
           });
 
           await Promise.all([
             repo
               .upsertRunNode(run.id, node.id, {
-                status: 'blocked',
+                status: runtimeStatus,
                 outputs: safeOutputs,
                 finishedAt,
                 nodeType: node.type,
@@ -488,14 +492,19 @@ export const executePathRun = async (
             repo
               .createRunEvent({
                 runId: run.id,
-                level: 'warn',
-                message: `Node ${node.title ?? node.id} blocked: ${message}`,
+                level: runtimeStatus === 'waiting_callback' ? 'info' : 'warn',
+                message:
+                  runtimeStatus === 'waiting_callback'
+                    ? `Node ${node.title ?? node.id} waiting: ${message}`
+                    : `Node ${node.title ?? node.id} blocked: ${message}`,
                 metadata: {
                   runId: run.id,
                   nodeId: node.id,
                   nodeType: node.type,
                   attempt,
                   reason,
+                  status: runtimeStatus,
+                  ...(waitingOnPorts ? { waitingOnPorts } : {}),
                 },
               })
               .catch(() => {}),

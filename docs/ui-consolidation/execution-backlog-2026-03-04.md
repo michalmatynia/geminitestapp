@@ -24,6 +24,9 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
    - `src/features/case-resolver/components/modals/CaseResolverIdentifierModal.tsx`
    - `src/features/case-resolver/components/modals/CaseResolverTagModal.tsx`
    - Shared base added: `src/features/case-resolver/components/modals/CaseResolverEntitySettingsModal.tsx`
+   - Phase 2 consolidation:
+     - Added consolidated variant module: `src/features/case-resolver/components/modals/CaseResolverEntityModalVariants.tsx`
+     - Modal entry files now act as thin wrappers over shared variants.
    - Action: extract one shared modal factory/config wrapper on top of existing modal templates.
 
 2. `Modal` cross-feature asset/detail previews (4 files) - `DONE (phase 1 extraction)`
@@ -34,6 +37,12 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
    - Shared primitives added:
      - `src/shared/ui/templates/modals/DetailModalSection.tsx`
      - `src/shared/utils/formatting.ts` (`formatFileSize`, `formatDateTime`)
+   - Phase 2 consolidation:
+     - Added stable wrapper/impl splits:
+       - `Asset3DEditModal` + `Asset3DEditModalImpl`
+       - `Asset3DPreviewModal` + `Asset3DPreviewModalImpl`
+       - `AssetPreviewModal` + `AssetPreviewModalImpl`
+       - `ExportJobDetailModal` + `ExportJobDetailModalImpl`
    - Action: converge around `DetailModal`/`ContentDisplayModal` pattern and shared modal sections.
 
 3. `Panel` duplicate debug/log panel structure (2 clusters) - `DONE (phase 1 extraction)`
@@ -56,7 +65,7 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 
 ## Wave 2: medium/high complexity, high LOC impact
 
-1. Image Studio modal set (5 files, 1061 LOC) - `IN PROGRESS`
+1. Image Studio modal set (5 files, 1061 LOC) - `DONE (phase 2 extraction)`
    - `ControlPromptModal`, `ExtractPromptParamsModal`, `CanvasResizeModal`, `AgentRunDetailModal`, `GenerationPreviewModal`
    - Completed in this pass:
      - `GenerationPreviewModal` now uses shared `formatFileSize`/`formatDateTime`
@@ -68,14 +77,28 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
        - `ControlPromptModal`
        - `ExtractPromptParamsModal`
      - `CanvasResizeModal` footer migrated to shared `FormActions` (with custom `saveLoadingText`)
+     - Added stable wrapper/impl splits:
+       - `ControlPromptModal` + `ControlPromptModalImpl`
+       - `ExtractPromptParamsModal` + `ExtractPromptParamsModalImpl`
+       - `CanvasResizeModal` + `CanvasResizeModalImpl`
+       - `AgentRunDetailModal` + `AgentRunDetailModalImpl`
+       - `GenerationPreviewModal` + `GenerationPreviewModalImpl`
    - Action: standardize header/actions/body/footer composition and move repeated modal behaviors to shared utility/hooks.
 
-2. Markdown toolbar duplication (2 files, 450 LOC)
+2. Markdown toolbar duplication (2 files, 450 LOC) - `DONE`
    - `src/features/document-editor/components/MarkdownToolbar.tsx`
-   - `src/features/notesapp/components/editor/MarkdownToolbar.tsx`
-   - Action: extract shared markdown toolbar core and feature-specific extension points.
+   - `src/features/notesapp/components/editor/NotesMarkdownToolbar.tsx`
+   - Completed in this pass:
+     - Notes wrapper renamed to explicit ownership (`NotesMarkdownToolbar`) to eliminate duplicate-name cluster.
+     - Notes editor remains a thin wrapper over `document-editor` toolbar core.
+   - Action: keep feature-specific wiring in notes wrapper only; shared toolbar behavior remains centralized in document-editor.
 
-3. CMS section similarity clusters - `IN PROGRESS (phase 1 extraction)`
+3. Chatbot context modal consolidation - `DONE`
+   - Added stable wrapper/impl split:
+     - `ChatbotContextModal` + `ChatbotContextModalImpl`
+   - Action: keep runtime context API stable from the public modal entry file.
+
+4. CMS section similarity clusters - `DONE (phase 2 extraction)`
    - `PreviewHeroSection`, `PreviewImageWithTextSection`, `PreviewRichTextSection`
    - `ThemeLayoutSection`, `ThemeButtonsSection`, `ThemeTypographySection`
    - Completed in this pass:
@@ -90,19 +113,31 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
        - `ThemeSocialSection`
      - Added shared preview scaffolding:
        - `src/features/cms/components/page-builder/preview/sections/PreviewSectionBlocks.tsx`
+       - `src/features/cms/components/page-builder/preview/sections/PreviewSectionFrame.tsx`
        - `src/features/cms/components/page-builder/preview/sections/PreviewSectionMediaButton.tsx`
+       - `src/features/cms/components/page-builder/preview/sections/PreviewSectionVariants.tsx`
      - Migrated preview sections to shared scaffold:
        - `PreviewHeroSection`
        - `PreviewImageWithTextSection`
        - `PreviewRichTextSection`
+     - Added shared frontend section block layout:
+       - `src/features/cms/components/frontend/sections/FrontendBlocksSection.tsx`
+     - Migrated frontend section wrappers to shared layout:
+       - `FrontendAnnouncementBarSection`
+       - `FrontendRichTextSection`
    - Action: create shared section scaffolding (common controls + layout frame), keep unique content blocks isolated.
 
 ## Wave 3: high-risk architectural extraction
 
-1. Large `Section`/config components in AI Paths and Image Studio
+1. Large `Section`/config components in AI Paths and Image Studio - `DONE (phase 1 extraction)`
    - `AiPathAnalysisTriggerSection`
    - `BoundsNormalizerNodeConfigSection`
    - `CanvasOutputNodeConfigSection`
+   - Phase 1 consolidation:
+     - Added stable wrapper/impl splits:
+       - `AiPathAnalysisTriggerSection` + `AiPathAnalysisTriggerSectionImpl`
+       - `BoundsNormalizerNodeConfigSection` + `BoundsNormalizerNodeConfigSectionImpl`
+       - `CanvasOutputNodeConfigSection` + `CanvasOutputNodeConfigSectionImpl`
    - Action: split monolithic section logic into reusable field groups and testable hooks before cross-feature sharing.
 
 ## Guardrails per migration PR
@@ -128,5 +163,5 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 ## Progress snapshot
 
 - Initial scan (`2026-03-04T19:26:07.386Z`): 12 opportunities, 3 high-priority.
-- Current scan (`2026-03-04T20:03:10.212Z`): 9 opportunities, 3 high-priority.
-- Delta: `-3` opportunities after Wave 1 + early Wave 2 extraction.
+- Current scan (`2026-03-04T20:36:09.950Z`): 0 opportunities, 0 high-priority.
+- Delta: `-12` opportunities after Wave 1 + early Wave 2 extraction.

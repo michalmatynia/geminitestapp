@@ -70,6 +70,7 @@ export type EvaluateGraphOptions = {
     runId: string;
     node: AiNode;
     reason: 'missing_inputs' | 'flow_control' | 'error';
+    status?: 'blocked' | 'waiting_callback';
     waitingOnPorts?: string[];
     waitingOnDetails?: Array<Record<string, unknown>>;
     message?: string;

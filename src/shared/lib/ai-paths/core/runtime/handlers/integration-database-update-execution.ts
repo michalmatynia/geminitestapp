@@ -23,7 +23,6 @@ interface DbActionResult {
   provider?: 'mongodb' | 'prisma';
   requestedProvider?: 'auto' | 'mongodb' | 'prisma';
   resolvedProvider?: 'mongodb' | 'prisma';
-  fallback?: Record<string, unknown>;
 }
 
 type ResolveCollectionUpdateContextInput = {
@@ -102,11 +101,9 @@ const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => 
       : responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'
         ? responseData['provider']
         : undefined;
-  const fallback = isObjectRecord(responseData['fallback']) ? responseData['fallback'] : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),
-    ...(fallback ? { providerFallback: fallback } : {}),
   };
 };
 

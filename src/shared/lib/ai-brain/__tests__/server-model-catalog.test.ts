@@ -30,15 +30,14 @@ describe('server model catalog', () => {
     await expect(listBrainModels()).rejects.toThrow(/Invalid AI Brain provider catalog payload/i);
   });
 
-  it('normalizes deprecated provider catalog pool arrays', async () => {
+  it('parses canonical entry-only provider catalog payloads', async () => {
     readStoredSettingValueMock.mockResolvedValue(
       JSON.stringify({
-        modelPresets: ['gpt-4o-mini'],
-        paidModels: ['gpt-4.1'],
-        ollamaModels: ['llama3.1'],
-        agentModels: [],
-        deepthinkingAgents: [],
-        playwrightPersonas: [],
+        entries: [
+          { pool: 'modelPresets', value: 'gpt-4o-mini' },
+          { pool: 'paidModels', value: 'gpt-4.1' },
+          { pool: 'ollamaModels', value: 'llama3.1' },
+        ],
       })
     );
 
@@ -50,5 +49,15 @@ describe('server model catalog', () => {
         configuredOllamaModels: ['llama3.1'],
       },
     });
+  });
+
+  it('rejects deprecated provider catalog pool arrays', async () => {
+    readStoredSettingValueMock.mockResolvedValue(
+      JSON.stringify({
+        modelPresets: ['gpt-4o-mini'],
+      })
+    );
+
+    await expect(listBrainModels()).rejects.toThrow(/Invalid AI Brain provider catalog payload/i);
   });
 });

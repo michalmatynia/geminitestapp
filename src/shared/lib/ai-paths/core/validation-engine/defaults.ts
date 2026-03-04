@@ -488,12 +488,6 @@ export const normalizeAiPathsValidationConfig = (
   value: AiPathsValidationConfig | null | undefined
 ): AiPathsValidationConfig => {
   const source = value ?? {};
-  const legacySchemaVersion =
-    typeof source.schemaVersion === 'number' &&
-    Number.isInteger(source.schemaVersion) &&
-    source.schemaVersion > 0
-      ? source.schemaVersion
-      : 1;
 
   const baseScore =
     typeof source.baseScore === 'number' && Number.isFinite(source.baseScore)
@@ -553,7 +547,6 @@ export const normalizeAiPathsValidationConfig = (
     rules,
     inferredCandidates,
     docsSyncState,
-    lastEvaluatedAt:
-      legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION ? null : lastEvaluatedAt,
+    lastEvaluatedAt,
   };
 };

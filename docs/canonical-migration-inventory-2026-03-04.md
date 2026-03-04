@@ -581,6 +581,241 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 - Extended Prompt Exploder runtime prune guardrails:
   - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `searchParams?.get('sessionId')` runtime coupling in Prompt Exploder source.
 
+## Executed Item 48 (AI Paths Runtime Node-Status Run-Alias Compatibility Prune)
+
+- Removed runtime node-status alias mapping for run-only statuses:
+  - `src/features/ai/ai-paths/services/path-run-executor.logic.ts`
+    - `toRuntimeNodeStatus` no longer maps `paused -> running` or `dead_lettered -> failed`.
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts`
+    - `normalizeNodeStatusForMerge` no longer maps `paused`/`dead_lettered` aliases.
+- Hardened runtime snapshot merge behavior to canonical status-only application:
+  - `mergeRuntimeNodeOutputsForStatus` now strips raw incoming `status` payloads and re-applies only normalized canonical statuses, preserving previous canonical status when available.
+- Added/updated regression coverage:
+  - `src/features/ai/ai-paths/services/__tests__/path-run-executor.logic.test.ts` now asserts `paused` and `dead_lettered` are rejected as node statuses.
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/runtime-utils.test.ts` now asserts alias/unknown incoming statuses are not remapped and do not leak as node status values without canonical prior state.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of runtime node-status alias snippets in:
+    - `src/features/ai/ai-paths/services/path-run-executor.logic.ts`
+    - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts`
+
+## Executed Item 49 (AI Paths Versioned-Settings Key Compatibility Prune)
+
+- Removed hardcoded legacy key special-casing from AI Paths settings API:
+  - `src/app/api/ai-paths/settings/handler.ts` no longer contains explicit `ai_paths_index_v1` guard/filter branches.
+- Promoted canonical key validation to versioned-key rule enforcement:
+  - settings API now rejects versioned keys matching `ai_paths_*_vN` in request/query and write payload paths.
+  - canonical unversioned `ai_paths_*` keys remain allowed.
+- Updated API regression coverage:
+  - `src/app/api/ai-paths/settings/handler.test.ts` now verifies versioned key rejection with canonical guard message and removes legacy index-filter expectations.
+- Updated canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now:
+    - forbids runtime references to `ai_paths_index_v1` in all source files.
+    - requires canonical versioned-key guard snippets in `src/app/api/ai-paths/settings/handler.ts`.
+    - blocks reintroduction of legacy/special-case key snippets (`LEGACY_PATH_INDEX_KEY`, `ai_paths_index_v1`, legacy filter branch) in the settings handler.
+
+## Executed Item 50 (AI Paths Presets Collection-Alias Runtime Migration Prune)
+
+- Removed runtime collection-alias auto-migration from presets normalization:
+  - `src/features/ai/ai-paths/context/PresetsContext.tsx`
+  - `normalizeDbNodePreset` now stores `normalizeDatabasePresetConfig(raw.config)` directly without calling `migrateDatabaseConfigCollections`.
+- Added regression coverage:
+  - `src/features/ai/ai-paths/context/__tests__/PresetsContext.normalizeDbNodePreset.test.tsx`
+    - verifies legacy alias values like `product_parameter` are not auto-canonicalized during runtime preset normalization.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks `migrateDatabaseConfigCollections` usage in `PresetsContext.tsx` and requires canonical direct normalization snippet.
+
+## Executed Item 51 (AI Paths Validation-Config Legacy Schema Gating Prune)
+
+- Removed legacy schema-version gating for validation evaluation timestamp normalization:
+  - `src/shared/lib/ai-paths/core/validation-engine/defaults.ts`
+  - `normalizeAiPathsValidationConfig` now preserves sanitized `lastEvaluatedAt` directly, without nulling it for legacy `schemaVersion` payloads.
+- Added regression coverage:
+  - `src/shared/lib/ai-paths/core/validation-engine/__tests__/defaults.normalization.test.ts`
+    - verifies `lastEvaluatedAt` remains preserved for `schemaVersion: 1` payloads.
+    - verifies missing timestamp still normalizes to `null`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `legacySchemaVersion`/schema-gated `lastEvaluatedAt` compatibility snippets in validation defaults and requires canonical `lastEvaluatedAt` normalization snippet.
+
+## Executed Item 52 (AI Paths Collection-Alias Migration Helper Surface Retirement)
+
+- Removed dead migration-helper surface from runtime collection utility module:
+  - `src/shared/lib/ai-paths/core/utils/collection-names.ts`
+  - deleted:
+    - `migrateDatabaseConfigCollections`
+    - `migratePathConfigCollections`
+    - internal migration-only helper branches supporting those exports.
+- Kept canonical runtime collection APIs:
+  - `canonicalizeAiPathsCollectionName`
+  - `findPathConfigCollectionAliasIssues`
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/utils/__tests__/collection-names.test.ts`
+    - now verifies canonical alias detection scope and canonicalization behavior directly.
+    - confirms top-level `dbQuery` compatibility payloads are ignored by runtime alias-issue detection.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `migrateDatabaseConfigCollections`/`migratePathConfigCollections` exports in `collection-names.ts` and requires canonical alias API snippets.
+
+## Executed Item 53 (Legacy Products Proxy Deprecation Shim Retirement)
+
+- Removed runtime proxy-level legacy `/api/products` deprecation responder:
+  - `src/proxy.ts` no longer intercepts legacy products paths to emit 410 successor metadata payloads.
+- Canonical behavior now relies on standard API routing only:
+  - `/api/*` requests pass through base proxy flow without legacy products path special-casing.
+  - legacy `/api/products` paths are no longer handled by a compatibility shim in middleware/proxy.
+- Updated regression coverage:
+  - `src/proxy.test.ts` now verifies legacy `/api/products/*` paths fall through the standard API proxy path (`NextResponse.next`) and no deprecation payload contract remains.
+
+## Executed Item 54 (AI Paths Settings Backup Payload Shape Compatibility Prune)
+
+- Tightened settings backup parsing to canonical structured payload shape:
+  - `src/shared/lib/ai-paths/settings-store-client.ts`
+  - `readBackupSettings` now accepts only object payloads with:
+    - numeric `savedAt`
+    - array `records`
+  - removed legacy array-root backup payload parsing branch.
+- Added regression coverage:
+  - `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+    - verifies structured backup fallback remains functional on request failure.
+    - verifies legacy array-root backup payloads are ignored.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of array-root backup payload compatibility parsing snippets in `settings-store-client.ts` and requires canonical structured backup parsing snippets.
+
+## Executed Item 55 (AI Paths Backup-Key Version Compatibility Prune)
+
+- Migrated AI Paths client settings backup storage key to canonical unversioned form:
+  - `src/shared/lib/ai-paths/settings-store-client.ts`
+  - `AI_PATHS_SETTINGS_BACKUP_KEY` now uses `ai_paths_settings_backup`.
+- Updated backup parsing regression coverage:
+  - `src/shared/lib/ai-paths/__tests__/settings-store-client.backup.test.ts`
+  - tests now target canonical backup key.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkSettingsBackupPayloadCompatibilityPrune`) now:
+    - blocks reintroduction of `ai_paths_settings_backup_v1`.
+    - requires canonical backup key snippet in `settings-store-client.ts`.
+
+## Executed Item 56 (AI Paths Validation Path-Meta Fallback Compatibility Prune)
+
+- Removed validation-admin path-meta synthesis from config records:
+  - `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+  - `parseAiPathsSettings` now derives `pathMetas` from canonical `ai_paths_index` entries only.
+- Updated regression coverage:
+  - `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+    - verifies legacy `ai_path_index` payloads no longer produce synthetic `pathMetas`.
+    - verifies configs missing canonical index entries are not surfaced as selectable path metas.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkValidationPathIndexMetaFallbackCompatibilityPrune`) now:
+    - blocks reintroduction of `fallbackMetas` synthesis in validation settings parsing.
+    - requires canonical index-driven `pathMetas` assembly snippet.
+
+## Executed Item 57 (Site-Wide Legacy Route Namespace Hygiene + Exception Register Reconciliation)
+
+- Added explicit legacy route-namespace guardrails to site-wide canonical checks:
+  - `scripts/canonical/check-sitewide.mjs` now blocks these forbidden directories if present:
+    - `src/app/api/import`
+    - `src/app/api/catalogs/assign`
+    - `src/app/api/ai-paths/legacy-compat/counters`
+- Pruned remaining empty legacy route namespaces from runtime source tree:
+  - removed empty directories:
+    - `src/app/api/import`
+    - `src/app/api/catalogs/assign`
+    - `src/app/api/ai-paths/legacy-compat/counters`
+- Reconciled stale temporary exceptions that were already retired by prior hard-cuts:
+  - `docs/legacy-compatibility-exception-register-2026-03-04.json`
+  - removed:
+    - `products-api-legacy-gateway`
+    - `integrations-base-import-action-import-rejection`
+    - `ai-brain-provider-catalog-legacy-pools`
+- Validation:
+  - `npm run canonical:check:sitewide` passes with updated guardrails and exception register.
+
+## Executed Item 58 (AI Paths Validation Collection-Map Delimiter Compatibility Prune)
+
+- Removed legacy collection-map delimiter compatibility in validation admin parsing:
+  - `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+  - `parseCollectionMapText` now accepts canonical `entity:collection` lines only.
+- Updated regression coverage:
+  - `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+    - verifies canonical `:` collection-map lines parse correctly.
+    - verifies legacy `=` collection-map lines are ignored.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkValidationCollectionMapLegacyDelimiterCompatibilityPrune`) now:
+    - blocks reintroduction of `=` delimiter compatibility snippets in validation collection-map parsing.
+    - requires canonical `line.indexOf(':')` delimiter parsing snippet.
+
+## Executed Item 59 (AI Paths Validation Docs-Sources Delimiter Compatibility Prune)
+
+- Removed legacy docs-sources comma delimiter compatibility in validation admin parsing:
+  - `src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts`
+  - `parseDocsSourcesText` now parses canonical one-source-per-line input and ignores comma-delimited lines.
+- Updated regression coverage:
+  - `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
+    - verifies canonical newline-delimited docs sources parse correctly.
+    - verifies legacy comma-delimited docs sources are ignored.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune`) now:
+    - blocks reintroduction of comma-delimiter docs-sources parsing snippets.
+    - requires canonical newline parsing and comma-line rejection snippets.
+
+## Executed Item 60 (Migration-Only Helper Relocation Out Of Runtime Source Tree)
+
+- Relocated migration-only helper modules from `src/features/**` to `scripts/db/lib/**`:
+  - `src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts`
+    -> `scripts/db/lib/integrations/link-map-preference-migration.ts`
+  - `src/features/integrations/services/export-warehouse-preference-migration.ts`
+    -> `scripts/db/lib/integrations/export-warehouse-preference-migration.ts`
+  - `src/features/case-resolver/workspace-detached-contract-migration.ts`
+    -> `scripts/db/lib/case-resolver/workspace-detached-contract-migration.ts`
+- Updated migration entrypoint imports to script-local helper paths:
+  - `scripts/db/migrate-base-import-parameter-link-map-v2.ts`
+  - `scripts/db/migrate-base-export-warehouse-preferences-v2.ts`
+  - `scripts/db/migrate-case-resolver-workspace-detached-contract-v2.ts`
+- Removed runtime-tree helper files after relocation:
+  - `src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts`
+  - `src/features/integrations/services/export-warehouse-preference-migration.ts`
+  - `src/features/case-resolver/workspace-detached-contract-migration.ts`
+- Reconciled exception register to reflect completion:
+  - `docs/legacy-compatibility-exception-register-2026-03-04.json` now has no active temporary exceptions (`"exceptions": []`).
+- Regression coverage updates:
+  - `src/features/case-resolver/__tests__/workspace-detached-contract-migration.test.ts` now targets the relocated script helper.
+  - `src/features/case-resolver/__tests__/workspace-persistence.test.ts` now inlines legacy schema constants for runtime-side legacy payload rejection checks.
+
+## Executed Item 61 (AI Paths Database Template catalogId Alias Compatibility Prune)
+
+- Removed runtime catalogId alias auto-promotion from database template context preparation:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts`
+  - `prepareDatabaseTemplateContext` no longer infers/promotes `catalogId` from nested context records (`entity/catalogs/bundle`) into top-level template inputs/context.
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-template-context.test.ts`
+    - verifies nested catalog metadata does not auto-populate top-level `catalogId`.
+    - verifies explicitly provided canonical `catalogId` input remains preserved.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseTemplateCatalogAliasCompatibilityPrune`) now:
+    - blocks reintroduction of database template catalogId alias helper snippets.
+    - requires canonical template-context assembly from `templateInputs` without alias sync helpers.
+
+## Executed Item 62 (AI Paths Database Input catalogId Alias Compatibility Prune)
+
+- Removed nested catalogId alias extraction from database input resolution:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts`
+  - `resolveDatabaseInputs` now reads `catalogId` only from explicit `catalogId` fields on source input objects.
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-input-resolution.test.ts`
+    - verifies nested `context.entity.catalogId` / `context.entity.catalogs[]` payloads no longer auto-populate top-level `catalogId`.
+    - verifies canonical direct `catalogId` fields still resolve/preserve correctly.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseInputCatalogAliasCompatibilityPrune`) now:
+    - blocks reintroduction of nested catalog alias traversal helpers in input resolution.
+    - requires canonical direct `catalogId` read snippet.
+
+## Executed Item 63 (Products Legacy API Utility Reintroduction Guard)
+
+- Hardened site-wide canonical guardrails to prevent reintroduction of removed dead products API utility files:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks:
+    - `src/features/products/api/versioning.ts`
+    - `src/features/products/api/routes/v2-products-route.ts`
+- Validation:
+  - `npm run canonical:check:sitewide` passes with the new products-utility guard checks.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

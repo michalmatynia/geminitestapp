@@ -7,7 +7,7 @@ import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownT
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
-export function MarkdownToolbar(): React.JSX.Element {
+export function NotesMarkdownToolbar(): React.JSX.Element {
   const {
     onApplyWrap,
     onApplyLinePrefix,

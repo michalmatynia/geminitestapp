@@ -591,8 +591,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             nodeUpdates.forEach((nodeUpdate: AiPathRunNodeRecord): void => {
               const nodeId = asString(nodeUpdate.nodeId);
               if (!nodeId) return;
-              const status = args.normalizeNodeStatus(nodeUpdate.status);
-              if (!status) return;
               const nodeInputs =
                 isObjectRecord(nodeUpdate.inputs) && !Array.isArray(nodeUpdate.inputs)
                   ? nodeUpdate.inputs
@@ -601,6 +599,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 isObjectRecord(nodeUpdate.outputs) && !Array.isArray(nodeUpdate.outputs)
                   ? nodeUpdate.outputs
                   : null;
+              const nodeStatus = args.normalizeNodeStatus(nodeUpdate.status);
+              const outputStatus = nodeOutputs ? args.normalizeNodeStatus(nodeOutputs['status']) : null;
+              const status =
+                outputStatus === 'waiting_callback'
+                  ? outputStatus
+                  : nodeStatus ?? outputStatus;
+              if (!status) return;
               const runtimeNode = runtimeNodeById.get(nodeId);
               const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
               const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);

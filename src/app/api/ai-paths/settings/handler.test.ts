@@ -69,7 +69,7 @@ describe('ai-paths settings handler', () => {
     ).rejects.toThrow('Invalid AI Paths key "invalid_key".');
   });
 
-  it('rejects legacy index key requests', async () => {
+  it('rejects versioned key requests', async () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/ai-paths/settings?keys=ai_paths_index_v1') as Parameters<
@@ -77,44 +77,29 @@ describe('ai-paths settings handler', () => {
         >[0],
         {} as Parameters<typeof GET_handler>[1]
       )
-    ).rejects.toThrow('Legacy AI Paths key "ai_paths_index_v1" is disabled. Use "ai_paths_index".');
+    ).rejects.toThrow(
+      'Versioned AI Paths key "ai_paths_index_v1" is disabled. Use canonical unversioned keys.'
+    );
 
     expect(listAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('filters legacy index records from full list responses', async () => {
-    listAiPathsSettingsMock.mockResolvedValue([
-      { key: 'ai_paths_index_v1', value: '[{"id":"legacy"}]' },
-      { key: 'ai_paths_index', value: '[{"id":"canonical"}]' },
-      { key: 'ai_paths_ui_state', value: '{"value":{}}' },
-    ]);
-
-    const response = await GET_handler(
-      new NextRequest('http://localhost/api/ai-paths/settings') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual([
-      { key: 'ai_paths_index', value: '[{"id":"canonical"}]' },
-      { key: 'ai_paths_ui_state', value: '{"value":{}}' },
-    ]);
-  });
-
-  it('rejects legacy index writes', async () => {
+  it('rejects versioned key writes', async () => {
     await expect(
       POST_handler(
         new NextRequest('http://localhost/api/ai-paths/settings', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            key: 'ai_paths_index_v1',
+            key: 'ai_paths_ui_state_v2',
             value: '[]',
           }),
         }) as Parameters<typeof POST_handler>[0],
         {} as Parameters<typeof POST_handler>[1]
       )
-    ).rejects.toThrow('Legacy AI Paths key "ai_paths_index_v1" is disabled. Use "ai_paths_index".');
+    ).rejects.toThrow(
+      'Versioned AI Paths key "ai_paths_ui_state_v2" is disabled. Use canonical unversioned keys.'
+    );
 
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
     expect(upsertAiPathsSettingsBulkMock).not.toHaveBeenCalled();

@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 import { Badge } from './badge';
 
@@ -12,6 +13,49 @@ interface TagProps {
   dot?: boolean;
   onRemove?: () => void;
   onClick?: () => void;
+}
+
+type TagRuntimeValue = {
+  label: string;
+  color?: string | null;
+  className?: string;
+  dot: boolean;
+  onRemove?: () => void;
+  onClick?: () => void;
+};
+
+const {
+  Context: TagRuntimeContext,
+  useStrictContext: useTagRuntime,
+} = createStrictContext<TagRuntimeValue>({
+  hookName: 'useTagRuntime',
+  providerName: 'TagRuntimeProvider',
+  displayName: 'TagRuntimeContext',
+});
+
+function TagBadge(): React.JSX.Element {
+  const runtime = useTagRuntime();
+  return (
+    <Badge
+      variant='outline'
+      onClick={runtime.onClick}
+      onRemove={runtime.onRemove}
+      removeLabel={`Remove ${runtime.label}`}
+      className={cn(
+        'gap-1.5 px-2.5 py-0.5 font-medium transition-colors border-none',
+        runtime.color ? 'text-white' : 'bg-primary/10 text-primary',
+        runtime.className
+      )}
+      style={runtime.color ? { backgroundColor: runtime.color } : undefined}
+      icon={
+        runtime.dot ? (
+          <span className='size-1.5 rounded-full bg-current' aria-hidden='true' />
+        ) : undefined
+      }
+    >
+      {runtime.label}
+    </Badge>
+  );
 }
 
 /**
@@ -26,23 +70,21 @@ export function Tag({
   onRemove,
   onClick,
 }: TagProps): React.JSX.Element {
+  const runtimeValue = useMemo<TagRuntimeValue>(
+    () => ({
+      label,
+      color,
+      className,
+      dot,
+      onRemove,
+      onClick,
+    }),
+    [label, color, className, dot, onRemove, onClick]
+  );
+
   return (
-    <Badge
-      variant='outline'
-      onClick={onClick}
-      onRemove={onRemove}
-      removeLabel={`Remove ${label}`}
-      className={cn(
-        'gap-1.5 px-2.5 py-0.5 font-medium transition-colors border-none',
-        color ? 'text-white' : 'bg-primary/10 text-primary',
-        className
-      )}
-      style={color ? { backgroundColor: color } : undefined}
-      icon={
-        dot ? <span className='size-1.5 rounded-full bg-current' aria-hidden='true' /> : undefined
-      }
-    >
-      {label}
-    </Badge>
+    <TagRuntimeContext.Provider value={runtimeValue}>
+      <TagBadge />
+    </TagRuntimeContext.Provider>
   );
 }

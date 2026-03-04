@@ -4,7 +4,7 @@ import {
   EXPORT_WAREHOUSE_SKIP_VALUE,
   stringifyExportWarehouseByInventoryMap,
 } from '@/features/integrations/services/export-warehouse-preference';
-import { migrateLegacyExportWarehousePreference } from '@/features/integrations/services/export-warehouse-preference-migration';
+import { migrateLegacyExportWarehousePreference } from '../../../../scripts/db/lib/integrations/export-warehouse-preference-migration';
 
 describe('export-warehouse-preference-migration', () => {
   it('migrates legacy fallback warehouse into default inventory mapping', () => {

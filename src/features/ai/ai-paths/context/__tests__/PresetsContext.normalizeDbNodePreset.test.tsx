@@ -45,4 +45,21 @@ describe('PresetsContext normalizeDbNodePreset', () => {
     expect(invalidOperation.config.operation).toBe('query');
     expect(invalidOperation.config.query?.collection).toBe('products');
   });
+
+  it('does not auto-migrate legacy collection aliases during runtime preset normalization', () => {
+    const { result } = renderHook(() => usePresetsActions(), { wrapper });
+
+    const normalized = result.current.normalizeDbNodePreset({
+      name: 'Legacy alias collection',
+      config: {
+        operation: 'query',
+        query: {
+          ...buildQuery(),
+          collection: 'product_parameter',
+        },
+      },
+    });
+
+    expect(normalized.config.query?.collection).toBe('product_parameter');
+  });
 });

@@ -18,12 +18,7 @@ interface ResourceCardProps {
   variant?: 'default' | 'subtle' | 'glass' | 'outline';
 }
 
-/**
- * A unified card component for resources like Products, Assets, and Notes.
- * It provides a standardized layout with a top media area, header actions, and a footer.
- * Leverages the base Card component for consistent theme application.
- */
-export function ResourceCard({
+function ResourceCardContent({
   title,
   description,
   media,
@@ -34,8 +29,8 @@ export function ResourceCard({
   children,
   onClick,
   className,
-  variant = 'default',
-}: ResourceCardProps): React.JSX.Element {
+  variant,
+}: ResourceCardProps & { variant: 'default' | 'subtle' | 'glass' | 'outline' }): React.JSX.Element {
   return (
     <Card
       variant={variant}
@@ -79,5 +74,41 @@ export function ResourceCard({
         {footer && <div className='mt-3 border-t border-white/5 pt-3'>{footer}</div>}
       </div>
     </Card>
+  );
+}
+
+/**
+ * A unified card component for resources like Products, Assets, and Notes.
+ * It provides a standardized layout with a top media area, header actions, and a footer.
+ * Leverages the base Card component for consistent theme application.
+ */
+export function ResourceCard({
+  title,
+  description,
+  media,
+  mediaClassName,
+  badges,
+  actions,
+  footer,
+  children,
+  onClick,
+  className,
+  variant = 'default',
+}: ResourceCardProps): React.JSX.Element {
+  return (
+    <ResourceCardContent
+      title={title}
+      description={description}
+      media={media}
+      mediaClassName={mediaClassName}
+      badges={badges}
+      actions={actions}
+      footer={footer}
+      onClick={onClick}
+      className={className}
+      variant={variant}
+    >
+      {children}
+    </ResourceCardContent>
   );
 }

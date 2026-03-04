@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
 
 export default function GlobalError({
   error,

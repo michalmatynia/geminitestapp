@@ -1,4 +1,3 @@
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { RefreshButton } from './RefreshButton';
@@ -37,40 +36,10 @@ type SectionHeaderProps = {
   children?: ReactNode | undefined;
 };
 
-type SectionHeaderRefreshRuntimeValue = {
+export type SectionHeaderRefreshConfig = {
   onRefresh: () => void;
   isRefreshing: boolean;
 };
-
-const {
-  Context: SectionHeaderRefreshRuntimeContext,
-  useStrictContext: useSectionHeaderRefreshRuntime,
-} = createStrictContext<SectionHeaderRefreshRuntimeValue>({
-  hookName: 'useSectionHeaderRefreshRuntime',
-  providerName: 'SectionHeaderRefreshRuntimeProvider',
-  displayName: 'SectionHeaderRefreshRuntimeContext',
-});
-
-type SectionHeaderRefreshRuntimeProviderProps = {
-  value: SectionHeaderRefreshRuntimeValue;
-  children: ReactNode;
-};
-
-function SectionHeaderRefreshRuntimeProvider({
-  value,
-  children,
-}: SectionHeaderRefreshRuntimeProviderProps): React.JSX.Element {
-  return (
-    <SectionHeaderRefreshRuntimeContext.Provider value={value}>
-      {children}
-    </SectionHeaderRefreshRuntimeContext.Provider>
-  );
-}
-
-function SectionHeaderRefreshAction(): React.JSX.Element {
-  const runtime = useSectionHeaderRefreshRuntime();
-  return <RefreshButton onRefresh={runtime.onRefresh} isRefreshing={runtime.isRefreshing} />;
-}
 
 export function SectionHeader({
   title,
@@ -88,13 +57,13 @@ export function SectionHeader({
   descriptionClassName,
   children, // Added children
 }: SectionHeaderProps) {
-  const refreshRuntimeValue = useMemo<SectionHeaderRefreshRuntimeValue | null>(() => {
-    if (!refresh) return null;
-    return {
-      onRefresh: refresh.onRefresh,
-      isRefreshing: refresh.isRefreshing,
-    };
-  }, [refresh]);
+  const refreshRuntime = useMemo(
+    () => ({
+      onRefresh: refresh?.onRefresh,
+      isRefreshing: refresh?.isRefreshing ?? false,
+    }),
+    [refresh?.onRefresh, refresh?.isRefreshing]
+  );
 
   return (
     <div
@@ -150,10 +119,11 @@ export function SectionHeader({
         <div className={cn('flex flex-wrap items-center gap-2 shrink-0', actionsClassName)}>
           {' '}
           {/* Added shrink-0 for actions */}
-          {refreshRuntimeValue ? (
-            <SectionHeaderRefreshRuntimeProvider value={refreshRuntimeValue}>
-              <SectionHeaderRefreshAction />
-            </SectionHeaderRefreshRuntimeProvider>
+          {refreshRuntime.onRefresh ? (
+            <RefreshButton
+              onRefresh={refreshRuntime.onRefresh}
+              isRefreshing={refreshRuntime.isRefreshing}
+            />
           ) : null}
           {actions}
         </div>

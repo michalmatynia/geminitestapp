@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,72 @@ export interface ConfirmModalProps {
   onConfirmPasswordChange?: (value: string) => void;
   confirmPasswordLabel?: string;
   children?: React.ReactNode;
+}
+
+type ConfirmModalRuntimeValue = {
+  loading: boolean;
+  onClose: () => void;
+  handleConfirm: (event: React.MouseEvent) => void;
+  cancelText: string;
+  confirmText: string;
+  isDangerous: boolean;
+  isConfirmDisabled: boolean;
+  extraAction?: React.ReactNode;
+  onConfirmPasswordChange?: (value: string) => void;
+  confirmPassword?: string;
+  confirmPasswordLabel: string;
+};
+
+const { Context: ConfirmModalRuntimeContext, useStrictContext: useConfirmModalRuntime } =
+  createStrictContext<ConfirmModalRuntimeValue>({
+    hookName: 'useConfirmModalRuntime',
+    providerName: 'ConfirmModalRuntimeProvider',
+    displayName: 'ConfirmModalRuntimeContext',
+  });
+
+function ConfirmModalPasswordField(): React.JSX.Element | null {
+  const runtime = useConfirmModalRuntime();
+  if (!runtime.onConfirmPasswordChange) return null;
+
+  return (
+    <div className='space-y-2'>
+      <Label className='text-xs font-medium text-gray-300'>{runtime.confirmPasswordLabel}</Label>
+      <Input
+        type='password'
+        value={runtime.confirmPassword}
+        onChange={(event) => runtime.onConfirmPasswordChange?.(event.target.value)}
+        placeholder='Enter your password'
+        disabled={runtime.loading}
+        autoFocus
+      />
+    </div>
+  );
+}
+
+function ConfirmModalFooterActions(): React.JSX.Element {
+  const runtime = useConfirmModalRuntime();
+
+  return (
+    <div className='flex gap-2 w-full'>
+      {runtime.extraAction}
+      <div className='flex-1' />
+      <AlertDialogCancel asChild>
+        <Button variant='outline' disabled={runtime.loading} onClick={runtime.onClose}>
+          {runtime.cancelText}
+        </Button>
+      </AlertDialogCancel>
+      <AlertDialogAction asChild>
+        <Button
+          onClick={(event) => runtime.handleConfirm(event)}
+          variant={runtime.isDangerous ? 'destructive' : 'primary'}
+          disabled={runtime.isConfirmDisabled}
+          loading={runtime.loading}
+        >
+          {runtime.confirmText}
+        </Button>
+      </AlertDialogAction>
+    </div>
+  );
 }
 
 /**
@@ -81,63 +148,64 @@ export function ConfirmModal({
     lg: 'sm:max-w-[800px]',
     xl: 'sm:max-w-[1000px]',
   }[size];
+  const runtimeValue = React.useMemo<ConfirmModalRuntimeValue>(
+    () => ({
+      loading,
+      onClose,
+      handleConfirm: (event: React.MouseEvent): void => {
+        void handleConfirm(event);
+      },
+      cancelText,
+      confirmText,
+      isDangerous,
+      isConfirmDisabled,
+      extraAction,
+      onConfirmPasswordChange,
+      confirmPassword,
+      confirmPasswordLabel,
+    }),
+    [
+      loading,
+      onClose,
+      cancelText,
+      confirmText,
+      isDangerous,
+      isConfirmDisabled,
+      extraAction,
+      onConfirmPasswordChange,
+      confirmPassword,
+      confirmPasswordLabel,
+    ]
+  );
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className={cn(sizeClasses)}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className={subtitle ? undefined : 'sr-only'}>
-            {resolvedDescription}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+      <ConfirmModalRuntimeContext.Provider value={runtimeValue}>
+        <AlertDialogContent className={cn(sizeClasses)}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription className={subtitle ? undefined : 'sr-only'}>
+              {resolvedDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-        <div className='py-4 space-y-4'>
-          {message && (
-            <div className='text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed'>
-              {message}
-            </div>
-          )}
+          <div className='py-4 space-y-4'>
+            {message && (
+              <div className='text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed'>
+                {message}
+              </div>
+            )}
 
-          {onConfirmPasswordChange && (
-            <div className='space-y-2'>
-              <Label className='text-xs font-medium text-gray-300'>{confirmPasswordLabel}</Label>
-              <Input
-                type='password'
-                value={confirmPassword}
-                onChange={(e) => onConfirmPasswordChange(e.target.value)}
-                placeholder='Enter your password'
-                disabled={loading}
-                autoFocus
-              />
-            </div>
-          )}
+            <ConfirmModalPasswordField />
 
-          {children}
-        </div>
-
-        <AlertDialogFooter>
-          <div className='flex gap-2 w-full'>
-            {extraAction}
-            <div className='flex-1' />
-            <AlertDialogCancel asChild>
-              <Button variant='outline' disabled={loading} onClick={onClose}>
-                {cancelText}
-              </Button>
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={(e) => void handleConfirm(e)}
-                variant={isDangerous ? 'destructive' : 'primary'}
-                disabled={isConfirmDisabled}
-                loading={loading}
-              >
-                {confirmText}
-              </Button>
-            </AlertDialogAction>
+            {children}
           </div>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+
+          <AlertDialogFooter>
+            <ConfirmModalFooterActions />
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </ConfirmModalRuntimeContext.Provider>
     </AlertDialog>
   );
 }

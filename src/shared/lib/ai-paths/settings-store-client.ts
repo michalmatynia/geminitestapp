@@ -19,7 +19,7 @@ export type {
 };
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
-const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';
+const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup';
 const AI_PATHS_SETTINGS_RETRY_DELAYS_MS = [500, 1500];
 const AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS = 60_000;
 const AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS = 25_000;
@@ -124,24 +124,17 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     const raw = window.localStorage.getItem(AI_PATHS_SETTINGS_BACKUP_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
-    const records = Array.isArray(parsed)
-      ? parsed
-      : parsed &&
-          typeof parsed === 'object' &&
-          Array.isArray((parsed as { records?: unknown }).records)
-        ? (parsed as { records: unknown[] }).records
+    const parsedRecord =
+      parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as { records?: unknown; savedAt?: unknown })
         : null;
-    if (!records) return null;
-    const backupAgeMs =
-      parsed &&
-      typeof parsed === 'object' &&
-      typeof (parsed as { savedAt?: unknown }).savedAt === 'number'
-        ? Date.now() - (parsed as { savedAt: number }).savedAt
-        : Number.POSITIVE_INFINITY;
+    if (!parsedRecord || !Array.isArray(parsedRecord.records)) return null;
+    if (typeof parsedRecord.savedAt !== 'number') return null;
+    const backupAgeMs = Date.now() - parsedRecord.savedAt;
     if (backupAgeMs > AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS) {
       return null;
     }
-    const normalized = records
+    const normalized = parsedRecord.records
       .map((item: unknown): AiPathsSettingRecord | null => {
         if (!item || typeof item !== 'object') return null;
         const key = (item as { key?: unknown }).key;

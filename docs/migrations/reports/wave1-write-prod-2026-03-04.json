@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 1,
+  "wave": "wave1-data-canonicalization-verification",
+  "reportMode": "write-executed",
+  "environment": "prod",
+  "generatedAt": "2026-03-04T20:14:28.276Z",
+  "commandTimeoutMs": 120000,
+  "aggregate": {
+    "total": 10,
+    "pending": 0,
+    "success": 10,
+    "failed": 0,
+    "skipped": 0
+  },
+  "commands": [
+    {
+      "id": "products-normalize-v2",
+      "label": "Products canonical shape normalization",
+      "command": "npm run products:normalize:v2 -- --write",
+      "baseCommand": "npm run products:normalize:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:08.106Z",
+      "finishedAt": "2026-03-04T20:14:10.742Z",
+      "durationMs": 2636,
+      "parsedSummary": {
+        "mode": "write",
+        "scanned": 351,
+        "updated": 0,
+        "categoryBackfilled": 0,
+        "categoriesFieldRemovedDocs": 0,
+        "nameFieldRemovedDocs": 0,
+        "descriptionFieldRemovedDocs": 0,
+        "producerDocsNormalized": 0,
+        "producerEntriesDropped": 0,
+        "producerEntriesRepaired": 0,
+        "tagDocsNormalized": 0,
+        "tagEntriesDropped": 0,
+        "tagEntriesRepaired": 0
+      },
+      "stdout": "\n> libapp2@0.1.0 products:normalize:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/normalize-products-v2.ts --write\n\n[normalize-products-v2] Summary\n{\n  \"mode\": \"write\",\n  \"scanned\": 351,\n  \"updated\": 0,\n  \"categoryBackfilled\": 0,\n  \"categoriesFieldRemovedDocs\": 0,\n  \"nameFieldRemovedDocs\": 0,\n  \"descriptionFieldRemovedDocs\": 0,\n  \"producerDocsNormalized\": 0,\n  \"producerEntriesDropped\": 0,\n  \"producerEntriesRepaired\": 0,\n  \"tagDocsNormalized\": 0,\n  \"tagEntriesDropped\": 0,\n  \"tagEntriesRepaired\": 0\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "ai-paths-config-contract-v2",
+      "label": "AI Paths config contract migration",
+      "command": "npm run migrate:ai-paths:config-contract:v2 -- --write",
+      "baseCommand": "npm run migrate:ai-paths:config-contract:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:10.744Z",
+      "finishedAt": "2026-03-04T20:14:13.102Z",
+      "durationMs": 2358,
+      "parsedSummary": {
+        "mode": "write",
+        "pathFilter": "all",
+        "updateLimit": null,
+        "scannedSettings": 22,
+        "scannedPathConfigs": 20,
+        "changedPaths": 0,
+        "runtimeStateResets": 0,
+        "nodeIdentityRepairs": 0,
+        "updateCount": 0,
+        "changes": [],
+        "issues": []
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:ai-paths:config-contract:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-ai-paths-config-contract-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"pathFilter\": \"all\",\n  \"updateLimit\": null,\n  \"scannedSettings\": 22,\n  \"scannedPathConfigs\": 20,\n  \"changedPaths\": 0,\n  \"runtimeStateResets\": 0,\n  \"nodeIdentityRepairs\": 0,\n  \"updateCount\": 0,\n  \"changes\": [],\n  \"issues\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "base-import-parameter-link-map-v2",
+      "label": "Base import parameter link-map migration",
+      "command": "npm run migrate:base-import-parameter-link-map:v2 -- --write",
+      "baseCommand": "npm run migrate:base-import-parameter-link-map:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:13.102Z",
+      "finishedAt": "2026-03-04T20:14:14.741Z",
+      "durationMs": 1639,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "writesApplied": 0,
+            "error": null,
+            "present": false,
+            "changed": false,
+            "legacyPayloadDetected": false,
+            "defaultCatalogCount": 0,
+            "scopedBucketCount": 0,
+            "scopedCatalogCount": 0,
+            "totalLinks": 0,
+            "warnings": [
+              "Setting not found."
+            ]
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "writesApplied": 0,
+            "error": null,
+            "present": false,
+            "changed": false,
+            "legacyPayloadDetected": false,
+            "defaultCatalogCount": 0,
+            "scopedBucketCount": 0,
+            "scopedCatalogCount": 0,
+            "totalLinks": 0,
+            "warnings": [
+              "Setting not found."
+            ]
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:base-import-parameter-link-map:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-import-parameter-link-map-v2.ts --write\n\n[migrate-base-import-parameter-link-map-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"writesApplied\": 0,\n      \"error\": null,\n      \"present\": false,\n      \"changed\": false,\n      \"legacyPayloadDetected\": false,\n      \"defaultCatalogCount\": 0,\n      \"scopedBucketCount\": 0,\n      \"scopedCatalogCount\": 0,\n      \"totalLinks\": 0,\n      \"warnings\": [\n        \"Setting not found.\"\n      ]\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"writesApplied\": 0,\n      \"error\": null,\n      \"present\": false,\n      \"changed\": false,\n      \"legacyPayloadDetected\": false,\n      \"defaultCatalogCount\": 0,\n      \"scopedBucketCount\": 0,\n      \"scopedCatalogCount\": 0,\n      \"totalLinks\": 0,\n      \"warnings\": [\n        \"Setting not found.\"\n      ]\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "base-export-warehouse-preferences-v2",
+      "label": "Base export warehouse preferences migration",
+      "command": "npm run migrate:base-export-warehouse-preferences:v2 -- --write",
+      "baseCommand": "npm run migrate:base-export-warehouse-preferences:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:14.741Z",
+      "finishedAt": "2026-03-04T20:14:16.382Z",
+      "durationMs": 1641,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "mapPresent": true,
+            "legacySettingPresent": false,
+            "defaultInventoryId": null,
+            "migratedToInventoryId": null,
+            "legacyPayloadDetected": false,
+            "scopedMappingCount": 2,
+            "warnings": [],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "mapPresent": false,
+            "legacySettingPresent": false,
+            "defaultInventoryId": null,
+            "migratedToInventoryId": null,
+            "legacyPayloadDetected": false,
+            "scopedMappingCount": 0,
+            "warnings": [],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:base-export-warehouse-preferences:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-export-warehouse-preferences-v2.ts --write\n\n[migrate-base-export-warehouse-preferences-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"mapPresent\": true,\n      \"legacySettingPresent\": false,\n      \"defaultInventoryId\": null,\n      \"migratedToInventoryId\": null,\n      \"legacyPayloadDetected\": false,\n      \"scopedMappingCount\": 2,\n      \"warnings\": [],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"mapPresent\": false,\n      \"legacySettingPresent\": false,\n      \"defaultInventoryId\": null,\n      \"migratedToInventoryId\": null,\n      \"legacyPayloadDetected\": false,\n      \"scopedMappingCount\": 0,\n      \"warnings\": [],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "base-connection-token-storage-v2",
+      "label": "Base connection token storage migration",
+      "command": "npm run migrate:base-connection-token-storage:v2 -- --write",
+      "baseCommand": "npm run migrate:base-connection-token-storage:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:16.382Z",
+      "finishedAt": "2026-03-04T20:14:18.489Z",
+      "durationMs": 2107,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "baseIntegrationCount": 0,
+            "baseConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithBaseApiToken": 0,
+            "connectionsWithLegacyPasswordOnly": 0,
+            "connectionsBackfilled": 0,
+            "connectionsStillMissingToken": 0,
+            "warnings": [
+              "No Base integrations found."
+            ],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "baseIntegrationCount": 0,
+            "baseConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithBaseApiToken": 0,
+            "connectionsWithLegacyPasswordOnly": 0,
+            "connectionsBackfilled": 0,
+            "connectionsStillMissingToken": 0,
+            "warnings": [
+              "No Base integrations found."
+            ],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:base-connection-token-storage:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-connection-token-storage-v2.ts --write\n\n[migrate-base-connection-token-storage-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithBaseApiToken\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "base-token-encryption-v2",
+      "label": "Base token encryption migration",
+      "command": "npm run migrate:base-token-encryption:v2 -- --write",
+      "baseCommand": "npm run migrate:base-token-encryption:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:18.489Z",
+      "finishedAt": "2026-03-04T20:14:20.162Z",
+      "durationMs": 1673,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "baseIntegrationCount": 0,
+            "baseConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsAlreadyEncrypted": 0,
+            "connectionsEncryptedByMigration": 0,
+            "connectionsStillMissingToken": 0,
+            "warnings": [
+              "No Base integrations found."
+            ],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "baseIntegrationCount": 0,
+            "baseConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsAlreadyEncrypted": 0,
+            "connectionsEncryptedByMigration": 0,
+            "connectionsStillMissingToken": 0,
+            "warnings": [
+              "No Base integrations found."
+            ],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:base-token-encryption:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-base-token-encryption-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"baseIntegrationCount\": 0,\n      \"baseConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsAlreadyEncrypted\": 0,\n      \"connectionsEncryptedByMigration\": 0,\n      \"connectionsStillMissingToken\": 0,\n      \"warnings\": [\n        \"No Base integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "tradera-api-credential-storage-v2",
+      "label": "Tradera API credential storage migration",
+      "command": "npm run migrate:tradera-api-credential-storage:v2 -- --write",
+      "baseCommand": "npm run migrate:tradera-api-credential-storage:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:20.162Z",
+      "finishedAt": "2026-03-04T20:14:22.007Z",
+      "durationMs": 1845,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "traderaApiIntegrationCount": 0,
+            "traderaApiConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithCanonicalCredentials": 0,
+            "connectionsWithLegacyPasswordOnly": 0,
+            "connectionsBackfilled": 0,
+            "connectionsStillMissingCanonicalCredentials": 0,
+            "warnings": [
+              "No Tradera API integrations found."
+            ],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "traderaApiIntegrationCount": 0,
+            "traderaApiConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithCanonicalCredentials": 0,
+            "connectionsWithLegacyPasswordOnly": 0,
+            "connectionsBackfilled": 0,
+            "connectionsStillMissingCanonicalCredentials": 0,
+            "warnings": [
+              "No Tradera API integrations found."
+            ],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:tradera-api-credential-storage:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-tradera-api-credential-storage-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"traderaApiIntegrationCount\": 0,\n      \"traderaApiConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithCanonicalCredentials\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingCanonicalCredentials\": 0,\n      \"warnings\": [\n        \"No Tradera API integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"traderaApiIntegrationCount\": 0,\n      \"traderaApiConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithCanonicalCredentials\": 0,\n      \"connectionsWithLegacyPasswordOnly\": 0,\n      \"connectionsBackfilled\": 0,\n      \"connectionsStillMissingCanonicalCredentials\": 0,\n      \"warnings\": [\n        \"No Tradera API integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "tradera-api-user-id-storage-v2",
+      "label": "Tradera API user-id storage migration",
+      "command": "npm run migrate:tradera-api-user-id-storage:v2 -- --write",
+      "baseCommand": "npm run migrate:tradera-api-user-id-storage:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:22.007Z",
+      "finishedAt": "2026-03-04T20:14:24.105Z",
+      "durationMs": 2098,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "traderaApiIntegrationCount": 0,
+            "traderaApiConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithCanonicalUserId": 0,
+            "connectionsWithLegacyUsernameOnly": 0,
+            "connectionsBackfilledUserId": 0,
+            "connectionsStillMissingUserId": 0,
+            "warnings": [
+              "No Tradera API integrations found."
+            ],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "traderaApiIntegrationCount": 0,
+            "traderaApiConnectionCount": 0,
+            "connectionsScanned": 0,
+            "connectionsWithCanonicalUserId": 0,
+            "connectionsWithLegacyUsernameOnly": 0,
+            "connectionsBackfilledUserId": 0,
+            "connectionsStillMissingUserId": 0,
+            "warnings": [
+              "No Tradera API integrations found."
+            ],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:tradera-api-user-id-storage:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-tradera-api-user-id-storage-v2.ts --write\n\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"traderaApiIntegrationCount\": 0,\n      \"traderaApiConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithCanonicalUserId\": 0,\n      \"connectionsWithLegacyUsernameOnly\": 0,\n      \"connectionsBackfilledUserId\": 0,\n      \"connectionsStillMissingUserId\": 0,\n      \"warnings\": [\n        \"No Tradera API integrations found.\"\n      ],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"traderaApiIntegrationCount\": 0,\n      \"traderaApiConnectionCount\": 0,\n      \"connectionsScanned\": 0,\n      \"connectionsWithCanonicalUserId\": 0,\n      \"connectionsWithLegacyUsernameOnly\": 0,\n      \"connectionsBackfilledUserId\": 0,\n      \"connectionsStillMissingUserId\": 0,\n      \"warnings\": [\n        \"No Tradera API integrations found.\"\n      ],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "case-resolver-workspace-detached-contract-v2",
+      "label": "Case Resolver detached workspace contract migration",
+      "command": "npm run migrate:case-resolver:workspace-detached-contract:v2 -- --write",
+      "baseCommand": "npm run migrate:case-resolver:workspace-detached-contract:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:24.105Z",
+      "finishedAt": "2026-03-04T20:14:26.230Z",
+      "durationMs": 2125,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "keys": [
+              {
+                "key": "case_resolver_workspace_v2_history",
+                "present": false,
+                "changed": false,
+                "legacyPayloadDetected": false,
+                "invalidPayload": false,
+                "compressed": false,
+                "schemaBefore": null,
+                "schemaAfter": null,
+                "warnings": [
+                  "Setting not found."
+                ]
+              },
+              {
+                "key": "case_resolver_workspace_v2_documents",
+                "present": false,
+                "changed": false,
+                "legacyPayloadDetected": false,
+                "invalidPayload": false,
+                "compressed": false,
+                "schemaBefore": null,
+                "schemaAfter": null,
+                "warnings": [
+                  "Setting not found."
+                ]
+              }
+            ],
+            "warnings": [],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "keys": [
+              {
+                "key": "case_resolver_workspace_v2_history",
+                "present": false,
+                "changed": false,
+                "legacyPayloadDetected": false,
+                "invalidPayload": false,
+                "compressed": false,
+                "schemaBefore": null,
+                "schemaAfter": null,
+                "warnings": [
+                  "Setting not found."
+                ]
+              },
+              {
+                "key": "case_resolver_workspace_v2_documents",
+                "present": false,
+                "changed": false,
+                "legacyPayloadDetected": false,
+                "invalidPayload": false,
+                "compressed": false,
+                "schemaBefore": null,
+                "schemaAfter": null,
+                "warnings": [
+                  "Setting not found."
+                ]
+              }
+            ],
+            "warnings": [],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:case-resolver:workspace-detached-contract:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-case-resolver-workspace-detached-contract-v2.ts --write\n\n[migrate-case-resolver-workspace-detached-contract-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"keys\": [\n        {\n          \"key\": \"case_resolver_workspace_v2_history\",\n          \"present\": false,\n          \"changed\": false,\n          \"legacyPayloadDetected\": false,\n          \"invalidPayload\": false,\n          \"compressed\": false,\n          \"schemaBefore\": null,\n          \"schemaAfter\": null,\n          \"warnings\": [\n            \"Setting not found.\"\n          ]\n        },\n        {\n          \"key\": \"case_resolver_workspace_v2_documents\",\n          \"present\": false,\n          \"changed\": false,\n          \"legacyPayloadDetected\": false,\n          \"invalidPayload\": false,\n          \"compressed\": false,\n          \"schemaBefore\": null,\n          \"schemaAfter\": null,\n          \"warnings\": [\n            \"Setting not found.\"\n          ]\n        }\n      ],\n      \"warnings\": [],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"keys\": [\n        {\n          \"key\": \"case_resolver_workspace_v2_history\",\n          \"present\": false,\n          \"changed\": false,\n          \"legacyPayloadDetected\": false,\n          \"invalidPayload\": false,\n          \"compressed\": false,\n          \"schemaBefore\": null,\n          \"schemaAfter\": null,\n          \"warnings\": [\n            \"Setting not found.\"\n          ]\n        },\n        {\n          \"key\": \"case_resolver_workspace_v2_documents\",\n          \"present\": false,\n          \"changed\": false,\n          \"legacyPayloadDetected\": false,\n          \"invalidPayload\": false,\n          \"compressed\": false,\n          \"schemaBefore\": null,\n          \"schemaAfter\": null,\n          \"warnings\": [\n            \"Setting not found.\"\n          ]\n        }\n      ],\n      \"warnings\": [],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "id": "cms-page-builder-template-settings-v2",
+      "label": "CMS page-builder template settings migration",
+      "command": "npm run migrate:cms:page-builder-template-settings:v2 -- --write",
+      "baseCommand": "npm run migrate:cms:page-builder-template-settings:v2",
+      "expectedMode": "write",
+      "status": "success",
+      "exitCode": 0,
+      "timedOut": false,
+      "startedAt": "2026-03-04T20:14:26.230Z",
+      "finishedAt": "2026-03-04T20:14:28.276Z",
+      "durationMs": 2046,
+      "parsedSummary": {
+        "mode": "write",
+        "providers": [
+          {
+            "provider": "prisma",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "legacySectionPresent": false,
+            "legacyGridPresent": false,
+            "canonicalSectionPresent": false,
+            "canonicalGridPresent": false,
+            "sectionTemplateCount": 0,
+            "gridTemplateCount": 0,
+            "warnings": [],
+            "error": null
+          },
+          {
+            "provider": "mongodb",
+            "configured": true,
+            "changed": false,
+            "writesApplied": 0,
+            "legacySectionPresent": false,
+            "legacyGridPresent": false,
+            "canonicalSectionPresent": false,
+            "canonicalGridPresent": false,
+            "sectionTemplateCount": 0,
+            "gridTemplateCount": 0,
+            "warnings": [],
+            "error": null
+          }
+        ]
+      },
+      "stdout": "\n> libapp2@0.1.0 migrate:cms:page-builder-template-settings:v2\n> cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-cms-page-builder-template-settings-v2.ts --write\n\n[migrate-cms-page-builder-template-settings-v2] Summary\n{\n  \"mode\": \"write\",\n  \"providers\": [\n    {\n      \"provider\": \"prisma\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"legacySectionPresent\": false,\n      \"legacyGridPresent\": false,\n      \"canonicalSectionPresent\": false,\n      \"canonicalGridPresent\": false,\n      \"sectionTemplateCount\": 0,\n      \"gridTemplateCount\": 0,\n      \"warnings\": [],\n      \"error\": null\n    },\n    {\n      \"provider\": \"mongodb\",\n      \"configured\": true,\n      \"changed\": false,\n      \"writesApplied\": 0,\n      \"legacySectionPresent\": false,\n      \"legacyGridPresent\": false,\n      \"canonicalSectionPresent\": false,\n      \"canonicalGridPresent\": false,\n      \"sectionTemplateCount\": 0,\n      \"gridTemplateCount\": 0,\n      \"warnings\": [],\n      \"error\": null\n    }\n  ]\n}\n",
+      "stderr": ""
+    }
+  ]
+}

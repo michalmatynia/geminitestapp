@@ -5,10 +5,12 @@ import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-pat
 const {
   listRunsMock,
   getQueueStatsMock,
+  markStaleRunningRunsMock,
   getPathRunRepositoryMock,
 } = vi.hoisted(() => ({
   listRunsMock: vi.fn(),
   getQueueStatsMock: vi.fn(),
+  markStaleRunningRunsMock: vi.fn(),
   getPathRunRepositoryMock: vi.fn(),
 }));
 
@@ -59,16 +61,18 @@ describe('enforceAiPathsRunRateLimit', () => {
       queuedCount: 0,
       oldestQueuedAt: null,
     });
+    markStaleRunningRunsMock.mockReset().mockResolvedValue({ count: 0 });
     getPathRunRepositoryMock.mockReset().mockResolvedValue({
       listRuns: listRunsMock,
       getQueueStats: getQueueStatsMock,
+      markStaleRunningRuns: markStaleRunningRunsMock,
     });
   });
 
   it('does not count queued runs as active-limit blockers', async () => {
     listRunsMock.mockImplementation(async (options: { statuses?: AiPathRunStatus[] }) => {
       if (Array.isArray(options.statuses)) {
-        if (options.statuses.includes('running') || options.statuses.includes('paused')) {
+        if (options.statuses.includes('running')) {
           return { runs: [], total: 0 };
         }
         return {
@@ -95,15 +99,15 @@ describe('enforceAiPathsRunRateLimit', () => {
 
     expect(listRunsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        statuses: ['running', 'paused'],
+        statuses: ['running'],
       })
     );
   });
 
-  it('blocks when running/paused runs reach active limit', async () => {
+  it('blocks when running runs reach active limit', async () => {
     listRunsMock.mockImplementation(async (options: { statuses?: AiPathRunStatus[] }) => {
       if (Array.isArray(options.statuses)) {
-        if (!(options.statuses.includes('running') || options.statuses.includes('paused'))) {
+        if (!options.statuses.includes('running')) {
           return { runs: [], total: 0 };
         }
         return {
@@ -111,8 +115,8 @@ describe('enforceAiPathsRunRateLimit', () => {
             buildRun('run-r1', 'running'),
             buildRun('run-r2', 'running'),
             buildRun('run-r3', 'running'),
-            buildRun('run-r4', 'paused'),
-            buildRun('run-r5', 'paused'),
+            buildRun('run-r4', 'running'),
+            buildRun('run-r5', 'running'),
           ],
           total: 5,
         };
@@ -127,5 +131,32 @@ describe('enforceAiPathsRunRateLimit', () => {
         isElevated: false,
       })
     ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
+  });
+
+  it('rechecks active slots before rejecting when initial probe hits the limit', async () => {
+    listRunsMock
+      .mockResolvedValueOnce({ runs: [], total: 0 }) // recent
+      .mockResolvedValueOnce({
+        runs: [
+          buildRun('run-r1', 'running'),
+          buildRun('run-r2', 'running'),
+          buildRun('run-r3', 'running'),
+          buildRun('run-r4', 'running'),
+          buildRun('run-r5', 'running'),
+        ],
+        total: 5,
+      }) // active (initial)
+      .mockResolvedValueOnce({ runs: [], total: 0 }); // active (post-recovery)
+    markStaleRunningRunsMock.mockResolvedValueOnce({ count: 3 });
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(listRunsMock).toHaveBeenCalledTimes(3);
   });
 });

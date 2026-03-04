@@ -259,6 +259,73 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 return next;
               });
             },
+            onNodeBlocked: ({
+              node,
+              reason,
+              status,
+              waitingOnPorts,
+              waitingOnDetails,
+              message,
+              runId: callbackRunId,
+            }: {
+              node: AiNode;
+              reason: 'missing_inputs' | 'flow_control' | 'error';
+              status?: 'blocked' | 'waiting_callback';
+              waitingOnPorts?: string[];
+              waitingOnDetails?: Array<Record<string, unknown>>;
+              message?: string;
+              runId: string;
+            }) => {
+              const nodeStatus = status === 'waiting_callback' ? 'waiting_callback' : 'blocked';
+              args.setNodeStatus({
+                nodeId: node.id,
+                status: nodeStatus,
+                source: 'local',
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                kind: 'node_status',
+                level: nodeStatus === 'waiting_callback' ? 'info' : 'warn',
+                message:
+                  message ??
+                  (nodeStatus === 'waiting_callback'
+                    ? `Node ${node.title ?? node.id} waiting for upstream signal.`
+                    : `Node ${node.title ?? node.id} blocked by missing inputs.`),
+                metadata: {
+                  reason,
+                  ...(waitingOnPorts ? { waitingOnPorts } : {}),
+                  ...(waitingOnDetails ? { waitingOnDetails } : {}),
+                },
+              });
+              args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const nextOutput = mergeRuntimeNodeOutputsForStatus({
+                  previous: prev.outputs?.[node.id],
+                  next: {
+                    status: nodeStatus,
+                    skipReason: reason,
+                    blockedReason: reason,
+                    ...(message ? { message } : {}),
+                    ...(waitingOnPorts ? { waitingOnPorts } : {}),
+                    ...(waitingOnDetails ? { waitingOnDetails } : {}),
+                  },
+                  status: nodeStatus,
+                });
+                const next: RuntimeState = {
+                  ...prev,
+                  currentRun: {
+                    ...(prev.currentRun ?? {}),
+                    id: callbackRunId,
+                    status: 'running',
+                    startedAt: prev.currentRun?.startedAt ?? runStartedAt,
+                  },
+                  outputs: {
+                    ...(prev.outputs ?? {}),
+                    [node.id]: nextOutput,
+                  },
+                };
+                args.runtimeStateRef.current = next;
+                return next;
+              });
+            },
             fetchEntityByType: args.fetchEntityByType,
             reportAiPathsError: args.reportAiPathsError,
             abortSignal: args.abortControllerRef.current?.signal,

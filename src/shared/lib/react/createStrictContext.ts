@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext } from 'react';
 
 const MISSING_CONTEXT = Symbol('MISSING_CONTEXT');

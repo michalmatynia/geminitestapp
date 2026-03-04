@@ -125,10 +125,10 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
             ? runtimeNodeStatuses[toNodeId].trim().toLowerCase()
             : '';
         const fromIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(fromRuntimeStatus);
+        const fromIsWaiting = fromRuntimeStatus === 'waiting_callback';
         const toIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
         const toIsTerminal = TERMINAL_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
-        const isRuntimeActiveEdge =
-          toIsFlowing || (fromIsFlowing && !toIsTerminal);
+        const isRuntimeActiveEdge = toIsFlowing || (fromIsFlowing && !fromIsWaiting && !toIsTerminal);
         const isFlowing = activeEdgeIds.has(edge.id) || isRuntimeActiveEdge;
         const isActivePath =
           !isManualConnector &&

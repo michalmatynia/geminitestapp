@@ -12,7 +12,6 @@ export * from '@/shared/lib/products/services/validation-pattern-repository';
 export * from '@/shared/lib/products/services/product-migration';
 export * from '@/shared/lib/products/services/productService';
 export { ProductsImagesUploadPOST } from './api/routes/images-upload-route';
-export { ProductsV2GET, ProductsV2POST } from './api/routes/v2-products-route';
 
 // Infrastructure
 export {

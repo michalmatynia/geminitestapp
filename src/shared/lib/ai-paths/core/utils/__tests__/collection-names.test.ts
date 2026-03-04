@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
-import { migratePathConfigCollections } from '@/shared/lib/ai-paths/core/utils/collection-names';
+import {
+  canonicalizeAiPathsCollectionName,
+  findPathConfigCollectionAliasIssues,
+} from '@/shared/lib/ai-paths/core/utils/collection-names';
 
 const buildDbQuery = (collection: string) => ({
   provider: 'auto' as const,
@@ -45,8 +48,8 @@ const buildPathConfig = (nodeConfig: Record<string, unknown>): PathConfig =>
     updatedAt: '2026-01-01T00:00:00.000Z',
   }) as PathConfig;
 
-describe('collection name migration', () => {
-  it('canonicalizes collection aliases in canonical config locations', () => {
+describe('collection name canonicalization', () => {
+  it('reports collection alias issues only for canonical database query location', () => {
     const source = buildPathConfig({
       database: {
         operation: 'query',
@@ -68,16 +71,18 @@ describe('collection name migration', () => {
       },
     });
 
-    const migrated = migratePathConfigCollections(source);
-
-    expect(migrated.changed).toBe(true);
-    const node = migrated.config.nodes[0];
-    expect(node?.config?.database?.query?.collection).toBe('integration_connections');
-    expect(node?.config?.poll?.dbQuery?.collection).toBe('product_tags');
-    expect(node?.config?.db_schema?.collections).toEqual(['product_drafts', 'settings']);
+    const issues = findPathConfigCollectionAliasIssues(source);
+    expect(issues).toEqual([
+      {
+        nodeId: 'node-db',
+        location: 'database.query.collection',
+        value: 'integration_connection',
+        canonical: 'integration_connections',
+      },
+    ]);
   });
 
-  it('ignores legacy top-level dbQuery compatibility payloads', () => {
+  it('ignores top-level dbQuery compatibility payloads in alias issue detection', () => {
     const source = buildPathConfig({
       dbQuery: buildDbQuery('integration_connection'),
       database: {
@@ -85,12 +90,15 @@ describe('collection name migration', () => {
       },
     });
 
-    const migrated = migratePathConfigCollections(source);
-    const migratedDbQuery = (migrated.config.nodes[0]?.config as Record<string, unknown>)['dbQuery'] as
-      | Record<string, unknown>
-      | undefined;
+    const issues = findPathConfigCollectionAliasIssues(source);
+    expect(issues).toEqual([]);
+  });
 
-    expect(migrated.changed).toBe(false);
-    expect(migratedDbQuery?.['collection']).toBe('integration_connection');
+  it('canonicalizes recognized aliases and leaves unknown values unchanged', () => {
+    expect(canonicalizeAiPathsCollectionName('integration_connection')).toBe(
+      'integration_connections'
+    );
+    expect(canonicalizeAiPathsCollectionName('product_tags')).toBe('product_tags');
+    expect(canonicalizeAiPathsCollectionName('unknown_collection')).toBe('unknown_collection');
   });
 });

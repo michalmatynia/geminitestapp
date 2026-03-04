@@ -8,7 +8,7 @@ import { Pool } from 'pg';
 import {
   migrateCaseResolverWorkspaceDetachedDocumentsSchemaToV2,
   migrateCaseResolverWorkspaceDetachedHistorySchemaToV2,
-} from '@/features/case-resolver/workspace-detached-contract-migration';
+} from './lib/case-resolver/workspace-detached-contract-migration';
 import {
   COMPRESSED_SETTING_PREFIX,
   decodeSettingValue,

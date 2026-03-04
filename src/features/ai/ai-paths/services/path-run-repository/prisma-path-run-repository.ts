@@ -589,7 +589,15 @@ export const prismaPathRunRepository: AiPathRunRepository = {
   async markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }> {
     const cutoff = new Date(Date.now() - maxAgeMs);
     const result = await prisma.aiPathRun.updateMany({
-      where: { status: 'running', startedAt: { lt: cutoff } },
+      where: {
+        status: 'running',
+        OR: [
+          { startedAt: { lt: cutoff } },
+          {
+            AND: [{ startedAt: null }, { updatedAt: { lt: cutoff } }],
+          },
+        ],
+      },
       data: {
         status: 'failed',
         finishedAt: new Date(),

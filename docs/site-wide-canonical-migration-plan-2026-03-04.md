@@ -34,32 +34,107 @@ Wave 1 execution kickoff started:
 3. npm entrypoints added:
    - `wave1:verify:prepare`
    - `wave1:verify:dry-run`
+   - `wave1:verify:write`
 4. Local dry-run verification executed:
    - report: `docs/migrations/reports/wave1-dry-run-local.json`
    - result: `10` success / `0` failed (AI Paths config contract timeout fixed; command now exits cleanly)
+5. Staging dry-run verification executed:
+   - report: `docs/migrations/reports/wave1-dry-run-staging-2026-03-04.json`
+   - result: `10` success / `0` failed
+6. Wave 1 environment summary published:
+   - `docs/migrations/wave1-verification-summary-2026-03-04.md`
+7. Prod dry-run verification executed:
+   - report: `docs/migrations/reports/wave1-dry-run-prod-2026-03-04.json`
+   - result: `10` success / `0` failed
+8. Local write-mode verification executed:
+   - report: `docs/migrations/reports/wave1-write-local-2026-03-04.json`
+   - result: `10` success / `0` failed (`aggregate updateCount=0`)
+9. Staging write-mode verification executed:
+   - report: `docs/migrations/reports/wave1-write-staging-2026-03-04.json`
+   - result: `10` success / `0` failed (`aggregate updateCount=0`)
+10. Prod write-mode verification executed:
+   - report: `docs/migrations/reports/wave1-write-prod-2026-03-04.json`
+   - result: `10` success / `0` failed (`aggregate updateCount=0`)
+11. Wave 1 apply summary published:
+   - `docs/migrations/wave1-apply-summary-2026-03-04.md`
+
+Wave 2 hard-cut execution started:
+
+1. AI Brain provider catalog strict mode enforced:
+   - `parseBrainProviderCatalog` now rejects deprecated pool arrays and accepts canonical `entries` only.
+   - updated tests:
+     - `src/shared/lib/ai-brain/__tests__/settings.test.ts`
+     - `src/shared/lib/ai-brain/__tests__/server-model-catalog.test.ts`
+2. Integrations imports root canonical actions only:
+   - removed legacy `action=import` runtime branch from:
+     - `src/app/api/v2/integrations/imports/base/handler.ts`
+   - validated with:
+     - `src/app/api/v2/integrations/imports/base/routes-parity.test.ts`
+3. Products metadata canonical response contract hard-cut:
+   - removed `groupType` compatibility response alias from price-group metadata handlers:
+     - `src/app/api/v2/products/metadata/handler.ts`
+     - `src/app/api/v2/products/metadata/[type]/[id]/handler.ts`
+   - canonical contract test now covers the route:
+     - `src/app/api/v2/products/metadata/handler.canonical.test.ts`
+4. Products legacy API deprecation gateway retired:
+   - removed `/api/products` proxy-level `410` compatibility responder from:
+     - `src/proxy.ts`
+   - regression coverage now verifies standard API pass-through behavior:
+     - `src/proxy.test.ts`
+5. Repo hygiene leftovers removed + guarded:
+   - removed empty legacy route namespaces:
+     - `src/app/api/import`
+     - `src/app/api/catalogs/assign`
+     - `src/app/api/ai-paths/legacy-compat/counters`
+   - `scripts/canonical/check-sitewide.mjs` now fails when those namespaces are reintroduced.
+6. Exception register reconciled with completed hard-cuts:
+   - removed stale temporary exceptions from:
+     - `docs/legacy-compatibility-exception-register-2026-03-04.json`
+   - removed IDs:
+     - `products-api-legacy-gateway`
+     - `integrations-base-import-action-import-rejection`
+     - `ai-brain-provider-catalog-legacy-pools`
+7. Migration-only helper relocation completed:
+   - moved migration helpers from runtime source tree (`src/features/**`) to script-only tree (`scripts/db/lib/**`):
+     - `src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts`
+       -> `scripts/db/lib/integrations/link-map-preference-migration.ts`
+     - `src/features/integrations/services/export-warehouse-preference-migration.ts`
+       -> `scripts/db/lib/integrations/export-warehouse-preference-migration.ts`
+     - `src/features/case-resolver/workspace-detached-contract-migration.ts`
+       -> `scripts/db/lib/case-resolver/workspace-detached-contract-migration.ts`
+   - migration scripts now import from `scripts/db/lib/**`:
+     - `scripts/db/migrate-base-import-parameter-link-map-v2.ts`
+     - `scripts/db/migrate-base-export-warehouse-preferences-v2.ts`
+     - `scripts/db/migrate-case-resolver-workspace-detached-contract-v2.ts`
+8. Exception register now contains no active temporary exceptions:
+   - `docs/legacy-compatibility-exception-register-2026-03-04.json` now has `"exceptions": []`.
+9. Dead parallel products API utility layer pruned:
+   - removed unused runtime artifacts:
+     - `src/features/products/api/versioning.ts`
+     - `src/features/products/api/routes/v2-products-route.ts`
+   - removed their isolated tests:
+     - `src/features/products/api/versioning.test.ts`
+     - `src/features/products/api/routes/v2-products-route.test.ts`
+   - removed stale exports from:
+     - `src/features/products/api/server.ts`
+     - `src/features/products/server.ts`
+10. Wave 4 guardrails extended in site-wide canonical check:
+   - `scripts/canonical/check-sitewide.mjs` now blocks reintroduction of:
+     - products legacy gateway token (`LEGACY_PRODUCTS_PREFIX = '/api/products'`)
+     - integrations legacy imports action rejection token (`Legacy imports/base action "import" is no longer supported.`)
+     - AI Brain legacy provider-catalog merge helper token (`resolveLegacyProviderCatalogEntries`)
+10. Products legacy API utility reintroduction guard added:
+   - `scripts/canonical/check-sitewide.mjs` now fails if these removed files reappear:
+     - `src/features/products/api/versioning.ts`
+     - `src/features/products/api/routes/v2-products-route.ts`
 
 ## Baseline (Current State)
 
 Completed: major canonicalization waves across AI Paths, Case Resolver, Observability, Validation, Folder Tree/CMS, Integrations, Prompt Exploder, and token/credential storage.
 
-Remaining candidate compatibility surfaces (runtime or repo hygiene) identified by source scan:
+Remaining candidate compatibility surfaces (runtime or repo hygiene):
 
-1. Legacy API deprecation gateway still active:
-   - `src/proxy.ts` (`/api/products` -> `410` with successor metadata)
-2. Compatibility API behavior still exposed:
-   - `src/app/api/v2/integrations/imports/base/handler.ts` (explicit legacy `action=import` rejection path)
-   - `src/app/api/v2/products/metadata/handler.ts` (compatibility response fields tested in `handler.compat.test.ts`)
-3. Legacy payload parsing still accepted in runtime:
-   - `src/shared/lib/ai-brain/settings.ts` (`parseBrainProviderCatalog` merges legacy pool-shaped payloads)
-4. Migration-only code still under runtime source tree (`src/`) and imported by scripts:
-   - `src/features/integrations/services/imports/parameter-import/link-map-preference-migration.ts`
-   - `src/features/integrations/services/export-warehouse-preference-migration.ts`
-   - `src/features/case-resolver/workspace-detached-contract-migration.ts`
-5. Potentially dead/parallel legacy API utility layer:
-   - `src/features/products/api/versioning.ts`
-   - `src/features/products/api/routes/v2-products-route.ts`
-6. Repo hygiene leftovers:
-   - empty route dirs (for example `src/app/api/import`, `src/app/api/catalogs/assign`, `src/app/api/ai-paths/legacy-compat/counters`)
+- none currently identified from active Wave 3 scope.
 
 ## Scope Rules
 
@@ -130,7 +205,7 @@ Actions:
    - retire `/api/products` compatibility gateway in `src/proxy.ts` once consumer usage is zero for agreed window.
 2. Products metadata contract hard-cut:
    - remove compatibility-only response aliases/fields if clients no longer depend on them.
-   - replace `handler.compat.test.ts` with canonical contract tests.
+   - replace compatibility tests with canonical contract tests (`handler.canonical.test.ts`).
 3. Integrations imports root cleanup:
    - narrow `src/app/api/v2/integrations/imports/base/handler.ts` to canonical actions only; remove legacy-branch handling once callers are clean.
 4. AI Brain provider catalog strict mode:

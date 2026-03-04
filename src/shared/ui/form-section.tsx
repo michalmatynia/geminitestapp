@@ -4,7 +4,7 @@ import { Card } from './card';
 import { Label } from './label';
 import { SectionHeader } from './section-header';
 
-import { cloneElement, isValidElement, useId } from 'react';
+import { cloneElement, isValidElement, useId, useMemo } from 'react';
 
 import type { ReactNode } from 'react';
 
@@ -36,6 +36,16 @@ export function FormSection({
   const cardVariant =
     variant === 'glass' ? 'glass' : variant?.startsWith('subtle') ? 'subtle' : 'default';
   const cardPadding = variant?.endsWith('compact') ? 'sm' : 'default';
+  const headerRuntime = useMemo(
+    () => ({
+      title: title ?? '',
+      subtitle,
+      icon: titleIcon,
+      description,
+      actions,
+    }),
+    [title, subtitle, titleIcon, description, actions]
+  );
 
   return (
     <Card
@@ -46,11 +56,11 @@ export function FormSection({
     >
       {(title || subtitle || description || actions) && (
         <SectionHeader
-          title={title ?? ''}
-          subtitle={subtitle}
-          icon={titleIcon}
-          description={description}
-          actions={actions}
+          title={headerRuntime.title}
+          subtitle={headerRuntime.subtitle}
+          icon={headerRuntime.icon}
+          description={headerRuntime.description}
+          actions={headerRuntime.actions}
           size='xs'
         />
       )}

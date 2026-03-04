@@ -858,6 +858,126 @@ describe('evaluateGraph', () => {
     expect(result.nodeStatuses['model-1']).toBe('blocked');
   });
 
+  it('emits waiting status when missing inputs are still expected from upstream nodes', async () => {
+    const onNodeBlocked = vi.fn();
+    const nodes: AiNode[] = [
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt Builder',
+        description: '',
+        inputs: ['value'],
+        outputs: ['prompt'],
+        position: { x: 0, y: 0 },
+        config: {
+          prompt: {
+            template: 'Describe the current item.',
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt'],
+        outputs: ['result', 'jobId'],
+        position: { x: 240, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+            temperature: 0.7,
+            maxTokens: 500,
+            vision: false,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt-model',
+        from: 'prompt-1',
+        to: 'model-1',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+    ];
+
+    await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      skipAiJobs: true,
+      onNodeBlocked,
+    });
+
+    const waitingCall = onNodeBlocked.mock.calls.find((call) => {
+      const payload = call[0] as { node?: { id?: string }; status?: string };
+      return payload.node?.id === 'model-1' && payload.status === 'waiting_callback';
+    });
+    expect(waitingCall).toBeDefined();
+  });
+
+  it('does not block prompt nodes on empty optional connected ports', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'seed-1',
+        type: 'constant',
+        title: 'Seed',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: {
+          constant: {
+            valueType: 'string',
+            value: 'noop',
+          },
+        },
+      },
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        description: '',
+        inputs: ['value', 'context'],
+        outputs: ['prompt'],
+        position: { x: 220, y: 0 },
+        inputContracts: {
+          value: { required: false },
+          context: { required: false },
+        },
+        config: {
+          prompt: {
+            template: 'Draft ready',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-seed-prompt-context',
+        from: 'seed-1',
+        to: 'prompt-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+    });
+
+    expect(result.outputs['prompt-1']?.['status']).not.toBe('blocked');
+    expect(String(result.outputs['prompt-1']?.['prompt'] ?? '')).toContain('Draft ready');
+  });
+
   it('includes upstream waiting diagnostics when model is blocked on prompt', async () => {
     const nodes: AiNode[] = [
       {
@@ -928,7 +1048,7 @@ describe('evaluateGraph', () => {
       edges,
     });
 
-    expect(result.outputs['model-1']?.['status']).toBe('blocked');
+    expect(result.outputs['model-1']?.['status']).toBe('waiting_callback');
     expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
     expect(result.outputs['model-1']?.['waitingOnPorts']).toContain('prompt');
     expect(result.outputs['model-1']?.['message']).toContain('Upstream status for prompt');

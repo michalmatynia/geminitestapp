@@ -1,5 +1,5 @@
-import { CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 } from './workspace-persistence-detached-documents';
-import { CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2 } from './workspace-persistence-detached-history';
+import { CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 } from '@/features/case-resolver/workspace-persistence-detached-documents';
+import { CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2 } from '@/features/case-resolver/workspace-persistence-detached-history';
 
 export const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1 =
   'case_resolver_workspace_detached_history_v1';

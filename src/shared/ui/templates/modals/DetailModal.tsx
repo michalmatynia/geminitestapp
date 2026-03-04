@@ -51,26 +51,69 @@ export function DetailModal({
   onInteractOutside,
   onEscapeKeyDown,
 }: DetailModalProps) {
+  const appModalRuntime = React.useMemo(
+    () => ({
+      open: isOpen,
+      onOpenChange: onClose,
+      onClose,
+      title,
+      subtitle,
+      header,
+      headerActions,
+      size,
+      padding,
+      footer,
+      className,
+      contentClassName,
+      showClose,
+      closeOnOutside,
+      closeOnEscape,
+      onInteractOutside,
+      onEscapeKeyDown,
+      bodyClassName: `${maxHeight} overflow-y-auto ${bodyClassName ?? ''}`.trim(),
+    }),
+    [
+      isOpen,
+      onClose,
+      title,
+      subtitle,
+      header,
+      headerActions,
+      size,
+      padding,
+      footer,
+      className,
+      contentClassName,
+      showClose,
+      closeOnOutside,
+      closeOnEscape,
+      onInteractOutside,
+      onEscapeKeyDown,
+      maxHeight,
+      bodyClassName,
+    ]
+  );
+
   return (
     <AppModal
-      open={isOpen}
-      onOpenChange={onClose}
-      onClose={onClose}
-      title={title}
-      subtitle={subtitle}
-      header={header}
-      headerActions={headerActions}
-      size={size}
-      padding={padding}
-      footer={footer}
-      className={className}
-      contentClassName={contentClassName}
-      showClose={showClose}
-      closeOnOutside={closeOnOutside}
-      closeOnEscape={closeOnEscape}
-      onInteractOutside={onInteractOutside}
-      onEscapeKeyDown={onEscapeKeyDown}
-      bodyClassName={`${maxHeight} overflow-y-auto ${bodyClassName ?? ''}`.trim()}
+      open={appModalRuntime.open}
+      onOpenChange={appModalRuntime.onOpenChange}
+      onClose={appModalRuntime.onClose}
+      title={appModalRuntime.title}
+      subtitle={appModalRuntime.subtitle}
+      header={appModalRuntime.header}
+      headerActions={appModalRuntime.headerActions}
+      size={appModalRuntime.size}
+      padding={appModalRuntime.padding}
+      footer={appModalRuntime.footer}
+      className={appModalRuntime.className}
+      contentClassName={appModalRuntime.contentClassName}
+      showClose={appModalRuntime.showClose}
+      closeOnOutside={appModalRuntime.closeOnOutside}
+      closeOnEscape={appModalRuntime.closeOnEscape}
+      onInteractOutside={appModalRuntime.onInteractOutside}
+      onEscapeKeyDown={appModalRuntime.onEscapeKeyDown}
+      bodyClassName={appModalRuntime.bodyClassName}
     >
       {children}
     </AppModal>

@@ -6,6 +6,5 @@ import 'server-only';
 export * from '@/shared/lib/api/api-handler';
 export * from '@/shared/lib/api/handle-api-error';
 export * from '@/shared/lib/api/parse-json';
-export * from './versioning';
 export * from './errors';
 export * from './server-errors';

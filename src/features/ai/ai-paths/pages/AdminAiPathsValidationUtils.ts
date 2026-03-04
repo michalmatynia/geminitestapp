@@ -50,9 +50,9 @@ export const parseDocsSourcesText = (value: string): string[] =>
   Array.from(
     new Set(
       value
-        .split(',')
+        .split('\n')
         .map((entry: string): string => entry.trim())
-        .filter((entry: string): boolean => entry.length > 0)
+        .filter((entry: string): boolean => entry.length > 0 && !entry.includes(','))
     )
   );
 
@@ -72,7 +72,7 @@ export const parseCollectionMapText = (value: string): Record<string, string> =>
     .map((line: string): string => line.trim())
     .filter((line: string): boolean => line.length > 0)
     .forEach((line: string) => {
-      const separatorIndex = line.includes(':') ? line.indexOf(':') : line.indexOf('=');
+      const separatorIndex = line.indexOf(':');
       if (separatorIndex <= 0) return;
       const entity = line.slice(0, separatorIndex).trim();
       const collection = line.slice(separatorIndex + 1).trim();
@@ -217,21 +217,7 @@ export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSe
       };
     });
 
-  const fallbackMetas: PathMeta[] = Array.from(parsedConfigById.values())
-    .filter(
-      (config: PathConfig): boolean =>
-        !metasFromIndex.some((meta: PathMeta) => meta.id === config.id)
-    )
-    .map(
-      (config: PathConfig): PathMeta => ({
-        id: config.id,
-        name: config.name || `Path ${config.id.slice(0, 6)}`,
-        createdAt: config.updatedAt,
-        updatedAt: config.updatedAt,
-      })
-    );
-
-  const pathMetas = [...metasFromIndex, ...fallbackMetas].sort((left, right) =>
+  const pathMetas = [...metasFromIndex].sort((left, right) =>
     left.name.localeCompare(right.name)
   );
   const pathConfigs = Object.fromEntries(

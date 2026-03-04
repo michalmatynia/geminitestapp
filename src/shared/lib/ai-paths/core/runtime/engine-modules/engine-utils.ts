@@ -21,6 +21,15 @@ type NodeInputReadiness = {
   }>;
 };
 
+const TRANSIENT_UPSTREAM_WAIT_STATUSES = new Set<string>([
+  'pending',
+  'running',
+  'processing',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+]);
+
 const resolveEdgeNodeId = (value: string | undefined): string | null => {
   const normalized = typeof value === 'string' ? value.trim() : '';
   return normalized.length > 0 ? normalized : null;
@@ -271,6 +280,37 @@ export const buildWaitingOnDetails = (
   }));
 };
 
+export const resolveMissingInputStatus = (input: {
+  waitingOnDetails: Array<{
+    upstream: Array<{
+      status: string;
+      blockedReason?: string;
+      waitingOnPorts?: string[];
+    }>;
+  }>;
+}): 'blocked' | 'waiting_callback' => {
+  const hasTransientUpstream = input.waitingOnDetails.some((detail) =>
+    detail.upstream.some((upstream) => {
+      const status = upstream.status.trim().toLowerCase();
+      if (TRANSIENT_UPSTREAM_WAIT_STATUSES.has(status)) {
+        return true;
+      }
+      if (status !== 'blocked') {
+        return false;
+      }
+      const blockedReason =
+        typeof upstream.blockedReason === 'string' ? upstream.blockedReason.trim().toLowerCase() : '';
+      const hasWaitingPorts =
+        Array.isArray(upstream.waitingOnPorts) &&
+        upstream.waitingOnPorts.some(
+          (port: unknown): boolean => typeof port === 'string' && port.trim().length > 0
+        );
+      return blockedReason === 'missing_inputs' || hasWaitingPorts;
+    })
+  );
+  return hasTransientUpstream ? 'waiting_callback' : 'blocked';
+};
+
 export const evaluateInputReadiness = (
   node: AiNode,
   rawInputs: RuntimePortValues,
@@ -343,7 +383,11 @@ export const evaluateInputReadiness = (
 
   const explicitRequiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
   const requiredPorts =
-    explicitRequiredPorts.length > 0 ? explicitRequiredPorts : Array.from(connectedPorts);
+    explicitRequiredPorts.length > 0
+      ? explicitRequiredPorts
+      : node.type === 'prompt'
+        ? []
+        : Array.from(connectedPorts);
   const requiredPortSet = new Set(requiredPorts);
   const optionalPorts = Array.from(connectedPorts).filter(
     (port: string): boolean => !requiredPortSet.has(port)

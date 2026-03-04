@@ -22,10 +22,16 @@ export const OUTPUT_CONNECTOR_COLORS = {
 };
 
 export const formatRuntimeStatusLabel = (status: string): string =>
-  status
-    .split('_')
-    .map((part: string): string => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
-    .join(' ');
+  status === 'waiting_callback'
+    ? 'Waiting'
+    : status === 'advance_pending'
+      ? 'Processing'
+      : status
+          .split('_')
+          .map((part: string): string =>
+            part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part
+          )
+          .join(' ');
 
 export const resolveNodePalette = (
   nodeType: string

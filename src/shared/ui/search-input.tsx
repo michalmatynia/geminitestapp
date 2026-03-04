@@ -3,6 +3,7 @@
 import { Search, X } from 'lucide-react';
 import React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
@@ -15,6 +16,57 @@ interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   variant?: 'default' | 'subtle';
   size?: 'default' | 'sm' | 'xs';
 }
+
+type SearchInputNativeProps = Omit<
+  SearchInputProps,
+  'value' | 'onClear' | 'containerClassName' | 'className' | 'variant' | 'size'
+>;
+
+type SearchInputRuntimeValue = {
+  value: string;
+  onClear?: () => void;
+  containerClassName?: string;
+  className?: string;
+  variant: 'default' | 'subtle';
+  size: 'default' | 'sm' | 'xs';
+  inputProps: SearchInputNativeProps;
+};
+
+const { Context: SearchInputRuntimeContext, useStrictContext: useSearchInputRuntime } =
+  createStrictContext<SearchInputRuntimeValue>({
+    hookName: 'useSearchInputRuntime',
+    providerName: 'SearchInputRuntimeProvider',
+    displayName: 'SearchInputRuntimeContext',
+  });
+
+const SearchInputContent = React.forwardRef<HTMLInputElement>(function SearchInputContent(_, ref) {
+  const runtime = useSearchInputRuntime();
+  return (
+    <div className={cn('relative flex items-center', runtime.containerClassName)}>
+      <Search className='absolute left-3 size-4 text-gray-500' />
+      <Input
+        ref={ref}
+        value={runtime.value}
+        variant={runtime.variant}
+        size={runtime.size}
+        className={cn('pl-9 pr-9', runtime.className)}
+        {...runtime.inputProps}
+      />
+      {runtime.value && runtime.onClear && (
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon'
+          onClick={runtime.onClear}
+          className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
+          aria-label='Clear search'
+        >
+          <X className='size-3.5' />
+        </Button>
+      )}
+    </div>
+  );
+});
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   (
@@ -29,32 +81,26 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref
   ) => {
+    const runtimeValue = React.useMemo<SearchInputRuntimeValue>(
+      () => ({
+        value,
+        onClear,
+        containerClassName,
+        className,
+        variant,
+        size,
+        inputProps: props,
+      }),
+      [value, onClear, containerClassName, className, variant, size, props]
+    );
+
     return (
-      <div className={cn('relative flex items-center', containerClassName)}>
-        <Search className='absolute left-3 size-4 text-gray-500' />
-        <Input
-          ref={ref}
-          value={value}
-          variant={variant}
-          size={size}
-          className={cn('pl-9 pr-9', className)}
-          {...props}
-        />
-        {value && onClear && (
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            onClick={onClear}
-            className='absolute right-1 size-7 text-gray-500 hover:text-gray-300'
-            aria-label='Clear search'
-          >
-            <X className='size-3.5' />
-          </Button>
-        )}
-      </div>
+      <SearchInputRuntimeContext.Provider value={runtimeValue}>
+        <SearchInputContent ref={ref} />
+      </SearchInputRuntimeContext.Provider>
     );
   }
 );
 
+SearchInputContent.displayName = 'SearchInputContent';
 SearchInput.displayName = 'SearchInput';

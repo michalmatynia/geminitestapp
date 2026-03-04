@@ -27,6 +27,7 @@ import type {
   DatabaseType,
   DatabasePreviewMode,
 } from '@/shared/contracts/database';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   Badge,
   Button,
@@ -74,6 +75,73 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 /* ─── Table Detail Card ─── */
 
+type TableDetailCardRuntimeValue = {
+  detail: DatabaseTableDetail;
+  tableRow: DatabaseTablePreviewData | undefined;
+  onQueryTable?: (tableName: string) => void;
+  onManageTable?: (tableName: string) => void;
+};
+
+const {
+  Context: TableDetailCardRuntimeContext,
+  useStrictContext: useTableDetailCardRuntime,
+} = createStrictContext<TableDetailCardRuntimeValue>({
+  hookName: 'useTableDetailCardRuntime',
+  providerName: 'TableDetailCardRuntimeProvider',
+  displayName: 'TableDetailCardRuntimeContext',
+});
+
+function TableDetailCardTitle(): React.JSX.Element {
+  const { detail } = useTableDetailCardRuntime();
+  return (
+    <div className='flex flex-1 items-center gap-3'>
+      <TableIcon className='size-4 text-emerald-300' />
+      <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
+      <Hint size='xxs' uppercase className='text-gray-500'>
+        {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
+      </Hint>
+    </div>
+  );
+}
+
+function TableDetailCardActions(): React.ReactNode {
+  const { detail, onQueryTable, onManageTable } = useTableDetailCardRuntime();
+  if (!onQueryTable && !onManageTable) return null;
+
+  return (
+    <div className='flex items-center gap-2'>
+      {onQueryTable && (
+        <Button
+          variant='ghost'
+          size='xs'
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onQueryTable(detail.name);
+          }}
+          className='h-7 gap-1 text-[10px] text-gray-400 hover:text-blue-300'
+        >
+          <PlayIcon className='size-3' />
+          Query
+        </Button>
+      )}
+      {onManageTable && (
+        <Button
+          variant='ghost'
+          size='xs'
+          onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            onManageTable(detail.name);
+          }}
+          className='h-7 gap-1 text-[10px] text-gray-400 hover:text-emerald-300'
+        >
+          <SettingsIcon className='size-3' />
+          Manage
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function TableDetailCard({
   detail,
   onQueryTable,
@@ -90,97 +158,65 @@ function TableDetailCard({
     () => tableRows.find((r: DatabaseTablePreviewData) => r.name === detail.name),
     [tableRows, detail.name]
   );
+  const runtimeValue = useMemo<TableDetailCardRuntimeValue>(
+    () => ({ detail, tableRow, onQueryTable, onManageTable }),
+    [detail, tableRow, onQueryTable, onManageTable]
+  );
 
   return (
-    <CollapsibleSection
-      open={expanded}
-      onOpenChange={setExpanded}
-      title={
-        <div className='flex flex-1 items-center gap-3'>
-          <TableIcon className='size-4 text-emerald-300' />
-          <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
-          <Hint size='xxs' uppercase className='text-gray-500'>
-            {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
-          </Hint>
+    <TableDetailCardRuntimeContext.Provider value={runtimeValue}>
+      <CollapsibleSection
+        open={expanded}
+        onOpenChange={setExpanded}
+        title={<TableDetailCardTitle />}
+        actions={<TableDetailCardActions />}
+        variant='card'
+        className='bg-card/60'
+        headerClassName='px-4 py-3'
+      >
+        <div className='border-t border-border bg-black/20'>
+          <Tabs defaultValue='columns' className='w-full'>
+            <div className='px-4 pt-2'>
+              <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
+                <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
+                  Columns ({detail.columns.length})
+                </TabsTrigger>
+                <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
+                  Indexes ({detail.indexes.length})
+                </TabsTrigger>
+                <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
+                  Foreign Keys ({detail.foreignKeys.length})
+                </TabsTrigger>
+                <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
+                  Preview {tableRow ? `(${tableRow.totalRows})` : ''}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value='columns' className='mt-0'>
+              <ColumnsTab />
+            </TabsContent>
+
+            <TabsContent value='indexes' className='mt-0'>
+              <IndexesTab />
+            </TabsContent>
+
+            <TabsContent value='foreignKeys' className='mt-0'>
+              <ForeignKeysTab />
+            </TabsContent>
+
+            <TabsContent value='data' className='mt-0'>
+              <DataTab />
+            </TabsContent>
+          </Tabs>
         </div>
-      }
-      actions={
-        <div className='flex items-center gap-2'>
-          {onQueryTable && (
-            <Button
-              variant='ghost'
-              size='xs'
-              onClick={(e: React.MouseEvent): void => {
-                e.stopPropagation();
-                onQueryTable(detail.name);
-              }}
-              className='h-7 gap-1 text-[10px] text-gray-400 hover:text-blue-300'
-            >
-              <PlayIcon className='size-3' />
-              Query
-            </Button>
-          )}
-          {onManageTable && (
-            <Button
-              variant='ghost'
-              size='xs'
-              onClick={(e: React.MouseEvent): void => {
-                e.stopPropagation();
-                onManageTable(detail.name);
-              }}
-              className='h-7 gap-1 text-[10px] text-gray-400 hover:text-emerald-300'
-            >
-              <SettingsIcon className='size-3' />
-              Manage
-            </Button>
-          )}
-        </div>
-      }
-      variant='card'
-      className='bg-card/60'
-      headerClassName='px-4 py-3'
-    >
-      <div className='border-t border-border bg-black/20'>
-        <Tabs defaultValue='columns' className='w-full'>
-          <div className='px-4 pt-2'>
-            <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
-              <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
-                Columns ({detail.columns.length})
-              </TabsTrigger>
-              <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
-                Indexes ({detail.indexes.length})
-              </TabsTrigger>
-              <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
-                Foreign Keys ({detail.foreignKeys.length})
-              </TabsTrigger>
-              <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
-                Preview {tableRow ? `(${tableRow.totalRows})` : ''}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value='columns' className='mt-0'>
-            <ColumnsTab columns={detail.columns} />
-          </TabsContent>
-
-          <TabsContent value='indexes' className='mt-0'>
-            <IndexesTab indexes={detail.indexes} />
-          </TabsContent>
-
-          <TabsContent value='foreignKeys' className='mt-0'>
-            <ForeignKeysTab foreignKeys={detail.foreignKeys} />
-          </TabsContent>
-
-          <TabsContent value='data' className='mt-0'>
-            <DataTab tableRows={tableRow} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </CollapsibleSection>
+      </CollapsibleSection>
+    </TableDetailCardRuntimeContext.Provider>
   );
 }
 
-function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.Element {
+function ColumnsTab(): React.JSX.Element {
+  const { detail } = useTableDetailCardRuntime();
   const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(
     () => [
       {
@@ -238,12 +274,13 @@ function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.E
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={columns} variant='flat' />
+      <StandardDataTablePanel columns={tableColumns} data={detail.columns} variant='flat' />
     </div>
   );
 }
 
-function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.Element {
+function IndexesTab(): React.JSX.Element {
+  const { detail } = useTableDetailCardRuntime();
   const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(
     () => [
       {
@@ -286,16 +323,13 @@ function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.El
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={indexes} variant='flat' />
+      <StandardDataTablePanel columns={tableColumns} data={detail.indexes} variant='flat' />
     </div>
   );
 }
 
-function ForeignKeysTab({
-  foreignKeys,
-}: {
-  foreignKeys: DatabaseForeignKeyInfo[];
-}): React.JSX.Element {
+function ForeignKeysTab(): React.JSX.Element {
+  const { detail } = useTableDetailCardRuntime();
   const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(
     () => [
       {
@@ -330,16 +364,13 @@ function ForeignKeysTab({
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={foreignKeys} variant='flat' />
+      <StandardDataTablePanel columns={tableColumns} data={detail.foreignKeys} variant='flat' />
     </div>
   );
 }
 
-function DataTab({
-  tableRows,
-}: {
-  tableRows: DatabaseTablePreviewData | undefined;
-}): React.JSX.Element {
+function DataTab(): React.JSX.Element {
+  const { tableRow: tableRows } = useTableDetailCardRuntime();
   const { page, pageSize } = useDatabasePreviewState();
 
   const columns = useMemo(() => {

@@ -9,7 +9,7 @@ import {
   parseExportWarehouseByInventoryMap,
   stringifyExportWarehouseByInventoryMap,
 } from '@/features/integrations/services/export-warehouse-preference';
-import { migrateLegacyExportWarehousePreference } from '@/features/integrations/services/export-warehouse-preference-migration';
+import { migrateLegacyExportWarehousePreference } from './lib/integrations/export-warehouse-preference-migration';
 
 type CliOptions = {
   dryRun: boolean;

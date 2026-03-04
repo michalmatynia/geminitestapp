@@ -339,4 +339,88 @@ describe('canvas connection preview', () => {
 
     expect(container.querySelector('.ai-paths-wire-flow')).toBeFalsy();
   });
+
+  it('renders incoming wire flow for waiting nodes without animating their outgoing edges', () => {
+    const upstreamNode = buildNode({
+      id: 'node-upstream',
+      outputs: ['result'],
+      inputs: [],
+      position: { x: 40, y: 120 },
+    });
+    const waitingNode = buildNode({
+      id: 'node-waiting',
+      inputs: ['input'],
+      outputs: ['result'],
+      position: { x: 320, y: 120 },
+    });
+    const downstreamNode = buildNode({
+      id: 'node-downstream',
+      inputs: ['input'],
+      outputs: [],
+      position: { x: 620, y: 120 },
+    });
+
+    const incomingEdge: Edge = {
+      id: 'edge-incoming-waiting',
+      from: upstreamNode.id,
+      to: waitingNode.id,
+      fromPort: 'result',
+      toPort: 'input',
+    };
+    const outgoingEdge: Edge = {
+      id: 'edge-outgoing-waiting',
+      from: waitingNode.id,
+      to: downstreamNode.id,
+      fromPort: 'result',
+      toPort: 'input',
+    };
+
+    const value = buildContextValue();
+    value.nodes = [upstreamNode, waitingNode, downstreamNode];
+    value.edges = [incomingEdge, outgoingEdge];
+    value.nodeById = new Map([
+      [upstreamNode.id, upstreamNode],
+      [waitingNode.id, waitingNode],
+      [downstreamNode.id, downstreamNode],
+    ]);
+    value.edgeMetaMap = new Map([
+      [incomingEdge.id, incomingEdge],
+      [outgoingEdge.id, outgoingEdge],
+    ]);
+    value.edgePaths = [
+      {
+        id: incomingEdge.id,
+        path: 'M 180 140 C 220 140 260 140 300 140',
+        fromNodeId: upstreamNode.id,
+        toNodeId: waitingNode.id,
+        bounds: { minX: 180, minY: 140, maxX: 300, maxY: 140 },
+      },
+      {
+        id: outgoingEdge.id,
+        path: 'M 460 140 C 500 140 540 140 580 140',
+        fromNodeId: waitingNode.id,
+        toNodeId: downstreamNode.id,
+        bounds: { minX: 460, minY: 140, maxX: 580, maxY: 140 },
+      },
+    ];
+    value.runtimeNodeStatuses = {
+      [waitingNode.id]: 'waiting_callback',
+    };
+    value.wireFlowEnabled = true;
+    value.activeEdgeIds = new Set<string>();
+
+    const { container } = render(
+      <svg>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
+      </svg>
+    );
+
+    const flowingPaths = Array.from(container.querySelectorAll('.ai-paths-wire-flow'));
+    expect(flowingPaths).toHaveLength(1);
+    expect(flowingPaths[0]?.getAttribute('d')).toBe('M 180 140 C 220 140 260 140 300 140');
+  });
 });

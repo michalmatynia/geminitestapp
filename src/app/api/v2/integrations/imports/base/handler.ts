@@ -165,17 +165,12 @@ export async function postBaseImportsHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
-  const rawAction =
-    typeof (ctx.body as Record<string, unknown> | undefined)?.['action'] === 'string'
-      ? String((ctx.body as Record<string, unknown>)['action']).trim()
-      : '';
-  if (rawAction === 'import') {
-    throw badRequestError(
-      'Legacy imports/base action "import" is no longer supported. Use /api/v2/integrations/imports/base/runs.'
-    );
+  const parsedBody = requestSchema.safeParse(ctx.body);
+  if (!parsedBody.success) {
+    throw badRequestError('Invalid imports/base request payload.');
   }
-
-  const data = ctx.body as z.infer<typeof requestSchema>;
+  const data = parsedBody.data;
+  const action = data['action'];
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
   const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
@@ -212,12 +207,12 @@ export async function postBaseImportsHandler(
     );
   }
 
-  if (data.action === 'inventories') {
+  if (action === 'inventories') {
     const inventories = await fetchBaseInventories(token);
     return NextResponse.json({ inventories });
   }
 
-  if (data.action === 'warehouses') {
+  if (action === 'warehouses') {
     if (!data.inventoryId) {
       throw badRequestError('Inventory ID is required.');
     }
@@ -233,7 +228,7 @@ export async function postBaseImportsHandler(
     return NextResponse.json({ warehouses, allWarehouses });
   }
 
-  if (data.action === 'warehouses_debug') {
+  if (action === 'warehouses_debug') {
     if (!data.inventoryId) {
       throw badRequestError('Inventory ID is required.');
     }
@@ -265,7 +260,7 @@ export async function postBaseImportsHandler(
   const inventoryId = data.inventoryId;
   const provider = await getProductDataProvider();
 
-  if (data.action === 'list') {
+  if (action === 'list') {
     const catalogRepository = await getCatalogRepository();
     const catalogs = await catalogRepository.listCatalogs();
     const defaultCatalog = catalogs.find((catalog: (typeof catalogs)[number]) => catalog.isDefault);
@@ -447,7 +442,7 @@ export async function postBaseImportsHandler(
       totalPages: searchedTotalPages,
     });
   }
-  throw badRequestError(`Unsupported action: ${data.action}`);
+  throw badRequestError(`Unsupported action: ${action}`);
 }
 
 export const POST_handler = postBaseImportsHandler;

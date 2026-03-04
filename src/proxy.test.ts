@@ -60,38 +60,21 @@ const createRequest = (
   };
 };
 
-describe('proxy legacy products deprecation', () => {
+describe('proxy api routing', () => {
   beforeEach(() => {
     ensureCsrfCookieMock.mockReset();
   });
 
-  it('returns 410 for legacy /api/products paths with successor metadata', async () => {
+  it('lets legacy /api/products paths fall through base proxy flow', async () => {
     const request = createRequest(
       'http://localhost/api/products/categories/tree?catalogId=catalog-1&fresh=1'
     );
 
     const response = await Promise.resolve(proxy(request as never, { params: {} }));
-    const payload = (await response.json()) as {
-      error: string;
-      successorPath: string;
-      deprecatedPath: string;
-      deprecatedOn: string;
-    };
 
-    expect(response.status).toBe(410);
-    expect(response.headers.get('Sunset')).toBe('2026-03-04');
-    expect(response.headers.get('Link')).toBe(
-      '</api/v2/products/categories/tree?catalogId=catalog-1&fresh=1>; rel="successor-version"'
-    );
-    expect(payload).toEqual({
-      error: 'Deprecated API route',
-      message:
-        'Legacy products API routes were retired on 2026-03-04. Use /api/v2/products endpoints.',
-      deprecatedPath: '/api/products/categories/tree?catalogId=catalog-1&fresh=1',
-      successorPath: '/api/v2/products/categories/tree?catalogId=catalog-1&fresh=1',
-      deprecatedOn: '2026-03-04',
-    });
-    expect(ensureCsrfCookieMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-middleware-next')).toBe('1');
+    expect(ensureCsrfCookieMock).toHaveBeenCalledTimes(1);
   });
 
   it('allows /api/v2/products paths through base proxy flow', async () => {

@@ -37,9 +37,14 @@ const deletePayloadSchema = z
 
 const MAX_SETTINGS_QUERY_KEYS = 500;
 const MAX_SETTINGS_QUERY_KEY_LENGTH = 200;
-const LEGACY_PATH_INDEX_KEY = 'ai_paths_index_v1';
-const LEGACY_PATH_INDEX_DISABLED_MESSAGE =
-  'Legacy AI Paths key "ai_paths_index_v1" is disabled. Use "ai_paths_index".';
+const VERSIONED_AI_PATHS_KEY_PATTERN = /^ai_paths_.*_v\d+$/;
+
+const assertCanonicalAiPathsKey = (key: string): void => {
+  if (!VERSIONED_AI_PATHS_KEY_PATTERN.test(key)) return;
+  throw badRequestError(
+    `Versioned AI Paths key "${key}" is disabled. Use canonical unversioned keys.`
+  );
+};
 
 const parseRequestedKeys = (req: NextRequest): string[] => {
   const raw = req.nextUrl.searchParams.getAll('keys');
@@ -64,21 +69,18 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
     if (!key.startsWith('ai_paths_')) {
       throw badRequestError(`Invalid AI Paths key "${key}".`);
     }
+    assertCanonicalAiPathsKey(key);
   });
   return unique;
 };
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
-  if (requestedKeys.includes(LEGACY_PATH_INDEX_KEY)) {
-    throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
-  }
   const startedAt = Date.now();
-  const loadedSettings =
+  const settings =
     requestedKeys.length > 0
       ? await listAiPathsSettings(requestedKeys)
       : await listAiPathsSettings();
-  const settings = loadedSettings.filter((item) => item.key !== LEGACY_PATH_INDEX_KEY);
   const durationMs = Date.now() - startedAt;
   const payloadBytes = settings.reduce((sum, item) => sum + item.key.length + item.value.length, 0);
 
@@ -117,18 +119,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
   if (parsedBulk.success) {
-    if (parsedBulk.data.items.some((item) => item.key === LEGACY_PATH_INDEX_KEY)) {
-      throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
-    }
+    parsedBulk.data.items.forEach((item) => assertCanonicalAiPathsKey(item.key));
     await upsertAiPathsSettingsBulk(parsedBulk.data.items);
     return NextResponse.json(parsedBulk.data.items);
   }
 
   const parsedSingle = settingPayloadSchema.safeParse(body);
   if (parsedSingle.success) {
-    if (parsedSingle.data.key === LEGACY_PATH_INDEX_KEY) {
-      throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
-    }
+    assertCanonicalAiPathsKey(parsedSingle.data.key);
     await upsertAiPathsSetting(parsedSingle.data.key, parsedSingle.data.value);
     return NextResponse.json(parsedSingle.data);
   }

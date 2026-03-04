@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { resolveDatabaseInputs } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution';
 
 describe('resolveDatabaseInputs catalogId resolution', () => {
-  it('resolves catalogId from context entity catalogs array', () => {
+  it('does not resolve catalogId from nested context entity catalog payloads', () => {
     const resolved = resolveDatabaseInputs({
       nodeInputs: {
         context: {
           entity: {
+            catalogId: 'catalog-from-nested-entity',
             catalogs: [{ catalogId: 'catalog-from-context' }],
           },
         },
@@ -17,7 +18,7 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       simulationEntityType: null,
     });
 
-    expect(resolved['catalogId']).toBe('catalog-from-context');
+    expect(resolved['catalogId']).toBeUndefined();
   });
 
   it('resolves catalogId from bundle when context does not provide it', () => {

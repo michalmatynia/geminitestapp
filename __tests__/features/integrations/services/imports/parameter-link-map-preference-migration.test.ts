@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseLegacyCompatibleScopedCatalogParameterLinkMap } from '@/features/integrations/services/imports/parameter-import/link-map-preference-migration';
+import { parseLegacyCompatibleScopedCatalogParameterLinkMap } from '../../../../../scripts/db/lib/integrations/link-map-preference-migration';
 import { stringifyScopedCatalogParameterLinkMap } from '@/features/integrations/services/imports/parameter-import/link-map-preference';
 
 describe('parameter-link-map-preference-migration', () => {

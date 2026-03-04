@@ -212,8 +212,8 @@ export function FormModal({
     <AppModal
       open={isCurrentlyOpen}
       onOpenChange={handleOpenChange}
-      title={title}
-      subtitle={subtitle}
+      title={headerRuntimeValue.title}
+      subtitle={headerRuntimeValue.subtitle}
       size={size}
       variant={variant}
       padding={padding}

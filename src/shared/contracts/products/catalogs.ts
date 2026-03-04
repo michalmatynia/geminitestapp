@@ -42,7 +42,6 @@ export const priceGroupSchema = namedDtoSchema.extend({
   currencyId: z.string(),
   currencyCode: z.string(),
   isDefault: z.boolean(),
-  groupType: z.enum(['standard', 'dependent']),
   type: z.string(),
   basePriceField: z.string(),
   sourceGroupId: z.string().nullable(),

@@ -1,3 +1,4 @@
+import React from 'react';
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
@@ -10,6 +11,7 @@ import type {
   SectionInstance,
 } from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { CmsPageProvider } from './CmsPageContext';
 import { CssAnimationWrapper } from './CssAnimationWrapper';
@@ -64,6 +66,9 @@ export function CmsPageRenderer({
   mediaStyles,
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
+  const resolvedMediaStyles = React.useMemo(() => mediaStyles ?? null, [mediaStyles]);
+  const resolvedColorSchemes = React.useMemo(() => colorSchemes ?? {}, [colorSchemes]);
+  const resolvedLayout = React.useMemo(() => layout ?? {}, [layout]);
 
   const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
     const sectionId = comp.content.sectionId;
@@ -93,8 +98,8 @@ export function CmsPageRenderer({
   });
 
   return (
-    <MediaStylesProvider value={mediaStyles ?? null}>
-      <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={layout ?? {}}>
+    <MediaStylesProvider value={resolvedMediaStyles}>
+      <CmsPageProvider colorSchemes={resolvedColorSchemes} layout={resolvedLayout}>
         <div className='cms-page cms-hover-scope' style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
           {ZONE_ORDER.map((zone: PageZone) =>
             rootSectionIdsByZone[zone].map((rootId: string) => {
@@ -159,16 +164,50 @@ interface SectionRendererProps {
   blocks: BlockInstance[];
 }
 
+type SectionRendererRuntimeValue = {
+  type: string;
+  sectionId: string;
+  settings: Record<string, unknown>;
+  blocks: BlockInstance[];
+};
+
+const {
+  Context: SectionRendererRuntimeContext,
+  useStrictContext: useSectionRendererRuntime,
+} = createStrictContext<SectionRendererRuntimeValue>({
+  hookName: 'useSectionRendererRuntime',
+  providerName: 'SectionRendererRuntimeProvider',
+  displayName: 'SectionRendererRuntimeContext',
+});
+
+function SectionRendererContent(): React.ReactNode {
+  const runtime = useSectionRendererRuntime();
+  return (
+    <SectionBlockProvider
+      sectionId={runtime.sectionId}
+      settings={runtime.settings}
+      blocks={runtime.blocks}
+    >
+      <SectionRendererInner type={runtime.type} />
+    </SectionBlockProvider>
+  );
+}
+
 export function SectionRenderer({
   type,
   sectionId,
   settings,
   blocks,
 }: SectionRendererProps): React.ReactNode {
+  const runtimeValue = React.useMemo<SectionRendererRuntimeValue>(
+    () => ({ type, sectionId, settings, blocks }),
+    [type, sectionId, settings, blocks]
+  );
+
   return (
-    <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
-      <SectionRendererInner type={type} />
-    </SectionBlockProvider>
+    <SectionRendererRuntimeContext.Provider value={runtimeValue}>
+      <SectionRendererContent />
+    </SectionRendererRuntimeContext.Provider>
   );
 }
 

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { auth } from '@/features/auth/server';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
@@ -51,6 +52,11 @@ const RUN_RATE_QUERY_TIMEOUT_MS = parseNumber(
   process.env['AI_PATHS_RUN_RATE_QUERY_TIMEOUT_MS'],
   1_500
 );
+const RUN_ACTIVE_STALE_RECOVERY_INTERVAL_MS = parseNumber(
+  process.env['AI_PATHS_RUN_ACTIVE_STALE_RECOVERY_INTERVAL_MS'],
+  60_000
+);
+const RUN_ACTIVE_STALE_MAX_AGE_MS = resolveAiPathsStaleRunningMaxAgeMs();
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS'],
   60
@@ -59,6 +65,8 @@ const ACTION_RATE_MAX = parseNumber(process.env['AI_PATHS_ACTION_RATE_LIMIT_MAX'
 const ACTION_RATE_BUCKET_PREFIX = 'ai_paths:action-rate:v1';
 
 const actionBuckets = new Map<string, { count: number; resetAt: number }>();
+let staleRunningRecoveryInFlight: Promise<void> | null = null;
+let lastStaleRunningRecoveryAt = 0;
 
 const withSoftTimeout = async <T>(
   promise: Promise<T>,
@@ -166,11 +174,53 @@ export const assertAiPathRunAccess = (access: AiPathsAccessContext, run: AiPathR
   }
 };
 
+const maybeRecoverStaleRunningRunsForRateLimit = async (
+  access: AiPathsAccessContext
+): Promise<void> => {
+  if (RUN_ACTIVE_STALE_RECOVERY_INTERVAL_MS <= 0 || RUN_ACTIVE_STALE_MAX_AGE_MS <= 0) {
+    return;
+  }
+  if (staleRunningRecoveryInFlight) {
+    await staleRunningRecoveryInFlight;
+    return;
+  }
+  const now = Date.now();
+  if (now - lastStaleRunningRecoveryAt < RUN_ACTIVE_STALE_RECOVERY_INTERVAL_MS) {
+    return;
+  }
+
+  lastStaleRunningRecoveryAt = now;
+  staleRunningRecoveryInFlight = (async (): Promise<void> => {
+    try {
+      const repo = await getPathRunRepository();
+      const result = await repo.markStaleRunningRuns(RUN_ACTIVE_STALE_MAX_AGE_MS);
+      if (result.count > 0) {
+        void logSystemEvent({
+          level: 'warn',
+          message: '[ai-paths.rate-limit] stale running recovery released active slots',
+          source: 'ai-paths-access',
+          context: {
+            userId: access.userId,
+            recoveredCount: result.count,
+            maxAgeMs: RUN_ACTIVE_STALE_MAX_AGE_MS,
+          },
+        });
+      }
+    } catch {
+      // Recovery is best-effort in the rate-limit path.
+    } finally {
+      staleRunningRecoveryInFlight = null;
+    }
+  })();
+
+  await staleRunningRecoveryInFlight;
+};
+
 export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): Promise<void> => {
   const repo = await getPathRunRepository();
   const now = Date.now();
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
-  const activeStatuses: AiPathRunStatus[] = ['running', 'paused'];
+  const activeStatuses: AiPathRunStatus[] = ['running'];
 
   // Run rate-limit probes in parallel with short soft timeouts.
   // If a probe times out, fail open for that probe to keep enqueue hot path responsive.
@@ -225,12 +275,44 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   if (recent && recent.runs.length >= RUN_RATE_MAX) {
     throw rateLimitedError('Too many runs queued. Please wait before trying again.', windowMs);
   }
-  if (active && active.runs.length >= RUN_ACTIVE_MAX) {
+  let activeRunCount = active?.runs.length ?? 0;
+  if (activeRunCount >= RUN_ACTIVE_MAX) {
+    await maybeRecoverStaleRunningRunsForRateLimit(access);
+    const refreshedActiveProbe =
+      RUN_ACTIVE_MAX > 0
+        ? await withSoftTimeout(
+          repo.listRuns({
+            userId: access.userId,
+            statuses: activeStatuses,
+            limit: RUN_ACTIVE_MAX,
+            offset: 0,
+            includeTotal: false,
+          }),
+          RUN_RATE_QUERY_TIMEOUT_MS
+        )
+        : null;
+    if (refreshedActiveProbe?.timedOut) {
+      void logSystemEvent({
+        level: 'warn',
+        message: '[ai-paths.rate-limit] soft timeout while re-probing active runs',
+        source: 'ai-paths-access',
+        context: {
+          userId: access.userId,
+          timeoutMs: RUN_RATE_QUERY_TIMEOUT_MS,
+          activeStatuses,
+        },
+      });
+    }
+    if (refreshedActiveProbe?.value) {
+      activeRunCount = refreshedActiveProbe.value.runs.length;
+    }
+  }
+  if (activeRunCount >= RUN_ACTIVE_MAX) {
     throw rateLimitedError(
       'Too many active runs. Wait for one to finish before starting another.',
       windowMs,
       {
-        activeCount: active.runs.length,
+        activeCount: activeRunCount,
         activeLimit: RUN_ACTIVE_MAX,
         activeStatuses,
       }

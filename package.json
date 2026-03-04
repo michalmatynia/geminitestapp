@@ -39,6 +39,7 @@
     "migrate:validator-pattern-feature:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-validator-pattern-feature-v2.ts",
     "wave1:verify:prepare": "node scripts/db/prepare-wave1-dry-run-verification.mjs --env=local",
     "wave1:verify:dry-run": "node scripts/db/prepare-wave1-dry-run-verification.mjs --env=local --run",
+    "wave1:verify:write": "node scripts/db/prepare-wave1-dry-run-verification.mjs --env=local --write",
     "restore:base-listing-statuses": "tsx scripts/db/restore-base-listing-statuses.ts",
     "cleanup:db-providers": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/cleanup-db-provider-settings.ts",
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",

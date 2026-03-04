@@ -357,20 +357,6 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
   ],
 };
 
-const resolveLegacyProviderCatalogEntries = (
-  parsed: Record<string, unknown>
-): AiBrainCatalogEntry[] =>
-  BRAIN_CATALOG_POOL_VALUES.flatMap((pool: AiBrainCatalogPool): AiBrainCatalogEntry[] => {
-    const values = parsed[pool];
-    if (!Array.isArray(values)) return [];
-    return values.map(
-      (value: unknown): AiBrainCatalogEntry => ({
-        pool,
-        value: typeof value === 'string' ? value : '',
-      })
-    );
-  });
-
 const isLegacyProviderCatalogKey = (value: string): value is AiBrainCatalogPool =>
   BRAIN_CATALOG_POOL_VALUES.includes(value as AiBrainCatalogPool);
 
@@ -431,8 +417,20 @@ export const parseBrainProviderCatalog = (
   }
 
   const parsedRecord = parsed as Record<string, unknown>;
+  const legacyPoolKeys = Object.keys(parsedRecord).filter(
+    (key: string): boolean => isLegacyProviderCatalogKey(key)
+  );
+  if (legacyPoolKeys.length > 0) {
+    throw validationError('Invalid AI Brain provider catalog payload.', {
+      source: 'ai_brain.provider_catalog',
+      reason: 'legacy_pool_keys_not_supported',
+      keys: legacyPoolKeys,
+      migration:
+        'Legacy pool arrays are no longer supported. Re-save AI Brain provider catalog using canonical entries[].',
+    });
+  }
   const unsupportedKeys = Object.keys(parsedRecord).filter(
-    (key: string): boolean => key !== 'entries' && !isLegacyProviderCatalogKey(key)
+    (key: string): boolean => key !== 'entries'
   );
   if (unsupportedKeys.length > 0) {
     throw validationError('Invalid AI Brain provider catalog payload.', {
@@ -441,35 +439,8 @@ export const parseBrainProviderCatalog = (
       keys: unsupportedKeys,
     });
   }
-  BRAIN_CATALOG_POOL_VALUES.forEach((pool: AiBrainCatalogPool): void => {
-    if (
-      Object.prototype.hasOwnProperty.call(parsedRecord, pool) &&
-      !Array.isArray(parsedRecord[pool])
-    ) {
-      throw validationError('Invalid AI Brain provider catalog payload.', {
-        source: 'ai_brain.provider_catalog',
-        reason: 'invalid_legacy_pool_shape',
-        key: pool,
-      });
-    }
-  });
-  const legacyEntries = resolveLegacyProviderCatalogEntries(parsedRecord);
-  const normalizedParsed: Record<string, unknown> = {};
-  if (Object.prototype.hasOwnProperty.call(parsedRecord, 'entries')) {
-    normalizedParsed['entries'] = parsedRecord['entries'];
-  }
-  if (legacyEntries.length > 0) {
-    const existingEntries = Array.isArray(parsedRecord['entries'])
-      ? (parsedRecord['entries'] as unknown[])
-      : null;
-    normalizedParsed['entries'] = existingEntries
-      ? [...existingEntries, ...legacyEntries]
-      : parsedRecord['entries'] === undefined
-        ? legacyEntries
-        : parsedRecord['entries'];
-  }
 
-  const result = providerCatalogSchema.safeParse(normalizedParsed);
+  const result = providerCatalogSchema.safeParse(parsedRecord);
   if (!result.success) {
     throw validationError('Invalid AI Brain provider catalog payload.', {
       source: 'ai_brain.provider_catalog',

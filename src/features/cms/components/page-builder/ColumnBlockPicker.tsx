@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { PickerOption } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
@@ -25,6 +26,36 @@ const SECTION_BLOCK_TYPES = [
 interface ColumnBlockPickerProps {
   onSelect: (blockType: string) => void;
   allowedBlockTypes?: string[] | undefined;
+}
+
+type ColumnBlockPickerSelectRuntimeValue = {
+  onSelect: (blockType: string) => void;
+};
+
+const {
+  Context: ColumnBlockPickerSelectRuntimeContext,
+  useStrictContext: useColumnBlockPickerSelectRuntime,
+} = createStrictContext<ColumnBlockPickerSelectRuntimeValue>({
+  hookName: 'useColumnBlockPickerSelectRuntime',
+  providerName: 'ColumnBlockPickerSelectRuntimeProvider',
+  displayName: 'ColumnBlockPickerSelectRuntimeContext',
+});
+
+function ColumnBlockPickerDropdown({
+  groups,
+}: {
+  groups: Array<{ label: string; options: PickerOption[] }>;
+}): React.JSX.Element {
+  const runtime = useColumnBlockPickerSelectRuntime();
+  return (
+    <GenericPickerDropdown
+      groups={groups}
+      onSelect={(option: PickerOption) => runtime.onSelect(option.key)}
+      ariaLabel='Add block to column'
+      searchable
+      searchPlaceholder='Search blocks...'
+    />
+  );
 }
 
 export function ColumnBlockPicker({
@@ -63,15 +94,15 @@ export function ColumnBlockPicker({
       },
     ].filter((g) => g.options.length > 0);
   }, [resolvedTypes]);
+  const selectRuntimeValue = useMemo<ColumnBlockPickerSelectRuntimeValue>(
+    () => ({ onSelect }),
+    [onSelect]
+  );
 
   if (resolvedTypes.length === 0) return null;
   return (
-    <GenericPickerDropdown
-      groups={groups}
-      onSelect={(option: PickerOption) => onSelect(option.key)}
-      ariaLabel='Add block to column'
-      searchable
-      searchPlaceholder='Search blocks...'
-    />
+    <ColumnBlockPickerSelectRuntimeContext.Provider value={selectRuntimeValue}>
+      <ColumnBlockPickerDropdown groups={groups} />
+    </ColumnBlockPickerSelectRuntimeContext.Provider>
   );
 }

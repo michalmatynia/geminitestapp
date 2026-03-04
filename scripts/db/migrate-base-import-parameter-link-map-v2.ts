@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Pool } from 'pg';
 
-import { parseLegacyCompatibleScopedCatalogParameterLinkMap } from '@/features/integrations/services/imports/parameter-import/link-map-preference-migration';
+import { parseLegacyCompatibleScopedCatalogParameterLinkMap } from './lib/integrations/link-map-preference-migration';
 import {
   stringifyScopedCatalogParameterLinkMap,
   type ScopedCatalogParameterLinkMap,

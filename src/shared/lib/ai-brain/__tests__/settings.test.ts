@@ -116,43 +116,26 @@ describe('ai-brain settings helpers', () => {
     ).toThrowError(/Invalid AI Brain provider catalog payload/i);
   });
 
-  it('normalizes deprecated provider catalog pool arrays when canonical entries are missing', () => {
-    const parsed = parseBrainProviderCatalog(
-      JSON.stringify({
-        modelPresets: ['gpt-4o-mini'],
-        paidModels: ['gpt-4.1'],
-        ollamaModels: ['llama3.1'],
-        agentModels: [],
-        deepthinkingAgents: [],
-        playwrightPersonas: [],
-      })
-    );
-
-    expect(parsed.entries).toEqual([
-      { pool: 'modelPresets', value: 'gpt-4o-mini' },
-      { pool: 'paidModels', value: 'gpt-4.1' },
-      { pool: 'ollamaModels', value: 'llama3.1' },
-    ]);
+  it('rejects deprecated provider catalog pool arrays and requires canonical entries', () => {
+    expect(() =>
+      parseBrainProviderCatalog(
+        JSON.stringify({
+          modelPresets: ['gpt-4o-mini'],
+          paidModels: ['gpt-4.1'],
+        })
+      )
+    ).toThrowError(/Invalid AI Brain provider catalog payload/i);
   });
 
-  it('merges deprecated provider catalog pool arrays into canonical entries', () => {
-    const parsed = parseBrainProviderCatalog(
-      JSON.stringify({
-        entries: [
-          { pool: 'paidModels', value: 'gpt-4.1' },
-          { pool: 'modelPresets', value: 'gpt-4o-mini' },
-        ],
-        modelPresets: ['gpt-4o-mini', 'gpt-4o'],
-        paidModels: ['gpt-4.1', 'o1'],
-      })
-    );
-
-    expect(parsed.entries).toEqual([
-      { pool: 'paidModels', value: 'gpt-4.1' },
-      { pool: 'modelPresets', value: 'gpt-4o-mini' },
-      { pool: 'modelPresets', value: 'gpt-4o' },
-      { pool: 'paidModels', value: 'o1' },
-    ]);
+  it('rejects mixed canonical entries with deprecated provider catalog pool arrays', () => {
+    expect(() =>
+      parseBrainProviderCatalog(
+        JSON.stringify({
+          entries: [{ pool: 'paidModels', value: 'gpt-4.1' }],
+          modelPresets: ['gpt-4o-mini'],
+        })
+      )
+    ).toThrowError(/Invalid AI Brain provider catalog payload/i);
   });
 
   it('parses canonical entry-only provider catalog payloads and preserves entry order', () => {

@@ -32,6 +32,7 @@ import {
 import {
   orderNodesByDependencies,
   evaluateInputReadiness,
+  resolveMissingInputStatus,
   pickString,
   resolveEdgeFromNodeId,
   resolveEdgeToNodeId,
@@ -306,6 +307,8 @@ export async function evaluateGraphInternal(
             ? 'completed'
             : state.errorNodes.has(id)
               ? 'failed'
+              : state.activeNodes.has(id)
+                ? 'running'
               : state.blockedNodes.has(id)
                 ? 'blocked'
                 : 'pending',
@@ -313,7 +316,18 @@ export async function evaluateGraphInternal(
       );
 
       if (!readiness.ready) {
-        if (!state.blockedNodes.has(node.id)) {
+        const blockedStatus =
+          readiness.waitingOnDetails.length > 0
+            ? resolveMissingInputStatus({
+              waitingOnDetails: readiness.waitingOnDetails,
+            })
+            : 'blocked';
+        const previousStatus =
+          typeof state.outputs[node.id]?.['status'] === 'string'
+            ? String(state.outputs[node.id]?.['status']).trim().toLowerCase()
+            : null;
+
+        if (!state.blockedNodes.has(node.id) || previousStatus !== blockedStatus) {
           state.blockedNodes.add(node.id);
           let message =
             readiness.waitingOnPorts.length > 0
@@ -333,8 +347,9 @@ export async function evaluateGraphInternal(
           }
 
           state.outputs[node.id] = {
-            status: 'blocked',
+            status: blockedStatus,
             skipReason: 'missing_inputs',
+            blockedReason: 'missing_inputs',
             message,
             waitingOnPorts: readiness.waitingOnPorts,
             waitingOnDetails: readiness.waitingOnDetails,
@@ -350,7 +365,7 @@ export async function evaluateGraphInternal(
               nodeId: node.id,
               nodeType: node.type,
               nodeTitle: node.title ?? null,
-              status: 'blocked',
+              status: blockedStatus,
               iteration,
               inputs: cloneValue(nodeInputs),
               outputs: cloneValue(state.outputs[node.id]),
@@ -382,6 +397,7 @@ export async function evaluateGraphInternal(
               runId: resolvedRunId,
               node,
               reason: 'missing_inputs',
+              status: blockedStatus,
               message,
               waitingOnPorts: readiness.waitingOnPorts,
               waitingOnDetails: readiness.waitingOnDetails,

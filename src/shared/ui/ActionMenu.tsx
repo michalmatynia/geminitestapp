@@ -3,6 +3,7 @@
 import { MoreVertical } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu';
 import { cn } from '@/shared/utils';
@@ -19,6 +20,51 @@ interface ActionMenuProps {
   disabled?: boolean;
 }
 
+type ActionMenuRuntimeValue = {
+  children: ReactNode;
+  trigger?: ReactNode;
+  align: 'start' | 'end' | 'center';
+  className?: string;
+  triggerClassName?: string;
+  ariaLabel: string;
+  variant: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size: 'default' | 'sm' | 'lg' | 'icon' | 'xs';
+  disabled: boolean;
+};
+
+const { Context: ActionMenuRuntimeContext, useStrictContext: useActionMenuRuntime } =
+  createStrictContext<ActionMenuRuntimeValue>({
+    hookName: 'useActionMenuRuntime',
+    providerName: 'ActionMenuRuntimeProvider',
+    displayName: 'ActionMenuRuntimeContext',
+  });
+
+function ActionMenuContent(): React.JSX.Element {
+  const runtime = useActionMenuRuntime();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={runtime.variant}
+          size={runtime.size}
+          disabled={runtime.disabled}
+          className={cn(
+            'p-0 text-muted-foreground hover:bg-muted/50 hover:text-white',
+            runtime.size === 'icon' && 'h-8 w-8',
+            runtime.triggerClassName
+          )}
+          aria-label={runtime.ariaLabel}
+        >
+          {runtime.trigger ?? <MoreVertical className='h-4 w-4' />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={runtime.align} className={runtime.className}>
+        {runtime.children}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function ActionMenu({
   children,
   trigger,
@@ -30,26 +76,24 @@ export function ActionMenu({
   size = 'icon',
   disabled = false,
 }: ActionMenuProps): React.JSX.Element {
+  const runtimeValue = React.useMemo<ActionMenuRuntimeValue>(
+    () => ({
+      children,
+      trigger,
+      align,
+      className,
+      triggerClassName,
+      ariaLabel,
+      variant,
+      size,
+      disabled,
+    }),
+    [children, trigger, align, className, triggerClassName, ariaLabel, variant, size, disabled]
+  );
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          disabled={disabled}
-          className={cn(
-            'p-0 text-muted-foreground hover:bg-muted/50 hover:text-white',
-            size === 'icon' && 'h-8 w-8',
-            triggerClassName
-          )}
-          aria-label={ariaLabel}
-        >
-          {trigger ?? <MoreVertical className='h-4 w-4' />}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className={className}>
-        {children}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <ActionMenuRuntimeContext.Provider value={runtimeValue}>
+      <ActionMenuContent />
+    </ActionMenuRuntimeContext.Provider>
   );
 }

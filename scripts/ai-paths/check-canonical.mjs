@@ -21,13 +21,12 @@ const EXPECTED_MAINTENANCE_ACTION_IDS = [
   'ensure_starter_workflow_defaults',
 ];
 
-const ALLOWED_LEGACY_INDEX_FILES = new Set(['src/app/api/ai-paths/settings/handler.ts']);
-
 const SETTINGS_HANDLER_FILE = 'src/app/api/ai-paths/settings/handler.ts';
 const MAINTENANCE_HANDLER_FILE = 'src/app/api/ai-paths/settings/maintenance/handler.ts';
 const MAINTENANCE_CONSTANTS_FILE = 'src/features/ai/ai-paths/server/settings-store.constants.ts';
 const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
 const DATABASE_NORMALIZATION_FILE = 'src/shared/lib/ai-paths/core/normalization/nodes/database.ts';
+const VALIDATION_DEFAULTS_FILE = 'src/shared/lib/ai-paths/core/validation-engine/defaults.ts';
 const COLLECTION_NAMES_FILE = 'src/shared/lib/ai-paths/core/utils/collection-names.ts';
 const ENGINE_CORE_FILE = 'src/shared/lib/ai-paths/core/runtime/engine-core.ts';
 const GRAPH_PORTS_FILE = 'src/shared/lib/ai-paths/core/utils/graph.ports.ts';
@@ -37,6 +36,18 @@ const SETTINGS_PERSISTENCE_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts';
 const SETTINGS_PATH_ACTIONS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts';
+const SETTINGS_STORE_CLIENT_FILE = 'src/shared/lib/ai-paths/settings-store-client.ts';
+const ADMIN_VALIDATION_UTILS_FILE = 'src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts';
+const DATABASE_TEMPLATE_CONTEXT_FILE =
+  'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts';
+const DATABASE_INPUT_RESOLUTION_FILE =
+  'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts';
+const DATABASE_QUERY_EXECUTION_FILE =
+  'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts';
+const DATABASE_UPDATE_EXECUTION_FILE =
+  'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts';
+const LOCAL_EXECUTION_HELPERS_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts';
 const JOB_QUEUE_PANEL_UTILS_FILE = 'src/features/ai/ai-paths/components/job-queue-panel-utils.ts';
 const RUNS_ENQUEUE_HANDLER_FILE = 'src/app/api/ai-paths/runs/enqueue/handler.ts';
 const PATH_RUN_SERVICE_FILE = 'src/features/ai/ai-paths/services/path-run-service.ts';
@@ -50,6 +61,7 @@ const MONGO_RUN_REPOSITORY_FILE =
 const QUERY_INVALIDATION_FILE = 'src/shared/lib/query-invalidation.ts';
 const SHARED_RUN_SOURCES_FILE = 'src/shared/lib/ai-paths/run-sources.ts';
 const FEATURE_RUN_SOURCES_FILE = 'src/features/ai/ai-paths/lib/run-sources.ts';
+const PRESETS_CONTEXT_FILE = 'src/features/ai/ai-paths/context/PresetsContext.tsx';
 const TRIGGER_FETCHER_MIGRATION_FILE =
   'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
 
@@ -114,12 +126,7 @@ const checkLegacyIndexKeyUsage = (sourceFiles) => {
     if (isTestFile(relative)) continue;
     const text = fs.readFileSync(absolute, 'utf8');
     if (!text.includes(LEGACY_INDEX_KEY)) continue;
-    if (!ALLOWED_LEGACY_INDEX_FILES.has(relative)) {
-      reportViolation(
-        relative,
-        `legacy key "${LEGACY_INDEX_KEY}" is only allowed in ${Array.from(ALLOWED_LEGACY_INDEX_FILES).join(', ')}`
-      );
-    }
+    reportViolation(relative, `forbidden legacy key "${LEGACY_INDEX_KEY}" detected in runtime source`);
   }
 };
 
@@ -162,20 +169,34 @@ const checkMaintenanceConstants = () => {
   }
 };
 
-const checkSettingsHandlerGuards = () => {
+const checkSettingsHandlerVersionedKeyGuards = () => {
   const text = readFile(SETTINGS_HANDLER_FILE);
   const requiredSnippets = [
-    'requestedKeys.includes(LEGACY_PATH_INDEX_KEY)',
-    '.filter((item) => item.key !== LEGACY_PATH_INDEX_KEY)',
-    'parsedBulk.data.items.some((item) => item.key === LEGACY_PATH_INDEX_KEY)',
-    'parsedSingle.data.key === LEGACY_PATH_INDEX_KEY',
+    'const VERSIONED_AI_PATHS_KEY_PATTERN = /^ai_paths_.*_v\\d+$/;',
+    'assertCanonicalAiPathsKey(key);',
+    'parsedBulk.data.items.forEach((item) => assertCanonicalAiPathsKey(item.key));',
+    'assertCanonicalAiPathsKey(parsedSingle.data.key);',
+  ];
+  const forbiddenSnippets = [
+    'LEGACY_PATH_INDEX_KEY',
+    'ai_paths_index_v1',
+    '.filter((item) => item.key !==',
   ];
 
   for (const snippet of requiredSnippets) {
     if (!text.includes(snippet)) {
       reportViolation(
         SETTINGS_HANDLER_FILE,
-        `missing canonical guard snippet for legacy index key: ${snippet}`
+        `missing canonical versioned-key guard snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        SETTINGS_HANDLER_FILE,
+        `legacy/special-case key guard snippet must remain removed: ${snippet}`
       );
     }
   }
@@ -235,13 +256,31 @@ const checkDatabaseNodeLegacyDbQueryPrune = () => {
 
 const checkCollectionNamesLegacyDbQueryPrune = () => {
   const text = readFile(COLLECTION_NAMES_FILE);
-  const forbiddenSnippets = ['legacyDbQueryCandidate', "nextConfigWithLegacy['dbQuery']"];
+  const forbiddenSnippets = [
+    'legacyDbQueryCandidate',
+    "nextConfigWithLegacy['dbQuery']",
+    'export const migrateDatabaseConfigCollections =',
+    'export const migratePathConfigCollections =',
+  ];
+  const requiredSnippets = [
+    'export const canonicalizeAiPathsCollectionName =',
+    'export const findPathConfigCollectionAliasIssues =',
+  ];
 
   for (const snippet of forbiddenSnippets) {
     if (text.includes(snippet)) {
       reportViolation(
         COLLECTION_NAMES_FILE,
         `legacy collection migration dbQuery compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        COLLECTION_NAMES_FILE,
+        `missing canonical collection alias snippet: ${snippet}`
       );
     }
   }
@@ -627,6 +666,278 @@ const checkRuntimeNodeStatusAliasCompatibilityPrune = () => {
   }
 };
 
+const checkPresetCollectionMigrationCompatibilityPrune = () => {
+  const text = readFile(PRESETS_CONTEXT_FILE);
+  const forbiddenSnippets = ['migrateDatabaseConfigCollections'];
+  const requiredSnippets = ['config: normalizeDatabasePresetConfig(raw.config)'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        PRESETS_CONTEXT_FILE,
+        `legacy preset collection migration compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        PRESETS_CONTEXT_FILE,
+        `missing canonical preset normalization snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkValidationConfigLegacySchemaCompatibilityPrune = () => {
+  const text = readFile(VALIDATION_DEFAULTS_FILE);
+  const forbiddenSnippets = [
+    'const legacySchemaVersion =',
+    'legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION ? null : lastEvaluatedAt',
+  ];
+  const requiredSnippets = ['lastEvaluatedAt,'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        VALIDATION_DEFAULTS_FILE,
+        `legacy validation-config schema compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        VALIDATION_DEFAULTS_FILE,
+        `missing canonical validation-config normalization snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkSettingsBackupPayloadCompatibilityPrune = () => {
+  const text = readFile(SETTINGS_STORE_CLIENT_FILE);
+  const forbiddenSnippets = ['const records = Array.isArray(parsed)', 'ai_paths_settings_backup_v1'];
+  const requiredSnippets = [
+    "const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup';",
+    "parsed && typeof parsed === 'object' && !Array.isArray(parsed)",
+    'if (!parsedRecord || !Array.isArray(parsedRecord.records)) return null;',
+    "if (typeof parsedRecord.savedAt !== 'number') return null;",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        SETTINGS_STORE_CLIENT_FILE,
+        `legacy settings-backup payload compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        SETTINGS_STORE_CLIENT_FILE,
+        `missing canonical settings-backup payload snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkValidationPathIndexMetaFallbackCompatibilityPrune = () => {
+  const text = readFile(ADMIN_VALIDATION_UTILS_FILE);
+  const forbiddenSnippets = ['const fallbackMetas: PathMeta[]', '[...metasFromIndex, ...fallbackMetas]'];
+  const requiredSnippets = [
+    'const indexMetas = parsePathIndex(settingsMap.get(PATH_INDEX_KEY));',
+    'const pathMetas = [...metasFromIndex].sort((left, right) =>',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `legacy validation path-meta fallback compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `missing canonical validation path-index snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkValidationCollectionMapLegacyDelimiterCompatibilityPrune = () => {
+  const text = readFile(ADMIN_VALIDATION_UTILS_FILE);
+  const forbiddenSnippets = ["line.indexOf('=')", "line.includes(':') ? line.indexOf(':') :"];
+  const requiredSnippets = ["const separatorIndex = line.indexOf(':');"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `legacy validation collection-map delimiter compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `missing canonical validation collection-map snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune = () => {
+  const text = readFile(ADMIN_VALIDATION_UTILS_FILE);
+  const forbiddenSnippets = [".split(',')"];
+  const requiredSnippets = [".split('\\n')", "entry.length > 0 && !entry.includes(',')"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `legacy validation docs-sources delimiter compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        ADMIN_VALIDATION_UTILS_FILE,
+        `missing canonical validation docs-sources snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseTemplateCatalogAliasCompatibilityPrune = () => {
+  const text = readFile(DATABASE_TEMPLATE_CONTEXT_FILE);
+  const forbiddenSnippets = [
+    'resolveCatalogIdFromTemplateInputs',
+    'applyCatalogIdAliases',
+    'syncCatalogId();',
+    "templateContext['catalogId'] = catalogId;",
+  ];
+  const requiredSnippets = ["const templateContext: Record<string, unknown> = {", '...templateInputs,'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_TEMPLATE_CONTEXT_FILE,
+        `legacy database template catalogId alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DATABASE_TEMPLATE_CONTEXT_FILE,
+        `missing canonical database template context snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseInputCatalogAliasCompatibilityPrune = () => {
+  const text = readFile(DATABASE_INPUT_RESOLUTION_FILE);
+  const forbiddenSnippets = [
+    'pickCatalogIdFromCatalogs',
+    "pickCatalogId(record['entity'] as Record<string, unknown>)",
+    "pickCatalogId(record['entityJson'] as Record<string, unknown>)",
+    "pickCatalogId(record['product'] as Record<string, unknown>)",
+    "pickCatalogId(record['bundle'] as Record<string, unknown>)",
+  ];
+  const requiredSnippets = ["return pickString(record['catalogId']);"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_INPUT_RESOLUTION_FILE,
+        `legacy database input catalogId alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DATABASE_INPUT_RESOLUTION_FILE,
+        `missing canonical database input catalogId snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseProviderFallbackCompatibilityPrune = () => {
+  const queryExecutionText = readFile(DATABASE_QUERY_EXECUTION_FILE);
+  const updateExecutionText = readFile(DATABASE_UPDATE_EXECUTION_FILE);
+  const localExecutionHelpersText = readFile(LOCAL_EXECUTION_HELPERS_FILE);
+
+  const queryForbiddenSnippets = [
+    'fallback?: Record<string, unknown>;',
+    "queryResultData['fallback']",
+    'providerFallback',
+  ];
+  const updateForbiddenSnippets = [
+    'fallback?: Record<string, unknown>;',
+    "responseData['fallback']",
+    'providerFallback',
+  ];
+  const localHelperForbiddenSnippets = ["bundle['providerFallback']", "databaseMeta['providerFallback']"];
+  const requiredSnippets = [
+    "databaseMeta['requestedProvider'] = requestedProvider;",
+    "databaseMeta['resolvedProvider'] = resolvedProvider;",
+  ];
+
+  for (const snippet of queryForbiddenSnippets) {
+    if (queryExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_QUERY_EXECUTION_FILE,
+        `legacy database query provider-fallback compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of updateForbiddenSnippets) {
+    if (updateExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_UPDATE_EXECUTION_FILE,
+        `legacy database update provider-fallback compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of localHelperForbiddenSnippets) {
+    if (localExecutionHelpersText.includes(snippet)) {
+      reportViolation(
+        LOCAL_EXECUTION_HELPERS_FILE,
+        `legacy local-execution provider-fallback compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!localExecutionHelpersText.includes(snippet)) {
+      reportViolation(
+        LOCAL_EXECUTION_HELPERS_FILE,
+        `missing canonical local-execution database metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -634,7 +945,7 @@ const main = () => {
   checkLegacyIndexKeyUsage(sourceFiles);
   checkForbiddenMaintenanceActionIds(sourceFiles);
   checkMaintenanceConstants();
-  checkSettingsHandlerGuards();
+  checkSettingsHandlerVersionedKeyGuards();
   checkMaintenanceHandlerEnum();
   checkTriggerButtonsApiCompatibilityPrune();
   checkDatabaseNodeLegacyDbQueryPrune();
@@ -654,6 +965,15 @@ const main = () => {
   checkRunModeQueueCompatibilityPrune();
   checkRequestIdLookupCompatibilityPrune();
   checkRuntimeNodeStatusAliasCompatibilityPrune();
+  checkPresetCollectionMigrationCompatibilityPrune();
+  checkValidationConfigLegacySchemaCompatibilityPrune();
+  checkSettingsBackupPayloadCompatibilityPrune();
+  checkValidationPathIndexMetaFallbackCompatibilityPrune();
+  checkValidationCollectionMapLegacyDelimiterCompatibilityPrune();
+  checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
+  checkDatabaseTemplateCatalogAliasCompatibilityPrune();
+  checkDatabaseInputCatalogAliasCompatibilityPrune();
+  checkDatabaseProviderFallbackCompatibilityPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { Checkbox } from '../checkbox';
@@ -299,6 +300,63 @@ export interface SettingsPanelBuilderProps<
   showCancelButton?: boolean;
 }
 
+type SettingsPanelBuilderShape = Record<string, unknown>;
+
+type SettingsPanelBuilderRuntimeValue = {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  onSave: () => void;
+  isSaving: boolean;
+  size: 'sm' | 'md' | 'lg' | 'xl';
+  saveText: string;
+  cancelText: string;
+  showSaveButton: boolean;
+  showCancelButton: boolean;
+  fields: SettingsField<SettingsPanelBuilderShape>[];
+  values: SettingsPanelBuilderShape;
+  errors: Partial<Record<string, string>>;
+  onChange: (values: Partial<SettingsPanelBuilderShape>) => void;
+};
+
+const {
+  Context: SettingsPanelBuilderRuntimeContext,
+  useStrictContext: useSettingsPanelBuilderRuntime,
+} = createStrictContext<SettingsPanelBuilderRuntimeValue>({
+  hookName: 'useSettingsPanelBuilderRuntime',
+  providerName: 'SettingsPanelBuilderRuntimeProvider',
+  displayName: 'SettingsPanelBuilderRuntimeContext',
+});
+
+function SettingsPanelBuilderRuntimePanel(): React.JSX.Element {
+  const runtime = useSettingsPanelBuilderRuntime();
+
+  return (
+    <FormModal
+      open={runtime.open}
+      onClose={runtime.onClose}
+      title={runtime.title}
+      {...(runtime.subtitle !== undefined ? { subtitle: runtime.subtitle } : {})}
+      onSave={runtime.onSave}
+      isSaving={runtime.isSaving}
+      size={runtime.size}
+      saveText={runtime.saveText}
+      cancelText={runtime.cancelText}
+      showSaveButton={runtime.showSaveButton}
+      showCancelButton={runtime.showCancelButton}
+    >
+      <SettingsFieldsRenderer
+        fields={runtime.fields}
+        values={runtime.values}
+        errors={runtime.errors}
+        onChange={runtime.onChange}
+        disabled={runtime.isSaving}
+      />
+    </FormModal>
+  );
+}
+
 /**
  * Generic settings panel builder modal.
  * Consolidates Theme, Component, Menu, Viewer3D settings patterns.
@@ -323,28 +381,48 @@ export function SettingsPanelBuilder<T extends object>({
   const handleSave = () => {
     void onSave();
   };
+  const runtimeValue = useMemo<SettingsPanelBuilderRuntimeValue>(
+    () => ({
+      open,
+      onClose,
+      title,
+      subtitle,
+      onSave: handleSave,
+      isSaving,
+      size,
+      saveText: saveText ?? (isSaving ? 'Saving...' : 'Save'),
+      cancelText: cancelText ?? 'Cancel',
+      showSaveButton,
+      showCancelButton,
+      fields: fields as SettingsField<SettingsPanelBuilderShape>[],
+      values: values as SettingsPanelBuilderShape,
+      errors: errors as Partial<Record<string, string>>,
+      onChange: (nextValues: Partial<SettingsPanelBuilderShape>) => {
+        onChange(nextValues as Partial<T>);
+      },
+    }),
+    [
+      open,
+      onClose,
+      title,
+      subtitle,
+      isSaving,
+      size,
+      saveText,
+      cancelText,
+      showSaveButton,
+      showCancelButton,
+      fields,
+      values,
+      errors,
+      onChange,
+      onSave,
+    ]
+  );
 
   return (
-    <FormModal
-      open={open}
-      onClose={onClose}
-      title={title}
-      {...(subtitle !== undefined ? { subtitle } : {})}
-      onSave={handleSave}
-      isSaving={isSaving}
-      size={size}
-      saveText={saveText ?? (isSaving ? 'Saving...' : 'Save')}
-      cancelText={cancelText ?? 'Cancel'}
-      showSaveButton={showSaveButton}
-      showCancelButton={showCancelButton}
-    >
-      <SettingsFieldsRenderer
-        fields={fields}
-        values={values}
-        errors={errors}
-        onChange={onChange}
-        disabled={isSaving}
-      />
-    </FormModal>
+    <SettingsPanelBuilderRuntimeContext.Provider value={runtimeValue}>
+      <SettingsPanelBuilderRuntimePanel />
+    </SettingsPanelBuilderRuntimeContext.Provider>
   );
 }

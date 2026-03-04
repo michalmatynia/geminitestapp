@@ -19,7 +19,7 @@ import {
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
-import { MarkdownToolbar } from './editor/MarkdownToolbar';
+import { NotesMarkdownToolbar } from './editor/NotesMarkdownToolbar';
 import { NoteMetadata } from './editor/NoteMetadata';
 import { WysiwygEditor } from './editor/WysiwygEditor';
 
@@ -79,7 +79,7 @@ function NoteFormInner(): React.JSX.Element {
 
           <FormField label='Content'>
             <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
-              <MarkdownToolbar />
+              <NotesMarkdownToolbar />
             </MarkdownToolbarActionsProvider>
             <div className='mt-2'>
               {editorMode === 'markdown' || editorMode === 'code' ? (

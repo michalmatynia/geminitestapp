@@ -5,9 +5,9 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { computeBackoffMs, processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
 import {
   assertAiPathRunQueueReady,
-  enqueuePathRunJob,
   getAiPathRunQueueStatus,
   removePathRunQueueEntries,
+  scheduleLocalFallbackRun,
   __testOnly,
 } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import {
@@ -270,12 +270,12 @@ describe('AI Path Run Queue Worker', () => {
     it('clears local fallback timers when queue entries are removed', async () => {
       vi.useFakeTimers();
       try {
-        await enqueuePathRunJob('run-local-fallback', { delayMs: 5_000 });
+        scheduleLocalFallbackRun('run-local-fallback', 5_000);
         const result = await removePathRunQueueEntries(['run-local-fallback']);
         expect(result.requested).toBe(1);
         expect(result.removed).toBeGreaterThanOrEqual(1);
 
-        await vi.runOnlyPendingTimersAsync();
+        await vi.advanceTimersByTimeAsync(5_000);
         expect(mockRepo.claimRunForProcessing).not.toHaveBeenCalled();
       } finally {
         vi.useRealTimers();

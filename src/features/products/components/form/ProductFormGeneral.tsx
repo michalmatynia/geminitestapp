@@ -321,8 +321,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
             });
             const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
               pattern.replacementAppliesToScopes,
-              validationInstanceScope,
-              pattern.appliesToScopes
+              validationInstanceScope
             );
             const effectiveReplacement = replacementEnabledForScope ? replacement : null;
             replacedValue = applyResolvedReplacement({

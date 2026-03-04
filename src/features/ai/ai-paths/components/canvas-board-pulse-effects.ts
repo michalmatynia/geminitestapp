@@ -186,7 +186,6 @@ export function useCanvasPulseEffects({
   ]);
 
   React.useEffect(() => {
-    if ((runtimeEvents?.length ?? 0) > 0) return;
     const nextHashes = buildRuntimeHashes();
     const prevHashes = prevHashesRef.current;
     prevHashesRef.current = nextHashes;

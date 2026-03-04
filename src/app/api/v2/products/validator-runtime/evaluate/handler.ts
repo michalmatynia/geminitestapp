@@ -392,17 +392,12 @@ const resolveReplacementFromResult = (
   context: Record<string, unknown>,
   currentValue: string
 ): string | null => {
-  const replacementPaths = [
-    ...(Array.isArray(config['replacementPaths'])
-      ? (config['replacementPaths'] as unknown[])
-        .filter((entry: unknown): entry is string => typeof entry === 'string')
-        .map((entry: string) => entry.trim())
-        .filter((entry: string) => entry.length > 0)
-      : []),
-    ...(typeof config['replacementPath'] === 'string' && config['replacementPath'].trim().length > 0
-      ? [config['replacementPath'].trim()]
-      : []),
-  ];
+  const replacementPaths = Array.isArray(config['replacementPaths'])
+    ? (config['replacementPaths'] as unknown[])
+      .filter((entry: unknown): entry is string => typeof entry === 'string')
+      .map((entry: string) => entry.trim())
+      .filter((entry: string) => entry.length > 0)
+    : [];
 
   for (const replacementPath of replacementPaths) {
     const value = getValueAtMappingPath(resultData, replacementPath);
@@ -437,7 +432,10 @@ const evaluateDatabaseRuntime = async ({
   const payloadSource =
     config['payload'] && typeof config['payload'] === 'object' && !Array.isArray(config['payload'])
       ? (config['payload'] as Record<string, unknown>)
-      : config;
+      : null;
+  if (!payloadSource) {
+    throw badRequestError('Runtime DB config requires a payload object.');
+  }
   const renderedPayload = renderUnknown(payloadSource, context, currentValue) as Record<
     string,
     unknown
@@ -479,7 +477,7 @@ const evaluateDatabaseRuntime = async ({
     const resultData = response.data ?? {};
     const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : '';
     const operator = normalizeRuntimeOperator(config['operator']);
-    const operand = config['operand'] ?? config['value'] ?? config['expected'] ?? null;
+    const operand = config['operand'] ?? null;
     const flags = typeof config['flags'] === 'string' ? config['flags'] : null;
     const candidate = resultPath ? getValueAtMappingPath(resultData, resultPath) : resultData;
     return {
@@ -521,11 +519,7 @@ const evaluateDatabaseRuntime = async ({
   const operator = normalizeRuntimeOperator(
     config['operator'] ?? (resultPath === 'count' ? 'gt' : 'truthy')
   );
-  const operand =
-    config['operand'] ??
-    config['value'] ??
-    config['expected'] ??
-    (resultPath === 'count' ? 0 : null);
+  const operand = config['operand'] ?? (resultPath === 'count' ? 0 : null);
   const flags = typeof config['flags'] === 'string' ? config['flags'] : null;
   const candidate = resultPath ? getValueAtMappingPath(resultData, resultPath) : resultData;
   return {
@@ -608,7 +602,7 @@ const evaluateAiRuntime = async ({
     const resultPath =
       typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : 'raw';
     const operator = normalizeRuntimeOperator(config['operator'] ?? 'truthy');
-    const operand = config['operand'] ?? config['value'] ?? config['expected'] ?? null;
+    const operand = config['operand'] ?? null;
     const flags = typeof config['flags'] === 'string' ? config['flags'] : null;
     const candidate = resultPath ? getValueAtMappingPath(resultData, resultPath) : resultData;
     matched = evaluateRuntimeCondition(operator, candidate, operand, flags);
@@ -668,8 +662,7 @@ const buildRuntimeIssue = ({
     (replacementScope === 'field' && replacementFields.includes(fieldName));
   const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
     pattern.replacementAppliesToScopes,
-    validationScope,
-    pattern.appliesToScopes
+    validationScope
   );
   const effectiveReplacementValue =
     pattern.replacementEnabled && replacementAllowed && replacementEnabledForScope

@@ -98,7 +98,19 @@ describe('CMS Pages API', () => {
       const updateData = {
         name: 'Updated Page',
         slugIds: ['s1'],
-        components: [{ type: 'Hero', content: {}, order: 0 }],
+        components: [
+          {
+            type: 'Hero',
+            order: 0,
+            content: {
+              zone: 'template',
+              settings: {},
+              blocks: [],
+              sectionId: 'section-hero',
+              parentSectionId: null,
+            },
+          },
+        ],
       };
       const updatedPage = { id: '123', name: 'Updated Page' };
       mockRepo.updatePage.mockResolvedValue(updatedPage);

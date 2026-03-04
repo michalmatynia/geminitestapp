@@ -18,12 +18,14 @@ import { useRuntimeActions } from '@/features/ai/ai-paths/context/RuntimeContext
 import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 import {
   buildNodesForAutoSave as buildNodesForAutoSaveHelper,
+  collectInvalidPathSavePayloadIssues,
   lintPathNodeRoles,
   mergeNodeOverride,
   normalizeConfigForHash,
   resolvePathSaveBlockedMessage,
   stripNodeConfig,
 } from '../../useAiPathsPersistence.helpers';
+import { pruneSingleCardinalityIncomingEdges } from '../../edge-cardinality-repair';
 import type { PathSaveOptions, UseAiPathsPersistenceArgs } from '../../useAiPathsPersistence.types';
 
 export function usePathPersistence(
@@ -97,21 +99,6 @@ export function usePathPersistence(
         // Fallback to the client-side sanitized config when response payload parsing fails.
       }
       return sanitizedConfig;
-    },
-    [core]
-  );
-
-  const persistRuntimePathState = useCallback(
-    async (configId: string, config: PathConfig): Promise<void> => {
-      const payload = core.stringifyForStorage(
-        sanitizePathConfig(config),
-        `runtime path config (${configId})`
-      );
-      await core.enqueueSettingsWrite(async (): Promise<void> => {
-        await updateAiPathsSettingsBulk([
-          { key: `${PATH_CONFIG_PREFIX}${configId}`, value: payload },
-        ]);
-      });
     },
     [core]
   );
@@ -274,13 +261,48 @@ export function usePathPersistence(
         const rawEdgesForSave = options?.edgesOverride ?? edgesRef.current;
         const normalizedNodesForSave = normalizeNodes(nodesForSave);
         const edgesForSave = sanitizeEdges(normalizedNodesForSave, rawEdgesForSave);
+        const repairedEdges = pruneSingleCardinalityIncomingEdges(
+          normalizedNodesForSave,
+          edgesForSave
+        );
+        const edgesForSaveResolved = repairedEdges.edges;
+        if (!silent && repairedEdges.removedEdges.length > 0) {
+          const count = repairedEdges.removedEdges.length;
+          args.toast(
+            `Auto-repaired ${count} duplicate wire${count === 1 ? '' : 's'} on single-cardinality inputs.`,
+            { variant: 'warning' }
+          );
+        }
+        const savePayloadIssues = collectInvalidPathSavePayloadIssues(
+          normalizedNodesForSave,
+          edgesForSaveResolved
+        );
+        if (savePayloadIssues.length > 0) {
+          const firstIssue = savePayloadIssues[0];
+          const message = firstIssue
+            ? `Path save blocked: invalid graph payload (${firstIssue.path}: ${firstIssue.message}).`
+            : 'Path save blocked: invalid graph payload.';
+          args.reportAiPathsError(
+            new Error(message),
+            {
+              action: silent ? 'validateSavePayloadSilent' : 'validateSavePayload',
+              pathId: args.activePathId,
+              savePayloadIssues: savePayloadIssues.slice(0, 10),
+            },
+            'Failed to validate AI Paths payload before save:'
+          );
+          if (!silent) {
+            args.toast(message, { variant: 'error' });
+          }
+          return false;
+        }
         if (
           !options?.edgesOverride &&
-          stableStringify(rawEdgesForSave) !== stableStringify(edgesForSave)
+          stableStringify(rawEdgesForSave) !== stableStringify(edgesForSaveResolved)
         ) {
-          setEdges(edgesForSave);
+          setEdges(edgesForSaveResolved);
         }
-        const compileReport = compileGraph(nodesForSave, edgesForSave);
+        const compileReport = compileGraph(nodesForSave, edgesForSaveResolved);
         if (!silent && compileReport.errors > 0) {
           const primaryError = compileReport.findings.find(
             (finding): boolean => finding.severity === 'error'
@@ -294,7 +316,12 @@ export function usePathPersistence(
           const warningMessage = buildCompileWarningMessage(compileReport);
           args.toast(warningMessage, { variant: 'warning' });
         }
-        const config = buildActivePathConfig(updatedAt, nodesForSave, resolvedName, edgesForSave);
+        const config = buildActivePathConfig(
+          updatedAt,
+          nodesForSave,
+          resolvedName,
+          edgesForSaveResolved
+        );
         const nextPaths = pathsRef.current.map(
           (path: PathMeta): PathMeta =>
             path.id === args.activePathId ? { ...path, name: resolvedName, updatedAt } : path
@@ -419,7 +446,6 @@ export function usePathPersistence(
     autoSaveStatus,
     setAutoSaveStatus,
     persistPathConfig,
-    persistRuntimePathState,
     persistPathSettings,
     buildPathSnapshot,
     lastSavedSnapshotRef,

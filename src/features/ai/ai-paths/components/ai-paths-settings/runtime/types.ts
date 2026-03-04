@@ -58,6 +58,7 @@ export interface ServerExecutionArgs {
     terminalStatus: 'completed' | 'failed' | 'canceled',
     currentOutputs?: Record<string, unknown>
   ) => void;
+  setRunStatus: (status: RunStatus) => void;
   setLastRunAt: (at: string | null) => void;
   toast: UiToastFn;
   currentRunIdRef?: MutableRefObject<string | null>;

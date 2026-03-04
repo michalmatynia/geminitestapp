@@ -5,7 +5,10 @@ import {
   safeParseJson,
 } from './utils/workspace-persistence-utils';
 
-const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA = 'case_resolver_workspace_detached_history_v1';
+export const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2 =
+  'case_resolver_workspace_detached_history_v2';
+const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA =
+  CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V2;
 const CASE_RESOLVER_DOCUMENT_HISTORY_VERSIONS = new Set(['original', 'exploded']);
 const CASE_RESOLVER_DOCUMENT_HISTORY_EDITORS = new Set([
   'wysiwyg',
@@ -130,11 +133,7 @@ export const parseCaseResolverWorkspaceDetachedHistoryPayload = (
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
   const record = parsed as Record<string, unknown>;
   const schemaRaw = record['schema'];
-  if (
-    typeof schemaRaw === 'string' &&
-    schemaRaw.trim().length > 0 &&
-    schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA
-  ) {
+  if (typeof schemaRaw !== 'string' || schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA) {
     return null;
   }
   const workspaceRevisionRaw = record['workspaceRevision'];

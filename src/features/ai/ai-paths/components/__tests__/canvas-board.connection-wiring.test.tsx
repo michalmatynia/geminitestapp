@@ -423,17 +423,19 @@ describe('CanvasBoard connector wiring', () => {
     });
   });
 
-  it('blocks adding another wire to a single-cardinality input port', async () => {
+  it('enforces a single wire on a single-cardinality input port', async () => {
     const sourceA = buildNode({
       id: 'node-source-a',
       title: 'Source A',
-      outputs: ['result'],
+      type: 'trigger',
+      outputs: ['trigger'],
       position: { x: 120, y: 120 },
     });
     const sourceB = buildNode({
       id: 'node-source-b',
       title: 'Source B',
-      outputs: ['result'],
+      type: 'trigger',
+      outputs: ['trigger'],
       position: { x: 120, y: 280 },
     });
     const target = buildNode({
@@ -448,7 +450,7 @@ describe('CanvasBoard connector wiring', () => {
         id: 'edge-initial',
         from: 'node-source-a',
         to: 'node-target',
-        fromPort: 'result',
+        fromPort: 'trigger',
         toPort: 'trigger',
       },
     ];
@@ -467,7 +469,7 @@ describe('CanvasBoard connector wiring', () => {
     );
 
     const outputPort = container.querySelector(
-      'circle[data-port="output"][data-node-id="node-source-b"][data-port-name="result"]'
+      'circle[data-port="output"][data-node-id="node-source-b"][data-port-name="trigger"]'
     );
     const inputPort = container.querySelector(
       'circle[data-port="input"][data-node-id="node-target"][data-port-name="trigger"]'
@@ -496,7 +498,84 @@ describe('CanvasBoard connector wiring', () => {
     await waitFor(() => {
       expect(getByTestId('edge-count')).toHaveTextContent('1');
       expect(getByTestId('edge-summary')).toHaveTextContent(
-        'node-source-a:result->node-target:trigger'
+        /node-source-(a|b):trigger->node-target:trigger/
+      );
+    });
+  });
+
+  it('ignores non-canonical incoming edges when wiring a single-cardinality port', async () => {
+    const sourceA = buildNode({
+      id: 'node-source-a',
+      title: 'Source A',
+      outputs: ['result'],
+      position: { x: 120, y: 120 },
+    });
+    const sourceB = buildNode({
+      id: 'node-source-b',
+      title: 'Source B',
+      outputs: ['result'],
+      position: { x: 120, y: 280 },
+    });
+    const target = buildNode({
+      id: 'node-target',
+      title: 'Fetcher: Trigger Context',
+      type: 'fetcher',
+      inputs: ['trigger'],
+      position: { x: 520, y: 180 },
+    });
+    const initialEdges: Edge[] = [
+      {
+        id: 'edge-broken',
+        from: 'node-source-a',
+        to: 'node-target',
+        toPort: 'trigger',
+      },
+    ];
+
+    const { container, getByTestId } = render(
+      <ToastProvider>
+        <AiPathsProvider
+          initialNodes={[sourceA, sourceB, target]}
+          initialEdges={initialEdges}
+        >
+          <CanvasBoard confirmNodeSwitch={() => true} />
+          <EdgeCountProbe />
+          <EdgeSummaryProbe />
+        </AiPathsProvider>
+      </ToastProvider>
+    );
+
+    const outputPort = container.querySelector(
+      'circle[data-port="output"][data-node-id="node-source-b"][data-port-name="result"]'
+    );
+    const inputPort = container.querySelector(
+      'circle[data-port="input"][data-node-id="node-target"][data-port-name="trigger"]'
+    );
+    expect(outputPort).toBeTruthy();
+    expect(inputPort).toBeTruthy();
+    if (!outputPort || !inputPort) return;
+
+    fireEvent.pointerDown(outputPort, {
+      pointerId: 22,
+      clientX: 360,
+      clientY: 280,
+      buttons: 1,
+    });
+    await waitFor(() => {
+      expect(container.querySelector('[data-connecting-preview="true"]')).toBeTruthy();
+    });
+
+    fireEvent.pointerUp(inputPort, {
+      pointerId: 22,
+      clientX: 520,
+      clientY: 220,
+      buttons: 0,
+    });
+
+    await waitFor(() => {
+      expect(getByTestId('edge-count')).toHaveTextContent('1');
+      expect(getByTestId('edge-summary')).toHaveTextContent(
+        'node-source-b:result->node-target:trigger'
       );
     });
   });

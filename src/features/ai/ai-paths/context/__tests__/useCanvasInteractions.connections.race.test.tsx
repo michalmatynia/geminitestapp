@@ -116,12 +116,14 @@ describe('useCanvasInteractionsConnections race handling', () => {
   it('blocks a second write on a single-cardinality input before edges prop re-renders', async () => {
     const sourceNodeA = buildNode({
       id: 'node-source-a',
-      outputs: ['result'],
+      type: 'trigger',
+      outputs: ['trigger'],
       position: { x: 120, y: 120 },
     });
     const sourceNodeB = buildNode({
       id: 'node-source-b',
-      outputs: ['result'],
+      type: 'trigger',
+      outputs: ['trigger'],
       position: { x: 120, y: 300 },
     });
     const targetNode = buildNode({
@@ -162,14 +164,22 @@ describe('useCanvasInteractionsConnections race handling', () => {
     const { result } = renderHook(() => useCanvasInteractionsConnections(props));
 
     await act(async () => {
-      await result.current.handleStartConnection(createPointerEvent(sourceTargetA), sourceNodeA, 'result');
+      await result.current.handleStartConnection(
+        createPointerEvent(sourceTargetA),
+        sourceNodeA,
+        'trigger'
+      );
     });
     act(() => {
       result.current.handleCompleteConnection(createPointerEvent(target), targetNode, 'trigger');
     });
 
     await act(async () => {
-      await result.current.handleStartConnection(createPointerEvent(sourceTargetB), sourceNodeB, 'result');
+      await result.current.handleStartConnection(
+        createPointerEvent(sourceTargetB),
+        sourceNodeB,
+        'trigger'
+      );
     });
     act(() => {
       result.current.handleCompleteConnection(createPointerEvent(target), targetNode, 'trigger');
@@ -183,7 +193,7 @@ describe('useCanvasInteractionsConnections race handling', () => {
     expect(resolvedEdges[0]).toMatchObject({
       from: 'node-source-a',
       to: 'node-target',
-      fromPort: 'result',
+      fromPort: 'trigger',
       toPort: 'trigger',
     });
     expect(props.toast).toHaveBeenCalledWith(

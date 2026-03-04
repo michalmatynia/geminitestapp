@@ -267,7 +267,7 @@ describe('case-resolver nodefile relations', () => {
         name: 'Inline Node File',
         folder: '',
         kind: 'node_file',
-        textContent: '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[]}',
+        textContent: '{"kind":"case_resolver_node_file_snapshot_v2","nodes":[]}',
       }),
     ];
     const graph = createGraph({

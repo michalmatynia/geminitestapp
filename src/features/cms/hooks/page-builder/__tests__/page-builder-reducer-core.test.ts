@@ -235,4 +235,26 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     expect(imageBlock).toBeDefined();
     expect(imageBlock?.settings['backgroundTarget']).toBe('grid');
   });
+
+  it('does not auto-migrate legacy grid structures during runtime actions', () => {
+    const state = createState([
+      createSection({
+        id: 'grid-legacy',
+        type: 'Grid',
+        settings: { rows: 1, columns: 2 },
+        blocks: [{ id: 'legacy-column', type: 'Column', settings: {}, blocks: [] }],
+      }),
+    ]);
+
+    const next = reducePageBuilderStateCore(state, {
+      type: 'SET_GRID_COLUMNS',
+      sectionId: 'grid-legacy',
+      columnCount: 3,
+    });
+
+    const gridSection = next.sections.find((section) => section.id === 'grid-legacy');
+    expect(gridSection).toBeDefined();
+    expect(gridSection?.blocks).toEqual(state.sections[0]?.blocks);
+    expect(gridSection?.settings).toEqual(state.sections[0]?.settings);
+  });
 });

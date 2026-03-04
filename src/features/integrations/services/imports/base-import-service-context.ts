@@ -210,9 +210,10 @@ export const resolveCatalogLanguageContext = async (
 };
 
 export const resolveBaseConnectionContext = async (
-  requestedConnectionId: string | undefined
+  requestedConnectionId: string
 ): Promise<BaseConnectionContext> => {
-  const normalizedConnectionId = requestedConnectionId?.trim() || null;
+  const normalizedConnectionId =
+    typeof requestedConnectionId === 'string' ? requestedConnectionId.trim() : null;
   if (!normalizedConnectionId) {
     return {
       baseIntegrationId: null,

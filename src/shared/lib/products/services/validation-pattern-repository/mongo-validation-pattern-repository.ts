@@ -313,8 +313,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   replacementValue: doc.replacementValue ?? null,
   replacementFields: normalizeReplacementFields(doc.replacementFields),
   replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-    doc.replacementAppliesToScopes,
-    doc.appliesToScopes
+    doc.replacementAppliesToScopes
   ),
   runtimeEnabled: doc.runtimeEnabled ?? false,
   runtimeType: normalizeRuntimeType(doc.runtimeType),
@@ -333,8 +332,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   passOutputToNext: doc.passOutputToNext ?? true,
   launchEnabled: doc.launchEnabled ?? false,
   launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-    doc.launchAppliesToScopes,
-    doc.appliesToScopes
+    doc.launchAppliesToScopes
   ),
   launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(doc.launchScopeBehavior),
   launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
@@ -409,8 +407,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
       replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-        data.replacementAppliesToScopes,
-        data.appliesToScopes
+        data.replacementAppliesToScopes
       ),
       runtimeEnabled: data.runtimeEnabled ?? false,
       runtimeType: normalizeRuntimeType(data.runtimeType),
@@ -429,8 +426,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       passOutputToNext: data.passOutputToNext ?? true,
       launchEnabled: data.launchEnabled ?? false,
       launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-        data.launchAppliesToScopes,
-        data.appliesToScopes
+        data.launchAppliesToScopes
       ),
       launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(data.launchScopeBehavior),
       launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
@@ -497,8 +493,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     }
     if (data.replacementAppliesToScopes !== undefined) {
       set.replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
-        data.replacementAppliesToScopes,
-        data.appliesToScopes
+        data.replacementAppliesToScopes
       );
     }
     if (data.runtimeEnabled !== undefined) {
@@ -547,8 +542,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     }
     if (data.launchAppliesToScopes !== undefined) {
       set.launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
-        data.launchAppliesToScopes,
-        data.appliesToScopes
+        data.launchAppliesToScopes
       );
     }
     if (data.launchScopeBehavior !== undefined) {

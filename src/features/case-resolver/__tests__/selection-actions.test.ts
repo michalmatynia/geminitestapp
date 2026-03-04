@@ -28,7 +28,7 @@ const createWorkspace = (): CaseResolverWorkspace => ({
       name: 'Node Asset',
       folder: '',
       kind: 'node_file',
-      textContent: '{"kind":"case_resolver_node_file_snapshot_v1"}',
+      textContent: '{"kind":"case_resolver_node_file_snapshot_v2"}',
     }),
   ],
 });

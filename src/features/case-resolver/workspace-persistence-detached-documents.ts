@@ -5,8 +5,10 @@ import {
   safeParseJson,
 } from './utils/workspace-persistence-utils';
 
+export const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2 =
+  'case_resolver_workspace_detached_documents_v2';
 const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA =
-  'case_resolver_workspace_detached_documents_v1';
+  CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V2;
 const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS = 6_000;
 const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS = 2_000;
 const CASE_RESOLVER_SCAN_SLOT_STATUSES = new Set(['pending', 'processing', 'completed', 'failed']);
@@ -249,8 +251,7 @@ export const parseCaseResolverWorkspaceDetachedDocumentsPayload = (
   const record = parsed as Record<string, unknown>;
   const schemaRaw = record['schema'];
   if (
-    typeof schemaRaw === 'string' &&
-    schemaRaw.trim().length > 0 &&
+    typeof schemaRaw !== 'string' ||
     schemaRaw !== CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA
   ) {
     return null;

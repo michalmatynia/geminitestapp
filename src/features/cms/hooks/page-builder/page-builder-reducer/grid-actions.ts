@@ -1,8 +1,7 @@
 import {
   createColumnBlock,
   createRowBlock,
-  splitGridBlocks,
-  ensureGridRows,
+  getCanonicalGridStructure,
 } from '../block-helpers';
 import type {
   PageBuilderState,
@@ -19,8 +18,9 @@ export function reduceGridActions(
     case 'SET_GRID_COLUMNS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== 'Grid') return s;
-        const normalized = ensureGridRows(s);
-        const { rows, extras } = splitGridBlocks(normalized.blocks);
+        const canonical = getCanonicalGridStructure(s);
+        if (!canonical) return s;
+        const { rows, extras } = canonical;
         const targetCols = Math.max(1, action.columnCount);
         const nextRows = rows.map((row: BlockInstance) => {
           const cols = (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column');
@@ -33,9 +33,9 @@ export function reduceGridActions(
           return { ...row, blocks: cols.slice(0, targetCols) };
         });
         return {
-          ...normalized,
+          ...s,
           blocks: [...nextRows, ...extras],
-          settings: { ...normalized.settings, columns: targetCols, rows: nextRows.length },
+          settings: { ...s.settings, columns: targetCols, rows: nextRows.length },
         };
       });
       return { ...state, sections: updatedSections };
@@ -44,30 +44,25 @@ export function reduceGridActions(
     case 'SET_GRID_ROWS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== 'Grid') return s;
-        const normalized = ensureGridRows(s);
-        const { rows, extras } = splitGridBlocks(normalized.blocks);
-        const columnsPerRow =
-          (normalized.settings['columns'] as number) ??
-          Math.max(
-            1,
-            (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
-          );
+        const canonical = getCanonicalGridStructure(s);
+        if (!canonical) return s;
+        const { rows, extras, columnsPerRow } = canonical;
         const targetRows = Math.max(1, action.rowCount);
         if (rows.length < targetRows) {
           const newRows = Array.from({ length: targetRows - rows.length }, () =>
             createRowBlock(columnsPerRow)
           );
           return {
-            ...normalized,
+            ...s,
             blocks: [...rows, ...newRows, ...extras],
-            settings: { ...normalized.settings, rows: targetRows, columns: columnsPerRow },
+            settings: { ...s.settings, rows: targetRows, columns: columnsPerRow },
           };
         }
         const nextRows = rows.slice(0, targetRows);
         return {
-          ...normalized,
+          ...s,
           blocks: [...nextRows, ...extras],
-          settings: { ...normalized.settings, rows: targetRows, columns: columnsPerRow },
+          settings: { ...s.settings, rows: targetRows, columns: columnsPerRow },
         };
       });
       return { ...state, sections: updatedSections };
@@ -76,19 +71,14 @@ export function reduceGridActions(
     case 'ADD_GRID_ROW': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
         if (s.id !== action.sectionId || s.type !== 'Grid') return s;
-        const normalized = ensureGridRows(s);
-        const { rows, extras } = splitGridBlocks(normalized.blocks);
-        const columnsPerRow =
-          (normalized.settings['columns'] as number) ??
-          Math.max(
-            1,
-            (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
-          );
+        const canonical = getCanonicalGridStructure(s);
+        if (!canonical) return s;
+        const { rows, extras, columnsPerRow } = canonical;
         const nextRows = [...rows, createRowBlock(columnsPerRow)];
         return {
-          ...normalized,
+          ...s,
           blocks: [...nextRows, ...extras],
-          settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow },
+          settings: { ...s.settings, rows: nextRows.length, columns: columnsPerRow },
         };
       });
       return { ...state, sections: updatedSections };

@@ -8,10 +8,6 @@ import {
   POST_handler as postActiveTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/active-template/handler';
 import {
-  GET_handler as getExportWarehouseHandler,
-  POST_handler as postExportWarehouseHandler,
-} from '@/app/api/v2/integrations/imports/base/export-warehouse/handler';
-import {
   GET_handler as getLastTemplateHandler,
   POST_handler as postLastTemplateHandler,
 } from '@/app/api/v2/integrations/imports/base/last-template/handler';
@@ -27,10 +23,6 @@ const IMPORT_BASE_SETTING_HANDLERS: Record<string, RouteHandlers> = {
   'active-template': {
     GET: getActiveTemplateHandler,
     POST: postActiveTemplateHandler,
-  },
-  'export-warehouse': {
-    GET: getExportWarehouseHandler,
-    POST: postExportWarehouseHandler,
   },
   'last-template': {
     GET: getLastTemplateHandler,

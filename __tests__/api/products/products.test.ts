@@ -84,9 +84,9 @@ vi.mock('@/shared/lib/db/prisma', () => {
   return { default: mockClient };
 });
 
-import { POST as POST_DUPLICATE } from '@/app/api/products/[id]/duplicate/route';
-import { PUT, DELETE } from '@/app/api/products/[id]/route';
-import { GET as GET_LIST, POST } from '@/app/api/products/route';
+import { POST as POST_DUPLICATE } from '@/app/api/v2/products/[id]/duplicate/route';
+import { PUT, DELETE } from '@/app/api/v2/products/[id]/route';
+import { GET as GET_LIST, POST } from '@/app/api/v2/products/route';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
 import { queryCache } from '@/features/products/performance/query-cache';
 import prisma from '@/shared/lib/db/prisma';

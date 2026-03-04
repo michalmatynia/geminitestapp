@@ -56,7 +56,7 @@ describe('case resolver nodefile persistence', () => {
 
     expect(didPersist).toBe(true);
     expect(resolvedSnapshot).toMatchObject({
-      kind: 'case_resolver_node_file_snapshot_v1',
+      kind: 'case_resolver_node_file_snapshot_v2',
       nodes: [],
       edges: [],
     });
@@ -81,7 +81,7 @@ describe('case resolver nodefile persistence', () => {
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-legacy'),
         value: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
+          kind: 'case_resolver_node_file_snapshot_v2',
           source: 'manual',
           nodes: [
             {
@@ -139,7 +139,7 @@ describe('case resolver nodefile persistence', () => {
       toJsonResponse(200, {
         key: buildCaseResolverNodeFileSnapshotKey('asset-1'),
         value: JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
+          kind: 'case_resolver_node_file_snapshot_v2',
           source: 'manual',
           nodeId: 'legacy-node',
           sourceFileId: 'doc-legacy',
@@ -170,7 +170,7 @@ describe('case resolver nodefile persistence', () => {
 
   it('rejects inline nodefile snapshots during workspace persist', async () => {
     const inlineSnapshot = JSON.stringify({
-      kind: 'case_resolver_node_file_snapshot_v1',
+      kind: 'case_resolver_node_file_snapshot_v2',
       source: 'manual',
       nodes: [
         {

@@ -140,6 +140,8 @@ export function useLocalExecutionTriggers(
       options?: { mode?: 'run' | 'step' }
     ): Promise<void> => {
       const mode = options?.mode ?? 'run';
+      const triggerDisplayName = triggerNode.title ?? triggerNode.id;
+      const shouldAnnounceLaunch = mode === 'run' && event !== undefined;
       if (!args.isPathActive) {
         args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
         return;
@@ -592,6 +594,9 @@ export function useLocalExecutionTriggers(
             variant: 'warning',
           });
         }
+        if (shouldAnnounceLaunch) {
+          args.toast(`Launching workflow from ${triggerDisplayName}...`, { variant: 'info' });
+        }
         await args.runServerStream(triggerNode, triggerEvent, triggerContext);
         return;
       }
@@ -621,6 +626,9 @@ export function useLocalExecutionTriggers(
         }
         args.toast('A run is already in progress.', { variant: 'info' });
         return;
+      }
+      if (shouldAnnounceLaunch) {
+        args.toast(`Workflow started from ${triggerDisplayName}.`, { variant: 'info' });
       }
       const startedAt = new Date().toISOString();
       const startedAtMs = Date.now();

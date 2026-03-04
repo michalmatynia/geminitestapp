@@ -43,11 +43,10 @@ export const normalizeProductValidationPatternScopes = (
 };
 
 export const normalizeProductValidationPatternReplacementScopes = (
-  value: unknown,
-  fallbackPatternScopes?: unknown
+  value: unknown
 ): ProductValidationInstanceScope[] => {
   if (!Array.isArray(value)) {
-    return normalizeProductValidationPatternScopes(fallbackPatternScopes);
+    return normalizeProductValidationPatternScopes(value);
   }
   const unique = new Set<ProductValidationInstanceScope>();
   for (const entry of value) {
@@ -56,7 +55,7 @@ export const normalizeProductValidationPatternReplacementScopes = (
     }
   }
   if (unique.size === 0) {
-    return normalizeProductValidationPatternScopes(fallbackPatternScopes);
+    return normalizeProductValidationPatternScopes(value);
   }
   return PRODUCT_VALIDATION_INSTANCE_SCOPES.filter((scope: ProductValidationInstanceScope) =>
     unique.has(scope)
@@ -64,11 +63,10 @@ export const normalizeProductValidationPatternReplacementScopes = (
 };
 
 export const normalizeProductValidationPatternLaunchScopes = (
-  value: unknown,
-  fallbackPatternScopes?: unknown
+  value: unknown
 ): ProductValidationInstanceScope[] => {
   if (!Array.isArray(value)) {
-    return normalizeProductValidationPatternScopes(fallbackPatternScopes);
+    return normalizeProductValidationPatternScopes(value);
   }
   const unique = new Set<ProductValidationInstanceScope>();
   for (const entry of value) {
@@ -77,7 +75,7 @@ export const normalizeProductValidationPatternLaunchScopes = (
     }
   }
   if (unique.size === 0) {
-    return normalizeProductValidationPatternScopes(fallbackPatternScopes);
+    return normalizeProductValidationPatternScopes(value);
   }
   return PRODUCT_VALIDATION_INSTANCE_SCOPES.filter((scope: ProductValidationInstanceScope) =>
     unique.has(scope)
@@ -91,22 +89,15 @@ export const isPatternEnabledForValidationScope = (
 
 export const isPatternReplacementEnabledForValidationScope = (
   replacementScopes: unknown,
-  scope: ProductValidationInstanceScope,
-  fallbackPatternScopes?: unknown
+  scope: ProductValidationInstanceScope
 ): boolean =>
-  normalizeProductValidationPatternReplacementScopes(
-    replacementScopes,
-    fallbackPatternScopes
-  ).includes(scope);
+  normalizeProductValidationPatternReplacementScopes(replacementScopes).includes(scope);
 
 export const isPatternLaunchEnabledForValidationScope = (
   launchScopes: unknown,
-  scope: ProductValidationInstanceScope,
-  fallbackPatternScopes?: unknown
+  scope: ProductValidationInstanceScope
 ): boolean =>
-  normalizeProductValidationPatternLaunchScopes(launchScopes, fallbackPatternScopes).includes(
-    scope
-  );
+  normalizeProductValidationPatternLaunchScopes(launchScopes).includes(scope);
 
 export const normalizeProductValidationLaunchScopeBehavior = (
   value: unknown

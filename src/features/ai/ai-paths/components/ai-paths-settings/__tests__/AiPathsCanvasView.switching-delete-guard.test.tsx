@@ -67,7 +67,6 @@ describe('AiPathsCanvasView switch guard', () => {
       isFocusMode: false,
       renderActions: (actions: unknown) => actions,
       confirmNodeSwitch: async () => true,
-      nodeConfigDirty: false,
       savePathConfig: vi.fn(async () => true),
       saving: false,
       setPathSettingsModalOpen: vi.fn(),
@@ -106,7 +105,6 @@ describe('AiPathsCanvasView switch guard', () => {
       handleSwitchPath: vi.fn(),
       isPathSwitching: true,
       lastError: null,
-      setLastError: vi.fn(),
       persistLastError: vi.fn(async () => undefined),
       incrementLoadNonce: vi.fn(),
       handleClearConnectorData: vi.fn(async () => undefined),
@@ -127,4 +125,3 @@ describe('AiPathsCanvasView switch guard', () => {
     expect(screen.getByRole('button', { name: 'Remove Selected' })).toBeDisabled();
   });
 });
-

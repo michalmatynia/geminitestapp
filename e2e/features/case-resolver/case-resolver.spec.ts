@@ -17,7 +17,7 @@ const E2E_ADMIN_PASSWORD =
   process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ??
   process.env['E2E_ADMIN_PASSWORD'] ??
   'E2eAdmin!123';
-const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
+const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 const FILEMAKER_DATABASE_KEY = 'filemaker_database_v1';
 const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =

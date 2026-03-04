@@ -15,6 +15,9 @@ const legacyCsvImportEndpointToken = '/api/import';
 const legacyCatalogsEndpointToken = '/api/catalogs';
 const legacyContractsImportToken = '@/shared/contracts/data-import-export';
 const legacyApiImportToken = "@/app/api/integrations/imports/base/";
+const legacyExportWarehouseEndpointToken = '/api/v2/integrations/imports/base/export-warehouse';
+const canonicalImportsRootEndpointToken = '/api/v2/integrations/imports/base';
+const legacyRootImportActionPattern = /action\s*:\s*['"]import['"]/;
 const expectedV2RoutePaths = [
   'route.ts',
   'parameters/route.ts',
@@ -129,6 +132,32 @@ describe('v2 integrations imports/base route migration', () => {
     const featureFiles = collectSourceFiles(featuresRoot);
     const offenders = featureFiles
       .filter((absolute) => readFileSync(absolute, 'utf8').includes(legacyContractsImportToken))
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids deprecated imports/base export-warehouse endpoint literals in feature runtime code', () => {
+    const featureFiles = collectSourceFiles(featuresRoot);
+    const offenders = featureFiles
+      .filter((absolute) =>
+        readFileSync(absolute, 'utf8').includes(legacyExportWarehouseEndpointToken)
+      )
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids legacy root imports action=import payloads in feature runtime code', () => {
+    const featureFiles = collectSourceFiles(featuresRoot);
+    const offenders = featureFiles
+      .filter((absolute) => {
+        const content = readFileSync(absolute, 'utf8');
+        return (
+          content.includes(canonicalImportsRootEndpointToken) &&
+          legacyRootImportActionPattern.test(content)
+        );
+      })
       .map((absolute) => path.relative(projectRoot, absolute));
 
     expect(offenders).toEqual([]);

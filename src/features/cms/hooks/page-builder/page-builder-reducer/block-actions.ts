@@ -2,8 +2,7 @@ import {
   applyTextAtomSettings,
   createBlockInstance,
   createRowBlock,
-  splitGridBlocks,
-  ensureGridRows,
+  getCanonicalGridStructure,
 } from '../block-helpers';
 import type {
   PageBuilderState,
@@ -22,19 +21,14 @@ export function reduceBlockActions(
         const updatedSections = state.sections.map((s: SectionInstance) => {
           if (s.id !== action.sectionId) return s;
           if (s.type !== 'Grid') return s;
-          const normalized = ensureGridRows(s);
-          const { rows, extras } = splitGridBlocks(normalized.blocks);
-          const columnsPerRow =
-            (normalized.settings['columns'] as number) ??
-            Math.max(
-              1,
-              (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
-            );
+          const canonical = getCanonicalGridStructure(s);
+          if (!canonical) return s;
+          const { rows, extras, columnsPerRow } = canonical;
           const nextRows = [...rows, createRowBlock(columnsPerRow)];
           return {
-            ...normalized,
+            ...s,
             blocks: [...nextRows, ...extras],
-            settings: { ...normalized.settings, rows: nextRows.length, columns: columnsPerRow },
+            settings: { ...s.settings, rows: nextRows.length, columns: columnsPerRow },
           };
         });
         return { ...state, sections: updatedSections };

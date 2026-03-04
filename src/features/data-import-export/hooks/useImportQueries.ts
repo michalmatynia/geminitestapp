@@ -189,20 +189,24 @@ export function useTemplateMutation(
 }
 
 export function useInventories(
-  connectionId?: string,
+  connectionId: string,
   enabled: boolean = true
 ): ListQuery<BaseInventory> {
   const queryKey = importExportKeys.inventories(connectionId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
+      const normalizedConnectionId = connectionId.trim();
+      if (!normalizedConnectionId) {
+        throw new Error('Base.com connection is required to load inventories.');
+      }
       const data = await api.post<{ inventories: BaseInventory[] }>(
         '/api/v2/integrations/imports/base',
-        { action: 'inventories', connectionId }
+        { action: 'inventories', connectionId: normalizedConnectionId }
       );
       return data.inventories;
     },
-    enabled,
+    enabled: enabled && !!connectionId.trim(),
     meta: {
       source: 'importExport.hooks.useInventories',
       operation: 'list',
@@ -216,7 +220,7 @@ export function useInventories(
 
 export function useWarehouses(
   inventoryId: string,
-  connectionId?: string,
+  connectionId: string,
   includeAll: boolean = false,
   enabled: boolean = true
 ): SingleQuery<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> {
@@ -224,17 +228,22 @@ export function useWarehouses(
   return createSingleQueryV2({
     id: inventoryId || null,
     queryKey,
-    queryFn: () =>
-      api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>(
+    queryFn: () => {
+      const normalizedConnectionId = connectionId.trim();
+      if (!normalizedConnectionId) {
+        throw new Error('Base.com connection is required to load warehouses.');
+      }
+      return api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>(
         '/api/v2/integrations/imports/base',
         {
           action: 'warehouses',
           inventoryId,
-          connectionId,
+          connectionId: normalizedConnectionId,
           includeAllWarehouses: includeAll,
         }
-      ),
-    enabled: enabled && !!inventoryId,
+      );
+    },
+    enabled: enabled && !!inventoryId && !!connectionId.trim(),
     meta: {
       source: 'importExport.hooks.useWarehouses',
       operation: 'detail',
@@ -300,7 +309,7 @@ export function useImportParameterCache(
 
 export function useRefreshImportParameterCacheMutation(): MutationResult<
   { keys?: string[]; values?: Record<string, string> },
-  { inventoryId: string; connectionId?: string }
+  { inventoryId: string; connectionId: string }
   > {
   const mutationKey = importExportKeys.lists();
 
@@ -310,20 +319,23 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
       connectionId,
     }: {
       inventoryId: string;
-      connectionId?: string;
+      connectionId: string;
     }): Promise<{ keys?: string[]; values?: Record<string, string> }> => {
       const normalizedInventoryId = inventoryId.trim();
       if (!normalizedInventoryId) {
         throw new Error('Inventory ID is required to load source fields.');
       }
 
-      const normalizedConnectionId = connectionId?.trim();
+      const normalizedConnectionId = connectionId.trim();
+      if (!normalizedConnectionId) {
+        throw new Error('Base.com connection is required to load source fields.');
+      }
       return api.post<{ keys?: string[]; values?: Record<string, string> }>(
         '/api/v2/integrations/imports/base/parameters',
         {
           inventoryId: normalizedInventoryId,
           sampleSize: 8,
-          ...(normalizedConnectionId ? { connectionId: normalizedConnectionId } : {}),
+          connectionId: normalizedConnectionId,
         }
       );
     },
@@ -346,7 +358,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
 export function useImportList(
   inventoryId: string,
   params: {
-    connectionId?: string;
+    connectionId: string;
     catalogId?: string;
     limit?: string | number;
     uniqueOnly?: boolean;
@@ -374,6 +386,10 @@ export function useImportList(
     queryFn: () => {
       const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } =
         params;
+      const normalizedConnectionId = connectionId.trim();
+      if (!normalizedConnectionId) {
+        throw new Error('Base.com connection is required to load import list.');
+      }
       return api.post<{
         products?: ImportListItem[];
         total?: number;
@@ -386,7 +402,7 @@ export function useImportList(
         totalPages?: number;
       }>('/api/v2/integrations/imports/base', {
         action: 'list',
-        connectionId,
+        connectionId: normalizedConnectionId,
         catalogId,
         inventoryId,
         limit: limit === 'all' ? undefined : Number(limit),
@@ -397,7 +413,7 @@ export function useImportList(
         searchSku,
       });
     },
-    enabled: enabled && !!inventoryId,
+    enabled: enabled && !!inventoryId && !!params.connectionId.trim(),
     meta: {
       source: 'importExport.hooks.useImportList',
       operation: 'detail',
@@ -412,7 +428,7 @@ export function useImportList(
 export function useImportMutation(): MutationResult<
   ImportResponse,
   {
-    connectionId?: string;
+    connectionId: string;
     inventoryId: string;
     catalogId: string;
     templateId?: string;
@@ -428,7 +444,16 @@ export function useImportMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
-    mutationFn: (params) => api.post<ImportResponse>('/api/v2/integrations/imports/base/runs', params),
+    mutationFn: (params) => {
+      const normalizedConnectionId = params.connectionId.trim();
+      if (!normalizedConnectionId) {
+        throw new Error('Base.com connection is required to start import.');
+      }
+      return api.post<ImportResponse>('/api/v2/integrations/imports/base/runs', {
+        ...params,
+        connectionId: normalizedConnectionId,
+      });
+    },
     mutationKey,
     meta: {
       source: 'importExport.hooks.useImportMutation',
@@ -609,7 +634,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
         }),
         ...(normalizedInventoryId
           ? [
-            api.post('/api/v2/integrations/imports/base/export-warehouse', {
+            api.post('/api/v2/integrations/exports/base/export-warehouse', {
               warehouseId: normalizedWarehouseId,
               inventoryId: normalizedInventoryId,
             }),

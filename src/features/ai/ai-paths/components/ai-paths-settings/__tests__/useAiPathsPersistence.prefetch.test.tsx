@@ -159,6 +159,74 @@ describe('useAiPathsPersistence idle prefetch', () => {
     setLoadingPersistenceMock.mockReset();
   });
 
+  it('does not request removed legacy validation key during hydration', async () => {
+    const activePathId = 'path_active';
+    const activeConfig = createDefaultPathConfig(activePathId);
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: JSON.stringify(activeConfig),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      isPathActive: true,
+      isPathLocked: false,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      parserSamples: {},
+      pathConfigs: { [activePathId]: activeConfig },
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [
+        {
+          id: activePathId,
+          name: activeConfig.name,
+          createdAt: activeConfig.createdAt,
+          updatedAt: activeConfig.updatedAt,
+        },
+      ],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalled();
+    });
+
+    const requestedKeys = mockedFetchAiPathsSettingsByKeysCached.mock.calls.flatMap(
+      (call) => call[0] ?? []
+    );
+
+    expect(requestedKeys).not.toContain('ai_paths_validation_v1');
+    expect(requestedKeys).toContain('ai_paths_ui_state');
+  });
+
   it('prefetches non-active path configs after initial hydration', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary';

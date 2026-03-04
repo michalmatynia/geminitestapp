@@ -1,11 +1,21 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
 
 import { useAiPathsNodeConfigActions } from '../useAiPathsNodeConfigActions';
 
+const useGraphActionsMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphActions: useGraphActionsMock,
+}));
+
 describe('useAiPathsNodeConfigActions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('updates the explicitly requested node id when provided', () => {
     let nodes: AiNode[] = [
       {
@@ -42,12 +52,9 @@ describe('useAiPathsNodeConfigActions', () => {
       nodes = updater(nodes);
     };
 
-    const { result } = renderHook(() =>
-      useAiPathsNodeConfigActions({
-        selectedNodeId: 'node-b',
-        setNodes,
-      })
-    );
+    useGraphActionsMock.mockReturnValue({ setNodes });
+
+    const { result } = renderHook(() => useAiPathsNodeConfigActions({ selectedNodeId: 'node-b' }));
 
     act(() => {
       result.current.updateSelectedNode(

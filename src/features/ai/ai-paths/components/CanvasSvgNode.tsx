@@ -17,6 +17,8 @@ import {
 import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
 import { type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
 
+const EMPTY_TRIGGER_IDS = new Set<string>();
+
 type CanvasSvgNodeProps = {
   node: AiNode;
   ui: CanvasBoardUIContextValue;
@@ -31,6 +33,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     inputPulseNodes,
     outputPulseNodes,
     triggerConnected,
+    launchingTriggerIds = EMPTY_TRIGGER_IDS,
     enableNodeAnimations,
     connectorHitTargetPx,
     hoveredConnectorKey,
@@ -174,6 +177,8 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
     Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
   const inputPulse = inputPulseNodes.has(node.id);
   const outputPulse = outputPulseNodes.has(node.id);
+  const isTriggerConnected = triggerConnected.has(node.id);
+  const isTriggerLaunching = launchingTriggerIds.has(node.id);
   const typeBadge = node.type.toUpperCase();
   const typeBadgeWidth = Math.max(54, typeBadge.length * 6 + 12);
   const runtimeBadgeWidth = runtimeStatusLabel
@@ -446,23 +451,17 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
             height={16}
             rx={5}
             fill={
-              triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.14)'
+              isTriggerLaunching
+                ? 'rgba(14, 165, 233, 0.24)'
+                : isTriggerConnected
+                  ? 'rgba(16, 185, 129, 0.2)'
+                  : 'rgba(244, 63, 94, 0.14)'
             }
-            stroke={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
+            stroke={isTriggerLaunching ? '#38bdf8' : isTriggerConnected ? '#10b981' : '#f43f5e'}
             strokeWidth='1'
-            style={{ cursor: nodeCursor, pointerEvents: 'all' }}
+            style={{ cursor: 'pointer', pointerEvents: 'all' }}
             onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
               event.stopPropagation();
-              void onPointerDownNode(event, node.id);
-            }}
-            onPointerMove={(event: React.PointerEvent<SVGRectElement>) => {
-              onPointerMoveNode(event, node.id);
-            }}
-            onPointerUp={(event: React.PointerEvent<SVGRectElement>) => {
-              onPointerUpNode(event, node.id);
-            }}
-            onPointerCancel={(event: React.PointerEvent<SVGRectElement>) => {
-              onPointerUpNode(event, node.id);
             }}
             onClick={(event: React.MouseEvent<SVGRectElement>) => {
               event.stopPropagation();
@@ -470,26 +469,26 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
                 event.preventDefault();
                 return;
               }
-              void onFireTrigger(node);
+              void onFireTrigger(node, event);
             }}
           />
           <path
             d='M0 0L0 7L6 3.5Z'
             transform='translate(8 4.5)'
-            fill={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
+            fill={isTriggerLaunching ? '#38bdf8' : isTriggerConnected ? '#10b981' : '#f43f5e'}
             pointerEvents='none'
           />
           <text
             x={46}
             y={11}
             textAnchor='middle'
-            fill={triggerConnected.has(node.id) ? '#a7f3d0' : '#fecdd3'}
+            fill={isTriggerLaunching ? '#bae6fd' : isTriggerConnected ? '#a7f3d0' : '#fecdd3'}
             fontSize='8'
             fontWeight='600'
             pointerEvents='none'
             style={{ userSelect: 'none' }}
           >
-            Fire Trigger
+            {isTriggerLaunching ? 'Launching...' : 'Fire Trigger'}
           </text>
         </g>
       )}

@@ -57,9 +57,10 @@ export function useImportExportData({
   pollImportRun: boolean;
   setPollImportRun: (poll: boolean) => void;
 }) {
+  const normalizedSelectedBaseConnectionId = selectedBaseConnectionId.trim();
   const inventoriesQuery = useInventories(
-    selectedBaseConnectionId,
-    inventoriesEnabled && isBaseConnected && !!selectedBaseConnectionId
+    normalizedSelectedBaseConnectionId,
+    inventoriesEnabled && isBaseConnected && !!normalizedSelectedBaseConnectionId
   );
   const inventories = useMemo<InventoryOption[]>(() => {
     const toText = (value: unknown): string => {
@@ -115,9 +116,12 @@ export function useImportExportData({
 
   const warehousesQuery = useWarehouses(
     exportInventoryId,
-    selectedBaseConnectionId,
+    normalizedSelectedBaseConnectionId,
     includeAllWarehouses,
-    warehousesEnabled && isBaseConnected && !!selectedBaseConnectionId && !!exportInventoryId
+    warehousesEnabled &&
+      isBaseConnected &&
+      !!normalizedSelectedBaseConnectionId &&
+      !!exportInventoryId
   );
   const warehousesData = warehousesQuery.data as
     | { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }
@@ -131,7 +135,7 @@ export function useImportExportData({
   const importListQuery = useImportList(
     inventoryId,
     {
-      connectionId: selectedBaseConnectionId,
+      connectionId: normalizedSelectedBaseConnectionId,
       catalogId,
       limit,
       uniqueOnly,
@@ -140,7 +144,10 @@ export function useImportExportData({
       searchName: importNameSearch,
       searchSku: importSkuSearch,
     },
-    importListEnabled && isBaseConnected && !!inventoryId
+    importListEnabled &&
+      isBaseConnected &&
+      !!inventoryId &&
+      !!normalizedSelectedBaseConnectionId
   );
   const importListData = importListQuery.data as
     | {

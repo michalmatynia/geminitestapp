@@ -147,7 +147,7 @@ const selectRuntimeRules = (
 const CASE_RESOLVER_HEADING_RULE_ID_RE = /^segment\.case_resolver\.heading\./i;
 
 const isCaseResolverRuntimeScope = (scope: string | null | undefined): boolean =>
-  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
+  scope === 'case_resolver_prompt_exploder';
 
 const hasUsableCaseResolverHeadingRules = (rules: PromptValidationRule[]): boolean =>
   rules.some(
@@ -236,7 +236,7 @@ const buildRuntimeSelectionCacheKey = (args: {
   templateSignature: string;
 }): string =>
   [
-    'runtime-selection-v1',
+    'runtime-selection-v2',
     args.scope,
     args.stack,
     args.profile,
@@ -529,68 +529,45 @@ export const explodePromptWithValidationRuntime = (args: {
       status,
     });
   };
-  const maxAttempts = 2;
-  let lastError: unknown = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const explodeStartedAt = performance.now();
-    try {
-      const document = explodePromptText({
-        prompt: args.prompt,
-        validationRules: args.runtime.runtimeValidationRules,
-        learnedTemplates: args.runtime.runtimeLearnedTemplates,
-        similarityThreshold: args.similarityThreshold,
-        validationScope: args.runtime.identity.scope,
-        runtimeCacheKey: args.runtime.identity.cacheKey,
-        correlationId: args.runtime.correlationId,
-      });
-      recordPromptValidationTiming('explode_ms', performance.now() - explodeStartedAt, {
-        scope: args.runtime.identity.scope,
-        stack:
-          typeof args.runtime.identity.stack === 'string'
-            ? args.runtime.identity.stack
-            : args.runtime.identity.stack?.id || 'anonymous',
-        correlationId: args.runtime.correlationId,
-        attempt: String(attempt),
-      });
-      if (attempt > 1) {
-        recordPromptValidationCounter('runtime_retry_success', 1, {
-          scope: args.runtime.identity.scope,
-        });
-      }
-      recordPipelineTiming('ok');
-      return document;
-    } catch (error) {
-      lastError = error;
-      const isRetryable =
-        !(error instanceof PromptValidationScopeResolutionError) &&
-        !(error instanceof PromptValidationRuntimeError) &&
-        attempt < maxAttempts;
-      if (isRetryable) {
-        recordPromptValidationCounter('runtime_retry', 1, {
-          scope: args.runtime.identity.scope,
-        });
-        continue;
-      }
-      break;
-    }
-  }
-
-  const pipelineMs = performance.now() - pipelineStartedAt;
-  if (pipelineMs > 2_500) {
-    recordPromptValidationCounter('runtime_timeout', 1, {
-      scope: args.runtime.identity.scope,
-    });
-  }
-  recordPromptValidationError('runtime_execution');
-  recordPipelineTiming('error');
-  throw new PromptValidationRuntimeError(
-    'Prompt explosion failed for the selected runtime.',
-    {
-      cacheKey: args.runtime.identity.cacheKey,
+  const explodeStartedAt = performance.now();
+  try {
+    const document = explodePromptText({
+      prompt: args.prompt,
+      validationRules: args.runtime.runtimeValidationRules,
+      learnedTemplates: args.runtime.runtimeLearnedTemplates,
+      similarityThreshold: args.similarityThreshold,
+      validationScope: args.runtime.identity.scope,
+      runtimeCacheKey: args.runtime.identity.cacheKey,
       correlationId: args.runtime.correlationId,
-      pipelineMs,
-    },
-    lastError
-  );
+    });
+    recordPromptValidationTiming('explode_ms', performance.now() - explodeStartedAt, {
+      scope: args.runtime.identity.scope,
+      stack:
+        typeof args.runtime.identity.stack === 'string'
+          ? args.runtime.identity.stack
+          : args.runtime.identity.stack?.id || 'anonymous',
+      correlationId: args.runtime.correlationId,
+      attempt: '1',
+    });
+    recordPipelineTiming('ok');
+    return document;
+  } catch (error) {
+    const pipelineMs = performance.now() - pipelineStartedAt;
+    if (pipelineMs > 2_500) {
+      recordPromptValidationCounter('runtime_timeout', 1, {
+        scope: args.runtime.identity.scope,
+      });
+    }
+    recordPromptValidationError('runtime_execution');
+    recordPipelineTiming('error');
+    throw new PromptValidationRuntimeError(
+      'Prompt explosion failed for the selected runtime.',
+      {
+        cacheKey: args.runtime.identity.cacheKey,
+        correlationId: args.runtime.correlationId,
+        pipelineMs,
+      },
+      error
+    );
+  }
 };

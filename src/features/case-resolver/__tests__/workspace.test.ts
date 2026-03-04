@@ -1523,7 +1523,7 @@ describe('case-resolver workspace', () => {
   it('parses node-file snapshots with node and edge metadata', () => {
     const snapshot = parseNodeFileSnapshot(
       JSON.stringify({
-        kind: 'case_resolver_node_file_snapshot_v1',
+        kind: 'case_resolver_node_file_snapshot_v2',
         source: 'manual',
         nodes: [createPromptNode('meta-node')],
         edges: [
@@ -1605,7 +1605,7 @@ describe('case-resolver workspace', () => {
     expect(() =>
       parseNodeFileSnapshot(
         JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
+          kind: 'case_resolver_node_file_snapshot_v2',
           source: 'manual',
           nodeId: 'legacy-node',
           sourceFileId: 'doc-legacy',
@@ -1630,7 +1630,7 @@ describe('case-resolver workspace', () => {
     expect(() =>
       parseNodeFileSnapshot(
         JSON.stringify({
-          kind: 'case_resolver_node_file_snapshot_v1',
+          kind: 'case_resolver_node_file_snapshot_v2',
           source: 'manual',
           nodes: [createPromptNode('legacy-node-a'), createPromptNode('legacy-node-b')],
           edges: [
@@ -1699,7 +1699,7 @@ describe('case-resolver workspace', () => {
             kind: 'node_file',
             sourceFileId: 'doc-legacy',
             textContent: JSON.stringify({
-              kind: 'case_resolver_node_file_snapshot_v1',
+              kind: 'case_resolver_node_file_snapshot_v2',
               source: 'manual',
               nodeId: 'legacy-node',
               sourceFileId: 'doc-legacy',
@@ -1711,7 +1711,7 @@ describe('case-resolver workspace', () => {
         activeFileId: 'doc-legacy',
       })
     );
-    expect(workspace.assets[0]?.textContent).toContain('case_resolver_node_file_snapshot_v1');
+    expect(workspace.assets[0]?.textContent).toContain('case_resolver_node_file_snapshot_v2');
     expect(workspace.assets[0]?.metadata?.nodeFileSnapshotStorage).toBeUndefined();
     const legacyDocumentGraph = workspace.files.find((file) => file.id === 'doc-legacy')?.graph;
     expect(legacyDocumentGraph?.nodeFileAssetIdByNode ?? {}).toEqual({});

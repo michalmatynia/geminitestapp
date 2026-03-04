@@ -85,6 +85,31 @@ describe('runObservabilityCheck logger enforcement', () => {
     });
   });
 
+  it('fails when legacy AI-path observability shim import is used', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/bad-ai-path-shim-import.ts',
+      "import { buildAiPathRunStaticContext } from '@/shared/lib/observability/ai-path-run-static-context';\nvoid buildAiPathRunStaticContext;\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.legacyCompatibility.totalViolations).toBe(1);
+    expect(report.legacyCompatibility.violations[0]).toMatchObject({
+      file: 'src/bad-ai-path-shim-import.ts',
+      message:
+        'legacy import "@/shared/lib/observability/ai-path-run-static-context" is not allowed',
+    });
+  });
+
   it('fails when forbidden legacy compatibility file still exists', () => {
     const root = createTempRoot();
     writeSource(

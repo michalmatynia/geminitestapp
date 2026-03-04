@@ -483,6 +483,42 @@
     animation: ai-paths-port-pulse 0.9s ease-in-out infinite;
   }
 
+  @keyframes ai-paths-node-pulse-input {
+    0% {
+      opacity: 0.18;
+      filter: drop-shadow(0 0 1px rgba(56, 189, 248, 0.45));
+    }
+    50% {
+      opacity: 0.95;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.9));
+    }
+    100% {
+      opacity: 0.18;
+      filter: drop-shadow(0 0 1px rgba(56, 189, 248, 0.45));
+    }
+  }
+  .ai-paths-node-pulse-input {
+    animation: ai-paths-node-pulse-input 0.55s ease-out;
+  }
+
+  @keyframes ai-paths-node-pulse-output {
+    0% {
+      opacity: 0.18;
+      filter: drop-shadow(0 0 1px rgba(16, 185, 129, 0.35));
+    }
+    50% {
+      opacity: 0.95;
+      filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.85));
+    }
+    100% {
+      opacity: 0.18;
+      filter: drop-shadow(0 0 1px rgba(16, 185, 129, 0.35));
+    }
+  }
+  .ai-paths-node-pulse-output {
+    animation: ai-paths-node-pulse-output 0.55s ease-out;
+  }
+
   @keyframes ai-paths-dot-bounce {
     0%,
     80%,
@@ -499,7 +535,9 @@
   @media (prefers-reduced-motion: reduce) {
     .ai-paths-wire-flow,
     .ai-paths-node-halo,
-    .ai-paths-port-pulse {
+    .ai-paths-port-pulse,
+    .ai-paths-node-pulse-input,
+    .ai-paths-node-pulse-output {
       animation: none !important;
       filter: none !important;
     }

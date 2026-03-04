@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { PathConfig, PathMeta, AiPathsValidationConfig } from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
@@ -189,7 +189,6 @@ export function useAiPathsPersistence(
           'user_preferences',
           AI_PATHS_HISTORY_RETENTION_KEY,
           AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
-          'ai_paths_validation_v1',
           'ai_paths_ui_state',
           'ai_paths_trigger_buttons',
         ];
@@ -217,15 +216,6 @@ export function useAiPathsPersistence(
           (s) => s.key === AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY
         );
         setHistoryRetentionOptionsMax(normalizeHistoryRetentionOptionsMax(historyMaxItem?.value));
-
-        const validationItem = baseSettings.find((s) => s.key === 'ai_paths_validation_v1');
-        if (validationItem?.value) {
-          try {
-            setAiPathsValidation(JSON.parse(validationItem.value) as AiPathsValidationConfig);
-          } catch {
-            // ignore
-          }
-        }
 
         const preferredActivePathId = resolvePreferredActivePathId(userPrefs);
         const fallbackActivePathId = loadedPaths[0]?.id ?? null;
@@ -599,7 +589,6 @@ export function useAiPathsPersistence(
     handleSave,
     persistActivePathPreference: prefs.persistActivePathPreference,
     persistPathSettings: path.persistPathSettings,
-    persistRuntimePathState: path.persistRuntimePathState,
     persistSettingsBulk: presets.persistSettingsBulk,
     savePathIndex,
     saving: path.saving,

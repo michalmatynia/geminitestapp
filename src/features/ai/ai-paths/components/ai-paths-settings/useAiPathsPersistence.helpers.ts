@@ -1,3 +1,6 @@
+import { z } from 'zod';
+
+import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
@@ -85,6 +88,11 @@ export type PathNodeRoleLintResult = {
   warnings: string[];
 };
 
+export type PathSavePayloadIssue = {
+  path: string;
+  message: string;
+};
+
 const formatNodeType = (type: string): string => type.replace(/_/g, ' ');
 
 export const lintPathNodeRoles = (nodes: AiNode[]): PathNodeRoleLintResult => {
@@ -125,6 +133,35 @@ export const lintPathNodeRoles = (nodes: AiNode[]): PathNodeRoleLintResult => {
     errors,
     warnings,
   };
+};
+
+const pathSavePayloadSchema = z.object({
+  nodes: z.array(aiNodeSchema),
+  edges: z.array(edgeSchema),
+});
+
+const formatIssuePath = (segments: ReadonlyArray<PropertyKey>): string => {
+  if (segments.length === 0) return '(root)';
+  return segments
+    .map((segment) => {
+      if (typeof segment === 'symbol') {
+        return segment.description ?? '(symbol)';
+      }
+      return String(segment);
+    })
+    .join('.');
+};
+
+export const collectInvalidPathSavePayloadIssues = (
+  nodes: AiNode[],
+  edges: Edge[]
+): PathSavePayloadIssue[] => {
+  const parsed = pathSavePayloadSchema.safeParse({ nodes, edges });
+  if (parsed.success) return [];
+  return parsed.error.issues.map((issue) => ({
+    path: formatIssuePath(issue.path),
+    message: issue.message,
+  }));
 };
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {

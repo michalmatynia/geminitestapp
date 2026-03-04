@@ -12,6 +12,8 @@ Status update (2026-03-04):
   - strict retry/fallback path removal,
   - parser runtime stricter compile behavior.
 - Bridge runtime alias normalization removed; canonical payloads are now required at runtime.
+- Post-cutover legacy cleanup delivered:
+  - obsolete persistence migration runtime helper and migration script removed from active toolchain.
 
 ## Goal
 
@@ -79,7 +81,7 @@ Deliverables:
 
 - Idempotent migration script with dry-run and apply modes.
 - Migration report: records scanned, updated, skipped, invalid.
-- Script entrypoint: `scripts/db/migrate-prompt-exploder-contract-v2.ts`
+- Historical script entrypoint (retired after cutover): `scripts/db/migrate-prompt-exploder-contract-v2.ts`
 
 Exit criteria:
 

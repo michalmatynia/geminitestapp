@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { vi, beforeEach } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
-import { GET } from '@/app/api/products/migrate/route';
+import { GET } from '@/app/api/v2/products/migrate/route';
 
 // Mock products server
 vi.mock('@/features/products/server', () => ({

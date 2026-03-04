@@ -98,9 +98,9 @@ export function useCanvasEventHandlers(args: {
       if (event.defaultPrevented) return;
       const now = performance.now();
       const insideByPoint = isPointInsideCanvas(event.clientX, event.clientY);
+      if (!insideByPoint) return;
       const likelyZoomGesture = isWheelLikelyZoomGesture(event);
       const withinActiveGestureWindow = now < wheelGestureActiveUntilRef.current;
-      if (!insideByPoint && !withinActiveGestureWindow) return;
       if (!likelyZoomGesture && !withinActiveGestureWindow) return;
 
       wheelGestureActiveUntilRef.current = now + (likelyZoomGesture ? 1800 : 540);

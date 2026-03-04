@@ -4,7 +4,7 @@ import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
 import type { ZodSchema } from 'zod';
 
-import { GET, POST } from '@/app/api/products/tags/route';
+import { GET, POST } from '@/app/api/v2/products/tags/route';
 import prisma from '@/shared/lib/db/prisma';
 
 // Mock Prisma client

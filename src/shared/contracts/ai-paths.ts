@@ -328,10 +328,10 @@ export interface LastErrorInfo {
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
 
 export interface RuntimeControlHandlers {
-  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;
   fireTriggerPersistent?: (
     node: AiNode,
-    event?: React.MouseEvent<HTMLButtonElement>
+    event?: React.MouseEvent<Element>
   ) => void | Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;

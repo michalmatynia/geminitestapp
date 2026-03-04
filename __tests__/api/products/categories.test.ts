@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
-import { GET as GET_TREE } from '@/app/api/products/categories/tree/route';
+import { GET as GET_TREE } from '@/app/api/v2/products/categories/tree/route';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('Product Categories API', () => {

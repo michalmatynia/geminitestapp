@@ -87,7 +87,10 @@ const BASE_IMPORT_RESUME_DEFAULT_STATUSES: BaseImportItemStatus[] = ['failed', '
 export const prepareBaseImportRun = async (
   input: StartBaseImportRunInput
 ): Promise<BaseImportRunRecord> => {
-  const normalizedConnectionId = input.connectionId?.trim() || '';
+  const normalizedConnectionId = input.connectionId.trim();
+  if (!normalizedConnectionId) {
+    throw badRequestError('Base.com connection is required.');
+  }
   const normalizedTemplateId = input.templateId?.trim() || '';
   const normalizedRequestId = input.requestId?.trim() || '';
   const normalizedSelectedIds = normalizeSelectedIds(input.selectedIds);
@@ -97,6 +100,7 @@ export const prepareBaseImportRun = async (
       : null;
 
   const normalizedParams: BaseImportRunParams = {
+    connectionId: normalizedConnectionId,
     inventoryId: input.inventoryId.trim(),
     catalogId: input.catalogId.trim(),
     imageMode: input.imageMode,
@@ -104,7 +108,6 @@ export const prepareBaseImportRun = async (
     allowDuplicateSku: input.allowDuplicateSku,
     dryRun: input.dryRun ?? false,
     mode: resolveMode(input.mode),
-    ...(normalizedConnectionId ? { connectionId: normalizedConnectionId } : {}),
     ...(normalizedTemplateId ? { templateId: normalizedTemplateId } : {}),
     ...(normalizedLimit !== null ? { limit: normalizedLimit } : {}),
     ...(normalizedSelectedIds.length > 0 ? { selectedIds: normalizedSelectedIds } : {}),

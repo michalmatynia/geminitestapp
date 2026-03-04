@@ -124,8 +124,7 @@ export async function postValidatorPatternsHandler(
   const replacementValue = body.replacementValue?.trim() || null;
   const replacementFields = normalizeReplacementFields(body.replacementFields);
   const replacementAppliesToScopes = normalizeProductValidationPatternReplacementScopes(
-    body.replacementAppliesToScopes,
-    body.appliesToScopes
+    body.replacementAppliesToScopes
   );
   const runtimeEnabled = body.runtimeEnabled ?? false;
   const runtimeType = body.runtimeType ?? 'none';
@@ -144,8 +143,7 @@ export async function postValidatorPatternsHandler(
   const sequenceGroupDebounceMs = body.sequenceGroupDebounceMs ?? 0;
   const launchEnabled = body.launchEnabled ?? false;
   const launchAppliesToScopes = normalizeProductValidationPatternLaunchScopes(
-    body.launchAppliesToScopes,
-    body.appliesToScopes
+    body.launchAppliesToScopes
   );
   const launchSourceMode = body.launchSourceMode ?? 'current_field';
   const launchScopeBehavior = normalizeProductValidationLaunchScopeBehavior(

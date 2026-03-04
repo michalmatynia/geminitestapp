@@ -27,7 +27,6 @@ import type { ClusterPresetDraft } from '../cluster-presets-panel';
 export interface UseAiPathsSettingsStateReturn {
   loading: boolean;
   isPathSwitching: boolean;
-  setIsPathSwitching: React.Dispatch<React.SetStateAction<boolean>>;
   docsOverviewSnippet: string;
   docsWiringSnippet: string;
   docsDescriptionSnippet: string;
@@ -70,7 +69,6 @@ export interface UseAiPathsSettingsStateReturn {
   handleRunModeChange: (mode: PathRunMode) => void;
   handleStrictFlowModeChange: (enabled: boolean) => void;
   handleBlockedRunPolicyChange: (policy: PathBlockedRunPolicy) => void;
-  setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>>;
   updateAiPathsValidation: (patch: Partial<AiPathsValidationConfig>) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
   triggers: string[];
@@ -83,22 +81,13 @@ export interface UseAiPathsSettingsStateReturn {
     time: string;
     pathId?: string | null;
   } | null;
-  setLastError: React.Dispatch<
-    React.SetStateAction<{
-      message: string;
-      time: string;
-      pathId?: string | null;
-    } | null>
-  >;
   persistLastError: (
     payload: { message: string; time: string; pathId?: string | null } | null
   ) => Promise<void>;
-  setLoadNonce: React.Dispatch<React.SetStateAction<number>>;
+  incrementLoadNonce: () => void;
   lastRunAt: string | null;
   pathName: string;
-  setPathName: React.Dispatch<React.SetStateAction<string>>;
   pathDescription: string;
-  setPathDescription: React.Dispatch<React.SetStateAction<string>>;
   updateActivePathMeta: (name: string) => void;
   paths: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
@@ -130,6 +119,7 @@ export interface UseAiPathsSettingsStateReturn {
   connectingPos: { x: number; y: number } | null;
   connectingFromNode: AiNode | null;
   selectedNodeId: string | null;
+  nodeConfigDirty: boolean;
   dragState: {
     nodeId: string;
     offsetX: number;
@@ -146,9 +136,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleSelectEdge: (edgeId: string | null) => void;
   handleFireTrigger: (triggerNode: AiNode, event?: React.MouseEvent) => void;
   handleFireTriggerPersistent: (triggerNode: AiNode, event?: React.MouseEvent) => Promise<void>;
-  setSimulationOpenNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   updateSelectedNode: (update: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleDeleteSelectedNode: () => void;
   handleRemoveEdge: (edgeId: string) => void;
   handleClearWires: () => Promise<void>;
@@ -197,9 +185,6 @@ export interface UseAiPathsSettingsStateReturn {
   lastGraphModelPayload: unknown;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
-  configOpen: boolean;
-  nodeConfigDirty: boolean;
-  setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;
@@ -239,7 +224,6 @@ export interface UseAiPathsSettingsStateReturn {
   presetsJson: string;
   setPresetsJson: React.Dispatch<React.SetStateAction<string>>;
   handleImportPresets: (mode: 'merge' | 'replace') => Promise<void>;
-  simulationOpenNodeId: string | null;
   ConfirmationModal: React.ComponentType;
   confirmNodeSwitch: (nextNodeId: string) => boolean | Promise<boolean>;
   reportAiPathsError: (
@@ -256,6 +240,5 @@ export interface UseAiPathsSettingsStateReturn {
     configId: string,
     config: PathConfig
   ) => Promise<void>;
-  persistRuntimePathState: (pathId: string, runtimeState: RuntimeState) => Promise<void>;
   persistSettingsBulk: (items: Array<{ key: string; value: string }>) => Promise<void>;
 }

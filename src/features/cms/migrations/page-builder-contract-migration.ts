@@ -2,6 +2,8 @@ import type { BlockInstance, PageComponent, PageZone } from '@/shared/contracts/
 
 const VALID_ZONES = new Set<PageZone>(['header', 'template', 'footer']);
 const VALID_IMAGE_BACKGROUND_TARGETS = new Set(['grid', 'row', 'column']);
+const TRUE_BOOLEAN_LITERALS = new Set(['true', '1', 'yes', 'on']);
+const FALSE_BOOLEAN_LITERALS = new Set(['false', '0', 'no', 'off', '']);
 const CANONICAL_CONTENT_KEYS = new Set([
   'zone',
   'settings',
@@ -44,6 +46,43 @@ const normalizeParentSectionId = (value: unknown, sectionId: string): string | n
   const trimmed = value.trim();
   if (!trimmed || trimmed === sectionId) return null;
   return trimmed;
+};
+
+const normalizeBooleanSetting = (value: unknown): boolean | null => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return null;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (TRUE_BOOLEAN_LITERALS.has(normalized)) return true;
+    if (FALSE_BOOLEAN_LITERALS.has(normalized)) return false;
+  }
+  return null;
+};
+
+const normalizeSettings = (
+  source: unknown
+): { settings: Record<string, unknown>; changed: boolean } => {
+  if (!isRecord(source)) {
+    return { settings: {}, changed: true };
+  }
+
+  const hiddenValue = source['isHidden'];
+  const normalizedHidden = normalizeBooleanSetting(hiddenValue);
+  if (normalizedHidden === null || hiddenValue === normalizedHidden) {
+    return { settings: source, changed: false };
+  }
+
+  return {
+    settings: {
+      ...source,
+      isHidden: normalizedHidden,
+    },
+    changed: true,
+  };
 };
 
 const normalizeGridBlocks = (
@@ -191,8 +230,10 @@ export const migrateCmsPageBuilderComponents = (
     const parentSectionId = normalizeParentSectionId(rawContent['parentSectionId'], sectionId);
     if (rawContent['parentSectionId'] !== parentSectionId) stats.normalizedParents += 1;
 
-    const settings = isRecord(rawContent['settings']) ? rawContent['settings'] : {};
-    if (rawContent['settings'] !== settings) stats.normalizedSettings += 1;
+    const normalizedSettings = normalizeSettings(rawContent['settings']);
+    const settings = normalizedSettings.settings;
+    const settingsChanged = rawContent['settings'] !== settings || normalizedSettings.changed;
+    if (settingsChanged) stats.normalizedSettings += 1;
 
     const sourceBlocks = Array.isArray(rawContent['blocks'])
       ? (rawContent['blocks'] as BlockInstance[])
@@ -225,7 +266,7 @@ export const migrateCmsPageBuilderComponents = (
     const componentChanged =
       !isRecord(component.content) ||
       rawContent['zone'] !== zone ||
-      rawContent['settings'] !== settings ||
+      settingsChanged ||
       rawContent['blocks'] !== blocks ||
       rawContent['sectionId'] !== sectionId ||
       rawContent['parentSectionId'] !== parentSectionId ||

@@ -337,23 +337,7 @@ export const triggerButtonsApi = {
   create: createTriggerButton,
   update: updateTriggerButton,
   delete: deleteTriggerButton,
-  remove: deleteTriggerButton,
-  reorder: (
-    payload:
-      | string[]
-      | {
-          orderedIds?: string[];
-          buttonIds?: string[];
-        }
-  ) => {
-    if (Array.isArray(payload)) {
-      return reorderTriggerButtons({ orderedIds: payload });
-    }
-    if (Array.isArray(payload.orderedIds)) {
-      return reorderTriggerButtons({ orderedIds: payload.orderedIds });
-    }
-    return reorderTriggerButtons({ orderedIds: payload.buttonIds ?? [] });
-  },
+  reorder: reorderTriggerButtons,
 };
 
 export const aiJobsApi = {

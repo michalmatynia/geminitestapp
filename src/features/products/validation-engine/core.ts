@@ -278,11 +278,7 @@ export const shouldLaunchPattern = ({
 }): boolean => {
   if (!pattern.launchEnabled) return true;
   if (
-    !isPatternLaunchEnabledForValidationScope(
-      pattern.launchAppliesToScopes,
-      validationScope,
-      pattern.appliesToScopes
-    )
+    !isPatternLaunchEnabledForValidationScope(pattern.launchAppliesToScopes, validationScope)
   ) {
     return (
       normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior) ===
@@ -558,8 +554,7 @@ export const buildFieldIssues = ({
         const hasReplacer = Boolean(pattern.replacementEnabled && pattern.replacementValue);
         const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
           pattern.replacementAppliesToScopes,
-          validationScope,
-          pattern.appliesToScopes
+          validationScope
         );
         const replacementScope: FieldValidatorIssue['replacementScope'] = !hasReplacer
           ? 'none'

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import type {
   Edge,
-  RuntimeState,
   PathMeta,
   PathConfig,
 } from '@/shared/lib/ai-paths';
@@ -29,8 +28,15 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
-import { usePersistenceActions, useRuntimeActions } from '@/features/ai/ai-paths/context';
-import { useContextSettingsState } from './hooks/state/useContextSettingsState';
+import {
+  useGraphActions,
+  usePersistenceActions,
+  usePersistenceState,
+  useRuntimeState,
+  useRuntimeActions,
+  useSelectionActions,
+  useSelectionState,
+} from '@/features/ai/ai-paths/context';
 import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
 import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
 
@@ -51,8 +57,26 @@ export function useAiPathsSettingsState({
 }: AiPathsSettingsStateOptions): UseAiPathsSettingsStateReturn {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const { setOperationHandlers } = usePersistenceActions();
-  const { setRunControlHandlers, setRuntimeNodeConfigHandlers } = useRuntimeActions();
+  const { setPathName: setPathNameAction } = useGraphActions();
+  const { selectedNodeId, configOpen, nodeConfigDirty } = useSelectionState();
+  const { setNodeConfigDirty: setNodeConfigDirtyAction } = useSelectionActions();
+  const { loading, loadNonce, isPathSwitching } = usePersistenceState();
+  const { setOperationHandlers, incrementLoadNonce: incrementLoadNonceAction } =
+    usePersistenceActions();
+  const {
+    setRunControlHandlers,
+    setRuntimeNodeConfigHandlers,
+    setParserSamples: setParserSamplesAction,
+    setUpdaterSamples: setUpdaterSamplesAction,
+  } = useRuntimeActions();
+  const {
+    runtimeState,
+    parserSamples,
+    updaterSamples,
+    pathDebugSnapshots,
+    lastRunAt,
+    lastError,
+  } = useRuntimeState();
 
   const normalizeTriggerLabel = (value?: string | null): string =>
     value === 'Product Modal - Context Grabber'
@@ -61,6 +85,7 @@ export function useAiPathsSettingsState({
 
   const {
     nodes,
+    setEdges: setEdgesAction,
     edges,
     paths,
     pathConfigs,
@@ -68,9 +93,7 @@ export function useAiPathsSettingsState({
     isPathLocked,
     isPathActive,
     pathName,
-    setPathName,
     pathDescription,
-    setPathDescription,
     activeTrigger,
   } = useCoreSettingsState();
 
@@ -81,34 +104,9 @@ export function useAiPathsSettingsState({
     strictFlowMode,
     blockedRunPolicy,
     aiPathsValidationState,
-    setAiPathsValidationState,
     historyRetentionPasses,
     historyRetentionOptionsMax,
   } = useExecutionSettingsState();
-
-  const {
-    selectedNodeId,
-    configOpen,
-    nodeConfigDirty,
-    simulationOpenNodeId,
-    runtimeState,
-    parserSamples,
-    updaterSamples,
-    pathDebugSnapshots,
-    lastRunAt,
-    lastError,
-    loading,
-    loadNonce,
-    isPathSwitching,
-    setParserSamples,
-    setUpdaterSamples,
-    setLastError,
-    setConfigOpen,
-    setNodeConfigDirty,
-    setSimulationOpenNodeId,
-    setLoadNonce,
-    setIsPathSwitching,
-  } = useContextSettingsState();
 
   const {
     validation,
@@ -128,7 +126,7 @@ export function useAiPathsSettingsState({
     configOpen,
     nodeConfigDirty,
     selectedNodeId,
-    setNodeConfigDirty,
+    setNodeConfigDirty: setNodeConfigDirtyAction,
     confirm,
     toast,
   });
@@ -239,7 +237,6 @@ export function useAiPathsSettingsState({
     handleSave,
     persistActivePathPreference,
     persistPathSettings,
-    persistRuntimePathState,
     persistSettingsBulk,
     savePathIndex,
   } = useAiPathsPersistence({
@@ -301,6 +298,16 @@ export function useAiPathsSettingsState({
     toast,
   });
 
+  const handleCanonicalEdgesDetected = useCallback(
+    (nextEdges: Edge[]): void => {
+      setEdgesAction(nextEdges, {
+        reason: 'update',
+        source: 'runtime.edge-canonicalization',
+      });
+    },
+    [setEdgesAction]
+  );
+
   const runtime = useAiPathsRuntime({
     activePathId,
     pathName,
@@ -316,6 +323,7 @@ export function useAiPathsSettingsState({
     isPathActive,
     nodes,
     edges,
+    onCanonicalEdgesDetected: handleCanonicalEdgesDetected,
     reportAiPathsError,
     toast,
   });
@@ -449,6 +457,10 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
   });
 
+  const incrementLoadNonce = useCallback((): void => {
+    incrementLoadNonceAction();
+  }, [incrementLoadNonceAction]);
+
   return {
     // Docs
     docsOverviewSnippet: DOCS_OVERVIEW_SNIPPET,
@@ -482,9 +494,7 @@ export function useAiPathsSettingsState({
     isPathLocked,
     isPathActive,
     pathName,
-    setPathName,
     pathDescription,
-    setPathDescription,
     activeTrigger,
     triggers,
     executionMode,
@@ -493,35 +503,27 @@ export function useAiPathsSettingsState({
     strictFlowMode,
     blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
-    setAiPathsValidation: setAiPathsValidationState,
     historyRetentionPasses,
     historyRetentionOptionsMax,
     // Loading / Saving
     loading,
     isPathSwitching,
-    setIsPathSwitching,
     saving,
     // Samples
     parserSamples,
-    setParserSamples,
+    setParserSamples: setParserSamplesAction,
     parserSampleLoading,
     updaterSamples,
-    setUpdaterSamples,
+    setUpdaterSamples: setUpdaterSamplesAction,
     updaterSampleLoading,
     // Run / Error
     lastRunAt,
     lastError,
-    setLastError,
     pathDebugSnapshots,
     // UI State
     selectedNodeId,
-    configOpen,
-    setConfigOpen,
     nodeConfigDirty,
-    setNodeConfigDirty,
-    setLoadNonce,
-    simulationOpenNodeId,
-    setSimulationOpenNodeId,
+    incrementLoadNonce,
     selectedNode,
     // Path flags
     pathConfigs,
@@ -573,10 +575,6 @@ export function useAiPathsSettingsState({
     handleSave,
     persistActivePathPreference,
     persistPathSettings: persistPathSettingsVoid,
-    persistRuntimePathState: persistRuntimePathState as unknown as (
-      pathId: string,
-      runtimeState: RuntimeState
-    ) => Promise<void>,
     persistSettingsBulk,
     savePathIndex,
     // Samples fetch
@@ -623,7 +621,9 @@ export function useAiPathsSettingsState({
     sendingToAi: runtime.sendingToAi,
     lastGraphModelPayload: null,
     // Path meta
-    updateActivePathMeta: (name: string) => setPathName(name),
+    updateActivePathMeta: (name: string) => {
+      setPathNameAction(name);
+    },
     // Confirm modal
     ConfirmationModal,
     confirmNodeSwitch,

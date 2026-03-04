@@ -137,14 +137,8 @@ const hasPatternChanges = (
   if (!isStringArrayEqual(current.replacementFields, next.replacementFields)) return true;
   if (
     !isStringArrayEqual(
-      normalizeProductValidationPatternReplacementScopes(
-        current.replacementAppliesToScopes,
-        current.appliesToScopes
-      ),
-      normalizeProductValidationPatternReplacementScopes(
-        next.replacementAppliesToScopes,
-        next.appliesToScopes
-      )
+      normalizeProductValidationPatternReplacementScopes(current.replacementAppliesToScopes),
+      normalizeProductValidationPatternReplacementScopes(next.replacementAppliesToScopes)
     )
   ) {
     return true;
@@ -174,14 +168,8 @@ const hasPatternChanges = (
   if ((current.launchEnabled ?? false) !== (next.launchEnabled ?? false)) return true;
   if (
     !isStringArrayEqual(
-      normalizeProductValidationPatternLaunchScopes(
-        current.launchAppliesToScopes,
-        current.appliesToScopes
-      ),
-      normalizeProductValidationPatternLaunchScopes(
-        next.launchAppliesToScopes,
-        next.appliesToScopes
-      )
+      normalizeProductValidationPatternLaunchScopes(current.launchAppliesToScopes),
+      normalizeProductValidationPatternLaunchScopes(next.launchAppliesToScopes)
     )
   ) {
     return true;
@@ -369,8 +357,7 @@ const toCreateInput = (
     replacementValue,
     replacementFields: pattern.replacementFields ?? [],
     replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-      pattern.replacementAppliesToScopes,
-      pattern.appliesToScopes
+      pattern.replacementAppliesToScopes
     ),
     runtimeEnabled,
     runtimeType,
@@ -387,8 +374,7 @@ const toCreateInput = (
     passOutputToNext: pattern.passOutputToNext ?? true,
     launchEnabled,
     launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-      pattern.launchAppliesToScopes,
-      pattern.appliesToScopes
+      pattern.launchAppliesToScopes
     ),
     launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior),
     launchSourceMode,

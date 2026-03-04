@@ -24,15 +24,13 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
         <MultiSelect
           options={PATTERN_SCOPE_OPTIONS}
           selected={normalizeProductValidationPatternReplacementScopes(
-            formData.replacementAppliesToScopes,
-            formData.appliesToScopes
+            formData.replacementAppliesToScopes
           )}
           onChange={(values: string[]) =>
             setFormData((prev: PatternFormData) => ({
               ...prev,
               replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-                values,
-                prev.appliesToScopes
+                values
               ),
             }))
           }

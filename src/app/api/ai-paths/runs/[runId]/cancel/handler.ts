@@ -6,25 +6,12 @@ import {
   requireAiPathsAccess,
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { mongoPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
-import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository';
 import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
-
-const resolveFallbackRepository = (primary: AiPathRunRepository): AiPathRunRepository | null => {
-  if (primary === prismaPathRunRepository) {
-    return process.env['MONGODB_URI'] ? mongoPathRunRepository : null;
-  }
-  if (primary === mongoPathRunRepository) {
-    return process.env['DATABASE_URL'] ? prismaPathRunRepository : null;
-  }
-  return null;
-};
 
 export async function POST_handler(
   _req: NextRequest,
@@ -35,18 +22,7 @@ export async function POST_handler(
   await enforceAiPathsActionRateLimit(access, 'run-cancel');
   const runId: string = params.runId;
   const repo = await getPathRunRepository();
-  let repoForRun: AiPathRunRepository = repo;
   let existing: AiPathRunRecord | null = await repo.findRunById(runId);
-  if (!existing) {
-    const fallbackRepo = resolveFallbackRepository(repo);
-    if (fallbackRepo) {
-      const fallbackRun = await fallbackRepo.findRunById(runId);
-      if (fallbackRun) {
-        existing = fallbackRun;
-        repoForRun = fallbackRepo;
-      }
-    }
-  }
   if (!existing) {
     await removePathRunQueueEntries([runId]);
     return NextResponse.json({
@@ -58,7 +34,7 @@ export async function POST_handler(
   }
   assertAiPathRunAccess(access, existing);
   if (TERMINAL_STATUSES.has(existing.status)) {
-    await cancelPathRunWithRepository(repoForRun, runId);
+    await cancelPathRunWithRepository(repo, runId);
     return NextResponse.json({
       run: existing,
       canceled: false,
@@ -66,6 +42,6 @@ export async function POST_handler(
       message: `Run is already ${existing.status}.`,
     });
   }
-  const run: unknown = await cancelPathRunWithRepository(repoForRun, runId);
+  const run: unknown = await cancelPathRunWithRepository(repo, runId);
   return NextResponse.json({ run, canceled: true, runId });
 }

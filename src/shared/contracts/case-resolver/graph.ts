@@ -112,7 +112,7 @@ export interface CaseResolverSnapshotNodeMeta {
 }
 
 export const caseResolverNodeFileSnapshotSchema = z.object({
-  kind: z.literal('case_resolver_node_file_snapshot_v1'),
+  kind: z.literal('case_resolver_node_file_snapshot_v2'),
   nodes: z.array(aiNodeSchema),
   edges: z.array(edgeSchema),
   nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
@@ -128,7 +128,7 @@ export const caseResolverNodeFileSnapshotSchema = z.object({
 });
 
 export interface CaseResolverNodeFileSnapshot {
-  kind: 'case_resolver_node_file_snapshot_v1';
+  kind: 'case_resolver_node_file_snapshot_v2';
   source?: 'manual' | 'auto' | undefined;
   nodes: AiNode[];
   edges: Edge[];

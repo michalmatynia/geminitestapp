@@ -60,7 +60,7 @@ describe('prompt exploder segmentation library', () => {
     expect(parsed.records).toEqual([]);
   });
 
-  it('hydrates legacy records missing prompt and segments via adapter', () => {
+  it('rejects legacy records missing canonical prompt and segments fields', () => {
     const payload = {
       version: 1,
       records: [
@@ -84,9 +84,7 @@ describe('prompt exploder segmentation library', () => {
 
     const parsed = parsePromptExploderSegmentationLibrary(JSON.stringify(payload));
 
-    expect(parsed.records).toHaveLength(1);
-    expect(parsed.records[0]?.prompt).toBe('Legacy source prompt');
-    expect(parsed.records[0]?.segments.map((segment) => segment.id)).toEqual(['legacy_segment']);
+    expect(parsed.records).toEqual([]);
   });
 
   it('builds a segmentation record from prompt and document snapshot', () => {

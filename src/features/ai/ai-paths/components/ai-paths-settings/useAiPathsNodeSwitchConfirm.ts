@@ -21,7 +21,7 @@ type UseAiPathsNodeSwitchConfirmInput = {
   configOpen: boolean;
   nodeConfigDirty: boolean;
   selectedNodeId: string | null;
-  setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  setNodeConfigDirty: (dirty: boolean) => void;
   confirm: ConfirmFn;
   toast: ToastFn;
 };

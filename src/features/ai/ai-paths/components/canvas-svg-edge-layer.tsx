@@ -6,6 +6,14 @@ import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
 import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 
+const FLOWING_RUNTIME_NODE_STATUSES = new Set([
+  'queued',
+  'running',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+]);
+
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   cullPadding = 160,
 }: {
@@ -23,6 +31,7 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
     selectedEdgeId,
     selectedNodeIdSet,
     activeEdgeIds,
+    runtimeNodeStatuses,
     triggerConnected,
     wireFlowEnabled,
     flowingIntensity,
@@ -91,12 +100,23 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
           selectedNodeIdSet.has(fromNodeId) &&
           selectedNodeIdSet.has(toNodeId);
         const isSelected = selectedEdgeId === edge.id || isNodeSelectionEdge;
-        const isFlowing = activeEdgeIds.has(edge.id);
         const isManualConnector =
           edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
         const fromNode = nodeById.get(fromNodeId);
         const toNode = nodeById.get(toNodeId);
         const isSchemaConnection = fromNode?.type === 'db_schema' && toNode?.type === 'database';
+        const fromRuntimeStatus =
+          typeof runtimeNodeStatuses[fromNodeId] === 'string'
+            ? runtimeNodeStatuses[fromNodeId].trim().toLowerCase()
+            : '';
+        const toRuntimeStatus =
+          typeof runtimeNodeStatuses[toNodeId] === 'string'
+            ? runtimeNodeStatuses[toNodeId].trim().toLowerCase()
+            : '';
+        const isRuntimeActiveEdge =
+          FLOWING_RUNTIME_NODE_STATUSES.has(fromRuntimeStatus) ||
+          FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
+        const isFlowing = activeEdgeIds.has(edge.id) || isRuntimeActiveEdge;
         const isActivePath =
           !isManualConnector &&
           !isSchemaConnection &&

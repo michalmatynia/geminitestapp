@@ -55,16 +55,12 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
               <MultiSelect
                 options={PATTERN_SCOPE_OPTIONS}
                 selected={normalizeProductValidationPatternLaunchScopes(
-                  formData.launchAppliesToScopes,
-                  formData.appliesToScopes
+                  formData.launchAppliesToScopes
                 )}
                 onChange={(values: string[]) =>
                   setFormData((prev: PatternFormData) => ({
                     ...prev,
-                    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-                      values,
-                      prev.appliesToScopes
-                    ),
+                    launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(values),
                   }))
                 }
                 placeholder='Follow pattern scopes'

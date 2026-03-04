@@ -160,4 +160,21 @@ describe('base import parameters handler', () => {
       products: ['p-99'],
     });
   });
+
+  it('requires explicit connectionId for parameter cache refresh', async () => {
+    await expect(
+      postBaseImportParametersHandler(
+        new NextRequest('http://localhost/api/v2/integrations/imports/base/parameters', {
+          method: 'POST',
+          body: JSON.stringify({
+            inventoryId: 'inventory-1',
+            sampleSize: 2,
+          }),
+        }),
+        mockContext
+      )
+    ).rejects.toThrow(/Base\.com connection is required/i);
+
+    expect(callBaseApiMock).not.toHaveBeenCalled();
+  });
 });

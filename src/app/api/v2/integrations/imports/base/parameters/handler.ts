@@ -420,6 +420,10 @@ export async function postBaseImportParametersHandler(
   if (!data.inventoryId) {
     throw badRequestError('Inventory ID is required.');
   }
+  const normalizedConnectionId = data.connectionId?.trim() ?? '';
+  if (!normalizedConnectionId) {
+    throw badRequestError('Base.com connection is required.');
+  }
 
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
@@ -431,12 +435,12 @@ export async function postBaseImportParametersHandler(
   }
 
   const connections = await integrationRepo.listConnections(baseIntegration.id);
-  const normalizedConnectionId = data.connectionId?.trim();
-  const connection = normalizedConnectionId
-    ? connections.find((entry: (typeof connections)[number]) => entry.id === normalizedConnectionId)
-    : connections.find(
-      (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
-    );
+  const connection = connections.find(
+    (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
+  );
+  if (!connection) {
+    throw badRequestError('Selected Base.com connection was not found.');
+  }
   if (!connection?.baseApiToken && !connection?.password) {
     throw badRequestError('No Base API token configured.');
   }

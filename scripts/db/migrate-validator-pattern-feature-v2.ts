@@ -28,16 +28,15 @@ type CliOptions = {
   dryRun: boolean;
   limit: number | null;
   target: 'all' | 'patterns' | 'lists';
-  rewriteAllPatterns: boolean;
 };
 
 type PatternMigrationSummary = {
   mode: 'dry-run' | 'write';
   provider: ProductDbProvider;
   scanned: number;
+  legacyRuntimeConfigPatterns: number;
   staleDimensionPatterns: number;
   interleavedDimensionPatterns: number;
-  rewriteAllPatterns: boolean;
   plannedUpdates: number;
   attemptedUpdates: number;
   appliedUpdates: number;
@@ -74,16 +73,11 @@ const parseCliOptions = (argv: string[]): CliOptions => {
     dryRun: true,
     limit: null,
     target: 'all',
-    rewriteAllPatterns: true,
   };
 
   for (const arg of argv) {
     if (arg === '--write') {
       options.dryRun = false;
-      continue;
-    }
-    if (arg === '--compat-only') {
-      options.rewriteAllPatterns = false;
       continue;
     }
     if (arg.startsWith('--limit=')) {
@@ -130,46 +124,256 @@ const isNameSecondSegmentDimensionPattern = (pattern: {
   );
 };
 
+type RuntimeConfigCanonicalization = {
+  runtimeConfig: string | null;
+  legacyDetected: boolean;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeReplacementPathsFromConfig = (
+  config: Record<string, unknown>
+): { paths: string[]; usedLegacyReplacementPath: boolean } => {
+  const normalized = new Set<string>();
+  if (Array.isArray(config['replacementPaths'])) {
+    for (const entry of config['replacementPaths']) {
+      if (typeof entry !== 'string') continue;
+      const trimmed = entry.trim();
+      if (trimmed.length === 0) continue;
+      normalized.add(trimmed);
+    }
+  }
+
+  let usedLegacyReplacementPath = false;
+  if (typeof config['replacementPath'] === 'string') {
+    const trimmed = config['replacementPath'].trim();
+    if (trimmed.length > 0) {
+      normalized.add(trimmed);
+    }
+    usedLegacyReplacementPath = true;
+  }
+
+  return {
+    paths: Array.from(normalized),
+    usedLegacyReplacementPath,
+  };
+};
+
+const canonicalizeDatabaseRuntimeConfig = (
+  config: Record<string, unknown>
+): { next: Record<string, unknown>; legacyDetected: boolean } => {
+  const operation = config['operation'] === 'action' ? 'action' : 'query';
+  const payload = isRecord(config['payload']) ? { ...config['payload'] } : {};
+
+  let legacyDetected = !isRecord(config['payload']);
+  const legacyRootPayloadKeys = [
+    'provider',
+    'collection',
+    'query',
+    'projection',
+    'sort',
+    'limit',
+    'single',
+    'idType',
+    'action',
+    'filter',
+    'pipeline',
+    'distinctField',
+  ];
+
+  for (const key of legacyRootPayloadKeys) {
+    if (config[key] === undefined) continue;
+    legacyDetected = true;
+    if (payload[key] === undefined) {
+      payload[key] = config[key];
+    }
+  }
+
+  const { paths: replacementPaths, usedLegacyReplacementPath } =
+    normalizeReplacementPathsFromConfig(config);
+  if (usedLegacyReplacementPath) legacyDetected = true;
+  if (config['value'] !== undefined || config['expected'] !== undefined) {
+    legacyDetected = true;
+  }
+
+  const next: Record<string, unknown> = {
+    version: 1,
+    operation,
+    payload,
+  };
+  if (typeof config['resultPath'] === 'string') {
+    const trimmed = config['resultPath'].trim();
+    if (trimmed.length > 0) next['resultPath'] = trimmed;
+  }
+  if (config['operator'] !== undefined) next['operator'] = config['operator'];
+  const operand = config['operand'] ?? config['value'] ?? config['expected'];
+  if (operand !== undefined) next['operand'] = operand;
+  if (typeof config['flags'] === 'string' || config['flags'] === null) {
+    next['flags'] = config['flags'];
+  }
+  if (replacementPaths.length > 0) {
+    next['replacementPaths'] = replacementPaths;
+  }
+  if (
+    typeof config['replacementValue'] === 'string' ||
+    typeof config['replacementValue'] === 'number' ||
+    typeof config['replacementValue'] === 'boolean'
+  ) {
+    next['replacementValue'] = config['replacementValue'];
+  }
+  if (typeof config['messageTemplate'] === 'string') {
+    next['messageTemplate'] = config['messageTemplate'];
+  }
+  if (config['onError'] === 'ignore' || config['onError'] === 'issue') {
+    next['onError'] = config['onError'];
+  }
+
+  return { next, legacyDetected };
+};
+
+const canonicalizeAiRuntimeConfig = (
+  config: Record<string, unknown>
+): { next: Record<string, unknown>; legacyDetected: boolean } => {
+  const { paths: replacementPaths, usedLegacyReplacementPath } =
+    normalizeReplacementPathsFromConfig(config);
+  let legacyDetected = usedLegacyReplacementPath;
+  if (config['value'] !== undefined || config['expected'] !== undefined) {
+    legacyDetected = true;
+  }
+
+  const next: Record<string, unknown> = {
+    version: 1,
+  };
+  if (typeof config['model'] === 'string') next['model'] = config['model'];
+  if (typeof config['systemPrompt'] === 'string') next['systemPrompt'] = config['systemPrompt'];
+  if (typeof config['promptTemplate'] === 'string') next['promptTemplate'] = config['promptTemplate'];
+  if (typeof config['temperature'] === 'number') next['temperature'] = config['temperature'];
+  if (typeof config['maxTokens'] === 'number') next['maxTokens'] = config['maxTokens'];
+  if (typeof config['timeoutMs'] === 'number') next['timeoutMs'] = config['timeoutMs'];
+  if (config['responseFormat'] === 'json' || config['responseFormat'] === 'text') {
+    next['responseFormat'] = config['responseFormat'];
+  }
+  if (typeof config['resultPath'] === 'string') {
+    const trimmed = config['resultPath'].trim();
+    if (trimmed.length > 0) next['resultPath'] = trimmed;
+  }
+  if (config['operator'] !== undefined) next['operator'] = config['operator'];
+  const operand = config['operand'] ?? config['value'] ?? config['expected'];
+  if (operand !== undefined) next['operand'] = operand;
+  if (typeof config['flags'] === 'string' || config['flags'] === null) {
+    next['flags'] = config['flags'];
+  }
+  if (typeof config['messageTemplate'] === 'string') {
+    next['messageTemplate'] = config['messageTemplate'];
+  }
+  if (replacementPaths.length > 0) {
+    next['replacementPaths'] = replacementPaths;
+  }
+  if (
+    typeof config['replacementValue'] === 'string' ||
+    typeof config['replacementValue'] === 'number' ||
+    typeof config['replacementValue'] === 'boolean'
+  ) {
+    next['replacementValue'] = config['replacementValue'];
+  }
+  if (config['onError'] === 'ignore' || config['onError'] === 'issue') {
+    next['onError'] = config['onError'];
+  }
+  return { next, legacyDetected };
+};
+
+const canonicalizeValidationPatternRuntimeConfig = (
+  pattern: ProductValidationPattern
+): RuntimeConfigCanonicalization => {
+  if (!pattern.runtimeEnabled || pattern.runtimeType === 'none') {
+    return {
+      runtimeConfig: null,
+      legacyDetected: false,
+    };
+  }
+
+  if (typeof pattern.runtimeConfig !== 'string' || pattern.runtimeConfig.trim().length === 0) {
+    return {
+      runtimeConfig: pattern.runtimeConfig,
+      legacyDetected: false,
+    };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(pattern.runtimeConfig);
+  } catch {
+    return {
+      runtimeConfig: pattern.runtimeConfig,
+      legacyDetected: false,
+    };
+  }
+  if (!isRecord(parsed)) {
+    return {
+      runtimeConfig: pattern.runtimeConfig,
+      legacyDetected: false,
+    };
+  }
+
+  const canonicalized =
+    pattern.runtimeType === 'database_query'
+      ? canonicalizeDatabaseRuntimeConfig(parsed)
+      : canonicalizeAiRuntimeConfig(parsed);
+
+  const nextRuntimeConfig = JSON.stringify(canonicalized.next);
+  return {
+    runtimeConfig: nextRuntimeConfig,
+    legacyDetected: canonicalized.legacyDetected,
+  };
+};
+
 const buildCanonicalPatternPatch = (
   pattern: ProductValidationPattern
-): UpdateProductValidationPatternInput => ({
-  label: pattern.label,
-  target: pattern.target,
-  locale: pattern.locale,
-  regex: pattern.regex,
-  flags: pattern.flags,
-  message: pattern.message,
-  severity: pattern.severity,
-  enabled: pattern.enabled,
-  replacementEnabled: pattern.replacementEnabled,
-  replacementAutoApply: pattern.replacementAutoApply,
-  skipNoopReplacementProposal: pattern.skipNoopReplacementProposal,
-  replacementValue: pattern.replacementValue,
-  replacementFields: pattern.replacementFields,
-  replacementAppliesToScopes: pattern.replacementAppliesToScopes ?? pattern.appliesToScopes,
-  runtimeEnabled: pattern.runtimeEnabled,
-  runtimeType: pattern.runtimeType,
-  runtimeConfig: pattern.runtimeConfig,
-  postAcceptBehavior: pattern.postAcceptBehavior,
-  denyBehaviorOverride: pattern.denyBehaviorOverride,
-  validationDebounceMs: pattern.validationDebounceMs,
-  sequenceGroupId: pattern.sequenceGroupId,
-  sequenceGroupLabel: pattern.sequenceGroupLabel,
-  sequenceGroupDebounceMs: pattern.sequenceGroupDebounceMs,
-  sequence: pattern.sequence,
-  chainMode: pattern.chainMode,
-  maxExecutions: pattern.maxExecutions,
-  passOutputToNext: pattern.passOutputToNext,
-  launchEnabled: pattern.launchEnabled,
-  launchAppliesToScopes: pattern.launchAppliesToScopes ?? pattern.appliesToScopes,
-  launchScopeBehavior: pattern.launchScopeBehavior,
-  launchSourceMode: pattern.launchSourceMode,
-  launchSourceField: pattern.launchSourceField,
-  launchOperator: pattern.launchOperator,
-  launchValue: pattern.launchValue,
-  launchFlags: pattern.launchFlags,
-  appliesToScopes: pattern.appliesToScopes,
-});
+): { patch: UpdateProductValidationPatternInput; legacyRuntimeConfigDetected: boolean } => {
+  const runtimeConfigCanonicalization = canonicalizeValidationPatternRuntimeConfig(pattern);
+  return {
+    patch: {
+      label: pattern.label,
+      target: pattern.target,
+      locale: pattern.locale,
+      regex: pattern.regex,
+      flags: pattern.flags,
+      message: pattern.message,
+      severity: pattern.severity,
+      enabled: pattern.enabled,
+      replacementEnabled: pattern.replacementEnabled,
+      replacementAutoApply: pattern.replacementAutoApply,
+      skipNoopReplacementProposal: pattern.skipNoopReplacementProposal,
+      replacementValue: pattern.replacementValue,
+      replacementFields: pattern.replacementFields,
+      replacementAppliesToScopes: pattern.replacementAppliesToScopes ?? pattern.appliesToScopes,
+      runtimeEnabled: pattern.runtimeEnabled,
+      runtimeType: pattern.runtimeType,
+      runtimeConfig: runtimeConfigCanonicalization.runtimeConfig,
+      postAcceptBehavior: pattern.postAcceptBehavior,
+      denyBehaviorOverride: pattern.denyBehaviorOverride,
+      validationDebounceMs: pattern.validationDebounceMs,
+      sequenceGroupId: pattern.sequenceGroupId,
+      sequenceGroupLabel: pattern.sequenceGroupLabel,
+      sequenceGroupDebounceMs: pattern.sequenceGroupDebounceMs,
+      sequence: pattern.sequence,
+      chainMode: pattern.chainMode,
+      maxExecutions: pattern.maxExecutions,
+      passOutputToNext: pattern.passOutputToNext,
+      launchEnabled: pattern.launchEnabled,
+      launchAppliesToScopes: pattern.launchAppliesToScopes ?? pattern.appliesToScopes,
+      launchScopeBehavior: pattern.launchScopeBehavior,
+      launchSourceMode: pattern.launchSourceMode,
+      launchSourceField: pattern.launchSourceField,
+      launchOperator: pattern.launchOperator,
+      launchValue: pattern.launchValue,
+      launchFlags: pattern.launchFlags,
+      appliesToScopes: pattern.appliesToScopes,
+    },
+    legacyRuntimeConfigDetected: runtimeConfigCanonicalization.legacyDetected,
+  };
+};
 
 const migrateProductValidatorPatterns = async (
   options: CliOptions
@@ -178,10 +382,12 @@ const migrateProductValidatorPatterns = async (
   const patterns = await repository.listPatterns();
   const indexedPatterns = patterns.map((pattern, index) => ({ pattern, index }));
   const updates = new Map<string, UpdateProductValidationPatternInput>();
-
-  if (options.rewriteAllPatterns) {
-    for (const pattern of patterns) {
-      updates.set(pattern.id, buildCanonicalPatternPatch(pattern));
+  let legacyRuntimeConfigPatterns = 0;
+  for (const pattern of patterns) {
+    const canonical = buildCanonicalPatternPatch(pattern);
+    updates.set(pattern.id, canonical.patch);
+    if (canonical.legacyRuntimeConfigDetected) {
+      legacyRuntimeConfigPatterns += 1;
     }
   }
 
@@ -285,9 +491,9 @@ const migrateProductValidatorPatterns = async (
     mode: options.dryRun ? 'dry-run' : 'write',
     provider: activeProvider,
     scanned: patterns.length,
+    legacyRuntimeConfigPatterns,
     staleDimensionPatterns: staleDimensionEntries.length,
     interleavedDimensionPatterns: interleavedDimensionEntries.length,
-    rewriteAllPatterns: options.rewriteAllPatterns,
     plannedUpdates: plannedUpdates.length,
     attemptedUpdates: limitedUpdates.length,
     appliedUpdates,
@@ -484,7 +690,6 @@ async function main(): Promise<void> {
     options: {
       target: options.target,
       limit: options.limit,
-      rewriteAllPatterns: options.rewriteAllPatterns,
     },
   };
 

@@ -21,7 +21,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-import { GET } from '@/app/api/products/paged/route';
+import { GET } from '@/app/api/v2/products/paged/route';
 import prisma from '@/shared/lib/db/prisma';
 
 const createMockProduct = (overrides: Record<string, unknown> = {}) => ({
@@ -50,7 +50,7 @@ const createMockProduct = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-describe('GET /api/products/paged', () => {
+describe('GET /api/v2/products/paged', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
@@ -66,7 +66,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([mock] as any);
     vi.mocked(prisma.product.count).mockResolvedValue(1);
 
-    const res = await GET(new NextRequest('http://localhost/api/products/paged'));
+    const res = await GET(new NextRequest('http://localhost/api/v2/products/paged'));
     expect(res.status).toBe(200);
 
     const data = (await res.json()) as { products: unknown[]; total: number };
@@ -81,7 +81,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
 
-    const res = await GET(new NextRequest('http://localhost/api/products/paged'));
+    const res = await GET(new NextRequest('http://localhost/api/v2/products/paged'));
     expect(res.status).toBe(200);
 
     const data = (await res.json()) as { products: unknown[]; total: number };
@@ -94,7 +94,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.count).mockResolvedValue(42);
 
     const res = await GET(
-      new NextRequest('http://localhost/api/products/paged?page=3&pageSize=10')
+      new NextRequest('http://localhost/api/v2/products/paged?page=3&pageSize=10')
     );
     expect(res.status).toBe(200);
 
@@ -112,7 +112,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
 
-    await GET(new NextRequest('http://localhost/api/products/paged?catalogId=cat-123'));
+    await GET(new NextRequest('http://localhost/api/v2/products/paged?catalogId=cat-123'));
 
     expect(prisma.product.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -129,7 +129,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(7);
 
-    await GET(new NextRequest('http://localhost/api/products/paged'));
+    await GET(new NextRequest('http://localhost/api/v2/products/paged'));
 
     expect(prisma.product.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.product.count).toHaveBeenCalledTimes(1);

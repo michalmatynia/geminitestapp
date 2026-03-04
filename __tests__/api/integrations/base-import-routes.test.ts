@@ -51,7 +51,7 @@ describe('base import route unification', () => {
     });
   });
 
-  it('imports/base action=import delegates to run starter and returns no-store response', async () => {
+  it('rejects legacy action=import on root imports endpoint', async () => {
     const response = await importsBasePost(
       new NextRequest('http://localhost/api/v2/integrations/imports/base', {
         method: 'POST',
@@ -61,42 +61,27 @@ describe('base import route unification', () => {
           connectionId: 'connection-1',
           inventoryId: 'inventory-1',
           catalogId: 'catalog-1',
-          templateId: 'template-1',
-          limit: 50,
-          imageMode: 'download',
-          uniqueOnly: false,
-          allowDuplicateSku: true,
-          selectedIds: ['1001', '1002'],
-          dryRun: true,
-          mode: 'upsert_on_sku',
-          requestId: 'request-legacy-1',
         }),
       })
     );
-    const payload = (await response.json()) as BaseImportRunResponse;
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(startBaseImportRunResponseMock).toHaveBeenCalledTimes(1);
-    expect(startBaseImportRunResponseMock).toHaveBeenCalledWith({
-      connectionId: 'connection-1',
-      inventoryId: 'inventory-1',
-      catalogId: 'catalog-1',
-      templateId: 'template-1',
-      limit: 50,
-      imageMode: 'download',
-      uniqueOnly: false,
-      allowDuplicateSku: true,
-      selectedIds: ['1001', '1002'],
-      dryRun: true,
-      mode: 'upsert_on_sku',
-      requestId: 'request-legacy-1',
-    });
-    expect(payload).toMatchObject({
-      runId: 'run-1',
-      status: 'queued',
-      queueJobId: 'queue-1',
-    });
+    expect(response.status).toBe(400);
+    expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
+  });
+
+  it('requires explicit connectionId for inventories action', async () => {
+    const response = await importsBasePost(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'inventories',
+        }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
   });
 
   it('runs endpoint delegates to the same run starter payload contract', async () => {
@@ -143,5 +128,24 @@ describe('base import route unification', () => {
       runId: 'run-1',
       status: 'queued',
     });
+  });
+
+  it('requires explicit connectionId on runs endpoint', async () => {
+    const response = await runsPost(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          inventoryId: 'inventory-2',
+          catalogId: 'catalog-2',
+          imageMode: 'links',
+          uniqueOnly: true,
+          allowDuplicateSku: false,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(startBaseImportRunResponseMock).not.toHaveBeenCalled();
   });
 });

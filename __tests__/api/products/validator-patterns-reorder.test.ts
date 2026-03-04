@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST } from '@/app/api/products/validator-patterns/reorder/route';
+import { POST } from '@/app/api/v2/products/validator-patterns/reorder/route';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 const repositoryMock = vi.hoisted(() => ({
@@ -75,7 +75,7 @@ describe('validator-patterns/reorder route', () => {
       .mockResolvedValueOnce({ ...patternB, sequence: 10 });
 
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns/reorder', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/reorder', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -108,7 +108,7 @@ describe('validator-patterns/reorder route', () => {
     repositoryMock.listPatterns.mockResolvedValue([patternA]);
 
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns/reorder', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/reorder', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({

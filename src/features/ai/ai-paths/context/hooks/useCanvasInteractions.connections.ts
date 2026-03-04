@@ -4,6 +4,7 @@ import {
   NODE_WIDTH,
   getNodeInputPortCardinality,
   getPortOffsetY,
+  sanitizeEdges,
   validateConnection,
 } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
@@ -225,7 +226,7 @@ export function useCanvasInteractionsConnections({
         return;
       }
 
-      const currentEdges = edgesRef.current;
+      const currentEdges = sanitizeEdges(nodes, edgesRef.current);
       const hasExactConnection = currentEdges.some(
         (edge) =>
           edge.from === activeConnection.fromNodeId &&
@@ -298,7 +299,7 @@ export function useCanvasInteractionsConnections({
       }
       if (connectingRef.current) return;
 
-      const currentEdges = edgesRef.current;
+      const currentEdges = sanitizeEdges(nodes, edgesRef.current);
       const edgeToMove = currentEdges.find((e) => e.to === nodeId && e.toPort === port);
       if (!edgeToMove?.from || !edgeToMove.fromPort) return;
 

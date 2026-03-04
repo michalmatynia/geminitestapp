@@ -307,7 +307,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const deleteMutation = createDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
-      const result = await triggerButtonsApi.remove(id);
+      const result = await triggerButtonsApi.delete(id);
       if (!result.ok) throw new Error(result.error);
     },
     meta: {
@@ -335,7 +335,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const reorderMutation = createUpdateMutationV2<AiTriggerButtonRecord[], string[]>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
     mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.reorder(orderedIds);
+      const result = await triggerButtonsApi.reorder({ orderedIds });
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },

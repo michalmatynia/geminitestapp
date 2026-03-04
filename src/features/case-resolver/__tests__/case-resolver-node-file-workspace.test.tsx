@@ -13,7 +13,7 @@ const fetchCaseResolverNodeFileSnapshotMock = vi.fn(async () => null);
 const persistCaseResolverNodeFileSnapshotMock = vi.fn(async () => true);
 
 const snapshot: CaseResolverNodeFileSnapshot = {
-  kind: 'case_resolver_node_file_snapshot_v1',
+  kind: 'case_resolver_node_file_snapshot_v2',
   nodes: [],
   edges: [],
   nodeMeta: {},

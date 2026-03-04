@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PUT } from '@/app/api/products/validator-patterns/[id]/route';
-import { POST } from '@/app/api/products/validator-patterns/route';
+import { PUT } from '@/app/api/v2/products/validator-patterns/[id]/route';
+import { POST } from '@/app/api/v2/products/validator-patterns/route';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 
 const repositoryMock = vi.hoisted(() => ({
@@ -88,7 +88,7 @@ describe('validator-pattern routes', () => {
     });
 
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -110,7 +110,7 @@ describe('validator-pattern routes', () => {
 
   it('POST rejects regex launch operator without pattern value', async () => {
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -133,7 +133,7 @@ describe('validator-pattern routes', () => {
 
   it('POST allows runtime replacement without static replacementValue', async () => {
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +169,7 @@ describe('validator-pattern routes', () => {
 
   it('POST rejects missing replacementValue when runtime replacement is disabled', async () => {
     const response = await POST(
-      new NextRequest('http://localhost/api/products/validator-patterns', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -204,7 +204,7 @@ describe('validator-pattern routes', () => {
     });
 
     const response = await PUT(
-      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -223,7 +223,7 @@ describe('validator-pattern routes', () => {
 
   it('PUT rejects launch regex with invalid regex flags/pattern', async () => {
     const response = await PUT(
-      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +244,7 @@ describe('validator-pattern routes', () => {
 
   it('PUT allows runtime replacement without static replacementValue', async () => {
     const response = await PUT(
-      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -331,7 +331,7 @@ describe('validator-pattern routes', () => {
     });
 
     const response = await PUT(
-      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+      new NextRequest('http://localhost/api/v2/products/validator-patterns/pattern-1', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({

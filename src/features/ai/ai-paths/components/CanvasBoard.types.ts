@@ -56,7 +56,7 @@ export interface CanvasBoardState {
   nodeDurations: Record<string, number>;
 
   // Actions
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
 
   // Selection
   selectedNodeId: string | null;

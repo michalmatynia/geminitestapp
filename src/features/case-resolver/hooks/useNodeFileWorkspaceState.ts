@@ -212,7 +212,7 @@ export function useNodeFileWorkspaceState({
 
   const buildCurrentSnapshot = useCallback(
     (): CaseResolverNodeFileSnapshot => ({
-      kind: 'case_resolver_node_file_snapshot_v1',
+      kind: 'case_resolver_node_file_snapshot_v2',
       nodes,
       edges,
       nodeMeta: nodeMetaByNode,

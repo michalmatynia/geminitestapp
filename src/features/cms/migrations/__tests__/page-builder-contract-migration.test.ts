@@ -110,6 +110,27 @@ describe('migrateCmsPageBuilderComponents', () => {
     expect(migrated.stats.normalizedBlocks).toBe(1);
   });
 
+  it('canonicalizes legacy isHidden setting values to strict booleans', () => {
+    const source = [
+      makeComponent({
+        content: {
+          zone: 'template',
+          sectionId: 'section-hidden',
+          parentSectionId: null,
+          settings: { isHidden: 'yes' },
+          blocks: [],
+        } as unknown as PageComponent['content'],
+      }),
+    ];
+
+    const migrated = migrateCmsPageBuilderComponents(source);
+    const content = migrated.components[0]?.content;
+
+    expect(migrated.changed).toBe(true);
+    expect(content?.settings['isHidden']).toBe(true);
+    expect(migrated.stats.normalizedSettings).toBe(1);
+  });
+
   it('keeps already canonical components unchanged', () => {
     const source = [makeComponent()];
     const migrated = migrateCmsPageBuilderComponents(source);

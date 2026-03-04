@@ -103,7 +103,7 @@ const createPromptNode = (id: string, x: number): AiNode => ({
 });
 
 const createSnapshot = (): CaseResolverNodeFileSnapshot => ({
-  kind: 'case_resolver_node_file_snapshot_v1',
+  kind: 'case_resolver_node_file_snapshot_v2',
   nodes: [createPromptNode('node-1', 0)],
   edges: [],
   nodeMeta: {},

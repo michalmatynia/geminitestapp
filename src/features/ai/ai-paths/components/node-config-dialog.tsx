@@ -196,7 +196,6 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
         setDraftNode(null);
         return;
       }
-      toast('Failed to save node settings.', { variant: 'error' });
     })();
   }, [cloneNode, draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 

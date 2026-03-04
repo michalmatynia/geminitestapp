@@ -1,4 +1,5 @@
 import type { SectionInstance } from '../../types/page-builder';
+import { cmsSectionInstanceSchema } from '@/shared/contracts/cms';
 
 export const SECTION_TEMPLATE_SETTINGS_KEY = 'cms_section_templates.v1';
 
@@ -12,42 +13,50 @@ export type SectionTemplateRecord = {
   section: SectionInstance;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const normalizeRequiredString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isValidIsoDate = (value: string): boolean => Number.isFinite(Date.parse(value));
+
 export function normalizeSectionTemplates(input: unknown): SectionTemplateRecord[] {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((entry: unknown, index: number): SectionTemplateRecord | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const record = entry as Partial<SectionTemplateRecord>;
-      const section = record.section;
-      if (!section || typeof section !== 'object' || typeof section.type !== 'string') return null;
-      return {
-        id:
-          typeof record.id === 'string' && record.id.length > 0
-            ? record.id
-            : `section-template-${index + 1}`,
-        name:
-          typeof record.name === 'string' && record.name.trim().length > 0
-            ? record.name.trim()
-            : `Section template ${index + 1}`,
-        description: typeof record.description === 'string' ? record.description : '',
-        category:
-          typeof record.category === 'string' && record.category.trim().length > 0
-            ? record.category.trim()
-            : 'Saved sections',
-        sectionType:
-          typeof record.sectionType === 'string' && record.sectionType.length > 0
-            ? record.sectionType
-            : section.type,
-        createdAt:
-          typeof record.createdAt === 'string' && record.createdAt.length > 0
-            ? record.createdAt
-            : new Date().toISOString(),
-        section,
-      };
-    })
-    .filter((record: SectionTemplateRecord | null): record is SectionTemplateRecord =>
-      Boolean(record)
-    );
+
+  return input.flatMap((entry: unknown): SectionTemplateRecord[] => {
+    if (!isRecord(entry)) return [];
+
+    const id = normalizeRequiredString(entry['id']);
+    const name = normalizeRequiredString(entry['name']);
+    const category = normalizeRequiredString(entry['category']);
+    const sectionType = normalizeRequiredString(entry['sectionType']);
+    const createdAt = normalizeRequiredString(entry['createdAt']);
+    if (!id || !name || !category || !sectionType || !createdAt || !isValidIsoDate(createdAt)) {
+      return [];
+    }
+
+    const parsedSection = cmsSectionInstanceSchema.safeParse(entry['section']);
+    if (!parsedSection.success) return [];
+    if (parsedSection.data.type !== sectionType) return [];
+
+    const description = normalizeRequiredString(entry['description']) ?? '';
+
+    return [
+      {
+        id,
+        name,
+        description,
+        category,
+        sectionType,
+        createdAt,
+        section: parsedSection.data,
+      },
+    ];
+  });
 }
 
 export function cloneSectionTemplateSection(section: SectionInstance): SectionInstance {

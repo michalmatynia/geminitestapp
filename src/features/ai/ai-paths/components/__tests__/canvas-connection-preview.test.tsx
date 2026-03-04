@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import type { PortDataType } from '@/shared/lib/ai-paths/core/utils/port-types';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
@@ -170,5 +170,61 @@ describe('canvas connection preview', () => {
     const calledNode = call?.[1];
     expect(calledNode?.id).toBe(node.id);
     expect(call?.[2]).toBe('result');
+  });
+
+  it('renders wire flow for edges connected to nodes in running status', () => {
+    const sourceNode = buildNode({
+      id: 'node-running-source',
+      outputs: ['result'],
+      inputs: [],
+      position: { x: 120, y: 80 },
+    });
+    const targetNode = buildNode({
+      id: 'node-running-target',
+      inputs: ['input'],
+      outputs: [],
+      position: { x: 420, y: 220 },
+    });
+    const edge: Edge = {
+      id: 'edge-running-status',
+      from: sourceNode.id,
+      to: targetNode.id,
+      fromPort: 'result',
+      toPort: 'input',
+    };
+    const value = buildContextValue();
+    value.nodes = [sourceNode, targetNode];
+    value.edges = [edge];
+    value.nodeById = new Map([
+      [sourceNode.id, sourceNode],
+      [targetNode.id, targetNode],
+    ]);
+    value.edgeMetaMap = new Map([[edge.id, edge]]);
+    value.edgePaths = [
+      {
+        id: edge.id,
+        path: 'M 380 162 C 420 162 470 244 540 244',
+        fromNodeId: sourceNode.id,
+        toNodeId: targetNode.id,
+        bounds: { minX: 380, minY: 162, maxX: 540, maxY: 244 },
+      },
+    ];
+    value.runtimeNodeStatuses = {
+      [sourceNode.id]: 'running',
+    };
+    value.wireFlowEnabled = true;
+    value.activeEdgeIds = new Set<string>();
+
+    const { container } = render(
+      <svg>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
+      </svg>
+    );
+
+    expect(container.querySelector('.ai-paths-wire-flow')).toBeTruthy();
   });
 });

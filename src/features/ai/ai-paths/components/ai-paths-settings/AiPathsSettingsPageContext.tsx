@@ -34,7 +34,6 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
     skippedRuleIds: string[];
     moduleImpact: Record<string, unknown>;
   };
-  nodeConfigDirty: boolean;
   selectedNodeIds: string[];
   selectionScopeMode: 'portion' | 'wiring';
   setSelectionScopeMode: React.Dispatch<React.SetStateAction<'portion' | 'wiring'>>;

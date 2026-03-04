@@ -37,8 +37,7 @@ export const buildFormDataFromPattern = (pattern: ProductValidationPattern): Pat
     replacementValue: getStaticReplacementValue(pattern.replacementValue) ?? '',
     replacementFields: normalizeReplacementFields(pattern.replacementFields),
     replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-      pattern.replacementAppliesToScopes,
-      pattern.appliesToScopes
+      pattern.replacementAppliesToScopes
     ),
     postAcceptBehavior: pattern.postAcceptBehavior ?? 'revalidate',
     denyBehaviorOverride:
@@ -56,8 +55,7 @@ export const buildFormDataFromPattern = (pattern: ProductValidationPattern): Pat
         : '',
     launchEnabled: pattern.launchEnabled ?? false,
     launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-      pattern.launchAppliesToScopes,
-      pattern.appliesToScopes
+      pattern.launchAppliesToScopes
     ),
     launchScopeBehavior: pattern.launchScopeBehavior ?? 'gate',
     launchSourceMode: pattern.launchSourceMode ?? 'current_field',

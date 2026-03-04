@@ -212,50 +212,27 @@ export function splitGridBlocks(blocks: BlockInstance[]): {
   return { rows, extras };
 }
 
-export function ensureGridRows(section: SectionInstance): SectionInstance {
-  if (section.type !== 'Grid') return section;
+export function getCanonicalGridStructure(section: SectionInstance): {
+  rows: BlockInstance[];
+  extras: BlockInstance[];
+  columnsPerRow: number;
+} | null {
+  if (section.type !== 'Grid') return null;
   const { rows, extras } = splitGridBlocks(section.blocks);
-  if (rows.length > 0) {
-    const canonicalRows = rows.map((row: BlockInstance): BlockInstance => {
-      const columns = (row.blocks ?? []).filter((block: BlockInstance) => block.type === 'Column');
-      return {
-        ...row,
-        blocks: columns.length > 0 ? columns : [createColumnBlock()],
-      };
-    });
-    const maxColumns = Math.max(
-      1,
-      ...canonicalRows.map(
-        (row: BlockInstance) =>
-          (row.blocks ?? []).filter((block: BlockInstance) => block.type === 'Column').length
-      )
-    );
-    return {
-      ...section,
-      blocks: [...canonicalRows, ...extras],
-      settings: { ...section.settings, rows: canonicalRows.length, columns: maxColumns },
-    };
+  if (rows.length === 0) return null;
+
+  let columnsPerRow = 0;
+  for (const row of rows) {
+    const rowBlocks = row.blocks ?? [];
+    if (rowBlocks.length === 0) return null;
+    if (!rowBlocks.every((block: BlockInstance) => block.type === 'Column')) {
+      return null;
+    }
+    columnsPerRow = Math.max(columnsPerRow, rowBlocks.length);
   }
-  const rowsSettingRaw = section.settings['rows'];
-  const columnsSettingRaw = section.settings['columns'];
-  const rowsSetting =
-    typeof rowsSettingRaw === 'number' && Number.isFinite(rowsSettingRaw) && rowsSettingRaw > 0
-      ? Math.floor(rowsSettingRaw)
-      : 1;
-  const columnsSetting =
-    typeof columnsSettingRaw === 'number' &&
-      Number.isFinite(columnsSettingRaw) &&
-      columnsSettingRaw > 0
-      ? Math.floor(columnsSettingRaw)
-      : 1;
-  const canonicalRows = Array.from({ length: Math.max(1, rowsSetting) }, () =>
-    createRowBlock(columnsSetting)
-  );
-  return {
-    ...section,
-    blocks: [...canonicalRows, ...extras],
-    settings: { ...section.settings, rows: canonicalRows.length, columns: columnsSetting },
-  };
+
+  if (columnsPerRow <= 0) return null;
+  return { rows, extras, columnsPerRow };
 }
 
 export function updateColumnBlocks(
@@ -535,7 +512,7 @@ export function cloneBlock(block: BlockInstance): BlockInstance {
 }
 
 export function cloneSection(section: SectionInstance): SectionInstance {
-  const cloned: SectionInstance = {
+  return {
     id: uid(),
     type: section.type,
     zone: section.zone,
@@ -543,5 +520,4 @@ export function cloneSection(section: SectionInstance): SectionInstance {
     settings: { ...section.settings },
     blocks: section.blocks.map(cloneBlock),
   };
-  return ensureGridRows(cloned);
 }

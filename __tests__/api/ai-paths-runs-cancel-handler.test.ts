@@ -13,11 +13,8 @@ const getPathRunRepositoryMock = vi.hoisted(() => vi.fn());
 const cancelPathRunWithRepositoryMock = vi.hoisted(() => vi.fn());
 const removePathRunQueueEntriesMock = vi.hoisted(() => vi.fn());
 
-const prismaPathRunRepositoryMock = vi.hoisted(() => ({
+const runRepositoryMock = vi.hoisted(() => ({
   findRunById: findRunByIdMock,
-}));
-const mongoPathRunRepositoryMock = vi.hoisted(() => ({
-  findRunById: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -28,14 +25,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository', () => ({
-  prismaPathRunRepository: prismaPathRunRepositoryMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository', () => ({
-  mongoPathRunRepository: mongoPathRunRepositoryMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
@@ -68,7 +57,7 @@ describe('AI Paths run cancel handler', () => {
     enforceAiPathsActionRateLimitMock.mockResolvedValue(undefined);
     assertAiPathRunAccessMock.mockReturnValue(undefined);
     removePathRunQueueEntriesMock.mockResolvedValue({ removed: 0, requested: 1 });
-    getPathRunRepositoryMock.mockResolvedValue(prismaPathRunRepositoryMock);
+    getPathRunRepositoryMock.mockResolvedValue(runRepositoryMock);
   });
 
   it('removes queue entry when run is missing', async () => {
@@ -86,6 +75,7 @@ describe('AI Paths run cancel handler', () => {
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).not.toHaveBeenCalled();
     expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith(['run-missing']);
+    expect(findRunByIdMock).toHaveBeenCalledTimes(1);
     expect(payload).toMatchObject({
       run: null,
       canceled: false,
@@ -114,7 +104,7 @@ describe('AI Paths run cancel handler', () => {
 
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).toHaveBeenCalledWith(
-      prismaPathRunRepositoryMock,
+      runRepositoryMock,
       'run-terminal'
     );
     expect(removePathRunQueueEntriesMock).not.toHaveBeenCalled();
@@ -146,7 +136,7 @@ describe('AI Paths run cancel handler', () => {
 
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).toHaveBeenCalledWith(
-      prismaPathRunRepositoryMock,
+      runRepositoryMock,
       'run-active'
     );
     expect(removePathRunQueueEntriesMock).not.toHaveBeenCalled();

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
+import { type AiNode, type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 import { cn } from '@/shared/utils';
 
 import { useCanvasBoardState } from './useCanvasBoardState';
@@ -14,6 +14,7 @@ import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
 import { CanvasNodeDiagnosticsTooltip } from './canvas/CanvasNodeDiagnosticsTooltip';
 import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
 import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';
+import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
 import {
   type CanvasBoardConnectorTooltipOverrideInput,
   type CanvasBoardConnectorTooltipOverride,
@@ -21,6 +22,15 @@ import {
 import type { ConnectorInfo } from './canvas-board-connectors';
 
 const CONNECTOR_HIT_TARGET_PX = 14;
+
+const shouldIgnoreCanvasPanStart = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      '[data-node-body], [data-node-root], [data-port], [data-canvas-edge-hit], [data-node-diagnostics-badge], [data-node-action], button, input, textarea, select, a, [contenteditable="true"], [data-canvas-no-pan="true"]'
+    )
+  );
+};
 
 export interface CanvasBoardProps {
   viewportClassName?: string | undefined;
@@ -111,14 +121,41 @@ export function CanvasBoard({
     return 'skeleton' as const;
   }, [view.scale]);
 
-  const shouldIgnoreCanvasPanStart = React.useCallback((target: EventTarget | null): boolean => {
-    if (!(target instanceof Element)) return false;
-    return Boolean(
-      target.closest(
-        '[data-node-body], [data-node-root], [data-port], [data-canvas-edge-hit], [data-node-diagnostics-badge], [data-node-action]'
-      )
-    );
+  const [launchingTriggerIds, setLaunchingTriggerIds] = React.useState<Set<string>>(
+    () => new Set()
+  );
+
+  const markTriggerLaunching = React.useCallback((nodeId: string): void => {
+    setLaunchingTriggerIds((prev) => {
+      if (prev.has(nodeId)) return prev;
+      const next = new Set(prev);
+      next.add(nodeId);
+      return next;
+    });
   }, []);
+
+  const clearTriggerLaunching = React.useCallback((nodeId: string): void => {
+    setLaunchingTriggerIds((prev) => {
+      if (!prev.has(nodeId)) return prev;
+      const next = new Set(prev);
+      next.delete(nodeId);
+      return next;
+    });
+  }, []);
+
+  const handleFireTrigger = React.useCallback(
+    (node: AiNode, event?: React.MouseEvent<SVGRectElement>): void => {
+      markTriggerLaunching(node.id);
+      Promise.resolve(state.fireTrigger(node, event))
+        .catch(() => undefined)
+        .finally(() => {
+          setTimeout(() => {
+            clearTriggerLaunching(node.id);
+          }, 480);
+        });
+    },
+    [clearTriggerLaunching, markTriggerLaunching, state]
+  );
 
   const edgeMetaMap = React.useMemo(
     () => new Map(state.edges.map((edge) => [edge.id, edge])),
@@ -134,9 +171,101 @@ export function CanvasBoard({
     return next;
   }, [state.edges]);
 
-  const activeEdgeIds = React.useMemo(() => new Set<string>(), []);
-  const inputPulseNodes = React.useMemo(() => new Set<string>(), []);
-  const outputPulseNodes = React.useMemo(() => new Set<string>(), []);
+  const buildEdgePortKey = React.useCallback((nodeId: string, port: string): string => {
+    return `${nodeId}:${port}`;
+  }, []);
+
+  const edgesByFromPort = React.useMemo(() => {
+    const byPort = new Map<string, Array<(typeof state.edges)[number]>>();
+    state.edges.forEach((edge) => {
+      if (!edge.from || !edge.fromPort) return;
+      const key = buildEdgePortKey(edge.from, edge.fromPort);
+      const current = byPort.get(key);
+      if (current) {
+        current.push(edge);
+        return;
+      }
+      byPort.set(key, [edge]);
+    });
+    return byPort;
+  }, [buildEdgePortKey, state.edges]);
+
+  const edgesByToPort = React.useMemo(() => {
+    const byPort = new Map<string, Array<(typeof state.edges)[number]>>();
+    state.edges.forEach((edge) => {
+      if (!edge.to || !edge.toPort) return;
+      const key = buildEdgePortKey(edge.to, edge.toPort);
+      const current = byPort.get(key);
+      if (current) {
+        current.push(edge);
+        return;
+      }
+      byPort.set(key, [edge]);
+    });
+    return byPort;
+  }, [buildEdgePortKey, state.edges]);
+
+  const incomingEdgeIdsByNode = React.useMemo(() => {
+    const byNode = new Map<string, string[]>();
+    state.edges.forEach((edge) => {
+      if (!edge.to) return;
+      const current = byNode.get(edge.to);
+      if (current) {
+        current.push(edge.id);
+        return;
+      }
+      byNode.set(edge.to, [edge.id]);
+    });
+    return byNode;
+  }, [state.edges]);
+
+  const outgoingEdgeIdsByNode = React.useMemo(() => {
+    const byNode = new Map<string, string[]>();
+    state.edges.forEach((edge) => {
+      if (!edge.from) return;
+      const current = byNode.get(edge.from);
+      if (current) {
+        current.push(edge.id);
+        return;
+      }
+      byNode.set(edge.from, [edge.id]);
+    });
+    return byNode;
+  }, [state.edges]);
+
+  const pulseTiming = React.useMemo(
+    () => ({
+      flowAnimationMs:
+        state.effectiveFlowIntensity === 'high'
+          ? 640
+          : state.effectiveFlowIntensity === 'low'
+            ? 1200
+            : 900,
+      nodePulseMs:
+        state.effectiveFlowIntensity === 'high'
+          ? 520
+          : state.effectiveFlowIntensity === 'low'
+            ? 860
+            : 700,
+    }),
+    [state.effectiveFlowIntensity]
+  );
+
+  const { activeEdgeIds, inputPulseNodes, outputPulseNodes } = useCanvasPulseEffects({
+    nodes: state.nodes,
+    edges: state.edges,
+    runtimeEvents: state.runtimeEvents ?? [],
+    runtimeState: state.runtimeState,
+    getPortValue: state.getPortValue,
+    edgesByFromPort,
+    edgesByToPort,
+    incomingEdgeIdsByNode,
+    outgoingEdgeIdsByNode,
+    buildEdgePortKey,
+    nodeById: state.nodeById,
+    flowAnimationMs: pulseTiming.flowAnimationMs,
+    nodePulseMs: pulseTiming.nodePulseMs,
+  });
   const wireFlowEnabled = state.effectiveFlowIntensity !== 'off';
   const flowingIntensity =
     state.effectiveFlowIntensity === 'off' ? 'low' : state.effectiveFlowIntensity;
@@ -152,6 +281,7 @@ export function CanvasBoard({
       inputPulseNodes,
       outputPulseNodes,
       activeEdgeIds,
+      launchingTriggerIds,
       triggerConnected,
       wireFlowEnabled,
       flowingIntensity,
@@ -188,9 +318,7 @@ export function CanvasBoard({
       onDisconnectPort: (direction, nodeId, port) => {
         state.handleDisconnectPort(direction, nodeId, port);
       },
-      onFireTrigger: (node) => {
-        void state.fireTrigger(node);
-      },
+      onFireTrigger: handleFireTrigger,
       onRemoveEdge: (edgeId) => {
         state.handleRemoveEdge(edgeId);
       },
@@ -211,6 +339,7 @@ export function CanvasBoard({
       inputPulseNodes,
       outputPulseNodes,
       activeEdgeIds,
+      launchingTriggerIds,
       triggerConnected,
       wireFlowEnabled,
       flowingIntensity,
@@ -221,7 +350,7 @@ export function CanvasBoard({
       handleConnectorLeave,
       handleNodeDiagnosticsHover,
       handleNodeDiagnosticsLeave,
-      shouldIgnoreCanvasPanStart,
+      handleFireTrigger,
       onFocusNodeDiagnostics,
     ]
   );

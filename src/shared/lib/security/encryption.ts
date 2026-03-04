@@ -4,11 +4,10 @@ import crypto from 'crypto';
 
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 
-function getKey(keyEnv: string, fallbackEnv?: string): Buffer {
-  const raw = process.env[keyEnv] || (fallbackEnv ? process.env[fallbackEnv] : undefined);
+function getKey(keyEnv: string): Buffer {
+  const raw = process.env[keyEnv];
   if (!raw) {
-    const msg = fallbackEnv ? `${keyEnv} (or ${fallbackEnv}) is required` : `${keyEnv} is required`;
-    throw configurationError(msg);
+    throw configurationError(`${keyEnv} is required`);
   }
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) {
@@ -19,10 +18,9 @@ function getKey(keyEnv: string, fallbackEnv?: string): Buffer {
 
 export function encryptSecret(
   value: string,
-  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY',
-  fallbackEnv?: string
+  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY'
 ): string {
-  const key = getKey(keyEnv, fallbackEnv);
+  const key = getKey(keyEnv);
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
@@ -32,10 +30,9 @@ export function encryptSecret(
 
 export function decryptSecret(
   payload: string,
-  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY',
-  fallbackEnv?: string
+  keyEnv: string = 'INTEGRATION_ENCRYPTION_KEY'
 ): string {
-  const key = getKey(keyEnv, fallbackEnv);
+  const key = getKey(keyEnv);
   const [ivB64, tagB64, dataB64] = payload.split(':');
   if (!ivB64 || !tagB64 || !dataB64) {
     throw badRequestError('Invalid encrypted payload');
@@ -49,9 +46,8 @@ export function decryptSecret(
   return decrypted.toString('utf8');
 }
 
-// Legacy aliases for auth
 export const encryptAuthSecret = (value: string): string =>
-  encryptSecret(value, 'AUTH_ENCRYPTION_KEY', 'INTEGRATION_ENCRYPTION_KEY');
+  encryptSecret(value, 'AUTH_ENCRYPTION_KEY');
 
 export const decryptAuthSecret = (payload: string): string =>
-  decryptSecret(payload, 'AUTH_ENCRYPTION_KEY', 'INTEGRATION_ENCRYPTION_KEY');
+  decryptSecret(payload, 'AUTH_ENCRYPTION_KEY');

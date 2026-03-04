@@ -159,7 +159,7 @@ export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string
   const hash = createHash('sha1');
   hash.update(
     JSON.stringify({
-      connectionId: params.connectionId ?? null,
+      connectionId: params.connectionId,
       inventoryId: params.inventoryId,
       catalogId: params.catalogId,
       templateId: params.templateId ?? null,

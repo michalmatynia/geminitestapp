@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
-import { GET } from '@/app/api/products/count/route';
+import { GET } from '@/app/api/v2/products/count/route';
 import prisma from '@/shared/lib/db/prisma';
 
 // Mock Prisma client

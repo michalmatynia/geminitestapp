@@ -217,8 +217,7 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
     replacementValue: pattern.replacementValue ?? null,
     replacementFields: normalizeReplacementFields(pattern.replacementFields),
     replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-      replacementAppliesToScopesRaw,
-      appliesToScopesRaw
+      replacementAppliesToScopesRaw
     ),
     runtimeEnabled:
       typeof patternAny['runtimeEnabled'] === 'boolean' ? patternAny['runtimeEnabled'] : false,
@@ -242,8 +241,7 @@ const toDomain = (pattern: PrismaPattern): ProductValidationPattern => {
     launchEnabled:
       typeof patternAny['launchEnabled'] === 'boolean' ? patternAny['launchEnabled'] : false,
     launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-      launchAppliesToScopesRaw,
-      appliesToScopesRaw
+      launchAppliesToScopesRaw
     ),
     launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
       patternAny['launchScopeBehavior']
@@ -336,8 +334,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       replacementValue: data.replacementValue?.trim() || null,
       replacementFields: normalizeReplacementFields(data.replacementFields),
       replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-        data.replacementAppliesToScopes,
-        data.appliesToScopes
+        data.replacementAppliesToScopes
       ),
       runtimeEnabled: data.runtimeEnabled ?? false,
       runtimeType: normalizeRuntimeType(data.runtimeType),
@@ -356,8 +353,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       passOutputToNext: data.passOutputToNext ?? true,
       launchEnabled: data.launchEnabled ?? false,
       launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-        data.launchAppliesToScopes,
-        data.appliesToScopes
+        data.launchAppliesToScopes
       ),
       launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(data.launchScopeBehavior),
       launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
@@ -419,8 +415,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       }),
       ...(data.replacementAppliesToScopes !== undefined && {
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-          data.replacementAppliesToScopes,
-          data.appliesToScopes
+          data.replacementAppliesToScopes
         ),
       }),
       ...(data.runtimeEnabled !== undefined && { runtimeEnabled: data.runtimeEnabled }),
@@ -467,8 +462,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       }),
       ...(data.launchAppliesToScopes !== undefined && {
         launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-          data.launchAppliesToScopes,
-          data.appliesToScopes
+          data.launchAppliesToScopes
         ),
       }),
       ...(data.launchScopeBehavior !== undefined && {

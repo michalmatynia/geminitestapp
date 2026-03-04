@@ -83,15 +83,15 @@ describe('CmsPageRenderer Component', () => {
     expect(screen.getByTestId('section-grid')).toBeInTheDocument();
   });
 
-  it('should treat string visibility flags consistently', () => {
+  it('should hide sections only when isHidden is strict boolean true', () => {
     const components = [
       {
         type: 'Hero',
-        content: { zone: 'template', settings: { isHidden: 'false' }, blocks: [] },
+        content: { zone: 'template', settings: { isHidden: false }, blocks: [] },
       } as unknown as PageComponent,
       {
         type: 'RichText',
-        content: { zone: 'template', settings: { isHidden: 'true' }, blocks: [] },
+        content: { zone: 'template', settings: { isHidden: true }, blocks: [] },
       } as unknown as PageComponent,
     ];
 

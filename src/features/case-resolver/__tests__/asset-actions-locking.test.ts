@@ -400,7 +400,7 @@ describe('case resolver asset actions lock races', () => {
     expect(createdAsset).toBeTruthy();
     expect(createdAsset?.textContent).toBe('');
     expect(parseNodeFileSnapshot(createdAsset?.textContent ?? '')).toMatchObject({
-      kind: 'case_resolver_node_file_snapshot_v1',
+      kind: 'case_resolver_node_file_snapshot_v2',
       nodes: [],
       edges: [],
     });

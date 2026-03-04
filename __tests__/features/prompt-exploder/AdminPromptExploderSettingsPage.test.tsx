@@ -359,7 +359,7 @@ describe('AdminPromptExploderSettingsPage', () => {
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith(
-        'Prompt Exploder settings contain deprecated AI snapshot keys: modelId, fallbackModelId.',
+        'Prompt Exploder settings payload contains deprecated AI snapshot keys: fallbackModelId, modelId',
         { variant: 'error' }
       );
     });

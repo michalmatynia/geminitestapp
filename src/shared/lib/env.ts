@@ -35,6 +35,7 @@ const envSchema = z.object({
   AUTH_LOGGING: z.coerce.boolean().default(false),
   AUTH_DEBUG: z.coerce.boolean().default(false),
   AUTH_TOKEN_REFRESH_TTL_MS: z.coerce.number().int().positive().default(60000),
+  AUTH_ENCRYPTION_KEY: z.string().optional(),
 
   // AI
   OPENAI_API_KEY: z.string().optional(),

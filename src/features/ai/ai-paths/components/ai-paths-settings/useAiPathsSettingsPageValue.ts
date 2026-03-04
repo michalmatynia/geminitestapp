@@ -163,7 +163,6 @@ export function useAiPathsSettingsPageValue(
       handleRunNodeValidationCheck,
       docsTooltipsEnabled,
       setDocsTooltipsEnabled,
-      nodeConfigDirty: state.nodeConfigDirty,
       selectedNodeIds: state.selectedNodeId ? [state.selectedNodeId] : [],
       selectionScopeMode,
       setSelectionScopeMode,
@@ -175,7 +174,7 @@ export function useAiPathsSettingsPageValue(
       setRenameDraft,
       commitPathNameEdit: () => {
         if (!state.activePathId) return;
-        state.setPathName(renameDraft);
+        state.updateActivePathMeta(renameDraft);
         void state.handleSave({ pathNameOverride: renameDraft });
         setIsPathNameEditing(false);
       },
@@ -191,7 +190,7 @@ export function useAiPathsSettingsPageValue(
       hasHistory: state.runtimeEvents.length > 0,
       handleInspectTraceNode,
       incrementLoadNonce: () => {
-        state.setLoadNonce((previous: number): number => previous + 1);
+        state.incrementLoadNonce();
       },
     }),
     [

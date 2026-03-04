@@ -27,7 +27,11 @@ import {
   buildActivePathConfig,
 } from './utils';
 import { parseRuntimeState } from '../../AiPathsSettingsUtils';
-import { collectInvalidRunNodePayloadIssues } from './payload-validation';
+import {
+  collectInvalidRunEnqueuePayloadIssues,
+  collectInvalidRunEnqueueSerializationIssues,
+  collectInvalidRunNodePayloadIssues,
+} from './payload-validation';
 
 import type { ServerExecutionArgs } from './types';
 
@@ -136,6 +140,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       eventSourceRef.current = null;
     }
     serverRunActiveRef.current = false;
+    args.setRunStatus('idle');
   }, []);
 
   const runServerStream = useCallback(
@@ -165,12 +170,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           metadata: { error: message },
         });
         args.settleTransientNodeStatuses('failed');
+        args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         return;
       }
       if (serverRunActiveRef.current) stopServerRunStream();
 
       serverRunActiveRef.current = true;
+      args.setRunStatus('running');
       args.resetRuntimeNodeStatuses({});
       const runtimeNodeById = new Map<string, AiNode>(
         args.normalizedNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
@@ -204,6 +211,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           },
         });
         args.settleTransientNodeStatuses('failed');
+        args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();
         logClientError(new Error('Invalid AI Paths run node payload'), {
@@ -217,29 +225,117 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
         return;
       }
-
-      try {
-        const enqueueResult = await enqueueAiPathRun({
-          pathId: args.activePathId,
-          pathName: args.pathName,
-          nodes: args.normalizedNodes,
-          edges: args.sanitizedEdges,
-          triggerEvent,
-          triggerNodeId: triggerNode.id,
-          triggerContext,
-          entityId,
-          entityType,
-          meta: {
-            source: 'ai_paths_ui',
-            triggerLabel: args.activeTrigger ?? null,
-            strictFlowMode: args.strictFlowMode !== false,
-            blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
-            ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
+      const enqueueMeta = {
+        source: 'ai_paths_ui',
+        triggerLabel: args.activeTrigger ?? null,
+        strictFlowMode: args.strictFlowMode !== false,
+        blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
+        ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
+      };
+      const enqueuePayload = {
+        pathId: args.activePathId,
+        pathName: args.pathName,
+        nodes: args.normalizedNodes,
+        edges: args.sanitizedEdges,
+        triggerEvent,
+        triggerNodeId: triggerNode.id,
+        triggerContext,
+        entityId,
+        entityType,
+        meta: enqueueMeta,
+      };
+      const enqueuePayloadIssues = collectInvalidRunEnqueuePayloadIssues(enqueuePayload);
+      if (enqueuePayloadIssues.length > 0) {
+        const firstIssue = enqueuePayloadIssues[0];
+        const message = firstIssue
+          ? `Cannot run path: enqueue payload is invalid (${firstIssue.path}: ${firstIssue.message}).`
+          : 'Cannot run path: enqueue payload is invalid.';
+        args.appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message,
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'failed',
+          source: 'server',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_failed',
+          level: 'error',
+          message: `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
+          metadata: {
+            error: message,
+            enqueuePayloadIssues: enqueuePayloadIssues.slice(0, 5),
           },
         });
+        args.settleTransientNodeStatuses('failed');
+        args.setRunStatus('idle');
+        args.toast(message, { variant: 'error' });
+        stopServerRunStream();
+        logClientError(new Error('Invalid AI Paths enqueue payload'), {
+          context: {
+            source: 'useAiPathsServerExecution',
+            action: 'validateEnqueuePayloadShape',
+            pathId: args.activePathId,
+            triggerNodeId: triggerNode.id,
+            enqueuePayloadIssues: enqueuePayloadIssues.slice(0, 10),
+          },
+        });
+        return;
+      }
+      const enqueueSerializationIssues =
+        collectInvalidRunEnqueueSerializationIssues(enqueuePayload);
+      if (enqueueSerializationIssues.length > 0) {
+        const firstIssue = enqueueSerializationIssues[0];
+        const message = firstIssue
+          ? `Cannot run path: enqueue payload is not JSON-safe (${firstIssue.path}: ${firstIssue.message}).`
+          : 'Cannot run path: enqueue payload is not JSON-safe.';
+        args.appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message,
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'failed',
+          source: 'server',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_failed',
+          level: 'error',
+          message: `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
+          metadata: {
+            error: message,
+            enqueueSerializationIssues: enqueueSerializationIssues.slice(0, 5),
+          },
+        });
+        args.settleTransientNodeStatuses('failed');
+        args.setRunStatus('idle');
+        args.toast(message, { variant: 'error' });
+        stopServerRunStream();
+        logClientError(new Error('Invalid AI Paths enqueue payload serialization'), {
+          context: {
+            source: 'useAiPathsServerExecution',
+            action: 'validateEnqueuePayloadSerialization',
+            pathId: args.activePathId,
+            triggerNodeId: triggerNode.id,
+            enqueueSerializationIssues: enqueueSerializationIssues.slice(0, 10),
+          },
+        });
+        return;
+      }
+
+      try {
+        const enqueueResult = await enqueueAiPathRun(enqueuePayload);
 
         if (!enqueueResult.ok) {
-          const enqueueError = enqueueResult.error || 'Failed to enqueue server run.';
+          const enqueueError =
+            typeof enqueueResult.error === 'string' && enqueueResult.error.trim().length > 0
+              ? enqueueResult.error
+              : 'Failed to enqueue server run.';
           const blocked =
             enqueueError.includes('Validation blocked run') ||
             enqueueError.includes('Graph compile failed') ||
@@ -265,6 +361,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             metadata: { error: enqueueError },
           });
           args.settleTransientNodeStatuses('failed');
+          args.setRunStatus('idle');
           args.toast(enqueueError, { variant: blocked ? 'warning' : 'error' });
           stopServerRunStream();
           return;
@@ -285,6 +382,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             message,
           });
           args.settleTransientNodeStatuses('failed');
+          args.setRunStatus('idle');
           args.toast(message, { variant: 'error' });
           stopServerRunStream();
           return;
@@ -410,6 +508,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           } else {
             args.settleTransientNodeStatuses('failed');
           }
+          args.setRunStatus('idle');
           stopServerRunStream();
           if (args.currentRunIdRef) {
             args.currentRunIdRef.current = null;
@@ -744,6 +843,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           metadata: { error: message },
         });
         args.settleTransientNodeStatuses('failed');
+        args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();
         logClientError(error, {

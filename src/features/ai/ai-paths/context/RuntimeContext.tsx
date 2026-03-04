@@ -134,10 +134,10 @@ export interface RuntimeActions {
     status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;
   fireTriggerPersistent: (
     node: AiNode,
-    event?: React.MouseEvent<HTMLButtonElement>
+    event?: React.MouseEvent<Element>
   ) => Promise<void>;
   pauseActiveRun: () => void;
   resumeActiveRun: () => void;
@@ -386,7 +386,7 @@ export function RuntimeProvider({
   }, []);
 
   const fireTrigger = useCallback(
-    async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    async (node: AiNode, event?: React.MouseEvent<Element>) => {
       const handler = runControlHandlersRef.current.fireTrigger;
       if (!handler) {
         reportMissingRunControlHandler('fireTrigger', { nodeId: node.id, markFailed: true });
@@ -398,7 +398,7 @@ export function RuntimeProvider({
   );
 
   const fireTriggerPersistent = useCallback(
-    async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    async (node: AiNode, event?: React.MouseEvent<Element>) => {
       const handler = runControlHandlersRef.current.fireTriggerPersistent;
       if (!handler) {
         reportMissingRunControlHandler('fireTriggerPersistent', {

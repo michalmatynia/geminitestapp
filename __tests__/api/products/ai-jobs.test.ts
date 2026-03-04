@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import { vi, beforeEach } from 'vitest';
 import { describe, it, expect } from 'vitest';
 
-import { POST as POST_BULK } from '@/app/api/products/ai-jobs/bulk/route';
-import { POST as POST_ENQUEUE } from '@/app/api/products/ai-jobs/enqueue/route';
-import { GET } from '@/app/api/products/ai-jobs/route';
+import { POST as POST_BULK } from '@/app/api/v2/products/ai-jobs/bulk/route';
+import { POST as POST_ENQUEUE } from '@/app/api/v2/products/ai-jobs/enqueue/route';
+import { GET } from '@/app/api/v2/products/ai-jobs/route';
 
 // Mock jobs server
 vi.mock('@/features/jobs/server', () => ({

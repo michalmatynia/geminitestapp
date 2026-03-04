@@ -4,9 +4,10 @@ import { z } from 'zod';
 import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
 import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 export const startRunSchema = z.object({
-  connectionId: z.string().trim().min(1).optional(),
+  connectionId: z.string().trim().min(1),
   inventoryId: z.string().trim().min(1),
   catalogId: z.string().trim().min(1),
   templateId: z.string().trim().min(1).optional(),
@@ -38,14 +39,22 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const rawConnectionId =
+    typeof (ctx.body as Record<string, unknown> | undefined)?.['connectionId'] === 'string'
+      ? String((ctx.body as Record<string, unknown>)['connectionId']).trim()
+      : '';
+  if (!rawConnectionId) {
+    throw badRequestError('Base.com connection is required.');
+  }
+
   const data = ctx.body as z.infer<typeof startRunSchema>;
   const response = await startBaseImportRunResponse({
+    connectionId: rawConnectionId,
     inventoryId: data.inventoryId,
     catalogId: data.catalogId,
     imageMode: data.imageMode,
     uniqueOnly: data.uniqueOnly,
     allowDuplicateSku: data.allowDuplicateSku,
-    ...(data.connectionId ? { connectionId: data.connectionId } : {}),
     ...(data.templateId ? { templateId: data.templateId } : {}),
     ...(typeof data.limit === 'number' ? { limit: data.limit } : {}),
     ...(Array.isArray(data.selectedIds) ? { selectedIds: data.selectedIds } : {}),

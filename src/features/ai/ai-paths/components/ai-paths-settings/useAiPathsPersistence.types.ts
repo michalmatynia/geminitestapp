@@ -94,7 +94,6 @@ export type UseAiPathsPersistenceResult = {
     configId: string,
     config: PathConfig
   ) => Promise<PathConfig | null>;
-  persistRuntimePathState: (configId: string, config: PathConfig) => Promise<void>;
   persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
   savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
   saving: boolean;

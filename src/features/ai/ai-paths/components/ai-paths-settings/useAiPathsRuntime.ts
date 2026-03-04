@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { normalizeNodes, sanitizeEdges, aiJobsApi } from '@/shared/lib/ai-paths';
+import { normalizeNodes, sanitizeEdges, stableStringify, aiJobsApi } from '@/shared/lib/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import {
   useRuntimeActions,
@@ -15,6 +15,7 @@ import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
 import { useAiPathsServerExecution } from './runtime/useAiPathsServerExecution';
 import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
 import { createRunId } from './runtime/utils';
+import { pruneSingleCardinalityIncomingEdges } from './edge-cardinality-repair';
 
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 
@@ -56,6 +57,16 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     (): Edge[] => sanitizeEdges(normalizedNodes, args.edges),
     [args.edges, normalizedNodes]
   );
+  const repairedSanitizedEdges = useMemo(
+    (): Edge[] => pruneSingleCardinalityIncomingEdges(normalizedNodes, sanitizedEdges).edges,
+    [normalizedNodes, sanitizedEdges]
+  );
+
+  useEffect(() => {
+    if (!args.onCanonicalEdgesDetected) return;
+    if (stableStringify(args.edges) === stableStringify(repairedSanitizedEdges)) return;
+    args.onCanonicalEdgesDetected(repairedSanitizedEdges);
+  }, [args.edges, args.onCanonicalEdgesDetected, repairedSanitizedEdges]);
 
   const hasPendingIteratorAdvance = useCallback(
     (rtState: RuntimeState): boolean =>
@@ -82,10 +93,11 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     setRuntimeState,
     setLastRunAt,
     normalizedNodes,
-    sanitizedEdges,
+    sanitizedEdges: repairedSanitizedEdges,
     runtimeStateRef,
     currentRunIdRef,
     currentRunStartedAtRef,
+    setCurrentRunId: runtimeContextActions.setCurrentRunId,
   });
 
   // 3. Local execution engine
@@ -98,7 +110,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     setRuntimeState,
     setLastRunAt,
     normalizedNodes,
-    sanitizedEdges,
+    sanitizedEdges: repairedSanitizedEdges,
     runtimeStateRef,
     runInFlightRef,
     abortControllerRef,
@@ -121,7 +133,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     ...args,
     setRuntimeState,
     normalizedNodes,
-    sanitizedEdges,
+    sanitizedEdges: repairedSanitizedEdges,
     runtimeStateRef,
     runGraphForTrigger: local.runGraphForTrigger,
   });
@@ -131,6 +143,22 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   useEffect(() => {
     runtimeStateRef.current = runtimeContextState.runtimeState;
   }, [runtimeContextState.runtimeState]);
+
+  useEffect(() => {
+    runtimeContextActions.setRuntimeRunStatus(state.runStatus);
+  }, [runtimeContextActions, state.runStatus]);
+
+  useEffect(() => {
+    runtimeContextActions.setRuntimeNodeStatuses(state.runtimeNodeStatuses);
+  }, [runtimeContextActions, state.runtimeNodeStatuses]);
+
+  useEffect(() => {
+    runtimeContextActions.setRuntimeEvents(state.runtimeEvents);
+  }, [runtimeContextActions, state.runtimeEvents]);
+
+  useEffect(() => {
+    runtimeContextActions.setNodeDurations(state.nodeDurations);
+  }, [runtimeContextActions, state.nodeDurations]);
 
   // Cleanup only on unmount. Depending on the whole `server` object causes
   // cleanup to fire on normal rerenders, which aborts active local runs.
@@ -170,7 +198,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         const candidateIds = new Set<string>();
 
         frontier.forEach((nodeId: string): void => {
-          sanitizedEdges.forEach((edge: Edge): void => {
+          repairedSanitizedEdges.forEach((edge: Edge): void => {
             if (edge.from !== nodeId || !edge.to) return;
             const targetId = edge.to;
             const targetNode = normalizedNodes.find(
@@ -202,7 +230,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
 
       return { kind: 'missing' };
     },
-    [normalizedNodes, sanitizedEdges]
+    [normalizedNodes, repairedSanitizedEdges]
   );
 
   const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
@@ -379,6 +407,11 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     currentRunStartedAtRef.current = null;
     currentRunStartedAtMsRef.current = null;
     runtimeContextActions.setSendingToAi(false);
+    runtimeContextActions.setCurrentRunId(null);
+    runtimeContextActions.setRuntimeRunStatus('idle');
+    runtimeContextActions.setRuntimeNodeStatuses({});
+    runtimeContextActions.setRuntimeEvents([]);
+    runtimeContextActions.setNodeDurations({});
     state.setRunStatus('idle');
     state.resetRuntimeNodeStatuses({});
     state.setRuntimeEvents([]);

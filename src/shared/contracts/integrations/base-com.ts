@@ -181,7 +181,7 @@ export const baseImportRunStatsSchema = z.object({
 export type BaseImportRunStats = z.infer<typeof baseImportRunStatsSchema>;
 
 export const baseImportRunParamsSchema = z.object({
-  connectionId: z.string().optional(),
+  connectionId: z.string().trim().min(1),
   inventoryId: z.string(),
   catalogId: z.string(),
   templateId: z.string().optional(),

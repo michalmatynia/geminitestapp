@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import {
   promptExploderSegmentationRecordSchema,
-  promptExploderSegmentSchema,
   type PromptExploderDocument,
   type PromptExploderSegment,
   type PromptExploderSubsection,
@@ -35,61 +34,6 @@ export const defaultPromptExploderSegmentationLibraryState: PromptExploderSegmen
     version: PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION,
     records: [],
   };
-
-const asObjectRecord = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const asString = (value: unknown): string | null => (typeof value === 'string' ? value : null);
-
-const parseSegments = (value: unknown): PromptExploderSegment[] | null => {
-  if (!Array.isArray(value)) return null;
-  const parsedSegments: PromptExploderSegment[] = [];
-  for (const candidate of value) {
-    const parsed = promptExploderSegmentSchema.safeParse(candidate);
-    if (!parsed.success) return null;
-    parsedSegments.push(parsed.data);
-  }
-  return parsedSegments;
-};
-
-const adaptLegacySegmentationRecord = (value: unknown): PromptExploderSegmentationRecord | null => {
-  const record = asObjectRecord(value);
-  if (!record) return null;
-
-  const documentSnapshot = asObjectRecord(record['documentSnapshot']);
-  const prompt = asString(record['prompt']) ?? asString(record['sourcePrompt']) ?? '';
-  const segments = parseSegments(record['segments']) ?? parseSegments(documentSnapshot?.['segments']) ?? [];
-
-  const adapted: Record<string, unknown> = {
-    ...record,
-    prompt,
-    segments,
-  };
-  const parsed = promptExploderSegmentationRecordSchema.safeParse(adapted);
-  return parsed.success ? parsed.data : null;
-};
-
-const adaptLegacySegmentationLibraryState = (
-  value: unknown
-): PromptExploderSegmentationLibraryState | null => {
-  const state = asObjectRecord(value);
-  if (!state) return null;
-  const rawRecords = Array.isArray(state['records']) ? state['records'] : [];
-  const records = rawRecords
-    .map(adaptLegacySegmentationRecord)
-    .filter((record): record is PromptExploderSegmentationRecord => record !== null);
-  const versionRaw = state['version'];
-  const version =
-    typeof versionRaw === 'number' && Number.isFinite(versionRaw) && versionRaw > 0
-      ? Math.floor(versionRaw)
-      : PROMPT_EXPLODER_SEGMENTATION_LIBRARY_VERSION;
-  return {
-    version,
-    records,
-  };
-};
 
 const outlineSubsectionFromSnapshot = (
   subsection: PromptExploderSubsection,
@@ -157,9 +101,7 @@ export const parsePromptExploderSegmentationLibrary = (
   if (!rawValue?.trim()) return defaultPromptExploderSegmentationLibraryState;
   try {
     const parsed: unknown = JSON.parse(rawValue);
-    const adapted = adaptLegacySegmentationLibraryState(parsed);
-    if (!adapted) return defaultPromptExploderSegmentationLibraryState;
-    const result = promptExploderSegmentationLibraryStateSchema.safeParse(adapted);
+    const result = promptExploderSegmentationLibraryStateSchema.safeParse(parsed);
     if (!result.success) return defaultPromptExploderSegmentationLibraryState;
     return result.data;
   } catch {

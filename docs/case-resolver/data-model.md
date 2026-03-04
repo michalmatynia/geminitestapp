@@ -12,9 +12,11 @@ related_components:
 
 ## Settings Keys
 
-Defined in `src/features/case-resolver/settings.ts`:
+Defined in `src/features/case-resolver/settings.constants.ts` and `src/features/case-resolver/utils/workspace-settings-persistence-helpers.ts`:
 
-- `case_resolver_workspace_v1`
+- `case_resolver_workspace_v2`
+- `case_resolver_workspace_v2_history`
+- `case_resolver_workspace_v2_documents`
 - `case_resolver_tags_v1`
 - `case_resolver_identifiers_v1`
 - `case_resolver_categories_v1`

@@ -1,4 +1,5 @@
 import type { SectionInstance } from '../../types/page-builder';
+import { cmsSectionInstanceSchema } from '@/shared/contracts/cms';
 
 export const GRID_TEMPLATE_SETTINGS_KEY = 'cms_grid_templates.v1';
 
@@ -10,32 +11,44 @@ export type GridTemplateRecord = {
   section: SectionInstance;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const normalizeRequiredString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isValidIsoDate = (value: string): boolean => Number.isFinite(Date.parse(value));
+
 export function normalizeGridTemplates(input: unknown): GridTemplateRecord[] {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((entry: unknown, index: number): GridTemplateRecord | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const record = entry as Partial<GridTemplateRecord>;
-      const section = record.section;
-      if (!section || typeof section !== 'object' || section.type !== 'Grid') return null;
-      return {
-        id:
-          typeof record.id === 'string' && record.id.length > 0
-            ? record.id
-            : `grid-template-${index + 1}`,
-        name:
-          typeof record.name === 'string' && record.name.trim().length > 0
-            ? record.name.trim()
-            : `Grid template ${index + 1}`,
-        description: typeof record.description === 'string' ? record.description : '',
-        createdAt:
-          typeof record.createdAt === 'string' && record.createdAt.length > 0
-            ? record.createdAt
-            : new Date().toISOString(),
-        section,
-      };
-    })
-    .filter((record: GridTemplateRecord | null): record is GridTemplateRecord => Boolean(record));
+
+  return input.flatMap((entry: unknown): GridTemplateRecord[] => {
+    if (!isRecord(entry)) return [];
+
+    const id = normalizeRequiredString(entry['id']);
+    const name = normalizeRequiredString(entry['name']);
+    const createdAt = normalizeRequiredString(entry['createdAt']);
+    if (!id || !name || !createdAt || !isValidIsoDate(createdAt)) return [];
+
+    const parsedSection = cmsSectionInstanceSchema.safeParse(entry['section']);
+    if (!parsedSection.success) return [];
+    if (parsedSection.data.type !== 'Grid') return [];
+
+    const description = normalizeRequiredString(entry['description']) ?? '';
+
+    return [
+      {
+        id,
+        name,
+        description,
+        createdAt,
+        section: parsedSection.data,
+      },
+    ];
+  });
 }
 
 export function cloneGridTemplateSection(section: SectionInstance): SectionInstance {

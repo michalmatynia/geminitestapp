@@ -417,7 +417,8 @@ describe('CanvasSvgNodeLayer', () => {
 
     expect(onFireTrigger).toHaveBeenCalledTimes(1);
     expect(onFireTrigger).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'node-trigger-1', type: 'trigger' })
+      expect.objectContaining({ id: 'node-trigger-1', type: 'trigger' }),
+      expect.any(Object)
     );
   });
 });

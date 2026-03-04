@@ -14,7 +14,6 @@ import {
   getIntegrationRepository,
   mapBaseProduct,
   extractBaseImageUrls,
-  startBaseImportRunResponse,
 } from '@/features/integrations/server';
 import type { BaseProductRecord } from '@/features/integrations/server';
 import {
@@ -29,25 +28,17 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 export const requestSchema = z.object({
-  token: z.string().trim().min(1).optional(),
-  action: z.enum(['inventories', 'warehouses', 'warehouses_debug', 'import', 'list']),
+  action: z.enum(['inventories', 'warehouses', 'warehouses_debug', 'list']),
   connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
   includeAllWarehouses: z.boolean().optional(),
   catalogId: z.string().trim().min(1).optional(),
-  templateId: z.string().trim().min(1).optional(),
   limit: z.coerce.number().int().positive().optional(),
   page: z.coerce.number().int().positive().optional(),
   pageSize: z.coerce.number().int().positive().optional(),
   searchName: z.string().trim().optional(),
   searchSku: z.string().trim().optional(),
-  imageMode: z.enum(['links', 'download']).optional(),
   uniqueOnly: z.boolean().optional(),
-  allowDuplicateSku: z.boolean().optional(), // Allow importing products with duplicate SKUs
-  selectedIds: z.array(z.string().trim().min(1)).optional(),
-  dryRun: z.boolean().optional(),
-  mode: z.enum(['create_only', 'upsert_on_base_id', 'upsert_on_sku']).optional(),
-  requestId: z.string().trim().min(1).optional(),
 });
 
 type MappedItem = {
@@ -174,6 +165,16 @@ export async function postBaseImportsHandler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
+  const rawAction =
+    typeof (ctx.body as Record<string, unknown> | undefined)?.['action'] === 'string'
+      ? String((ctx.body as Record<string, unknown>)['action']).trim()
+      : '';
+  if (rawAction === 'import') {
+    throw badRequestError(
+      'Legacy imports/base action "import" is no longer supported. Use /api/v2/integrations/imports/base/runs.'
+    );
+  }
+
   const data = ctx.body as z.infer<typeof requestSchema>;
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
@@ -182,76 +183,32 @@ export async function postBaseImportsHandler(
   );
   const baseIntegrationId = baseIntegration?.id ?? null;
 
-  if (data.action === 'import') {
-    if (!data.inventoryId) {
-      throw badRequestError('Inventory ID is required.');
-    }
-    if (!data.catalogId) {
-      throw badRequestError('Catalog ID is required.');
-    }
+  const normalizedConnectionId = data.connectionId?.trim() || '';
+  let token: string | null = null;
 
-    const response = await startBaseImportRunResponse({
-      inventoryId: data.inventoryId,
-      catalogId: data.catalogId,
-      imageMode: data.imageMode ?? 'links',
-      uniqueOnly: data.uniqueOnly ?? true,
-      allowDuplicateSku: data.allowDuplicateSku ?? false,
-      ...(data.connectionId ? { connectionId: data.connectionId } : {}),
-      ...(data.templateId ? { templateId: data.templateId } : {}),
-      ...(typeof data.limit === 'number' ? { limit: data.limit } : {}),
-      ...(Array.isArray(data.selectedIds) ? { selectedIds: data.selectedIds } : {}),
-      ...(typeof data.dryRun === 'boolean' ? { dryRun: data.dryRun } : {}),
-      ...(data.mode ? { mode: data.mode } : {}),
-      ...(data.requestId ? { requestId: data.requestId } : {}),
-    });
-    return NextResponse.json(response, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
+  if (!normalizedConnectionId) {
+    throw badRequestError('Base.com connection is required.');
+  }
+  if (!baseIntegrationId) {
+    throw badRequestError('Base.com integration is not configured.');
   }
 
-  const resolvedBaseConnectionId = data.connectionId?.trim() || null;
-  let resolvedBaseConnection: {
-    id: string;
-    baseApiToken?: string | null | undefined;
-    password?: string | null | undefined;
-  } | null = null;
-  if (baseIntegrationId && resolvedBaseConnectionId) {
-    resolvedBaseConnection = await integrationRepo.getConnectionByIdAndIntegration(
-      resolvedBaseConnectionId,
-      baseIntegrationId
-    );
-    if (!resolvedBaseConnection) {
-      // resolvedBaseConnectionId = null; // Unused
-    }
+  const resolvedBaseConnection = await integrationRepo.getConnectionByIdAndIntegration(
+    normalizedConnectionId,
+    baseIntegrationId
+  );
+  if (!resolvedBaseConnection) {
+    throw badRequestError('Selected Base.com connection was not found.');
   }
 
-  let token = data.token;
-
-  if (!token) {
-    if (baseIntegrationId) {
-      if (!resolvedBaseConnection) {
-        const connections = await integrationRepo.listConnections(baseIntegrationId);
-        resolvedBaseConnection =
-          connections.find(
-            (connection: (typeof connections)[number]) =>
-              connection.baseApiToken || connection.password
-          ) ?? null;
-        // resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null; // Unused
-      }
-      if (resolvedBaseConnection) {
-        try {
-          if (resolvedBaseConnection.baseApiToken) {
-            token = decryptSecret(resolvedBaseConnection.baseApiToken);
-          } else if (resolvedBaseConnection.password) {
-            token = decryptSecret(resolvedBaseConnection.password);
-          }
-        } catch {
-          // Ignore decryption errors, will fail later if token is still missing
-        }
-      }
+  try {
+    if (resolvedBaseConnection.baseApiToken) {
+      token = decryptSecret(resolvedBaseConnection.baseApiToken).trim();
+    } else if (resolvedBaseConnection.password) {
+      token = decryptSecret(resolvedBaseConnection.password).trim();
     }
+  } catch {
+    // Ignore decryption errors, the missing-token guard below returns a typed client error.
   }
 
   if (!token) {

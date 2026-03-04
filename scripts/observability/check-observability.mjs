@@ -364,6 +364,15 @@ const collectLegacyCompatibilityViolations = (root, srcDir) => {
         message:
           'legacy import "@/features/observability/utils/client-error-logger" is not allowed',
       },
+      {
+        regex: /@\/shared\/lib\/observability\/ai-path-run-static-context/g,
+        message: 'legacy import "@/shared/lib/observability/ai-path-run-static-context" is not allowed',
+      },
+      {
+        regex: /@\/shared\/lib\/observability\/runtime-context\/adapters\/ai-path-run/g,
+        message:
+          'legacy import "@/shared/lib/observability/runtime-context/adapters/ai-path-run" is not allowed',
+      },
     ];
 
     for (const check of legacyImportPatterns) {
@@ -451,6 +460,8 @@ const collectLegacyCompatibilityViolations = (root, srcDir) => {
     'src/features/observability/lib/transient-recovery/constants.ts',
     'src/features/observability/lib/transient-recovery/settings.ts',
     'src/features/observability/lib/transient-recovery/with-recovery.ts',
+    'src/shared/lib/observability/ai-path-run-static-context.ts',
+    'src/shared/lib/observability/runtime-context/adapters/ai-path-run.ts',
   ];
 
   for (const relativeFile of forbiddenLegacyFiles) {

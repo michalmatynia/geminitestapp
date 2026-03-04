@@ -54,9 +54,7 @@ describe('prompt exploder settings schema', () => {
   it('rejects deprecated persisted AI snapshot keys', () => {
     const result = parsePromptExploderSettingsResult(
       JSON.stringify({
-        version: 1,
-        runtime: defaultPromptExploderSettings.runtime,
-        learning: defaultPromptExploderSettings.learning,
+        ...defaultPromptExploderSettings,
         ai: {
           operationMode: 'hybrid',
           modelId: 'legacy-model',
@@ -68,6 +66,6 @@ describe('prompt exploder settings schema', () => {
 
     expect(result.settings).toEqual(defaultPromptExploderSettings);
     expect(result.error?.code).toBe('deprecated_ai_keys');
-    expect(result.error?.deprecatedKeys).toEqual(['modelId', 'fallbackModelId', 'temperature']);
+    expect(result.error?.deprecatedKeys).toEqual(['fallbackModelId', 'modelId', 'temperature']);
   });
 });

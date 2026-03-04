@@ -16,6 +16,10 @@ import {
   POST_handler as postDefaultInventoryHandler,
 } from '@/app/api/v2/integrations/exports/base/default-inventory/handler';
 import {
+  GET_handler as getExportWarehouseHandler,
+  POST_handler as postExportWarehouseHandler,
+} from '@/app/api/v2/integrations/exports/base/export-warehouse/handler';
+import {
   GET_handler as getImageRetryPresetsHandler,
   POST_handler as postImageRetryPresetsHandler,
 } from '@/app/api/v2/integrations/exports/base/image-retry-presets/handler';
@@ -43,6 +47,10 @@ const EXPORT_BASE_SETTING_HANDLERS: Record<string, RouteHandlers> = {
   'default-inventory': {
     GET: getDefaultInventoryHandler,
     POST: postDefaultInventoryHandler,
+  },
+  'export-warehouse': {
+    GET: getExportWarehouseHandler,
+    POST: postExportWarehouseHandler,
   },
   'image-retry-presets': {
     GET: getImageRetryPresetsHandler,

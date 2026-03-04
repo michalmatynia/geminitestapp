@@ -274,8 +274,7 @@ export function useValidatorSettingsController() {
         replacementValue,
         replacementFields: formData.replacementFields,
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
-          formData.replacementAppliesToScopes,
-          formData.appliesToScopes
+          formData.replacementAppliesToScopes
         ),
         postAcceptBehavior: formData.postAcceptBehavior,
         denyBehaviorOverride:
@@ -289,8 +288,7 @@ export function useValidatorSettingsController() {
         passOutputToNext: formData.passOutputToNext,
         launchEnabled: formData.launchEnabled,
         launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-          formData.launchAppliesToScopes,
-          formData.appliesToScopes
+          formData.launchAppliesToScopes
         ),
         launchScopeBehavior: formData.launchScopeBehavior,
         launchSourceMode: formData.launchSourceMode,
@@ -307,12 +305,10 @@ export function useValidatorSettingsController() {
 
       if (editingPattern) {
         const currentReplacementScopes = normalizeProductValidationPatternReplacementScopes(
-          editingPattern.replacementAppliesToScopes,
-          editingPattern.appliesToScopes
+          editingPattern.replacementAppliesToScopes
         );
         const currentLaunchScopes = normalizeProductValidationPatternLaunchScopes(
-          editingPattern.launchAppliesToScopes,
-          editingPattern.appliesToScopes
+          editingPattern.launchAppliesToScopes
         );
         const currentAppliesToScopes = normalizeProductValidationPatternScopes(
           editingPattern.appliesToScopes

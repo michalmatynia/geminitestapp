@@ -12,6 +12,10 @@ import {
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
 } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import {
+  CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V1,
+  CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1,
+} from '@/features/case-resolver/workspace-detached-contract-migration';
+import {
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
@@ -288,7 +292,7 @@ describe('case-resolver workspace persistence', () => {
           name: 'Inline Snapshot Asset',
           kind: 'node_file',
           textContent:
-            '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"node-inline"}]}',
+            '{"kind":"case_resolver_node_file_snapshot_v2","nodes":[{"id":"node-inline"}]}',
         }),
       ],
     };
@@ -486,7 +490,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedHistoryPayload = {
-      schema: 'case_resolver_workspace_detached_history_v1',
+      schema: 'case_resolver_workspace_detached_history_v2',
       workspaceRevision: 12,
       files: [
         {
@@ -541,6 +545,72 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
+  it('skips detached history sidecar hydration for legacy v1 schema payloads', async () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      workspaceRevision: 12,
+      files: [
+        createCaseResolverFile({
+          id: 'doc-history-legacy',
+          fileType: 'document',
+          name: 'Doc History Legacy',
+          documentContent: '<p>Hello</p>',
+          documentContentHtml: '<p>Hello</p>',
+          documentHistory: [],
+        }),
+      ],
+    };
+    const detachedHistoryPayload = {
+      schema: CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA_V1,
+      workspaceRevision: 12,
+      files: [
+        {
+          id: 'doc-history-legacy',
+          documentHistory: [
+            {
+              id: 'detached-legacy',
+              savedAt: '2026-03-01T12:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>Detached</p>',
+              documentContentMarkdown: 'Detached',
+              documentContentHtml: '<p>Detached</p>',
+              documentContentPlainText: 'Detached',
+            },
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: JSON.stringify(detachedHistoryPayload),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      includeDetachedHistory: true,
+      requiredFileId: null,
+      strategy: 'light_only',
+    });
+
+    expect(result.status).toBe('resolved');
+    if (result.status === 'resolved') {
+      const file = result.workspace.files.find((entry) => entry.id === 'doc-history-legacy');
+      expect(file?.documentHistory.length).toBe(0);
+    }
+  });
+
   it('hydrates detached documents sidecar when explicitly requested', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
@@ -558,7 +628,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedDocumentsPayload = {
-      schema: 'case_resolver_workspace_detached_documents_v1',
+      schema: 'case_resolver_workspace_detached_documents_v2',
       workspaceRevision: 12,
       lastMutationId: 'doc-mutation-1',
       files: [
@@ -603,6 +673,64 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
+  it('skips detached documents sidecar hydration for legacy v1 schema payloads', async () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      workspaceRevision: 12,
+      lastMutationId: 'doc-mutation-legacy',
+      files: [
+        createCaseResolverFile({
+          id: 'doc-body-legacy',
+          fileType: 'document',
+          name: 'Doc Legacy',
+          documentContent: '',
+          documentContentHtml: '',
+          documentContentPlainText: '',
+        }),
+      ],
+    };
+    const detachedDocumentsPayload = {
+      schema: CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA_V1,
+      workspaceRevision: 12,
+      lastMutationId: 'doc-mutation-legacy',
+      files: [
+        {
+          id: 'doc-body-legacy',
+          documentContentHtml: '<p>Detached body</p>',
+          documentContentPlainText: 'Detached body',
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+          value: JSON.stringify(detachedDocumentsPayload),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      includeDetachedDocuments: true,
+      requiredFileId: null,
+      strategy: 'light_only',
+    });
+
+    expect(result.status).toBe('resolved');
+    if (result.status === 'resolved') {
+      const file = result.workspace.files.find((entry) => entry.id === 'doc-body-legacy');
+      expect(file?.documentContentHtml).toBe('');
+      expect(file?.documentContentPlainText).toBe('');
+    }
+  });
+
   it('requests detached sidecars with caseResolverFileId when required file is provided', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
@@ -628,7 +756,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedDocumentsPayload = {
-      schema: 'case_resolver_workspace_detached_documents_v1',
+      schema: 'case_resolver_workspace_detached_documents_v2',
       workspaceRevision: 14,
       lastMutationId: 'required-file-1',
       files: [
@@ -640,7 +768,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedHistoryPayload = {
-      schema: 'case_resolver_workspace_detached_history_v1',
+      schema: 'case_resolver_workspace_detached_history_v2',
       workspaceRevision: 14,
       lastMutationId: 'required-file-1',
       files: [
@@ -718,7 +846,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedDocumentsPayload = {
-      schema: 'case_resolver_workspace_detached_documents_v1',
+      schema: 'case_resolver_workspace_detached_documents_v2',
       workspaceRevision: 19,
       lastMutationId: 'conditional-1',
       files: [
@@ -730,7 +858,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedHistoryPayload = {
-      schema: 'case_resolver_workspace_detached_history_v1',
+      schema: 'case_resolver_workspace_detached_history_v2',
       workspaceRevision: 19,
       lastMutationId: 'conditional-1',
       files: [
@@ -878,7 +1006,7 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
     const detachedHistoryPayload = {
-      schema: 'case_resolver_workspace_detached_history_v1',
+      schema: 'case_resolver_workspace_detached_history_v2',
       workspaceRevision: 22,
       lastMutationId: 'stale-mutation',
       files: [
@@ -1335,7 +1463,7 @@ describe('case-resolver workspace persistence', () => {
           folder: '',
           kind: 'node_file',
           textContent:
-            '{"kind":"case_resolver_node_file_snapshot_v1","nodes":[{"id":"legacy-node"}]}',
+            '{"kind":"case_resolver_node_file_snapshot_v2","nodes":[{"id":"legacy-node"}]}',
         }),
       ],
     };

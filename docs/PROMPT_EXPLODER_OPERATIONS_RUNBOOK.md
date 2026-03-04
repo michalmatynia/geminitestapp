@@ -18,9 +18,7 @@ Contract migration note:
 
 - Stack IDs and bridge IDs are frozen to canonical hyphenated forms.
 - Runtime no longer normalizes legacy snake_case/`studio` aliases.
-- Persistence migration script:
-  - Dry-run: `npm run migrate:prompt-exploder:contract:v2`
-  - Apply: `npm run migrate:prompt-exploder:contract:v2 -- --write`
+- Legacy persistence migration path was retired after canonical cutover.
 
 ## Pre-Release Gates
 

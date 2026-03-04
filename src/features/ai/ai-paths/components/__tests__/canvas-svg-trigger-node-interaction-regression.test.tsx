@@ -77,6 +77,25 @@ const buildUi = (
   }) as CanvasBoardUIContextValue;
 
 describe('CanvasSvgNode trigger regression interactions', () => {
+  it('renders fire trigger chip with pointer cursor', () => {
+    const node = buildTriggerNode();
+    const ui = buildUi({ nodes: [node] });
+
+    const { container } = render(
+      <svg>
+        <CanvasSvgNode node={node} ui={ui} />
+      </svg>
+    );
+
+    const triggerActionRect = container.querySelector(
+      '[data-node-action="fire-trigger"]'
+    ) as SVGRectElement | null;
+    expect(triggerActionRect).toBeTruthy();
+    if (!triggerActionRect) return;
+
+    expect(triggerActionRect.style.cursor).toBe('pointer');
+  });
+
   it('keeps node click selection separate from trigger quick action', () => {
     const onSelectNode = vi.fn();
     const onFireTrigger = vi.fn();
@@ -128,6 +147,6 @@ describe('CanvasSvgNode trigger regression interactions', () => {
     fireEvent.click(triggerActionRect);
 
     expect(consumeSuppressedNodeClick).toHaveBeenCalledWith(node.id);
-    expect(onFireTrigger).toHaveBeenCalledWith(node);
+    expect(onFireTrigger).toHaveBeenCalledWith(node, expect.any(Object));
   });
 });

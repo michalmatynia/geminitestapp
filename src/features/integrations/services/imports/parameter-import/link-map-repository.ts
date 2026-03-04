@@ -5,6 +5,12 @@ import { ObjectId } from 'mongodb';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import {
+  buildParameterLinkScopeKey,
+  parseScopedCatalogParameterLinkMap,
+  stringifyScopedCatalogParameterLinkMap,
+  normalizeParameterLinkEntries,
+} from '@/features/integrations/services/imports/parameter-import/link-map-preference';
 
 import type { Filter } from 'mongodb';
 
@@ -18,49 +24,11 @@ type SettingDoc = {
   updatedAt?: Date;
 };
 
-type LinkScopeInput = {
-  connectionId?: string | null;
-  inventoryId?: string | null;
-};
-
-type ParameterLinkMap = Record<string, Record<string, Record<string, string>>>;
-
 const SETTINGS_KEY = 'base_import_parameter_link_map';
-const DEFAULT_SCOPE_KEY = '__global__';
-const SCOPE_SEPARATOR = '::';
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
-};
-
-const normalizeOptionalId = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-};
-
-const buildScopeKey = (scope?: LinkScopeInput): string => {
-  const connectionId = normalizeOptionalId(scope?.connectionId);
-  const inventoryId = normalizeOptionalId(scope?.inventoryId);
-  if (!connectionId || !inventoryId) return DEFAULT_SCOPE_KEY;
-  return `${connectionId}${SCOPE_SEPARATOR}${inventoryId}`;
-};
-
-const normalizeLinkEntries = (raw: unknown): Record<string, string> => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return {};
-  }
-  return Object.entries(raw as Record<string, unknown>).reduce(
-    (acc: Record<string, string>, [baseParameterId, parameterId]: [string, unknown]) => {
-      const normalizedBase = baseParameterId.trim();
-      const normalizedParameterId = normalizeOptionalId(parameterId);
-      if (!normalizedBase || !normalizedParameterId) return acc;
-      acc[normalizedBase] = normalizedParameterId;
-      return acc;
-    },
-    {}
-  );
 };
 
 const resolveProvider = async (): Promise<Provider> => {
@@ -112,47 +80,6 @@ const writeSettingsValue = async (value: string): Promise<void> => {
   });
 };
 
-const parseLinkMap = (raw: string | null): ParameterLinkMap => {
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {};
-    }
-
-    const normalized: ParameterLinkMap = {};
-    Object.entries(parsed as Record<string, unknown>).forEach(
-      ([topLevelKey, topLevelValue]: [string, unknown]) => {
-        const normalizedTopLevelKey = topLevelKey.trim();
-        if (!normalizedTopLevelKey) return;
-        if (!topLevelValue || typeof topLevelValue !== 'object' || Array.isArray(topLevelValue)) {
-          return;
-        }
-
-        const topEntries = Object.entries(topLevelValue as Record<string, unknown>);
-
-        const scopeBucket: Record<string, Record<string, string>> = {};
-        topEntries.forEach(([catalogId, catalogLinksRaw]: [string, unknown]) => {
-          const normalizedCatalogId = catalogId.trim();
-          if (!normalizedCatalogId) return;
-          const links = normalizeLinkEntries(catalogLinksRaw);
-          if (Object.keys(links).length === 0) return;
-          scopeBucket[normalizedCatalogId] = links;
-        });
-        if (Object.keys(scopeBucket).length > 0) {
-          normalized[normalizedTopLevelKey] = scopeBucket;
-        }
-      }
-    );
-
-    return normalized;
-  } catch {
-    return {};
-  }
-};
-
-const serializeLinkMap = (map: ParameterLinkMap): string => JSON.stringify(map);
-
 export const getCatalogParameterLinks = async (input: {
   catalogId: string;
   connectionId?: string | null;
@@ -160,12 +87,13 @@ export const getCatalogParameterLinks = async (input: {
 }): Promise<Record<string, string>> => {
   const normalizedCatalogId = input.catalogId.trim();
   if (!normalizedCatalogId) return {};
-  const all = parseLinkMap(await readSettingsValue());
-  const scopeKey = buildScopeKey(input);
-  const scopedLinks =
-    all[scopeKey]?.[normalizedCatalogId] ??
-    (scopeKey !== DEFAULT_SCOPE_KEY ? all[DEFAULT_SCOPE_KEY]?.[normalizedCatalogId] : undefined);
-  return scopedLinks ?? {};
+  const all = parseScopedCatalogParameterLinkMap(await readSettingsValue());
+  const scopeKey = buildParameterLinkScopeKey(input);
+  if (scopeKey) {
+    const scopedLinks = all.byScope[scopeKey]?.[normalizedCatalogId];
+    if (scopedLinks) return scopedLinks;
+  }
+  return all.defaultByCatalog[normalizedCatalogId] ?? {};
 };
 
 export const mergeCatalogParameterLinks = async (input: {
@@ -176,13 +104,25 @@ export const mergeCatalogParameterLinks = async (input: {
 }): Promise<void> => {
   const normalizedCatalogId = input.catalogId.trim();
   if (!normalizedCatalogId) return;
-  const nextEntries = normalizeLinkEntries(input.links);
+  const nextEntries = normalizeParameterLinkEntries(input.links);
   if (Object.keys(nextEntries).length === 0) return;
 
-  const all = parseLinkMap(await readSettingsValue());
-  const scopeKey = buildScopeKey(input);
-  if (!all[scopeKey]) all[scopeKey] = {};
-  const previous = all[scopeKey][normalizedCatalogId] ?? {};
-  all[scopeKey][normalizedCatalogId] = { ...previous, ...nextEntries };
-  await writeSettingsValue(serializeLinkMap(all));
+  const all = parseScopedCatalogParameterLinkMap(await readSettingsValue());
+  const scopeKey = buildParameterLinkScopeKey(input);
+
+  if (scopeKey) {
+    if (!all.byScope[scopeKey]) {
+      all.byScope[scopeKey] = {};
+    }
+    const previous = all.byScope[scopeKey]?.[normalizedCatalogId] ?? {};
+    all.byScope[scopeKey] = {
+      ...(all.byScope[scopeKey] ?? {}),
+      [normalizedCatalogId]: { ...previous, ...nextEntries },
+    };
+  } else {
+    const previous = all.defaultByCatalog[normalizedCatalogId] ?? {};
+    all.defaultByCatalog[normalizedCatalogId] = { ...previous, ...nextEntries };
+  }
+
+  await writeSettingsValue(stringifyScopedCatalogParameterLinkMap(all));
 };

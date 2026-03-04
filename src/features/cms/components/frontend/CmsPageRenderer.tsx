@@ -37,6 +37,13 @@ import { getHoverEffectVars } from './theme-styles';
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 
+const normalizeZone = (zone: unknown): PageZone => {
+  if (zone === 'header' || zone === 'template' || zone === 'footer') {
+    return zone;
+  }
+  return 'template';
+};
+
 interface CmsPageRendererProps {
   components: PageComponentInput[];
   colorSchemes?: Record<string, ColorSchemeColors> | undefined;
@@ -59,13 +66,16 @@ export function CmsPageRenderer({
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
 
   const sections: SectionInstance[] = components.map(
-    (comp: PageComponentInput): SectionInstance => ({
-      id: comp.content.sectionId,
+    (comp: PageComponentInput, index: number): SectionInstance => ({
+      id:
+        typeof comp.content.sectionId === 'string' && comp.content.sectionId.trim().length > 0
+          ? comp.content.sectionId
+          : `legacy-section-${index}`,
       type: comp.type,
-      zone: comp.content.zone,
+      zone: normalizeZone(comp.content.zone),
       parentSectionId: comp.content.parentSectionId,
-      settings: comp.content.settings,
-      blocks: comp.content.blocks,
+      settings: comp.content.settings ?? {},
+      blocks: comp.content.blocks ?? [],
     })
   );
 

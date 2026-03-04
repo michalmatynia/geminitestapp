@@ -77,7 +77,7 @@ const buildUi = (
   }) as CanvasBoardUIContextValue;
 
 describe('CanvasSvgNode trigger interactions', () => {
-  it('routes trigger badge pointer events into node drag handlers', () => {
+  it('keeps trigger badge pointer interactions isolated from node drag handlers', () => {
     const onPointerDownNode = vi.fn();
     const onPointerMoveNode = vi.fn();
     const onPointerUpNode = vi.fn();
@@ -105,9 +105,9 @@ describe('CanvasSvgNode trigger interactions', () => {
     fireEvent.pointerMove(triggerActionRect, { pointerId: 7, clientX: 320, clientY: 280 });
     fireEvent.pointerUp(triggerActionRect, { pointerId: 7, clientX: 320, clientY: 280 });
 
-    expect(onPointerDownNode).toHaveBeenCalledWith(expect.anything(), node.id);
-    expect(onPointerMoveNode).toHaveBeenCalledWith(expect.anything(), node.id);
-    expect(onPointerUpNode).toHaveBeenCalledWith(expect.anything(), node.id);
+    expect(onPointerDownNode).not.toHaveBeenCalled();
+    expect(onPointerMoveNode).not.toHaveBeenCalled();
+    expect(onPointerUpNode).not.toHaveBeenCalled();
   });
 
   it('does not fire trigger click when click is suppressed after drag', () => {
@@ -137,5 +137,20 @@ describe('CanvasSvgNode trigger interactions', () => {
     expect(consumeSuppressedNodeClick).toHaveBeenCalledWith(node.id);
     expect(onFireTrigger).not.toHaveBeenCalled();
   });
-});
 
+  it('shows launching indicator text while trigger dispatch is pending', () => {
+    const node = buildTriggerNode();
+    const ui = buildUi({
+      nodes: [node],
+      launchingTriggerIds: new Set([node.id]),
+    });
+
+    const { getByText } = render(
+      <svg>
+        <CanvasSvgNode node={node} ui={ui} />
+      </svg>
+    );
+
+    expect(getByText('Launching...')).toBeTruthy();
+  });
+});

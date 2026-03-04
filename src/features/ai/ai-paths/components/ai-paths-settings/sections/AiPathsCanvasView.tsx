@@ -22,7 +22,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     onFocusModeChange,
     renderActions,
     confirmNodeSwitch,
-    nodeConfigDirty,
     savePathConfig,
     saving,
     setPathSettingsModalOpen,
@@ -51,7 +50,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     handleSwitchPath,
     isPathSwitching,
     lastError,
-    setLastError,
     persistLastError,
     incrementLoadNonce,
     handleClearConnectorData,
@@ -71,6 +69,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
 
   const {
     selectionToolMode,
+    nodeConfigDirty: nodeConfigDirtySelection,
     selectedNodeIds: selectedNodeIdsCtx,
     selectedEdgeId: selectedEdgeIdCtx,
   } = useSelectionState();
@@ -87,7 +86,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const clearConnectorData = handleClearConnectorData ?? (async (): Promise<void> => undefined);
   const clearHistory = handleClearHistory ?? (async (): Promise<void> => undefined);
   const togglePathActive = handleTogglePathActive ?? (() => undefined);
-  const clearLastError = setLastError ?? (() => undefined);
   const persistLastErrorSafe = persistLastError ?? (async (): Promise<void> => undefined);
   const bumpLoadNonce = incrementLoadNonce ?? (() => undefined);
   const confirmNodeSwitchSafe = confirmNodeSwitch ?? (async (): Promise<boolean> => true);
@@ -122,7 +120,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     data-doc-id='canvas_save_path'
                     className='rounded-md border text-sm text-white hover:bg-muted/60'
                     onClick={() => {
-                      if (nodeConfigDirty) {
+                      if (nodeConfigDirtySelection) {
                         notify(
                           'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
                           { variant: 'info' }
@@ -391,7 +389,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       type='button'
                       className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                       onClick={() => {
-                        clearLastError(null);
                         void persistLastErrorSafe(null);
                       }}
                     >
@@ -402,7 +399,6 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                         type='button'
                         className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                         onClick={() => {
-                          clearLastError(null);
                           void persistLastErrorSafe(null);
                           bumpLoadNonce();
                         }}

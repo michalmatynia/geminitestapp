@@ -26,7 +26,8 @@ Case Resolver is split across three layers:
 
 1. UI state is normalized and stamped with mutation metadata.
 2. Client persists through `/api/settings` using:
-   - `key: case_resolver_workspace_v1`
+   - `key: case_resolver_workspace_v2`
+   - detached sidecars: `case_resolver_workspace_v2_history`, `case_resolver_workspace_v2_documents`
    - `expectedRevision`
    - `mutationId`
 3. Server returns one of:

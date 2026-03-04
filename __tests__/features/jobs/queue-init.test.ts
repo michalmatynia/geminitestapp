@@ -4,6 +4,27 @@ import { initializeQueues, __testOnly } from '@/features/jobs/queue-init';
 import * as redisConnection from '@/shared/lib/queue/redis-connection';
 import * as registry from '@/shared/lib/queue/registry';
 
+const redisConnectMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const redisPingMock = vi.hoisted(() => vi.fn().mockResolvedValue('PONG'));
+const redisDisconnectMock = vi.hoisted(() => vi.fn());
+const RedisMock = vi.hoisted(() =>
+  vi.fn(function MockRedis(this: {
+    on: ReturnType<typeof vi.fn>;
+    connect: typeof redisConnectMock;
+    ping: typeof redisPingMock;
+    disconnect: typeof redisDisconnectMock;
+  }) {
+    this.on = vi.fn();
+    this.connect = redisConnectMock;
+    this.ping = redisPingMock;
+    this.disconnect = redisDisconnectMock;
+  })
+);
+
+vi.mock('ioredis', () => ({
+  Redis: RedisMock,
+}));
+
 vi.mock('@/shared/lib/queue/redis-connection');
 vi.mock('@/shared/lib/queue/registry');
 vi.mock('@/shared/lib/observability/system-logger');
@@ -31,6 +52,8 @@ describe('queue-init', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env['DISABLE_QUEUE_WORKERS'];
+    process.env['REDIS_URL'] = 'redis://localhost:6379';
+    delete process.env['REDIS_TLS'];
     __testOnly.resetInitialized();
   });
 

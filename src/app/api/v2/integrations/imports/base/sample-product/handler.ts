@@ -105,6 +105,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   let productId = data.productId;
   if (!productId) {
+    const normalizedConnectionId = data.connectionId?.trim() ?? '';
+    if (!normalizedConnectionId) {
+      throw badRequestError('Base.com connection is required.');
+    }
+
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
@@ -114,14 +119,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       throw notFoundError('Base integration not found.');
     }
     const connections = await integrationRepo.listConnections(baseIntegration.id);
-    const normalizedConnectionId = data.connectionId?.trim();
-    const connection = normalizedConnectionId
-      ? connections.find(
-        (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
-      )
-      : connections.find(
-        (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
-      );
+    const connection = connections.find(
+      (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
+    );
+    if (!connection) {
+      throw badRequestError('Selected Base.com connection was not found.');
+    }
     if (!connection?.baseApiToken && !connection?.password) {
       throw badRequestError('No Base API token configured.');
     }

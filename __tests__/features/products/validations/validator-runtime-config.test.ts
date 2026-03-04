@@ -68,4 +68,32 @@ describe('validator-runtime-config', () => {
     expect(valid).not.toBeNull();
     expect(invalid).toBeNull();
   });
+
+  it('rejects legacy root-level database payload aliases', () => {
+    expect(() =>
+      validateAndNormalizeRuntimeConfig({
+        runtimeEnabled: true,
+        runtimeType: 'database_query',
+        runtimeConfig: JSON.stringify({
+          operation: 'query',
+          collection: 'products',
+          query: { sku: 'KEYCHA001' },
+        }),
+      })
+    ).toThrowError(/Invalid database runtimeConfig/i);
+  });
+
+  it('rejects legacy replacementPath and expected aliases in AI runtime config', () => {
+    expect(() =>
+      validateAndNormalizeRuntimeConfig({
+        runtimeEnabled: true,
+        runtimeType: 'ai_prompt',
+        runtimeConfig: JSON.stringify({
+          promptTemplate: 'Return JSON',
+          replacementPath: 'parsed.replacementValue',
+          expected: true,
+        }),
+      })
+    ).toThrowError(/Invalid AI runtimeConfig/i);
+  });
 });

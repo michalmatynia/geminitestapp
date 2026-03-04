@@ -57,6 +57,7 @@ export interface CanvasBoardUIContextValue {
   wireFlowEnabled: boolean;
   flowingIntensity: Exclude<PathFlowIntensity, 'off'>;
   reduceVisualEffects: boolean;
+  launchingTriggerIds?: Set<string>;
 
   // Interaction Settings
   enableNodeAnimations: boolean;
@@ -105,7 +106,7 @@ export interface CanvasBoardUIContextValue {
     port: string
   ) => void | Promise<void>;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
-  onFireTrigger: (node: AiNode) => void | Promise<void>;
+  onFireTrigger: (node: AiNode, event?: React.MouseEvent<SVGRectElement>) => void | Promise<void>;
   onRemoveEdge: (edgeId: string) => void;
   onSelectEdge: (edgeId: string) => void;
 }

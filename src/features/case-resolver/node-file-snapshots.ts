@@ -7,7 +7,7 @@ import { validationError } from '@/shared/errors/app-error';
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
 
 export const createEmptyNodeFileSnapshot = (): CaseResolverNodeFileSnapshot => ({
-  kind: 'case_resolver_node_file_snapshot_v1',
+  kind: 'case_resolver_node_file_snapshot_v2',
   source: 'manual',
   nodes: [],
   edges: [],
@@ -82,7 +82,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
   }
 
   return {
-    kind: 'case_resolver_node_file_snapshot_v1',
+    kind: 'case_resolver_node_file_snapshot_v2',
     source: source === 'auto' ? 'auto' : 'manual',
     nodes: [...snapshot.nodes],
     edges: snapshot.edges.map((edge) =>

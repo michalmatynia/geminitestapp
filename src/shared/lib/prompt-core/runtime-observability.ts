@@ -181,8 +181,6 @@ export const getPromptValidationObservabilitySnapshot = (
     runtime_fast_path_miss: getCounterValue('runtime_fast_path_miss'),
     runtime_inflight_dedup_hit: getCounterValue('runtime_inflight_dedup_hit'),
     runtime_inflight_dedup_miss: getCounterValue('runtime_inflight_dedup_miss'),
-    runtime_retry: getCounterValue('runtime_retry'),
-    runtime_retry_success: getCounterValue('runtime_retry_success'),
     runtime_timeout: getCounterValue('runtime_timeout'),
     runtime_backpressure_drop: getCounterValue('runtime_backpressure_drop'),
     runtime_circuit_break_open: getCounterValue('runtime_circuit_break_open'),

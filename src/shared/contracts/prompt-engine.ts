@@ -424,8 +424,6 @@ export const promptValidationCounterNameSchema = z.enum([
   'runtime_fast_path_miss',
   'runtime_inflight_dedup_hit',
   'runtime_inflight_dedup_miss',
-  'runtime_retry',
-  'runtime_retry_success',
   'runtime_timeout',
   'runtime_backpressure_drop',
   'runtime_circuit_break_open',

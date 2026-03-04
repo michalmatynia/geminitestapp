@@ -20,7 +20,7 @@ type RefetchResult<TData = unknown> = {
 type RefetchFn<TData = unknown> = () => Promise<RefetchResult<TData>>;
 
 type ImportMutationPayload = {
-  connectionId?: string;
+  connectionId: string;
   inventoryId: string;
   catalogId: string;
   imageMode: 'download' | 'links';
@@ -240,6 +240,7 @@ export const createImportExportRuntimeActions = ({
     try {
       const selectedIds = Array.from(selectedImportIds);
       const importData: ImportMutationPayload = {
+        connectionId: selectedBaseConnectionId,
         inventoryId,
         catalogId,
         imageMode,
@@ -249,9 +250,6 @@ export const createImportExportRuntimeActions = ({
         allowDuplicateSku,
         requestId: `${Date.now()}`,
       };
-      if (selectedBaseConnectionId) {
-        importData.connectionId = selectedBaseConnectionId;
-      }
       if (importTemplateId) importData.templateId = importTemplateId;
       if (limit !== 'all') importData.limit = Number(limit);
       if (importListEnabled) {

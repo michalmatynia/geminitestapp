@@ -19,19 +19,21 @@ export type RegexConfigBasicTabProps = {
   regexValidation: { ok: boolean; error: string };
 };
 
-export function RegexConfigBasicTab({
-  regexConfig,
-  onUpdateVariantField,
-  onUpdateRegex,
-  templateName,
-  onTemplateNameChange,
-  onSaveNodeTemplate,
-  onSaveGlobalTemplate,
-  isSavingGlobal,
-  isExtractMode,
-  regexMode,
-  regexValidation,
-}: RegexConfigBasicTabProps): React.JSX.Element {
+export function RegexConfigBasicTab(props: RegexConfigBasicTabProps): React.JSX.Element {
+  const {
+    regexConfig,
+    onUpdateVariantField,
+    onUpdateRegex,
+    templateName,
+    onTemplateNameChange,
+    onSaveNodeTemplate,
+    onSaveGlobalTemplate,
+    isSavingGlobal,
+    isExtractMode,
+    regexMode,
+    regexValidation,
+  } = props;
+
   return (
     <div className='space-y-4'>
       <div className='flex items-start justify-between gap-3'>

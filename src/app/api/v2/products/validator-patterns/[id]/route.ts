@@ -6,7 +6,7 @@ import {
   deleteValidatorPatternByIdHandler,
   putValidatorPatternByIdHandler,
   updatePatternSchema,
-} from '@/app/api/products/validator-patterns/[id]/handler';
+} from '@/app/api/v2/products/validator-patterns/[id]/handler';
 
 export const PUT = apiHandlerWithParams<{ id: string }>(putValidatorPatternByIdHandler, {
   source: 'products.validator-patterns.[id].PUT',

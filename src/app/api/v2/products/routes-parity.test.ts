@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readdirSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -10,6 +10,8 @@ const legacyRoot = path.join(projectRoot, 'src/app/api/products');
 const v2Root = path.join(projectRoot, 'src/app/api/v2/products');
 
 const collectRouteFiles = (baseDir: string): string[] => {
+  if (!existsSync(baseDir)) return [];
+
   const walk = (dir: string): string[] => {
     const entries = readdirSync(dir, { withFileTypes: true });
     const files: string[] = [];

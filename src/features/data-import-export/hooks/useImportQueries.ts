@@ -199,7 +199,7 @@ export function useInventories(
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories: BaseInventory[] }>(
-        '/api/integrations/imports/base',
+        '/api/v2/integrations/imports/base',
         { action: 'inventories', connectionId }
       );
       return data.inventories;
@@ -228,7 +228,7 @@ export function useWarehouses(
     queryKey,
     queryFn: () =>
       api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>(
-        '/api/integrations/imports/base',
+        '/api/v2/integrations/imports/base',
         {
           action: 'warehouses',
           inventoryId,
@@ -386,7 +386,7 @@ export function useImportList(
         page?: number;
         pageSize?: number;
         totalPages?: number;
-      }>('/api/integrations/imports/base', {
+      }>('/api/v2/integrations/imports/base', {
         action: 'list',
         connectionId,
         catalogId,

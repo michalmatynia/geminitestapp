@@ -312,7 +312,7 @@ export function usePriceGroups(): ListQuery<PriceGroupWithDetails> {
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<PriceGroupWithDetails[]> =>
-      await api.get<PriceGroupWithDetails[]>('/api/price-groups'),
+      await api.get<PriceGroupWithDetails[]>('/api/v2/products/metadata/price-groups'),
     meta: {
       source: 'products.hooks.usePriceGroups',
       operation: 'list',

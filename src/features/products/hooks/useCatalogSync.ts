@@ -21,21 +21,25 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
   DE: { value: 'name_de', label: 'German' },
 };
 
+const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
+const LANGUAGES_ENDPOINT = '/api/v2/metadata/languages';
+const CURRENCIES_ENDPOINT = '/api/v2/metadata/currencies';
+
 // API fetch functions
 async function fetchCatalogs(signal?: AbortSignal): Promise<Catalog[]> {
   return api.get<Catalog[]>('/api/catalogs', { signal });
 }
 
 async function fetchPriceGroups(signal?: AbortSignal): Promise<PriceGroupWithDetails[]> {
-  return api.get<PriceGroupWithDetails[]>('/api/price-groups', { signal });
+  return api.get<PriceGroupWithDetails[]>(PRICE_GROUPS_ENDPOINT, { signal });
 }
 
 async function fetchLanguages(signal?: AbortSignal): Promise<LanguageRecord[]> {
-  return api.get<LanguageRecord[]>('/api/languages', { signal });
+  return api.get<LanguageRecord[]>(LANGUAGES_ENDPOINT, { signal });
 }
 
 async function fetchCurrencies(signal?: AbortSignal): Promise<CurrencyRecord[]> {
-  return api.get<CurrencyRecord[]>('/api/currencies', { signal });
+  return api.get<CurrencyRecord[]>(CURRENCIES_ENDPOINT, { signal });
 }
 
 export interface UseCatalogSyncResult {

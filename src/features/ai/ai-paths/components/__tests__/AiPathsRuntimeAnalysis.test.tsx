@@ -5,11 +5,13 @@ import { describe, expect, it, vi } from 'vitest';
 const {
   useAiPathRuntimeAnalyticsMock,
   useAiPathsSettingsOrchestratorMock,
+  useRunHistoryActionsMock,
   useBrainAssignmentMock,
   toastMock,
 } = vi.hoisted(() => ({
   useAiPathRuntimeAnalyticsMock: vi.fn(),
   useAiPathsSettingsOrchestratorMock: vi.fn(),
+  useRunHistoryActionsMock: vi.fn(),
   useBrainAssignmentMock: vi.fn(),
   toastMock: vi.fn(),
 }));
@@ -24,6 +26,10 @@ vi.mock(
     useAiPathsSettingsOrchestrator: useAiPathsSettingsOrchestratorMock,
   })
 );
+
+vi.mock('@/features/ai/ai-paths/context', () => ({
+  useRunHistoryActions: useRunHistoryActionsMock,
+}));
 
 vi.mock('@/shared/lib/ai-brain/hooks/useBrainAssignment', () => ({
   useBrainAssignment: useBrainAssignmentMock,
@@ -46,10 +52,12 @@ describe('AiPathsRuntimeAnalysis', () => {
       runtimeNodeStatuses: {},
       activePathId: null,
       nodes: [],
+      reportAiPathsError: vi.fn(),
+    });
+    useRunHistoryActionsMock.mockReturnValue({
       setRunHistoryNodeId: vi.fn(),
       setRunFilter: vi.fn(),
-      handleOpenRunDetail: vi.fn(),
-      reportAiPathsError: vi.fn(),
+      openRunDetail: vi.fn(),
     });
     useBrainAssignmentMock.mockImplementation(
       ({ capability }: { capability?: 'insights.runtime_analytics' | 'ai_paths.model' }) => ({

@@ -11,7 +11,7 @@ const updateListingSchema = z.object({
 });
 
 /**
- * DELETE /api/products/[id]/listings/[listingId]
+ * DELETE /api/integrations/products/[id]/listings/[listingId]
  * Marks a listing as removed from a marketplace.
  */
 export async function DELETE_handler(
@@ -41,7 +41,7 @@ export async function DELETE_handler(
 }
 
 /**
- * PATCH /api/products/[id]/listings/[listingId]
+ * PATCH /api/integrations/products/[id]/listings/[listingId]
  * Updates listing metadata (e.g., inventoryId).
  */
 export async function PATCH_handler(

@@ -6,7 +6,7 @@ import {
   createPatternSchema,
   getValidatorPatternsHandler,
   postValidatorPatternsHandler,
-} from '@/app/api/products/validator-patterns/handler';
+} from '@/app/api/v2/products/validator-patterns/handler';
 
 export const GET = apiHandler(getValidatorPatternsHandler, {
   source: 'products.validator-patterns.GET',

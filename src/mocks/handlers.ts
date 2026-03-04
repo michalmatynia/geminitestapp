@@ -143,15 +143,15 @@ const mockNotes = [
  */
 export const handlers = [
   // Products endpoints
-  http.get('/api/products', () => {
+  http.get('/api/v2/products', () => {
     return HttpResponse.json(mockProducts);
   }),
 
-  http.get('/api/products/count', () => {
+  http.get('/api/v2/products/count', () => {
     return HttpResponse.json({ count: mockProducts.length });
   }),
 
-  http.get('/api/products/:id', ({ params }: ParamsContext) => {
+  http.get('/api/v2/products/:id', ({ params }: ParamsContext) => {
     const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -159,7 +159,7 @@ export const handlers = [
     return HttpResponse.json(product);
   }),
 
-  http.get('/api/products/:id/studio', () => {
+  http.get('/api/v2/products/:id/studio', () => {
     return HttpResponse.json({
       config: {
         projectId: null,
@@ -167,11 +167,11 @@ export const handlers = [
     });
   }),
 
-  http.get('/api/products/categories/tree', () => {
+  http.get('/api/v2/products/categories/tree', () => {
     return HttpResponse.json([]);
   }),
 
-  http.post('/api/products', async ({ request }: RequestContext) => {
+  http.post('/api/v2/products', async ({ request }: RequestContext) => {
     const body = (await request.json()) as Record<string, unknown>;
     const newProduct = {
       id: Math.random().toString(36).substr(2, 9),
@@ -182,7 +182,7 @@ export const handlers = [
     return HttpResponse.json(newProduct, { status: 201 });
   }),
 
-  http.put('/api/products/:id', async ({ params, request }: RequestParamsContext) => {
+  http.put('/api/v2/products/:id', async ({ params, request }: RequestParamsContext) => {
     const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -196,7 +196,7 @@ export const handlers = [
     return HttpResponse.json(updatedProduct);
   }),
 
-  http.delete('/api/products/:id', ({ params }: ParamsContext) => {
+  http.delete('/api/v2/products/:id', ({ params }: ParamsContext) => {
     const product = mockProducts.find((p: (typeof mockProducts)[number]) => p.id === params['id']);
     if (!product) {
       return HttpResponse.json({ error: 'Product not found' }, { status: 404 });
@@ -325,7 +325,19 @@ export const handlers = [
     return HttpResponse.json(tree);
   }),
 
-  // Price groups
+  // Price groups (canonical + legacy compatibility)
+  http.get('/api/v2/products/metadata/price-groups', () => {
+    return HttpResponse.json([
+      {
+        id: 'pg-1',
+        groupId: 'default',
+        name: 'Default Price Group',
+        currencyId: 'curr-1',
+        currency: { id: 'curr-1', code: 'USD', name: 'US Dollar' },
+        isDefault: true,
+      },
+    ]);
+  }),
   http.get('/api/price-groups', () => {
     return HttpResponse.json([
       {
@@ -339,7 +351,13 @@ export const handlers = [
     ]);
   }),
 
-  // Languages
+  // Languages (canonical + legacy compatibility)
+  http.get('/api/v2/metadata/languages', () => {
+    return HttpResponse.json([
+      { id: 'lang-1', code: 'EN', name: 'English' },
+      { id: 'lang-2', code: 'PL', name: 'Polish' },
+    ]);
+  }),
   http.get('/api/languages', () => {
     return HttpResponse.json([
       { id: 'lang-1', code: 'EN', name: 'English' },
@@ -347,7 +365,13 @@ export const handlers = [
     ]);
   }),
 
-  // Currencies
+  // Currencies (canonical + legacy compatibility)
+  http.get('/api/v2/metadata/currencies', () => {
+    return HttpResponse.json([
+      { id: 'curr-1', code: 'USD', name: 'US Dollar' },
+      { id: 'curr-2', code: 'PLN', name: 'Polish Zloty' },
+    ]);
+  }),
   http.get('/api/currencies', () => {
     return HttpResponse.json([
       { id: 'curr-1', code: 'USD', name: 'US Dollar' },

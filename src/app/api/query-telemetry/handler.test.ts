@@ -19,7 +19,7 @@ const createEvent = (id: string) => ({
   stage: 'error',
   source: 'ui.products.table',
   operation: 'fetch',
-  resource: '/api/products',
+  resource: '/api/v2/products',
   key: 'customer=john.doe@example.com&phone=+48 123 456 789&' + 'x'.repeat(220),
   keyHash: 'hash-key-1',
   criticality: 'critical',

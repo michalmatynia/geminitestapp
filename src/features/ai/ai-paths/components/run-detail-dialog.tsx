@@ -13,12 +13,12 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
 import { collectPlaywrightArtifacts } from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { useRunHistoryActions, useRunHistoryState } from '../context';
 
 type RuntimeTraceSnapshot = {
   traceId?: string;
@@ -58,18 +58,20 @@ type RuntimeTraceSnapshot = {
 export function RunDetailDialog(): React.JSX.Element {
   const {
     runDetailOpen: isOpen,
-    setRunDetailOpen,
     runDetailLoading,
     runDetail,
     runStreamStatus,
     runStreamPaused,
     runEventsOverflow,
     runEventsBatchLimit,
-    runDetailSelectedHistoryNodeId: runHistoryNodeId,
+    runHistoryNodeId: runHistoryNodeId,
+  } = useRunHistoryState();
+  const {
+    setRunDetailOpen,
     setRunStreamPaused: onStreamPauseToggle,
     setRunHistoryNodeId: onHistoryNodeSelect,
-    handleResumeRun,
-  } = useAiPathsSettingsOrchestrator();
+    resumeRun,
+  } = useRunHistoryActions();
 
   const onClose = () => setRunDetailOpen(false);
 
@@ -439,7 +441,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   onReplayFromEntry={(): void => {
                     if (!runDetail?.run?.id) return;
                     // For now we replay the whole run that produced this history entry.
-                    void handleResumeRun(runDetail.run.id, 'replay').catch(() => {});
+                    void resumeRun(runDetail.run.id, 'replay').catch(() => {});
                   }}
                 />
               </div>

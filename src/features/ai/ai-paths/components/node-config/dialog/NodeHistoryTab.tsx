@@ -3,11 +3,11 @@ import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryE
 import { Button } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
-import { useAiPathsSettingsOrchestrator } from '../../ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { useRunHistoryActions } from '../../../context';
 
 export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
-  const { handleResumeRun } = useAiPathsSettingsOrchestrator();
+  const { resumeRun } = useRunHistoryActions();
   if (!selectedNode) return null;
 
   const history = runtimeState.history?.[selectedNode.id] ?? [];
@@ -47,7 +47,7 @@ export function NodeHistoryTab(): React.JSX.Element | null {
         onReplayFromEntry={(): void => {
           const currentRunId = runtimeState.currentRun?.id;
           if (!currentRunId) return;
-          void handleResumeRun(currentRunId, 'replay').catch(() => {});
+          void resumeRun(currentRunId, 'replay').catch(() => {});
         }}
       />
     </div>

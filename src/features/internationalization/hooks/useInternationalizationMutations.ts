@@ -14,11 +14,15 @@ import { createDeleteMutationV2, createSaveMutationV2 } from '@/shared/lib/query
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const i18nKeys = QUERY_KEYS.internationalization;
+const I18N_METADATA_BASE = '/api/v2/metadata';
+const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;
+const COUNTRIES_ENDPOINT = `${I18N_METADATA_BASE}/countries`;
+const LANGUAGES_ENDPOINT = `${I18N_METADATA_BASE}/languages`;
 
 export function useDeleteCurrencyMutation(): DeleteMutation<void, string> {
   const mutationKey = i18nKeys.currencies();
   return createDeleteMutationV2<void, string>({
-    mutationFn: (id) => api.delete<void>(`/api/currencies/${id}`),
+    mutationFn: (id) => api.delete<void>(`${CURRENCIES_ENDPOINT}/${id}`),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useDeleteCurrencyMutation',
@@ -34,7 +38,7 @@ export function useDeleteCurrencyMutation(): DeleteMutation<void, string> {
 export function useDeleteCountryMutation(): DeleteMutation<void, string> {
   const mutationKey = i18nKeys.countries();
   return createDeleteMutationV2<void, string>({
-    mutationFn: (id) => api.delete<void>(`/api/countries/${id}`),
+    mutationFn: (id) => api.delete<void>(`${COUNTRIES_ENDPOINT}/${id}`),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useDeleteCountryMutation',
@@ -50,7 +54,7 @@ export function useDeleteCountryMutation(): DeleteMutation<void, string> {
 export function useDeleteLanguageMutation(): DeleteMutation<void, string> {
   const mutationKey = i18nKeys.languages();
   return createDeleteMutationV2<void, string>({
-    mutationFn: (id) => api.delete<void>(`/api/languages/${id}`),
+    mutationFn: (id) => api.delete<void>(`${LANGUAGES_ENDPOINT}/${id}`),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useDeleteLanguageMutation',
@@ -69,8 +73,8 @@ export function useSaveCurrencyMutation(): SaveMutation<
   > {
   const mutationKey = i18nKeys.currencies();
   return createSaveMutationV2<CurrencyOption, { id?: string; data: SaveCurrencyInput }>({
-    createFn: (variables) => api.post<CurrencyOption>('/api/currencies', variables),
-    updateFn: (id, variables) => api.put<CurrencyOption>(`/api/currencies/${id}`, variables),
+    createFn: (variables) => api.post<CurrencyOption>(CURRENCIES_ENDPOINT, variables),
+    updateFn: (id, variables) => api.put<CurrencyOption>(`${CURRENCIES_ENDPOINT}/${id}`, variables),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useSaveCurrencyMutation',
@@ -89,8 +93,8 @@ export function useSaveCountryMutation(): SaveMutation<
   > {
   const mutationKey = i18nKeys.countries();
   return createSaveMutationV2<CountryOption, { id?: string; data: SaveCountryInput }>({
-    createFn: (variables) => api.post<CountryOption>('/api/countries', variables),
-    updateFn: (id, variables) => api.put<CountryOption>(`/api/countries/${id}`, variables),
+    createFn: (variables) => api.post<CountryOption>(COUNTRIES_ENDPOINT, variables),
+    updateFn: (id, variables) => api.put<CountryOption>(`${COUNTRIES_ENDPOINT}/${id}`, variables),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useSaveCountryMutation',
@@ -109,8 +113,8 @@ export function useSaveLanguageMutation(): SaveMutation<
   > {
   const mutationKey = i18nKeys.languages();
   return createSaveMutationV2<Language, { id?: string; data: SaveLanguageInput }>({
-    createFn: (variables) => api.post<Language>('/api/languages', variables),
-    updateFn: (id, variables) => api.put<Language>(`/api/languages/${id}`, variables),
+    createFn: (variables) => api.post<Language>(LANGUAGES_ENDPOINT, variables),
+    updateFn: (id, variables) => api.put<Language>(`${LANGUAGES_ENDPOINT}/${id}`, variables),
     mutationKey,
     meta: {
       source: 'i18n.hooks.useSaveLanguageMutation',

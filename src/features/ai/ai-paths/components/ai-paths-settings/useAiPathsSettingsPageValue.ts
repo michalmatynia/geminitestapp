@@ -9,6 +9,7 @@ import {
 } from '../../lib';
 import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-utils';
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
+import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
 import type { AiPathsSettingsPageContextValue } from './AiPathsSettingsPageContext';
 import type { AiPathsSettingsProps } from '../AiPathsSettings';
 import type { UseAiPathsSettingsStateReturn } from './types';
@@ -17,6 +18,7 @@ export function useAiPathsSettingsPageValue(
   props: AiPathsSettingsProps,
   state: UseAiPathsSettingsStateReturn
 ): AiPathsSettingsPageContextValue {
+  const { setRunHistoryNodeId, setRunFilter, openRunDetail } = useRunHistoryActions();
   const [pathSettingsModalOpen, setPathSettingsModalOpen] = React.useState(false);
   const [simulationModalOpen, setSimulationModalOpen] = React.useState(false);
   const [selectionScopeMode, setSelectionScopeMode] = React.useState<'portion' | 'wiring'>(
@@ -114,12 +116,12 @@ export function useAiPathsSettingsPageValue(
       }
 
       if (runId) {
-        state.setRunHistoryNodeId(targetNodeId);
-        state.setRunFilter(focus);
-        void state.handleOpenRunDetail(runId);
+        setRunHistoryNodeId(targetNodeId);
+        setRunFilter(focus);
+        openRunDetail(runId);
       }
     },
-    [state]
+    [openRunDetail, setRunFilter, setRunHistoryNodeId, state.activePathId]
   );
 
   const handleOpenNodeValidator = React.useCallback((): void => {

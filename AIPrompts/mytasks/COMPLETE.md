@@ -376,7 +376,7 @@ return NextResponse.json(
 
 };
 }
-Then in app/api/products/route.ts:
+Then in app/api/v2/products/route.ts:
 
 validate input
 

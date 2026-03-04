@@ -30,7 +30,7 @@ describe('products api versioning', () => {
 
   it('extracts requested version from path and defaults to current version', () => {
     const pathReq = new NextRequest('http://localhost/api/v1/products');
-    const defaultReq = new NextRequest('http://localhost/api/products');
+    const defaultReq = new NextRequest('http://localhost/api/unversioned-route');
 
     expect(ApiVersionManager.extractVersion(pathReq)).toBe('v1');
     expect(ApiVersionManager.extractVersion(defaultReq)).toBe('v2');

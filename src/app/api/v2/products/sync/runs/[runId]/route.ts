@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { GET_handler, querySchema } from '@/app/api/products/sync/runs/[runId]/handler';
+import { GET_handler, querySchema } from '@/app/api/v2/products/sync/runs/[runId]/handler';
 
 export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, {
   source: 'products.sync.runs.[runId].GET',

@@ -115,7 +115,7 @@ export function BaseQuickExportButton({
 
       const inventoriesResponse = await api.post<{
         inventories?: Array<{ inventory_id?: string | number; id?: string | number }>;
-      }>('/api/integrations/imports/base', {
+      }>('/api/v2/integrations/imports/base', {
         action: 'inventories',
         connectionId,
       });

@@ -8,28 +8,33 @@ import type {
 } from '@/shared/contracts/internationalization';
 import { api } from '@/shared/lib/api-client';
 
+const I18N_METADATA_BASE = '/api/v2/metadata';
+const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;
+const COUNTRIES_ENDPOINT = `${I18N_METADATA_BASE}/countries`;
+const LANGUAGES_ENDPOINT = `${I18N_METADATA_BASE}/languages`;
+
 export async function getCurrencies(): Promise<CurrencyOption[]> {
-  return api.get<CurrencyOption[]>('/api/currencies');
+  return api.get<CurrencyOption[]>(CURRENCIES_ENDPOINT);
 }
 
 export async function getCountries(): Promise<CountryOption[]> {
-  return api.get<CountryOption[]>('/api/countries');
+  return api.get<CountryOption[]>(COUNTRIES_ENDPOINT);
 }
 
 export async function getLanguages(): Promise<Language[]> {
-  return api.get<Language[]>('/api/languages');
+  return api.get<Language[]>(LANGUAGES_ENDPOINT);
 }
 
 export async function deleteCurrency(id: string): Promise<void> {
-  await api.delete(`/api/currencies/${id}`);
+  await api.delete(`${CURRENCIES_ENDPOINT}/${id}`);
 }
 
 export async function deleteCountry(id: string): Promise<void> {
-  await api.delete(`/api/countries/${id}`);
+  await api.delete(`${COUNTRIES_ENDPOINT}/${id}`);
 }
 
 export async function deleteLanguage(id: string): Promise<void> {
-  await api.delete(`/api/languages/${id}`);
+  await api.delete(`${LANGUAGES_ENDPOINT}/${id}`);
 }
 
 export async function saveCurrency(
@@ -37,9 +42,9 @@ export async function saveCurrency(
   data: SaveCurrencyInput
 ): Promise<CurrencyOption> {
   if (id) {
-    return api.put<CurrencyOption>(`/api/currencies/${id}`, data);
+    return api.put<CurrencyOption>(`${CURRENCIES_ENDPOINT}/${id}`, data);
   }
-  return api.post<CurrencyOption>('/api/currencies', data);
+  return api.post<CurrencyOption>(CURRENCIES_ENDPOINT, data);
 }
 
 export async function saveCountry(
@@ -47,9 +52,9 @@ export async function saveCountry(
   data: SaveCountryInput
 ): Promise<CountryOption> {
   if (id) {
-    return api.put<CountryOption>(`/api/countries/${id}`, data);
+    return api.put<CountryOption>(`${COUNTRIES_ENDPOINT}/${id}`, data);
   }
-  return api.post<CountryOption>('/api/countries', data);
+  return api.post<CountryOption>(COUNTRIES_ENDPOINT, data);
 }
 
 export async function saveLanguage(
@@ -57,7 +62,7 @@ export async function saveLanguage(
   data: SaveLanguageInput
 ): Promise<Language> {
   if (id) {
-    return api.put<Language>(`/api/languages/${id}`, data);
+    return api.put<Language>(`${LANGUAGES_ENDPOINT}/${id}`, data);
   }
-  return api.post<Language>('/api/languages', data);
+  return api.post<Language>(LANGUAGES_ENDPOINT, data);
 }

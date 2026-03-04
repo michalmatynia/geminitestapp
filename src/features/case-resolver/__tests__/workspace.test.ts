@@ -701,7 +701,7 @@ describe('case-resolver workspace', () => {
     expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
   });
 
-  it('converts legacy relation graph edge keys during workspace parse', () => {
+  it('drops legacy relation graph edge keys during workspace parse', () => {
     const raw = JSON.stringify({
       version: 2,
       workspaceRevision: 0,
@@ -758,13 +758,8 @@ describe('case-resolver workspace', () => {
 
     const workspace = parseCaseResolverWorkspace(raw);
     expect(
-      workspace.relationGraph.edges.some(
-        (edge: Edge): boolean =>
-          edge.id === 'legacy-edge' &&
-          edge.source === 'case:case-a' &&
-          edge.target === 'custom-link'
-      )
-    ).toBe(true);
+      workspace.relationGraph.edges.some((edge: Edge): boolean => edge.id === 'legacy-edge')
+    ).toBe(false);
   });
 
   it('synchronizes relation graph structure and preserves custom links', () => {
@@ -1655,7 +1650,7 @@ describe('case-resolver workspace', () => {
     ).toThrowError(/Legacy Case Resolver edge fields are no longer supported/i);
   });
 
-  it('strips legacy inline node-file snapshots when loading the workspace', () => {
+  it('strips inline node-file snapshots when loading the workspace', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1714,7 +1709,7 @@ describe('case-resolver workspace', () => {
     expect(workspace.assets[0]?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
   });
 
-  it('converts legacy graph edges during workspace normalization', () => {
+  it('drops legacy graph edges during workspace normalization', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1746,14 +1741,7 @@ describe('case-resolver workspace', () => {
         activeFileId: 'case-legacy-edge',
       })
     );
-    expect(workspace.files[0]?.graph.edges).toHaveLength(1);
-    expect(workspace.files[0]?.graph.edges[0]).toMatchObject({
-      id: 'edge-legacy',
-      source: 'node-a',
-      target: 'node-b',
-      sourceHandle: 'wysiwygText',
-      targetHandle: 'plaintextContent',
-    });
+    expect(workspace.files[0]?.graph.edges).toHaveLength(0);
   });
 
   it('drops legacy edge port names during workspace normalization', () => {

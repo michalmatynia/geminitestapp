@@ -252,7 +252,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     try {
       parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
     } catch {
-      // Drop malformed or legacy edges during workspace sanitation.
+      // Drop malformed edges during workspace sanitation.
     }
   });
   const edgesByNodeId = parsedEdges.filter(

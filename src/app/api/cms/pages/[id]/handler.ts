@@ -123,10 +123,6 @@ export async function PUT_handler(
 }
 
 /**
- * DELETE /api/products/categories/[id]
- * Deletes a product category and all its children (cascade).
- */
-/**
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */

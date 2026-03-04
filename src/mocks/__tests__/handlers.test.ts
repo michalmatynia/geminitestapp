@@ -6,7 +6,7 @@ import { server } from '../server';
 describe('MSW Handlers', () => {
   describe('Products API', () => {
     it('should fetch all products', async () => {
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/v2/products');
       const data = (await response.json()) as Record<string, unknown>[];
 
       expect(response.status).toBe(200);
@@ -15,7 +15,7 @@ describe('MSW Handlers', () => {
     });
 
     it('should fetch all products', async () => {
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/v2/products');
       const data = (await response.json()) as Record<string, unknown>[];
 
       expect(response.status).toBe(200);
@@ -24,7 +24,7 @@ describe('MSW Handlers', () => {
     });
 
     it('should fetch a single product by id', async () => {
-      const response = await fetch('/api/products/1');
+      const response = await fetch('/api/v2/products/1');
       const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);
@@ -34,7 +34,7 @@ describe('MSW Handlers', () => {
     });
 
     it('should return 404 for non-existent product', async () => {
-      const response = await fetch('/api/products/999');
+      const response = await fetch('/api/v2/products/999');
 
       expect(response.status).toBe(404);
     });
@@ -48,7 +48,7 @@ describe('MSW Handlers', () => {
         price: 99.99,
       };
 
-      const response = await fetch('/api/products', {
+      const response = await fetch('/api/v2/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newProduct),
@@ -66,7 +66,7 @@ describe('MSW Handlers', () => {
         price: 39.99,
       };
 
-      const response = await fetch('/api/products/1', {
+      const response = await fetch('/api/v2/products/1', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -79,7 +79,7 @@ describe('MSW Handlers', () => {
     });
 
     it('should delete a product', async () => {
-      const response = await fetch('/api/products/1', {
+      const response = await fetch('/api/v2/products/1', {
         method: 'DELETE',
       });
 
@@ -143,12 +143,12 @@ describe('MSW Handlers', () => {
     it('should allow overriding handlers in tests', async () => {
       // Override the products handler for this specific test
       server.use(
-        http.get('/api/products', () => {
+        http.get('/api/v2/products', () => {
           return HttpResponse.json([{ id: 'test', name_en: 'Test Override' }]);
         })
       );
 
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/v2/products');
       const data = (await response.json()) as Record<string, unknown>[];
 
       expect((data[0] as Record<string, unknown>)['name_en']).toBe('Test Override');

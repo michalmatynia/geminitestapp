@@ -5,6 +5,7 @@ import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignme
 import { useAiPathRuntimeAnalytics } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import { Button, Card, StatusBadge, useToast } from '@/shared/ui';
+import { useRunHistoryActions } from '@/features/ai/ai-paths/context';
 import {
   formatDurationMs,
   formatPercent,
@@ -20,6 +21,7 @@ import type {
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const state = useAiPathsSettingsOrchestrator();
   const { runtimeRunStatus, runtimeNodeStatuses, activePathId, nodes } = state;
+  const { setRunHistoryNodeId, setRunFilter, openRunDetail } = useRunHistoryActions();
   const { toast } = useToast();
   const runtimeAnalyticsCapability = useBrainAssignment({
     capability: 'insights.runtime_analytics',
@@ -119,27 +121,29 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
     async (nodeId: string, focus: 'all' | 'failed'): Promise<void> => {
       const targetNodeId = nodeId.trim();
       if (!targetNodeId) return;
-      const runId = await fetchLatestRunIdForTraceNode(targetNodeId, focus === 'failed');
-      if (!runId) {
-        toast(`No recent runs found for ${targetNodeId}.`, { variant: 'warning' });
-        return;
-      }
-      state.setRunHistoryNodeId(targetNodeId);
-      state.setRunFilter(focus);
-      await state.handleOpenRunDetail(runId).catch((error: unknown) => {
+      try {
+        const runId = await fetchLatestRunIdForTraceNode(targetNodeId, focus === 'failed');
+        if (!runId) {
+          toast(`No recent runs found for ${targetNodeId}.`, { variant: 'warning' });
+          return;
+        }
+        setRunHistoryNodeId(targetNodeId);
+        setRunFilter(focus);
+        openRunDetail(runId);
+      } catch (error: unknown) {
         state.reportAiPathsError(
           error,
           {
             action: 'inspectRuntimeTraceNode',
-            runId,
             nodeId: targetNodeId,
+            focus,
           },
-          'Failed to open runtime trace node drill-down:'
+          'Failed to inspect runtime trace node:'
         );
         toast('Failed to open run details for trace node.', { variant: 'error' });
-      });
+      }
     },
-    [fetchLatestRunIdForTraceNode, state, toast]
+    [fetchLatestRunIdForTraceNode, openRunDetail, setRunFilter, setRunHistoryNodeId, state, toast]
   );
 
   return (

@@ -14,7 +14,6 @@ import {
   Hint,
 } from '@/shared/ui';
 
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
@@ -22,33 +21,36 @@ import { useRunHistoryActions, useRunHistoryState } from '../context';
 export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 
 export function RunHistoryPanel(): React.JSX.Element {
-  const orchestrator = useAiPathsSettingsOrchestrator();
   const runHistoryState = useRunHistoryState();
-  const { expandedRunHistory, runHistorySelection } = runHistoryState;
+  const { runList: resolvedRuns, runsRefreshing: resolvedIsRefreshing, expandedRunHistory, runHistorySelection } =
+    runHistoryState;
   const {
     setRunFilter: setRunFilterContext,
     setExpandedRunHistory,
     setRunHistorySelection,
+    refreshRuns,
+    openRunDetail,
+    resumeRun,
+    cancelRun,
+    requeueDeadLetter,
   } = useRunHistoryActions();
-  const resolvedRuns = orchestrator.runList;
-  const resolvedIsRefreshing = orchestrator.runsQuery.isFetching;
   const [compareMode, setCompareMode] = React.useState(false);
   const [primaryRunId, setPrimaryRunId] = React.useState<string | null>(null);
   const [secondaryRunId, setSecondaryRunId] = React.useState<string | null>(null);
   const handleRefresh = (): void => {
-    void orchestrator.runsQuery.refetch().catch(() => {});
+    void refreshRuns().catch(() => {});
   };
   const handleOpenRunDetail = (runId: string): void => {
-    void orchestrator.handleOpenRunDetail(runId).catch(() => {});
+    openRunDetail(runId);
   };
   const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
-    void orchestrator.handleResumeRun(runId, mode).catch(() => {});
+    void resumeRun(runId, mode).catch(() => {});
   };
   const handleCancelRun = (runId: string): void => {
-    void orchestrator.handleCancelRun(runId).catch(() => {});
+    void cancelRun(runId).catch(() => {});
   };
   const handleRequeueDeadLetter = (runId: string): void => {
-    void orchestrator.handleRequeueDeadLetter(runId).catch(() => {});
+    void requeueDeadLetter(runId).catch(() => {});
   };
   const rawRunFilter = runHistoryState.runFilter as string;
 

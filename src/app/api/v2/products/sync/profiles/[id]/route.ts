@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, GET_handler, PUT_handler, updateProfileSchema } from '@/app/api/products/sync/profiles/[id]/handler';
+import { DELETE_handler, GET_handler, PUT_handler, updateProfileSchema } from '@/app/api/v2/products/sync/profiles/[id]/handler';
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'products.sync.profiles.[id].GET',

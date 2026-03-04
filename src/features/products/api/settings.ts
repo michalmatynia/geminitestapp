@@ -39,9 +39,11 @@ import { type ProductTag } from '@/shared/contracts/products/tags';
 import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { api } from '@/shared/lib/api-client';
 
+const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
+
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {
-    return await api.get<PriceGroup[]>('/api/price-groups');
+    return await api.get<PriceGroup[]>(PRICE_GROUPS_ENDPOINT);
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load price groups'), {
       context: { source: 'products-api-settings', action: 'getPriceGroups' },
@@ -51,11 +53,11 @@ export async function getPriceGroups(): Promise<PriceGroup[]> {
 }
 
 export async function updatePriceGroup(group: PriceGroup): Promise<PriceGroup> {
-  return api.put<PriceGroup>(`/api/price-groups/${group.groupId}`, group);
+  return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${group.groupId}`, group);
 }
 
 export async function deletePriceGroup(id: string): Promise<void> {
-  return api.delete(`/api/price-groups/${id}`);
+  return api.delete(`${PRICE_GROUPS_ENDPOINT}/${id}`);
 }
 
 export async function savePriceGroup(
@@ -63,9 +65,9 @@ export async function savePriceGroup(
   data: Partial<PriceGroup>
 ): Promise<PriceGroup> {
   if (id) {
-    return api.put<PriceGroup>(`/api/price-groups/${id}`, data);
+    return api.put<PriceGroup>(`${PRICE_GROUPS_ENDPOINT}/${id}`, data);
   }
-  return api.post<PriceGroup>('/api/price-groups', data);
+  return api.post<PriceGroup>(PRICE_GROUPS_ENDPOINT, data);
 }
 
 export async function getCatalogs(): Promise<CatalogRecord[]> {

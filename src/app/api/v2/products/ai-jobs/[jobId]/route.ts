@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
-import { DELETE_handler, GET_handler, POST_handler } from '@/app/api/products/ai-jobs/[jobId]/handler';
+import { DELETE_handler, GET_handler, POST_handler } from '@/app/api/v2/products/ai-jobs/[jobId]/handler';
 
 export const GET = apiHandlerWithParams<{ jobId: string }>(GET_handler, {
   source: 'products.ai-jobs.[jobId].GET',

@@ -235,7 +235,7 @@ export function useBaseInventories(
   const queryKey = integrationKeys.baseInventories(connectionId);
   const queryFn = async (): Promise<BaseInventory[]> => {
     const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
-      '/api/integrations/imports/base',
+      '/api/v2/integrations/imports/base',
       {
         action: 'inventories',
         connectionId,
@@ -331,7 +331,7 @@ export const getBaseInventoriesQueryOptions = (
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
-        '/api/integrations/imports/base',
+        '/api/v2/integrations/imports/base',
         {
           action: 'inventories',
           connectionId,

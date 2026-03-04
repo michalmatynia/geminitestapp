@@ -154,11 +154,7 @@ export const parseCaseResolverWorkspace = (
 export type CaseResolverWorkspaceSafeParseDiagnostics = {
   parseFallbackApplied: boolean;
   parseFallbackReason: string | null;
-  parseFallbackClass:
-    | 'none'
-    | 'invalid_json'
-    | 'graph_stripped_recovered'
-    | 'default_workspace_fallback';
+  parseFallbackClass: 'none' | 'invalid_json' | 'default_workspace_fallback';
 };
 
 const CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceSafeParseDiagnostics =
@@ -202,36 +198,6 @@ const resolveWorkspaceParseFallbackClass = (
   return 'default_workspace_fallback';
 };
 
-const stripWorkspaceGraphPayload = (
-  raw: string | null | undefined
-): string | null => {
-  if (typeof raw !== 'string' || raw.trim().length === 0) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch {
-    return null;
-  }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-  const record = parsed as Record<string, unknown>;
-  const nextRecord: Record<string, unknown> = {
-    ...record,
-    relationGraph: null,
-  };
-  const rawFiles = Array.isArray(record['files']) ? record['files'] : null;
-  if (rawFiles) {
-    nextRecord['files'] = rawFiles.map((entry: unknown): unknown => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry;
-      const fileRecord = entry as Record<string, unknown>;
-      return {
-        ...fileRecord,
-        graph: null,
-      };
-    });
-  }
-  return JSON.stringify(nextRecord);
-};
-
 export const safeParseCaseResolverWorkspace = (
   raw: string | null | undefined
 ): CaseResolverWorkspace => {
@@ -242,20 +208,6 @@ export const safeParseCaseResolverWorkspace = (
       CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY
     );
   } catch (firstError: unknown) {
-    const fallbackRaw = stripWorkspaceGraphPayload(raw);
-    if (fallbackRaw) {
-      try {
-        const fallbackWorkspace = parseCaseResolverWorkspace(fallbackRaw);
-        return attachCaseResolverWorkspaceSafeParseDiagnostics(fallbackWorkspace, {
-          parseFallbackApplied: true,
-          parseFallbackReason:
-            firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
-          parseFallbackClass: 'graph_stripped_recovered',
-        });
-      } catch {
-        // Use default workspace fallback below.
-      }
-    }
     const emptyWorkspace = createDefaultCaseResolverWorkspace();
     return attachCaseResolverWorkspaceSafeParseDiagnostics(
       emptyWorkspace,

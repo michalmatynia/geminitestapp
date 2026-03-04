@@ -25,24 +25,26 @@ export interface SequenceRunCardProps {
   sequenceLog: string[];
 }
 
-export function SequenceRunCard({
-  handleStartSequence,
-  handleCancelSequence,
-  handleRetryPendingSlotSync,
-  isSequenceRunning,
-  projectId,
-  workingSlotPresent,
-  sequencingEnabled,
-  enabledStepsCount,
-  activeSequenceRunId,
-  activeSequenceStatus,
-  displayState,
-  activeStepLabel,
-  slotSyncWarning,
-  pendingTerminalSlotId,
-  sequenceError,
-  sequenceLog,
-}: SequenceRunCardProps): React.JSX.Element {
+export function SequenceRunCard(props: SequenceRunCardProps): React.JSX.Element {
+  const {
+    handleStartSequence,
+    handleCancelSequence,
+    handleRetryPendingSlotSync,
+    isSequenceRunning,
+    projectId,
+    workingSlotPresent,
+    sequencingEnabled,
+    enabledStepsCount,
+    activeSequenceRunId,
+    activeSequenceStatus,
+    displayState,
+    activeStepLabel,
+    slotSyncWarning,
+    pendingTerminalSlotId,
+    sequenceError,
+    sequenceLog,
+  } = props;
+
   return (
     <StudioCard label='Run' className='shrink-0'>
       <div className='space-y-2'>

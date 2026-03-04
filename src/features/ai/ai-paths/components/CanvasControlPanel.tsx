@@ -30,20 +30,22 @@ export interface CanvasControlPanelProps {
   className?: string;
 }
 
-export function CanvasControlPanel({
-  edgeRoutingMode,
-  onEdgeRoutingModeChange,
-  showMinimap,
-  onToggleMinimap,
-  onZoomIn,
-  onZoomOut,
-  onFitToNodes,
-  onFitToSelection,
-  onResetView,
-  viewScale,
-  svgPerf,
-  className,
-}: CanvasControlPanelProps): React.JSX.Element {
+export function CanvasControlPanel(props: CanvasControlPanelProps): React.JSX.Element {
+  const {
+    edgeRoutingMode,
+    onEdgeRoutingModeChange,
+    showMinimap,
+    onToggleMinimap,
+    onZoomIn,
+    onZoomOut,
+    onFitToNodes,
+    onFitToSelection,
+    onResetView,
+    viewScale,
+    svgPerf,
+    className,
+  } = props;
+
   return (
     <div
       className={cn(

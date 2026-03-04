@@ -19,19 +19,21 @@ export interface CaseListSortingProps {
   className?: string;
 }
 
-export function CaseListSorting({
-  caseSortBy,
-  setCaseSortBy,
-  caseSortOrder,
-  setCaseSortOrder,
-  isHierarchyLocked,
-  setIsHierarchyLocked,
-  caseShowNestedContent,
-  setCaseShowNestedContent,
-  handleSaveDefaults,
-  isSavingDefaults,
-  className = '',
-}: CaseListSortingProps): React.JSX.Element {
+export function CaseListSorting(props: CaseListSortingProps): React.JSX.Element {
+  const {
+    caseSortBy,
+    setCaseSortBy,
+    caseSortOrder,
+    setCaseSortOrder,
+    isHierarchyLocked,
+    setIsHierarchyLocked,
+    caseShowNestedContent,
+    setCaseShowNestedContent,
+    handleSaveDefaults,
+    isSavingDefaults,
+    className = '',
+  } = props;
+
   return (
     <div
       className={`sticky top-2 z-20 w-full rounded-md border border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 ${className}`.trim()}

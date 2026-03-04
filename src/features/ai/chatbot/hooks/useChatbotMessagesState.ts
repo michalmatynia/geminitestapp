@@ -22,8 +22,7 @@ export interface UseChatbotMessagesStateReturn {
 }
 
 export function useChatbotMessagesState(
-  sessionId: string | null,
-  model: string
+  sessionId: string | null
 ): UseChatbotMessagesStateReturn {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -62,7 +61,6 @@ export function useChatbotMessagesState(
     try {
       const data = await sendMutation.mutateAsync({
         messages: currentMessages,
-        model,
         sessionId,
       });
 
@@ -84,7 +82,7 @@ export function useChatbotMessagesState(
     } finally {
       setIsSending(false);
     }
-  }, [input, isSending, messages, model, sessionId, sendMutation, toast]);
+  }, [input, isSending, messages, sessionId, sendMutation, toast]);
 
   return {
     messages,

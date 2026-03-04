@@ -61,7 +61,7 @@ const assertNoLegacyParameterSourceMappings = (args: {
   if (legacyMappings.length === 0) return;
 
   throw badRequestError(
-    `Export template "${args.templateId}" contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
+    `Export template "${args.templateId}" contains unsupported parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
     {
       templateId: args.templateId,
       legacyMappingCount: legacyMappings.length,

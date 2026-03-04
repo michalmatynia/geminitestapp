@@ -103,7 +103,7 @@ describe('prepareBaseExportMappingsAndProduct', () => {
     ]);
   });
 
-  it('rejects templates that still use legacy parameter source mappings', async () => {
+  it('rejects templates that still use unsupported parameter source mappings', async () => {
     listExportTemplatesMock.mockResolvedValue([
       {
         id: 'tpl-legacy',
@@ -144,7 +144,7 @@ describe('prepareBaseExportMappingsAndProduct', () => {
         },
       })
     ).rejects.toThrow(
-      'contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.'
+      'contains unsupported parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.'
     );
   });
 });

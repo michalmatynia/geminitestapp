@@ -112,7 +112,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     palette,
   });
   if (identityIssues.length > 0) {
-    throw badRequestError('AI Paths run graph contains legacy node identities.');
+    throw badRequestError('AI Paths run graph contains unsupported node identities.');
   }
   const normalizedEdges = sanitizeEdges(normalizedNodes, edges);
   if (stableStringify(normalizedEdges) !== stableStringify(edges)) {

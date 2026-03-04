@@ -174,7 +174,9 @@ describe('sanitizePathConfig', () => {
           : node
     );
 
-    expect(() => sanitizePathConfig(config)).toThrowError(/unsupported database schemaSnapshot/i);
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /(?:unsupported|deprecated) database schemaSnapshot/i
+    );
   });
 
   it('rejects unsupported database query provider \"all\" in path configs', () => {
@@ -198,7 +200,7 @@ describe('sanitizePathConfig', () => {
     );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
-      /unsupported database query provider \"all\"/i
+      /(?:unsupported|deprecated) database query provider \"all\"/i
     );
   });
 
@@ -224,7 +226,7 @@ describe('sanitizePathConfig', () => {
     );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
-      /deprecated parameter inference target path/i
+      /(?:unsupported|deprecated) parameter inference target path/i
     );
   });
 
@@ -240,7 +242,9 @@ describe('sanitizePathConfig', () => {
           : node
     );
 
-    expect(() => sanitizePathConfig(config)).toThrowError(/legacy node identities/i);
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /(?:unsupported|legacy) node identities/i
+    );
   });
 
   it('backfills missing node createdAt/updatedAt timestamps', () => {

@@ -87,7 +87,7 @@ describe('ai-paths runs enqueue handler', () => {
         }),
         {} as Parameters<typeof POST_handler>[1]
       )
-    ).rejects.toThrow(/legacy node identities/i);
+    ).rejects.toThrow(/unsupported node identities/i);
 
     expect(enqueuePathRunMock).not.toHaveBeenCalled();
   });

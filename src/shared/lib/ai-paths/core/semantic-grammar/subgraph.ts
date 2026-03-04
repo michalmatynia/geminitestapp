@@ -218,18 +218,14 @@ export const applySemanticSubgraphToPathConfig = (
         id: remappedId,
         from: fromNodeId,
         to: toNodeId,
-        source: fromNodeId,
-        target: toNodeId,
         ...(typeof edge.fromPort === 'string' || edge.fromPort === null
           ? {
             fromPort: edge.fromPort,
-            sourceHandle: edge.fromPort,
           }
           : {}),
         ...(typeof edge.toPort === 'string' || edge.toPort === null
           ? {
             toPort: edge.toPort,
-            targetHandle: edge.toPort,
           }
           : {}),
         ...(typeof edge.label === 'string' || edge.label === null ? { label: edge.label } : {}),

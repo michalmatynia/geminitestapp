@@ -112,7 +112,7 @@ export function useImportExportTemplates({
 
     if (!isImport && hasLegacyExportParameterSourceMapping(cleanMappings)) {
       toast(
-        'Export template contains legacy parameter source mappings. Use canonical text_fields.features.<name> mappings before duplicating.',
+        'Export template contains unsupported parameter source mappings. Use canonical text_fields.features.<name> mappings before duplicating.',
         { variant: 'error' }
       );
       return;
@@ -170,7 +170,7 @@ export function useImportExportTemplates({
 
     if (hasLegacyExportParameterSourceMapping(cleanMappings)) {
       toast(
-        'Import template includes legacy parameter source mappings that are not supported for export copy. Update mappings to canonical fields first.',
+        'Import template includes unsupported parameter source mappings for export copy. Update mappings to canonical fields first.',
         { variant: 'error' }
       );
       return;
@@ -225,7 +225,7 @@ export function useImportExportTemplates({
 
     if (!isImport && hasLegacyExportParameterSourceMapping(cleanedMappings)) {
       toast(
-        'Legacy export source mapping "parameter:<id>" is no longer supported. Use canonical text_fields.features.<name> source fields.',
+        'Export template mappings include unsupported "parameter:<id>" source keys. Use canonical text_fields.features.<name> source fields.',
         { variant: 'error' }
       );
       return;

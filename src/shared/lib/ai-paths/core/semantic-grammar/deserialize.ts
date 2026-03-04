@@ -63,18 +63,14 @@ const toAiEdge = (semanticEdge: SemanticEdge): Edge => ({
   id: semanticEdge.id,
   from: semanticEdge.fromNodeId,
   to: semanticEdge.toNodeId,
-  source: semanticEdge.fromNodeId,
-  target: semanticEdge.toNodeId,
   ...(typeof semanticEdge.fromPort === 'string' || semanticEdge.fromPort === null
     ? {
       fromPort: semanticEdge.fromPort,
-      sourceHandle: semanticEdge.fromPort,
     }
     : {}),
   ...(typeof semanticEdge.toPort === 'string' || semanticEdge.toPort === null
     ? {
       toPort: semanticEdge.toPort,
-      targetHandle: semanticEdge.toPort,
     }
     : {}),
   ...(typeof semanticEdge.label === 'string' || semanticEdge.label === null

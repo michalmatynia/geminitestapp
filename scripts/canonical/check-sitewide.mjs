@@ -136,12 +136,44 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-paths runtime identity legacy-specific error channel reintroduced',
   },
   {
+    token: 'legacy ai paths runtime identity fields are no longer supported.',
+    reason: 'ai-paths runtime identity legacy-specific error channel reintroduced',
+  },
+  {
     token: 'Legacy AI Paths trigger data outputs are no longer supported.',
+    reason: 'ai-paths trigger-output legacy-specific error channel reintroduced',
+  },
+  {
+    token: 'legacy ai paths trigger output ports are no longer supported.',
     reason: 'ai-paths trigger-output legacy-specific error channel reintroduced',
   },
   {
     token: 'Legacy AI Paths trigger data edges are no longer supported.',
     reason: 'ai-paths trigger-edge legacy-specific error channel reintroduced',
+  },
+  {
+    token: 'legacy ai paths trigger data edges are no longer supported.',
+    reason: 'ai-paths trigger-edge legacy-specific error channel reintroduced',
+  },
+  {
+    token: 'contains legacy parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.',
+    reason: 'integrations export-template legacy parameter-source error channel reintroduced',
+  },
+  {
+    token: 'Legacy export source mapping "parameter:<id>" is no longer supported. Use canonical text_fields.features.<name> source fields.',
+    reason: 'import-export template legacy parameter-source save error channel reintroduced',
+  },
+  {
+    token: 'AI Path config contains legacy node identities.',
+    reason: 'ai-paths path-config legacy node-identity error channel reintroduced',
+  },
+  {
+    token: 'AI Paths run graph contains legacy node identities.',
+    reason: 'ai-paths run-graph legacy node-identity error channel reintroduced',
+  },
+  {
+    token: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
+    reason: 'chatbot legacy model-override compatibility channel reintroduced',
   },
 ];
 const PRODUCTS_METADATA_HANDLER_FILES = [

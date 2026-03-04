@@ -96,7 +96,7 @@ describe('path-run-service enqueuePathRun', () => {
         nodes,
         edges,
       })
-    ).rejects.toThrow(/legacy node identities/i);
+    ).rejects.toThrow(/unsupported node identities/i);
     expect(createRunMock).not.toHaveBeenCalled();
   });
 

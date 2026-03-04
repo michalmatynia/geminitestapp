@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { Edge, PathConfig } from '@/shared/contracts/ai-paths';
 
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
@@ -43,6 +43,51 @@ describe('semantic grammar canvas serialization', () => {
       expect(parsed.value.nodes.length).toBe(original.nodes.length);
     }
   });
+
+  it('does not upgrade alias-only edge fields during semantic serialization', () => {
+    const config = createDefaultPathConfig('path_semantic_alias_only_edge');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
+      {
+        id: 'edge-legacy-alias-shape',
+        source: fromNode.id,
+        target: toNode.id,
+        sourceHandle: 'entityJson',
+        targetHandle: 'entityJson',
+      } as Edge,
+    ];
+
+    const semantic = serializePathConfigToSemanticCanvas(config, {
+      includeConnections: false,
+      sortById: false,
+    });
+    const firstEdge = semantic.edges[0];
+
+    expect(semantic.edges).toHaveLength(1);
+    expect(firstEdge).toBeDefined();
+    expect(firstEdge?.id).toBe('edge-legacy-alias-shape');
+    expect(firstEdge?.fromNodeId).toBe('');
+    expect(firstEdge?.toNodeId).toBe('');
+    expect(firstEdge).not.toHaveProperty('fromPort');
+    expect(firstEdge).not.toHaveProperty('toPort');
+  });
+
+  it('keeps deserialized semantic edges in canonical from/to shape only', () => {
+    const original = createDefaultPathConfig('path_semantic_deserialize_canonical_edges');
+    const semantic = serializePathConfigToSemanticCanvas(original);
+
+    const deserialized = deserializeSemanticCanvasToPathConfig(semantic);
+    const firstEdge = deserialized.edges[0] as Record<string, unknown>;
+
+    expect(firstEdge).toBeDefined();
+    expect(firstEdge['from']).toBeTruthy();
+    expect(firstEdge['to']).toBeTruthy();
+    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'source')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'target')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'sourceHandle')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'targetHandle')).toBe(false);
+  });
 });
 
 describe('semantic grammar subgraph operations', () => {
@@ -65,6 +110,17 @@ describe('semantic grammar subgraph operations', () => {
 
     expect(applied.pathConfig.nodes.length).toBe(target.nodes.length + subgraph.nodes.length);
     expect(Object.keys(applied.nodeIdMap)).toHaveLength(subgraph.nodes.length);
+    const firstAppliedEdgeId = Object.values(applied.edgeIdMap)[0];
+    const firstAppliedEdge = applied.pathConfig.edges.find(
+      (edge: Edge): boolean => edge.id === firstAppliedEdgeId
+    ) as Record<string, unknown> | undefined;
+    expect(firstAppliedEdge).toBeDefined();
+    expect(firstAppliedEdge?.['from']).toBeTruthy();
+    expect(firstAppliedEdge?.['to']).toBeTruthy();
+    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'source')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'target')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'sourceHandle')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'targetHandle')).toBe(false);
   });
 
   it('preserves existing path when parsed semantic document fails', () => {

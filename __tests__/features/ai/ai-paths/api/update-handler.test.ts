@@ -62,7 +62,7 @@ describe('AI Paths update handler', () => {
     );
   });
 
-  it('rejects deprecated simpleParameters alias in product updates', async () => {
+  it('rejects unsupported simpleParameters alias in product updates', async () => {
     const request = new NextRequest('http://localhost/api/ai-paths/update', {
       method: 'POST',
       body: JSON.stringify({
@@ -79,7 +79,7 @@ describe('AI Paths update handler', () => {
     });
 
     await expect(POST_handler(request, {} as never)).rejects.toThrow(
-      /deprecated "simpleParameters".*Use "parameters"/i
+      /unsupported "simpleParameters" alias.*Use "parameters"/i
     );
     expect(productRepository.updateProduct).not.toHaveBeenCalled();
   });

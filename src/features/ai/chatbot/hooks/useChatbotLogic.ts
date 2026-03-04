@@ -421,7 +421,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     try {
       const data = await chatbotApi.sendChatbotMessage({
         messages: [...messages, userMessage],
-        model,
         sessionId,
       });
 
@@ -441,7 +440,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     } finally {
       setIsSending(false);
     }
-  }, [input, isSending, messages, model, sessionId, toast]);
+  }, [input, isSending, messages, sessionId, toast]);
 
   return {
     messages: messages,

@@ -100,7 +100,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
     const contentType = req.headers.get('content-type') || '';
     let messages: IncomingChatMessage[] = [];
-    let requestedModel: string | null = null;
     let sessionId: string | null = null;
 
     if (contentType.includes('multipart/form-data')) {
@@ -116,7 +115,9 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       }
 
       const rawModel = formData.get('model');
-      requestedModel = typeof rawModel === 'string' ? rawModel : null;
+      if (rawModel !== null) {
+        throw badRequestError('Chatbot payload contains unsupported model override.');
+      }
 
       const rawSessionId = formData.get('sessionId');
       sessionId = typeof rawSessionId === 'string' ? rawSessionId : null;
@@ -207,16 +208,18 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     } else {
       let body: {
         messages?: IncomingChatMessage[];
-        model?: string;
         sessionId?: string;
+        model?: unknown;
       };
       try {
         body = (await req.json()) as typeof body;
       } catch {
         throw badRequestError('Invalid JSON payload.');
       }
+      if (Object.prototype.hasOwnProperty.call(body, 'model')) {
+        throw badRequestError('Chatbot payload contains unsupported model override.');
+      }
       messages = body.messages ?? [];
-      requestedModel = body.model ?? null;
       sessionId = body.sessionId ?? null;
     }
 
@@ -248,19 +251,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       defaultMaxTokens: 800,
       defaultSystemPrompt: DEFAULT_CHATBOT_SYSTEM_PROMPT,
     });
-
-    const normalizedRequestedModel = requestedModel?.trim() || '';
-    if (normalizedRequestedModel && normalizedRequestedModel !== brainConfig.modelId) {
-      await logSystemEvent({
-        level: 'info',
-        message: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
-        context: {
-          requestedModel: normalizedRequestedModel,
-          appliedModel: brainConfig.modelId,
-          requestId: ctx.requestId,
-        },
-      });
-    }
 
     if (DEBUG_CHATBOT) {
       await logSystemEvent({

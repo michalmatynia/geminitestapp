@@ -63,6 +63,8 @@ const JOB_QUEUE_PANEL_UTILS_FILE = 'src/features/ai/ai-paths/components/job-queu
 const RUNS_ENQUEUE_HANDLER_FILE = 'src/app/api/ai-paths/runs/enqueue/handler.ts';
 const PATH_RUN_SERVICE_FILE = 'src/features/ai/ai-paths/services/path-run-service.ts';
 const PATH_RUN_EXECUTOR_LOGIC_FILE = 'src/features/ai/ai-paths/services/path-run-executor.logic.ts';
+const PATH_RUN_EXECUTOR_HELPERS_FILE =
+  'src/features/ai/ai-paths/services/path-run-executor.helpers.ts';
 const SETTINGS_RUNTIME_UTILS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts';
 const PRISMA_RUN_REPOSITORY_FILE =
@@ -79,12 +81,18 @@ const STARTER_WORKFLOW_REGISTRY_FILE = 'src/shared/lib/ai-paths/core/starter-wor
 const DB_SCHEMA_NODE_CONFIG_SECTION_FILE =
   'src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx';
 const DATABASE_NODE_CONFIG_STATE_FILE = 'src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts';
+const TRIGGER_NORMALIZATION_FILE =
+  'src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts';
 const ENTITY_UPDATE_HANDLER_FILE = 'src/app/api/ai-paths/update/handler.ts';
 const DATABASE_PARAMETER_INFERENCE_FILE =
   'src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts';
 const DATABASE_SETTINGS_TAB_FILE =
   'src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx';
 const PRODUCTS_AI_PATH_SETTINGS_FILE = 'src/features/products/hooks/useAiPathSettings.ts';
+const SEMANTIC_GRAMMAR_SERIALIZE_FILE = 'src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts';
+const SEMANTIC_GRAMMAR_DESERIALIZE_FILE =
+  'src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts';
+const SEMANTIC_GRAMMAR_SUBGRAPH_FILE = 'src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts';
 
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
@@ -942,6 +950,103 @@ const checkLoadedPathSettingsEdgeAliasCompatibilityPrune = () => {
   }
 };
 
+const checkSemanticGrammarEdgeAliasCompatibilityPrune = () => {
+  const serializeText = readFile(SEMANTIC_GRAMMAR_SERIALIZE_FILE);
+  const deserializeText = readFile(SEMANTIC_GRAMMAR_DESERIALIZE_FILE);
+  const subgraphText = readFile(SEMANTIC_GRAMMAR_SUBGRAPH_FILE);
+  const serializeForbiddenSnippets = [
+    ": typeof edge.source === 'string' && edge.source.trim().length > 0",
+    ": typeof edge.target === 'string' && edge.target.trim().length > 0",
+    ": typeof edge.sourceHandle === 'string'",
+    ": typeof edge.targetHandle === 'string'",
+  ];
+  const serializeRequiredSnippets = [
+    "const toEdgeFromNodeId = (edge: Edge): string =>",
+    "typeof edge.from === 'string' ? edge.from.trim() : '';",
+    "const toEdgeToNodeId = (edge: Edge): string => (typeof edge.to === 'string' ? edge.to.trim() : '');",
+    "typeof edge.fromPort === 'string' ? edge.fromPort : null;",
+    "typeof edge.toPort === 'string' ? edge.toPort : null;",
+  ];
+  const deserializeForbiddenSnippets = [
+    'source: semanticEdge.fromNodeId,',
+    'target: semanticEdge.toNodeId,',
+    'sourceHandle: semanticEdge.fromPort,',
+    'targetHandle: semanticEdge.toPort,',
+  ];
+  const deserializeRequiredSnippets = [
+    'from: semanticEdge.fromNodeId,',
+    'to: semanticEdge.toNodeId,',
+    'fromPort: semanticEdge.fromPort,',
+    'toPort: semanticEdge.toPort,',
+  ];
+  const subgraphForbiddenSnippets = [
+    'source: fromNodeId,',
+    'target: toNodeId,',
+    'sourceHandle: edge.fromPort,',
+    'targetHandle: edge.toPort,',
+  ];
+  const subgraphRequiredSnippets = [
+    'from: fromNodeId,',
+    'to: toNodeId,',
+    'fromPort: edge.fromPort,',
+    'toPort: edge.toPort,',
+  ];
+
+  for (const snippet of serializeForbiddenSnippets) {
+    if (serializeText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_SERIALIZE_FILE,
+        `legacy semantic-grammar edge alias serialization snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of serializeRequiredSnippets) {
+    if (!serializeText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_SERIALIZE_FILE,
+        `missing canonical semantic-grammar edge serialization snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of deserializeForbiddenSnippets) {
+    if (deserializeText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_DESERIALIZE_FILE,
+        `legacy semantic-grammar edge alias deserialization snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of deserializeRequiredSnippets) {
+    if (!deserializeText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_DESERIALIZE_FILE,
+        `missing canonical semantic-grammar edge deserialization snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of subgraphForbiddenSnippets) {
+    if (subgraphText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_SUBGRAPH_FILE,
+        `legacy semantic-grammar subgraph edge alias snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of subgraphRequiredSnippets) {
+    if (!subgraphText.includes(snippet)) {
+      reportViolation(
+        SEMANTIC_GRAMMAR_SUBGRAPH_FILE,
+        `missing canonical semantic-grammar subgraph edge snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const checkDatabaseTemplateCatalogAliasCompatibilityPrune = () => {
   const text = readFile(DATABASE_TEMPLATE_CONTEXT_FILE);
   const forbiddenSnippets = [
@@ -1368,10 +1473,11 @@ const checkEntityUpdateSimpleParametersAliasPrune = () => {
     'normalizeLegacySimpleParameterUpdates',
     'mergeLegacySimpleParameterInferenceWithExisting',
     "prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined",
+    'AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".',
   ];
   const requiredSnippets = [
     "Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')",
-    'AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".',
+    'AI Paths product update payload contains unsupported "simpleParameters" alias. Use "parameters".',
   ];
 
   for (const snippet of forbiddenSnippets) {
@@ -1461,16 +1567,35 @@ const checkParameterInferenceTargetPathSanitizationPrune = () => {
   const aiPathsSettingsUtilsText = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
   const useAiPathSettingsText = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
 
-  const requiredAiPathsSettingsUtilsSnippets = [
-    "targetPath.length > 0 && targetPath !== 'parameters'",
+  const forbiddenSnippets = [
     'AI Path config contains deprecated parameter inference target path.',
     "reason: 'deprecated_parameter_inference_target_path'",
+  ];
+  const requiredAiPathsSettingsUtilsSnippets = [
+    "targetPath.length > 0 && targetPath !== 'parameters'",
+    'AI Path config contains unsupported parameter inference target path.',
+    "reason: 'unsupported_parameter_inference_target_path'",
   ];
   const requiredUseAiPathSettingsSnippets = [
     "targetPath.length > 0 && targetPath !== 'parameters'",
-    'AI Path config contains deprecated parameter inference target path.',
-    "reason: 'deprecated_parameter_inference_target_path'",
+    'AI Path config contains unsupported parameter inference target path.',
+    "reason: 'unsupported_parameter_inference_target_path'",
   ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `legacy parameter-inference target-path sanitize snippet detected: ${snippet}`
+      );
+    }
+    if (useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `legacy loaded-config parameter-inference target-path sanitize snippet detected: ${snippet}`
+      );
+    }
+  }
 
   for (const snippet of requiredAiPathsSettingsUtilsSnippets) {
     if (!aiPathsSettingsUtilsText.includes(snippet)) {
@@ -1486,6 +1611,237 @@ const checkParameterInferenceTargetPathSanitizationPrune = () => {
       reportViolation(
         PRODUCTS_AI_PATH_SETTINGS_FILE,
         `missing canonical loaded-config parameter-inference target-path sanitize snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseSchemaSnapshotProviderErrorChannelPrune = () => {
+  const triggerNormalizationText = readFile(TRIGGER_NORMALIZATION_FILE);
+  const aiPathsSettingsUtilsText = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
+  const useAiPathSettingsText = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
+
+  const forbiddenSnippets = [
+    'contains deprecated database schemaSnapshot',
+    'contains deprecated database query provider "all"',
+    "reason: 'deprecated_database_schema_snapshot'",
+    "reason: 'deprecated_database_query_provider'",
+  ];
+  const requiredTriggerNormalizationSnippets = [
+    'AI Path trigger payload contains unsupported database schemaSnapshot.',
+    'AI Path trigger payload contains unsupported database query provider "all".',
+    "reason: 'unsupported_database_schema_snapshot'",
+    "reason: 'unsupported_database_query_provider'",
+  ];
+  const requiredAiPathsSettingsUtilsSnippets = [
+    'AI Path config contains unsupported database schemaSnapshot.',
+    'AI Path config contains unsupported database query provider "all".',
+    "reason: 'unsupported_database_schema_snapshot'",
+    "reason: 'unsupported_database_query_provider'",
+  ];
+  const requiredUseAiPathSettingsSnippets = [
+    'AI Path config contains unsupported database schemaSnapshot.',
+    'AI Path config contains unsupported database query provider "all".',
+    "reason: 'unsupported_database_schema_snapshot'",
+    "reason: 'unsupported_database_query_provider'",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (triggerNormalizationText.includes(snippet)) {
+      reportViolation(
+        TRIGGER_NORMALIZATION_FILE,
+        `legacy database schema/provider error-channel snippet detected: ${snippet}`
+      );
+    }
+    if (aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `legacy database schema/provider error-channel snippet detected: ${snippet}`
+      );
+    }
+    if (useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `legacy database schema/provider error-channel snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredTriggerNormalizationSnippets) {
+    if (!triggerNormalizationText.includes(snippet)) {
+      reportViolation(
+        TRIGGER_NORMALIZATION_FILE,
+        `missing canonical trigger database schema/provider snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredAiPathsSettingsUtilsSnippets) {
+    if (!aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `missing canonical path-config database schema/provider snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredUseAiPathSettingsSnippets) {
+    if (!useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `missing canonical loaded-path database schema/provider snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkTriggerDataAndCollectionAliasErrorChannelPrune = () => {
+  const aiPathsSettingsUtilsText = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
+  const useAiPathSettingsText = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
+
+  const forbiddenSnippets = [
+    "reason: 'deprecated_trigger_outputs'",
+    "reason: 'deprecated_trigger_data_edge'",
+    "reason: 'deprecated_collection_aliases'",
+    'AI Path config contains deprecated collection aliases.',
+  ];
+  const requiredAiPathsSettingsUtilsSnippets = [
+    "reason: 'unsupported_trigger_outputs'",
+    "reason: 'unsupported_trigger_data_edge'",
+    "reason: 'unsupported_collection_aliases'",
+    'AI Path config contains unsupported collection aliases.',
+  ];
+  const requiredUseAiPathSettingsSnippets = [
+    "reason: 'unsupported_trigger_outputs'",
+    "reason: 'unsupported_trigger_data_edge'",
+    "reason: 'unsupported_collection_aliases'",
+    'AI Path config contains unsupported collection aliases.',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `legacy trigger-data/collection-alias error-channel snippet detected: ${snippet}`
+      );
+    }
+    if (useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `legacy trigger-data/collection-alias error-channel snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredAiPathsSettingsUtilsSnippets) {
+    if (!aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `missing canonical trigger-data/collection-alias error-channel snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredUseAiPathSettingsSnippets) {
+    if (!useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `missing canonical trigger-data/collection-alias error-channel snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRuntimeAndNodeIdentityReasonChannelPrune = () => {
+  const aiPathsSettingsUtilsText = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
+  const useAiPathSettingsText = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
+  const pathRunServiceText = readFile(PATH_RUN_SERVICE_FILE);
+  const pathRunExecutorHelpersText = readFile(PATH_RUN_EXECUTOR_HELPERS_FILE);
+  const pathActionsText = readFile(SETTINGS_PATH_ACTIONS_FILE);
+
+  const forbiddenRuntimeReasonSnippet = "reason: 'deprecated_runtime_identity_fields'";
+  const requiredRuntimeReasonSnippet = "reason: 'unsupported_runtime_identity_fields'";
+  const forbiddenRuntimeFallbackSnippet = "errorReason === 'deprecated_runtime_identity_fields'";
+  const requiredRuntimeFallbackSnippet = "errorReason === 'unsupported_runtime_identity_fields'";
+  const forbiddenNodeIdentitySnippets = ["reason: 'deprecated_node_identities'"];
+  const requiredNodeIdentitySnippets = ["reason: 'unsupported_node_identities'"];
+
+  if (aiPathsSettingsUtilsText.includes(forbiddenRuntimeReasonSnippet)) {
+    reportViolation(
+      AI_PATHS_SETTINGS_UTILS_FILE,
+      `legacy runtime-identity reason snippet detected: ${forbiddenRuntimeReasonSnippet}`
+    );
+  }
+  if (pathRunExecutorHelpersText.includes(forbiddenRuntimeReasonSnippet)) {
+    reportViolation(
+      PATH_RUN_EXECUTOR_HELPERS_FILE,
+      `legacy runtime-identity reason snippet detected: ${forbiddenRuntimeReasonSnippet}`
+    );
+  }
+  if (pathActionsText.includes(forbiddenRuntimeFallbackSnippet)) {
+    reportViolation(
+      SETTINGS_PATH_ACTIONS_FILE,
+      `legacy runtime-identity fallback reason snippet detected: ${forbiddenRuntimeFallbackSnippet}`
+    );
+  }
+
+  if (!aiPathsSettingsUtilsText.includes(requiredRuntimeReasonSnippet)) {
+    reportViolation(
+      AI_PATHS_SETTINGS_UTILS_FILE,
+      `missing canonical runtime-identity reason snippet: ${requiredRuntimeReasonSnippet}`
+    );
+  }
+  if (!pathRunExecutorHelpersText.includes(requiredRuntimeReasonSnippet)) {
+    reportViolation(
+      PATH_RUN_EXECUTOR_HELPERS_FILE,
+      `missing canonical runtime-identity reason snippet: ${requiredRuntimeReasonSnippet}`
+    );
+  }
+  if (!pathActionsText.includes(requiredRuntimeFallbackSnippet)) {
+    reportViolation(
+      SETTINGS_PATH_ACTIONS_FILE,
+      `missing canonical runtime-identity fallback reason snippet: ${requiredRuntimeFallbackSnippet}`
+    );
+  }
+
+  for (const snippet of forbiddenNodeIdentitySnippets) {
+    if (aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `legacy node-identity reason snippet detected: ${snippet}`
+      );
+    }
+    if (useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `legacy loaded-path node-identity reason snippet detected: ${snippet}`
+      );
+    }
+    if (pathRunServiceText.includes(snippet)) {
+      reportViolation(
+        PATH_RUN_SERVICE_FILE,
+        `legacy run-graph node-identity reason snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredNodeIdentitySnippets) {
+    if (!aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `missing canonical node-identity reason snippet: ${snippet}`
+      );
+    }
+    if (!useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `missing canonical loaded-path node-identity reason snippet: ${snippet}`
+      );
+    }
+    if (!pathRunServiceText.includes(snippet)) {
+      reportViolation(
+        PATH_RUN_SERVICE_FILE,
+        `missing canonical run-graph node-identity reason snippet: ${snippet}`
       );
     }
   }
@@ -1566,6 +1922,7 @@ const main = () => {
   checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
   checkSettingsEdgeAliasCompatibilityPrune();
   checkLoadedPathSettingsEdgeAliasCompatibilityPrune();
+  checkSemanticGrammarEdgeAliasCompatibilityPrune();
   checkDatabaseTemplateCatalogAliasCompatibilityPrune();
   checkDatabaseInputCatalogAliasCompatibilityPrune();
   checkDatabaseProviderFallbackCompatibilityPrune();
@@ -1582,6 +1939,9 @@ const main = () => {
   checkParameterInferenceTargetPathCompatibilityPrune();
   checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune();
   checkParameterInferenceTargetPathSanitizationPrune();
+  checkDatabaseSchemaSnapshotProviderErrorChannelPrune();
+  checkTriggerDataAndCollectionAliasErrorChannelPrune();
+  checkRuntimeAndNodeIdentityReasonChannelPrune();
   checkStarterWorkflowEdgeAliasCompatibilityPrune();
 
   if (violations.length > 0) {

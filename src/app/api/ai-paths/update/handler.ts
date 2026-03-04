@@ -120,7 +120,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const prepared = { ...preparedRaw } as Record<string, unknown>;
     if (Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')) {
       throw badRequestError(
-        'AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".'
+        'AI Paths product update payload contains unsupported "simpleParameters" alias. Use "parameters".'
       );
     }
     const validated = productUpdateSchema.safeParse(prepared);

@@ -13,6 +13,17 @@ import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '5000');
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MAX_MS'] ?? '60000');
+const ORPHAN_QUEUED_RECOVERY_ENABLED =
+  process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_ENABLED'] !== 'false';
+const ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS = Math.max(
+  0,
+  Number.parseInt(process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS'] ?? '60000', 10) ||
+    60000
+);
+const ORPHAN_QUEUED_RECOVERY_BATCH_SIZE = Math.max(
+  1,
+  Number.parseInt(process.env['AI_PATHS_ORPHAN_QUEUED_RECOVERY_BATCH_SIZE'] ?? '25', 10) || 25
+);
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const LOG_SOURCE = 'ai-path-run-processor';
@@ -370,6 +381,59 @@ export const processStaleRunRecovery = async (): Promise<void> => {
         action: 'staleRunRecovery',
         count,
       });
+    }
+
+    if (ORPHAN_QUEUED_RECOVERY_ENABLED) {
+      const repo = await getPathRunRepository();
+      const queued = await repo.listRuns({
+        statuses: ['queued'],
+        limit: ORPHAN_QUEUED_RECOVERY_BATCH_SIZE,
+        offset: 0,
+        includeTotal: false,
+      });
+      const now = Date.now();
+      const { enqueuePathRunJob } = await import('@/features/ai/ai-paths/workers/ai-path-run-queue/queue');
+      let revivedCount = 0;
+
+      for (const run of queued.runs) {
+        const timestamp = run.updatedAt ?? run.createdAt ?? null;
+        if (!timestamp) continue;
+        const updatedAtMs = Date.parse(timestamp);
+        if (!Number.isFinite(updatedAtMs)) continue;
+        if (now - updatedAtMs < ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS) continue;
+        try {
+          await enqueuePathRunJob(run.id);
+          revivedCount += 1;
+        } catch (error) {
+          const message = error instanceof Error ? error.message.toLowerCase() : '';
+          const duplicateJob =
+            message.includes('already exists') ||
+            message.includes('jobid') ||
+            message.includes('job id');
+          if (duplicateJob) {
+            continue;
+          }
+          void ErrorSystem.logWarning('Orphan queued run recovery enqueue failed', {
+            service: 'ai-paths-queue',
+            action: 'orphanQueuedRecovery',
+            runId: run.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      if (revivedCount > 0) {
+        debugQueueLog(`Recovery: revived ${revivedCount} orphan queued run(s)`, {
+          revivedCount,
+        });
+        void ErrorSystem.logWarning(`Orphan queued recovery: revived ${revivedCount} run(s)`, {
+          service: 'ai-paths-queue',
+          action: 'orphanQueuedRecovery',
+          revivedCount,
+          minAgeMs: ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS,
+          batchSize: ORPHAN_QUEUED_RECOVERY_BATCH_SIZE,
+        });
+      }
     }
   } catch (error) {
     void ErrorSystem.logWarning('Stale run recovery failed', {

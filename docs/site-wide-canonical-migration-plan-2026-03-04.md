@@ -470,6 +470,139 @@ Wave 2 hard-cut execution started:
    - extended site-wide canonical guardrail:
      - `scripts/canonical/check-sitewide.mjs`
      - blocks reintroduction of removed legacy-specific AI Paths runtime-identity/trigger-data error-message snippets.
+41. AI Paths DB schemaSnapshot + query-provider legacy-specific error-channel hard-cut:
+   - replaced legacy-specific deprecated schema/provider error channels with canonical unsupported semantics across trigger/path sanitizers:
+     - `src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts`
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+   - canonical messages now surface:
+     - `AI Path trigger payload contains unsupported database schemaSnapshot.`
+     - `AI Path trigger payload contains unsupported database query provider "all".`
+     - `AI Path config contains unsupported database schemaSnapshot.`
+     - `AI Path config contains unsupported database query provider "all".`
+   - canonical reason channels now surface:
+     - `unsupported_database_schema_snapshot`
+     - `unsupported_database_query_provider`
+   - updated regression assertions:
+     - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+     - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+     - `src/features/ai/ai-paths/hooks/__tests__/useAiPathTriggerEvent.sanitize.test.ts`
+   - extended AI-path canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - added `checkDatabaseSchemaSnapshotProviderErrorChannelPrune` to block deprecated schema/provider snippets and require canonical unsupported snippets.
+42. Integrations export-template parameter-source legacy-specific error-channel hard-cut:
+   - removed legacy-specific parameter-source rejection messaging from export-template/runtime preparation paths:
+     - `src/features/integrations/services/export-template-repository.ts`
+     - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+     - canonical unsupported semantics now surface:
+       - `contains unsupported parameter source mappings ...`
+   - removed legacy-specific export-template parameter-source toast messaging in import/export template editor flows:
+     - `src/features/data-import-export/context/import-export/useImportExportTemplates.ts`
+     - canonical unsupported semantics now surface for duplicate/create/save guards.
+   - updated regression assertions:
+     - `__tests__/features/integrations/services/export-template-repository.test.ts`
+     - `__tests__/app/api/integrations/products/export-to-base/helpers.test.ts`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of removed legacy-specific export-template parameter-source error-message snippets.
+43. AI Paths trigger-data + collection-alias reason-channel canonicalization:
+   - replaced legacy trigger-data reason channels with canonical unsupported identifiers:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `deprecated_trigger_outputs` -> `unsupported_trigger_outputs`
+     - `deprecated_trigger_data_edge` -> `unsupported_trigger_data_edge`
+   - replaced legacy collection-alias reason/message channel with canonical unsupported semantics:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `deprecated_collection_aliases` -> `unsupported_collection_aliases`
+     - `AI Path config contains deprecated collection aliases.` -> `AI Path config contains unsupported collection aliases.`
+   - updated regression assertion:
+     - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+   - extended AI-path canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - added `checkTriggerDataAndCollectionAliasErrorChannelPrune` to block deprecated reason/message snippets and require canonical unsupported snippets.
+44. AI Paths node-identity legacy-specific error-channel hard-cut:
+   - removed legacy-specific node-identity rejection messaging across path/run guards:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `src/features/ai/ai-paths/services/path-run-service.ts`
+     - `src/app/api/ai-paths/runs/enqueue/handler.ts`
+   - canonical unsupported semantics now surface:
+     - `AI Path config contains unsupported node identities.`
+     - `AI Paths run graph contains unsupported node identities.`
+   - updated regression assertions:
+     - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+     - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+     - `src/features/ai/ai-paths/services/__tests__/path-run-service.test.ts`
+     - `src/app/api/ai-paths/runs/enqueue/handler.test.ts`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of removed legacy-specific node-identity error-message snippets.
+45. Shared validationError legacy AI-Paths message canonicalizer prune:
+   - removed legacy validation-message canonicalizer shim:
+     - `src/shared/errors/app-error.ts`
+     - `validationError` now preserves caller-provided messages verbatim instead of rewriting legacy AI Paths strings.
+   - added regression coverage for verbatim validation-message behavior:
+     - `src/shared/errors/__tests__/app-error.validation-error.test.ts`
+     - locks three former legacy AI Paths message variants as pass-through (no rewrite).
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - now blocks lowercase legacy AI Paths validation message variants used by removed compatibility shim.
+46. AI Paths runtime/node-identity + parameter-inference reason-channel canonicalization:
+   - replaced legacy runtime-identity reason channel with canonical unsupported identifier:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+     - `deprecated_runtime_identity_fields` -> `unsupported_runtime_identity_fields`
+   - replaced legacy node-identity reason channel with canonical unsupported identifier:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `src/features/ai/ai-paths/services/path-run-service.ts`
+     - `deprecated_node_identities` -> `unsupported_node_identities`
+   - replaced legacy parameter-inference target-path reason/message with canonical unsupported semantics:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `deprecated_parameter_inference_target_path` -> `unsupported_parameter_inference_target_path`
+     - `AI Path config contains deprecated parameter inference target path.` -> `AI Path config contains unsupported parameter inference target path.`
+   - updated path-switch runtime fallback reason matching:
+     - `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts`
+     - now keys on `errorReason === 'unsupported_runtime_identity_fields'`.
+   - updated regression assertions:
+     - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+     - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+     - `src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts`
+     - `src/features/ai/ai-paths/services/__tests__/path-run-service.test.ts`
+     - `src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx`
+   - extended AI-path canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - strengthened `checkParameterInferenceTargetPathSanitizationPrune` to forbid legacy deprecated snippets.
+     - added `checkRuntimeAndNodeIdentityReasonChannelPrune` to block deprecated runtime/node-identity reason channels and require canonical unsupported snippets.
+47. AI Paths entity-update simpleParameters error-channel canonicalization:
+   - replaced legacy-specific simpleParameters rejection message with canonical unsupported semantics:
+     - `src/app/api/ai-paths/update/handler.ts`
+     - `AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".`
+       -> `AI Paths product update payload contains unsupported "simpleParameters" alias. Use "parameters".`
+   - updated regression assertion:
+     - `__tests__/features/ai/ai-paths/api/update-handler.test.ts`
+   - extended AI-path canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - `checkEntityUpdateSimpleParametersAliasPrune` now blocks deprecated message snippet and requires canonical unsupported message snippet.
+48. Chatbot legacy model-override payload compatibility hard-cut:
+   - removed legacy model-override compatibility from chat send handler:
+     - `src/app/api/chatbot/handler.ts`
+     - `/api/chatbot` now rejects payloads that include `model` with:
+       - `Chatbot payload contains unsupported model override.`
+   - removed frontend chat-send payload emission of legacy `model` override:
+     - `src/features/ai/chatbot/api/chat.ts`
+     - `src/features/ai/chatbot/hooks/useChatbotLogic.ts`
+     - `src/features/ai/chatbot/hooks/useChatbotMessagesState.ts`
+     - `src/features/ai/chatbot/hooks/useChatbotMutations.ts`
+   - updated API regression coverage:
+     - `src/app/api/chatbot/handler.test.ts`
+     - canonical payload path remains green and legacy `model` override now rejects.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of legacy model-override ignore channel:
+       - `[chatbot][chat] Ignored legacy requested model in favor of Brain`
 
 ## Baseline (Current State)
 

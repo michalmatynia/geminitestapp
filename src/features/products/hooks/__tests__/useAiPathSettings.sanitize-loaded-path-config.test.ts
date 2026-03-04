@@ -48,7 +48,7 @@ describe('sanitizeLoadedPathConfig', () => {
     usedNodeIds.clear();
   });
 
-  it('rejects deprecated database schemaSnapshot payloads', () => {
+  it('rejects unsupported database schemaSnapshot payloads', () => {
     const config = buildConfig(
       [
         buildNode({
@@ -70,11 +70,11 @@ describe('sanitizeLoadedPathConfig', () => {
     );
 
     expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /deprecated database schemaSnapshot/i
+      /unsupported database schemaSnapshot/i
     );
   });
 
-  it('rejects deprecated database query provider "all"', () => {
+  it('rejects unsupported database query provider "all"', () => {
     const config = buildConfig(
       [
         buildNode({
@@ -95,11 +95,11 @@ describe('sanitizeLoadedPathConfig', () => {
     );
 
     expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /deprecated database query provider "all"/i
+      /unsupported database query provider "all"/i
     );
   });
 
-  it('rejects deprecated parameter inference target path aliases', () => {
+  it('rejects unsupported parameter inference target path aliases', () => {
     const config = buildConfig(
       [
         buildNode({
@@ -121,11 +121,11 @@ describe('sanitizeLoadedPathConfig', () => {
     );
 
     expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /deprecated parameter inference target path/i
+      /unsupported parameter inference target path/i
     );
   });
 
-  it('rejects deprecated collection aliases', () => {
+  it('rejects unsupported collection aliases', () => {
     const config = buildConfig(
       [
         buildNode({
@@ -145,7 +145,7 @@ describe('sanitizeLoadedPathConfig', () => {
       []
     );
 
-    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/deprecated collection aliases/i);
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/unsupported collection aliases/i);
   });
 
   it('rejects legacy node identities', () => {
@@ -176,7 +176,7 @@ describe('sanitizeLoadedPathConfig', () => {
       ]
     );
 
-    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/legacy node identities/i);
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/unsupported node identities/i);
   });
 
   it('rejects legacy trigger data edges', () => {

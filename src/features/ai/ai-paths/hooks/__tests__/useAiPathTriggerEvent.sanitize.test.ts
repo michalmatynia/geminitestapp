@@ -5,7 +5,7 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factor
 import { sanitizeTriggerPathConfig } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 
 describe('sanitizeTriggerPathConfig', () => {
-  it('rejects deprecated database snapshot and provider payloads', () => {
+  it('rejects unsupported database snapshot and provider payloads', () => {
     const baseConfig = createDefaultPathConfig('path_legacy_trigger');
     const legacyConfig = {
       ...baseConfig,
@@ -68,7 +68,9 @@ describe('sanitizeTriggerPathConfig', () => {
       ],
     };
 
-    expect(() => sanitizeTriggerPathConfig(legacyConfig)).toThrowError(/deprecated database/i);
+    expect(() => sanitizeTriggerPathConfig(legacyConfig)).toThrowError(
+      /(?:unsupported|deprecated) database/i
+    );
   });
 
   it('keeps canonical trigger configs unchanged', () => {

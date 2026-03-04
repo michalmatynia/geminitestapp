@@ -2,7 +2,6 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 
 export const sendChatbotMessage = async (payload: {
   messages: ChatMessage[];
-  model?: string;
   sessionId?: string | null;
 }): Promise<{ message?: string }> => {
   const res = await fetch('/api/chatbot', {

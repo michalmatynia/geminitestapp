@@ -117,7 +117,7 @@ describe('ExportTemplateRepository', () => {
     expect(activeId).toBe(template.id);
   });
 
-  it('rejects legacy parameter source mappings on create', async () => {
+  it('rejects unsupported parameter source mappings on create', async () => {
     if (shouldSkipPrismaSettingsTests()) return;
 
     await expect(
@@ -130,10 +130,10 @@ describe('ExportTemplateRepository', () => {
           },
         ],
       })
-    ).rejects.toThrow(/legacy parameter source mappings/i);
+    ).rejects.toThrow(/unsupported parameter source mappings/i);
   });
 
-  it('rejects legacy parameter source mappings on update', async () => {
+  it('rejects unsupported parameter source mappings on update', async () => {
     if (shouldSkipPrismaSettingsTests()) return;
 
     const template = await createExportTemplate({ name: 'Update validation' });
@@ -147,6 +147,6 @@ describe('ExportTemplateRepository', () => {
           },
         ],
       })
-    ).rejects.toThrow(/legacy parameter source mappings/i);
+    ).rejects.toThrow(/unsupported parameter source mappings/i);
   });
 });

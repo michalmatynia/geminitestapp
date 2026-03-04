@@ -141,7 +141,7 @@ export function useAiPathsSettingsPathActions({
             ? (errorMeta as Record<string, unknown>)['reason']
             : null;
         const shouldRetryWithEmptyRuntime =
-          errorReason === 'deprecated_runtime_identity_fields' ||
+          errorReason === 'unsupported_runtime_identity_fields' ||
           message.includes('Invalid AI Paths runtime state payload');
         if (!shouldRetryWithEmptyRuntime) {
           throw error;

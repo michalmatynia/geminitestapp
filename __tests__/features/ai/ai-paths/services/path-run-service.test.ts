@@ -3,10 +3,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
 
-const { enqueuePathRunJobMock, removePathRunQueueEntriesMock } = vi.hoisted(() => ({
+const { enqueuePathRunJobMock, removePathRunQueueEntriesMock, scheduleLocalFallbackRunMock } =
+  vi.hoisted(() => ({
   enqueuePathRunJobMock: vi.fn().mockResolvedValue(undefined),
   removePathRunQueueEntriesMock: vi.fn().mockResolvedValue({ removed: 0, requested: 0 }),
-}));
+   scheduleLocalFallbackRunMock: vi.fn(),
+ }));
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
@@ -29,6 +31,7 @@ import prisma from '@/shared/lib/db/prisma';
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: enqueuePathRunJobMock,
   removePathRunQueueEntries: removePathRunQueueEntriesMock,
+  scheduleLocalFallbackRun: scheduleLocalFallbackRunMock,
 }));
 
 let canMutatePathRunTables = true;
@@ -44,6 +47,7 @@ describe('PathRunService', () => {
 
     enqueuePathRunJobMock.mockClear();
     removePathRunQueueEntriesMock.mockClear();
+    scheduleLocalFallbackRunMock.mockClear();
     repo = await getPathRunRepository();
     // Direct prisma cleanup since repo doesn't have deleteMany
     try {

@@ -90,7 +90,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
     );
     if (deprecatedKeys.length === 0) return;
     throw validationError('AI Paths runtime state payload includes unsupported identity fields.', {
-      reason: 'deprecated_runtime_identity_fields',
+      reason: 'unsupported_runtime_identity_fields',
       keys: deprecatedKeys,
       location,
     });
@@ -321,7 +321,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
     if (legacyPorts.length === 0) return;
     throw validationError('AI Path config contains unsupported trigger output ports.', {
       source: 'ai_paths.path_config',
-      reason: 'deprecated_trigger_outputs',
+      reason: 'unsupported_trigger_outputs',
       nodeId: node.id,
       outputs: legacyPorts,
     });
@@ -338,7 +338,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
     if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
     throw validationError('AI Path config contains unsupported trigger data edges.', {
       source: 'ai_paths.path_config',
-      reason: 'deprecated_trigger_data_edge',
+      reason: 'unsupported_trigger_data_edge',
       edgeIndex: index,
       edgeId: typeof edge['id'] === 'string' ? edge['id'] : null,
       sourceNodeId,
@@ -350,9 +350,9 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const collectionAliasIssues = findPathConfigCollectionAliasIssues(config);
   if (collectionAliasIssues.length > 0) {
-    throw validationError('AI Path config contains deprecated collection aliases.', {
+    throw validationError('AI Path config contains unsupported collection aliases.', {
       source: 'ai_paths.path_config',
-      reason: 'deprecated_collection_aliases',
+      reason: 'unsupported_collection_aliases',
       pathId: config.id,
       issues: collectionAliasIssues,
     });
@@ -470,9 +470,9 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
           ? parameterInferenceGuard['targetPath'].trim()
           : '';
       if (targetPath.length > 0 && targetPath !== 'parameters') {
-        throw validationError('AI Path config contains deprecated parameter inference target path.', {
+        throw validationError('AI Path config contains unsupported parameter inference target path.', {
           source: 'ai_paths.path_config',
-          reason: 'deprecated_parameter_inference_target_path',
+          reason: 'unsupported_parameter_inference_target_path',
           nodeId: node.id,
           targetPath,
         });
@@ -494,9 +494,9 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     { palette }
   );
   if (identityIssues.length > 0) {
-    throw validationError('AI Path config contains legacy node identities.', {
+    throw validationError('AI Path config contains unsupported node identities.', {
       source: 'ai_paths.path_config',
-      reason: 'deprecated_node_identities',
+      reason: 'unsupported_node_identities',
       pathId: config.id,
       issues: identityIssues,
     });

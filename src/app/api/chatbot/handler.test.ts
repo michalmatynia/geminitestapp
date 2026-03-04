@@ -95,7 +95,7 @@ describe('chatbot handler', () => {
     expect(payload.deprecation?.code).toBe('CHATBOT_MODELS_ENDPOINT_DEPRECATED');
   });
 
-  it('uses Brain config on POST and ignores the legacy requested model', async () => {
+  it('uses Brain config on POST for canonical payloads', async () => {
     resolveBrainModelExecutionConfigMock.mockResolvedValue({
       modelId: 'brain-model',
       temperature: 0.3,
@@ -123,7 +123,6 @@ describe('chatbot handler', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: 'session-1',
-          model: 'legacy-model',
           messages: [
             {
               role: 'user',
@@ -162,5 +161,29 @@ describe('chatbot handler', () => {
         enforced: true,
       },
     });
+  });
+
+  it('rejects legacy model override payloads', async () => {
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api/chatbot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'session-1',
+            model: 'legacy-model',
+            messages: [
+              {
+                role: 'user',
+                content: 'Hello',
+              },
+            ],
+          }),
+        }) as Parameters<typeof POST_handler>[0],
+        { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/unsupported model override/i);
+
+    expect(runChatbotModelMock).not.toHaveBeenCalled();
   });
 });

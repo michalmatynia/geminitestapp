@@ -1057,6 +1057,61 @@ Progress (2026-03-04):
       1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
       3. `npm run typecheck` -> passed.
+47. Pruned loaded-config edge alias fallback in seam 177 and re-validated canonical guards:
+   1. Enforced canonical edge source parsing in product-path loaded-config sanitizer:
+      1. `src/features/products/hooks/useAiPathSettings.ts`
+      2. `resolveEdgeSourceNodeId` now reads only canonical `from`.
+      3. `resolveEdgeSourcePort` now reads only canonical `fromPort`.
+   2. Updated regression coverage:
+      1. `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+      2. added alias-only edge shape rejection coverage (`source` / `target` / `sourceHandle` / `targetHandle`) to enforce canonical edge contracts.
+   3. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkLoadedPathSettingsEdgeAliasCompatibilityPrune`:
+         1. blocks reintroduction of loaded-config `source` / `sourceHandle` fallback snippets in `useAiPathSettings.ts`.
+         2. requires canonical `from` / `fromPort` parsing snippets.
+   4. Validation:
+      1. `npx vitest run src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      3. `npm run typecheck` -> passed.
+48. Pruned semantic-grammar edge alias compatibility in seam 178 and re-validated canonical guards:
+   1. Enforced canonical edge serialization in semantic grammar:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts`
+      2. removed fallback reads from `source` / `target` / `sourceHandle` / `targetHandle`.
+      3. semantic edge export now reads canonical `from` / `to` / `fromPort` / `toPort` only.
+   2. Enforced canonical edge deserialization in semantic grammar:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts`
+      2. removed alias writes to `source` / `target` / `sourceHandle` / `targetHandle`.
+      3. semantic edge import now emits canonical edge keys only.
+   3. Updated regression coverage:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts`
+      2. added alias-only edge serialization coverage (no compatibility upgrade from alias-only shape).
+      3. added deserialization coverage that canonical edge keys are emitted without alias fields.
+   4. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkSemanticGrammarEdgeAliasCompatibilityPrune` for semantic serialize/deserialize modules.
+      3. aligned `checkParameterInferenceTargetPathSanitizationPrune` expected snippets to current canonical unsupported semantics (`unsupported parameter inference target path`, `unsupported_parameter_inference_target_path`).
+   5. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      3. `npm run typecheck` -> passed.
+49. Pruned semantic-subgraph edge alias compatibility in seam 179 and re-validated canonical guards:
+   1. Enforced canonical edge shape in semantic-subgraph apply flow:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts`
+      2. removed alias writes from appended edges (`source` / `target` / `sourceHandle` / `targetHandle`).
+      3. subgraph edge application now emits canonical edge keys only (`from`, `to`, `fromPort`, `toPort`).
+   2. Tightened semantic-grammar regression coverage:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts`
+      2. alias-only edge serialization assertion now requires empty canonical endpoints (no alias upgrade fallback).
+      3. deserialization canonical-shape assertion now requires no alias keys.
+      4. subgraph-apply test now asserts appended edges are canonical-only (no alias keys).
+   3. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. `checkSemanticGrammarEdgeAliasCompatibilityPrune` now also enforces canonical edge shape in `semantic-grammar/subgraph.ts`.
+   4. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
+      3. `npm run typecheck` -> passed.
 
 ## Deprecation map
 

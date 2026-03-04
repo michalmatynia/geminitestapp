@@ -223,9 +223,9 @@ const assertCanonicalRunGraph = ({
     }
   );
   if (identityIssues.length > 0) {
-    throw validationError('AI Paths run graph contains legacy node identities.', {
+    throw validationError('AI Paths run graph contains unsupported node identities.', {
       source: 'ai_paths.run',
-      reason: 'deprecated_node_identities',
+      reason: 'unsupported_node_identities',
       pathId: input.pathId,
       issues: identityIssues,
     });

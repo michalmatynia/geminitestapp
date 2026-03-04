@@ -170,7 +170,7 @@ export function usePersistSessionMessage(): UpdateMutation<void, PersistSessionM
  */
 export function useSendChatMessage(): UpdateMutation<
   { message?: string },
-  { messages: ChatMessage[]; model?: string; sessionId?: string | null }
+  { messages: ChatMessage[]; sessionId?: string | null }
   > {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
   return createUpdateMutationV2({

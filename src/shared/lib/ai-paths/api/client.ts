@@ -340,15 +340,71 @@ export const triggerButtonsApi = {
   reorder: reorderTriggerButtons,
 };
 
+type AiJobsPollPayload =
+  | { status?: unknown; result?: unknown; error?: unknown }
+  | {
+      job?: {
+        status?: unknown;
+        result?: unknown;
+        error?: unknown;
+        errorMessage?: unknown;
+      };
+    };
+
+const normalizeAiJobStatus = (status: unknown): string => {
+  if (typeof status !== 'string') return '';
+  const normalized = status.trim().toLowerCase();
+  if (normalized === 'cancelled') return 'canceled';
+  return normalized;
+};
+
+const normalizeAiJobsPollPayload = (payload: AiJobsPollPayload): {
+  status: string;
+  result?: unknown;
+  error?: string;
+} => {
+  if ('job' in payload && payload.job && typeof payload.job === 'object') {
+    const jobRecord = payload.job;
+    const status = normalizeAiJobStatus(jobRecord.status);
+    const errorValue =
+      typeof jobRecord.errorMessage === 'string'
+        ? jobRecord.errorMessage
+        : typeof jobRecord.error === 'string'
+          ? jobRecord.error
+          : undefined;
+    return {
+      status,
+      ...(jobRecord.result !== undefined ? { result: jobRecord.result } : {}),
+      ...(errorValue ? { error: errorValue } : {}),
+    };
+  }
+
+  const payloadRecord = payload as Record<string, unknown>;
+  const status = normalizeAiJobStatus(payloadRecord['status']);
+  const errorValue = typeof payloadRecord['error'] === 'string' ? payloadRecord['error'] : undefined;
+  return {
+    status,
+    ...(payloadRecord['result'] !== undefined ? { result: payloadRecord['result'] } : {}),
+    ...(errorValue ? { error: errorValue } : {}),
+  };
+};
+
 export const aiJobsApi = {
-  enqueue: async (payload: unknown) => apiPost<{ jobId: string }>('/api/ai/jobs/enqueue', payload),
-  poll: async (jobId: string, options?: { signal?: AbortSignal }) =>
-    apiFetch<{ status: string; result?: unknown; error?: string }>(
-      `/api/ai/jobs/${jobId}/poll`,
-      options
-    ),
-  get: async (jobId: string) => apiFetch<{ job: unknown }>(`/api/ai/jobs/${jobId}`),
-  list: async () => apiFetch<{ jobs: unknown[] }>('/api/ai/jobs'),
+  enqueue: async (payload: unknown) =>
+    apiPost<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', payload),
+  poll: async (
+    jobId: string,
+    options?: { signal?: AbortSignal }
+  ): Promise<ApiResponse<{ status: string; result?: unknown; error?: string }>> => {
+    const response = await apiFetch<AiJobsPollPayload>(`/api/v2/products/ai-jobs/${jobId}`, options);
+    if (!response.ok) return response;
+    return {
+      ok: true,
+      data: normalizeAiJobsPollPayload(response.data),
+    };
+  },
+  get: async (jobId: string) => apiFetch<{ job: unknown }>(`/api/v2/products/ai-jobs/${jobId}`),
+  list: async () => apiFetch<{ jobs: unknown[] }>('/api/v2/products/ai-jobs'),
 };
 
 export const agentApi = {

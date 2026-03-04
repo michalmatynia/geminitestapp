@@ -117,10 +117,14 @@ const renderNotesPage = () => {
 
 describe('Notes page UI', () => {
   let notes: NoteWithRelations[] = [];
+  let sawNotebookScopedNotesFetch = false;
+  let createNoteRequestTitles: string[] = [];
 
   beforeEach(() => {
     window.localStorage.clear();
     notes = [makeNote(), makeNote({ id: 'note-2', title: 'Beta' })];
+    sawNotebookScopedNotesFetch = false;
+    createNoteRequestTitles = [];
     const tags = [...baseTags];
     const categories = [...baseCategories];
     const notebooks = [...baseNotebooks];
@@ -172,6 +176,7 @@ describe('Notes page UI', () => {
           tagIds?: string[];
           categoryIds?: string[];
         };
+        createNoteRequestTitles.push(body.title ?? '');
         const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
@@ -199,6 +204,9 @@ describe('Notes page UI', () => {
         let filtered = [...notes];
         const search = url.searchParams.get('search');
         const tagIds = url.searchParams.get('tagIds')?.split(',') ?? [];
+        if (url.searchParams.get('notebookId')) {
+          sawNotebookScopedNotesFetch = true;
+        }
 
         if (search) {
           filtered = filtered.filter((note) => {
@@ -232,8 +240,11 @@ describe('Notes page UI', () => {
     const user = userEvent.setup();
 
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sawNotebookScopedNotesFetch).toBe(true);
+    });
 
-    await user.click(screen.getByLabelText('Create note'));
+    await user.click(await screen.findByLabelText('Create note'));
     const createDialog = await screen.findByRole('dialog');
     await user.type(within(createDialog).getByPlaceholderText('Enter note title'), 'Gamma');
     await user.type(
@@ -241,10 +252,19 @@ describe('Notes page UI', () => {
       'Third note'
     );
     await user.click(within(createDialog).getByRole('button', { name: 'Create' }));
+    await waitFor(() => {
+      expect(createNoteRequestTitles).toContain('Gamma');
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
 
-    expect(
-      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 6000 })
-    ).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByText('Gamma', { selector: 'h3' })).toBeInTheDocument();
+      },
+      { timeout: 6000 }
+    );
   }, 10000);
 
   it('filters notes by search', async () => {

@@ -83,7 +83,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
     );
     if (deprecatedKeys.length === 0) return;
     throw validationError('AI Paths runtime state payload includes unsupported identity fields.', {
-      reason: 'deprecated_runtime_identity_fields',
+      reason: 'unsupported_runtime_identity_fields',
       keys: deprecatedKeys,
       location,
     });

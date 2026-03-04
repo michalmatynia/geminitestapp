@@ -19,34 +19,15 @@ export type SerializeSemanticCanvasOptions = {
 };
 
 const toEdgeFromNodeId = (edge: Edge): string =>
-  (typeof edge.from === 'string' && edge.from.trim().length > 0
-    ? edge.from
-    : typeof edge.source === 'string' && edge.source.trim().length > 0
-      ? edge.source
-      : ''
-  ).trim();
+  typeof edge.from === 'string' ? edge.from.trim() : '';
 
-const toEdgeToNodeId = (edge: Edge): string =>
-  (typeof edge.to === 'string' && edge.to.trim().length > 0
-    ? edge.to
-    : typeof edge.target === 'string' && edge.target.trim().length > 0
-      ? edge.target
-      : ''
-  ).trim();
+const toEdgeToNodeId = (edge: Edge): string => (typeof edge.to === 'string' ? edge.to.trim() : '');
 
 const toEdgeFromPort = (edge: Edge): string | null =>
-  typeof edge.fromPort === 'string'
-    ? edge.fromPort
-    : typeof edge.sourceHandle === 'string'
-      ? edge.sourceHandle
-      : null;
+  typeof edge.fromPort === 'string' ? edge.fromPort : null;
 
 const toEdgeToPort = (edge: Edge): string | null =>
-  typeof edge.toPort === 'string'
-    ? edge.toPort
-    : typeof edge.targetHandle === 'string'
-      ? edge.targetHandle
-      : null;
+  typeof edge.toPort === 'string' ? edge.toPort : null;
 
 const toSemanticEdge = (edge: Edge): SemanticEdge => ({
   id: edge.id,

@@ -37,32 +37,34 @@ export interface MarkdownToolbarProps extends MarkdownToolbarActionHandlers {
   onInsertFileReference?: ((value: string) => void) | undefined;
 }
 
-export function MarkdownToolbar({
-  mode,
-  onModeChange,
-  isModeLocked = false,
-  isMigrating = false,
-  onMigrateToWysiwyg,
-  onMigrateToMarkdown,
-  showPreview = false,
-  onTogglePreview,
-  onUndo,
-  onRedo,
-  canUndo = false,
-  canRedo = false,
-  textColor,
-  onTextColorChange,
-  fontFamily,
-  onFontFamilyChange,
-  fileReferenceOptions,
-  onInsertFileReference,
-  onApplyWrap,
-  onApplyLinePrefix,
-  onInsertAtCursor,
-  onApplyBulletList,
-  onApplyChecklist,
-  onApplySpanStyle,
-}: MarkdownToolbarProps): React.JSX.Element {
+export function MarkdownToolbar(props: MarkdownToolbarProps): React.JSX.Element {
+  const {
+    mode,
+    onModeChange,
+    isModeLocked = false,
+    isMigrating = false,
+    onMigrateToWysiwyg,
+    onMigrateToMarkdown,
+    showPreview = false,
+    onTogglePreview,
+    onUndo,
+    onRedo,
+    canUndo = false,
+    canRedo = false,
+    textColor,
+    onTextColorChange,
+    fontFamily,
+    onFontFamilyChange,
+    fileReferenceOptions,
+    onInsertFileReference,
+    onApplyWrap,
+    onApplyLinePrefix,
+    onInsertAtCursor,
+    onApplyBulletList,
+    onApplyChecklist,
+    onApplySpanStyle,
+  } = props;
+
   return (
     <Card
       variant='subtle-compact'

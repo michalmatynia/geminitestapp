@@ -34,32 +34,36 @@ export interface MemoizedViewer3DProps {
   scale: number;
 }
 
-export const MemoizedViewer3D = memo(function MemoizedViewer3D({
-  modelUrl,
-  height,
-  backgroundColor,
-  autoRotate,
-  autoRotateSpeed,
-  environment,
-  lighting,
-  lightIntensity,
-  enableShadows,
-  enableBloom,
-  bloomIntensity,
-  exposure,
-  showGround,
-  enableContactShadows,
-  enableVignette,
-  autoFit,
-  presentationMode,
-  positionX,
-  positionY,
-  positionZ,
-  rotationX,
-  rotationY,
-  rotationZ,
-  scale,
-}: MemoizedViewer3DProps): React.ReactElement {
+export const MemoizedViewer3D = memo(function MemoizedViewer3D(
+  props: MemoizedViewer3DProps
+): React.ReactElement {
+  const {
+    modelUrl,
+    height,
+    backgroundColor,
+    autoRotate,
+    autoRotateSpeed,
+    environment,
+    lighting,
+    lightIntensity,
+    enableShadows,
+    enableBloom,
+    bloomIntensity,
+    exposure,
+    showGround,
+    enableContactShadows,
+    enableVignette,
+    autoFit,
+    presentationMode,
+    positionX,
+    positionY,
+    positionZ,
+    rotationX,
+    rotationY,
+    rotationZ,
+    scale,
+  } = props;
+
   const position = useMemo<[number, number, number]>(
     () => [positionX, positionY, positionZ],
     [positionX, positionY, positionZ]

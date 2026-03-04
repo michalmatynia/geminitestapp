@@ -21,13 +21,12 @@ import {
 } from '@/features/ai/image-studio/utils/canvas-resize';
 import { useToast } from '@/shared/ui';
 
-export function CanvasResizeModal({
-  isOpen,
-  onClose,
-}: {
+export function CanvasResizeModal(props: {
   isOpen: boolean;
   onClose: () => void;
 }): React.JSX.Element {
+  const { isOpen, onClose } = props;
+
   const { projectId } = useProjectsState();
   const { handleResizeProjectCanvas, resizeProjectCanvasMutation } = useProjectsActions();
   const { workingSlot } = useSlotsState();

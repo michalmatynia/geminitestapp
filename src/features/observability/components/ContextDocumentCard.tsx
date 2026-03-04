@@ -6,13 +6,12 @@ import { cn } from '@/shared/utils';
 import { type ContextDocumentDisplay } from '../types';
 import { getStatusVariant } from '../utils/logHelpers';
 
-export function ContextDocumentCard({
-  document,
-  accentClassName = 'bg-sky-950/20',
-}: {
+export function ContextDocumentCard(props: {
   document: ContextDocumentDisplay;
   accentClassName?: string;
 }): React.JSX.Element {
+  const { document, accentClassName = 'bg-sky-950/20' } = props;
+
   return (
     <Card variant='glass' padding='md' className={cn('space-y-4', accentClassName)}>
       <div className='flex flex-wrap items-center gap-2'>

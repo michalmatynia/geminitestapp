@@ -27,7 +27,9 @@ import { useTreeSectionId } from './TreeSectionContext';
 import type { SectionBlockNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function SectionBlockNodeItem({ block, index }: SectionBlockNodeItemProps): React.ReactNode {
+export function SectionBlockNodeItem(props: SectionBlockNodeItemProps): React.ReactNode {
+  const { block, index } = props;
+
   const sectionId = useTreeSectionId();
   const columnId = useTreeColumnId();
   const { state: pbState } = usePageBuilder();

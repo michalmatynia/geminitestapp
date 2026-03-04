@@ -11,19 +11,15 @@ const providerOptions: Array<{ value: AiBrainProvider; label: string }> = [
   { value: 'agent', label: 'Agent' },
 ];
 
-export function AssignmentEditor({
-  assignment,
-  onChange,
-  readOnly,
-  allowedProviders,
-  showSystemPrompt = true,
-}: {
+export function AssignmentEditor(props: {
   assignment: AiBrainAssignment;
   onChange: (next: AiBrainAssignment) => void;
   readOnly?: boolean;
   allowedProviders?: AiBrainProvider[];
   showSystemPrompt?: boolean;
 }): React.JSX.Element {
+  const { assignment, onChange, readOnly, allowedProviders, showSystemPrompt = true } = props;
+
   const { modelQuickPicks, agentQuickPicks } = useBrain();
   const activeAllowedProviders =
     allowedProviders && allowedProviders.length > 0

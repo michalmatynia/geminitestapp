@@ -12,10 +12,9 @@ interface RichTextBlockProps {
   onChange: (content: RichTextContent) => void;
 }
 
-export default function RichTextBlock({
-  content,
-  onChange,
-}: RichTextBlockProps): React.JSX.Element {
+export default function RichTextBlock(props: RichTextBlockProps): React.JSX.Element {
+  const { content, onChange } = props;
+
   return (
     <div className='p-4 border rounded-lg'>
       <h4 className='font-bold mb-2'>Rich Text</h4>

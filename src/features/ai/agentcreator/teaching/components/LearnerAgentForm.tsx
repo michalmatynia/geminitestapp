@@ -20,13 +20,9 @@ export type LearnerAgentFormProps = {
   collections: AgentTeachingEmbeddingCollectionRecord[];
 };
 
-export function LearnerAgentForm({
-  draft,
-  onChange,
-  chatModel,
-  embeddingModel,
-  collections,
-}: LearnerAgentFormProps): React.JSX.Element {
+export function LearnerAgentForm(props: LearnerAgentFormProps): React.JSX.Element {
+  const { draft, onChange, chatModel, embeddingModel, collections } = props;
+
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c) => c.id === id);
     return found?.name ?? id;

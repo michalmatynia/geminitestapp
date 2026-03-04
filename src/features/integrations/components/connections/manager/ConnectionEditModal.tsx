@@ -18,10 +18,9 @@ type ConnectionEditModalProps = {
   onClose: () => void;
 };
 
-export function ConnectionEditModal({
-  connection,
-  onClose,
-}: ConnectionEditModalProps): React.JSX.Element {
+export function ConnectionEditModal(props: ConnectionEditModalProps): React.JSX.Element {
+  const { connection, onClose } = props;
+
   const { activeIntegration, handleSaveConnection } = useIntegrationsContext();
   const [form, setForm] = useState<ConnectionFormState>(createEmptyConnectionForm());
   const [isSaving, setIsSaving] = useState(false);

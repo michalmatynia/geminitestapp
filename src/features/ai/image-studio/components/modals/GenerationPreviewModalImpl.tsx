@@ -11,10 +11,11 @@ import { InlineImagePreviewCanvas } from '../studio-modals/InlineImagePreviewCan
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from '../studio-modals/slot-inline-edit-tab-types';
 
-export function GenerationPreviewModal({
-  isOpen,
-  onClose,
-}: Pick<EntityModalProps<LinkedGeneratedVariant>, 'isOpen' | 'onClose'>): React.JSX.Element {
+export function GenerationPreviewModal(
+  props: Pick<EntityModalProps<LinkedGeneratedVariant>, 'isOpen' | 'onClose'>
+): React.JSX.Element {
+  const { isOpen, onClose } = props;
+
   const {
     selectedGenerationPreview,
     selectedGenerationModalDimensions,

@@ -31,10 +31,9 @@ import { useTreeSectionId } from './TreeSectionContext';
 import type { SlideshowFrameNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function SlideshowFrameNodeItem({
-  frame,
-  index,
-}: SlideshowFrameNodeItemProps): React.ReactNode {
+export function SlideshowFrameNodeItem(props: SlideshowFrameNodeItemProps): React.ReactNode {
+  const { frame, index } = props;
+
   const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
   const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions } = useTreeActions();

@@ -31,15 +31,7 @@ const buildIssueSnippet = (
   };
 };
 
-export const ValidatorIssueHint = memo(function ValidatorIssueHint({
-  issue,
-  value,
-  onReplace,
-  onDeny,
-  denyLabel = 'Deny',
-  proposedValueOverride,
-  hideMatchSnippet = false,
-}: {
+export const ValidatorIssueHint = memo(function ValidatorIssueHint(props: {
   issue: FieldValidatorIssue;
   value: string;
   onReplace?: (() => void) | undefined;
@@ -48,6 +40,16 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
   proposedValueOverride?: string | null;
   hideMatchSnippet?: boolean;
 }): React.JSX.Element {
+  const {
+    issue,
+    value,
+    onReplace,
+    onDeny,
+    denyLabel = 'Deny',
+    proposedValueOverride,
+    hideMatchSnippet = false,
+  } = props;
+
   const snippet = buildIssueSnippet(value, issue.index, issue.length);
   const toneClass =
     issue.severity === 'warning'
@@ -139,12 +141,9 @@ type IssueHintRowProps = {
   numericField?: keyof ProductFormData;
 };
 
-export const IssueHintRow = memo(function IssueHintRow({
-  fieldName,
-  issue,
-  fieldValue,
-  numericField,
-}: IssueHintRowProps): React.JSX.Element {
+export const IssueHintRow = memo(function IssueHintRow(props: IssueHintRowProps): React.JSX.Element {
+  const { fieldName, issue, fieldValue, numericField } = props;
+
   const { getValues, setValue } = useFormContext<ProductFormData>();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 

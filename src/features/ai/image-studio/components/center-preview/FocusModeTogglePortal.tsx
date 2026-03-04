@@ -9,10 +9,9 @@ type FocusModeTogglePortalProps = {
   onToggleFocusMode: () => void;
 };
 
-export function FocusModeTogglePortal({
-  isFocusMode,
-  onToggleFocusMode,
-}: FocusModeTogglePortalProps): React.JSX.Element | null {
+export function FocusModeTogglePortal(props: FocusModeTogglePortalProps): React.JSX.Element | null {
+  const { isFocusMode, onToggleFocusMode } = props;
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);

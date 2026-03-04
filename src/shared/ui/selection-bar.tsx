@@ -25,19 +25,21 @@ interface SelectionBarProps<T> {
   label?: string | undefined;
 }
 
-export function SelectionBar<T>({
-  selectedCount,
-  onSelectPage,
-  onDeselectPage,
-  onDeselectAll,
-  onSelectAllGlobal,
-  loadingGlobal,
-  actions,
-  rightActions,
-  onDeleteSelected,
-  className,
-  label = 'Selection',
-}: SelectionBarProps<T>): React.JSX.Element {
+export function SelectionBar<T>(props: SelectionBarProps<T>): React.JSX.Element {
+  const {
+    selectedCount,
+    onSelectPage,
+    onDeselectPage,
+    onDeselectAll,
+    onSelectAllGlobal,
+    loadingGlobal,
+    actions,
+    rightActions,
+    onDeleteSelected,
+    className,
+    label = 'Selection',
+  } = props;
+
   const hasSelection = selectedCount > 0;
 
   return (

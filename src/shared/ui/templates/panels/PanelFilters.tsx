@@ -91,7 +91,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   filters,
   values,
   search: externalSearch = '',
-  searchPlaceholder = 'Search...',
+  searchPlaceholder,
   onFilterChange,
   onSearchChange,
   onReset,
@@ -102,7 +102,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   className,
 }) => {
   const runtimeSearchPlaceholder = React.useContext(PanelFiltersSearchPlaceholderRuntimeContext);
-  const effectiveSearchPlaceholder = searchPlaceholder || runtimeSearchPlaceholder || 'Search...';
+  const effectiveSearchPlaceholder = runtimeSearchPlaceholder ?? searchPlaceholder ?? 'Search...';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
   const [localSearch, setLocalSearch] = useState(externalSearch);
 

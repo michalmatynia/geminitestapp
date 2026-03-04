@@ -309,9 +309,9 @@ export async function evaluateGraphInternal(
               ? 'failed'
               : state.activeNodes.has(id)
                 ? 'running'
-              : state.blockedNodes.has(id)
-                ? 'blocked'
-                : 'pending',
+                : state.blockedNodes.has(id)
+                  ? 'blocked'
+                  : 'pending',
         (id) => state.outputs[id] ?? {}
       );
 
@@ -853,7 +853,13 @@ export async function evaluateGraphInternal(
     );
   }
 
-  if (state.blockedNodes.size > 0 && state.finishedNodes.size < scopedNodeIds.size) {
+  const hasTerminalBlockedNodes = Array.from(state.blockedNodes).some((nodeId) => {
+    const rawStatus = state.outputs[nodeId]?.['status'];
+    const status = typeof rawStatus === 'string' ? rawStatus.trim().toLowerCase() : 'blocked';
+    return status !== 'waiting_callback' && status !== 'advance_pending';
+  });
+
+  if (hasTerminalBlockedNodes && state.finishedNodes.size < scopedNodeIds.size) {
     await emitHalt('blocked');
   }
 

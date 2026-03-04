@@ -1068,6 +1068,82 @@ describe('evaluateGraph', () => {
     );
   });
 
+  it('does not emit blocked halt when unresolved nodes are waiting on upstream callbacks', async () => {
+    const onHalt = vi.fn();
+    const nodes: AiNode[] = [
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt Builder',
+        description: '',
+        inputs: ['result'],
+        outputs: ['prompt'],
+        position: { x: 0, y: 0 },
+        config: {
+          prompt: {
+            template: 'Name: {{result}}',
+          },
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              result: { required: true },
+            },
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+            },
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt-model',
+        from: 'prompt-1',
+        to: 'model-1',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-model-prompt',
+        from: 'model-1',
+        to: 'prompt-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      onHalt,
+    });
+
+    expect(result.outputs['model-1']?.['status']).toBe('waiting_callback');
+    expect(onHalt).not.toHaveBeenCalled();
+  });
+
   it('accepts prompt text containing image URLs as model prompt input', async () => {
     const nodes: AiNode[] = [
       {

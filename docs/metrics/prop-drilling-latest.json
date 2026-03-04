@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T20:45:05.693Z",
-    "scannedSourceFiles": 3898,
+    "generatedAt": "2026-03-04T20:56:29.727Z",
+    "scannedSourceFiles": 3899,
     "scannedJsxFiles": 1388,
     "componentCount": 2043,
-    "componentsWithForwarding": 246,
-    "resolvedTransitionCount": 1517,
-    "candidateChainCount": 87,
+    "componentsWithForwarding": 244,
+    "resolvedTransitionCount": 1504,
+    "candidateChainCount": 76,
     "highPriorityChainCount": 0,
     "unknownSpreadForwardingCount": 14,
     "topFeatureScopes": [
@@ -35,11 +35,11 @@
         "count": 12
       },
       {
-        "scope": "feature:integrations",
-        "count": 7
+        "scope": "feature:database",
+        "count": 5
       },
       {
-        "scope": "feature:database",
+        "scope": "feature:integrations",
         "count": 5
       },
       {
@@ -162,402 +162,6 @@
           "targetProp": "onCheckedChange",
           "relativePath": "src/shared/ui/SearchableList.tsx",
           "line": 95
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 76
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 76
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/ActionMenu.tsx#ActionMenu"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
-          "sourceProp": "listing",
-          "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 88
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onSelect"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "listing",
-          "targetProp": "onSelect",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/label.tsx#Label",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/label.tsx#Label"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "htmlFor"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/label.tsx#Label",
-          "sourceProp": "listing",
-          "targetProp": "htmlFor",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 126
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "id"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "id",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "value",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "onChange",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/status-badge.tsx#StatusBadge"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "status"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-          "sourceProp": "listing",
-          "targetProp": "status",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 57
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/metadata-item.tsx#MetadataItem"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
-          "sourceProp": "listing",
-          "targetProp": "value",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 61
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 120
         }
       ]
     },
@@ -2972,6 +2576,258 @@
           "line": 118
         }
       ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "page",
+        "page",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "page",
+          "targetProp": "page",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "page",
+          "targetProp": "disabled",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "pageSize",
+        "pageSize",
+        "value"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "pageSize",
+          "targetProp": "pageSize",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "pageSize",
+          "targetProp": "value",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "pageSizeOptions",
+        "pageSizeOptions",
+        "options"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "pageSizeOptions",
+          "targetProp": "pageSizeOptions",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "pageSizeOptions",
+          "targetProp": "options",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "isLoading",
+        "isLoading",
+        "disabled"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "isLoading",
+          "targetProp": "isLoading",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "isLoading",
+          "targetProp": "disabled",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "onPageChange",
+        "onPageChange",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "onPageChange",
+          "targetProp": "onPageChange",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "onPageChange",
+          "targetProp": "onValueChange",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 100
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/button.tsx#Button",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/button.tsx#Button"
+      ],
+      "propPath": [
+        "onPageChange",
+        "onPageChange",
+        "onClick"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "onPageChange",
+          "targetProp": "onPageChange",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/button.tsx#Button",
+          "sourceProp": "onPageChange",
+          "targetProp": "onClick",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "score": 83,
+      "depth": 3,
+      "rootFanout": 1,
+      "distinctFeatureCount": 1,
+      "rootComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+      "sinkComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+      "componentPath": [
+        "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+        "src/shared/ui/pagination.tsx#Pagination",
+        "src/shared/ui/select-simple.tsx#SelectSimple"
+      ],
+      "propPath": [
+        "onPageSizeChange",
+        "onPageSizeChange",
+        "onValueChange"
+      ],
+      "transitions": [
+        {
+          "fromComponentId": "src/shared/ui/templates/panels/PanelPagination.tsx#PanelPagination",
+          "toComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "sourceProp": "onPageSizeChange",
+          "targetProp": "onPageSizeChange",
+          "relativePath": "src/shared/ui/templates/panels/PanelPagination.tsx",
+          "line": 34
+        },
+        {
+          "fromComponentId": "src/shared/ui/pagination.tsx#Pagination",
+          "toComponentId": "src/shared/ui/select-simple.tsx#SelectSimple",
+          "sourceProp": "onPageSizeChange",
+          "targetProp": "onValueChange",
+          "relativePath": "src/shared/ui/pagination.tsx",
+          "line": 100
+        }
+      ]
     }
   ],
   "componentBacklog": [
@@ -4992,15 +4848,6 @@
       "hasUnknownSpreadForwarding": false
     },
     {
-      "componentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-      "name": "ProductListingActions",
-      "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-      "feature": "feature:integrations",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 8,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
       "componentId": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx#RowNodeItem",
       "name": "RowNodeItem",
       "relativePath": "src/features/cms/components/page-builder/tree/RowNodeItem.tsx",
@@ -5086,15 +4933,6 @@
       "name": "PreviewSectionBlocks",
       "relativePath": "src/features/cms/components/page-builder/preview/sections/PreviewSectionBlocks.tsx",
       "feature": "feature:cms",
-      "forwardedPropCount": 1,
-      "outgoingTransitionCount": 3,
-      "hasUnknownSpreadForwarding": false
-    },
-    {
-      "componentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-      "name": "ProductListingDetails",
-      "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-      "feature": "feature:integrations",
       "forwardedPropCount": 1,
       "outgoingTransitionCount": 3,
       "hasUnknownSpreadForwarding": false
@@ -5260,402 +5098,6 @@
           "targetProp": "onCheckedChange",
           "relativePath": "src/shared/ui/SearchableList.tsx",
           "line": 95
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 76
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 76
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/ActionMenu.tsx#ActionMenu"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "disabled"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/ActionMenu.tsx#ActionMenu",
-          "sourceProp": "listing",
-          "targetProp": "disabled",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 88
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onSelect"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/dropdown-menu.tsx#DropdownMenuItem",
-          "sourceProp": "listing",
-          "targetProp": "onSelect",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 96
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/label.tsx#Label",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/label.tsx#Label"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "htmlFor"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/label.tsx#Label",
-          "sourceProp": "listing",
-          "targetProp": "htmlFor",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 126
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "id"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "id",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "value",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/input.tsx#Input",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-        "src/shared/ui/input.tsx#Input"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onChange"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 16
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx#ProductListingActions",
-          "toComponentId": "src/shared/ui/input.tsx#Input",
-          "sourceProp": "listing",
-          "targetProp": "onChange",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx",
-          "line": 127
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/status-badge.tsx#StatusBadge"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "status"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/status-badge.tsx#StatusBadge",
-          "sourceProp": "listing",
-          "targetProp": "status",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 57
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/metadata-item.tsx#MetadataItem"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "value"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/metadata-item.tsx#MetadataItem",
-          "sourceProp": "listing",
-          "targetProp": "value",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 61
-        }
-      ]
-    },
-    {
-      "score": 99,
-      "depth": 3,
-      "rootFanout": 2,
-      "distinctFeatureCount": 2,
-      "rootComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-      "sinkComponentId": "src/shared/ui/button.tsx#Button",
-      "componentPath": [
-        "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-        "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-        "src/shared/ui/button.tsx#Button"
-      ],
-      "propPath": [
-        "listing",
-        "listing",
-        "onClick"
-      ],
-      "transitions": [
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx#ProductListingItem",
-          "toComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "sourceProp": "listing",
-          "targetProp": "listing",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx",
-          "line": 15
-        },
-        {
-          "fromComponentId": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx#ProductListingDetails",
-          "toComponentId": "src/shared/ui/button.tsx#Button",
-          "sourceProp": "listing",
-          "targetProp": "onClick",
-          "relativePath": "src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx",
-          "line": 120
         }
       ]
     },

@@ -893,6 +893,44 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `npm run ai-paths:check:canonical` passes.
   - `npm run canonical:check:sitewide` passes.
 
+## Executed Item 68 (AI Paths Database Update Provider Alias Metadata Compatibility Prune)
+
+- Removed legacy provider-alias fallback from database update execution metadata parsing:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+  - `resolveProviderMeta` now resolves provider metadata from canonical `resolvedProvider` only.
+  - removed deprecated `provider` field from update response metadata interface.
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+    - verifies provider-only response metadata does not populate `resolvedProvider`.
+    - verifies canonical `resolvedProvider` metadata remains preserved when provided by the response payload.
+- Validated canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseUpdateProviderAliasCompatibilityPrune`) now:
+    - blocks reintroduction of `provider` alias metadata snippets in update execution handler provider parsing.
+    - requires canonical `resolvedProvider` provider metadata snippets in update execution handler.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 69 (AI Paths Database Query Provider-Response Alias Compatibility Prune)
+
+- Removed legacy provider-response alias dependency from database query execution metadata parsing:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+  - query runtime now derives provider metadata from canonical response fields:
+    - `requestedProvider`
+    - `resolvedProvider`
+  - removed deprecated `provider` field from query response metadata interface.
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+    - verifies canonical `resolvedProvider` response metadata is surfaced in query runtime bundle.
+    - verifies provider-only response payloads do not populate `resolvedProvider`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseQueryProviderResponseAliasCompatibilityPrune`) now:
+    - blocks reintroduction of query-response `provider` alias metadata parsing snippets in query execution handler.
+    - requires canonical `resolvedProvider` response metadata parsing snippets.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

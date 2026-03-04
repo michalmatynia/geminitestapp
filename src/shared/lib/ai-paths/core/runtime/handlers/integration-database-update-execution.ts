@@ -20,7 +20,6 @@ interface DbActionResult {
   count?: number;
   modifiedCount?: number;
   matchedCount?: number;
-  provider?: 'mongodb' | 'prisma';
   requestedProvider?: 'auto' | 'mongodb' | 'prisma';
   resolvedProvider?: 'mongodb' | 'prisma';
 }
@@ -98,9 +97,7 @@ const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => 
   const resolvedProvider =
     responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'
       ? responseData['resolvedProvider']
-      : responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'
-        ? responseData['provider']
-        : undefined;
+      : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),

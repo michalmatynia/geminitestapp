@@ -590,9 +590,10 @@ export const executePathRun = async (
     if (runtimeHaltReason === 'canceled') {
       finalStatus = 'canceled';
     } else if (runtimeHaltReason === 'blocked') {
+      const blockedNodeDiagnostics = collectBlockedNodeDiagnostics(nodes, accOutputs);
       if (
         shouldFailBlockedRun({
-          runBlocked: true,
+          runBlocked: blockedNodeDiagnostics.length > 0,
           blockedRunPolicy:
             (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ??
             'complete_with_warning',
@@ -600,9 +601,7 @@ export const executePathRun = async (
         })
       ) {
         finalStatus = 'failed';
-        finalError = buildBlockedRunFailureMessage(
-          collectBlockedNodeDiagnostics(nodes, accOutputs)
-        );
+        finalError = buildBlockedRunFailureMessage(blockedNodeDiagnostics);
       }
     }
     if (finalStatus === 'completed') {

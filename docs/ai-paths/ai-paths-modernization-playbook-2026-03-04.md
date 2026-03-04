@@ -785,6 +785,42 @@ Progress (2026-03-04):
       3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
       Result: `3` files passed, `8` tests passed.
    6. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+33. Pruned database-update provider alias metadata compatibility in seam 163 and re-validated canonical guards:
+   1. Removed legacy `provider` alias fallback in update execution provider metadata parsing:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+      2. `resolveProviderMeta` now derives provider metadata from canonical `resolvedProvider` only.
+      3. removed deprecated `provider` field from `DbActionResult` metadata interface.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      2. verifies provider-only response payloads do not populate `resolvedProvider`.
+      3. verifies canonical `resolvedProvider` response metadata remains surfaced in execution metadata.
+   3. Validated canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` blocks reintroduction of update provider-alias fallback snippets and requires canonical `resolvedProvider` metadata snippets in update execution handler provider parsing.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      Result: `3` files passed, `10` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4233` files scanned).
+34. Pruned database-query provider-response alias metadata compatibility in seam 164 and re-validated canonical guards:
+   1. Removed legacy query-response `provider` alias dependency in query runtime metadata parsing:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+      2. query runtime provider metadata now derives from canonical response fields:
+         1. `requestedProvider`
+         2. `resolvedProvider`
+      3. removed deprecated `provider` field from `DbQueryResult` metadata interface.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. verifies canonical `resolvedProvider` response metadata remains surfaced in runtime bundle.
+      3. verifies provider-only response payloads do not populate `resolvedProvider`.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of query-response provider alias parsing snippets and requires canonical `resolvedProvider` parsing snippets in query execution handler metadata derivation.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      Result: `3` files passed, `11` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
 
 ## Deprecation map
 

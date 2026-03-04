@@ -1,15 +1,15 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-04T20:45:05.693Z
+Generated at: 2026-03-04T20:56:29.727Z
 
 ## Snapshot
 
-- Scanned source files: 3898
+- Scanned source files: 3899
 - JSX files scanned: 1388
 - Components detected: 2043
-- Components forwarding parent props: 246
-- Resolved forwarded transitions: 1517
-- Candidate chains (depth >= 3): 87
+- Components forwarding parent props: 244
+- Resolved forwarded transitions: 1504
+- Candidate chains (depth >= 3): 76
 - High-priority chains (depth >= 4): 0
 - Unknown spread forwarding edges: 14
 
@@ -23,8 +23,8 @@ Generated at: 2026-03-04T20:45:05.693Z
 | `feature:products` | 29 |
 | `feature:case-resolver` | 22 |
 | `shared-lib` | 12 |
-| `feature:integrations` | 7 |
 | `feature:database` | 5 |
+| `feature:integrations` | 5 |
 | `feature:foldertree` | 5 |
 | `feature:document-editor` | 4 |
 | `feature:filemaker` | 4 |
@@ -89,84 +89,80 @@ Generated at: 2026-03-04T20:45:05.693Z
 | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
 | 1 | 99 | 3 | `Asset3DPickerField` | `Button` | 2 | 2 | `onChange -> onSelect -> onClick` |
 | 2 | 99 | 3 | `EditPageContent` | `Checkbox` | 2 | 2 | `id -> onToggle -> onCheckedChange` |
-| 3 | 99 | 3 | `ProductListingItem` | `Button` | 2 | 2 | `listing -> listing -> onClick` |
-| 4 | 99 | 3 | `ProductListingItem` | `Button` | 2 | 2 | `listing -> listing -> disabled` |
-| 5 | 99 | 3 | `ProductListingItem` | `ActionMenu` | 2 | 2 | `listing -> listing -> disabled` |
-| 6 | 99 | 3 | `ProductListingItem` | `DropdownMenuItem` | 2 | 2 | `listing -> listing -> onSelect` |
-| 7 | 99 | 3 | `ProductListingItem` | `Label` | 2 | 2 | `listing -> listing -> htmlFor` |
-| 8 | 99 | 3 | `ProductListingItem` | `Input` | 2 | 2 | `listing -> listing -> id` |
-| 9 | 99 | 3 | `ProductListingItem` | `Input` | 2 | 2 | `listing -> listing -> value` |
-| 10 | 99 | 3 | `ProductListingItem` | `Input` | 2 | 2 | `listing -> listing -> onChange` |
-| 11 | 99 | 3 | `ProductListingItem` | `StatusBadge` | 2 | 2 | `listing -> listing -> status` |
-| 12 | 99 | 3 | `ProductListingItem` | `MetadataItem` | 2 | 2 | `listing -> listing -> value` |
-| 13 | 99 | 3 | `ProductListingItem` | `Button` | 2 | 2 | `listing -> listing -> onClick` |
-| 14 | 99 | 3 | `NotesAppTreeHeader` | `SectionHeader` | 2 | 2 | `selectedFolderForCreate -> actions -> actions` |
-| 15 | 99 | 3 | `NotesAppTreeHeader` | `SectionHeader` | 2 | 2 | `setPanelCollapsed -> actions -> actions` |
-| 16 | 99 | 3 | `PromptExploderHeaderBar` | `ToggleRow` | 2 | 2 | `docsTooltipsEnabled -> docsTooltipsEnabled -> checked` |
-| 17 | 99 | 3 | `PromptExploderHeaderBar` | `ToggleRow` | 2 | 2 | `onDocsTooltipsChange -> onDocsTooltipsChange -> onCheckedChange` |
-| 18 | 99 | 3 | `JobStatusCell` | `Badge` | 2 | 2 | `status -> icon -> icon` |
-| 19 | 89 | 3 | `DriveImportModal` | `FileManagerProvider` | 1 | 2 | `onSelectFile -> onSelectFile -> onSelectFile` |
-| 20 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeOptions -> cropShapeOptions -> options` |
-| 21 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeOptions -> cropShapeOptions -> disabled` |
-| 22 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeGeometryById -> cropShapeGeometryById -> onValueChange` |
-| 23 | 89 | 3 | `CaseIdentifierTextSelector` | `DropdownMenuCheckboxItem` | 1 | 2 | `value -> selected -> checked` |
-| 24 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `value -> value -> value` |
-| 25 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `onChange -> onChange -> onChange` |
-| 26 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `placeholder -> placeholder -> placeholder` |
-| 27 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `searchQuery -> value -> value` |
-| 28 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onChange` |
-| 29 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onClear` |
-| 30 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `page -> page -> onClick` |
-| 31 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `page -> page -> disabled` |
-| 32 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `onPageChange -> onPageChange -> onValueChange` |
-| 33 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `onPageChange -> onPageChange -> onClick` |
-| 34 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `pageSize -> pageSize -> value` |
-| 35 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `onPageSizeChange -> onPageSizeChange -> onValueChange` |
-| 36 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `searchQuery -> value -> value` |
-| 37 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onChange` |
-| 38 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onClear` |
-| 39 | 89 | 3 | `ThemeSettingsFieldsSection` | `FormField` | 1 | 2 | `className -> className -> actions` |
-| 40 | 89 | 3 | `ProviderBadge` | `Badge` | 1 | 2 | `label -> title -> title` |
-| 41 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `isOpen -> open -> open` |
-| 42 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `title -> title -> title` |
-| 43 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `size -> size -> size` |
-| 44 | 89 | 3 | `FolderTreeSearchViewport` | `SearchInput` | 1 | 2 | `searchPlaceholder -> placeholder -> placeholder` |
-| 45 | 89 | 3 | `ProductMetadataMultiSelectField` | `Button` | 1 | 2 | `disabled -> disabled -> disabled` |
-| 46 | 89 | 3 | `ProductMetadataMultiSelectField` | `DropdownMenuCheckboxItem` | 1 | 2 | `disabled -> disabled -> disabled` |
-| 47 | 89 | 3 | `ValidatedField` | `Label` | 1 | 2 | `required -> required -> className` |
-| 48 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `group -> group -> value` |
-| 49 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `group -> group -> onValueChange` |
-| 50 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `group -> group -> checked` |
-| 51 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `group -> group -> onCheckedChange` |
-| 52 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `onChange -> onChange -> onValueChange` |
-| 53 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `onChange -> onChange -> onCheckedChange` |
-| 54 | 89 | 3 | `BrainCatalogTree` | `TreeContextMenu` | 1 | 2 | `onEdit -> onEdit -> items` |
-| 55 | 89 | 3 | `BrainCatalogTree` | `TreeContextMenu` | 1 | 2 | `onRemove -> onRemove -> items` |
-| 56 | 89 | 3 | `BrainRoutingTree` | `StatusToggle` | 1 | 2 | `onToggleEnabled -> onToggleEnabled -> onToggle` |
-| 57 | 89 | 3 | `BrainRoutingTree` | `TreeContextMenu` | 1 | 2 | `onEdit -> onEdit -> items` |
-| 58 | 89 | 3 | `BrainRoutingTree` | `StatusToggle` | 1 | 2 | `isPending -> isPending -> disabled` |
-| 59 | 89 | 3 | `JobTable` | `Button` | 1 | 2 | `onDelete -> onDelete -> onClick` |
-| 60 | 89 | 3 | `JobTable` | `Button` | 1 | 2 | `isDeleting -> isDeleting -> loading` |
-| 61 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `header -> header -> header` |
-| 62 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `alerts -> alerts -> alerts` |
-| 63 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `filters -> filters -> filters` |
-| 64 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `footer -> footer -> footer` |
-| 65 | 83 | 3 | `DocumentRelationSearchPanel` | `RelationTreeBrowser` | 1 | 1 | `relationTreeInstance -> relationTreeInstance -> instance` |
-| 66 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> isRenaming` |
-| 67 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> toggleExpand` |
-| 68 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> startRename` |
-| 69 | 83 | 3 | `FolderTreeSearchViewport` | `FolderTreeContextMenu` | 1 | 1 | `controller -> controller -> controller` |
-| 70 | 83 | 3 | `EditProductPage` | `ProductFormCoreProvider` | 1 | 1 | `product -> product -> product` |
-| 71 | 83 | 3 | `FilterPanel` | `Input` | 1 | 1 | `searchPlaceholder -> searchPlaceholder -> placeholder` |
-| 72 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
-| 73 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `variant -> variant -> variant` |
-| 74 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `padding -> padding -> padding` |
-| 75 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `title -> title -> title` |
-| 76 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `description -> description -> description` |
-| 77 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `headerActions -> headerActions -> actions` |
-| 78 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `refresh -> refresh -> refresh` |
-| 79 | 83 | 3 | `SelectModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
-| 80 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> onClick` |
+| 3 | 99 | 3 | `NotesAppTreeHeader` | `SectionHeader` | 2 | 2 | `selectedFolderForCreate -> actions -> actions` |
+| 4 | 99 | 3 | `NotesAppTreeHeader` | `SectionHeader` | 2 | 2 | `setPanelCollapsed -> actions -> actions` |
+| 5 | 99 | 3 | `PromptExploderHeaderBar` | `ToggleRow` | 2 | 2 | `docsTooltipsEnabled -> docsTooltipsEnabled -> checked` |
+| 6 | 99 | 3 | `PromptExploderHeaderBar` | `ToggleRow` | 2 | 2 | `onDocsTooltipsChange -> onDocsTooltipsChange -> onCheckedChange` |
+| 7 | 99 | 3 | `JobStatusCell` | `Badge` | 2 | 2 | `status -> icon -> icon` |
+| 8 | 89 | 3 | `DriveImportModal` | `FileManagerProvider` | 1 | 2 | `onSelectFile -> onSelectFile -> onSelectFile` |
+| 9 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeOptions -> cropShapeOptions -> options` |
+| 10 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeOptions -> cropShapeOptions -> disabled` |
+| 11 | 89 | 3 | `SequenceStackCard` | `SelectSimple` | 1 | 2 | `cropShapeGeometryById -> cropShapeGeometryById -> onValueChange` |
+| 12 | 89 | 3 | `CaseIdentifierTextSelector` | `DropdownMenuCheckboxItem` | 1 | 2 | `value -> selected -> checked` |
+| 13 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `value -> value -> value` |
+| 14 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `onChange -> onChange -> onChange` |
+| 15 | 89 | 3 | `CaseResolverRichTextEditor` | `RichTextEditor` | 1 | 2 | `placeholder -> placeholder -> placeholder` |
+| 16 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `searchQuery -> value -> value` |
+| 17 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onChange` |
+| 18 | 89 | 3 | `CaseResolverTreeHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onClear` |
+| 19 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `page -> page -> onClick` |
+| 20 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `page -> page -> disabled` |
+| 21 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `onPageChange -> onPageChange -> onValueChange` |
+| 22 | 89 | 3 | `CaseListHeader` | `Button` | 1 | 2 | `onPageChange -> onPageChange -> onClick` |
+| 23 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `pageSize -> pageSize -> value` |
+| 24 | 89 | 3 | `CaseListHeader` | `SelectSimple` | 1 | 2 | `onPageSizeChange -> onPageSizeChange -> onValueChange` |
+| 25 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `searchQuery -> value -> value` |
+| 26 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onChange` |
+| 27 | 89 | 3 | `CaseListHeader` | `SearchInput` | 1 | 3 | `onSearchChange -> onChange -> onClear` |
+| 28 | 89 | 3 | `ThemeSettingsFieldsSection` | `FormField` | 1 | 2 | `className -> className -> actions` |
+| 29 | 89 | 3 | `ProviderBadge` | `Badge` | 1 | 2 | `label -> title -> title` |
+| 30 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `isOpen -> open -> open` |
+| 31 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `title -> title -> title` |
+| 32 | 89 | 3 | `LogModal` | `AppModal` | 1 | 2 | `size -> size -> size` |
+| 33 | 89 | 3 | `FolderTreeSearchViewport` | `SearchInput` | 1 | 2 | `searchPlaceholder -> placeholder -> placeholder` |
+| 34 | 89 | 3 | `ProductMetadataMultiSelectField` | `Button` | 1 | 2 | `disabled -> disabled -> disabled` |
+| 35 | 89 | 3 | `ProductMetadataMultiSelectField` | `DropdownMenuCheckboxItem` | 1 | 2 | `disabled -> disabled -> disabled` |
+| 36 | 89 | 3 | `ValidatedField` | `Label` | 1 | 2 | `required -> required -> className` |
+| 37 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `group -> group -> value` |
+| 38 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `group -> group -> onValueChange` |
+| 39 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `group -> group -> checked` |
+| 40 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `group -> group -> onCheckedChange` |
+| 41 | 89 | 3 | `AdvancedFilterBuilder` | `SelectSimple` | 1 | 2 | `onChange -> onChange -> onValueChange` |
+| 42 | 89 | 3 | `AdvancedFilterBuilder` | `Checkbox` | 1 | 2 | `onChange -> onChange -> onCheckedChange` |
+| 43 | 89 | 3 | `BrainCatalogTree` | `TreeContextMenu` | 1 | 2 | `onEdit -> onEdit -> items` |
+| 44 | 89 | 3 | `BrainCatalogTree` | `TreeContextMenu` | 1 | 2 | `onRemove -> onRemove -> items` |
+| 45 | 89 | 3 | `BrainRoutingTree` | `StatusToggle` | 1 | 2 | `onToggleEnabled -> onToggleEnabled -> onToggle` |
+| 46 | 89 | 3 | `BrainRoutingTree` | `TreeContextMenu` | 1 | 2 | `onEdit -> onEdit -> items` |
+| 47 | 89 | 3 | `BrainRoutingTree` | `StatusToggle` | 1 | 2 | `isPending -> isPending -> disabled` |
+| 48 | 89 | 3 | `JobTable` | `Button` | 1 | 2 | `onDelete -> onDelete -> onClick` |
+| 49 | 89 | 3 | `JobTable` | `Button` | 1 | 2 | `isDeleting -> isDeleting -> loading` |
+| 50 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `header -> header -> header` |
+| 51 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `alerts -> alerts -> alerts` |
+| 52 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `filters -> filters -> filters` |
+| 53 | 89 | 3 | `JobTable` | `ListPanel` | 1 | 2 | `footer -> footer -> footer` |
+| 54 | 83 | 3 | `DocumentRelationSearchPanel` | `RelationTreeBrowser` | 1 | 1 | `relationTreeInstance -> relationTreeInstance -> instance` |
+| 55 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> isRenaming` |
+| 56 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> toggleExpand` |
+| 57 | 83 | 3 | `FolderTreeSearchViewport` | `DefaultRow` | 1 | 1 | `controller -> controller -> startRename` |
+| 58 | 83 | 3 | `FolderTreeSearchViewport` | `FolderTreeContextMenu` | 1 | 1 | `controller -> controller -> controller` |
+| 59 | 83 | 3 | `EditProductPage` | `ProductFormCoreProvider` | 1 | 1 | `product -> product -> product` |
+| 60 | 83 | 3 | `FilterPanel` | `Input` | 1 | 1 | `searchPlaceholder -> searchPlaceholder -> placeholder` |
+| 61 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
+| 62 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `variant -> variant -> variant` |
+| 63 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `padding -> padding -> padding` |
+| 64 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `title -> title -> title` |
+| 65 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `description -> description -> description` |
+| 66 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `headerActions -> headerActions -> actions` |
+| 67 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `refresh -> refresh -> refresh` |
+| 68 | 83 | 3 | `SelectModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
+| 69 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> onClick` |
+| 70 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> disabled` |
+| 71 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSize -> pageSize -> value` |
+| 72 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSizeOptions -> pageSizeOptions -> options` |
+| 73 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `isLoading -> isLoading -> disabled` |
+| 74 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageChange -> onPageChange -> onValueChange` |
+| 75 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `onPageChange -> onPageChange -> onClick` |
+| 76 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageSizeChange -> onPageSizeChange -> onValueChange` |
 
 ## Top Chain Details
 
@@ -198,161 +194,7 @@ Generated at: 2026-03-04T20:45:05.693Z
   - `EditPageContent` -> `SearchableList`: `id` -> `onToggle` at src/features/cms/pages/pages/EditPagePage.tsx:229
   - `SearchableList` -> `Checkbox`: `onToggle` -> `onCheckedChange` at src/shared/ui/SearchableList.tsx:95
 
-### 3. ProductListingItem -> Button
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> onClick
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Button`: `listing` -> `onClick` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:76
-
-### 4. ProductListingItem -> Button
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> disabled
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Button`: `listing` -> `disabled` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:76
-
-### 5. ProductListingItem -> ActionMenu
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> disabled
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `ActionMenu` (src/shared/ui/ActionMenu.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `ActionMenu`: `listing` -> `disabled` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:88
-
-### 6. ProductListingItem -> DropdownMenuItem
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> onSelect
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `DropdownMenuItem` (src/shared/ui/dropdown-menu.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `DropdownMenuItem`: `listing` -> `onSelect` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:96
-
-### 7. ProductListingItem -> Label
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> htmlFor
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Label` (src/shared/ui/label.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Label`: `listing` -> `htmlFor` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:126
-
-### 8. ProductListingItem -> Input
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> id
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Input`: `listing` -> `id` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:127
-
-### 9. ProductListingItem -> Input
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> value
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Input`: `listing` -> `value` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:127
-
-### 10. ProductListingItem -> Input
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> onChange
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingActions` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx)
-  - `Input` (src/shared/ui/input.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingActions`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:16
-  - `ProductListingActions` -> `Input`: `listing` -> `onChange` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingActions.tsx:127
-
-### 11. ProductListingItem -> StatusBadge
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> status
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingDetails` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx)
-  - `StatusBadge` (src/shared/ui/status-badge.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingDetails`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:15
-  - `ProductListingDetails` -> `StatusBadge`: `listing` -> `status` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx:57
-
-### 12. ProductListingItem -> MetadataItem
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> value
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingDetails` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx)
-  - `MetadataItem` (src/shared/ui/metadata-item.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingDetails`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:15
-  - `ProductListingDetails` -> `MetadataItem`: `listing` -> `value` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx:61
-
-### 13. ProductListingItem -> Button
-
-- Score: 99
-- Depth: 3
-- Root fanout: 2
-- Prop path: listing -> listing -> onClick
-- Component path:
-  - `ProductListingItem` (src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx)
-  - `ProductListingDetails` (src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx)
-  - `Button` (src/shared/ui/button.tsx)
-- Transition lines:
-  - `ProductListingItem` -> `ProductListingDetails`: `listing` -> `listing` at src/features/integrations/components/listings/product-listings-modal/ProductListingItem.tsx:15
-  - `ProductListingDetails` -> `Button`: `listing` -> `onClick` at src/features/integrations/components/listings/product-listings-modal/listing-item/ProductListingDetails.tsx:120
-
-### 14. NotesAppTreeHeader -> SectionHeader
+### 3. NotesAppTreeHeader -> SectionHeader
 
 - Score: 99
 - Depth: 3
@@ -366,7 +208,7 @@ Generated at: 2026-03-04T20:45:05.693Z
   - `NotesAppTreeHeader` -> `TreeHeader`: `selectedFolderForCreate` -> `actions` at src/features/notesapp/components/tree/NotesAppTreeHeader.tsx:44
   - `TreeHeader` -> `SectionHeader`: `actions` -> `actions` at src/shared/ui/tree/TreeHeader.tsx:25
 
-### 15. NotesAppTreeHeader -> SectionHeader
+### 4. NotesAppTreeHeader -> SectionHeader
 
 - Score: 99
 - Depth: 3
@@ -379,6 +221,160 @@ Generated at: 2026-03-04T20:45:05.693Z
 - Transition lines:
   - `NotesAppTreeHeader` -> `TreeHeader`: `setPanelCollapsed` -> `actions` at src/features/notesapp/components/tree/NotesAppTreeHeader.tsx:44
   - `TreeHeader` -> `SectionHeader`: `actions` -> `actions` at src/shared/ui/tree/TreeHeader.tsx:25
+
+### 5. PromptExploderHeaderBar -> ToggleRow
+
+- Score: 99
+- Depth: 3
+- Root fanout: 2
+- Prop path: docsTooltipsEnabled -> docsTooltipsEnabled -> checked
+- Component path:
+  - `PromptExploderHeaderBar` (src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx)
+  - `PromptExploderDocsTooltipSwitch` (src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx)
+  - `ToggleRow` (src/shared/ui/toggle-row.tsx)
+- Transition lines:
+  - `PromptExploderHeaderBar` -> `PromptExploderDocsTooltipSwitch`: `docsTooltipsEnabled` -> `docsTooltipsEnabled` at src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx:64
+  - `PromptExploderDocsTooltipSwitch` -> `ToggleRow`: `docsTooltipsEnabled` -> `checked` at src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx:15
+
+### 6. PromptExploderHeaderBar -> ToggleRow
+
+- Score: 99
+- Depth: 3
+- Root fanout: 2
+- Prop path: onDocsTooltipsChange -> onDocsTooltipsChange -> onCheckedChange
+- Component path:
+  - `PromptExploderHeaderBar` (src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx)
+  - `PromptExploderDocsTooltipSwitch` (src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx)
+  - `ToggleRow` (src/shared/ui/toggle-row.tsx)
+- Transition lines:
+  - `PromptExploderHeaderBar` -> `PromptExploderDocsTooltipSwitch`: `onDocsTooltipsChange` -> `onDocsTooltipsChange` at src/features/prompt-exploder/components/PromptExploderHeaderBar.tsx:64
+  - `PromptExploderDocsTooltipSwitch` -> `ToggleRow`: `onDocsTooltipsChange` -> `onCheckedChange` at src/features/prompt-exploder/components/PromptExploderDocsTooltipSwitch.tsx:15
+
+### 7. JobStatusCell -> Badge
+
+- Score: 99
+- Depth: 3
+- Root fanout: 2
+- Prop path: status -> icon -> icon
+- Component path:
+  - `JobStatusCell` (src/shared/lib/jobs/components/job-table/JobStatusCell.tsx)
+  - `StatusBadge` (src/shared/ui/status-badge.tsx)
+  - `Badge` (src/shared/ui/badge.tsx)
+- Transition lines:
+  - `JobStatusCell` -> `StatusBadge`: `status` -> `icon` at src/shared/lib/jobs/components/job-table/JobStatusCell.tsx:44
+  - `StatusBadge` -> `Badge`: `icon` -> `icon` at src/shared/ui/status-badge.tsx:85
+
+### 8. DriveImportModal -> FileManagerProvider
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: onSelectFile -> onSelectFile -> onSelectFile
+- Component path:
+  - `DriveImportModal` (src/features/ai/image-studio/components/modals/DriveImportModal.tsx)
+  - `FileManager` (src/features/files/components/FileManager.tsx)
+  - `FileManagerProvider` (src/features/files/contexts/FileManagerContext.tsx)
+- Transition lines:
+  - `DriveImportModal` -> `FileManager`: `onSelectFile` -> `onSelectFile` at src/features/ai/image-studio/components/modals/DriveImportModal.tsx:53
+  - `FileManager` -> `FileManagerProvider`: `onSelectFile` -> `onSelectFile` at src/features/files/components/FileManager.tsx:38
+
+### 9. SequenceStackCard -> SelectSimple
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: cropShapeOptions -> cropShapeOptions -> options
+- Component path:
+  - `SequenceStackCard` (src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx)
+  - `SequenceStepEditor` (src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx)
+  - `SelectSimple` (src/shared/ui/select-simple.tsx)
+- Transition lines:
+  - `SequenceStackCard` -> `SequenceStepEditor`: `cropShapeOptions` -> `cropShapeOptions` at src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx:569
+  - `SequenceStepEditor` -> `SelectSimple`: `cropShapeOptions` -> `options` at src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx:232
+
+### 10. SequenceStackCard -> SelectSimple
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: cropShapeOptions -> cropShapeOptions -> disabled
+- Component path:
+  - `SequenceStackCard` (src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx)
+  - `SequenceStepEditor` (src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx)
+  - `SelectSimple` (src/shared/ui/select-simple.tsx)
+- Transition lines:
+  - `SequenceStackCard` -> `SequenceStepEditor`: `cropShapeOptions` -> `cropShapeOptions` at src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx:569
+  - `SequenceStepEditor` -> `SelectSimple`: `cropShapeOptions` -> `disabled` at src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx:232
+
+### 11. SequenceStackCard -> SelectSimple
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: cropShapeGeometryById -> cropShapeGeometryById -> onValueChange
+- Component path:
+  - `SequenceStackCard` (src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx)
+  - `SequenceStepEditor` (src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx)
+  - `SelectSimple` (src/shared/ui/select-simple.tsx)
+- Transition lines:
+  - `SequenceStackCard` -> `SequenceStepEditor`: `cropShapeGeometryById` -> `cropShapeGeometryById` at src/features/ai/image-studio/components/sequencing/SequenceStackCard.tsx:569
+  - `SequenceStepEditor` -> `SelectSimple`: `cropShapeGeometryById` -> `onValueChange` at src/features/ai/image-studio/components/sequencing/SequenceStepEditor.tsx:232
+
+### 12. CaseIdentifierTextSelector -> DropdownMenuCheckboxItem
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: value -> selected -> checked
+- Component path:
+  - `CaseIdentifierTextSelector` (src/features/case-resolver/components/CaseIdentifierTextSelector.tsx)
+  - `MultiSelect` (src/shared/ui/multi-select.tsx)
+  - `DropdownMenuCheckboxItem` (src/shared/ui/dropdown-menu.tsx)
+- Transition lines:
+  - `CaseIdentifierTextSelector` -> `MultiSelect`: `value` -> `selected` at src/features/case-resolver/components/CaseIdentifierTextSelector.tsx:23
+  - `MultiSelect` -> `DropdownMenuCheckboxItem`: `selected` -> `checked` at src/shared/ui/multi-select.tsx:125
+
+### 13. CaseResolverRichTextEditor -> RichTextEditor
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: value -> value -> value
+- Component path:
+  - `CaseResolverRichTextEditor` (src/features/case-resolver/components/CaseResolverRichTextEditor.tsx)
+  - `DocumentWysiwygEditor` (src/features/document-editor/components/DocumentWysiwygEditor.tsx)
+  - `RichTextEditor` (src/features/document-editor/components/RichTextEditor.tsx)
+- Transition lines:
+  - `CaseResolverRichTextEditor` -> `DocumentWysiwygEditor`: `value` -> `value` at src/features/case-resolver/components/CaseResolverRichTextEditor.tsx:21
+  - `DocumentWysiwygEditor` -> `RichTextEditor`: `value` -> `value` at src/features/document-editor/components/DocumentWysiwygEditor.tsx:43
+
+### 14. CaseResolverRichTextEditor -> RichTextEditor
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: onChange -> onChange -> onChange
+- Component path:
+  - `CaseResolverRichTextEditor` (src/features/case-resolver/components/CaseResolverRichTextEditor.tsx)
+  - `DocumentWysiwygEditor` (src/features/document-editor/components/DocumentWysiwygEditor.tsx)
+  - `RichTextEditor` (src/features/document-editor/components/RichTextEditor.tsx)
+- Transition lines:
+  - `CaseResolverRichTextEditor` -> `DocumentWysiwygEditor`: `onChange` -> `onChange` at src/features/case-resolver/components/CaseResolverRichTextEditor.tsx:21
+  - `DocumentWysiwygEditor` -> `RichTextEditor`: `onChange` -> `onChange` at src/features/document-editor/components/DocumentWysiwygEditor.tsx:43
+
+### 15. CaseResolverRichTextEditor -> RichTextEditor
+
+- Score: 89
+- Depth: 3
+- Root fanout: 1
+- Prop path: placeholder -> placeholder -> placeholder
+- Component path:
+  - `CaseResolverRichTextEditor` (src/features/case-resolver/components/CaseResolverRichTextEditor.tsx)
+  - `DocumentWysiwygEditor` (src/features/document-editor/components/DocumentWysiwygEditor.tsx)
+  - `RichTextEditor` (src/features/document-editor/components/RichTextEditor.tsx)
+- Transition lines:
+  - `CaseResolverRichTextEditor` -> `DocumentWysiwygEditor`: `placeholder` -> `placeholder` at src/features/case-resolver/components/CaseResolverRichTextEditor.tsx:21
+  - `DocumentWysiwygEditor` -> `RichTextEditor`: `placeholder` -> `placeholder` at src/features/document-editor/components/DocumentWysiwygEditor.tsx:43
 
 ## Execution Notes
 

@@ -305,6 +305,73 @@ describe('PathRunExecutor', () => {
     );
   });
 
+  it('does not fail run when halt is blocked but all blocked nodes are waiting_callback', async () => {
+    const triggerNode: AiNode = {
+      id: 'node-trigger-111111111111111111111111',
+      type: 'trigger',
+      title: 'Trigger',
+      description: '',
+      position: { x: 0, y: 0 },
+      inputs: ['context'],
+      outputs: ['trigger', 'triggerName'],
+      config: { trigger: { event: 'manual' } },
+    };
+
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        if (options.onNodeBlocked) {
+          await options.onNodeBlocked({
+            runId: options.runId!,
+            node: options.nodes[0]!,
+            reason: 'missing_inputs',
+            status: 'waiting_callback',
+            waitingOnPorts: ['trigger'],
+            message: 'Waiting for upstream trigger signal.',
+          });
+        }
+        if (options.onHalt) {
+          await options.onHalt({
+            runId: options.runId!,
+            reason: 'blocked',
+            nodeStatuses: {
+              [options.nodes[0]!.id]: 'waiting_callback',
+            },
+          });
+        }
+        return {
+          status: 'running',
+          outputs: {
+            [options.nodes[0]!.id]: {
+              status: 'waiting_callback',
+              waitingOnPorts: ['trigger'],
+            },
+          },
+          nodeOutputs: {
+            [options.nodes[0]!.id]: {
+              status: 'waiting_callback',
+              waitingOnPorts: ['trigger'],
+            },
+          },
+        } as any;
+      }
+    );
+
+    const run = await mockRepo.createRun({
+      pathId: 'test',
+      graph: { nodes: [triggerNode], edges: [] },
+      meta: {
+        aiPathsValidation: { enabled: true },
+        blockedRunPolicy: 'fail_run',
+      },
+    });
+
+    await executePathRun(run);
+
+    const updatedRun = await mockRepo.findRunById(run.id);
+    expect(updatedRun?.status).toBe('completed');
+    expect(updatedRun?.errorMessage ?? null).toBeNull();
+  });
+
   it('should fail run when required processing node finishes with failed status', async () => {
     vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
       async (options: EvaluateGraphArgs) => {

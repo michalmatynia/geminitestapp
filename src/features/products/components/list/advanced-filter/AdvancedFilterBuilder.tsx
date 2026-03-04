@@ -213,17 +213,21 @@ const buildConditionValidationMessage = (
   return null;
 };
 
-const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEditor({
-  condition,
-  onChange,
-  onRemove,
-  onDuplicate,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp,
-  canMoveDown,
-  disableRemove = false,
-}: ConditionEditorProps): React.JSX.Element {
+const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEditor(
+  props: ConditionEditorProps
+): React.JSX.Element {
+  const {
+    condition,
+    onChange,
+    onRemove,
+    onDuplicate,
+    onMoveUp,
+    onMoveDown,
+    canMoveUp,
+    canMoveDown,
+    disableRemove = false,
+  } = props;
+
   const runtime = useAdvancedFilterValueOptionsRuntime();
   const valueOptions = runtime.fieldValueOptions?.[condition.field];
   const fieldConfig = getFieldConfig(condition.field);
@@ -528,18 +532,22 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
   );
 });
 
-const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
-  group,
-  onChange,
-  onRemove,
-  onDuplicate,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp = false,
-  canMoveDown = false,
-  isRoot = false,
-  depth = 1,
-}: GroupEditorProps): React.JSX.Element {
+const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor(
+  props: GroupEditorProps
+): React.JSX.Element {
+  const {
+    group,
+    onChange,
+    onRemove,
+    onDuplicate,
+    onMoveUp,
+    onMoveDown,
+    canMoveUp = false,
+    canMoveDown = false,
+    isRoot = false,
+    depth = 1,
+  } = props;
+
   const handleRuleChange = (ruleId: string, nextRule: ProductAdvancedFilterRule): void => {
     onChange({
       ...group,
@@ -750,11 +758,11 @@ function AdvancedFilterRootEditor(): React.JSX.Element {
   return <AdvancedFilterGroupEditor group={group} onChange={onChange} isRoot depth={1} />;
 }
 
-export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder({
-  group,
-  onChange,
-  fieldValueOptions,
-}: AdvancedFilterBuilderProps): React.JSX.Element {
+export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder(
+  props: AdvancedFilterBuilderProps
+): React.JSX.Element {
+  const { group, onChange, fieldValueOptions } = props;
+
   const fieldValueOptionsRuntimeValue = useMemo<AdvancedFilterValueOptionsRuntimeValue>(
     () => ({
       fieldValueOptions,

@@ -72,6 +72,24 @@ jobs:
             logs/observability-check.log
             logs/observability-check.error.log
 
+  ui-consolidation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run UI consolidation guardrail
+        run: node scripts/architecture/check-ui-consolidation.mjs
+
   lint:
     runs-on: ubuntu-latest
     steps:

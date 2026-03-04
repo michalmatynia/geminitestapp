@@ -1,8 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+const args = new Set(process.argv.slice(2));
 const root = process.cwd();
 const outDir = path.join(root, 'docs', 'ui-consolidation');
+const HISTORY_DISABLED = args.has('--ci') || args.has('--no-history');
+const NO_WRITE = args.has('--no-write');
+const SUMMARY_JSON_ONLY = args.has('--summary-json');
 
 const COMPONENT_FAMILY_RE =
   /(Modal|Panel|Table|List|Form|Picker|Filter|Toolbar|Header|Sidebar|Tabs|Tab|Card|Dialog|Drawer|Section|Settings)\.tsx$/;
@@ -701,23 +705,37 @@ const buildInventoryCsv = (candidates) => {
 
 const run = async () => {
   const result = await analyze();
-  await fs.mkdir(outDir, { recursive: true });
+  if (!NO_WRITE) {
+    await fs.mkdir(outDir, { recursive: true });
 
-  const stamp = result.summary.generatedAt.replace(/[:.]/g, '-');
-  const jsonPath = path.join(outDir, 'scan-latest.json');
-  const mdPath = path.join(outDir, 'scan-latest.md');
-  const csvPath = path.join(outDir, 'inventory-latest.csv');
-  const historicalJsonPath = path.join(outDir, `scan-${stamp}.json`);
+    const stamp = result.summary.generatedAt.replace(/[:.]/g, '-');
+    const jsonPath = path.join(outDir, 'scan-latest.json');
+    const mdPath = path.join(outDir, 'scan-latest.md');
+    const csvPath = path.join(outDir, 'inventory-latest.csv');
+    const historicalJsonPath = path.join(outDir, `scan-${stamp}.json`);
 
-  await fs.writeFile(jsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
-  await fs.writeFile(mdPath, buildMarkdown(result), 'utf8');
-  await fs.writeFile(csvPath, buildInventoryCsv(result.candidates), 'utf8');
-  await fs.writeFile(historicalJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+    await fs.writeFile(jsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+    await fs.writeFile(mdPath, buildMarkdown(result), 'utf8');
+    await fs.writeFile(csvPath, buildInventoryCsv(result.candidates), 'utf8');
+    if (!HISTORY_DISABLED) {
+      await fs.writeFile(historicalJsonPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+    }
 
-  console.log(`Wrote ${toPosix(path.relative(root, jsonPath))}`);
-  console.log(`Wrote ${toPosix(path.relative(root, mdPath))}`);
-  console.log(`Wrote ${toPosix(path.relative(root, csvPath))}`);
-  console.log(`Wrote ${toPosix(path.relative(root, historicalJsonPath))}`);
+    if (!SUMMARY_JSON_ONLY) {
+      console.log(`Wrote ${toPosix(path.relative(root, jsonPath))}`);
+      console.log(`Wrote ${toPosix(path.relative(root, mdPath))}`);
+      console.log(`Wrote ${toPosix(path.relative(root, csvPath))}`);
+      if (!HISTORY_DISABLED) {
+        console.log(`Wrote ${toPosix(path.relative(root, historicalJsonPath))}`);
+      }
+    }
+  }
+
+  if (SUMMARY_JSON_ONLY) {
+    console.log(JSON.stringify({ summary: result.summary }));
+    return;
+  }
+
   console.log(
     [
       `Scanned files: ${result.summary.scannedFileCount}`,

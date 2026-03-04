@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const CSRF_COOKIE_NAME = 'csrf-token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
-export const CSRF_HEADER_FALLBACK = 'x-xsrf-token';
 export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 const SESSION_COOKIE_NAMES = [
@@ -40,7 +39,7 @@ export const getCsrfTokenFromRequest = (request: NextRequest): string | null =>
   request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
 
 export const getCsrfTokenFromHeaders = (request: NextRequest): string | null =>
-  request.headers.get(CSRF_HEADER_NAME) ?? request.headers.get(CSRF_HEADER_FALLBACK) ?? null;
+  request.headers.get(CSRF_HEADER_NAME) ?? null;
 
 export const isSameOriginRequest = (request: NextRequest): boolean => {
   const origin = request.headers.get('origin');

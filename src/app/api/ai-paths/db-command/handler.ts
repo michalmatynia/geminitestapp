@@ -263,7 +263,6 @@ const withProviderPayload = (
   payload: Record<string, unknown>
 ): Record<string, unknown> => ({
   ...payload,
-  provider,
   requestedProvider: requestedProvider ?? 'auto',
   resolvedProvider: provider,
 });

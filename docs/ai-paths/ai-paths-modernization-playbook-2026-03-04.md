@@ -821,6 +821,22 @@ Progress (2026-03-04):
       3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
       Result: `3` files passed, `11` tests passed.
    5. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
+35. Pruned DB-command provider payload alias metadata compatibility in seam 165 and re-validated canonical guards:
+   1. Removed legacy DB-command response `provider` alias emission:
+      1. `src/app/api/ai-paths/db-command/handler.ts`
+      2. `withProviderPayload` now emits canonical `requestedProvider`/`resolvedProvider` only.
+   2. Updated regression coverage:
+      1. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      2. verifies fallback responses no longer expose response `provider` alias.
+      3. verifies canonical `resolvedProvider` metadata remains surfaced for fallback outcomes.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of DB-command response `provider` alias payload snippets and requires canonical `requestedProvider`/`resolvedProvider` snippets.
+   4. Re-ran focused regression bundle:
+      1. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `3` files passed, `13` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4236` files scanned).
 
 ## Deprecation map
 

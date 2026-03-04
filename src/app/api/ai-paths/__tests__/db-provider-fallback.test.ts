@@ -127,7 +127,7 @@ describe('AI Paths DB provider fallback', () => {
     );
     const body = (await response.json()) as Record<string, unknown>;
 
-    expect(body['provider']).toBe('mongodb');
+    expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['matchedCount']).toBe(1);
     expect(body['modifiedCount']).toBe(1);
@@ -245,7 +245,7 @@ describe('AI Paths DB provider fallback', () => {
     );
     const body = (await response.json()) as Record<string, unknown>;
 
-    expect(body['provider']).toBe('mongodb');
+    expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['count']).toBe(1);
     expect(body['items']).toEqual([{ id: 'product-1' }]);
@@ -307,7 +307,7 @@ describe('AI Paths DB provider fallback', () => {
       { $set: { name_en: 'Updated name' } },
       { upsert: false }
     );
-    expect(body['provider']).toBe('mongodb');
+    expect(Object.prototype.hasOwnProperty.call(body, 'provider')).toBe(false);
     expect(body['resolvedProvider']).toBe('mongodb');
     expect(body['fallback']).toEqual(
       expect.objectContaining({

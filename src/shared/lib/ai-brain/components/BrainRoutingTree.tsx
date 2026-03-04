@@ -10,7 +10,10 @@ import {
 
 import { getBrainCapabilityDefinition } from '../settings';
 import type { AiBrainAssignment, AiBrainCapabilityKey, AiBrainSettings } from '../settings';
-import { BrainRoutingCapabilityNodeItem } from './BrainRoutingCapabilityNodeItem';
+import {
+  BrainRoutingCapabilityNodeItem,
+  BrainRoutingCapabilityNodeItemRuntimeContext,
+} from './BrainRoutingCapabilityNodeItem';
 import { BrainRoutingFeatureNodeItem } from './BrainRoutingFeatureNodeItem';
 import {
   buildBrainRoutingMasterNodes,
@@ -96,9 +99,6 @@ export function BrainRoutingTree({
           select={input.select}
           enabled={assignment.enabled}
           sourceLabel={sourceLabel}
-          onToggleEnabled={(enabled: boolean) => onToggleEnabled(capability, enabled)}
-          onEdit={() => onEdit(capability)}
-          isPending={isPending}
         />
       );
     },
@@ -113,15 +113,25 @@ export function BrainRoutingTree({
       settings.capabilities,
     ]
   );
+  const capabilityNodeRuntimeValue = useMemo(
+    () => ({
+      onToggleEnabled,
+      onEdit,
+      isPending,
+    }),
+    [isPending, onEdit, onToggleEnabled]
+  );
 
   return (
-    <FolderTreeViewportV2
-      controller={controller}
-      scrollToNodeRef={scrollToNodeRef}
-      rootDropUi={rootDropUi}
-      renderNode={renderNode}
-      enableDnd={false}
-      emptyLabel='No routing capabilities'
-    />
+    <BrainRoutingCapabilityNodeItemRuntimeContext.Provider value={capabilityNodeRuntimeValue}>
+      <FolderTreeViewportV2
+        controller={controller}
+        scrollToNodeRef={scrollToNodeRef}
+        rootDropUi={rootDropUi}
+        renderNode={renderNode}
+        enableDnd={false}
+        emptyLabel='No routing capabilities'
+      />
+    </BrainRoutingCapabilityNodeItemRuntimeContext.Provider>
   );
 }

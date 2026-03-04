@@ -91,6 +91,39 @@ const readRuntimeRetryPolicy = (node: AiNode): RuntimeRetryPolicy => {
   };
 };
 
+const resolveRecoverableNodeWaitState = (
+  node: AiNode,
+  error: unknown
+): { message: string; waitingOnPorts: string[] } | null => {
+  if (node.type !== 'fetcher') return null;
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  if (!message) return null;
+  const normalizedMessage = message.trim();
+  if (!normalizedMessage) return null;
+
+  if (
+    normalizedMessage.includes('Simulated entity by ID') &&
+    normalizedMessage.includes('no entity ID is configured')
+  ) {
+    return {
+      message: normalizedMessage,
+      waitingOnPorts: ['entityId'],
+    };
+  }
+
+  if (
+    normalizedMessage.toLowerCase().includes('could not hydrate') &&
+    normalizedMessage.toLowerCase().includes('fetcher')
+  ) {
+    return {
+      message: normalizedMessage,
+      waitingOnPorts: ['entityId', 'entityType'],
+    };
+  }
+
+  return null;
+};
+
 export async function evaluateGraphInternal(
   nodes: AiNode[],
   edges: Edge[],
@@ -775,6 +808,70 @@ export async function evaluateGraphInternal(
             const nodeDurationMs = nowMs() - nodeStartedAt;
             state.nodeDurationsMap.set(node.id, nodeDurationMs);
             state.activeNodes.delete(node.id);
+
+            const recoverableWaitState = resolveRecoverableNodeWaitState(node, error);
+            if (recoverableWaitState) {
+              state.blockedNodes.add(node.id);
+              state.outputs[node.id] = {
+                status: 'waiting_callback',
+                skipReason: 'missing_inputs',
+                blockedReason: 'missing_inputs',
+                message: recoverableWaitState.message,
+                waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                requiredPorts: recoverableWaitState.waitingOnPorts,
+              };
+
+              if (options['recordHistory']) {
+                const entries = state.history.get(node.id) ?? [];
+                entries.push({
+                  timestamp: new Date().toISOString(),
+                  pathId: options.pathId ?? null,
+                  pathName: null,
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  nodeTitle: node.title ?? null,
+                  status: 'waiting_callback',
+                  iteration,
+                  inputs: cloneValue(nodeInputs),
+                  outputs: cloneValue(state.outputs[node.id]),
+                  skipReason: 'missing_inputs',
+                  requiredPorts: recoverableWaitState.waitingOnPorts,
+                  waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                } as RuntimeHistoryEntry);
+                state.history.set(node.id, entries);
+              }
+
+              if (options.profile?.onEvent) {
+                options.profile.onEvent({
+                  type: 'node',
+                  runId: resolvedRunId,
+                  runStartedAt: resolvedRunStartedAt,
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  iteration,
+                  status: 'skipped',
+                  durationMs: nodeDurationMs,
+                  reason: 'missing_inputs',
+                  requiredPorts: recoverableWaitState.waitingOnPorts,
+                  waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                });
+              }
+
+              if (options.onNodeBlocked) {
+                await options.onNodeBlocked({
+                  runId: resolvedRunId,
+                  node,
+                  reason: 'missing_inputs',
+                  status: 'waiting_callback',
+                  message: recoverableWaitState.message,
+                  waitingOnPorts: recoverableWaitState.waitingOnPorts,
+                  waitingOnDetails: [],
+                });
+              }
+
+              return;
+            }
+
             state.errorNodes.add(node.id);
             if (error instanceof Error && error.message.includes('timed out')) {
               state.timeoutNodes.add(node.id);

@@ -1,9 +1,10 @@
 'use client';
 
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
 import { internalError } from '@/shared/errors/app-error';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { MultiSelect } from '@/shared/ui';
 
 import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
@@ -148,6 +149,57 @@ export interface ProductMetadataMultiSelectFieldProps {
   formContextToggleName?: 'toggleCatalog' | 'toggleProducer' | 'toggleTag';
 
   single?: boolean;
+}
+
+type ProductMetadataMultiSelectRuntimeValue = {
+  label: string;
+  options: Array<{ value: string; label: string }>;
+  selectedIds: string[];
+  onChange: (nextIds: string[]) => void;
+  loading: boolean;
+  disabled: boolean;
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyMessage?: string | undefined;
+  single: boolean;
+};
+
+const {
+  Context: ProductMetadataMultiSelectRuntimeContext,
+  useStrictContext: useProductMetadataMultiSelectRuntime,
+} = createStrictContext<ProductMetadataMultiSelectRuntimeValue>({
+  hookName: 'useProductMetadataMultiSelectRuntime',
+  providerName: 'ProductMetadataMultiSelectRuntimeProvider',
+  displayName: 'ProductMetadataMultiSelectRuntimeContext',
+});
+
+function ProductMetadataMultiSelectRuntime(): React.JSX.Element {
+  const {
+    label,
+    options,
+    selectedIds,
+    onChange,
+    loading,
+    disabled,
+    placeholder,
+    searchPlaceholder,
+    emptyMessage,
+    single,
+  } = useProductMetadataMultiSelectRuntime();
+  return (
+    <MultiSelect
+      label={label}
+      options={options}
+      selected={selectedIds}
+      onChange={onChange}
+      loading={loading}
+      disabled={disabled}
+      placeholder={placeholder}
+      searchPlaceholder={searchPlaceholder}
+      emptyMessage={emptyMessage}
+      single={single}
+    />
+  );
 }
 
 /**
@@ -330,19 +382,36 @@ export function ProductMetadataMultiSelectField({
   })();
   const resolvedPlaceholder = placeholder || `Select ${label.toLowerCase()}`;
   const resolvedSearchPlaceholder = searchPlaceholder || `Search ${label.toLowerCase()}...`;
+  const runtimeValue = useMemo(
+    () => ({
+      label,
+      options,
+      selectedIds,
+      onChange: resolvedOnChange,
+      loading: resolvedLoading,
+      disabled,
+      placeholder: resolvedPlaceholder,
+      searchPlaceholder: resolvedSearchPlaceholder,
+      emptyMessage,
+      single,
+    }),
+    [
+      disabled,
+      emptyMessage,
+      label,
+      options,
+      resolvedLoading,
+      resolvedOnChange,
+      resolvedPlaceholder,
+      resolvedSearchPlaceholder,
+      selectedIds,
+      single,
+    ]
+  );
 
   return (
-    <MultiSelect
-      label={label}
-      options={options}
-      selected={selectedIds}
-      onChange={resolvedOnChange}
-      loading={resolvedLoading}
-      disabled={disabled}
-      placeholder={resolvedPlaceholder}
-      searchPlaceholder={resolvedSearchPlaceholder}
-      emptyMessage={emptyMessage}
-      single={single}
-    />
+    <ProductMetadataMultiSelectRuntimeContext.Provider value={runtimeValue}>
+      <ProductMetadataMultiSelectRuntime />
+    </ProductMetadataMultiSelectRuntimeContext.Provider>
   );
 }

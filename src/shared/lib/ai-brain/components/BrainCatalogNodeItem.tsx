@@ -4,6 +4,7 @@ import React from 'react';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
 
 import { BRAIN_CATALOG_POOL_LABELS } from '@/shared/lib/ai-brain/catalog-entries';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { AiBrainCatalogEntry } from '@/shared/lib/ai-brain/settings';
 import { Badge, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
@@ -15,10 +16,24 @@ export interface BrainCatalogNodeItemProps {
   isSelected: boolean;
   isDragging: boolean;
   select: () => void;
+}
+
+export type BrainCatalogNodeItemRuntimeValue = {
   onEdit: (entry: AiBrainCatalogEntry) => void;
   onRemove: (entry: AiBrainCatalogEntry) => void;
   isPending: boolean;
-}
+};
+
+const {
+  Context: BrainCatalogNodeItemRuntimeContext,
+  useStrictContext: useBrainCatalogNodeItemRuntime,
+} = createStrictContext<BrainCatalogNodeItemRuntimeValue>({
+  hookName: 'useBrainCatalogNodeItemRuntime',
+  providerName: 'BrainCatalogNodeItemRuntimeProvider',
+  displayName: 'BrainCatalogNodeItemRuntimeContext',
+});
+
+export { BrainCatalogNodeItemRuntimeContext };
 
 export function BrainCatalogNodeItem({
   node,
@@ -27,10 +42,8 @@ export function BrainCatalogNodeItem({
   isSelected,
   isDragging,
   select,
-  onEdit,
-  onRemove,
-  isPending,
 }: BrainCatalogNodeItemProps): React.JSX.Element {
+  const { onEdit, onRemove, isPending } = useBrainCatalogNodeItemRuntime();
   const poolLabel = BRAIN_CATALOG_POOL_LABELS[entry.pool] ?? entry.pool;
 
   return (

@@ -22,37 +22,26 @@ import type {
   ImageStudioSequenceStepRuntime,
   ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import { useSequenceStepEditorRuntime } from './SequenceStepEditorRuntimeContext';
 
 type SequenceStepEditorProps = {
   stepId: string;
   operation: ImageStudioSequenceOperation;
   step: ImageStudioSequenceStep;
-  activeGenerationModel: string;
-  cropShapeOptions: Array<{ value: string; label: string }>;
-  cropShapeGeometryById: Record<
-    string,
-    {
-      bbox: { x: number; y: number; width: number; height: number } | null;
-      polygon: Array<{ x: number; y: number }> | null;
-    }
-  >;
-  sequencerFieldTooltipsEnabled: boolean;
-  updateStep: (
-    stepId: string,
-    updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep
-  ) => void;
 };
 
 export function SequenceStepEditor({
   stepId,
   operation,
   step,
-  activeGenerationModel,
-  cropShapeOptions,
-  cropShapeGeometryById,
-  sequencerFieldTooltipsEnabled,
-  updateStep,
 }: SequenceStepEditorProps): React.JSX.Element {
+  const {
+    activeGenerationModel,
+    cropShapeOptions,
+    cropShapeGeometryById,
+    sequencerFieldTooltipsEnabled,
+    updateStep,
+  } = useSequenceStepEditorRuntime();
   const isGenerationStep = step.type === 'generate' || step.type === 'regenerate';
   const projectGenerationModel = activeGenerationModel.trim();
   const generateStep = isGenerationStep ? step : null;

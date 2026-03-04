@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Box, Eye, Edit2, Trash2, Globe, Lock } from 'lucide-react';
+import { useCallback, useMemo, type JSX, type MouseEvent } from 'react';
 
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
@@ -33,7 +33,7 @@ const {
   displayName: 'Asset3DCardRuntimeContext',
 });
 
-function Asset3DResourceCard(): React.JSX.Element {
+function Asset3DResourceCard(): JSX.Element {
   const runtime = useAsset3DCardRuntime();
   const { asset, className, isDeleting } = runtime;
   const formatFileSize = (bytes: number): string => {
@@ -64,7 +64,7 @@ function Asset3DResourceCard(): React.JSX.Element {
             variant='ghost'
             size='icon'
             className='h-7 w-7 text-muted-foreground hover:text-blue-400'
-            onClick={(e: React.MouseEvent): void => {
+            onClick={(e: MouseEvent): void => {
               e.stopPropagation();
               runtime.onEditAsset();
             }}
@@ -75,7 +75,7 @@ function Asset3DResourceCard(): React.JSX.Element {
             variant='ghost'
             size='icon'
             className='h-7 w-7 text-muted-foreground hover:text-red-400'
-            onClick={(e: React.MouseEvent): void => {
+            onClick={(e: MouseEvent): void => {
               e.stopPropagation();
               runtime.onDeleteAsset();
             }}
@@ -155,7 +155,7 @@ function Asset3DResourceCard(): React.JSX.Element {
   );
 }
 
-export function Asset3DCard({ asset, className }: Asset3DCardProps): React.JSX.Element {
+export function Asset3DCard({ asset, className }: Asset3DCardProps): JSX.Element {
   const {
     setPreviewAsset,
     setEditAsset,
@@ -164,17 +164,17 @@ export function Asset3DCard({ asset, className }: Asset3DCardProps): React.JSX.E
   } = useAdmin3DAssetsContext();
 
   const isDeleting = checkIsDeleting(asset.id);
-  const onPreviewAsset = React.useCallback((): void => {
+  const onPreviewAsset = useCallback((): void => {
     setPreviewAsset(asset);
   }, [setPreviewAsset, asset]);
-  const onEditAsset = React.useCallback((): void => {
+  const onEditAsset = useCallback((): void => {
     setEditAsset(asset);
   }, [setEditAsset, asset]);
-  const onDeleteAsset = React.useCallback((): void => {
+  const onDeleteAsset = useCallback((): void => {
     void handleDelete(asset);
   }, [handleDelete, asset]);
 
-  const runtimeValue = React.useMemo<Asset3DCardRuntimeValue>(
+  const runtimeValue = useMemo<Asset3DCardRuntimeValue>(
     () => ({
       asset,
       className,

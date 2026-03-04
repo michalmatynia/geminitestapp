@@ -10,9 +10,18 @@ export interface JobActionsCellProps {
   onViewDetails: (id: string) => void;
   onCancel: (id: string) => void;
   onDelete?: ((id: string) => void) | undefined;
-  isCancelling: boolean;
-  isDeleting: boolean;
+  isCancelling?: boolean | undefined;
+  isDeleting?: boolean | undefined;
 }
+
+export type JobActionsCellRuntimeValue = {
+  onDelete?: ((id: string) => void) | undefined;
+  isDeleting?: ((id: string) => boolean) | undefined;
+};
+
+export const JobActionsCellRuntimeContext = React.createContext<JobActionsCellRuntimeValue | null>(
+  null
+);
 
 export function JobActionsCell({
   jobId,
@@ -20,9 +29,13 @@ export function JobActionsCell({
   onViewDetails,
   onCancel,
   onDelete,
-  isCancelling,
+  isCancelling = false,
   isDeleting,
 }: JobActionsCellProps): React.JSX.Element {
+  const runtime = React.useContext(JobActionsCellRuntimeContext);
+  const resolvedOnDelete = onDelete ?? runtime?.onDelete;
+  const resolvedIsDeleting = isDeleting ?? runtime?.isDeleting?.(jobId) ?? false;
+
   return (
     <div className='flex justify-end gap-2'>
       <Button
@@ -49,13 +62,13 @@ export function JobActionsCell({
           <XCircle className='h-4 w-4' />
         </Button>
       )}
-      {onDelete && (
+      {resolvedOnDelete && (
         <Button
           variant='ghost'
           size='icon'
           className='h-8 w-8 text-red-500 hover:text-red-400'
-          onClick={() => onDelete(jobId)}
-          loading={isDeleting}
+          onClick={() => resolvedOnDelete(jobId)}
+          loading={resolvedIsDeleting}
           aria-label='Delete job'
         >
           <Trash2 className='h-4 w-4' />

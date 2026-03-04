@@ -5,12 +5,12 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useJobsContext } from '@/shared/lib/jobs/context/JobsContext';
-import { StandardDataTablePanel } from '@/shared/ui';
+import { StandardDataTablePanel, StandardDataTablePanelRuntimeContext } from '@/shared/ui';
 
 import { type JobRowData } from '../types';
 import { JobStatusCell } from './job-table/JobStatusCell';
 import { JobTimingCell } from './job-table/JobTimingCell';
-import { JobActionsCell } from './job-table/JobActionsCell';
+import { JobActionsCell, JobActionsCellRuntimeContext } from './job-table/JobActionsCell';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -71,6 +71,22 @@ export function JobTable({
   );
 
   const isCancelling = isCancellingProp || isCancellingListing;
+  const panelRuntimeValue = useMemo(
+    () => ({
+      header,
+      alerts,
+      filters,
+      footer,
+    }),
+    [alerts, filters, footer, header]
+  );
+  const actionsRuntimeValue = useMemo(
+    () => ({
+      onDelete,
+      isDeleting,
+    }),
+    [isDeleting, onDelete]
+  );
 
   const columns = useMemo<ColumnDef<JobRowData>[]>(
     () => [
@@ -140,26 +156,20 @@ export function JobTable({
               status={job.status}
               onViewDetails={handleViewDetails}
               onCancel={handleCancel}
-              onDelete={onDelete}
               isCancelling={isCancelling?.(job.id) ?? false}
-              isDeleting={isDeleting?.(job.id) ?? false}
             />
           );
         },
       },
     ],
-    [handleViewDetails, handleCancel, onDelete, isCancelling, isDeleting]
+    [handleViewDetails, handleCancel, isCancelling]
   );
 
   return (
-    <StandardDataTablePanel
-      columns={columns}
-      data={data}
-      isLoading={isLoading}
-      header={header}
-      alerts={alerts}
-      filters={filters}
-      footer={footer}
-    />
+    <StandardDataTablePanelRuntimeContext.Provider value={panelRuntimeValue}>
+      <JobActionsCellRuntimeContext.Provider value={actionsRuntimeValue}>
+        <StandardDataTablePanel columns={columns} data={data} isLoading={isLoading} />
+      </JobActionsCellRuntimeContext.Provider>
+    </StandardDataTablePanelRuntimeContext.Provider>
   );
 }

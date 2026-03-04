@@ -5,6 +5,7 @@ import { useToast } from '@/shared/ui';
 
 import { StudioCard } from '../StudioCard';
 import { SequenceStepEditor } from './SequenceStepEditor';
+import { SequenceStepEditorRuntimeContext } from './SequenceStepEditorRuntimeContext';
 import { PROJECT_SEQUENCE_OPERATION_LABELS } from './sequencing-constants';
 import {
   IMAGE_STUDIO_SEQUENCE_MAX_STEPS,
@@ -444,163 +445,175 @@ export function SequenceStackCard({
       moveSequenceStepToEnd,
     ]
   );
+  const sequenceStepEditorRuntimeValue = useMemo(
+    () => ({
+      activeGenerationModel,
+      cropShapeOptions,
+      cropShapeGeometryById,
+      sequencerFieldTooltipsEnabled,
+      updateStep,
+    }),
+    [
+      activeGenerationModel,
+      cropShapeGeometryById,
+      cropShapeOptions,
+      sequencerFieldTooltipsEnabled,
+      updateStep,
+    ]
+  );
 
   return (
-    <StudioCard label='Stack' className='shrink-0'>
-      <div className='space-y-1.5'>
-        <div className='rounded border border-border/50 bg-card/30 p-[7px]'>
-          <div className='mb-1.5 flex items-center justify-between gap-2 text-[10px] text-gray-400'>
-            <span
-              className='min-w-0 truncate'
-              title='Step Catalog (drag or click to add at stack end)'
-            >
-              Step Catalog (drag or click to add at stack end)
-            </span>
-            <span>
-              {editableSequenceSteps.length}/{IMAGE_STUDIO_SEQUENCE_MAX_STEPS}
-            </span>
-          </div>
-          <div className='flex flex-wrap gap-1.5'>
-            {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
-              const enabled = enabledOperationSet.has(operation);
-              return (
-                <button
-                  key={`catalog_${operation}`}
-                  type='button'
-                  draggable
-                  onClick={() => {
-                    appendSequenceOperationToEnd(operation);
-                  }}
-                  onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
-                    handleCatalogItemDragStart(event, operation);
-                  }}
-                  onDragEnd={clearDragState}
-                  className={`inline-flex min-w-0 items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors ${
-                    enabled
-                      ? 'border-blue-400/60 bg-blue-500/10 text-blue-200'
-                      : 'border-border/60 bg-card/40 text-gray-200 hover:text-gray-100'
-                  }`}
-                  title={`Add ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} to stack`}
-                  aria-label={`Add ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} to stack`}
-                >
-                  <GripVertical className='size-3' />
-                  {PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className='text-[10px] text-gray-500'>Drag step handles to reorder the stack.</div>
-        {orderedRows.map(({ step, index }) => {
-          const operation = step.type;
-          const enabled = step.enabled;
-          const isDragSource = dragSource === 'stack' && draggingStepId === step.id;
-          const showDropBefore =
-            dropIndicator?.stepId === step.id && dropIndicator.position === 'before';
-          const showDropAfter =
-            dropIndicator?.stepId === step.id && dropIndicator.position === 'after';
-          return (
-            <div
-              key={step.id}
-              className='rounded border border-border/50 bg-card/40 px-2 py-[7px]'
-              onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
-                handleStackItemDragOver(event, step.id);
-              }}
-              onDrop={(event: React.DragEvent<HTMLDivElement>) => {
-                handleStackItemDrop(event, step.id);
-              }}
-              onDragLeave={(event: React.DragEvent<HTMLDivElement>) => {
-                if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                setDropIndicator((current) => (current?.stepId === step.id ? null : current));
-              }}
-            >
-              {showDropBefore ? (
-                <div className='mb-2 h-0.5 rounded bg-blue-400/80' aria-hidden='true' />
-              ) : null}
-              <div className='flex items-center justify-between gap-2'>
-                <div className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
+    <SequenceStepEditorRuntimeContext.Provider value={sequenceStepEditorRuntimeValue}>
+      <StudioCard label='Stack' className='shrink-0'>
+        <div className='space-y-1.5'>
+          <div className='rounded border border-border/50 bg-card/30 p-[7px]'>
+            <div className='mb-1.5 flex items-center justify-between gap-2 text-[10px] text-gray-400'>
+              <span
+                className='min-w-0 truncate'
+                title='Step Catalog (drag or click to add at stack end)'
+              >
+                Step Catalog (drag or click to add at stack end)
+              </span>
+              <span>
+                {editableSequenceSteps.length}/{IMAGE_STUDIO_SEQUENCE_MAX_STEPS}
+              </span>
+            </div>
+            <div className='flex flex-wrap gap-1.5'>
+              {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
+                const enabled = enabledOperationSet.has(operation);
+                return (
                   <button
+                    key={`catalog_${operation}`}
                     type='button'
                     draggable
-                    className='inline-flex h-6 w-6 cursor-grab items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 hover:text-gray-100 active:cursor-grabbing'
+                    onClick={() => {
+                      appendSequenceOperationToEnd(operation);
+                    }}
                     onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
-                      handleStackItemDragStart(event, step.id);
+                      handleCatalogItemDragStart(event, operation);
                     }}
                     onDragEnd={clearDragState}
-                    aria-label={`Drag to reorder ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
-                    title={`Drag to reorder ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
+                    className={`inline-flex min-w-0 items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors ${
+                      enabled
+                        ? 'border-blue-400/60 bg-blue-500/10 text-blue-200'
+                        : 'border-border/60 bg-card/40 text-gray-200 hover:text-gray-100'
+                    }`}
+                    title={`Add ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} to stack`}
+                    aria-label={`Add ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} to stack`}
                   >
-                    <GripVertical className='size-3.5' />
+                    <GripVertical className='size-3' />
+                    {PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
                   </button>
-                  <label className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
-                    <input
-                      type='checkbox'
-                      className='h-3.5 w-3.5'
-                      checked={enabled}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        toggleSequenceStep(step.id, event.target.checked)
-                      }
-                    />
-                    <span className='truncate' title={PROJECT_SEQUENCE_OPERATION_LABELS[operation]}>
-                      {PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
-                    </span>
-                    <span className='text-gray-500'>#{index + 1}</span>
-                  </label>
-                </div>
-                <div className='flex items-center gap-2'>
-                  {isDragSource ? (
-                    <span className='text-[9px] uppercase tracking-wide text-blue-300'>
-                      Dragging
-                    </span>
-                  ) : null}
-                  <button
-                    type='button'
-                    onClick={(): void => removeSequenceStepFromStack(step.id)}
-                    className='inline-flex h-6 w-6 items-center justify-center rounded border border-red-400/40 bg-red-500/10 text-red-200 transition-colors hover:bg-red-500/20 hover:text-red-100'
-                    aria-label={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
-                    title={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
-                  >
-                    <Trash2 className='size-3.5' />
-                  </button>
-                </div>
-              </div>
-
-              {enabled ? (
-                <SequenceStepEditor
-                  stepId={step.id}
-                  operation={operation}
-                  step={step}
-                  activeGenerationModel={activeGenerationModel}
-                  cropShapeOptions={cropShapeOptions}
-                  cropShapeGeometryById={cropShapeGeometryById}
-                  sequencerFieldTooltipsEnabled={sequencerFieldTooltipsEnabled}
-                  updateStep={updateStep}
-                />
-              ) : null}
-
-              {showDropAfter ? (
-                <div className='mt-2 h-0.5 rounded bg-blue-400/80' aria-hidden='true' />
-              ) : null}
+                );
+              })}
             </div>
-          );
-        })}
-        <div
-          className={`rounded border border-dashed px-2 py-[7px] text-center text-[10px] ${
-            hasActiveDrag
-              ? 'border-blue-400/70 bg-blue-500/10 text-blue-200'
-              : 'border-border/60 bg-card/20 text-gray-500'
-          }`}
-          onDragOver={handleStackAppendDragOver}
-          onDrop={handleStackAppendDrop}
-        >
-          Drop step here to append it to the end of stack.
+          </div>
+          <div className='text-[10px] text-gray-500'>Drag step handles to reorder the stack.</div>
+          {orderedRows.map(({ step, index }) => {
+            const operation = step.type;
+            const enabled = step.enabled;
+            const isDragSource = dragSource === 'stack' && draggingStepId === step.id;
+            const showDropBefore =
+              dropIndicator?.stepId === step.id && dropIndicator.position === 'before';
+            const showDropAfter =
+              dropIndicator?.stepId === step.id && dropIndicator.position === 'after';
+            return (
+              <div
+                key={step.id}
+                className='rounded border border-border/50 bg-card/40 px-2 py-[7px]'
+                onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
+                  handleStackItemDragOver(event, step.id);
+                }}
+                onDrop={(event: React.DragEvent<HTMLDivElement>) => {
+                  handleStackItemDrop(event, step.id);
+                }}
+                onDragLeave={(event: React.DragEvent<HTMLDivElement>) => {
+                  if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                  setDropIndicator((current) => (current?.stepId === step.id ? null : current));
+                }}
+              >
+                {showDropBefore ? (
+                  <div className='mb-2 h-0.5 rounded bg-blue-400/80' aria-hidden='true' />
+                ) : null}
+                <div className='flex items-center justify-between gap-2'>
+                  <div className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
+                    <button
+                      type='button'
+                      draggable
+                      className='inline-flex h-6 w-6 cursor-grab items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 hover:text-gray-100 active:cursor-grabbing'
+                      onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
+                        handleStackItemDragStart(event, step.id);
+                      }}
+                      onDragEnd={clearDragState}
+                      aria-label={`Drag to reorder ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
+                      title={`Drag to reorder ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
+                    >
+                      <GripVertical className='size-3.5' />
+                    </button>
+                    <label className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
+                      <input
+                        type='checkbox'
+                        className='h-3.5 w-3.5'
+                        checked={enabled}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          toggleSequenceStep(step.id, event.target.checked)
+                        }
+                      />
+                      <span
+                        className='truncate'
+                        title={PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
+                      >
+                        {PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
+                      </span>
+                      <span className='text-gray-500'>#{index + 1}</span>
+                    </label>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    {isDragSource ? (
+                      <span className='text-[9px] uppercase tracking-wide text-blue-300'>
+                        Dragging
+                      </span>
+                    ) : null}
+                    <button
+                      type='button'
+                      onClick={(): void => removeSequenceStepFromStack(step.id)}
+                      className='inline-flex h-6 w-6 items-center justify-center rounded border border-red-400/40 bg-red-500/10 text-red-200 transition-colors hover:bg-red-500/20 hover:text-red-100'
+                      aria-label={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
+                      title={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
+                </div>
+
+                {enabled ? (
+                  <SequenceStepEditor stepId={step.id} operation={operation} step={step} />
+                ) : null}
+
+                {showDropAfter ? (
+                  <div className='mt-2 h-0.5 rounded bg-blue-400/80' aria-hidden='true' />
+                ) : null}
+              </div>
+            );
+          })}
+          <div
+            className={`rounded border border-dashed px-2 py-[7px] text-center text-[10px] ${
+              hasActiveDrag
+                ? 'border-blue-400/70 bg-blue-500/10 text-blue-200'
+                : 'border-border/60 bg-card/20 text-gray-500'
+            }`}
+            onDragOver={handleStackAppendDragOver}
+            onDrop={handleStackAppendDrop}
+          >
+            Drop step here to append it to the end of stack.
+          </div>
+          <div className='text-[10px] text-gray-500'>
+            {enabledRuntimeSteps.length > 0
+              ? `Current stack: ${activeStackLabel}`
+              : 'No enabled operations.'}
+          </div>
         </div>
-        <div className='text-[10px] text-gray-500'>
-          {enabledRuntimeSteps.length > 0
-            ? `Current stack: ${activeStackLabel}`
-            : 'No enabled operations.'}
-        </div>
-      </div>
-    </StudioCard>
+      </StudioCard>
+    </SequenceStepEditorRuntimeContext.Provider>
   );
 }

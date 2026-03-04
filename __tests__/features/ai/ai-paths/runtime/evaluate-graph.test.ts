@@ -1144,6 +1144,71 @@ describe('evaluateGraph', () => {
     expect(onHalt).not.toHaveBeenCalled();
   });
 
+  it('downgrades fetcher simulation-id hydration misconfiguration to waiting instead of failing', async () => {
+    const onNodeBlocked = vi.fn();
+    const nodes: AiNode[] = [
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['trigger', 'triggerName'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+          },
+        },
+      },
+      {
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        description: '',
+        inputs: ['trigger', 'context', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        position: { x: 220, y: 0 },
+        config: {
+          fetcher: {
+            sourceMode: 'simulation_id',
+            entityType: 'product',
+            entityId: '',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      onNodeBlocked,
+    });
+
+    expect(result.outputs['fetcher-1']?.['status']).toBe('waiting_callback');
+    expect(result.outputs['fetcher-1']?.['blockedReason']).toBe('missing_inputs');
+    expect(result.outputs['fetcher-1']?.['waitingOnPorts']).toEqual(
+      expect.arrayContaining(['entityId'])
+    );
+    const blockedCall = onNodeBlocked.mock.calls.find((call) => {
+      const payload = call[0] as { node?: { id?: string }; status?: string };
+      return payload.node?.id === 'fetcher-1' && payload.status === 'waiting_callback';
+    });
+    expect(blockedCall).toBeDefined();
+  });
+
   it('accepts prompt text containing image URLs as model prompt input', async () => {
     const nodes: AiNode[] = [
       {

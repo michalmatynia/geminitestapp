@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { cn } from '@/shared/utils';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import type {
   DocumentRelationFileTypeFilter,
@@ -27,11 +28,21 @@ import {
 import { RelationTreeBrowser } from './RelationTreeBrowser';
 import type { RelationTreeInstance } from '../types';
 
-function DocumentRelationSearchInner({
-  relationTreeInstance,
-}: {
+type DocumentRelationSearchRuntimeValue = {
   relationTreeInstance: RelationTreeInstance;
-}): React.JSX.Element {
+};
+
+const {
+  Context: DocumentRelationSearchRuntimeContext,
+  useStrictContext: useDocumentRelationSearchRuntime,
+} = createStrictContext<DocumentRelationSearchRuntimeValue>({
+  hookName: 'useDocumentRelationSearchRuntime',
+  providerName: 'DocumentRelationSearchRuntimeProvider',
+  displayName: 'DocumentRelationSearchRuntimeContext',
+});
+
+function DocumentRelationSearchInner(): React.JSX.Element {
+  const { relationTreeInstance } = useDocumentRelationSearchRuntime();
   const {
     showFiltersBar,
     resultHeight,
@@ -118,6 +129,12 @@ export function DocumentRelationSearchPanel({
     }),
     [showSortControl, showFileTypeFilter]
   );
+  const runtimeValue = React.useMemo(
+    (): DocumentRelationSearchRuntimeValue => ({
+      relationTreeInstance,
+    }),
+    [relationTreeInstance]
+  );
 
   return (
     <DocumentRelationSearchProvider
@@ -129,7 +146,9 @@ export function DocumentRelationSearchPanel({
       defaultFileType={defaultFileType}
     >
       <DocumentRelationSearchUiProvider value={uiContextValue}>
-        <DocumentRelationSearchInner relationTreeInstance={relationTreeInstance} />
+        <DocumentRelationSearchRuntimeContext.Provider value={runtimeValue}>
+          <DocumentRelationSearchInner />
+        </DocumentRelationSearchRuntimeContext.Provider>
       </DocumentRelationSearchUiProvider>
     </DocumentRelationSearchProvider>
   );

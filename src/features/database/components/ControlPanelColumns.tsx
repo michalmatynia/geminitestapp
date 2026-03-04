@@ -8,11 +8,9 @@ export type UnifiedCollectionRow = UnifiedCollection;
 const ProviderBadge = ({
   exists,
   count,
-  label,
 }: {
   exists: boolean;
   count: number | null;
-  label: string;
 }): React.JSX.Element => {
   if (!exists) {
     return <span className='text-xs text-gray-500'>--</span>;
@@ -22,7 +20,6 @@ const ProviderBadge = ({
       status={count !== null ? count.toLocaleString() : '?'}
       variant='success'
       size='sm'
-      title={label}
     />
   );
 };
@@ -47,7 +44,6 @@ export function getControlPanelColumns(options: {
         <ProviderBadge
           exists={row.original.existsInMongo}
           count={row.original.mongoDocumentCount}
-          label='MongoDB documents'
         />
       ),
     },
@@ -58,7 +54,6 @@ export function getControlPanelColumns(options: {
         <ProviderBadge
           exists={row.original.existsInPrisma}
           count={row.original.prismaRowCount}
-          label='Prisma rows'
         />
       ),
     },

@@ -29,7 +29,7 @@ interface StatusBadgeProps {
 }
 
 // Map common statuses to variants
-const statusToVariant = (status: string): StatusVariant => {
+export const resolveStatusBadgeVariant = (status: string): StatusVariant => {
   const s = status.toLowerCase();
   if (
     s === 'pending' ||
@@ -78,7 +78,7 @@ export function StatusBadge({
   onClick,
 }: StatusBadgeProps): React.JSX.Element {
   const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] =
-    variant || statusToVariant(status);
+    variant || resolveStatusBadgeVariant(status);
   const displayLabel = (label || status).trim();
 
   return (

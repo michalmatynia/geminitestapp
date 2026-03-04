@@ -10,7 +10,7 @@ import {
 } from '@/features/foldertree/v2';
 
 import type { AiBrainCatalogEntry } from '../settings';
-import { BrainCatalogNodeItem } from './BrainCatalogNodeItem';
+import { BrainCatalogNodeItem, BrainCatalogNodeItemRuntimeContext } from './BrainCatalogNodeItem';
 import {
   buildBrainCatalogMasterNodes,
   createBrainCatalogNodeEntryMap,
@@ -78,23 +78,30 @@ export function BrainCatalogTree({
           isSelected={input.isSelected}
           isDragging={input.isDragging}
           select={input.select}
-          onEdit={onEdit}
-          onRemove={onRemove}
-          isPending={isPending}
         />
       );
     },
-    [entryByNodeId, isPending, onEdit, onRemove]
+    [entryByNodeId]
+  );
+  const nodeItemRuntimeValue = useMemo(
+    () => ({
+      onEdit,
+      onRemove,
+      isPending,
+    }),
+    [isPending, onEdit, onRemove]
   );
 
   return (
-    <FolderTreeViewportV2
-      controller={controller}
-      scrollToNodeRef={scrollToNodeRef}
-      rootDropUi={rootDropUi}
-      renderNode={renderNode}
-      enableDnd={!isPending}
-      emptyLabel='No catalog entries'
-    />
+    <BrainCatalogNodeItemRuntimeContext.Provider value={nodeItemRuntimeValue}>
+      <FolderTreeViewportV2
+        controller={controller}
+        scrollToNodeRef={scrollToNodeRef}
+        rootDropUi={rootDropUi}
+        renderNode={renderNode}
+        enableDnd={!isPending}
+        emptyLabel='No catalog entries'
+      />
+    </BrainCatalogNodeItemRuntimeContext.Provider>
   );
 }

@@ -72,6 +72,16 @@ export interface StandardDataTablePanelProps<TData> {
   children?: React.ReactNode | undefined;
 }
 
+export type StandardDataTablePanelRuntimeValue = {
+  header?: React.ReactNode | undefined;
+  alerts?: React.ReactNode | undefined;
+  filters?: React.ReactNode | undefined;
+  footer?: React.ReactNode | undefined;
+};
+
+export const StandardDataTablePanelRuntimeContext =
+  React.createContext<StandardDataTablePanelRuntimeValue | null>(null);
+
 /**
  * A standard UI pattern combining a ListPanel (with header, filters, footer)
  * and a DataTable. This reduces boilerplate in admin-style views.
@@ -112,6 +122,11 @@ export function StandardDataTablePanel<TData>({
   loadingVariant = 'panel',
   children,
 }: StandardDataTablePanelProps<TData>): React.JSX.Element {
+  const runtime = React.useContext(StandardDataTablePanelRuntimeContext);
+  const resolvedHeader = header ?? runtime?.header;
+  const resolvedAlerts = alerts ?? runtime?.alerts;
+  const resolvedFilters = filters ?? runtime?.filters;
+  const resolvedFooter = footer ?? runtime?.footer;
   const showPanelLoading = isLoading && loadingVariant === 'panel';
   const showTableLoading = isLoading && loadingVariant === 'table';
 
@@ -120,12 +135,12 @@ export function StandardDataTablePanel<TData>({
       {...(title !== undefined ? { title } : {})}
       {...(description !== undefined ? { description } : {})}
       {...(headerActions !== undefined ? { headerActions } : {})}
-      {...(header !== undefined ? { header } : {})}
+      {...(resolvedHeader !== undefined ? { header: resolvedHeader } : {})}
       {...(refresh !== undefined ? { refresh } : {})}
-      {...(alerts !== undefined ? { alerts } : {})}
-      {...(filters !== undefined ? { filters } : {})}
+      {...(resolvedAlerts !== undefined ? { alerts: resolvedAlerts } : {})}
+      {...(resolvedFilters !== undefined ? { filters: resolvedFilters } : {})}
       {...(actions !== undefined ? { actions } : {})}
-      {...(footer !== undefined ? { footer } : {})}
+      {...(resolvedFooter !== undefined ? { footer: resolvedFooter } : {})}
       {...(className !== undefined ? { className } : {})}
       contentClassName={cn('min-w-0', contentClassName)}
       {...(variant !== undefined ? { variant } : {})}

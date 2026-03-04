@@ -3,6 +3,7 @@
 import React from 'react';
 import { GripVertical, Pencil } from 'lucide-react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Badge, StatusToggle, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 
@@ -17,10 +18,24 @@ export interface BrainRoutingCapabilityNodeItemProps {
   select: () => void;
   enabled: boolean;
   sourceLabel: 'Capability override' | 'Feature fallback' | 'Global defaults';
-  onToggleEnabled: (next: boolean) => void;
-  onEdit: () => void;
-  isPending: boolean;
 }
+
+export type BrainRoutingCapabilityNodeItemRuntimeValue = {
+  onToggleEnabled: (capability: AiBrainCapabilityKey, enabled: boolean) => void;
+  onEdit: (capability: AiBrainCapabilityKey) => void;
+  isPending: boolean;
+};
+
+const {
+  Context: BrainRoutingCapabilityNodeItemRuntimeContext,
+  useStrictContext: useBrainRoutingCapabilityNodeItemRuntime,
+} = createStrictContext<BrainRoutingCapabilityNodeItemRuntimeValue>({
+  hookName: 'useBrainRoutingCapabilityNodeItemRuntime',
+  providerName: 'BrainRoutingCapabilityNodeItemRuntimeProvider',
+  displayName: 'BrainRoutingCapabilityNodeItemRuntimeContext',
+});
+
+export { BrainRoutingCapabilityNodeItemRuntimeContext };
 
 const sourceBadgeClassName: Record<BrainRoutingCapabilityNodeItemProps['sourceLabel'], string> = {
   'Capability override': 'border-emerald-400/40 text-emerald-300',
@@ -37,10 +52,9 @@ export function BrainRoutingCapabilityNodeItem({
   select,
   enabled,
   sourceLabel,
-  onToggleEnabled,
-  onEdit,
-  isPending,
 }: BrainRoutingCapabilityNodeItemProps): React.JSX.Element {
+  const { onToggleEnabled, onEdit, isPending } = useBrainRoutingCapabilityNodeItemRuntime();
+
   return (
     <TreeContextMenu
       items={[
@@ -48,7 +62,7 @@ export function BrainRoutingCapabilityNodeItem({
           id: 'edit-route',
           label: 'Edit route',
           icon: <Pencil className='size-3.5' />,
-          onSelect: onEdit,
+          onSelect: (): void => onEdit(capability),
         },
       ]}
     >
@@ -102,7 +116,7 @@ export function BrainRoutingCapabilityNodeItem({
                 size='sm'
                 enabledLabel='ENABLED'
                 disabledLabel='DISABLED'
-                onToggle={onToggleEnabled}
+                onToggle={(nextEnabled: boolean): void => onToggleEnabled(capability, nextEnabled)}
               />
             </span>
 
@@ -117,7 +131,7 @@ export function BrainRoutingCapabilityNodeItem({
               }}
               onClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
                 event.stopPropagation();
-                onEdit();
+                onEdit(capability);
               }}
               title={`Edit ${capability}`}
               aria-hidden='true'

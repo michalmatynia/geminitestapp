@@ -23,6 +23,7 @@ const EXPECTED_MAINTENANCE_ACTION_IDS = [
 
 const SETTINGS_HANDLER_FILE = 'src/app/api/ai-paths/settings/handler.ts';
 const MAINTENANCE_HANDLER_FILE = 'src/app/api/ai-paths/settings/maintenance/handler.ts';
+const DB_COMMAND_HANDLER_FILE = 'src/app/api/ai-paths/db-command/handler.ts';
 const MAINTENANCE_CONSTANTS_FILE = 'src/features/ai/ai-paths/server/settings-store.constants.ts';
 const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
 const API_CLIENT_BASE_FILE = 'src/shared/lib/ai-paths/api/client/base.ts';
@@ -1038,6 +1039,36 @@ const checkDatabaseQueryProviderResponseAliasCompatibilityPrune = () => {
   }
 };
 
+const checkDbCommandProviderAliasCompatibilityPrune = () => {
+  const dbCommandText = readFile(DB_COMMAND_HANDLER_FILE);
+
+  const forbiddenSnippets = [
+    "  provider,\n  requestedProvider: requestedProvider ?? 'auto',\n  resolvedProvider: provider,",
+  ];
+  const requiredSnippets = [
+    "  requestedProvider: requestedProvider ?? 'auto',",
+    "  resolvedProvider: provider,",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (dbCommandText.includes(snippet)) {
+      reportViolation(
+        DB_COMMAND_HANDLER_FILE,
+        `legacy db-command provider alias payload snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!dbCommandText.includes(snippet)) {
+      reportViolation(
+        DB_COMMAND_HANDLER_FILE,
+        `missing canonical db-command provider metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const checkApiClientCsrfCompatibilityAliasPrune = () => {
   const apiClientText = readFile(API_CLIENT_FILE);
   const apiClientBaseText = readFile(API_CLIENT_BASE_FILE);
@@ -1109,6 +1140,7 @@ const main = () => {
   checkDatabaseProviderAliasCompatibilityPrune();
   checkDatabaseUpdateProviderAliasCompatibilityPrune();
   checkDatabaseQueryProviderResponseAliasCompatibilityPrune();
+  checkDbCommandProviderAliasCompatibilityPrune();
   checkApiClientCsrfCompatibilityAliasPrune();
 
   if (violations.length > 0) {

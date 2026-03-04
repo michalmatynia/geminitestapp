@@ -12,12 +12,10 @@ import { useThemeSettings } from '../ThemeSettingsContext';
 
 interface ThemeSettingsFieldsSectionProps {
   fields: SettingsField<ThemeSettings>[];
-  className?: string;
 }
 
 export function ThemeSettingsFieldsSection({
   fields,
-  className,
 }: ThemeSettingsFieldsSectionProps): React.JSX.Element {
   const { theme, update } = useThemeSettings();
 
@@ -32,12 +30,5 @@ export function ThemeSettingsFieldsSection({
     [update]
   );
 
-  return (
-    <SettingsFieldsRenderer
-      fields={fields}
-      values={theme}
-      onChange={handleChange}
-      className={className}
-    />
-  );
+  return <SettingsFieldsRenderer fields={fields} values={theme} onChange={handleChange} />;
 }

@@ -15,15 +15,15 @@ import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
-interface Asset3DPickerModalProps extends EntityModalProps<Asset3DRecord, Asset3DRecord> {
-  onSelect: (assetId: string) => void;
-}
+import { useAsset3DPickerModalRuntime } from './Asset3DPickerModalRuntimeContext';
+
+type Asset3DPickerModalProps = EntityModalProps<Asset3DRecord, Asset3DRecord>;
 
 export function Asset3DPickerModal({
   isOpen,
   onClose,
-  onSelect,
 }: Asset3DPickerModalProps): React.JSX.Element | null {
+  const { onSelectAsset } = useAsset3DPickerModalRuntime();
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [filters, setFilters] = useState({
     search: '',
@@ -147,8 +147,7 @@ export function Asset3DPickerModal({
                             type='button'
                             size='sm'
                             onClick={() => {
-                              onSelect(asset.id);
-                              onClose();
+                              onSelectAsset(asset.id);
                             }}
                           >
                             Select

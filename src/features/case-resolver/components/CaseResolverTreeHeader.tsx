@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FolderPlus, FilePlus, FileImage, FileCode2, ImagePlus } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   useCaseResolverFolderTreeDataContext,
@@ -16,6 +17,31 @@ type CaseResolverTreeHeaderProps = {
   searchQuery: string;
   onSearchChange: (q: string) => void;
 };
+
+type CaseResolverTreeSearchRuntimeValue = {
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+};
+
+const {
+  Context: CaseResolverTreeSearchRuntimeContext,
+  useStrictContext: useCaseResolverTreeSearchRuntime,
+} = createStrictContext<CaseResolverTreeSearchRuntimeValue>({
+  hookName: 'useCaseResolverTreeSearchRuntime',
+  providerName: 'CaseResolverTreeSearchRuntimeProvider',
+  displayName: 'CaseResolverTreeSearchRuntimeContext',
+});
+
+function CaseResolverTreeSearchBar(): React.JSX.Element {
+  const { searchQuery, onSearchChange } = useCaseResolverTreeSearchRuntime();
+  return (
+    <FolderTreeSearchBar
+      value={searchQuery}
+      onChange={onSearchChange}
+      placeholder='Search files & folders…'
+    />
+  );
+}
 
 export function CaseResolverTreeHeader({
   searchQuery,
@@ -67,6 +93,10 @@ export function CaseResolverTreeHeader({
   }, [requestedCaseIssue]);
 
   const disableCreateActions = !canCreateInActiveCase;
+  const searchRuntimeValue = useMemo(
+    () => ({ searchQuery, onSearchChange }),
+    [onSearchChange, searchQuery]
+  );
 
   const activeCaseIdentifierLabel = React.useMemo((): string | null => {
     const identifierId = activeCaseFile?.caseIdentifierId ?? null;
@@ -151,11 +181,9 @@ export function CaseResolverTreeHeader({
           {createContextTooltip}
         </div>
       ) : null}
-      <FolderTreeSearchBar
-        value={searchQuery}
-        onChange={onSearchChange}
-        placeholder='Search files & folders…'
-      />
+      <CaseResolverTreeSearchRuntimeContext.Provider value={searchRuntimeValue}>
+        <CaseResolverTreeSearchBar />
+      </CaseResolverTreeSearchRuntimeContext.Provider>
       <div className='flex flex-wrap items-center gap-1'>
         <Button
           type='button'

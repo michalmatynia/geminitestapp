@@ -77,6 +77,11 @@ type AdvancedFilterValueOptionsRuntimeValue = {
   fieldValueOptions: AdvancedFilterBuilderFieldValueOptions;
 };
 
+type AdvancedFilterRootRuntimeValue = {
+  group: ProductAdvancedFilterGroup;
+  onChange: (group: ProductAdvancedFilterGroup) => void;
+};
+
 const {
   Context: AdvancedFilterValueOptionsRuntimeContext,
   useStrictContext: useAdvancedFilterValueOptionsRuntime,
@@ -84,6 +89,15 @@ const {
   hookName: 'useAdvancedFilterValueOptionsRuntime',
   providerName: 'AdvancedFilterValueOptionsRuntimeProvider',
   displayName: 'AdvancedFilterValueOptionsRuntimeContext',
+});
+
+const {
+  Context: AdvancedFilterRootRuntimeContext,
+  useStrictContext: useAdvancedFilterRootRuntime,
+} = createStrictContext<AdvancedFilterRootRuntimeValue>({
+  hookName: 'useAdvancedFilterRootRuntime',
+  providerName: 'AdvancedFilterRootRuntimeProvider',
+  displayName: 'AdvancedFilterRootRuntimeContext',
 });
 
 const COMBINATOR_OPTIONS: SelectSimpleOption[] = [
@@ -731,6 +745,11 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
   );
 });
 
+function AdvancedFilterRootEditor(): React.JSX.Element {
+  const { group, onChange } = useAdvancedFilterRootRuntime();
+  return <AdvancedFilterGroupEditor group={group} onChange={onChange} isRoot depth={1} />;
+}
+
 export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder({
   group,
   onChange,
@@ -742,11 +761,20 @@ export const AdvancedFilterBuilder = memo(function AdvancedFilterBuilder({
     }),
     [fieldValueOptions]
   );
+  const rootRuntimeValue = useMemo<AdvancedFilterRootRuntimeValue>(
+    () => ({
+      group,
+      onChange,
+    }),
+    [group, onChange]
+  );
 
   return (
-    <AdvancedFilterValueOptionsRuntimeContext.Provider value={fieldValueOptionsRuntimeValue}>
-      <AdvancedFilterGroupEditor group={group} onChange={onChange} isRoot depth={1} />
-    </AdvancedFilterValueOptionsRuntimeContext.Provider>
+    <AdvancedFilterRootRuntimeContext.Provider value={rootRuntimeValue}>
+      <AdvancedFilterValueOptionsRuntimeContext.Provider value={fieldValueOptionsRuntimeValue}>
+        <AdvancedFilterRootEditor />
+      </AdvancedFilterValueOptionsRuntimeContext.Provider>
+    </AdvancedFilterRootRuntimeContext.Provider>
   );
 });
 

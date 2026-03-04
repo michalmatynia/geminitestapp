@@ -134,6 +134,16 @@ Wave 2 hard-cut execution started:
    - canonical request/behavior coverage:
      - `src/app/api/v2/products/metadata/handler.canonical.test.ts`
    - site-wide guardrail now blocks `groupType` request-alias snippets in those handlers.
+13. CSRF request-header alias hard-cut:
+   - removed runtime CSRF request-header fallback alias support:
+     - removed `x-xsrf-token` acceptance from `src/shared/lib/security/csrf.ts`
+   - removed dead legacy header-alias constant:
+     - `src/shared/lib/security/csrf-client.ts` (`CSRF_HEADER_FALLBACK`)
+   - added canonical regression coverage:
+     - `src/shared/lib/security/__tests__/csrf.test.ts`
+   - site-wide guardrail now blocks CSRF legacy alias snippets:
+     - `x-xsrf-token`
+     - `CSRF_HEADER_FALLBACK`
 
 ## Baseline (Current State)
 

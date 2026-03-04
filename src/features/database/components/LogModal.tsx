@@ -2,7 +2,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { ContentDisplayModal } from '@/shared/ui/templates';
+import { AppModal } from '@/shared/ui';
 
 interface LogModalProps extends EntityModalProps<string> {
   title?: string;
@@ -19,18 +19,27 @@ export const LogModal = ({
   if (!isOpen || content === undefined) return null;
 
   return (
-    <ContentDisplayModal open={isOpen} onClose={onClose} title={title} size={size}>
-      <SyntaxHighlighter
-        language='bash'
-        style={atomDark}
-        customStyle={{
-          margin: 0,
-          borderRadius: '0.5rem',
-          fontSize: '0.875rem',
-        }}
-      >
-        {content || ''}
-      </SyntaxHighlighter>
-    </ContentDisplayModal>
+    <AppModal
+      open={isOpen}
+      onOpenChange={(open: boolean): void => {
+        if (!open) onClose();
+      }}
+      title={title}
+      size={size}
+    >
+      <div className='max-h-[60vh] overflow-y-auto'>
+        <SyntaxHighlighter
+          language='bash'
+          style={atomDark}
+          customStyle={{
+            margin: 0,
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+          }}
+        >
+          {content || ''}
+        </SyntaxHighlighter>
+      </div>
+    </AppModal>
   );
 };

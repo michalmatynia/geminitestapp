@@ -2,7 +2,7 @@
 
 import { Upload, FolderOpen } from 'lucide-react';
 import NextImage from 'next/image';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
@@ -22,6 +22,7 @@ import {
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
+import { Asset3DPickerModalRuntimeContext } from './Asset3DPickerModalRuntimeContext';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
@@ -152,6 +153,18 @@ export function Asset3DPickerField({
   const selectedAssetQuery = useAsset3DById(value || null);
   const selectedAsset = selectedAssetQuery.data ?? null;
   const modelUrl = selectedAsset ? `/api/assets3d/${selectedAsset.id}/file` : null;
+  const closePickerModal = (): void => {
+    setOpen(false);
+  };
+  const pickerRuntimeValue = useMemo(
+    () => ({
+      onSelectAsset: (assetId: string): void => {
+        onChange(assetId);
+        setOpen(false);
+      },
+    }),
+    [onChange]
+  );
 
   return (
     <FormField label={label}>
@@ -221,12 +234,9 @@ export function Asset3DPickerField({
         ) : null}
       </div>
 
-      <Asset3DPickerModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onSelect={onChange}
-        onSuccess={() => {}}
-      />
+      <Asset3DPickerModalRuntimeContext.Provider value={pickerRuntimeValue}>
+        <Asset3DPickerModal isOpen={open} onClose={closePickerModal} onSuccess={() => {}} />
+      </Asset3DPickerModalRuntimeContext.Provider>
 
       {previewAsset ? (
         <Asset3DPreviewModal

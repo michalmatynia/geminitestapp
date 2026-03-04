@@ -48,6 +48,7 @@ const FORBIDDEN_PRODUCTS_GROUP_TYPE_ALIAS_SNIPPETS = [
   "'groupType' in data",
   "data['groupType']",
 ];
+const FORBIDDEN_LEGACY_CSRF_HEADER_ALIAS_SNIPPETS = ['x-xsrf-token', 'CSRF_HEADER_FALLBACK'];
 
 const violations = [];
 
@@ -173,6 +174,18 @@ const checkProductsMetadataGroupTypeAliasPrune = () => {
       if (content.includes(snippet)) {
         reportViolation(
           `forbidden products metadata groupType request alias snippet detected: ${relative} -> ${snippet}`
+        );
+      }
+    }
+  }
+};
+
+const checkLegacyCsrfHeaderAliasPrune = (sourceFileMap) => {
+  for (const [relativeFile, content] of sourceFileMap.entries()) {
+    for (const snippet of FORBIDDEN_LEGACY_CSRF_HEADER_ALIAS_SNIPPETS) {
+      if (content.includes(snippet)) {
+        reportViolation(
+          `forbidden legacy csrf header alias snippet detected: ${relativeFile} -> ${snippet}`
         );
       }
     }
@@ -305,6 +318,7 @@ const main = () => {
   );
 
   checkForbiddenRuntimeGuardTokens(sourceFileMap);
+  checkLegacyCsrfHeaderAliasPrune(sourceFileMap);
 
   const register = readExceptionRegister();
   if (register) {

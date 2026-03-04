@@ -931,6 +931,45 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `npx vitest run src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts` passes.
   - `npm run ai-paths:check:canonical` passes.
 
+## Executed Item 70 (CSRF Legacy Header Alias Compatibility Prune)
+
+- Removed legacy `x-xsrf-token` request-header alias acceptance from CSRF parsing:
+  - `src/shared/lib/security/csrf.ts`
+  - `getCsrfTokenFromHeaders` now accepts canonical `x-csrf-token` only.
+- Removed dead legacy CSRF header alias constant from client helper module:
+  - `src/shared/lib/security/csrf-client.ts`
+  - removed `CSRF_HEADER_FALLBACK`.
+- Added regression coverage:
+  - `src/shared/lib/security/__tests__/csrf.test.ts`
+  - verifies canonical `x-csrf-token` acceptance and legacy `x-xsrf-token` rejection.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks runtime reintroduction of:
+    - `x-xsrf-token`
+    - `CSRF_HEADER_FALLBACK`
+- Validation:
+  - `npx vitest run src/shared/lib/security/__tests__/csrf.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+
+## Executed Item 71 (AI Paths DB-Command Provider Payload Alias Compatibility Prune)
+
+- Removed legacy `provider` alias emission from DB command response payload composition:
+  - `src/app/api/ai-paths/db-command/handler.ts`
+  - `withProviderPayload` now returns canonical provider metadata fields only:
+    - `requestedProvider`
+    - `resolvedProvider`
+- Updated API fallback regression coverage:
+  - `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+    - verifies DB action/update fallback responses no longer expose `provider` alias.
+    - verifies canonical `resolvedProvider` metadata remains surfaced.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDbCommandProviderAliasCompatibilityPrune`) now:
+    - blocks reintroduction of DB command response `provider` alias payload snippets.
+    - requires canonical `requestedProvider` / `resolvedProvider` payload snippets.
+- Validation:
+  - `npx vitest run src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
@@ -14,6 +14,7 @@ import {
 } from '@/features/cms/hooks/useCmsQueries';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import {
   SectionHeader,
   ToggleRow,
@@ -81,6 +82,44 @@ export default function EditPagePageLoader(): React.JSX.Element {
   return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={pageId} />;
 }
 
+type EditPageRouteListRuntimeValue = {
+  visibleSlugs: Slug[];
+  selectedSlugIds: string[];
+  domainSlugIds: Set<string>;
+  onToggleSlug: (slugId: string) => void;
+};
+
+const {
+  Context: EditPageRouteListRuntimeContext,
+  useStrictContext: useEditPageRouteListRuntime,
+} = createStrictContext<EditPageRouteListRuntimeValue>({
+  hookName: 'useEditPageRouteListRuntime',
+  providerName: 'EditPageRouteListRuntimeProvider',
+  displayName: 'EditPageRouteListRuntimeContext',
+});
+
+function EditPageRouteList(): React.JSX.Element {
+  const { visibleSlugs, selectedSlugIds, domainSlugIds, onToggleSlug } = useEditPageRouteListRuntime();
+  return (
+    <SearchableList
+      items={visibleSlugs}
+      selectedIds={selectedSlugIds}
+      onToggle={onToggleSlug}
+      getId={(slug: Slug) => slug.id}
+      getLabel={(slug: Slug) => slug.slug}
+      searchPlaceholder='Filter routes...'
+      renderItem={(slug: Slug) => (
+        <div className='flex flex-1 items-center justify-between'>
+          <span className='text-sm text-gray-300'>/{slug.slug}</span>
+          {!domainSlugIds.has(slug.id) && (
+            <StatusBadge status='Cross-Zone' variant='warning' size='sm' className='font-bold' />
+          )}
+        </div>
+      )}
+    />
+  );
+}
+
 function EditPageContent({
   initialPage,
   id,
@@ -134,6 +173,26 @@ function EditPageContent({
   );
 
   const visibleSlugs = includeAllZones ? allSlugs : domainSlugs;
+  const handleToggleSlug = useCallback(
+    (slugId: string): void => {
+      setManualSelectedSlugIds((previousSlugIds) => {
+        const currentSlugIds = previousSlugIds ?? selectedSlugIds;
+        return currentSlugIds.includes(slugId)
+          ? currentSlugIds.filter((value: string) => value !== slugId)
+          : [...currentSlugIds, slugId];
+      });
+    },
+    [selectedSlugIds]
+  );
+  const routeListRuntimeValue = useMemo(
+    () => ({
+      visibleSlugs,
+      selectedSlugIds,
+      domainSlugIds,
+      onToggleSlug: handleToggleSlug,
+    }),
+    [domainSlugIds, handleToggleSlug, selectedSlugIds, visibleSlugs]
+  );
 
   const handleSave = async (): Promise<void> => {
     if (!page) return;
@@ -226,32 +285,9 @@ function EditPageContent({
             }
             className='p-6'
           >
-            <SearchableList
-              items={visibleSlugs}
-              selectedIds={selectedSlugIds}
-              onToggle={(id) => {
-                setManualSelectedSlugIds((prev) => {
-                  const current = prev ?? selectedSlugIds;
-                  return current.includes(id) ? current.filter((i) => i !== id) : [...current, id];
-                });
-              }}
-              getId={(s: Slug) => s.id}
-              getLabel={(s: Slug) => s.slug}
-              searchPlaceholder='Filter routes...'
-              renderItem={(slug: Slug) => (
-                <div className='flex flex-1 items-center justify-between'>
-                  <span className='text-sm text-gray-300'>/{slug.slug}</span>
-                  {!domainSlugIds.has(slug.id) && (
-                    <StatusBadge
-                      status='Cross-Zone'
-                      variant='warning'
-                      size='sm'
-                      className='font-bold'
-                    />
-                  )}
-                </div>
-              )}
-            />
+            <EditPageRouteListRuntimeContext.Provider value={routeListRuntimeValue}>
+              <EditPageRouteList />
+            </EditPageRouteListRuntimeContext.Provider>
           </FormSection>
 
           {crossZoneSlugs.length > 0 && (

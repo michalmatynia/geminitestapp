@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { StatusBadge } from '@/shared/ui';
+import { Badge, resolveStatusBadgeVariant } from '@/shared/ui';
 
 export const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
@@ -39,9 +39,19 @@ export function JobStatusCell({
   status: string;
   errorMessage?: string | null;
 }): React.JSX.Element {
+  const resolvedStatusVariant = resolveStatusBadgeVariant(status);
+  const resolvedStatusLabel = status.trim();
+  const resolvedStatusIcon = getStatusIcon(status);
+
   return (
     <div className='flex flex-col gap-1'>
-      <StatusBadge status={status} icon={getStatusIcon(status)} />
+      <Badge
+        variant={resolvedStatusVariant}
+        className='gap-1 h-5 px-2 py-0.5 text-[10px] uppercase tracking-wider'
+        icon={resolvedStatusIcon}
+      >
+        {resolvedStatusLabel}
+      </Badge>
       {errorMessage && (
         <div className='max-w-[200px] truncate text-[10px] text-red-400' title={errorMessage}>
           {errorMessage}

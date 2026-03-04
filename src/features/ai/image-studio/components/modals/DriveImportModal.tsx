@@ -1,9 +1,9 @@
 'use client';
 
 import { Upload } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import FileManager from '@/features/files/components/FileManager';
+import FileManager, { FileManagerRuntimeContext } from '@/features/files/components/FileManager';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
@@ -24,6 +24,8 @@ export function DriveImportModal({
   localUploadTrigger,
   onSelectFile,
 }: DriveImportModalProps): React.JSX.Element | null {
+  const fileManagerRuntimeValue = useMemo(() => ({ onSelectFile }), [onSelectFile]);
+
   return (
     <DetailModal
       isOpen={isOpen}
@@ -50,7 +52,9 @@ export function DriveImportModal({
         <p className='text-xs text-muted-foreground px-1'>
           Select existing assets from your drive or upload a new file from your device.
         </p>
-        <FileManager mode='select' selectionMode='single' onSelectFile={onSelectFile} />
+        <FileManagerRuntimeContext.Provider value={fileManagerRuntimeValue}>
+          <FileManager mode='select' selectionMode='single' />
+        </FileManagerRuntimeContext.Provider>
       </div>
     </DetailModal>
   );

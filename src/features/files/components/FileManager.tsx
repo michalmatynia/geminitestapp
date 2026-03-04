@@ -24,6 +24,12 @@ interface FileManagerProps {
   showTagSearch?: boolean;
 }
 
+export type FileManagerRuntimeValue = {
+  onSelectFile?: (files: ImageFileSelection[]) => void;
+};
+
+export const FileManagerRuntimeContext = React.createContext<FileManagerRuntimeValue | null>(null);
+
 export default function FileManager({
   onSelectFile,
   mode,
@@ -34,9 +40,12 @@ export default function FileManager({
   showBulkActions,
   showTagSearch,
 }: FileManagerProps): React.JSX.Element {
+  const runtime = React.useContext(FileManagerRuntimeContext);
+  const resolvedOnSelectFile = onSelectFile ?? runtime?.onSelectFile;
+
   return (
     <FileManagerProvider
-      {...(onSelectFile !== undefined ? { onSelectFile } : {})}
+      {...(resolvedOnSelectFile !== undefined ? { onSelectFile: resolvedOnSelectFile } : {})}
       {...(mode !== undefined ? { mode } : {})}
       {...(selectionMode !== undefined ? { selectionMode } : {})}
       {...(autoConfirmSelection !== undefined ? { autoConfirmSelection } : {})}

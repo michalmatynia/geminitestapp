@@ -68,16 +68,31 @@ const collectUiConsolidationGuardrail = async () => {
   const summary = parseSummary(stdout, 'scan-ui-consolidation');
   const totalOpportunities = Number(summary?.totalOpportunities);
   const highPriorityOpportunities = Number(summary?.highPriorityCount);
+  const duplicateNameClusters = Number(summary?.duplicateNameClusterCount);
+  const propSignatureClusters = Number(summary?.propSignatureClusterCount);
+  const tokenSimilarityClusters = Number(summary?.tokenSimilarityClusterCount);
   if (!Number.isFinite(totalOpportunities)) {
     throw new Error('UI consolidation scan did not produce summary.totalOpportunities.');
   }
   if (!Number.isFinite(highPriorityOpportunities)) {
     throw new Error('UI consolidation scan did not produce summary.highPriorityCount.');
   }
+  if (!Number.isFinite(duplicateNameClusters)) {
+    throw new Error('UI consolidation scan did not produce summary.duplicateNameClusterCount.');
+  }
+  if (!Number.isFinite(propSignatureClusters)) {
+    throw new Error('UI consolidation scan did not produce summary.propSignatureClusterCount.');
+  }
+  if (!Number.isFinite(tokenSimilarityClusters)) {
+    throw new Error('UI consolidation scan did not produce summary.tokenSimilarityClusterCount.');
+  }
 
   return {
     totalOpportunities,
     highPriorityOpportunities,
+    duplicateNameClusters,
+    propSignatureClusters,
+    tokenSimilarityClusters,
   };
 };
 
@@ -99,6 +114,9 @@ const toSnapshot = (metrics, propDrilling, uiConsolidation) => ({
   'propDrilling.componentsWithForwarding': propDrilling.componentsWithForwarding,
   'uiConsolidation.totalOpportunities': uiConsolidation.totalOpportunities,
   'uiConsolidation.highPriorityOpportunities': uiConsolidation.highPriorityOpportunities,
+  'uiConsolidation.duplicateNameClusters': uiConsolidation.duplicateNameClusters,
+  'uiConsolidation.propSignatureClusters': uiConsolidation.propSignatureClusters,
+  'uiConsolidation.tokenSimilarityClusters': uiConsolidation.tokenSimilarityClusters,
 });
 
 const printRow = (label, current, max, status) => {

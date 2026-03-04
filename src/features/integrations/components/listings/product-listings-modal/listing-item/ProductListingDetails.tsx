@@ -3,12 +3,12 @@
 import React from 'react';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type {
-  ProductListingWithDetails,
   ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
 import { StatusBadge, Card, MetadataItem, Hint, Button } from '@/shared/ui';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useProductListingItemRuntime } from './ProductListingItemRuntimeContext';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
   if (!value) return '—';
@@ -22,11 +22,8 @@ const formatListValue = (value: string | null | undefined): string => (value ? v
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export function ProductListingDetails({
-  listing,
-}: {
-  listing: ProductListingWithDetails;
-}): React.JSX.Element {
+export function ProductListingDetails(): React.JSX.Element {
+  const { listing } = useProductListingItemRuntime();
   const { product, historyOpenByListing, setHistoryOpenByListing } = useProductListingsContext();
 
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(

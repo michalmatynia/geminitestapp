@@ -875,6 +875,24 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `npx vitest run src/app/api/v2/products/metadata/handler.canonical.test.ts` passes.
   - `npm run canonical:check:sitewide` passes with new guard checks.
 
+## Executed Item 67 (AI Paths API Client CSRF Helper Compatibility Alias Prune)
+
+- Removed legacy compatibility alias naming from AI Paths API client base helper:
+  - `src/shared/lib/ai-paths/api/client/base.ts`
+  - renamed helper:
+    - `withCsrfHeadersCompat` -> `withApiCsrfHeaders`
+  - `apiPost` / `apiPatch` / `apiDelete` now use canonical `withApiCsrfHeaders`.
+- Updated AI Paths API client export surface to canonical helper name:
+  - `src/shared/lib/ai-paths/api/client.ts`
+  - replaced `withCsrfHeadersCompat` imports/exports with `withApiCsrfHeaders`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now:
+    - blocks reintroduction of `withCsrfHeadersCompat` snippets in API client files.
+    - requires canonical `withApiCsrfHeaders` helper snippet in API client base.
+- Validation:
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run canonical:check:sitewide` passes.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

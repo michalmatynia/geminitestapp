@@ -18,7 +18,7 @@ import {
   apiDelete,
   ApiResponse,
   resolveApiUrl,
-  withCsrfHeadersCompat,
+  withApiCsrfHeaders,
 } from './client/base';
 
 import {
@@ -81,7 +81,7 @@ export {
   apiPost,
   apiPatch,
   apiDelete,
-  withCsrfHeadersCompat,
+  withApiCsrfHeaders,
   databaseAction,
   databaseQuery,
   databaseUpdate,

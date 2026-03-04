@@ -25,6 +25,7 @@ const SETTINGS_HANDLER_FILE = 'src/app/api/ai-paths/settings/handler.ts';
 const MAINTENANCE_HANDLER_FILE = 'src/app/api/ai-paths/settings/maintenance/handler.ts';
 const MAINTENANCE_CONSTANTS_FILE = 'src/features/ai/ai-paths/server/settings-store.constants.ts';
 const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
+const API_CLIENT_BASE_FILE = 'src/shared/lib/ai-paths/api/client/base.ts';
 const DATABASE_NORMALIZATION_FILE = 'src/shared/lib/ai-paths/core/normalization/nodes/database.ts';
 const VALIDATION_DEFAULTS_FILE = 'src/shared/lib/ai-paths/core/validation-engine/defaults.ts';
 const COLLECTION_NAMES_FILE = 'src/shared/lib/ai-paths/core/utils/collection-names.ts';
@@ -974,6 +975,69 @@ const checkDatabaseProviderAliasCompatibilityPrune = () => {
   }
 };
 
+const checkDatabaseUpdateProviderAliasCompatibilityPrune = () => {
+  const updateExecutionText = readFile(DATABASE_UPDATE_EXECUTION_FILE);
+
+  const forbiddenSnippets = [
+    "provider?: 'mongodb' | 'prisma';",
+    "responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'",
+  ];
+  const requiredSnippets = [
+    "responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'",
+    "...(resolvedProvider ? { resolvedProvider } : {}),",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (updateExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_UPDATE_EXECUTION_FILE,
+        `legacy database update provider alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!updateExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_UPDATE_EXECUTION_FILE,
+        `missing canonical database update provider metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkApiClientCsrfCompatibilityAliasPrune = () => {
+  const apiClientText = readFile(API_CLIENT_FILE);
+  const apiClientBaseText = readFile(API_CLIENT_BASE_FILE);
+
+  const forbiddenSnippets = ['withCsrfHeadersCompat'];
+  const requiredSnippets = ['withApiCsrfHeaders'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (apiClientText.includes(snippet)) {
+      reportViolation(
+        API_CLIENT_FILE,
+        `legacy api-client csrf compatibility alias snippet detected: ${snippet}`
+      );
+    }
+    if (apiClientBaseText.includes(snippet)) {
+      reportViolation(
+        API_CLIENT_BASE_FILE,
+        `legacy api-client csrf compatibility alias snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!apiClientBaseText.includes(snippet)) {
+      reportViolation(
+        API_CLIENT_BASE_FILE,
+        `missing canonical api-client csrf helper snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -1011,6 +1075,8 @@ const main = () => {
   checkDatabaseInputCatalogAliasCompatibilityPrune();
   checkDatabaseProviderFallbackCompatibilityPrune();
   checkDatabaseProviderAliasCompatibilityPrune();
+  checkDatabaseUpdateProviderAliasCompatibilityPrune();
+  checkApiClientCsrfCompatibilityAliasPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

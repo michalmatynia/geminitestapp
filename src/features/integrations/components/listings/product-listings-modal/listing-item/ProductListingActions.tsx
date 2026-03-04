@@ -3,22 +3,20 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingWithDetails, ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { Button, ActionMenu, DropdownMenuItem, Label, Input } from '@/shared/ui';
 import {
   TRADERA_INTEGRATION_SLUGS,
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import { useProductListingItemRuntime } from './ProductListingItemRuntimeContext';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export function ProductListingActions({
-  listing,
-}: {
-  listing: ProductListingWithDetails;
-}): React.JSX.Element {
+export function ProductListingActions(): React.JSX.Element {
+  const { listing } = useProductListingItemRuntime();
   const {
     exportingListing,
     inventoryOverrides,

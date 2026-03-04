@@ -100,7 +100,7 @@ export const getServerInternalToken = (): string | null => {
   return null;
 };
 
-export const withCsrfHeadersCompat = async (headers?: HeadersInit): Promise<Headers> => {
+export const withApiCsrfHeaders = async (headers?: HeadersInit): Promise<Headers> => {
   if (typeof window === 'undefined') {
     const token = generateServerCsrfToken();
     const next = new Headers(headers);
@@ -125,7 +125,7 @@ export async function apiPost<T>(
   body: unknown,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
 ): Promise<ApiResponse<T>> {
-  const headers = await withCsrfHeadersCompat({ 'Content-Type': 'application/json' });
+  const headers = await withApiCsrfHeaders({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'POST',
     headers,
@@ -140,7 +140,7 @@ export async function apiPatch<T>(
   body: unknown,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
 ): Promise<ApiResponse<T>> {
-  const headers = await withCsrfHeadersCompat({ 'Content-Type': 'application/json' });
+  const headers = await withApiCsrfHeaders({ 'Content-Type': 'application/json' });
   return apiFetch<T>(url, {
     method: 'PATCH',
     headers,
@@ -154,7 +154,7 @@ export async function apiDelete<T>(
   url: string,
   options?: { timeoutMs?: number | undefined; signal?: AbortSignal | undefined }
 ): Promise<ApiResponse<T>> {
-  const headers = await withCsrfHeadersCompat();
+  const headers = await withApiCsrfHeaders();
   return apiFetch<T>(url, {
     method: 'DELETE',
     headers,

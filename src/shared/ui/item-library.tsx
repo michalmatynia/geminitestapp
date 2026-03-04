@@ -37,21 +37,23 @@ interface ItemLibraryProps<T extends LibraryItem> {
   isSaving?: boolean;
 }
 
-export function ItemLibrary<T extends LibraryItem>({
-  title,
-  description,
-  items,
-  isLoading,
-  onSave,
-  onDelete,
-  renderExtraFields,
-  renderItemTags,
-  buildDefaultItem,
-  entityName,
-  backLink,
-  headerActions,
-  isSaving = false,
-}: ItemLibraryProps<T>): React.JSX.Element {
+export function ItemLibrary<T extends LibraryItem>(props: ItemLibraryProps<T>): React.JSX.Element {
+  const {
+    title,
+    description,
+    items,
+    isLoading,
+    onSave,
+    onDelete,
+    renderExtraFields,
+    renderItemTags,
+    buildDefaultItem,
+    entityName,
+    backLink,
+    headerActions,
+    isSaving = false,
+  } = props;
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [draft, setDraft] = useState<Partial<T>>({});

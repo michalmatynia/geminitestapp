@@ -25,20 +25,22 @@ export interface PromptModalProps {
  * A standard modal for requesting a single text input from the user.
  * Refactored to leverage FormModal for consistent action handling.
  */
-export function PromptModal({
-  open,
-  onClose,
-  onConfirm,
-  title,
-  message,
-  label,
-  defaultValue = '',
-  placeholder,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  isLoading = false,
-  required = false,
-}: PromptModalProps): React.JSX.Element {
+export function PromptModal(props: PromptModalProps): React.JSX.Element {
+  const {
+    open,
+    onClose,
+    onConfirm,
+    title,
+    message,
+    label,
+    defaultValue = '',
+    placeholder,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    isLoading = false,
+    required = false,
+  } = props;
+
   const [value, setValue] = useState(defaultValue);
 
   useEffect(() => {

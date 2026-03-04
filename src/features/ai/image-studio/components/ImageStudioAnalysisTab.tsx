@@ -58,7 +58,10 @@ import {
   CHROMA_THRESHOLD_MAX,
   ANALYSIS_REQUEST_TIMEOUT_MS,
 } from './analysis/analysis-types';
-import { AnalysisSettingsSection } from './analysis/sections/AnalysisSettingsSection';
+import {
+  AnalysisSettingsSection,
+  type AnalysisSettingsSectionConfig,
+} from './analysis/sections/AnalysisSettingsSection';
 import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
 import { AiPathAnalysisTriggerSection } from './analysis/sections/AiPathAnalysisTriggerSection';
 import { CustomTriggerButtonsSection } from './analysis/sections/CustomTriggerButtonsSection';
@@ -567,6 +570,92 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     controller.abort();
   };
 
+  const analysisSettingsConfig: AnalysisSettingsSectionConfig = {
+    mode,
+    setMode,
+    layoutPadding,
+    setLayoutPadding,
+    layoutPaddingX,
+    setLayoutPaddingX,
+    layoutPaddingY,
+    setLayoutPaddingY,
+    layoutSplitAxes,
+    setLayoutSplitAxes,
+    layoutAdvancedEnabled,
+    setLayoutAdvancedEnabled,
+    layoutDetection,
+    setLayoutDetection,
+    layoutWhiteThreshold,
+    setLayoutWhiteThreshold,
+    layoutChromaThreshold,
+    setLayoutChromaThreshold,
+    layoutFillMissingCanvasWhite,
+    setLayoutFillMissingCanvasWhite,
+    layoutShadowPolicy,
+    setLayoutShadowPolicy,
+    layoutPresetOptionValue,
+    layoutPresetOptions,
+    layoutPresetDraftName,
+    setLayoutPresetDraftName,
+    onCenterLayoutPresetChange: (value: string) => {
+      const presetValues = getObjectLayoutPresetValuesFromOption(
+        value as unknown as ObjectLayoutPresetOptionValue,
+        layoutCustomPresets
+      );
+      if (!presetValues) return;
+      setLayoutDetection(presetValues.detection);
+      setLayoutShadowPolicy(presetValues.shadowPolicy);
+      setLayoutWhiteThreshold(String(presetValues.whiteThreshold));
+      setLayoutChromaThreshold(String(presetValues.chromaThreshold));
+    },
+    onCenterLayoutSavePreset: () => {
+      try {
+        const saved = saveObjectLayoutCustomPreset(activeProjectId, {
+          presetId: selectedCustomPresetId,
+          name: layoutPresetDraftName,
+          values: {
+            detection: layoutDetection,
+            shadowPolicy: layoutShadowPolicy,
+            whiteThreshold,
+            chromaThreshold,
+          },
+        });
+        setLayoutCustomPresets(saved.presets);
+        setLayoutPresetDraftName(saved.savedPreset.name);
+        toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
+          variant: 'error',
+        });
+      }
+    },
+    onCenterLayoutDeletePreset: () => {
+      if (!selectedCustomPresetId) return;
+      const deletedName = selectedCustomPreset?.name?.trim() ?? '';
+      const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, selectedCustomPresetId);
+      setLayoutCustomPresets(nextPresets);
+      setLayoutPresetDraftName('');
+      toast(
+        deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
+        { variant: 'success' }
+      );
+    },
+    layoutCanSavePreset,
+    layoutCanDeletePreset,
+    layoutSavePresetLabel,
+    projectCanvasSize,
+    busy,
+    busyLabel,
+    handleAnalyze: () => {
+      void handleAnalyze();
+    },
+    handleCancel,
+    workingSlotId: workingSlot?.id ?? null,
+    workingSlotImageSrc,
+    sanitizePaddingInput,
+    sanitizeThresholdInput,
+  };
+
   return (
     <div className='container mx-auto max-w-6xl py-2'>
       <Card variant='subtle' padding='md' className='border-border/60 bg-card/40 space-y-4'>
@@ -591,94 +680,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
 
         <AiPathAnalysisTriggerSection variant='full' analysis={aiPathsAnalysis} />
 
-        <AnalysisSettingsSection
-          mode={mode}
-          setMode={setMode}
-          layoutPadding={layoutPadding}
-          setLayoutPadding={setLayoutPadding}
-          layoutPaddingX={layoutPaddingX}
-          setLayoutPaddingX={setLayoutPaddingX}
-          layoutPaddingY={layoutPaddingY}
-          setLayoutPaddingY={setLayoutPaddingY}
-          layoutSplitAxes={layoutSplitAxes}
-          setLayoutSplitAxes={setLayoutSplitAxes}
-          layoutAdvancedEnabled={layoutAdvancedEnabled}
-          setLayoutAdvancedEnabled={setLayoutAdvancedEnabled}
-          layoutDetection={layoutDetection}
-          setLayoutDetection={setLayoutDetection}
-          layoutWhiteThreshold={layoutWhiteThreshold}
-          setLayoutWhiteThreshold={setLayoutWhiteThreshold}
-          layoutChromaThreshold={layoutChromaThreshold}
-          setLayoutChromaThreshold={setLayoutChromaThreshold}
-          layoutFillMissingCanvasWhite={layoutFillMissingCanvasWhite}
-          setLayoutFillMissingCanvasWhite={setLayoutFillMissingCanvasWhite}
-          layoutShadowPolicy={layoutShadowPolicy}
-          setLayoutShadowPolicy={setLayoutShadowPolicy}
-          layoutPresetOptionValue={layoutPresetOptionValue}
-          layoutPresetOptions={layoutPresetOptions}
-          layoutPresetDraftName={layoutPresetDraftName}
-          setLayoutPresetDraftName={setLayoutPresetDraftName}
-          onCenterLayoutPresetChange={(value: string) => {
-            const presetValues = getObjectLayoutPresetValuesFromOption(
-              value as unknown as ObjectLayoutPresetOptionValue,
-              layoutCustomPresets
-            );
-            if (!presetValues) return;
-            setLayoutDetection(presetValues.detection);
-            setLayoutShadowPolicy(presetValues.shadowPolicy);
-            setLayoutWhiteThreshold(String(presetValues.whiteThreshold));
-            setLayoutChromaThreshold(String(presetValues.chromaThreshold));
-          }}
-          onCenterLayoutSavePreset={() => {
-            try {
-              const saved = saveObjectLayoutCustomPreset(activeProjectId, {
-                presetId: selectedCustomPresetId,
-                name: layoutPresetDraftName,
-                values: {
-                  detection: layoutDetection,
-                  shadowPolicy: layoutShadowPolicy,
-                  whiteThreshold,
-                  chromaThreshold,
-                },
-              });
-              setLayoutCustomPresets(saved.presets);
-              setLayoutPresetDraftName(saved.savedPreset.name);
-              toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
-            } catch (error) {
-              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
-                variant: 'error',
-              });
-            }
-          }}
-          onCenterLayoutDeletePreset={() => {
-            if (!selectedCustomPresetId) return;
-            const deletedName = selectedCustomPreset?.name?.trim() ?? '';
-            const nextPresets = deleteObjectLayoutCustomPreset(
-              activeProjectId,
-              selectedCustomPresetId
-            );
-            setLayoutCustomPresets(nextPresets);
-            setLayoutPresetDraftName('');
-            toast(
-              deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
-              { variant: 'success' }
-            );
-          }}
-          layoutCanSavePreset={layoutCanSavePreset}
-          layoutCanDeletePreset={layoutCanDeletePreset}
-          layoutSavePresetLabel={layoutSavePresetLabel}
-          projectCanvasSize={projectCanvasSize}
-          busy={busy}
-          busyLabel={busyLabel}
-          handleAnalyze={() => {
-            void handleAnalyze();
-          }}
-          handleCancel={handleCancel}
-          workingSlotId={workingSlot?.id ?? null}
-          workingSlotImageSrc={workingSlotImageSrc}
-          sanitizePaddingInput={sanitizePaddingInput}
-          sanitizeThresholdInput={sanitizeThresholdInput}
-        />
+        <AnalysisSettingsSection config={analysisSettingsConfig} />
 
         <AnalysisResultSection
           result={result}

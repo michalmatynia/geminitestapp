@@ -24,7 +24,10 @@ import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/s
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
 
 import { useDocsSnapshots } from './docs/useDocsSnapshots';
-import { DocsRuntimeStateSection } from './docs/sections/DocsRuntimeStateSection';
+import {
+  DocsRuntimeStateSection,
+  type DocsRuntimeState,
+} from './docs/sections/DocsRuntimeStateSection';
 
 type SettingDocRow = {
   path: string;
@@ -551,6 +554,42 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     filteredVersionGraphDocs.length === 0 &&
     !includeByQuery(['Image Studio Docs', 'runtime', 'snapshot', 'settings']);
 
+  const runtimeState: DocsRuntimeState = {
+    projectId,
+    projectsQueryCount: projectsQuery.data?.length ?? 0,
+    slotsLength: slots.length,
+    selectedSlotName: selectedSlot?.name ?? selectedSlot?.id ?? 'none',
+    workingSlotName: workingSlot?.name ?? workingSlot?.id ?? 'none',
+    selectedFolder,
+    previewMode,
+    compositeAssetsLength: compositeAssets.length,
+    promptTextLength: promptText.length,
+    promptIssueCount,
+    paramsStateCount: paramsState ? Object.keys(paramsState).length : 0,
+    paramSpecsCount: paramSpecs ? Object.keys(paramSpecs).length : 0,
+    maskShapesLength: maskShapes.length,
+    maskEligibleCount,
+    runPending: runMutation.isPending,
+    runOutputsLength: runOutputs.length,
+    generationHistoryLength: generationHistory.length,
+    tool,
+    activeMaskId,
+    maskGenMode,
+    maskGenLoading,
+    maskInvert,
+    maskFeather,
+    brushRadius,
+    maskThresholdSensitivity,
+    maskEdgeSensitivity,
+    projectSearch,
+    virtualFoldersLength: virtualFolders.length,
+    persistedTreeFoldersLength: persistedTree.folders.length,
+    extractReviewOpen,
+    extractDraftPromptLength: extractDraftPrompt.length,
+    slotImageUrlDraftLength: slotImageUrlDraft.trim().length,
+    slotBase64DraftLength: slotBase64Draft.trim().length,
+  };
+
   return (
     <div className='space-y-4 text-sm text-gray-300'>
       <FormSection
@@ -571,42 +610,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       />
 
       {includeByQuery(['runtime state', 'project', 'slot', 'prompt', 'mask', 'generation']) ? (
-        <DocsRuntimeStateSection
-          projectId={projectId}
-          projectsQueryCount={projectsQuery.data?.length ?? 0}
-          slotsLength={slots.length}
-          selectedSlotName={selectedSlot?.name ?? selectedSlot?.id ?? 'none'}
-          workingSlotName={workingSlot?.name ?? workingSlot?.id ?? 'none'}
-          selectedFolder={selectedFolder}
-          previewMode={previewMode}
-          compositeAssetsLength={compositeAssets.length}
-          promptTextLength={promptText.length}
-          promptIssueCount={promptIssueCount}
-          paramsStateCount={paramsState ? Object.keys(paramsState).length : 0}
-          paramSpecsCount={paramSpecs ? Object.keys(paramSpecs).length : 0}
-          maskShapesLength={maskShapes.length}
-          maskEligibleCount={maskEligibleCount}
-          runPending={runMutation.isPending}
-          runOutputsLength={runOutputs.length}
-          generationHistoryLength={generationHistory.length}
-          tool={tool}
-          activeMaskId={activeMaskId}
-          maskGenMode={maskGenMode}
-          maskGenLoading={maskGenLoading}
-          maskInvert={maskInvert}
-          maskFeather={maskFeather}
-          brushRadius={brushRadius}
-          maskThresholdSensitivity={maskThresholdSensitivity}
-          maskEdgeSensitivity={maskEdgeSensitivity}
-          projectSearch={projectSearch}
-          virtualFoldersLength={virtualFolders.length}
-          persistedTreeFoldersLength={persistedTree.folders.length}
-          extractReviewOpen={extractReviewOpen}
-          extractDraftPromptLength={extractDraftPrompt.length}
-          slotImageUrlDraftLength={slotImageUrlDraft.trim().length}
-          slotBase64DraftLength={slotBase64Draft.trim().length}
-          metricValue={metricValue}
-        />
+        <DocsRuntimeStateSection state={runtimeState} />
       ) : null}
 
       {filteredSettingsRows.length > 0 ? (

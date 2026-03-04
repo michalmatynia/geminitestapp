@@ -3,42 +3,7 @@
 import React from 'react';
 import { Card, MetadataItem } from '@/shared/ui';
 
-export function DocsRuntimeStateSection({
-  projectId,
-  projectsQueryCount,
-  slotsLength,
-  selectedSlotName,
-  workingSlotName,
-  selectedFolder,
-  previewMode,
-  compositeAssetsLength,
-  promptTextLength,
-  promptIssueCount,
-  paramsStateCount,
-  paramSpecsCount,
-  maskShapesLength,
-  maskEligibleCount,
-  runPending,
-  runOutputsLength,
-  generationHistoryLength,
-  tool,
-  activeMaskId,
-  maskGenMode,
-  maskGenLoading,
-  maskInvert,
-  maskFeather,
-  brushRadius,
-  maskThresholdSensitivity,
-  maskEdgeSensitivity,
-  projectSearch,
-  virtualFoldersLength,
-  persistedTreeFoldersLength,
-  extractReviewOpen,
-  extractDraftPromptLength,
-  slotImageUrlDraftLength,
-  slotBase64DraftLength,
-  metricValue,
-}: {
+export interface DocsRuntimeState {
   projectId: string;
   projectsQueryCount: number;
   slotsLength: number;
@@ -72,8 +37,55 @@ export function DocsRuntimeStateSection({
   extractDraftPromptLength: number;
   slotImageUrlDraftLength: number;
   slotBase64DraftLength: number;
-  metricValue: (value: string | number | boolean | null | undefined) => string;
-}): React.JSX.Element {
+}
+
+type DocsRuntimeStateSectionProps = {
+  state: DocsRuntimeState;
+};
+
+function metricValue(value: string | number | boolean | null | undefined): string {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return String(value);
+}
+
+export function DocsRuntimeStateSection({ state }: DocsRuntimeStateSectionProps): React.JSX.Element {
+  const {
+    projectId,
+    projectsQueryCount,
+    slotsLength,
+    selectedSlotName,
+    workingSlotName,
+    selectedFolder,
+    previewMode,
+    compositeAssetsLength,
+    promptTextLength,
+    promptIssueCount,
+    paramsStateCount,
+    paramSpecsCount,
+    maskShapesLength,
+    maskEligibleCount,
+    runPending,
+    runOutputsLength,
+    generationHistoryLength,
+    tool,
+    activeMaskId,
+    maskGenMode,
+    maskGenLoading,
+    maskInvert,
+    maskFeather,
+    brushRadius,
+    maskThresholdSensitivity,
+    maskEdgeSensitivity,
+    projectSearch,
+    virtualFoldersLength,
+    persistedTreeFoldersLength,
+    extractReviewOpen,
+    extractDraftPromptLength,
+    slotImageUrlDraftLength,
+    slotBase64DraftLength,
+  } = state;
+
   return (
     <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
       <h3 className='text-base font-semibold text-white'>Current Runtime State</h3>

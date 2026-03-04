@@ -12,7 +12,7 @@ import {
   CHROMA_THRESHOLD_MAX,
 } from '../analysis-types';
 
-export interface AnalysisSettingsSectionProps {
+export interface AnalysisSettingsSectionConfig {
   mode: AnalysisMode;
   setMode: (mode: AnalysisMode) => void;
   layoutPadding: string;
@@ -56,49 +56,55 @@ export interface AnalysisSettingsSectionProps {
   sanitizeThresholdInput: (v: string) => string;
 }
 
-export function AnalysisSettingsSection({
-  mode,
-  setMode,
-  layoutPadding,
-  setLayoutPadding,
-  layoutPaddingX,
-  setLayoutPaddingX,
-  layoutPaddingY,
-  setLayoutPaddingY,
-  layoutSplitAxes,
-  setLayoutSplitAxes,
-  layoutAdvancedEnabled,
-  setLayoutAdvancedEnabled,
-  layoutDetection,
-  setLayoutDetection,
-  layoutWhiteThreshold,
-  setLayoutWhiteThreshold,
-  layoutChromaThreshold,
-  setLayoutChromaThreshold,
-  layoutFillMissingCanvasWhite,
-  setLayoutFillMissingCanvasWhite,
-  layoutShadowPolicy,
-  setLayoutShadowPolicy,
-  layoutPresetOptionValue,
-  layoutPresetOptions,
-  layoutPresetDraftName,
-  setLayoutPresetDraftName,
-  onCenterLayoutPresetChange,
-  onCenterLayoutSavePreset,
-  onCenterLayoutDeletePreset,
-  layoutCanSavePreset,
-  layoutCanDeletePreset,
-  layoutSavePresetLabel,
-  projectCanvasSize,
-  busy,
-  busyLabel,
-  handleAnalyze,
-  handleCancel,
-  workingSlotId,
-  workingSlotImageSrc,
-  sanitizePaddingInput,
-  sanitizeThresholdInput,
-}: AnalysisSettingsSectionProps): React.JSX.Element {
+export interface AnalysisSettingsSectionProps {
+  config: AnalysisSettingsSectionConfig;
+}
+
+export function AnalysisSettingsSection({ config }: AnalysisSettingsSectionProps): React.JSX.Element {
+  const {
+    mode,
+    setMode,
+    layoutPadding,
+    setLayoutPadding,
+    layoutPaddingX,
+    setLayoutPaddingX,
+    layoutPaddingY,
+    setLayoutPaddingY,
+    layoutSplitAxes,
+    setLayoutSplitAxes,
+    layoutAdvancedEnabled,
+    setLayoutAdvancedEnabled,
+    layoutDetection,
+    setLayoutDetection,
+    layoutWhiteThreshold,
+    setLayoutWhiteThreshold,
+    layoutChromaThreshold,
+    setLayoutChromaThreshold,
+    layoutFillMissingCanvasWhite,
+    setLayoutFillMissingCanvasWhite,
+    layoutShadowPolicy,
+    setLayoutShadowPolicy,
+    layoutPresetOptionValue,
+    layoutPresetOptions,
+    layoutPresetDraftName,
+    setLayoutPresetDraftName,
+    onCenterLayoutPresetChange,
+    onCenterLayoutSavePreset,
+    onCenterLayoutDeletePreset,
+    layoutCanSavePreset,
+    layoutCanDeletePreset,
+    layoutSavePresetLabel,
+    projectCanvasSize,
+    busy,
+    busyLabel,
+    handleAnalyze,
+    handleCancel,
+    workingSlotId,
+    workingSlotImageSrc,
+    sanitizePaddingInput,
+    sanitizeThresholdInput,
+  } = config;
+
   const modeOptions = [
     { value: 'server_analysis', label: 'Analysis Server: Sharp' },
     { value: 'client_analysis', label: 'Analysis Client: Canvas' },

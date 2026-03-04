@@ -66,17 +66,19 @@ export const resolveStatusBadgeVariant = (status: string): StatusVariant => {
  * Provides automatic mapping from status strings to visual variants.
  * Leverages the shared Badge component for consistent design.
  */
-export function StatusBadge({
-  status,
-  label,
-  variant,
-  size = 'md',
-  icon,
-  hideLabel,
-  className,
-  title,
-  onClick,
-}: StatusBadgeProps): React.JSX.Element {
+export function StatusBadge(props: StatusBadgeProps): React.JSX.Element {
+  const {
+    status,
+    label,
+    variant,
+    size = 'md',
+    icon,
+    hideLabel,
+    className,
+    title,
+    onClick,
+  } = props;
+
   const resolvedVariant: VariantProps<typeof badgeVariants>['variant'] =
     variant || resolveStatusBadgeVariant(status);
   const displayLabel = (label || status).trim();

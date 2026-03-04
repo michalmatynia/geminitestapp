@@ -12,14 +12,9 @@ interface CaseFileEditorModalProps extends EntityModalProps<CaseResolverFileEdit
   children: React.ReactNode;
 }
 
-export function CaseFileEditorModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: draft,
-  onSave,
-  children,
-}: CaseFileEditorModalProps): React.JSX.Element | null {
+export function CaseFileEditorModal(props: CaseFileEditorModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, onSuccess, item: draft, onSave, children } = props;
+
   if (!draft) return null;
 
   return (

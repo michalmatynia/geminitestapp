@@ -250,13 +250,9 @@ export function Asset3DPickerField({
   );
 }
 
-export function ColorField({
-  label,
-  value,
-  onChange,
-  className,
-  disabled,
-}: FieldProps<string>): React.JSX.Element {
+export function ColorField(props: FieldProps<string>): React.JSX.Element {
+  const { label, value, onChange, className, disabled } = props;
+
   return (
     <FormField label={label} className={className}>
       <div className='flex items-center gap-2 mt-1'>

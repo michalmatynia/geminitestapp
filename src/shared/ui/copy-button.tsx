@@ -19,16 +19,18 @@ type CopyButtonProps = {
   children?: React.ReactNode;
 };
 
-export function CopyButton({
-  value,
-  className = '',
-  variant = 'ghost',
-  size = 'icon',
-  timeout = 2000,
-  showText = false,
-  disabled,
-  children,
-}: CopyButtonProps): React.JSX.Element {
+export function CopyButton(props: CopyButtonProps): React.JSX.Element {
+  const {
+    value,
+    className = '',
+    variant = 'ghost',
+    size = 'icon',
+    timeout = 2000,
+    showText = false,
+    disabled,
+    children,
+  } = props;
+
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent): Promise<void> => {

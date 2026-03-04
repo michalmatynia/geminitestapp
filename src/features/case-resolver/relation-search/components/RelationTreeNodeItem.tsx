@@ -39,17 +39,19 @@ const renderFileTypeIcon = (fileType: string): React.JSX.Element => {
   return <FileText className='size-3.5 shrink-0 text-sky-400/80' />;
 };
 
-export function RelationTreeNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isDragging,
-  isDropTarget,
-  dropPosition,
-  toggleExpand,
-  select,
-}: RelationTreeNodeItemProps): React.JSX.Element {
+export function RelationTreeNodeItem(props: RelationTreeNodeItemProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isDragging,
+    isDropTarget,
+    dropPosition,
+    toggleExpand,
+    select,
+  } = props;
+
   const {
     mode,
     lookup,

@@ -101,11 +101,15 @@ export function useCaseResolverStateWorkspaceHydration({
           attemptProfile: 'context_fast',
           maxTotalMs: 6_500,
           attemptTimeoutMs: 2_200,
+          includeDetachedHistory: true,
         });
       } else {
         const result = await fetchCaseResolverWorkspaceIfStale(
           'case_view_bootstrap',
-          currentRevision
+          currentRevision,
+          {
+            includeDetachedHistory: true,
+          }
         );
         if (result.updated) {
           snapshot = result.workspace;

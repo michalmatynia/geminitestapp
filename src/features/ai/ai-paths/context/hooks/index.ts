@@ -78,26 +78,6 @@ export {
   type AutoSaveStatus,
 } from './usePersistence';
 
-// State bridge hooks (sync shared state into domain contexts)
-export {
-  useStateBridgeSelection,
-  useStateBridgeCanvas,
-  useStateBridgeGraph,
-  useStateBridgeRuntime,
-  useStateBridgePersistence,
-  useStateBridgePresets,
-  useStateBridgeRunHistory,
-  useStateBridgeAll,
-  type StateBridgeSelectionProps,
-  type StateBridgeCanvasProps,
-  type StateBridgeGraphProps,
-  type StateBridgeRuntimeProps,
-  type StateBridgePersistenceProps,
-  type StateBridgePresetsProps,
-  type StateBridgeRunHistoryProps,
-  type StateBridgeAllProps,
-} from './useStateBridge';
-
 // Derived hooks
 export { useEdgePaths, type EdgePath } from './useEdgePaths';
 export { useCanvasInteractions } from './useCanvasInteractions';

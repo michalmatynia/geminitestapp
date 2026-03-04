@@ -188,6 +188,7 @@ describe('admin cases context hydration', () => {
         maxTotalMs: 15_000,
         attemptTimeoutMs: 5_000,
         requiredFileId: null,
+        includeDetachedHistory: false,
       }
     );
   });
@@ -233,6 +234,7 @@ describe('admin cases context hydration', () => {
         maxTotalMs: 15_000,
         attemptTimeoutMs: 5_000,
         requiredFileId: null,
+        includeDetachedHistory: false,
       }
     );
   });

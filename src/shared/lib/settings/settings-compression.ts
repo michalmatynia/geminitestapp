@@ -4,7 +4,11 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
 
 const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
-const COMPRESSIBLE_SETTING_KEYS = new Set<string>([CASE_RESOLVER_WORKSPACE_KEY]);
+const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';
+const COMPRESSIBLE_SETTING_KEYS = new Set<string>([
+  CASE_RESOLVER_WORKSPACE_KEY,
+  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+]);
 
 export const shouldCompressSettingValue = (key: string): boolean =>
   COMPRESSIBLE_SETTING_KEYS.has(key);

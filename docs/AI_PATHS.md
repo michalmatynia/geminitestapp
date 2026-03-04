@@ -146,6 +146,7 @@ npm run docs:ai-paths:tooltip:check
 
 ## Cross References
 
+- `docs/ai-paths/ai-paths-modernization-playbook-2026-03-04.md`
 - `docs/AI_PATHS_EXTENDED_REFERENCE.md`
 - `docs/ai-paths/semantic-grammar/README.md`
 - `docs/ai-paths/playwright-node.md`

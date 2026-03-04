@@ -224,10 +224,6 @@ export function useAiPathsSettingsState({
     fitToNodes,
     resetView,
   } = useAiPathsCanvasInteractions({
-    nodes,
-    setNodes,
-    edges,
-    setEdges,
     selectedNodeId,
     setSelectedNodeId,
     isPathSwitching,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   AiNode,
   Edge,
@@ -20,6 +20,12 @@ export function useCanvasConnection(args: {
   nodes: AiNode[];
   edges: Edge[];
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  connecting: ConnectingState | null;
+  setConnecting: (connecting: ConnectingState | null) => void;
+  connectingPos: { x: number; y: number } | null;
+  setConnectingPos: (pos: { x: number; y: number } | null) => void;
+  startConnection: (fromNodeId: string, fromPort: string, start: { x: number; y: number }) => void;
+  endConnection: () => void;
   view: { x: number; y: number; scale: number };
   viewportRef: React.RefObject<HTMLDivElement | null>;
   isPathLocked: boolean;
@@ -40,6 +46,12 @@ export function useCanvasConnection(args: {
     nodes,
     edges,
     setEdges,
+    connecting,
+    setConnecting,
+    connectingPos,
+    setConnectingPos,
+    startConnection,
+    endConnection,
     view,
     viewportRef,
     isPathLocked,
@@ -49,9 +61,6 @@ export function useCanvasConnection(args: {
     clearRuntimeInputsForEdges,
     toast,
   } = args;
-
-  const [connecting, setConnecting] = useState<ConnectingState | null>(null);
-  const [connectingPos, setConnectingPos] = useState<{ x: number; y: number } | null>(null);
 
   const getPortPosition = useCallback(
     (
@@ -78,10 +87,9 @@ export function useCanvasConnection(args: {
       }
       event.stopPropagation();
       const start = getPortPosition(node, port, 'output');
-      setConnecting({ fromNodeId: node.id, fromPort: port, start });
-      setConnectingPos(start);
+      startConnection(node.id, port, start);
     },
-    [getPortPosition, isPathLocked, notifyLocked]
+    [getPortPosition, isPathLocked, notifyLocked, startConnection]
   );
 
   const handleCompleteConnection = useCallback(
@@ -93,15 +101,13 @@ export function useCanvasConnection(args: {
       event.stopPropagation();
       if (!connecting) return;
       if (connecting.fromNodeId === node.id && connecting.fromPort === port) {
-        setConnecting(null);
-        setConnectingPos(null);
+        endConnection();
         return;
       }
 
       const fromNode = nodes.find((n: AiNode): boolean => n.id === connecting.fromNodeId);
       if (!fromNode) {
-        setConnecting(null);
-        setConnectingPos(null);
+        endConnection();
         return;
       }
 
@@ -114,8 +120,7 @@ export function useCanvasConnection(args: {
           toast('This input accepts one connection. Insert a merge/select node for fan-in.', {
             variant: 'error',
           });
-          setConnecting(null);
-          setConnectingPos(null);
+          endConnection();
           return;
         }
       }
@@ -124,8 +129,7 @@ export function useCanvasConnection(args: {
 
       if (!validation.valid) {
         toast(validation.message ?? 'Invalid connection.', { variant: 'error' });
-        setConnecting(null);
-        setConnectingPos(null);
+        endConnection();
         return;
       }
 
@@ -140,10 +144,9 @@ export function useCanvasConnection(args: {
         },
       ]);
       toast('Connection created.', { variant: 'success' });
-      setConnecting(null);
-      setConnectingPos(null);
+      endConnection();
     },
-    [connecting, edges, isPathLocked, nodes, notifyLocked, setEdges, toast]
+    [connecting, edges, endConnection, isPathLocked, nodes, notifyLocked, setEdges, toast]
   );
 
   const handleRemoveEdge = useCallback(
@@ -226,7 +229,7 @@ export function useCanvasConnection(args: {
       if (selectedEdgeId === edgeToMove.id) {
         selectEdge(null);
       }
-      setConnecting({ fromNodeId: edgeToMove.from, fromPort: edgeToMove.fromPort, start });
+      startConnection(edgeToMove.from, edgeToMove.fromPort, start);
       setConnectingPos(nextPos);
     },
     [
@@ -241,6 +244,7 @@ export function useCanvasConnection(args: {
       setEdges,
       view,
       selectEdge,
+      startConnection,
       viewportRef,
     ]
   );

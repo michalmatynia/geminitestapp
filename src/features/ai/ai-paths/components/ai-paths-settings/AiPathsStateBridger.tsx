@@ -1,6 +1,6 @@
 'use client';
 
-import { useStateBridgeAll } from '../../context';
+import { useStateBridgeAll } from '../../context/hooks/useStateBridge';
 import { type UseAiPathsSettingsStateReturn } from './types';
 
 export function AiPathsStateBridger({ state }: { state: UseAiPathsSettingsStateReturn }): null {

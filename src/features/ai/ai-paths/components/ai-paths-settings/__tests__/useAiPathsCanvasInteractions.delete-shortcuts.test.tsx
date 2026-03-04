@@ -18,13 +18,100 @@ let selectionStateMock: SelectionStateMock = {
 
 const selectEdgeMock = vi.fn();
 const selectNodeMock = vi.fn();
-const setGraphNodesMock = vi.fn();
-const setGraphEdgesMock = vi.fn();
+const graphStateMock: { nodes: AiNode[]; edges: Edge[] } = {
+  nodes: [],
+  edges: [],
+};
+const canvasStateMock: {
+  view: { x: number; y: number; scale: number };
+  panState: { startX: number; startY: number; originX: number; originY: number } | null;
+  dragState: { nodeId: string; offsetX: number; offsetY: number } | null;
+  connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null;
+  connectingPos: { x: number; y: number } | null;
+  lastDrop: { x: number; y: number } | null;
+} = {
+  view: { x: -600, y: -320, scale: 1 },
+  panState: null,
+  dragState: null,
+  connecting: null,
+  connectingPos: null,
+  lastDrop: null,
+};
+const setGraphNodesMock = vi.fn(
+  (
+    updater: AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    _meta?: { reason?: string; source?: string }
+  ) => {
+    graphStateMock.nodes = typeof updater === 'function' ? updater(graphStateMock.nodes) : updater;
+  }
+);
+const setGraphEdgesMock = vi.fn(
+  (
+    updater: Edge[] | ((prev: Edge[]) => Edge[]),
+    _meta?: { reason?: string; source?: string }
+  ) => {
+    graphStateMock.edges = typeof updater === 'function' ? updater(graphStateMock.edges) : updater;
+  }
+);
+const setCanvasViewMock = vi.fn((next: { x: number; y: number; scale: number }) => {
+  canvasStateMock.view = next;
+});
+const startPanMock = vi.fn((startX: number, startY: number) => {
+  canvasStateMock.panState = {
+    startX,
+    startY,
+    originX: canvasStateMock.view.x,
+    originY: canvasStateMock.view.y,
+  };
+});
+const endPanMock = vi.fn(() => {
+  canvasStateMock.panState = null;
+});
+const startDragMock = vi.fn((nodeId: string, offsetX: number, offsetY: number) => {
+  canvasStateMock.dragState = { nodeId, offsetX, offsetY };
+});
+const endDragMock = vi.fn(() => {
+  canvasStateMock.dragState = null;
+});
+const setConnectingMock = vi.fn(
+  (connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null) => {
+    canvasStateMock.connecting = connecting;
+  }
+);
+const setConnectingPosMock = vi.fn((pos: { x: number; y: number } | null) => {
+  canvasStateMock.connectingPos = pos;
+});
+const startConnectionMock = vi.fn(
+  (fromNodeId: string, fromPort: string, start: { x: number; y: number }) => {
+    canvasStateMock.connecting = { fromNodeId, fromPort, start };
+    canvasStateMock.connectingPos = start;
+  }
+);
+const endConnectionMock = vi.fn(() => {
+  canvasStateMock.connecting = null;
+  canvasStateMock.connectingPos = null;
+});
+const setLastDropMock = vi.fn((pos: { x: number; y: number } | null) => {
+  canvasStateMock.lastDrop = pos;
+});
 
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasRefs: () => ({
     viewportRef: { current: null },
     canvasRef: { current: null },
+  }),
+  useCanvasState: () => canvasStateMock,
+  useCanvasActions: () => ({
+    setView: setCanvasViewMock,
+    startPan: startPanMock,
+    endPan: endPanMock,
+    startDrag: startDragMock,
+    endDrag: endDragMock,
+    setConnecting: setConnectingMock,
+    setConnectingPos: setConnectingPosMock,
+    startConnection: startConnectionMock,
+    endConnection: endConnectionMock,
+    setLastDrop: setLastDropMock,
   }),
 }));
 
@@ -37,6 +124,7 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphState: () => graphStateMock,
   useGraphActions: () => ({
     setNodes: setGraphNodesMock,
     setEdges: setGraphEdgesMock,
@@ -60,6 +148,24 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     selectNodeMock.mockReset();
     setGraphNodesMock.mockReset();
     setGraphEdgesMock.mockReset();
+    setCanvasViewMock.mockReset();
+    startPanMock.mockReset();
+    endPanMock.mockReset();
+    startDragMock.mockReset();
+    endDragMock.mockReset();
+    setConnectingMock.mockReset();
+    setConnectingPosMock.mockReset();
+    startConnectionMock.mockReset();
+    endConnectionMock.mockReset();
+    setLastDropMock.mockReset();
+    graphStateMock.nodes = [];
+    graphStateMock.edges = [];
+    canvasStateMock.view = { x: -600, y: -320, scale: 1 };
+    canvasStateMock.panState = null;
+    canvasStateMock.dragState = null;
+    canvasStateMock.connecting = null;
+    canvasStateMock.connectingPos = null;
+    canvasStateMock.lastDrop = null;
   });
 
   it('opens remove confirmation on Delete for selected node and removes node on confirm', () => {
@@ -98,25 +204,16 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
       },
     ];
 
-    const setNodesMock = vi.fn((updater: AiNode[] | ((prev: AiNode[]) => AiNode[])) => {
-      nodesState = typeof updater === 'function' ? updater(nodesState) : updater;
-    });
-    const setEdgesMock = vi.fn((updater: Edge[] | ((prev: Edge[]) => Edge[])) => {
-      edgesState = typeof updater === 'function' ? updater(edgesState) : updater;
-    });
-
     selectionStateMock = {
       selectedEdgeId: null,
       selectedNodeId: 'node-a',
       selectedNodeIds: ['node-a'],
     };
+    graphStateMock.nodes = nodesState;
+    graphStateMock.edges = edgesState;
 
     renderHook(() =>
       useAiPathsCanvasInteractions({
-        nodes: nodesState,
-        setNodes: setNodesMock,
-        edges: edgesState,
-        setEdges: setEdgesMock,
         isPathLocked: false,
         selectedNodeId: 'node-a',
         setSelectedNodeId: vi.fn(),
@@ -182,22 +279,16 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
       },
     ];
 
-    const setEdgesMock = vi.fn((updater: Edge[] | ((prev: Edge[]) => Edge[])) => {
-      edgesState = typeof updater === 'function' ? updater(edgesState) : updater;
-    });
-
     selectionStateMock = {
       selectedEdgeId: 'edge-a-a',
       selectedNodeId: null,
       selectedNodeIds: [],
     };
+    graphStateMock.nodes = [node];
+    graphStateMock.edges = edgesState;
 
     renderHook(() =>
       useAiPathsCanvasInteractions({
-        nodes: [node],
-        setNodes: vi.fn(),
-        edges: edgesState,
-        setEdges: setEdgesMock,
         isPathLocked: false,
         selectedNodeId: null,
         setSelectedNodeId: vi.fn(),
@@ -231,24 +322,22 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
       selectedNodeId: 'node-a',
       selectedNodeIds: ['node-a'],
     };
+    graphStateMock.nodes = [
+      {
+        id: 'node-a',
+        type: 'prompt',
+        title: 'A',
+        description: '',
+        inputs: [],
+        outputs: [],
+        position: { x: 100, y: 100 },
+        config: {},
+      },
+    ];
+    graphStateMock.edges = [];
 
     renderHook(() =>
       useAiPathsCanvasInteractions({
-        nodes: [
-          {
-            id: 'node-a',
-            type: 'prompt',
-            title: 'A',
-            description: '',
-            inputs: [],
-            outputs: [],
-            position: { x: 100, y: 100 },
-            config: {},
-          },
-        ],
-        setNodes: vi.fn(),
-        edges: [],
-        setEdges: vi.fn(),
         isPathLocked: false,
         selectedNodeId: 'node-a',
         setSelectedNodeId: vi.fn(),

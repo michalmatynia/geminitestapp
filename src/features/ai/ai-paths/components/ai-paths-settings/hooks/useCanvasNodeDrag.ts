@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import {
   AiNode,
   CANVAS_WIDTH,
@@ -23,6 +23,13 @@ import {
 export function useCanvasNodeDrag(args: {
   nodes: AiNode[];
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
+  dragState: {
+    nodeId: string;
+    offsetX: number;
+    offsetY: number;
+  } | null;
+  startDrag: (nodeId: string, offsetX: number, offsetY: number) => void;
+  endDrag: () => void;
   view: { x: number; y: number; scale: number };
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -48,6 +55,9 @@ export function useCanvasNodeDrag(args: {
   const {
     nodes,
     setNodes,
+    dragState,
+    startDrag,
+    endDrag,
     view,
     viewportRef,
     canvasRef,
@@ -59,12 +69,6 @@ export function useCanvasNodeDrag(args: {
     ensureNodeVisible,
     setLastDrop,
   } = args;
-
-  const [dragState, setDragState] = useState<{
-    nodeId: string;
-    offsetX: number;
-    offsetY: number;
-  } | null>(null);
 
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
@@ -83,13 +87,9 @@ export function useCanvasNodeDrag(args: {
       if (!node) return;
       const canvasX = (event.clientX - viewport.left - view.x) / view.scale;
       const canvasY = (event.clientY - viewport.top - view.y) / view.scale;
-      setDragState({
-        nodeId,
-        offsetX: canvasX - node.position.x,
-        offsetY: canvasY - node.position.y,
-      });
+      startDrag(nodeId, canvasX - node.position.x, canvasY - node.position.y);
     },
-    [isPathLocked, nodes, notifyLocked, view, viewportRef]
+    [isPathLocked, nodes, notifyLocked, startDrag, view, viewportRef]
   );
 
   const handlePointerMove = useCallback(
@@ -143,9 +143,9 @@ export function useCanvasNodeDrag(args: {
         pendingDragRef.current = null;
       }
 
-      setDragState(null);
+      endDrag();
     },
-    [dragState, setNodes]
+    [dragState, endDrag, setNodes]
   );
 
   const handleDragStart = useCallback(

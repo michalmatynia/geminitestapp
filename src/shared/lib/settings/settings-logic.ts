@@ -4,6 +4,7 @@ const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>([
   'agent_personas',
   'case_resolver_workspace_v2',
+  'case_resolver_workspace_v2_history',
   'product_validator_decision_log',
   'ai_insights_analytics_history',
   'ai_insights_runtime_analytics_history',

@@ -90,24 +90,5 @@ export type {
   PersistenceOperationHandlers,
 } from './PersistenceContext';
 
-// State bridge hooks (sync shared state into domain contexts)
-export {
-  useStateBridgeSelection,
-  useStateBridgeCanvas,
-  useStateBridgeGraph,
-  useStateBridgeRuntime,
-  useStateBridgePersistence,
-  useStateBridgeAll,
-} from './hooks/useStateBridge';
-
 // Derived hooks
 export { useCanvasInteractions } from './hooks/useCanvasInteractions';
-
-export type {
-  StateBridgeSelectionProps,
-  StateBridgeCanvasProps,
-  StateBridgeGraphProps,
-  StateBridgeRuntimeProps,
-  StateBridgePersistenceProps,
-  StateBridgeAllProps,
-} from './hooks/useStateBridge';

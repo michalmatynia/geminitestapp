@@ -397,6 +397,94 @@ module.exports = tseslint.config(
     },
   },
   {
+    files: ['src/features/ai/ai-paths/**/*.{ts,tsx}'],
+    ignores: [
+      'src/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger.tsx',
+      'src/features/ai/ai-paths/context/index.ts',
+      'src/features/ai/ai-paths/context/hooks/index.ts',
+      'src/features/ai/ai-paths/context/hooks/useStateBridge.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/shared/lib/api-hooks',
+              message:
+                'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/mutation-factories',
+              message:
+                'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/query-factories',
+              message:
+                'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/tanstack-factory-meta-inference',
+              message: 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
+            },
+            {
+              name: '@/shared/lib/query-factories-v2',
+              importNames: [
+                'createListQuery',
+                'createSingleQuery',
+                'createMutation',
+                'createCreateMutation',
+                'createUpdateMutation',
+                'createDeleteMutation',
+              ],
+              message: 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
+            },
+            {
+              name: '@/features/ai/ai-paths/context',
+              importNames: [
+                'useStateBridgeSelection',
+                'useStateBridgeCanvas',
+                'useStateBridgeGraph',
+                'useStateBridgeRuntime',
+                'useStateBridgePersistence',
+                'useStateBridgePresets',
+                'useStateBridgeRunHistory',
+                'useStateBridgeAll',
+              ],
+              message:
+                'State bridge hooks are legacy compatibility only. Use context-native hooks/actions instead.',
+            },
+            {
+              name: '@/features/ai/ai-paths/context/hooks/useStateBridge',
+              message:
+                'State bridge hooks are legacy compatibility only. Use context-native hooks/actions instead.',
+            },
+            {
+              name: '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger',
+              message:
+                'AiPathsStateBridger is a temporary compatibility seam. Do not add new runtime imports.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['use client', 'use server'],
+              message: 'Prefer module-level directives over restricted imports.',
+            },
+            {
+              group: [
+                '**/context/hooks/useStateBridge',
+                '**/components/ai-paths-settings/AiPathsStateBridger',
+              ],
+              message:
+                'Bridge compatibility modules are deprecated. Use context-native hooks/actions instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/shared/hooks/query/**/*.{ts,tsx}', 'src/shared/hooks/useQueryComposition.ts'],
     rules: {
       'no-restricted-syntax': [

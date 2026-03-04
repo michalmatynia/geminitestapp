@@ -12,8 +12,11 @@ import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
   readWorkspaceMetadata,
+  resolveSettingRecordFromSettingsPayload,
   resolveWorkspaceRecordFromSettingsPayload,
+  buildSettingRecordFetchAttempts,
   buildWorkspaceRecordFetchAttempts,
   type WorkspaceMetadataLike,
 } from './utils/workspace-settings-persistence-helpers';
@@ -24,6 +27,11 @@ import {
   CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
   readWorkspaceFromSettingRecord,
 } from './workspace-persistence-shared';
+import {
+  applyCaseResolverWorkspaceDetachedHistoryPayload,
+  parseCaseResolverWorkspaceDetachedHistoryPayload,
+  type CaseResolverWorkspaceDetachedHistoryPayload,
+} from './workspace-persistence-detached-history';
 
 export type WorkspaceRecordFetchAttempt = {
   key: string;
@@ -170,6 +178,59 @@ const fetchWorkspaceRecordByKeyAttempts = async ({
   };
 };
 
+const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
+  source,
+  scope,
+  fresh,
+  startedAt,
+  maxTotalMs,
+  attemptTimeoutMs,
+}: {
+  source: string;
+  scope: 'light' | 'heavy';
+  fresh: boolean;
+  startedAt: number;
+  maxTotalMs: number;
+  attemptTimeoutMs: number;
+}): Promise<CaseResolverWorkspaceDetachedHistoryPayload | null> => {
+  const attempts = buildSettingRecordFetchAttempts({
+    key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+    strategy: scope === 'heavy' ? 'heavy_only' : 'light_only',
+    fresh,
+  });
+
+  for (const attempt of attempts) {
+    const elapsedMs = Date.now() - startedAt;
+    const remainingBudgetMs = maxTotalMs - elapsedMs;
+    if (remainingBudgetMs <= 0) return null;
+    try {
+      const response = await fetchSettingsPayloadWithTimeout({
+        url: attempt.url,
+        timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
+      });
+      if (!response.ok) continue;
+      const payload = (await response.json()) as unknown;
+      const record = resolveSettingRecordFromSettingsPayload(
+        payload,
+        CASE_RESOLVER_WORKSPACE_HISTORY_KEY
+      );
+      if (!record || typeof record.value !== 'string') continue;
+      const detachedHistoryPayload = parseCaseResolverWorkspaceDetachedHistoryPayload(record.value);
+      if (!detachedHistoryPayload) continue;
+      return detachedHistoryPayload;
+    } catch (error: unknown) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_detached_history_failed',
+        durationMs: Date.now() - startedAt,
+        message: error instanceof Error ? error.message : 'Unknown detached history fetch error.',
+      });
+    }
+  }
+
+  return null;
+};
+
 export const fetchCaseResolverWorkspaceMetadata = async (
   source: string
 ): Promise<CaseResolverWorkspaceMetadata | null> => {
@@ -230,6 +291,7 @@ export const fetchCaseResolverWorkspaceRecord = async (
     attemptProfile?: CaseResolverWorkspaceFetchAttemptProfile;
     maxTotalMs?: number;
     attemptTimeoutMs?: number;
+    includeDetachedHistory?: boolean;
   }
 ): Promise<CaseResolverWorkspace | null> => {
   const result = await fetchCaseResolverWorkspaceRecordDetailed(source, options);
@@ -245,11 +307,13 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     attemptProfile?: CaseResolverWorkspaceFetchAttemptProfile;
     maxTotalMs?: number;
     attemptTimeoutMs?: number;
+    includeDetachedHistory?: boolean;
   }
 ): Promise<CaseResolverWorkspaceRecordFetchResult> => {
   const startedAt = Date.now();
   const fetchStrategy = options?.strategy ?? 'light_then_heavy';
   const fetchFresh = options?.fresh !== false;
+  const includeDetachedHistory = options?.includeDetachedHistory === true;
   const requiredFileId = options?.requiredFileId?.trim() ?? '';
   const attemptProfile = options?.attemptProfile ?? 'default';
   const attempts = buildWorkspaceRecordFetchAttempts({
@@ -280,9 +344,38 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     logHeavyFallback: fetchStrategy === 'light_then_heavy',
   });
   if (primaryResult.status === 'resolved') {
+    const detachedHistoryPayload = includeDetachedHistory
+      ? await fetchWorkspaceDetachedHistoryPayloadByKey({
+        source,
+        scope: primaryResult.scope,
+        fresh: fetchFresh,
+        startedAt,
+        maxTotalMs,
+        attemptTimeoutMs,
+      })
+      : null;
+    const workspaceWithDetachedHistory = includeDetachedHistory
+      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+        workspace: primaryResult.workspace,
+        detachedHistoryPayload,
+      })
+      : primaryResult.workspace;
+    if (includeDetachedHistory && detachedHistoryPayload) {
+      const detachedHistoryRevision = detachedHistoryPayload.workspaceRevision;
+      const workspaceRevision = getCaseResolverWorkspaceRevision(primaryResult.workspace);
+      if (detachedHistoryRevision !== workspaceRevision) {
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_detached_history_skipped',
+          durationMs: Date.now() - startedAt,
+          workspaceRevision,
+          message: `detached_history_revision=${detachedHistoryRevision}`,
+        });
+      }
+    }
     return {
       status: 'resolved',
-      workspace: primaryResult.workspace,
+      workspace: workspaceWithDetachedHistory,
       attemptKey: primaryResult.attemptKey,
       scope: primaryResult.scope,
       source: 'resolved_v2',
@@ -354,10 +447,14 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
 
 export const fetchCaseResolverWorkspaceIfStale = async (
   source: string,
-  currentRevision: number
+  currentRevision: number,
+  options?: {
+    includeDetachedHistory?: boolean;
+  }
 ): Promise<FetchIfStaleResult> => {
   const startedAt = Date.now();
   const normalizedRevision = Math.max(0, Math.floor(currentRevision));
+  const includeDetachedHistory = options?.includeDetachedHistory === true;
   const url =
     `/api/settings?key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}` +
     `&fresh=1&ifRevisionGt=${normalizedRevision}`;
@@ -407,13 +504,29 @@ export const fetchCaseResolverWorkspaceIfStale = async (
       return { updated: false, revision: normalizedRevision };
     }
     const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
+    const detachedHistoryPayload = includeDetachedHistory
+      ? await fetchWorkspaceDetachedHistoryPayloadByKey({
+        source,
+        scope: 'light',
+        fresh: true,
+        startedAt,
+        maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+        attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+      })
+      : null;
+    const workspaceWithDetachedHistory = includeDetachedHistory
+      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+        workspace,
+        detachedHistoryPayload,
+      })
+      : workspace;
     logCaseResolverWorkspaceEvent({
       source,
       action: 'conditional_fetch_updated',
-      workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspaceWithDetachedHistory),
       durationMs: Date.now() - startedAt,
     });
-    return { updated: true, workspace };
+    return { updated: true, workspace: workspaceWithDetachedHistory };
   } catch (error: unknown) {
     logCaseResolverWorkspaceEvent({
       source,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
   AiNode,
   VIEW_MARGIN,
@@ -9,15 +9,14 @@ import {
   clampScale,
   clampTranslate,
 } from '@/shared/lib/ai-paths';
+import {
+  useCanvasActions,
+  useCanvasState,
+} from '@/features/ai/ai-paths/context/CanvasContext';
 
 export function useCanvasView(viewportRef: React.RefObject<HTMLDivElement | null>) {
-  const [view, setView] = useState({ x: -600, y: -320, scale: 1 });
-  const [panState, setPanState] = useState<{
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-  } | null>(null);
+  const { view, panState } = useCanvasState();
+  const { setView, startPan, endPan } = useCanvasActions();
 
   const setViewClamped = useCallback(
     (next: { x: number; y: number; scale: number }): void => {
@@ -128,14 +127,9 @@ export function useCanvasView(viewportRef: React.RefObject<HTMLDivElement | null
     (event: React.PointerEvent<HTMLDivElement>): void => {
       if (event.button !== 0 && event.button !== 1) return;
       if ((event.target as HTMLElement).closest('[data-node-id]')) return;
-      setPanState({
-        startX: event.clientX,
-        startY: event.clientY,
-        originX: view.x,
-        originY: view.y,
-      });
+      startPan(event.clientX, event.clientY);
     },
-    [view.x, view.y]
+    [startPan]
   );
 
   const handlePanMove = useCallback(
@@ -153,8 +147,8 @@ export function useCanvasView(viewportRef: React.RefObject<HTMLDivElement | null
   );
 
   const handlePanEnd = useCallback((): void => {
-    setPanState(null);
-  }, []);
+    endPan();
+  }, [endPan]);
 
   const getCanvasCenterPosition = useCallback((): { x: number; y: number } => {
     const viewport = viewportRef.current?.getBoundingClientRect();

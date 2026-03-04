@@ -7,6 +7,7 @@ import {
   createDefaultCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
+import { CASE_RESOLVER_WORKSPACE_HISTORY_KEY } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import {
   CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   compactCaseResolverWorkspaceForPersist,
@@ -125,6 +126,89 @@ describe('case-resolver workspace persistence', () => {
     if (result.ok) {
       expect(result.idempotent).toBe(true);
       expect(result.workspace.lastMutationId).toBe('mutation-repeat');
+    }
+  });
+
+  it('persists detached history sidecar and keeps primary workspace payload history-free', async () => {
+    const workspaceWithHistory = {
+      ...createDefaultCaseResolverWorkspace(),
+      workspaceRevision: 5,
+      files: [
+        createCaseResolverFile({
+          id: 'doc-with-history',
+          fileType: 'document',
+          name: 'Doc With History',
+          documentContent: '<p>Hello</p>',
+          documentContentHtml: '<p>Hello</p>',
+          documentHistory: [
+            {
+              id: 'doc-history-1',
+              savedAt: '2026-03-01T10:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>History</p>',
+              documentContentMarkdown: 'History',
+              documentContentHtml: '<p>History</p>',
+              documentContentPlainText: 'History',
+            },
+          ],
+        }),
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(200, { key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY, value: 'ok' }))
+      .mockImplementationOnce(async (_url: string, init?: RequestInit): Promise<Response> => {
+        const body = JSON.parse(String(init?.body ?? '{}')) as { key?: string; value?: string };
+        return toJsonResponse(200, {
+          key: body.key,
+          value: body.value,
+        });
+      });
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await persistCaseResolverWorkspaceSnapshot({
+      workspace: workspaceWithHistory,
+      expectedRevision: 4,
+      mutationId: 'mutation-with-history',
+      source: 'test',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const detachedHistoryBody = JSON.parse(
+      String((fetchMock.mock.calls[0]?.[1] as RequestInit)?.body ?? '{}')
+    ) as {
+      key?: string;
+      value?: string;
+    };
+    expect(detachedHistoryBody.key).toBe(CASE_RESOLVER_WORKSPACE_HISTORY_KEY);
+    const detachedHistoryPayload = JSON.parse(detachedHistoryBody.value ?? '{}') as {
+      workspaceRevision?: number;
+      files?: Array<{ id: string; documentHistory: unknown[] }>;
+    };
+    expect(detachedHistoryPayload.workspaceRevision).toBe(5);
+    expect(detachedHistoryPayload.files?.[0]?.id).toBe('doc-with-history');
+    expect(detachedHistoryPayload.files?.[0]?.documentHistory?.length).toBeGreaterThan(0);
+
+    const primaryWorkspaceBody = JSON.parse(
+      String((fetchMock.mock.calls[1]?.[1] as RequestInit)?.body ?? '{}')
+    ) as {
+      key?: string;
+      value?: string;
+    };
+    expect(primaryWorkspaceBody.key).toBe(CASE_RESOLVER_WORKSPACE_KEY);
+    const primaryWorkspacePayload = JSON.parse(primaryWorkspaceBody.value ?? '{}') as {
+      files?: Array<Record<string, unknown>>;
+    };
+    expect(primaryWorkspacePayload.files?.[0]).not.toHaveProperty('documentHistory');
+
+    if (result.ok) {
+      const restoredHistory = result.workspace.files.find((file) => file.id === 'doc-with-history')
+        ?.documentHistory;
+      expect(restoredHistory?.length).toBeGreaterThan(0);
     }
   });
 
@@ -314,6 +398,147 @@ describe('case-resolver workspace persistence', () => {
     expect(fetchMock.mock.calls[1]?.[0]).toBe(
       `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
+  });
+
+  it('hydrates detached history sidecar when explicitly requested', async () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      workspaceRevision: 12,
+      files: [
+        createCaseResolverFile({
+          id: 'doc-history-detached',
+          fileType: 'document',
+          name: 'Doc Detached',
+          documentContent: '<p>Hello</p>',
+          documentContentHtml: '<p>Hello</p>',
+          documentHistory: [],
+        }),
+      ],
+    };
+    const detachedHistoryPayload = {
+      schema: 'case_resolver_workspace_detached_history_v1',
+      workspaceRevision: 12,
+      files: [
+        {
+          id: 'doc-history-detached',
+          documentHistory: [
+            {
+              id: 'detached-1',
+              savedAt: '2026-03-01T12:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>Detached</p>',
+              documentContentMarkdown: 'Detached',
+              documentContentHtml: '<p>Detached</p>',
+              documentContentPlainText: 'Detached',
+            },
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: JSON.stringify(detachedHistoryPayload),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      includeDetachedHistory: true,
+      requiredFileId: null,
+      strategy: 'light_only',
+    });
+
+    expect(result.status).toBe('resolved');
+    if (result.status === 'resolved') {
+      const file = result.workspace.files.find((entry) => entry.id === 'doc-history-detached');
+      expect(file?.documentHistory.length).toBe(1);
+      expect(file?.documentHistory[0]?.id).toBe('detached-1');
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_HISTORY_KEY)}`
+    );
+  });
+
+  it('skips detached history hydration when mutation id does not match workspace mutation', async () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      workspaceRevision: 22,
+      lastMutationId: 'server-mutation',
+      files: [
+        createCaseResolverFile({
+          id: 'doc-history-detached-mismatch',
+          fileType: 'document',
+          name: 'Doc Detached Mismatch',
+          documentContent: '<p>Hello</p>',
+          documentContentHtml: '<p>Hello</p>',
+          documentHistory: [],
+        }),
+      ],
+    };
+    const detachedHistoryPayload = {
+      schema: 'case_resolver_workspace_detached_history_v1',
+      workspaceRevision: 22,
+      lastMutationId: 'stale-mutation',
+      files: [
+        {
+          id: 'doc-history-detached-mismatch',
+          documentHistory: [
+            {
+              id: 'detached-stale-1',
+              savedAt: '2026-03-01T12:00:00.000Z',
+              documentContentVersion: 1,
+              activeDocumentVersion: 'original',
+              editorType: 'wysiwyg',
+              documentContent: '<p>Detached stale</p>',
+              documentContentMarkdown: 'Detached stale',
+              documentContentHtml: '<p>Detached stale</p>',
+              documentContentPlainText: 'Detached stale',
+            },
+          ],
+        },
+      ],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: JSON.stringify(detachedHistoryPayload),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecordDetailed('test_source', {
+      includeDetachedHistory: true,
+      requiredFileId: null,
+      strategy: 'light_only',
+    });
+
+    expect(result.status).toBe('resolved');
+    if (result.status === 'resolved') {
+      const file = result.workspace.files.find(
+        (entry) => entry.id === 'doc-history-detached-mismatch'
+      );
+      expect(file?.documentHistory.length).toBe(0);
+    }
   });
 
   it('continues to keyed heavy when keyed light workspace is missing the required file', async () => {
@@ -702,6 +927,53 @@ describe('case-resolver workspace persistence', () => {
     expect(
       compactedMigratedNodeAsset?.metadata?.[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]
     ).toBe('keyed');
+  });
+
+  it('caps persisted document history and strips verbose history metadata fields', () => {
+    const largeHistory = Array.from({ length: 20 }, (_, index) => ({
+      id: `doc-history-${index + 1}`,
+      savedAt: `2026-02-26T10:${String(index).padStart(2, '0')}:00.000Z`,
+      documentContentVersion: index + 1,
+      editorType: 'wysiwyg' as const,
+      activeDocumentVersion: 'original' as const,
+      documentContent: `<p>History ${index + 1}</p>`,
+      documentContentMarkdown: `History ${index + 1}`,
+      documentContentHtml: `<p>History ${index + 1}</p>`,
+      documentContentPlainText: `History ${index + 1}`,
+      changes: {
+        before: 'a'.repeat(200),
+        after: 'b'.repeat(200),
+      },
+      userId: 'user-1',
+      documentId: 'doc-1',
+      action: 'autosave',
+      timestamp: `2026-02-26T10:${String(index).padStart(2, '0')}:00.000Z`,
+    }));
+    const documentFile = createCaseResolverFile({
+      id: 'doc-history-heavy',
+      fileType: 'document',
+      name: 'Doc History Heavy',
+      documentContent: '<p>Hello</p>',
+      documentContentHtml: '<p>Hello</p>',
+      documentHistory: largeHistory,
+    });
+
+    const compacted = compactCaseResolverWorkspaceForPersist({
+      ...createDefaultCaseResolverWorkspace(),
+      files: [documentFile],
+    });
+    const compactedDoc = compacted.files.find((file) => file.id === 'doc-history-heavy');
+    const compactedHistory = compactedDoc?.documentHistory ?? [];
+    const firstHistoryEntry = compactedHistory[0] as Record<string, unknown> | undefined;
+
+    expect(compactedHistory.length).toBeLessThan(largeHistory.length);
+    expect(compactedHistory.length).toBeLessThanOrEqual(12);
+    expect(firstHistoryEntry).toBeDefined();
+    expect(firstHistoryEntry && 'changes' in firstHistoryEntry).toBe(false);
+    expect(firstHistoryEntry && 'userId' in firstHistoryEntry).toBe(false);
+    expect(firstHistoryEntry && 'documentId' in firstHistoryEntry).toBe(false);
+    expect(firstHistoryEntry && 'action' in firstHistoryEntry).toBe(false);
+    expect(firstHistoryEntry && 'timestamp' in firstHistoryEntry).toBe(false);
   });
 
   it('strips inline node-file snapshot text during workspace compaction', () => {

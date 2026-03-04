@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
-import { useCanvasRefs } from '@/features/ai/ai-paths/context/CanvasContext';
-import { useGraphActions } from '@/features/ai/ai-paths/context/GraphContext';
+import {
+  useCanvasActions,
+  useCanvasRefs,
+  useCanvasState,
+} from '@/features/ai/ai-paths/context/CanvasContext';
+import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 import {
   useSelectionActions,
   useSelectionState,
@@ -22,10 +26,6 @@ import { useCanvasConnection } from './hooks/useCanvasConnection';
 import { isEditableElement } from './utils/canvas-interaction-utils';
 
 type UseAiPathsCanvasInteractionsArgs = {
-  nodes: AiNode[];
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  edges: Edge[];
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   isPathLocked: boolean;
   isPathSwitching?: boolean;
   selectedNodeId: string | null;
@@ -112,10 +112,6 @@ export function useAiPathsCanvasInteractions(
   args: UseAiPathsCanvasInteractionsArgs
 ): AiPathsCanvasInteractions {
   const {
-    nodes,
-    setNodes,
-    edges,
-    setEdges,
     isPathLocked,
     isPathSwitching = false,
     selectedNodeId,
@@ -128,8 +124,17 @@ export function useAiPathsCanvasInteractions(
   } = args;
 
   const { viewportRef, canvasRef } = useCanvasRefs();
-  const [lastDrop, setLastDrop] = useState<{ x: number; y: number } | null>(null);
-  const lastDropTimerRef = useRef<number | null>(null);
+  const { dragState: dragStateCtx, connecting: connectingCtx, connectingPos: connectingPosCtx, lastDrop } =
+    useCanvasState();
+  const {
+    startDrag,
+    endDrag,
+    setConnecting: setConnectingCtx,
+    setConnectingPos: setConnectingPosCtx,
+    startConnection,
+    endConnection,
+    setLastDrop: setLastDropCtx,
+  } = useCanvasActions();
   const lockedToastAtRef = useRef<number>(0);
 
   const {
@@ -138,8 +143,29 @@ export function useAiPathsCanvasInteractions(
     selectedNodeIds: selectedNodeIdsCtx,
   } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
+  const { nodes: graphNodes, edges: graphEdges } = useGraphState();
   const { setNodes: setGraphNodes, setEdges: setGraphEdges } = useGraphActions();
   const { ConfirmationModal } = useConfirm();
+
+  const setNodesViaGraph = useCallback(
+    (nextNodes: AiNode[] | ((prev: AiNode[]) => AiNode[])): void => {
+      setGraphNodes(nextNodes, {
+        reason: 'update',
+        source: 'settings.canvas.compat.setNodesViaGraph',
+      });
+    },
+    [setGraphNodes]
+  );
+
+  const setEdgesViaGraph = useCallback(
+    (nextEdges: Edge[] | ((prev: Edge[]) => Edge[])): void => {
+      setGraphEdges(nextEdges, {
+        reason: 'update',
+        source: 'settings.canvas.compat.setEdgesViaGraph',
+      });
+    },
+    [setGraphEdges]
+  );
 
   const notifyLocked = useCallback((): void => {
     const now = Date.now();
@@ -172,8 +198,11 @@ export function useAiPathsCanvasInteractions(
     handleDragOver,
     handleDrop,
   } = useCanvasNodeDrag({
-    nodes,
-    setNodes,
+    nodes: graphNodes,
+    setNodes: setNodesViaGraph,
+    dragState: dragStateCtx,
+    startDrag,
+    endDrag,
     view,
     viewportRef,
     canvasRef,
@@ -183,7 +212,7 @@ export function useAiPathsCanvasInteractions(
     toast,
     setSelectedNodeId,
     ensureNodeVisible,
-    setLastDrop,
+    setLastDrop: setLastDropCtx,
   });
 
   const {
@@ -199,9 +228,15 @@ export function useAiPathsCanvasInteractions(
     edgePaths,
     connectingFromNode,
   } = useCanvasConnection({
-    nodes,
-    edges,
-    setEdges,
+    nodes: graphNodes,
+    edges: graphEdges,
+    setEdges: setEdgesViaGraph,
+    connecting: connectingCtx,
+    setConnecting: setConnectingCtx,
+    connectingPos: connectingPosCtx,
+    setConnectingPos: setConnectingPosCtx,
+    startConnection,
+    endConnection,
     view,
     viewportRef,
     isPathLocked,
@@ -211,23 +246,6 @@ export function useAiPathsCanvasInteractions(
     clearRuntimeInputsForEdges,
     toast,
   });
-
-  useEffect((): void | (() => void) => {
-    if (!lastDrop) return;
-    if (lastDropTimerRef.current) {
-      window.clearTimeout(lastDropTimerRef.current);
-    }
-    lastDropTimerRef.current = window.setTimeout((): void => {
-      setLastDrop(null);
-      lastDropTimerRef.current = null;
-    }, 1600);
-    return (): void => {
-      if (lastDropTimerRef.current) {
-        window.clearTimeout(lastDropTimerRef.current);
-        lastDropTimerRef.current = null;
-      }
-    };
-  }, [lastDrop]);
 
   useEffect((): void | (() => void) => {
     const handleWindowPointerDown = (event: PointerEvent): void => {
@@ -262,7 +280,7 @@ export function useAiPathsCanvasInteractions(
           : [];
     if (nodeIdsToDelete.length === 0) {
       if (selectedEdgeId) {
-        const edgeDeleteResult = computeEdgeSelectionDeleteResult(edges, [selectedEdgeId]);
+        const edgeDeleteResult = computeEdgeSelectionDeleteResult(graphEdges, [selectedEdgeId]);
         if (edgeDeleteResult.edgeIds.length === 0) return;
         setGraphEdges(edgeDeleteResult.remainingEdges, {
           reason: 'delete',
@@ -277,11 +295,11 @@ export function useAiPathsCanvasInteractions(
       notifyLocked();
       return;
     }
-    const deleteResult = computeNodeSelectionDeleteResult(nodes, edges, nodeIdsToDelete);
+    const deleteResult = computeNodeSelectionDeleteResult(graphNodes, graphEdges, nodeIdsToDelete);
     if (deleteResult.nodeIds.length === 0) return;
     const isSingleNode = deleteResult.nodeIds.length === 1;
     const targetNode = isSingleNode
-      ? nodes.find((node: AiNode): boolean => node.id === deleteResult.nodeIds[0])
+      ? graphNodes.find((node: AiNode): boolean => node.id === deleteResult.nodeIds[0])
       : null;
     const label = isSingleNode
       ? (targetNode?.title ?? 'this node')
@@ -322,10 +340,10 @@ export function useAiPathsCanvasInteractions(
     selectedNodeId,
     selectedEdgeId,
     isPathLocked,
-    nodes,
+    graphNodes,
     confirm,
     notifyLocked,
-    edges,
+    graphEdges,
     setGraphEdges,
     setGraphNodes,
     clearRuntimeInputsForEdges,
@@ -358,8 +376,11 @@ export function useAiPathsCanvasInteractions(
   ]);
 
   useEffect((): void => {
-    setEdges((prev: Edge[]): Edge[] => sanitizeEdges(nodes, prev));
-  }, [nodes, setEdges]);
+    setGraphEdges((prev: Edge[]): Edge[] => sanitizeEdges(graphNodes, prev), {
+      reason: 'update',
+      source: 'settings.canvas.compat.sanitizeEdges',
+    });
+  }, [graphNodes, setGraphEdges]);
 
   const handlePanStart = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (connecting) {
@@ -422,7 +443,7 @@ export function useAiPathsCanvasInteractions(
   };
 
   const fitToNodes = (): void => {
-    fitToNodesView(nodes);
+    fitToNodesView(graphNodes);
   };
 
   return {

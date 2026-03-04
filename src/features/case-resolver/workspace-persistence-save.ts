@@ -11,6 +11,7 @@ import {
 import {
   formatByteCount,
   getCaseResolverWorkspaceRevision,
+  readPositiveIntegerEnv,
   safeParseJson,
 } from './utils/workspace-persistence-utils';
 
@@ -18,6 +19,7 @@ import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
   type SettingsRecordLike,
 } from './utils/workspace-settings-persistence-helpers';
 
@@ -31,8 +33,24 @@ import {
   isCaseResolverWorkspacePayloadTooLarge,
   readWorkspaceFromSettingRecord,
 } from './workspace-persistence-shared';
+import {
+  applyCaseResolverWorkspaceDetachedHistoryPayload,
+  buildCaseResolverWorkspaceDetachedHistoryPayload,
+  stripCaseResolverWorkspaceDetachedHistory,
+} from './workspace-persistence-detached-history';
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
+const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT = 12;
+const CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES_DEFAULT = 900_000;
+
+const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT = readPositiveIntegerEnv(
+  'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT',
+  CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT
+);
+const CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES = readPositiveIntegerEnv(
+  'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES',
+  CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES_DEFAULT
+);
 
 export type PersistWorkspaceInput = {
   workspace: CaseResolverWorkspace;
@@ -48,16 +66,35 @@ const summarizeWorkspacePersistPayload = (
   assetBytes: number;
   nodeFileInlineBytes: number;
   settingsBytes: number;
+  historyBytes: number;
+  historyEntryCount: number;
   largestEntries: string[];
+  largestHistoryFiles: string[];
 } => {
   const largestEntries: Array<{ label: string; bytes: number }> = [];
+  const historyByFile: Array<{ id: string; bytes: number; entries: number }> = [];
   const registerLargest = (label: string, bytes: number): void => {
     largestEntries.push({ label, bytes });
   };
 
+  let historyBytes = 0;
+  let historyEntryCount = 0;
   const fileBytes = (workspace.files ?? []).reduce((sum, file): number => {
     const bytes = JSON.stringify(file).length;
     registerLargest(`file:${file.id}:${file.name}`, bytes);
+    const fileHistory = Array.isArray(file.documentHistory) ? file.documentHistory : [];
+    const fileHistoryBytes = fileHistory.reduce((historySum, entry): number => {
+      return historySum + JSON.stringify(entry).length;
+    }, 0);
+    historyBytes += fileHistoryBytes;
+    historyEntryCount += fileHistory.length;
+    if (fileHistoryBytes > 0) {
+      historyByFile.push({
+        id: file.id,
+        bytes: fileHistoryBytes,
+        entries: fileHistory.length,
+      });
+    }
     return sum + bytes;
   }, 0);
   const assetBytes = (workspace.assets ?? []).reduce((sum, asset): number => {
@@ -79,10 +116,19 @@ const summarizeWorkspacePersistPayload = (
     assetBytes,
     nodeFileInlineBytes,
     settingsBytes,
+    historyBytes,
+    historyEntryCount,
     largestEntries: largestEntries
       .sort((left, right): number => right.bytes - left.bytes)
       .slice(0, 5)
       .map((entry): string => `${entry.label}=${formatByteCount(entry.bytes)}`),
+    largestHistoryFiles: historyByFile
+      .sort((left, right): number => right.bytes - left.bytes)
+      .slice(0, 5)
+      .map(
+        (entry): string =>
+          `file:${entry.id}=${formatByteCount(entry.bytes)}(${entry.entries} entries)`
+      ),
   };
 };
 
@@ -113,34 +159,43 @@ const normalizeNodeFileAssetForPersist = (
 export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
+  type PersistedHistoryEntry = CaseResolverWorkspace['files'][number]['documentHistory'][number];
   const compactedFiles = Array.isArray(workspace.files)
     ? workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
       const fileRecord = file as unknown as Record<string, unknown>;
       const isScanFile = file.fileType === 'scanfile';
       const rawHistory = fileRecord['documentHistory'];
-      const compactedHistory = Array.isArray(rawHistory)
-        ? rawHistory.map((entry: unknown) => {
-          if (!entry || typeof entry !== 'object') return entry;
-          const entryRecord = entry as Record<string, unknown>;
-          const rest = { ...entryRecord };
-          if (isScanFile) {
-            delete rest['documentContent'];
-            delete rest['documentContentHtml'];
-            delete rest['documentContentPlainText'];
-          } else {
-            const htmlValue =
-                  typeof rest['documentContentHtml'] === 'string'
-                    ? rest['documentContentHtml']
-                    : '';
-            if (htmlValue.trim().length > 0) {
+      const compactedHistory: PersistedHistoryEntry[] = Array.isArray(rawHistory)
+        ? rawHistory
+          .slice(0, CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT)
+          .filter(
+            (entry: unknown): entry is Record<string, unknown> =>
+              Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+          )
+          .map((entryRecord): PersistedHistoryEntry => {
+            const rest = { ...entryRecord };
+            // Keep history snapshots lightweight in persisted workspace.
+            delete rest['changes'];
+            delete rest['timestamp'];
+            delete rest['documentId'];
+            delete rest['userId'];
+            delete rest['action'];
+            if (isScanFile) {
               delete rest['documentContent'];
+              delete rest['documentContentHtml'];
+              delete rest['documentContentPlainText'];
+            } else {
+              const htmlValue =
+                typeof rest['documentContentHtml'] === 'string' ? rest['documentContentHtml'] : '';
+              if (htmlValue.trim().length > 0) {
+                delete rest['documentContent'];
+              }
+              delete rest['documentContentMarkdown'];
+              delete rest['documentContentPlainText'];
             }
-            delete rest['documentContentMarkdown'];
-            delete rest['documentContentPlainText'];
-          }
-          return rest;
-        })
-        : rawHistory;
+            return rest as PersistedHistoryEntry;
+          })
+        : [];
       if (isScanFile) {
         const {
           documentContent: _content,
@@ -150,10 +205,19 @@ export const compactCaseResolverWorkspaceForPersist = (
           explodedDocumentContent: _exploded,
           ...fileRest
         } = file;
-        return {
+        const compactedFile = {
           ...fileRest,
-          documentHistory: compactedHistory,
         } as CaseResolverWorkspace['files'][number];
+        if (compactedHistory.length > 0) {
+          compactedFile.documentHistory = compactedHistory;
+        }
+        if (
+          Array.isArray(compactedFile.documentConversionWarnings) &&
+          compactedFile.documentConversionWarnings.length === 0
+        ) {
+          delete (compactedFile as Record<string, unknown>)['documentConversionWarnings'];
+        }
+        return compactedFile;
       }
       const {
         documentContentMarkdown: _markdown,
@@ -167,10 +231,19 @@ export const compactCaseResolverWorkspaceForPersist = (
       ) {
         delete (fileRest as Record<string, unknown>)['documentContent'];
       }
-      return {
+      const compactedFile = {
         ...fileRest,
-        documentHistory: compactedHistory,
       } as CaseResolverWorkspace['files'][number];
+      if (compactedHistory.length > 0) {
+        compactedFile.documentHistory = compactedHistory;
+      }
+      if (
+        Array.isArray(compactedFile.documentConversionWarnings) &&
+        compactedFile.documentConversionWarnings.length === 0
+      ) {
+        delete (compactedFile as Record<string, unknown>)['documentConversionWarnings'];
+      }
+      return compactedFile;
     })
     : workspace.files;
 
@@ -217,7 +290,15 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       error: message,
     };
   }
-  let workspaceForPersistPipeline = normalizedWorkspace;
+  const normalizedMutationId = input.mutationId.trim();
+  let workspaceForPersistPipeline =
+    normalizedMutationId.length > 0 && normalizedWorkspace.lastMutationId !== normalizedMutationId
+      ? {
+        ...normalizedWorkspace,
+        lastMutationId: normalizedMutationId,
+        lastMutationAt: normalizedWorkspace.lastMutationAt ?? new Date().toISOString(),
+      }
+      : normalizedWorkspace;
   const normalizationDiagnostics =
     getCaseResolverWorkspaceNormalizationDiagnostics(normalizedWorkspace);
   logCaseResolverWorkspaceEvent({
@@ -252,8 +333,16 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       error: message,
     };
   }
-  const serializedWorkspace = JSON.stringify(workspaceForPersist);
+  const detachedHistoryPayload = buildCaseResolverWorkspaceDetachedHistoryPayload(workspaceForPersist);
+  const hasDetachedHistoryPayload = detachedHistoryPayload.files.length > 0;
+  const serializedDetachedHistoryPayload = hasDetachedHistoryPayload
+    ? JSON.stringify(detachedHistoryPayload)
+    : '';
+  const detachedHistoryPayloadBytes = serializedDetachedHistoryPayload.length;
+  const workspaceForPersistPrimary = stripCaseResolverWorkspaceDetachedHistory(workspaceForPersist);
+  const serializedWorkspace = JSON.stringify(workspaceForPersistPrimary);
   const payloadBytes = serializedWorkspace.length;
+  const payloadSummary = summarizeWorkspacePersistPayload(workspaceForPersist);
   logCaseResolverWorkspaceEvent({
     source: input.source,
     action: 'persist_attempt',
@@ -262,9 +351,29 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
     payloadBytes,
   });
+  if (payloadBytes >= CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES) {
+    logCaseResolverWorkspaceEvent({
+      source: input.source,
+      action: 'persist_payload_profile',
+      mutationId: input.mutationId,
+      expectedRevision: input.expectedRevision,
+      workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+      payloadBytes,
+      message: [
+        `threshold=${formatByteCount(CASE_RESOLVER_WORKSPACE_PAYLOAD_PROFILE_WARN_BYTES)}`,
+        `files=${formatByteCount(payloadSummary.fileBytes)}`,
+        `assets=${formatByteCount(payloadSummary.assetBytes)}`,
+        `history=${formatByteCount(payloadSummary.historyBytes)}(${payloadSummary.historyEntryCount} entries)`,
+        `detached_history=${formatByteCount(detachedHistoryPayloadBytes)}`,
+        `nodefile_inline=${formatByteCount(payloadSummary.nodeFileInlineBytes)}`,
+        `settings=${formatByteCount(payloadSummary.settingsBytes)}`,
+        `largest=${payloadSummary.largestEntries.join(', ')}`,
+        `largest_history=${payloadSummary.largestHistoryFiles.join(', ')}`,
+      ].join(' '),
+    });
+  }
   if (isCaseResolverWorkspacePayloadTooLarge(payloadBytes)) {
     const maxPayloadBytes = getCaseResolverWorkspaceMaxPayloadBytes();
-    const payloadSummary = summarizeWorkspacePersistPayload(workspaceForPersist);
     const message = [
       'Case Resolver workspace is too large to save safely.',
       `Payload: ${formatByteCount(payloadBytes)}.`,
@@ -283,9 +392,12 @@ export const persistCaseResolverWorkspaceSnapshot = async (
         message,
         `files=${formatByteCount(payloadSummary.fileBytes)}`,
         `assets=${formatByteCount(payloadSummary.assetBytes)}`,
+        `history=${formatByteCount(payloadSummary.historyBytes)}(${payloadSummary.historyEntryCount} entries)`,
+        `detached_history=${formatByteCount(detachedHistoryPayloadBytes)}`,
         `nodefile_inline=${formatByteCount(payloadSummary.nodeFileInlineBytes)}`,
         `settings=${formatByteCount(payloadSummary.settingsBytes)}`,
         `largest=${payloadSummary.largestEntries.join(', ')}`,
+        `largest_history=${payloadSummary.largestHistoryFiles.join(', ')}`,
       ].join(' '),
     });
     return {
@@ -293,6 +405,70 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       conflict: false,
       error: message,
     };
+  }
+
+  if (hasDetachedHistoryPayload) {
+    let detachedHistoryResponse: Response;
+    try {
+      detachedHistoryResponse = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+          value: serializedDetachedHistoryPayload,
+        }),
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to persist detached Case Resolver workspace history.';
+      logCaseResolverWorkspaceEvent({
+        source: input.source,
+        action: 'persist_detached_history_failed',
+        mutationId: input.mutationId,
+        expectedRevision: input.expectedRevision,
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
+        payloadBytes: detachedHistoryPayloadBytes,
+        durationMs: Date.now() - startedAt,
+        message,
+      });
+      return {
+        ok: false,
+        conflict: false,
+        error: message,
+      };
+    }
+    if (!detachedHistoryResponse.ok) {
+      const detachedRawText = await detachedHistoryResponse.text();
+      const detachedPayload = detachedRawText.trim().length
+        ? safeParseJson<SettingsRecordLike>(detachedRawText)
+        : null;
+      const message =
+        (detachedPayload &&
+        typeof detachedPayload.value === 'string' &&
+        detachedPayload.value.trim().length > 0
+          ? detachedPayload.value
+          : null) ??
+        `Failed to persist detached Case Resolver workspace history (${detachedHistoryResponse.status}).`;
+      logCaseResolverWorkspaceEvent({
+        source: input.source,
+        action: 'persist_detached_history_failed',
+        mutationId: input.mutationId,
+        expectedRevision: input.expectedRevision,
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
+        payloadBytes: detachedHistoryPayloadBytes,
+        durationMs: Date.now() - startedAt,
+        message,
+      });
+      return {
+        ok: false,
+        conflict: false,
+        error: message,
+      };
+    }
   }
 
   let response: Response;
@@ -321,7 +497,10 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   const payload = rawText.trim().length > 0 ? safeParseJson<SettingsRecordLike>(rawText) : null;
 
   if (response.ok) {
-    const nextWorkspace = readWorkspaceFromSettingRecord(payload, serializedWorkspace);
+    const nextWorkspace = applyCaseResolverWorkspaceDetachedHistoryPayload({
+      workspace: readWorkspaceFromSettingRecord(payload, serializedWorkspace),
+      detachedHistoryPayload: hasDetachedHistoryPayload ? detachedHistoryPayload : null,
+    });
     logCaseResolverWorkspaceEvent({
       source: input.source,
       action: 'persist_success',

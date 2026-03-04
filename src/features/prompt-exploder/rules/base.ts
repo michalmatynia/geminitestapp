@@ -16,7 +16,7 @@ export const isCaseResolverExploderScope = (scope: string | null | undefined): b
 
 export const normalizeRuleScopes = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  fallbackScope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
+  fallbackScope: PromptExploderRuntimeValidationScope
 ): PromptValidationScope[] => {
   if (Array.isArray(scopes) && scopes.length > 0) {
     return [...new Set(scopes)] as PromptValidationScope[];
@@ -29,7 +29,7 @@ export const normalizeRuleScopes = (
 
 export const includesScope = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
+  scope: PromptExploderRuntimeValidationScope
 ): boolean => {
   if (!Array.isArray(scopes) || scopes.length === 0) return true;
   const activeRuleScope = isCaseResolverExploderScope(scope)
@@ -40,7 +40,7 @@ export const includesScope = (
 
 export const remapExploderScopesForTarget = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  targetScope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
+  targetScope: PromptExploderRuntimeValidationScope
 ): PromptValidationScope[] => {
   const normalizedScopes = normalizeRuleScopes(scopes, targetScope);
   if (includesScope(normalizedScopes, targetScope)) {
@@ -112,8 +112,7 @@ export const createRegexRule = (rule: {
   passOutputToNext: true,
   appliesToScopes: rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchEnabled: false,
-  launchAppliesToScopes: rule.launchAppliesToScopes ??
-    rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
+  launchAppliesToScopes: rule.launchAppliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchScopeBehavior: 'gate',
   launchOperator: 'contains',
   launchValue: null,

@@ -1,7 +1,7 @@
 import { type AiNode, type DatabaseConfig, type DbQueryConfig } from '@/shared/contracts/ai-paths';
 import { DATABASE_INPUT_PORTS } from '../../constants';
 import { ensureUniquePorts } from '../../utils/graph.ports';
-import { migrateLegacyDbQueryProvider, normalizeTemplateText } from '../normalization.helpers';
+import { normalizeTemplateText } from '../normalization.helpers';
 
 export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const defaultQuery = {
@@ -17,15 +17,14 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
     projection: '',
     single: false,
   };
-  const legacyDbQuery = (node.config as Record<string, unknown> | undefined)?.['dbQuery'];
   const queryConfig = {
     ...defaultQuery,
-    ...(node.config?.database?.query ??
-      (legacyDbQuery && typeof legacyDbQuery === 'object'
-        ? (legacyDbQuery as Record<string, unknown>)
-        : {})),
+    ...(node.config?.database?.query ?? {}),
   };
-  const migratedQueryConfig = migrateLegacyDbQueryProvider(queryConfig as DbQueryConfig);
+  const normalizedQueryConfig: DbQueryConfig = {
+    ...(queryConfig as DbQueryConfig),
+    queryTemplate: normalizeTemplateText(queryConfig.queryTemplate ?? ''),
+  };
   const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
   const mappings = databaseConfig.mappings ?? [];
   const forcedInputs = ['result', 'content_en', 'productId', 'entityId'];
@@ -70,7 +69,7 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         distinctField: databaseConfig.distinctField ?? '',
         updateTemplate: normalizeTemplateText(databaseConfig.updateTemplate ?? ''),
         mappings,
-        query: migratedQueryConfig,
+        query: normalizedQueryConfig,
         writeSource: databaseConfig.writeSource ?? 'bundle',
         writeSourcePath: databaseConfig.writeSourcePath ?? '',
         dryRun: databaseConfig.dryRun ?? false,

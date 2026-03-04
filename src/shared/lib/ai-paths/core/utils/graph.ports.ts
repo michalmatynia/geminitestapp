@@ -11,13 +11,6 @@ export const normalizePortName = (port: string): string => {
   const normalized = trimmed.toLowerCase();
   if (normalized === 'productjson') return 'entityJson';
   if (normalized === 'simulation') return 'context';
-  if (
-    normalized === 'images (urls)' ||
-    normalized === 'images(urls)' ||
-    normalized === 'image urls'
-  ) {
-    return 'images';
-  }
   if (normalized === 'text') return 'value';
   return trimmed;
 };

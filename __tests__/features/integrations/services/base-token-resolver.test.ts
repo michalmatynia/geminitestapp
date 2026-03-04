@@ -23,7 +23,6 @@ describe('base-token-resolver', () => {
     const encrypted = encryptSecret(token);
     const resolved = resolveBaseConnectionToken({
       baseApiToken: encrypted,
-      password: encryptSecret('password-fallback'),
     });
 
     expect(resolved).toEqual({
@@ -33,24 +32,19 @@ describe('base-token-resolver', () => {
     });
   });
 
-  it('falls back to password when baseApiToken is empty', () => {
-    const passwordToken = 'password-token';
+  it('does not fall back when baseApiToken is empty', () => {
     const resolved = resolveBaseConnectionToken({
       baseApiToken: '',
-      password: encryptSecret(passwordToken),
     });
 
-    expect(resolved).toEqual({
-      token: passwordToken,
-      source: 'password',
-      error: null,
-    });
+    expect(resolved.token).toBeNull();
+    expect(resolved.source).toBeNull();
+    expect(resolved.error).toContain('Legacy password token fallback is disabled');
   });
 
   it('accepts plaintext token for legacy/plain storage', () => {
     const resolved = resolveBaseConnectionToken({
       baseApiToken: 'plain-token',
-      password: null,
     });
 
     expect(resolved).toEqual({
@@ -63,7 +57,6 @@ describe('base-token-resolver', () => {
   it('returns actionable error for undecryptable encrypted-like token', () => {
     const resolved = resolveBaseConnectionToken({
       baseApiToken: 'YWJj:ZGVm:Z2hp',
-      password: null,
     });
 
     expect(resolved.token).toBeNull();

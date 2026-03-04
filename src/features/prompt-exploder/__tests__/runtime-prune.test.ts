@@ -11,6 +11,11 @@ const forbiddenRuntimeCompatTokens = [
   "scope === 'case-resolver-prompt-exploder'",
   'runtime_retry_success',
   'runtime_retry',
+  'parseStoredValidationRuleStack',
+  'stack.id ??',
+];
+const forbiddenRuntimeCompatPatterns: RegExp[] = [
+  /launchAppliesToScopes:\s*rule\.launchAppliesToScopes\s*\?\?\s*rule\.appliesToScopes/s,
 ];
 
 const collectSourceFiles = (dir: string): string[] => {
@@ -40,7 +45,10 @@ describe('prompt exploder runtime legacy-compat prune guard', () => {
     const offenders = sourceFiles
       .filter((absolutePath: string): boolean => {
         const content = readFileSync(absolutePath, 'utf8');
-        return forbiddenRuntimeCompatTokens.some((token: string): boolean => content.includes(token));
+        return (
+          forbiddenRuntimeCompatTokens.some((token: string): boolean => content.includes(token)) ||
+          forbiddenRuntimeCompatPatterns.some((pattern: RegExp): boolean => pattern.test(content))
+        );
       })
       .map((absolutePath: string): string => path.relative(projectRoot, absolutePath));
 

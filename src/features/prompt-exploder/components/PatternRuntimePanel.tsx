@@ -141,9 +141,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
       (option) => option.value === activeValidationRuleStack
     )?.label;
     if (optionLabel) return optionLabel;
-    return typeof activeValidationRuleStack === 'string'
-      ? activeValidationRuleStack
-      : activeValidationRuleStack?.name || activeValidationRuleStack?.id || 'anonymous';
+    return activeValidationRuleStack;
   }, [activeValidationRuleStack, validationStackOptions]);
   const isCaseResolverStack = React.useMemo(
     () =>
@@ -306,11 +304,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
           <SelectSimple
             size='sm'
-            value={
-              typeof learningDraft.runtimeValidationRuleStack === 'string'
-                ? learningDraft.runtimeValidationRuleStack
-                : learningDraft.runtimeValidationRuleStack?.id || ''
-            }
+            value={learningDraft.runtimeValidationRuleStack}
             onValueChange={(value: string) => {
               setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
@@ -318,7 +312,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               }));
             }}
             options={validationStackOptions.map((option) => ({
-              value: typeof option.value === 'string' ? option.value : option.value.id || '',
+              value: option.value,
               label: option.label,
             }))}
           />{' '}

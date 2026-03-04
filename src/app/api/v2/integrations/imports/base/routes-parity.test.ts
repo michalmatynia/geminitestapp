@@ -10,6 +10,7 @@ const legacyRoot = path.join(projectRoot, 'src/app/api/integrations/imports/base
 const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations/imports/base');
 const featuresRoot = path.join(projectRoot, 'src/features');
 const importExportFeatureRoot = path.join(featuresRoot, 'data-import-export');
+const importsServiceRoot = path.join(featuresRoot, 'integrations/services/imports');
 const legacyEndpointToken = '/api/integrations/imports/base';
 const legacyCsvImportEndpointToken = '/api/import';
 const legacyCatalogsEndpointToken = '/api/catalogs';
@@ -18,6 +19,8 @@ const legacyApiImportToken = "@/app/api/integrations/imports/base/";
 const legacyExportWarehouseEndpointToken = '/api/v2/integrations/imports/base/export-warehouse';
 const canonicalImportsRootEndpointToken = '/api/v2/integrations/imports/base';
 const legacyRootImportActionPattern = /action\s*:\s*['"]import['"]/;
+const legacyPasswordTokenFallbackPattern =
+  /(?:resolvedBaseConnection|connection)\.password|source:\s*['"]password['"]/;
 const expectedV2RoutePaths = [
   'route.ts',
   'parameters/route.ts',
@@ -158,6 +161,15 @@ describe('v2 integrations imports/base route migration', () => {
           legacyRootImportActionPattern.test(content)
         );
       })
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids legacy password token fallback in imports runtime code', () => {
+    const candidateFiles = [...collectSourceFiles(v2Root), ...collectSourceFiles(importsServiceRoot)];
+    const offenders = candidateFiles
+      .filter((absolute) => legacyPasswordTokenFallbackPattern.test(readFileSync(absolute, 'utf8')))
       .map((absolute) => path.relative(projectRoot, absolute));
 
     expect(offenders).toEqual([]);

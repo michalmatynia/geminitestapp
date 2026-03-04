@@ -244,7 +244,9 @@ const resolveBaseConnectionContext = async (
     throw new Error('Selected connection is not a Base.com integration.');
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     throw new Error(tokenResolution.error ?? 'No Base API token configured.');
   }
@@ -725,7 +727,7 @@ export const runBaseListingBackfill = async (options?: {
     (preferredConnectionId
       ? connections.find((entry) => entry.id === preferredConnectionId)
       : null) ??
-    connections.find((entry) => Boolean(entry.baseApiToken || entry.password)) ??
+    connections.find((entry) => Boolean(entry.baseApiToken)) ??
     connections[0];
 
   if (!connection) {

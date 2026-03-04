@@ -481,16 +481,19 @@ test.describe('AI Paths Admin Page', () => {
 
   test('should fire a trigger and surface runtime feedback', async ({ page }) => {
     await page.getByRole('tab', { name: 'Canvas' }).click();
+    await unlockPathIfLocked(page);
     await fitCanvasToNodes(page);
-
-    let triggerNode = page.locator('[data-node-root]').filter({ hasText: /trigger/i }).first();
-    if (!(await triggerNode.isVisible().catch(() => false))) {
-      triggerNode = await addNodeToCanvas(page, 'trigger', { x: 500, y: 320 });
+    const triggerNode = await addNodeToCanvas(page, 'trigger', { x: 500, y: 320 });
+    await expect(triggerNode).toBeVisible();
+    const triggerNodeId = await triggerNode.getAttribute('data-node-root');
+    expect(triggerNodeId).toBeTruthy();
+    if (!triggerNodeId) {
+      throw new Error('Expected trigger node root id.');
     }
-
-    const triggerBody = triggerNode.locator('[data-node-body]').first();
-    await expect(triggerBody).toBeVisible();
-    await selectNodeBody(triggerBody);
+    const triggerChip = page.locator(
+      `[data-node-action="fire-trigger"][data-node-id="${triggerNodeId}"]`
+    );
+    await expect(triggerChip).toBeVisible();
 
     const runtimeEventsCount = page.locator('[data-doc-id="runtime_events_count"]').first();
     await expect(runtimeEventsCount).toBeVisible();
@@ -499,9 +502,14 @@ test.describe('AI Paths Admin Page', () => {
       10
     );
 
-    const fireTriggerButton = page.getByRole('button', { name: 'Fire Trigger' }).last();
-    await expect(fireTriggerButton).toBeVisible();
-    await fireTriggerButton.click();
+    await triggerChip.click();
+    const launchingAppeared = await page
+      .getByText('Launching...')
+      .first()
+      .waitFor({ state: 'visible', timeout: 1_500 })
+      .then(() => true)
+      .catch(() => false);
+    expect(launchingAppeared).toBe(true);
     await page.waitForTimeout(500);
     const afterRuntimeCount = Number.parseInt(
       ((await runtimeEventsCount.textContent()) ?? '0').trim() || '0',

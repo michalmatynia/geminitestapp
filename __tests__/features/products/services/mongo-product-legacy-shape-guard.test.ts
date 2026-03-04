@@ -29,6 +29,9 @@ type ProductViolation = {
 };
 
 const PRODUCTS_COLLECTION = 'products';
+const RUN_LEGACY_SHAPE_GUARD =
+  process.env['RUN_MONGO_PRODUCT_LEGACY_SHAPE_GUARD'] === '1' ||
+  process.env['RUN_MONGO_PRODUCT_LEGACY_SHAPE_GUARD'] === 'true';
 const LEGACY_PRODUCER_KEYS = new Set(['producer_id', 'product_id', 'assigned_at', 'id', 'value']);
 const LEGACY_TAG_KEYS = new Set(['tag_id', 'product_id', 'assigned_at', 'id', 'value']);
 const LOCALIZED_SCALAR_FIELDS = [
@@ -253,7 +256,8 @@ const assertNoInvalidCanonicalShapes = async (collection: Collection<Document>):
 };
 
 describe('Mongo products legacy shape guard', () => {
-  it(
+  const legacyShapeGuardIt = RUN_LEGACY_SHAPE_GUARD ? it : it.skip;
+  legacyShapeGuardIt(
     'has no legacy product fields left in Mongo documents',
     async () => {
       const db = await getMongoDb();

@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
-const decryptSecretMock = vi.hoisted(() => vi.fn());
 const callBaseApiMock = vi.hoisted(() => vi.fn());
 const setImportSampleInventoryIdMock = vi.hoisted(() => vi.fn());
 const setImportSampleProductIdMock = vi.hoisted(() => vi.fn());
@@ -13,7 +12,6 @@ vi.mock('@/features/integrations/server', () => ({
     listIntegrations: listIntegrationsMock,
     listConnections: listConnectionsMock,
   })),
-  decryptSecret: decryptSecretMock,
   callBaseApi: callBaseApiMock,
   getImportSampleInventoryId: vi.fn(async () => null),
   getImportSampleProductId: vi.fn(async () => null),
@@ -35,7 +33,6 @@ describe('base import sample-product route', () => {
     listConnectionsMock.mockResolvedValue([
       { id: 'conn-1', baseApiToken: 'encrypted-token', password: null },
     ]);
-    decryptSecretMock.mockReturnValue('token-1');
     callBaseApiMock.mockResolvedValue({
       products: [{ product_id: 'p-1' }],
     });
@@ -72,7 +69,7 @@ describe('base import sample-product route', () => {
     const payload = (await response.json()) as SampleProductResponse;
 
     expect(response.status).toBe(200);
-    expect(callBaseApiMock).toHaveBeenCalledWith('token-1', 'getInventoryProductsList', {
+    expect(callBaseApiMock).toHaveBeenCalledWith('encrypted-token', 'getInventoryProductsList', {
       inventory_id: 'inventory-1',
       limit: 1,
     });

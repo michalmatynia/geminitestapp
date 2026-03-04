@@ -16,15 +16,14 @@ import { getProductRepository } from '@/features/products/server';
 export const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord
 ): TraderaApiCredentials => {
-  const fallbackSecret = connection.password ? decryptSecret(connection.password).trim() : '';
   const appId = toPositiveInt(connection.traderaApiAppId);
   const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
   const appKey = connection.traderaApiAppKey
     ? decryptSecret(connection.traderaApiAppKey).trim()
-    : fallbackSecret;
+    : '';
   const token = connection.traderaApiToken
     ? decryptSecret(connection.traderaApiToken).trim()
-    : fallbackSecret;
+    : '';
 
   if (!appId) {
     throw internalError('Tradera API App ID is missing. Update the connection credentials.');

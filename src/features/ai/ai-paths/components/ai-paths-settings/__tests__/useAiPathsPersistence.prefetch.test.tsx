@@ -48,7 +48,6 @@ const pathMock = {
   saving: false,
   persistPathConfig: vi.fn(async () => true),
   persistPathSettings: vi.fn(async () => null),
-  persistRuntimePathState: vi.fn(async () => undefined),
   buildPathSnapshot: vi.fn(() => 'snapshot'),
   lastSavedSnapshotRef: { current: null as string | null },
   setAutoSaveStatus: vi.fn(),
@@ -308,5 +307,99 @@ describe('useAiPathsPersistence idle prefetch', () => {
         expect.objectContaining({ timeoutMs: 6000 })
       );
     }, { timeout: 3000 });
+
+    await waitFor(() => {
+      expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('skips prefetch hydration for configs with legacy runtime identity payloads', async () => {
+    const activePathId = 'path_active';
+    const secondaryPathId = 'path_secondary_legacy_runtime';
+    const activeConfig = createDefaultPathConfig(activePathId);
+    const secondaryConfig = createDefaultPathConfig(secondaryPathId);
+    secondaryConfig.runtimeState = JSON.stringify({
+      status: 'idle',
+      runId: 'legacy-run-id',
+    });
+    const pathConfigsState: Record<string, PathConfig> = {
+      [activePathId]: activeConfig,
+    };
+
+    mockedFetchAiPathsSettingsByKeysCached.mockImplementation(async (keys) => {
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${secondaryPathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${secondaryPathId}`,
+            value: JSON.stringify(secondaryConfig),
+          },
+        ];
+      }
+      if (keys.includes(`${PATH_CONFIG_PREFIX}${activePathId}`)) {
+        return [
+          {
+            key: `${PATH_CONFIG_PREFIX}${activePathId}`,
+            value: JSON.stringify(activeConfig),
+          },
+        ];
+      }
+      return [];
+    });
+
+    const args: UseAiPathsPersistenceArgs = {
+      activePathId,
+      activeTrigger: activeConfig.trigger,
+      edges: activeConfig.edges,
+      expandedPaletteGroups: new Set(['Trigger']),
+      isPathActive: true,
+      isPathLocked: false,
+      lastRunAt: null,
+      loadNonce: 0,
+      loading: false,
+      nodes: activeConfig.nodes,
+      paletteCollapsed: false,
+      parserSamples: {},
+      pathConfigs: pathConfigsState,
+      pathDescription: activeConfig.description,
+      pathName: activeConfig.name,
+      paths: [
+        {
+          id: activePathId,
+          name: activeConfig.name,
+          createdAt: activeConfig.createdAt,
+          updatedAt: activeConfig.updatedAt,
+        },
+        {
+          id: secondaryPathId,
+          name: secondaryConfig.name,
+          createdAt: secondaryConfig.createdAt,
+          updatedAt: secondaryConfig.updatedAt,
+        },
+      ],
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'manual',
+      strictFlowMode: true,
+      blockedRunPolicy: 'fail_run',
+      aiPathsValidation: { enabled: true },
+      selectedNodeId: null,
+      runtimeState: {} as UseAiPathsPersistenceArgs['runtimeState'],
+      updaterSamples: {},
+      normalizeTriggerLabel: (value?: string | null) => value ?? 'Product Modal - Context Filter',
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+    };
+
+    renderHook(() => useAiPathsPersistence(args));
+
+    await waitFor(() => {
+      expect(mockedFetchAiPathsSettingsByKeysCached).toHaveBeenCalledWith(
+        [`${PATH_CONFIG_PREFIX}${secondaryPathId}`],
+        expect.objectContaining({ timeoutMs: 6000 })
+      );
+    }, { timeout: 3000 });
+
+    await new Promise((resolve) => setTimeout(resolve, 75));
+    expect(setPathConfigsGraphMock).toHaveBeenCalledTimes(0);
   });
 });

@@ -6,7 +6,7 @@ import { auth } from '@/features/auth/server';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { deleteBaseProduct } from '@/features/integrations/server';
-import { decryptSecret } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -118,20 +118,16 @@ export async function POST_handler(
       });
     }
 
-    let token: string | null = null;
-    if (connection.baseApiToken) {
-      token = decryptSecret(connection.baseApiToken);
-    } else if (connection.password) {
-      token = decryptSecret(connection.password);
-    }
-
-    if (!token) {
+    const tokenResolution = resolveBaseConnectionToken({
+      baseApiToken: connection.baseApiToken,
+    });
+    if (!tokenResolution.token) {
       throw badRequestError('Base.com API token not found in connection.', {
         connectionId: listing.connectionId,
       });
     }
 
-    await deleteBaseProduct(token, inventoryId, listing.externalListingId);
+    await deleteBaseProduct(tokenResolution.token, inventoryId, listing.externalListingId);
 
     await repo.updateListingStatus(listingId, 'removed');
     await repo.appendExportHistory(listingId, {

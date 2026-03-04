@@ -65,19 +65,20 @@ export function CmsPageRenderer({
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
 
-  const sections: SectionInstance[] = components.map(
-    (comp: PageComponentInput, index: number): SectionInstance => ({
-      id:
-        typeof comp.content.sectionId === 'string' && comp.content.sectionId.trim().length > 0
-          ? comp.content.sectionId
-          : `legacy-section-${index}`,
-      type: comp.type,
-      zone: normalizeZone(comp.content.zone),
-      parentSectionId: comp.content.parentSectionId,
-      settings: comp.content.settings ?? {},
-      blocks: comp.content.blocks ?? [],
-    })
-  );
+  const sections: SectionInstance[] = components.flatMap((comp: PageComponentInput) => {
+    const sectionId = comp.content.sectionId;
+    if (typeof sectionId !== 'string' || sectionId.trim().length === 0) return [];
+    return [
+      {
+        id: sectionId,
+        type: comp.type,
+        zone: normalizeZone(comp.content.zone),
+        parentSectionId: comp.content.parentSectionId,
+        settings: comp.content.settings ?? {},
+        blocks: comp.content.blocks ?? [],
+      },
+    ];
+  });
 
   const hierarchy = buildHierarchyIndexes(sections);
   const rootSectionIdsByZone: Record<PageZone, string[]> = {

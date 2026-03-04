@@ -175,7 +175,6 @@ export function useAiPathsSettingsState({
     confirmNodeSwitch: (nextNodeId) => confirmNodeSwitch(nextNodeId),
     confirm,
     clearRuntimeInputsForEdges: runtimeMgmt.pruneRuntimeInputs,
-    reportAiPathsError,
     toast,
     isPathLocked,
   });
@@ -356,13 +355,7 @@ export function useAiPathsSettingsState({
     paths,
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
-    pruneRuntimeInputs: (_state, removed, remaining) => {
-      return pruneRuntimeInputsState(
-        _state,
-        removed as unknown as Edge[],
-        remaining as unknown as Edge[]
-      );
-    },
+    pruneRuntimeInputs: pruneRuntimeInputsState,
   });
 
   useEffect(() => {
@@ -619,7 +612,6 @@ export function useAiPathsSettingsState({
     clearNodeCache: runtime.clearNodeCache,
     handleSendToAi: runtime.handleSendToAi,
     sendingToAi: runtime.sendingToAi,
-    lastGraphModelPayload: null,
     // Path meta
     updateActivePathMeta: (name: string) => {
       setPathNameAction(name);

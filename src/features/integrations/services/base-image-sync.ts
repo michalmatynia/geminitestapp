@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { getProductListingRepository } from '@/features/integrations/server';
-import { integrationService, decryptSecret } from '@/features/integrations/server';
+import { integrationService } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -144,18 +145,15 @@ export const syncBaseImagesForListing = async (
       });
     }
 
-    let token: string | null = null;
-    if (connection.baseApiToken) {
-      token = decryptSecret(connection.baseApiToken);
-    } else if (connection.password) {
-      token = decryptSecret(connection.password);
-    }
-
-    if (!token) {
-      throw badRequestError('Base.com API token not found in connection.', {
+    const tokenResolution = resolveBaseConnectionToken({
+      baseApiToken: connection.baseApiToken,
+    });
+    if (!tokenResolution.token) {
+      throw badRequestError(tokenResolution.error ?? 'Base.com API token not found in connection.', {
         connectionId: listing.connectionId,
       });
     }
+    const token = tokenResolution.token;
 
     const records = await fetchBaseProductDetails(token, inventoryId, [baseProductId]);
     if (!records.length) {

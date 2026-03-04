@@ -403,9 +403,8 @@ export function usePathPersistence(
         const rawMessage = error instanceof Error ? error.message.trim() : '';
         const shouldExposeRawMessage =
           rawMessage.length > 0 &&
-          (/deprecated ai snapshot keys/i.test(rawMessage) ||
-            /legacy ai paths/i.test(rawMessage) ||
-            /ai path config contains/i.test(rawMessage));
+          (/ai path config contains/i.test(rawMessage) ||
+            /invalid ai paths runtime state payload/i.test(rawMessage));
         args.reportAiPathsError(
           error,
           { action: silent ? 'savePathSilent' : 'savePath', pathId: args.activePathId },

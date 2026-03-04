@@ -4,12 +4,11 @@ import { decryptSecret } from '@/shared/lib/security/encryption';
 
 type BaseTokenCarrier = {
   baseApiToken?: string | null | undefined;
-  password?: string | null | undefined;
 };
 
 type ResolvedBaseToken = {
   token: string | null;
-  source: 'baseApiToken' | 'password' | null;
+  source: 'baseApiToken' | null;
   error: string | null;
 };
 
@@ -25,7 +24,7 @@ const looksLikeEncryptedSecret = (value: string): boolean => {
 
 const resolveCandidate = (
   raw: string | null | undefined,
-  source: 'baseApiToken' | 'password'
+  source: 'baseApiToken'
 ): { token: string | null; error: string | null } => {
   const candidate = typeof raw === 'string' ? raw.trim() : '';
   if (!candidate) return { token: null, error: null };
@@ -59,17 +58,9 @@ export const resolveBaseConnectionToken = (connection: BaseTokenCarrier): Resolv
     return { token: fromBaseToken.token, source: 'baseApiToken', error: null };
   }
 
-  const fromPassword = resolveCandidate(connection.password, 'password');
-  if (fromPassword.token) {
-    return { token: fromPassword.token, source: 'password', error: null };
-  }
-
   return {
     token: null,
     source: null,
-    error:
-      fromBaseToken.error ??
-      fromPassword.error ??
-      'No Base API token configured. Please test or re-save the connection.',
+    error: fromBaseToken.error ?? 'No Base API token configured. Legacy password token fallback is disabled.',
   };
 };

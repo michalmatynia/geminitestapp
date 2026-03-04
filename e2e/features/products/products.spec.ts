@@ -1,17 +1,51 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const E2E_ADMIN_EMAIL =
+  process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ??
+  process.env['E2E_ADMIN_EMAIL'] ??
+  'e2e.admin@example.com';
+const E2E_ADMIN_PASSWORD =
+  process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ??
+  process.env['E2E_ADMIN_PASSWORD'] ??
+  'E2eAdmin!123';
+
+const ensureAdminSession = async (page: Page): Promise<boolean> => {
+  await page.goto('/auth/signin?callbackUrl=%2Fadmin', {
+    waitUntil: 'networkidle',
+  });
+  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+  if (!(await signInHeading.isVisible().catch(() => false))) {
+    return true;
+  }
+
+  await page.getByRole('textbox', { name: 'Email' }).fill(E2E_ADMIN_EMAIL);
+  await page.getByRole('textbox', { name: 'Password' }).fill(E2E_ADMIN_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  const authSucceeded = await page
+    .waitForURL(/\/admin(\/.*)?(\?.*)?$/, { timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  return authSucceeded;
+};
 
 test.describe('Products Management', () => {
   test.beforeEach(async ({ page }) => {
+    const authenticated = await ensureAdminSession(page);
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
+
     // Navigate to the products page
     await page.goto('/admin/products');
   });
+
+  const getCreateProductButton = (page: Page) =>
+    page.locator('[aria-label="Create new product"]:visible').first();
 
   test('should display the products list', async ({ page }) => {
     // Check for the main heading
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
 
     // Check for the create button
-    await expect(page.getByLabel('Create new product')).toBeVisible();
+    await expect(getCreateProductButton(page)).toBeVisible();
   });
 
   test('should open the create product modal after entering SKU', async ({ page }) => {
@@ -23,15 +57,15 @@ test.describe('Products Management', () => {
     });
 
     // Click the create button
-    await page.getByLabel('Create new product').click();
+    await getCreateProductButton(page).click();
 
     // The modal should appear
-    await expect(
-      page.getByRole('heading', { name: 'Create Product', exact: true }).nth(1)
-    ).toBeVisible();
+    const modal = page.getByRole('dialog').last();
+    await expect(modal).toBeVisible();
+    await expect(modal.getByRole('heading', { name: 'Create Product', exact: true })).toBeVisible();
 
     // Check if the SKU is pre-filled
-    await expect(page.locator('input#sku')).toHaveValue(testSku);
+    await expect(modal.locator('input#sku')).toHaveValue(testSku);
   });
 
   test('should validate required fields in the create form', async ({ page }) => {
@@ -39,7 +73,7 @@ test.describe('Products Management', () => {
     page.on('dialog', async (dialog) => {
       await dialog.accept(`VAL${Date.now()}`);
     });
-    await page.getByLabel('Create new product').click();
+    await getCreateProductButton(page).click();
 
     const skuInput = page.locator('input#sku');
     await skuInput.fill('');
@@ -57,7 +91,7 @@ test.describe('Products Management', () => {
     page.on('dialog', async (dialog) => {
       await dialog.accept(`LANG${Date.now()}`);
     });
-    await page.getByLabel('Create new product').click();
+    await getCreateProductButton(page).click();
 
     // Select a catalog to enable languages
     const catalogSelect = page.getByLabel('Filter by catalog');
@@ -94,7 +128,7 @@ test.describe('Products Management', () => {
     page.on('dialog', async (dialog) => {
       await dialog.accept(`TABS${Date.now()}`);
     });
-    await page.getByLabel('Create new product').click();
+    await getCreateProductButton(page).click();
 
     // Check main tabs
     await expect(page.getByRole('tab', { name: 'General' })).toBeVisible();

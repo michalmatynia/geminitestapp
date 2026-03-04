@@ -9,12 +9,26 @@ const projectRoot = path.resolve(currentDir, '../../../../../../..');
 const legacyRoot = path.join(projectRoot, 'src/app/api/integrations/exports/base');
 const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations/exports/base');
 const featuresRoot = path.join(projectRoot, 'src/features');
+const productsApiRoot = path.join(projectRoot, 'src/app/api/v2/integrations/products');
+const baseConnectionsApiRoot = path.join(
+  projectRoot,
+  'src/app/api/v2/integrations/[id]/connections/[connectionId]/base'
+);
+const baseImageSyncServiceFile = path.join(
+  projectRoot,
+  'src/features/integrations/services/base-image-sync.ts'
+);
+const productSyncServiceFile = path.join(
+  projectRoot,
+  'src/features/product-sync/services/product-sync-service.ts'
+);
 const starterWorkflowsRoot = path.join(
   projectRoot,
   'src/shared/lib/ai-paths/core/starter-workflows/assets'
 );
 const legacyEndpointToken = '/api/integrations/exports/base';
 const legacyApiImportToken = "@/app/api/integrations/exports/base/";
+const legacyPasswordTokenFallbackPattern = /connection\.password|source:\s*['"]password['"]/;
 const expectedV2RoutePaths = ['[setting]/route.ts'] as const;
 
 const collectRouteFiles = (baseDir: string): string[] => {
@@ -101,6 +115,21 @@ describe('v2 integrations exports/base route migration', () => {
     const assetFiles = collectSourceFiles(starterWorkflowsRoot);
     const offenders = assetFiles
       .filter((absolute) => readFileSync(absolute, 'utf8').includes(legacyEndpointToken))
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids legacy password token fallback in exports runtime code', () => {
+    const candidateFiles = [
+      ...collectSourceFiles(v2Root),
+      ...collectSourceFiles(productsApiRoot),
+      ...collectSourceFiles(baseConnectionsApiRoot),
+      baseImageSyncServiceFile,
+      productSyncServiceFile,
+    ].filter((absolute, index, all) => existsSync(absolute) && all.indexOf(absolute) === index);
+    const offenders = candidateFiles
+      .filter((absolute) => legacyPasswordTokenFallbackPattern.test(readFileSync(absolute, 'utf8')))
       .map((absolute) => path.relative(projectRoot, absolute));
 
     expect(offenders).toEqual([]);

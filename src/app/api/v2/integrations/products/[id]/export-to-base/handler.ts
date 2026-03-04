@@ -169,7 +169,9 @@ export async function postExportToBaseHandler(
       ['baselinker', 'base-com', 'base'].includes(integration.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
-    const tokenResolution = resolveBaseConnectionToken(connection);
+    const tokenResolution = resolveBaseConnectionToken({
+      baseApiToken: connection.baseApiToken,
+    });
     if (!tokenResolution.token) {
       throw badRequestError(
         tokenResolution.error ??

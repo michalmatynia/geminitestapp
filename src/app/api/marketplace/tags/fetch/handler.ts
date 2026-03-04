@@ -44,7 +44,9 @@ export async function POST_handler(
     throw badRequestError('Only Base.com connections are supported for tag fetch');
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     throw badRequestError(
       tokenResolution.error ?? 'Base.com API token not configured for this connection'

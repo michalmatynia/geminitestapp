@@ -6,7 +6,7 @@ import {
   setPointerCaptureSafe,
   releasePointerCaptureSafe,
 } from '../useCanvasInteractions.helpers';
-import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteractions.helpers';
+import type { MarqueeSelectionState } from '../useCanvasInteractions.helpers';
 
 export interface UseCanvasStateHandlersValue {
   notifyLocked: () => void;
@@ -25,7 +25,6 @@ export interface UseCanvasStateHandlersValue {
   ) => RuntimeState;
   resolveActiveNodeSelectionIds: () => string[];
   resolveNodesWithinMarquee: (marquee: MarqueeSelectionState) => string[];
-  resolveNodeSelectionByScope: (currentSelection: string[], marqueeNodes: string[]) => string[];
   handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanMove: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   handlePanEnd: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
@@ -42,19 +41,10 @@ type PanCaptureTarget =
   | null;
 
 export function useCanvasStateHandlers(args: {
-  isPathLocked: boolean;
   toast: Toast;
-  viewportRef: React.RefObject<HTMLDivElement>;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
   nodes: AiNode[];
-  selectedNodeId: string | null;
   selectedNodeIds: string[];
-  edges: Edge[];
-  setNodes: (nodes: AiNode[]) => void;
-  setRuntimeState: (state: (prev: RuntimeState) => RuntimeState) => void;
-  selectionToolMode: MarqueeMode;
-  selectionScopeMode: 'replace' | 'add' | 'toggle';
-  setNodeSelection: (ids: string[]) => void;
-  toggleNodeSelection: (id: string) => void;
   startPan: (x: number, y: number) => void;
   endPan: () => void;
   setIsPanning: (isPanning: boolean) => void;
@@ -147,12 +137,8 @@ export function useCanvasStateHandlers(args: {
     if (normalizedSelection.length > 0) {
       return normalizedSelection;
     }
-    const fallbackSelectedNodeId = args.selectedNodeId?.trim() ?? '';
-    if (fallbackSelectedNodeId && existingNodeIds.has(fallbackSelectedNodeId)) {
-      return [fallbackSelectedNodeId];
-    }
     return [];
-  }, [args.nodes, args.selectedNodeId, args.selectedNodeIds]);
+  }, [args.nodes, args.selectedNodeIds]);
 
   const resolveNodesWithinMarquee = useCallback(
     (marquee: MarqueeSelectionState): string[] => {
@@ -173,24 +159,6 @@ export function useCanvasStateHandlers(args: {
         .map((node: AiNode): string => node.id);
     },
     [args.nodes]
-  );
-
-  const resolveNodeSelectionByScope = useCallback(
-    (currentSelection: string[], marqueeNodes: string[]): string[] => {
-      if (args.selectionScopeMode === 'add') {
-        return Array.from(new Set([...currentSelection, ...marqueeNodes]));
-      }
-      if (args.selectionScopeMode === 'toggle') {
-        const next = new Set(currentSelection);
-        marqueeNodes.forEach((id) => {
-          if (next.has(id)) next.delete(id);
-          else next.add(id);
-        });
-        return Array.from(next);
-      }
-      return marqueeNodes;
-    },
-    [args.selectionScopeMode]
   );
 
   const handlePanStart = useCallback(
@@ -283,7 +251,6 @@ export function useCanvasStateHandlers(args: {
     pruneRuntimeInputsInternal,
     resolveActiveNodeSelectionIds,
     resolveNodesWithinMarquee,
-    resolveNodeSelectionByScope,
     handlePanStart,
     handlePanMove,
     handlePanEnd,

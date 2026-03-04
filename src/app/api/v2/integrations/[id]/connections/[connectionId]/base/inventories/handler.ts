@@ -37,7 +37,9 @@ export async function GET_handler(
     throw badRequestError('This endpoint is for Base.com/Baselinker connections only.');
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     throw badRequestError(
       tokenResolution.error ?? 'No Base API token configured. Please test the connection first.'

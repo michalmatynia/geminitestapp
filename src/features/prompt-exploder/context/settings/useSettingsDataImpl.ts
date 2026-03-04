@@ -30,7 +30,6 @@ import {
   PromptExploderLearnedTemplate,
   PromptExploderPatternSnapshot,
   PromptExploderRuntimeValidationScope,
-  PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { LearningDraft } from './SettingsDraftsContext';
@@ -39,35 +38,6 @@ import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 type UseSettingsDataImplArgs = {
   settingsQuery: ReturnType<typeof useSettingsMap>;
   settingsMap: Map<string, string>;
-};
-
-const parseStoredValidationRuleStack = (
-  value: unknown
-): PromptExploderValidationRuleStack | null => {
-  if (typeof value === 'string') {
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
-  }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
-  if (!id) return null;
-  const name =
-    typeof record['name'] === 'string' && record['name'].trim().length > 0
-      ? record['name'].trim()
-      : undefined;
-  const ruleIds = Array.isArray(record['ruleIds'])
-    ? record['ruleIds'].filter(
-      (ruleId): ruleId is string => typeof ruleId === 'string' && ruleId.trim().length > 0
-    )
-    : undefined;
-  const isCustom = typeof record['isCustom'] === 'boolean' ? record['isCustom'] : undefined;
-  return {
-    id,
-    ...(name ? { name } : {}),
-    ...(ruleIds ? { ruleIds } : {}),
-    ...(typeof isCustom === 'boolean' ? { isCustom } : {}),
-  };
 };
 
 export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
@@ -203,7 +173,7 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     if (learningDraftHydratedFrom === hydrationSignature) return;
 
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      parseStoredValidationRuleStack(promptExploderSettings.runtime.validationRuleStack),
+      promptExploderSettings.runtime.validationRuleStack,
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack

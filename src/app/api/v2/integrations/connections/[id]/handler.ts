@@ -45,6 +45,8 @@ const connectionSchema = z.object({
   traderaApiSandbox: z.boolean().optional(),
 });
 
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+
 const deleteConnectionSchema = z.object({
   userPassword: z.string().trim().min(1),
 });
@@ -77,6 +79,10 @@ export async function PUT_handler(
     ? await repo.getIntegrationById(existingConnection.integrationId)
     : null;
   const normalizedUsername = data.username?.trim();
+  const normalizedPassword = data.password?.trim();
+  const isBaseIntegration = Boolean(
+    integration && BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
+  );
 
   if (
     integration &&
@@ -94,7 +100,20 @@ export async function PUT_handler(
   const connection = await repo.updateConnection(id, {
     name: data.name,
     ...(typeof normalizedUsername === 'string' ? { username: normalizedUsername } : {}),
-    ...(data.password ? { password: encryptSecret(data.password) } : {}),
+    ...(typeof normalizedPassword === 'string' && normalizedPassword
+      ? (() => {
+        const encryptedPassword = encryptSecret(normalizedPassword);
+        return {
+          password: encryptedPassword,
+          ...(isBaseIntegration
+            ? {
+              baseApiToken: encryptedPassword,
+              baseTokenUpdatedAt: new Date().toISOString(),
+            }
+            : {}),
+        };
+      })()
+      : {}),
 
     ...(typeof data.playwrightHeadless === 'boolean'
       ? { playwrightHeadless: data.playwrightHeadless }

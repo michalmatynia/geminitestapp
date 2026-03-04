@@ -61,7 +61,7 @@ const buildPromptNode = (id: string, patch: Partial<AiNode> = {}): AiNode =>
     description: '',
     position: { x: 0, y: 0 },
     data: {},
-    inputs: ['bundle', 'images (urls)', 'result'],
+    inputs: ['bundle', 'images', 'result'],
     outputs: ['prompt', 'images'],
     config: {
       prompt: {

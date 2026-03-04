@@ -441,7 +441,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
       ) : null}
 
       {node.type === 'trigger' && (
-        <g transform={`translate(${NODE_WIDTH - 92} 6)`} pointerEvents='none'>
+        <g transform={`translate(${NODE_WIDTH - 92} 6)`}>
           <rect
             data-node-action='fire-trigger'
             data-node-id={node.id}

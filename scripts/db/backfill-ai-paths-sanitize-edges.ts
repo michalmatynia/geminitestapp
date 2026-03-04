@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { getNodeInputPortCardinality } from '@/shared/lib/ai-paths/core/utils/graph.nodes';
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
@@ -21,6 +22,50 @@ type BackfillIssue = {
 };
 
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
+
+const pruneSingleCardinalityIncomingEdges = (
+  nodes: PathConfig['nodes'],
+  edges: PathConfig['edges']
+): {
+  edges: PathConfig['edges'];
+  removed: number;
+} => {
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const nextEdges: PathConfig['edges'] = [];
+  const singlePortEdgeIndex = new Map<string, number>();
+  let removed = 0;
+
+  edges.forEach((edge) => {
+    const targetNodeId = typeof edge.to === 'string' ? edge.to.trim() : '';
+    const targetPort = typeof edge.toPort === 'string' ? edge.toPort.trim() : '';
+    if (!targetNodeId || !targetPort) {
+      nextEdges.push(edge);
+      return;
+    }
+
+    const targetNode = nodeById.get(targetNodeId);
+    if (!targetNode || getNodeInputPortCardinality(targetNode, targetPort) !== 'one') {
+      nextEdges.push(edge);
+      return;
+    }
+
+    const targetKey = `${targetNodeId}:${targetPort}`;
+    const existingIndex = singlePortEdgeIndex.get(targetKey);
+    if (existingIndex === undefined) {
+      singlePortEdgeIndex.set(targetKey, nextEdges.length);
+      nextEdges.push(edge);
+      return;
+    }
+
+    nextEdges[existingIndex] = edge;
+    removed += 1;
+  });
+
+  return {
+    edges: nextEdges,
+    removed,
+  };
+};
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -77,6 +122,7 @@ async function main(): Promise<void> {
   let scannedPathConfigs = 0;
   let changedPaths = 0;
   let droppedEdges = 0;
+  let singleCardinalityPrunes = 0;
   let rewiredEdges = 0;
 
   for (const setting of settings) {
@@ -98,17 +144,20 @@ async function main(): Promise<void> {
 
     const normalizedNodes = normalizeNodes(parsed.nodes ?? []);
     const canonicalEdges = sanitizeEdges(normalizedNodes, parsed.edges ?? []);
-    if (stableStringify(parsed.edges ?? []) === stableStringify(canonicalEdges)) {
+    const singleCardinalityRepair = pruneSingleCardinalityIncomingEdges(normalizedNodes, canonicalEdges);
+    const repairedEdges = singleCardinalityRepair.edges;
+    if (stableStringify(parsed.edges ?? []) === stableStringify(repairedEdges)) {
       continue;
     }
 
     changedPaths += 1;
     changedPathIds.push(pathId);
-    droppedEdges += Math.max(0, (parsed.edges?.length ?? 0) - canonicalEdges.length);
+    droppedEdges += Math.max(0, (parsed.edges?.length ?? 0) - repairedEdges.length);
+    singleCardinalityPrunes += singleCardinalityRepair.removed;
     const originalEdgesById = new Map(
       (parsed.edges ?? []).map((edge): [string, typeof edge] => [edge.id, edge])
     );
-    rewiredEdges += canonicalEdges.reduce((count: number, edge, index: number): number => {
+    rewiredEdges += repairedEdges.reduce((count: number, edge, index: number): number => {
       const original = originalEdgesById.get(edge.id) ?? parsed.edges?.[index];
       if (!original) return count;
       if (original.fromPort !== edge.fromPort || original.toPort !== edge.toPort) {
@@ -121,7 +170,7 @@ async function main(): Promise<void> {
       key: setting.key,
       value: JSON.stringify({
         ...parsed,
-        edges: canonicalEdges,
+        edges: repairedEdges,
       }),
     });
 
@@ -144,6 +193,7 @@ async function main(): Promise<void> {
         scannedPathConfigs,
         changedPaths,
         droppedEdges,
+        singleCardinalityPrunes,
         rewiredEdges,
         updateCount: updates.length,
         changedPathIds,

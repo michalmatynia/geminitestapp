@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 
@@ -68,35 +68,15 @@ export async function POST_handler(
     );
   }
 
-  // Get the Base API token - it can be stored either in baseApiToken field or password field
-  let baseToken: string | null = null;
-
-  if (connection.baseApiToken) {
-    pushStep('Decrypting token', 'pending', 'Decrypting Base API token');
-    try {
-      baseToken = decryptSecret(connection.baseApiToken);
-      pushStep('Decrypting token', 'ok', 'Base API token decrypted');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      pushStep('Decrypting token', 'failed', `Failed to decrypt token: ${message}`);
-    }
+  pushStep('Resolving token', 'pending', 'Resolving Base API token');
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
+  if (!tokenResolution.token) {
+    return fail('Token validation', tokenResolution.error ?? 'No Base API token configured for this connection');
   }
-
-  // Fallback: use password field if baseApiToken is not set
-  if (!baseToken && connection.password) {
-    pushStep('Using password as token', 'pending', 'Attempting to use password field as API token');
-    try {
-      baseToken = decryptSecret(connection.password);
-      pushStep('Using password as token', 'ok', 'Password field used as API token');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return fail('Using password as token', `Failed to decrypt: ${message}`);
-    }
-  }
-
-  if (!baseToken) {
-    return fail('Token validation', 'No Base API token configured for this connection');
-  }
+  const baseToken = tokenResolution.token;
+  pushStep('Resolving token', 'ok', 'Base API token resolved');
 
   // Test 1: Make a simple API call to verify the token works
   pushStep('Testing API connection', 'pending', 'Calling Base.com API');
@@ -109,24 +89,15 @@ export async function POST_handler(
       `API connection successful. Found ${inventories.length} inventory/inventories.`
     );
 
-    // Store the token if it was from password field and not yet in baseApiToken
-    if (!connection.baseApiToken) {
-      pushStep('Storing token', 'pending', 'Saving API token to connection');
-      try {
-        await repo.updateConnection(connection.id, {
-          baseApiToken: encryptSecret(baseToken),
-          baseTokenUpdatedAt: new Date().toISOString(),
-        });
-        pushStep('Storing token', 'ok', 'API token saved to connection');
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        pushStep('Storing token', 'failed', `Failed to save token: ${message}`);
-      }
-    } else {
-      // Update the token timestamp
+    pushStep('Updating token metadata', 'pending', 'Updating token check timestamp');
+    try {
       await repo.updateConnection(connection.id, {
         baseTokenUpdatedAt: new Date().toISOString(),
       });
+      pushStep('Updating token metadata', 'ok', 'Token check timestamp updated');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      pushStep('Updating token metadata', 'failed', `Failed to update token metadata: ${message}`);
     }
 
     // Store the first inventory ID as default if available

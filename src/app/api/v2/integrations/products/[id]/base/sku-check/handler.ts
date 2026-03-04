@@ -73,7 +73,9 @@ export async function POST_handler(
     });
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     throw badRequestError(
       tokenResolution.error ??

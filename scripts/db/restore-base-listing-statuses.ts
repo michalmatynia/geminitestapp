@@ -256,9 +256,7 @@ const resolveBaseConnection = async (
     if (preferred) return preferred;
   }
 
-  return (
-    connections.find((entry) => Boolean(entry.baseApiToken || entry.password)) ?? connections[0]!
-  );
+  return connections.find((entry) => Boolean(entry.baseApiToken)) ?? connections[0]!;
 };
 
 const copyCollectionSnapshot = async (

@@ -25,6 +25,8 @@ const createConnectionSchema = z
   })
   .strict();
 
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+
 /**
  * GET /api/v2/integrations/[id]/connections
  * Fetch connections for an integration.
@@ -125,6 +127,7 @@ export async function POST_handler(
   }
 
   const normalizedUsername = data.username?.trim() ?? '';
+  const isBaseIntegration = BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase());
   if (integration.slug !== 'baselinker' && !normalizedUsername) {
     throw badRequestError('Username is required for this integration.', {
       integrationId,
@@ -132,10 +135,18 @@ export async function POST_handler(
     });
   }
 
+  const encryptedPassword = encryptSecret(data.password);
+
   const created = await repo.createConnection(integrationId, {
     name: data.name,
     username: normalizedUsername,
-    password: encryptSecret(data.password),
+    password: encryptedPassword,
+    ...(isBaseIntegration
+      ? {
+        baseApiToken: encryptedPassword,
+        baseTokenUpdatedAt: new Date().toISOString(),
+      }
+      : {}),
     ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
       : {}),

@@ -271,7 +271,13 @@ export const executePathRun = async (
       return;
     }
 
-    let runtimeHaltReason: 'step_limit' | 'completed' | 'canceled' | 'blocked' | null = null;
+    let runtimeHaltReason:
+      | 'blocked'
+      | 'max_iterations'
+      | 'completed'
+      | 'failed'
+      | 'canceled'
+      | null = null;
     await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
@@ -556,12 +562,10 @@ export const executePathRun = async (
           void reportAiPathsError(error, { nodeId: node.id, action: 'onNodeError' });
         }
       },
-      control: {
-        mode: 'run',
-        signal: runAbortController.signal,
-        onHalt: (halt: { reason: 'step_limit' | 'completed' | 'canceled' | 'blocked' }) => {
-          runtimeHaltReason = halt.reason;
-        },
+      onHalt: (halt: {
+        reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
+      }) => {
+        runtimeHaltReason = halt.reason;
       },
     });
 

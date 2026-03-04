@@ -28,14 +28,14 @@ const buildParserNode = (patch: Partial<AiNode> = {}): AiNode =>
   }) as AiNode;
 
 describe('parser port normalization', () => {
-  it('canonicalizes legacy parser image output aliases', () => {
+  it('does not auto-canonicalize legacy parser image output aliases', () => {
     const [normalized] = normalizeNodes([buildParserNode()]);
 
-    expect(normalized?.outputs).toEqual(['bundle', 'images']);
+    expect(normalized?.outputs).toEqual(['bundle']);
     expect(normalized?.config?.parser?.mappings).toMatchObject({
-      images: 'images',
+      'images (urls)': 'images',
       title: 'title',
     });
-    expect(normalized?.config?.parser?.mappings).not.toHaveProperty('images (urls)');
+    expect(normalized?.config?.parser?.mappings).not.toHaveProperty('images');
   });
 });

@@ -132,8 +132,8 @@ export async function postTestConnectionHandler(
     pushStep('Decrypting credentials', 'pending', 'Validating Tradera API credentials');
     const appId = toPositiveInt(connection.traderaApiAppId);
     const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
-    const encryptedAppKey = connection.traderaApiAppKey ?? connection.password;
-    const encryptedToken = connection.traderaApiToken ?? connection.password;
+    const encryptedAppKey = connection.traderaApiAppKey;
+    const encryptedToken = connection.traderaApiToken;
 
     if (!appId) {
       return fail(
@@ -150,13 +150,13 @@ export async function postTestConnectionHandler(
     if (!encryptedAppKey) {
       return fail(
         'Decrypting credentials',
-        'Tradera API App Key is missing. Update the connection first.'
+        'Tradera API App Key is missing. Update the connection first. Legacy password fallback is disabled.'
       );
     }
     if (!encryptedToken) {
       return fail(
         'Decrypting credentials',
-        'Tradera API token is missing. Update the connection first.'
+        'Tradera API token is missing. Update the connection first. Legacy password fallback is disabled.'
       );
     }
 

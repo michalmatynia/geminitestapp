@@ -28,6 +28,12 @@ const SETTINGS_HANDLER_FILE = 'src/app/api/ai-paths/settings/handler.ts';
 const MAINTENANCE_HANDLER_FILE = 'src/app/api/ai-paths/settings/maintenance/handler.ts';
 const MAINTENANCE_CONSTANTS_FILE = 'src/features/ai/ai-paths/server/settings-store.constants.ts';
 const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
+const DATABASE_NORMALIZATION_FILE = 'src/shared/lib/ai-paths/core/normalization/nodes/database.ts';
+const COLLECTION_NAMES_FILE = 'src/shared/lib/ai-paths/core/utils/collection-names.ts';
+const ENGINE_CORE_FILE = 'src/shared/lib/ai-paths/core/runtime/engine-core.ts';
+const GRAPH_PORTS_FILE = 'src/shared/lib/ai-paths/core/utils/graph.ports.ts';
+const TRIGGER_FETCHER_MIGRATION_FILE =
+  'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
 
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
@@ -195,6 +201,121 @@ const checkTriggerButtonsApiCompatibilityPrune = () => {
   }
 };
 
+const checkDatabaseNodeLegacyDbQueryPrune = () => {
+  const text = readFile(DATABASE_NORMALIZATION_FILE);
+  const forbiddenSnippets = ['legacyDbQuery', "['dbQuery']"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_NORMALIZATION_FILE,
+        `legacy database-node dbQuery compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkCollectionNamesLegacyDbQueryPrune = () => {
+  const text = readFile(COLLECTION_NAMES_FILE);
+  const forbiddenSnippets = ['legacyDbQueryCandidate', "nextConfigWithLegacy['dbQuery']"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        COLLECTION_NAMES_FILE,
+        `legacy collection migration dbQuery compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRuntimeRetryLegacyEnabledPrune = () => {
+  const text = readFile(ENGINE_CORE_FILE);
+  const forbiddenSnippets = ['legacyEnabledValue', 'enabled?: unknown'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ENGINE_CORE_FILE,
+        `legacy runtime retry compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkRuntimeHaltLegacyControlPrune = () => {
+  const text = readFile(ENGINE_CORE_FILE);
+  const forbiddenSnippets = ["(options as Record<string, unknown>)['control']", "| { onHalt?:"];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ENGINE_CORE_FILE,
+        `legacy runtime halt compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkTriggerFetcherLegacyMigrationPrune = (sourceFiles) => {
+  if (fs.existsSync(path.join(ROOT, TRIGGER_FETCHER_MIGRATION_FILE))) {
+    reportViolation(
+      TRIGGER_FETCHER_MIGRATION_FILE,
+      'legacy trigger->fetcher migration module must remain removed from runtime source'
+    );
+  }
+
+  const forbiddenTokens = ['migrateTriggerToFetcherGraph', 'TriggerToFetcherMigrationResult'];
+  for (const absolute of sourceFiles) {
+    const relative = toRelative(absolute);
+    if (isTestFile(relative)) continue;
+    const text = fs.readFileSync(absolute, 'utf8');
+    for (const token of forbiddenTokens) {
+      if (text.includes(token)) {
+        reportViolation(
+          relative,
+          `legacy trigger->fetcher migration token detected in runtime source: ${token}`
+        );
+      }
+    }
+  }
+};
+
+const checkLegacyDbQueryProviderMigrationPrune = (sourceFiles) => {
+  const forbiddenTokens = ['migrateLegacyDbQueryProvider', 'DEFAULT_LEGACY_DB_QUERY_TEMPLATE'];
+  for (const absolute of sourceFiles) {
+    const relative = toRelative(absolute);
+    if (isTestFile(relative)) continue;
+    const text = fs.readFileSync(absolute, 'utf8');
+    for (const token of forbiddenTokens) {
+      if (text.includes(token)) {
+        reportViolation(
+          relative,
+          `legacy db-query provider migration token detected in runtime source: ${token}`
+        );
+      }
+    }
+  }
+};
+
+const checkLegacyParserImagePortAliasPrune = () => {
+  const text = readFile(GRAPH_PORTS_FILE);
+  const forbiddenSnippets = [
+    "normalized === 'images (urls)'",
+    "normalized === 'images(urls)'",
+    "normalized === 'image urls'",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        GRAPH_PORTS_FILE,
+        `legacy parser image-port alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -205,6 +326,13 @@ const main = () => {
   checkSettingsHandlerGuards();
   checkMaintenanceHandlerEnum();
   checkTriggerButtonsApiCompatibilityPrune();
+  checkDatabaseNodeLegacyDbQueryPrune();
+  checkCollectionNamesLegacyDbQueryPrune();
+  checkRuntimeRetryLegacyEnabledPrune();
+  checkRuntimeHaltLegacyControlPrune();
+  checkTriggerFetcherLegacyMigrationPrune(sourceFiles);
+  checkLegacyDbQueryProviderMigrationPrune(sourceFiles);
+  checkLegacyParserImagePortAliasPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

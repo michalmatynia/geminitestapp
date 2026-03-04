@@ -10,7 +10,7 @@ import type {
   AiPathRunRecord,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-import { enqueueAiPathRun, streamAiPathRun } from '@/shared/lib/ai-paths';
+import { enqueueAiPathRun, streamAiPathRun, aiPathRunNodeSchema } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import {
@@ -74,22 +74,27 @@ const normalizeRuntimeEventLevel = (value: unknown): RuntimeEventLevel => {
   return 'info';
 };
 
+const parseRunNodeRecord = (value: unknown): AiPathRunNodeRecord | null => {
+  const parsed = aiPathRunNodeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
 const normalizeNodeStreamPayload = (value: unknown): AiPathRunNodeRecord[] => {
   if (Array.isArray(value)) {
-    return value.filter((entry: unknown): boolean =>
-      isObjectRecord(entry)
-    ) as unknown as AiPathRunNodeRecord[];
+    return value.flatMap((entry: unknown): AiPathRunNodeRecord[] => {
+      const parsed = parseRunNodeRecord(entry);
+      return parsed ? [parsed] : [];
+    });
   }
   if (!isObjectRecord(value)) return [];
   if (Array.isArray(value['nodes'])) {
-    return value['nodes'].filter((entry: unknown): boolean =>
-      isObjectRecord(entry)
-    ) as unknown as AiPathRunNodeRecord[];
+    return value['nodes'].flatMap((entry: unknown): AiPathRunNodeRecord[] => {
+      const parsed = parseRunNodeRecord(entry);
+      return parsed ? [parsed] : [];
+    });
   }
-  if (typeof value['nodeId'] === 'string') {
-    return [value as unknown as AiPathRunNodeRecord];
-  }
-  return [];
+  const parsed = parseRunNodeRecord(value);
+  return parsed ? [parsed] : [];
 };
 
 const normalizeEventStreamPayload = (
@@ -707,6 +712,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                     asString(rawEvent.id) ??
                     `server_evt_${Date.now()}_${index}_${Math.random().toString(16).slice(2, 8)}`,
                   timestamp: rawTimestamp,
+                  type: 'log',
                   source: 'server',
                   kind: 'log',
                   level: normalizeRuntimeEventLevel(rawEvent.level),
@@ -719,7 +725,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   ...(status ? { status } : {}),
                   ...(iteration !== null ? { iteration } : {}),
                   ...(metadata ? { metadata } : {}),
-                } as unknown as AiPathRuntimeEvent);
+                });
               }
             );
             if (streamedEvents.length > 0) {

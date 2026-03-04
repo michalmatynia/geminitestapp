@@ -6,19 +6,19 @@ import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSetti
 
 export function GraphModelDebugPanel(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
-  const payload = orchestrator.lastGraphModelPayload;
+  const payload = orchestrator.runtimeState;
 
   return (
     <div className='space-y-2'>
       <JsonViewer
-        title='Graph Model Debug'
+        title='Runtime State Debug'
         data={payload}
         maxHeight='300px'
         className='bg-card/60'
       />
       {!payload && (
         <div className='text-[11px] text-gray-500 px-3'>
-          Run a model node to capture the latest payload.
+          Run a path to capture runtime debug payload.
         </div>
       )}
     </div>

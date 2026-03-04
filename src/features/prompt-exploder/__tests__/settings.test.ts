@@ -1,27 +1,34 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  defaultPromptExploderSettings,
-  parsePromptExploderSettings,
-  parsePromptExploderSettingsResult,
-} from '../settings';
+const loadSettings = async (): Promise<typeof import('../settings')> => import('../settings');
+
+beforeEach(() => {
+  vi.unmock('@/shared/contracts/prompt-exploder');
+  vi.resetModules();
+});
 
 describe('parsePromptExploderSettingsResult', () => {
-  it('returns defaults when payload is empty', () => {
+  it('returns defaults when payload is empty', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
     const parsed = parsePromptExploderSettingsResult(null);
 
     expect(parsed.error).toBeNull();
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
 
-  it('accepts canonical settings payloads', () => {
+  it('accepts canonical settings payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
     const parsed = parsePromptExploderSettingsResult(JSON.stringify(defaultPromptExploderSettings));
 
     expect(parsed.error).toBeNull();
     expect(parsed.settings.ai.operationMode).toBe(defaultPromptExploderSettings.ai.operationMode);
   });
 
-  it('rejects deprecated AI snapshot keys in non-empty payloads', () => {
+  it('rejects deprecated AI snapshot keys in non-empty payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
     const payload = {
       ...defaultPromptExploderSettings,
       ai: {
@@ -37,7 +44,9 @@ describe('parsePromptExploderSettingsResult', () => {
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
 
-  it('rejects partial non-empty payloads instead of merging defaults', () => {
+  it('rejects partial non-empty payloads instead of merging defaults', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
     const partialPayload = {
       version: 1,
       runtime: {
@@ -57,7 +66,9 @@ describe('parsePromptExploderSettingsResult', () => {
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
 
-  it('rejects deprecated operationMode values in non-empty payloads', () => {
+  it('rejects deprecated operationMode values in non-empty payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
     const payload = {
       ...defaultPromptExploderSettings,
       ai: {
@@ -70,19 +81,41 @@ describe('parsePromptExploderSettingsResult', () => {
     expect(parsed.error?.code).toBe('invalid_shape');
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
+
+  it('rejects non-canonical object validationRuleStack payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
+      await loadSettings();
+    const payload = {
+      ...defaultPromptExploderSettings,
+      runtime: {
+        ...defaultPromptExploderSettings.runtime,
+        validationRuleStack: {
+          id: 'prompt-exploder',
+        },
+      },
+    };
+
+    const parsed = parsePromptExploderSettingsResult(JSON.stringify(payload));
+
+    expect(parsed.error?.code).toBe('invalid_shape');
+    expect(parsed.settings).toEqual(defaultPromptExploderSettings);
+  });
 });
 
 describe('parsePromptExploderSettings', () => {
-  it('returns defaults for empty payloads', () => {
+  it('returns defaults for empty payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettings } = await loadSettings();
     expect(parsePromptExploderSettings(null)).toEqual(defaultPromptExploderSettings);
     expect(parsePromptExploderSettings('')).toEqual(defaultPromptExploderSettings);
   });
 
-  it('throws for invalid non-empty payloads', () => {
+  it('throws for invalid non-empty payloads', async () => {
+    const { parsePromptExploderSettings } = await loadSettings();
     expect(() => parsePromptExploderSettings('{"broken"')).toThrowError(/not valid json/i);
   });
 
-  it('throws for deprecated AI snapshot keys in non-empty payloads', () => {
+  it('throws for deprecated AI snapshot keys in non-empty payloads', async () => {
+    const { defaultPromptExploderSettings, parsePromptExploderSettings } = await loadSettings();
     expect(() =>
       parsePromptExploderSettings(
         JSON.stringify({

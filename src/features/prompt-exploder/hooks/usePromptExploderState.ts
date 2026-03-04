@@ -30,8 +30,7 @@ import {
   updatePromptExploderDocument,
 } from '../parser';
 import { 
-  type PromptExploderParserTuningRuleDraft, 
-  type PromptExploderValidationRuleStack 
+  type PromptExploderParserTuningRuleDraft
 } from '@/shared/contracts/prompt-exploder';
 import {
   parsePromptExploderLibrary,
@@ -277,7 +276,7 @@ export function usePromptExploderState() {
       return;
     }
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      promptExploderSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
+      promptExploderSettings.runtime.validationRuleStack,
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack

@@ -75,8 +75,8 @@ const ensureValidDimensions = (width: number, height: number): void => {
   }
 };
 
-const normalizeModeForFingerprint = (_mode: ImageStudioAutoScalerMode): 'auto_scaler_v1' =>
-  'auto_scaler_v1';
+const normalizeModeForFingerprint = (_mode: ImageStudioAutoScalerMode): 'auto_scaler' =>
+  'auto_scaler';
 
 export const normalizeAutoScalerBoundsForFingerprint = (
   bounds: ImageStudioCenterObjectBounds | null | undefined

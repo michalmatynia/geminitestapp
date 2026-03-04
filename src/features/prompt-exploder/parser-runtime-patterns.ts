@@ -86,7 +86,7 @@ export type PatternRuntime = {
 };
 
 export const normalizeRuntimeValidationScope = (
-  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' | null | undefined
+  scope: PromptExploderRuntimeValidationScope | null | undefined
 ): PromptExploderRuntimeValidationScope =>
   scope === 'case_resolver_prompt_exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
 const runtimePatternCacheByRules = new WeakMap<

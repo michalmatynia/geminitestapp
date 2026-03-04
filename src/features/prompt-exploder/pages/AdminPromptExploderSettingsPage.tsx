@@ -42,9 +42,8 @@ import {
 } from '../validation-stack';
 
 import type { 
-  PromptExploderOperationMode, 
-  PromptExploderSettings,
-  PromptExploderValidationRuleStack
+  PromptExploderOperationMode,
+  PromptExploderSettings
 } from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
@@ -109,7 +108,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       runtime: {
         ...parsedSettings.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
-          parsedSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
+          parsedSettings.runtime.validationRuleStack,
           validatorPatternLists
         ),
       },
@@ -138,7 +137,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     setDraft((previous) => {
       if (!previous) return previous;
       const normalizedStack = normalizePromptExploderValidationRuleStack(
-        previous.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
+        previous.runtime.validationRuleStack,
         validatorPatternLists
       );
       if (normalizedStack === previous.runtime.validationRuleStack) {
@@ -180,7 +179,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         type: 'select',
         options: validationPatternStackOptions.map((opt) => ({
           label: opt.label,
-          value: typeof opt.value === 'string' ? opt.value : opt.value.id || '',
+          value: opt.value,
         })),
       },
       {
@@ -315,7 +314,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       runtime: {
         ...draft.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
-          draft.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
+          draft.runtime.validationRuleStack,
           validatorPatternLists
         ),
         benchmarkLowConfidenceThreshold: clampNumber(

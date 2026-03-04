@@ -10,7 +10,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
-const decryptSecretMock = vi.hoisted(() => vi.fn());
 const callBaseApiMock = vi.hoisted(() => vi.fn());
 const setImportParameterCacheMock = vi.hoisted(() => vi.fn());
 
@@ -19,7 +18,6 @@ vi.mock('@/features/integrations/server', () => ({
     listIntegrations: listIntegrationsMock,
     listConnections: listConnectionsMock,
   })),
-  decryptSecret: decryptSecretMock,
   callBaseApi: callBaseApiMock,
   getImportParameterCache: vi.fn(async () => null),
   setImportParameterCache: setImportParameterCacheMock,
@@ -51,7 +49,6 @@ describe('base import parameters handler', () => {
     listConnectionsMock.mockResolvedValue([
       { id: 'conn-1', baseApiToken: 'encrypted-token', password: null },
     ]);
-    decryptSecretMock.mockReturnValue('token-1');
     setImportParameterCacheMock.mockResolvedValue(undefined);
   });
 
@@ -114,14 +111,24 @@ describe('base import parameters handler', () => {
         productId: 'p-1',
       })
     );
-    expect(callBaseApiMock).toHaveBeenNthCalledWith(1, 'token-1', 'getInventoryProductsList', {
-      inventory_id: 'inventory-1',
-      limit: 2,
-    });
-    expect(callBaseApiMock).toHaveBeenNthCalledWith(2, 'token-1', 'getInventoryProductsData', {
-      inventory_id: 'inventory-1',
-      products: ['p-1', 'p-2'],
-    });
+    expect(callBaseApiMock).toHaveBeenNthCalledWith(
+      1,
+      'encrypted-token',
+      'getInventoryProductsList',
+      {
+        inventory_id: 'inventory-1',
+        limit: 2,
+      }
+    );
+    expect(callBaseApiMock).toHaveBeenNthCalledWith(
+      2,
+      'encrypted-token',
+      'getInventoryProductsData',
+      {
+        inventory_id: 'inventory-1',
+        products: ['p-1', 'p-2'],
+      }
+    );
   });
 
   it('keeps explicit productId flow for single-product key extraction', async () => {
@@ -155,7 +162,7 @@ describe('base import parameters handler', () => {
     expect(payload.productId).toBe('p-99');
     expect(payload.keys).toEqual(expect.arrayContaining(['text_fields.features.Brand']));
     expect(callBaseApiMock).toHaveBeenCalledTimes(1);
-    expect(callBaseApiMock).toHaveBeenCalledWith('token-1', 'getInventoryProductsData', {
+    expect(callBaseApiMock).toHaveBeenCalledWith('encrypted-token', 'getInventoryProductsData', {
       inventory_id: 'inventory-1',
       products: ['p-99'],
     });

@@ -107,4 +107,25 @@ describe('CmsPageRenderer nested sections', () => {
     expect(screen.queryByTestId('section-hero')).not.toBeInTheDocument();
     expect(screen.queryByTestId('section-text')).not.toBeInTheDocument();
   });
+
+  it('does not synthesize legacy section ids when sectionId is missing', () => {
+    const components = [
+      {
+        type: 'Hero',
+        order: 0,
+        content: {
+          zone: 'template',
+          settings: {},
+          blocks: [],
+          sectionId: ' ',
+          parentSectionId: null,
+        },
+      } as unknown as PageComponentInput,
+    ];
+
+    const { container } = render(<CmsPageRenderer components={components} />);
+
+    expect(screen.queryByTestId('section-hero')).not.toBeInTheDocument();
+    expect(container.querySelector('.cms-page')?.children.length).toBe(0);
+  });
 });

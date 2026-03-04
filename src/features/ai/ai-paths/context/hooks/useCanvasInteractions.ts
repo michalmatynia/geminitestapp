@@ -17,12 +17,11 @@ import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePath
 import { useSelectionState, useSelectionActions } from './useSelection';
 
 import { useGraphState, useGraphActions } from '../GraphContext';
-import { useRuntimeState, useRuntimeActions } from '../RuntimeContext';
+import { useRuntimeActions } from '../RuntimeContext';
 
 import {
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
-  type MarqueeMode,
   type TouchPointSample,
   getMarqueeRect,
 } from './useCanvasInteractions.helpers';
@@ -61,7 +60,6 @@ import {
   type UseCanvasTouchHandlersValue,
 } from './canvas/useCanvasTouchHandlers';
 
-import type { Toast } from '@/shared/contracts/ui';
 import type { Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
 /**
@@ -88,7 +86,7 @@ export function useCanvasInteractions(args?: {
     setConnectingPos,
     setLastDrop,
   } = useCanvasActions();
-  const { viewportRef, canvasRef } = useCanvasRefs();
+  const { viewportRef } = useCanvasRefs();
 
   // Context: Graph
   const { nodes, edges, activePathId, isPathLocked } = useGraphState();
@@ -96,11 +94,9 @@ export function useCanvasInteractions(args?: {
 
   // Context: Runtime
   const { setRuntimeState } = useRuntimeActions();
-  useRuntimeState();
 
   // Context: Selection
-  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode } =
-    useSelectionState();
+  const { selectedNodeIds, selectedEdgeId } = useSelectionState();
   const { setNodeSelection, selectNode, selectEdge, toggleNodeSelection } = useSelectionActions();
 
   // Context: Helpers
@@ -117,21 +113,11 @@ export function useCanvasInteractions(args?: {
   // ---------------------------------------------------------------------------
 
   const stateHandlers: UseCanvasStateHandlersValue = useCanvasStateHandlers({
-    isPathLocked,
-    toast: toast as unknown as Toast,
-    viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
+    toast,
+    viewportRef,
     nodes,
-    selectedNodeId,
     selectedNodeIds,
-    edges,
-    setNodes,
-    setRuntimeState,
-    selectionToolMode: (selectionToolMode === 'select' ? 'replace' : 'replace') as MarqueeMode,
-    selectionScopeMode: 'replace',
-    setNodeSelection,
-    toggleNodeSelection,
     startPan,
-
     endPan,
     setIsPanning,
     updateView: (next) => updateView(next),
@@ -160,7 +146,6 @@ export function useCanvasInteractions(args?: {
     notifyLocked: stateHandlers.notifyLocked,
     confirmNodeSwitch,
     selectedNodeIdSet: new Set(selectedNodeIds),
-    selectedNodeId,
     selectedNodeIds,
     setNodes,
     setNodeSelection,
@@ -178,7 +163,6 @@ export function useCanvasInteractions(args?: {
     setRuntimeState,
     pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
     viewportRef,
-    canvasRef: canvasRef as unknown as React.RefObject<SVGSVGElement | null>,
     view,
     setLastDrop: (pos: { x: number; y: number }) => setLastDrop(pos),
     ensureNodeVisible: nav.ensureNodeVisible,
@@ -229,8 +213,7 @@ export function useCanvasInteractions(args?: {
   const edgePaths = useEdgePaths(edgeRoutingMode as EdgeRoutingMode);
 
   const eventHandlers: UseCanvasEventHandlersValue = useCanvasEventHandlers({
-    viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
-    canvasRef: canvasRef as unknown as React.RefObject<HTMLCanvasElement>,
+    viewportRef,
     view: { scale: view.scale, panX: view.x, panY: view.y },
     nav,
     updateLastPointerCanvasPosFromClient: stateHandlers.updateLastPointerCanvasPosFromClient,

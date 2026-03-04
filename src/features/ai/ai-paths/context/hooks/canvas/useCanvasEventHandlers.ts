@@ -8,8 +8,7 @@ export interface UseCanvasEventHandlersValue {
 }
 
 export function useCanvasEventHandlers(args: {
-  viewportRef: React.RefObject<HTMLDivElement>;
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  viewportRef: React.RefObject<HTMLDivElement | null>;
   view: { scale: number; panX: number; panY: number };
   nav: UseCanvasInteractionsNavigationValue;
   updateLastPointerCanvasPosFromClient: (x: number, y: number) => void;
@@ -59,14 +58,10 @@ export function useCanvasEventHandlers(args: {
   );
 
   const isWheelLikelyZoomGesture = useCallback((event: WheelLikeEvent): boolean => {
+    // Allow normal wheel/trackpad scroll to bubble so the page can scroll vertically.
+    // We only treat wheel as canvas zoom for explicit pinch-like gestures.
     if (event.ctrlKey || event.metaKey) return true;
-    if (performance.now() < wheelGestureActiveUntilRef.current) return true;
-    if (event.deltaMode !== 0) return false;
-    const absY = Math.abs(event.deltaY);
-    const absX = Math.abs(event.deltaX);
-    const hasTrackpadMicroDelta = (absY > 0 && absY < 24) || (absX > 0 && absX < 24);
-    if (hasTrackpadMicroDelta) return true;
-    return false;
+    return performance.now() < wheelGestureActiveUntilRef.current;
   }, []);
 
   const applyWheelZoomFromEvent = useCallback(
@@ -113,14 +108,14 @@ export function useCanvasEventHandlers(args: {
 
   const handleWheel = useCallback(
     (event: React.WheelEvent): void => {
-      handleWheelLike(event as unknown as WheelLikeEvent);
+      handleWheelLike(event);
     },
     [handleWheelLike]
   );
 
   useEffect(() => {
     const handleNativeWheel = (event: WheelEvent): void => {
-      handleWheelLike(event as unknown as WheelLikeEvent);
+      handleWheelLike(event);
     };
     window.addEventListener('wheel', handleNativeWheel, { passive: false, capture: true });
     return (): void => {

@@ -7,6 +7,7 @@ import {
   cancelAiPathRun,
   getAiPathRun,
   listAiPathRuns,
+  aiPathRunRecordSchema,
   resumeAiPathRun,
   type AiPathRunEventRecord,
   type AiPathRunNodeRecord,
@@ -47,6 +48,28 @@ function isSameRunList(prev: AiPathRunRecord[], next: AiPathRunRecord[]): boolea
     if (prevRun.finishedAt !== nextRun.finishedAt) return false;
   }
   return true;
+}
+
+function normalizeRunListResponse(response: Awaited<ReturnType<typeof listAiPathRuns>>): {
+  ok: boolean;
+  data: { runs: AiPathRunRecord[] };
+} {
+  if (!response.ok) {
+    return {
+      ok: false,
+      data: { runs: [] },
+    };
+  }
+  const runs = Array.isArray(response.data.runs)
+    ? response.data.runs.flatMap((run): AiPathRunRecord[] => {
+      const parsed = aiPathRunRecordSchema.safeParse(run);
+      return parsed.success ? [parsed.data] : [];
+    })
+    : [];
+  return {
+    ok: true,
+    data: { runs },
+  };
 }
 
 export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHistoryArgs): void {
@@ -215,7 +238,7 @@ export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHisto
         timeoutMs: 4000,
         ...(signal ? { signal } : {}),
       });
-      return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };
+      return normalizeRunListResponse(res);
     },
     enabled: Boolean(activePathId),
     retry: 0,

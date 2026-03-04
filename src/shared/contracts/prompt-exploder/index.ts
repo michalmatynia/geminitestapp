@@ -25,7 +25,6 @@ export {
 } from './case-resolver';
 export * from './patterns';
 export * from './params';
-export * from './migration';
 
 // Explicitly export to avoid ambiguity
 export {

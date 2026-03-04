@@ -55,7 +55,9 @@ export async function POST_handler(
     throw notFoundError('Connection not found.', { connectionId });
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     throw badRequestError(tokenResolution.error ?? 'No Base API token configured.');
   }

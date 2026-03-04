@@ -49,7 +49,9 @@ export async function POST_handler(
   let sourceName: string;
 
   if (BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    const tokenResolution = resolveBaseConnectionToken(connection);
+    const tokenResolution = resolveBaseConnectionToken({
+      baseApiToken: connection.baseApiToken,
+    });
     if (!tokenResolution.token) {
       throw badRequestError(
         tokenResolution.error || 'Base.com API token not configured for this connection'

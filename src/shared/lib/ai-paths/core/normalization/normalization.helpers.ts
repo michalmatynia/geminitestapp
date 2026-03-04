@@ -1,17 +1,12 @@
 import type {
   AiNode,
   NodeDefinition,
-  DbQueryConfig,
   PathConfig,
   NodePortContract,
 } from '@/shared/contracts/ai-paths';
 import { palette as PALETTE_DEFINITIONS } from '../definitions';
 
 export type PortContractRecord = Record<string, NodePortContract>;
-
-export const DEFAULT_LEGACY_DB_QUERY_TEMPLATE = `{
-  "_id": "{{value}}"
-}`;
 
 export const resolveDefinitionForNode = (node: AiNode): NodeDefinition | null => {
   const sameType = PALETTE_DEFINITIONS.filter(
@@ -164,40 +159,4 @@ export const normalizeTemplateText = (value: string | undefined | null): string 
   const trimmed = value.trim();
   if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return value;
   return value.replace(/\\n/g, '\n');
-};
-
-const isLegacyDefaultMongoQuery = (query: DbQueryConfig): boolean =>
-  query.provider === 'mongodb' &&
-  query.collection === 'products' &&
-  query.mode === 'preset' &&
-  query.preset === 'by_id' &&
-  query.field === '_id' &&
-  query.idType === 'string' &&
-  query.queryTemplate === DEFAULT_LEGACY_DB_QUERY_TEMPLATE &&
-  query.limit === 20 &&
-  query.sort === '' &&
-  query.projection === '' &&
-  query.single === false;
-
-export const migrateLegacyDbQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
-  const normalizedTemplate = normalizeTemplateText(query.queryTemplate ?? '');
-  const provider = query.provider;
-  if (provider === 'auto' || provider === 'mongodb' || provider === 'prisma') {
-    if (isLegacyDefaultMongoQuery(query)) {
-      return {
-        ...query,
-        provider: 'auto',
-        queryTemplate: normalizedTemplate,
-      };
-    }
-    return {
-      ...query,
-      queryTemplate: normalizedTemplate,
-    };
-  }
-  return {
-    ...query,
-    provider: 'auto',
-    queryTemplate: normalizedTemplate,
-  };
 };

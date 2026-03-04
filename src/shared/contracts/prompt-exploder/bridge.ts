@@ -29,6 +29,8 @@ export const promptExploderBridgeSourceSchema = z.enum([
   'case-resolver',
 ]);
 export type PromptExploderBridgeSource = z.infer<typeof promptExploderBridgeSourceSchema>;
+export const PROMPT_EXPLODER_CANONICAL_BRIDGE_SOURCES: readonly PromptExploderBridgeSource[] =
+  promptExploderBridgeSourceSchema.options;
 
 export const promptExploderBridgeTargetSchema = z.enum([
   'image-studio',
@@ -39,6 +41,8 @@ export const promptExploderBridgeTargetSchema = z.enum([
   'prompt-exploder',
 ]);
 export type PromptExploderBridgeTarget = z.infer<typeof promptExploderBridgeTargetSchema>;
+export const PROMPT_EXPLODER_CANONICAL_BRIDGE_TARGETS: readonly PromptExploderBridgeTarget[] =
+  promptExploderBridgeTargetSchema.options;
 
 export const promptExploderCaseResolverContextSchema = z.object({
   fileId: z.string().optional(),

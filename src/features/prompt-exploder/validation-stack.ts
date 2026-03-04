@@ -69,8 +69,7 @@ const normalizeStackValue = (
   value: PromptExploderValidationRuleStack | null | undefined
 ): string => {
   if (!value) return '';
-  if (typeof value === 'string') return value.trim();
-  return (value.id || '').trim();
+  return value.trim();
 };
 
 const toRuntimeScope = (validatorScope: ValidatorScope): PromptExploderRuntimeValidationScope =>

@@ -36,7 +36,7 @@ export const normalizeCenterBoundsForFingerprint = (
   };
 };
 
-type NormalizedCenterModeForFingerprint = 'alpha_bbox' | 'object_layout_v1';
+type NormalizedCenterModeForFingerprint = 'alpha_bbox' | 'object_layout';
 type NormalizedCenterLayoutConfig = {
   paddingPercent: number;
   paddingXPercent: number;
@@ -67,7 +67,7 @@ const normalizeModeForFingerprint = (
   mode: ImageStudioCenterMode
 ): NormalizedCenterModeForFingerprint =>
   mode === 'client_object_layout' || mode === 'server_object_layout'
-    ? 'object_layout_v1'
+    ? 'object_layout'
     : 'alpha_bbox';
 
 export const buildCenterFingerprint = (input: {

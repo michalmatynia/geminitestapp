@@ -53,8 +53,7 @@ const createRegexRule = (rule: {
   passOutputToNext: true,
   appliesToScopes: rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchEnabled: false,
-  launchAppliesToScopes: rule.launchAppliesToScopes ??
-    rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
+  launchAppliesToScopes: rule.launchAppliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchScopeBehavior: 'gate',
   launchOperator: 'contains',
   launchValue: null,

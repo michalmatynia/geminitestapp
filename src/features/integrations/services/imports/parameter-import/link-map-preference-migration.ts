@@ -113,7 +113,7 @@ export const parseLegacyCompatibleScopedCatalogParameterLinkMap = (
           map.byScope[normalizedTopLevelKey] = {};
         }
         mergeCatalogMaps(
-          map.byScope[normalizedTopLevelKey] as CatalogParameterLinkMap,
+          map.byScope[normalizedTopLevelKey],
           normalizedCatalogMap
         );
       } else if (hasDirectLinks) {

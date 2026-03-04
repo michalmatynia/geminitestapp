@@ -126,27 +126,6 @@ export function useAiPathsPersistence(
       try {
         return sanitizePathConfig(config);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        const canRetryWithEmptyRuntime =
-          message.includes('Legacy AI Paths runtime identity fields are no longer supported') ||
-          message.includes('Invalid AI Paths runtime state payload');
-        if (canRetryWithEmptyRuntime) {
-          try {
-            return sanitizePathConfig({
-              ...config,
-              runtimeState: '',
-            });
-          } catch (retryError) {
-            logClientError(retryError, {
-              context: {
-                source: 'useAiPathsPersistence',
-                action: 'sanitizePrefetchedPathConfigRetry',
-                pathId,
-              },
-            });
-            return null;
-          }
-        }
         logClientError(error, {
           context: {
             source: 'useAiPathsPersistence',

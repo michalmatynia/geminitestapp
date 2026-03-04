@@ -38,6 +38,50 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     vi.restoreAllMocks();
   });
 
+  it('does not hijack unmodified wheel scrolling inside canvas bounds', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
+    const setViewClamped = vi.fn();
+    const getZoomTargetView = vi.fn((scale: number) => ({ x: 0, y: 0, scale }));
+    const updateLastPointerCanvasPosFromClient = vi.fn();
+    const resolveViewportPointFromClient = vi.fn((x: number, y: number) => ({ x, y }));
+
+    const nav = {
+      getZoomTargetView,
+      setViewClamped,
+    } as unknown as UseCanvasInteractionsNavigationValue;
+
+    const { unmount } = renderHook(() =>
+      useCanvasEventHandlers({
+        viewportRef,
+        view: { scale: 1, panX: 0, panY: 0 },
+        nav,
+        updateLastPointerCanvasPosFromClient,
+        resolveViewportPointFromClient,
+      })
+    );
+
+    let insideScroll: WheelEvent | null = null;
+    act(() => {
+      insideScroll = dispatchWheel({
+        clientX: 260,
+        clientY: 240,
+        deltaY: 80,
+        ctrlKey: false,
+        metaKey: false,
+      });
+    });
+
+    expect(insideScroll?.defaultPrevented).toBe(false);
+    expect(setViewClamped).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
   it('does not block outside-page wheel scrolling after an in-canvas zoom event', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {
@@ -45,7 +89,6 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     });
 
     const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement>;
-    const canvasRef = { current: null } as React.RefObject<HTMLCanvasElement>;
     const setViewClamped = vi.fn();
     const getZoomTargetView = vi.fn((scale: number) => ({ x: 0, y: 0, scale }));
     const updateLastPointerCanvasPosFromClient = vi.fn();
@@ -62,7 +105,6 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
     const { unmount } = renderHook(() =>
       useCanvasEventHandlers({
         viewportRef,
-        canvasRef,
         view: { scale: 1, panX: 0, panY: 0 },
         nav,
         updateLastPointerCanvasPosFromClient,

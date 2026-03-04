@@ -275,19 +275,6 @@ const migrateNodeCollections = (node: AiNode): { node: AiNode; changed: boolean 
   let changed = false;
   let nextConfig = { ...node.config };
 
-  const legacyDbQueryCandidate = (nextConfig as Record<string, unknown>)['dbQuery'];
-  const legacyDbQuery =
-    legacyDbQueryCandidate && typeof legacyDbQueryCandidate === 'object'
-      ? (legacyDbQueryCandidate as DbQueryConfig)
-      : undefined;
-  const dbQueryResult = migrateDbQueryConfig(legacyDbQuery);
-  if (dbQueryResult.changed) {
-    changed = true;
-    const nextConfigWithLegacy = { ...nextConfig } as Record<string, unknown>;
-    nextConfigWithLegacy['dbQuery'] = dbQueryResult.query!;
-    nextConfig = nextConfigWithLegacy as typeof nextConfig;
-  }
-
   const pollDbQueryResult = migrateDbQueryConfig(nextConfig.poll?.dbQuery);
   if (pollDbQueryResult.changed && nextConfig.poll) {
     changed = true;

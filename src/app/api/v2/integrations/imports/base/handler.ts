@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
-  decryptSecret,
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
   fetchBaseInventories,
@@ -16,6 +15,7 @@ import {
   extractBaseImageUrls,
 } from '@/features/integrations/server';
 import type { BaseProductRecord } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import {
   getCatalogRepository,
   getProductDataProvider,
@@ -201,18 +201,15 @@ export async function postBaseImportsHandler(
     throw badRequestError('Selected Base.com connection was not found.');
   }
 
-  try {
-    if (resolvedBaseConnection.baseApiToken) {
-      token = decryptSecret(resolvedBaseConnection.baseApiToken).trim();
-    } else if (resolvedBaseConnection.password) {
-      token = decryptSecret(resolvedBaseConnection.password).trim();
-    }
-  } catch {
-    // Ignore decryption errors, the missing-token guard below returns a typed client error.
-  }
-
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: resolvedBaseConnection.baseApiToken,
+  });
+  token = tokenResolution.token;
   if (!token) {
-    throw badRequestError('Base.com API token is required (or connect integration).');
+    throw badRequestError(
+      tokenResolution.error ??
+        'Base.com API token is required. Legacy password token fallback is disabled.'
+    );
   }
 
   if (data.action === 'inventories') {

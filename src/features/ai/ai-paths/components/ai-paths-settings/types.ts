@@ -182,7 +182,6 @@ export interface UseAiPathsSettingsStateReturn {
   handleApplyPreset: (preset: ClusterPreset) => void;
   handleDeletePreset: (presetId: string) => Promise<void>;
   handleExportPresets: () => void;
-  lastGraphModelPayload: unknown;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   parserSamples: Record<string, ParserSampleState>;

@@ -5,7 +5,6 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/shared/lib/ai-paths';
-import { LOCAL_RUN_STEP_CHUNK } from '@/shared/contracts/ai-paths-runtime';
 
 import { createRunId } from '../utils';
 
@@ -25,7 +24,6 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
         return { status: 'paused', state: args.runtimeStateRef.current };
       }
       args.runLoopActiveRef.current = true;
-      const stepLimit = mode === 'step' ? 1 : LOCAL_RUN_STEP_CHUNK;
       const nodeValidationEnabledForBlockedPolicy = args.aiPathsValidation?.enabled !== false;
       let outcome: 'completed' | 'paused' | 'canceled' | 'error' = 'completed';
       let capturedError: unknown = undefined;
@@ -59,7 +57,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             args.currentRunStartedAtMsRef.current = Number.isNaN(parsed) ? Date.now() : parsed;
           }
           const haltRef = {
-            reason: 'completed' as 'completed' | 'step_limit' | 'canceled' | 'blocked',
+            reason: 'completed' as 'completed' | 'blocked' | 'max_iterations' | 'failed',
           };
           const nextState = await evaluateGraph({
             nodes: args.normalizedNodes,
@@ -265,16 +263,11 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
                 options as Parameters<typeof args.toast>[1]
               );
             },
-            control: {
-              mode,
-              stepLimit,
-              signal: args.abortControllerRef.current?.signal,
-              onHalt: (payload: {
-                reason: 'completed' | 'step_limit' | 'canceled' | 'blocked';
-                iteration?: number;
-              }) => {
-                haltRef.reason = payload.reason;
-              },
+            onHalt: (payload: {
+              reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
+              iteration?: number;
+            }) => {
+              haltRef.reason = payload.reason;
             },
           });
           state = nextState;
@@ -325,7 +318,7 @@ export function useLocalExecutionLoop(args: LocalExecutionArgs) {
             break;
           }
           const iteratorPending = args.hasPendingIteratorAdvance(nextState);
-          if (haltRef.reason === 'step_limit') {
+          if (haltRef.reason === 'max_iterations') {
             if (mode === 'step' || args.pauseRequestedRef.current) {
               outcome = 'paused';
               break;

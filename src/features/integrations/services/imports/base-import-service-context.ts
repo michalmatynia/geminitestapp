@@ -264,7 +264,9 @@ export const resolveBaseConnectionContext = async (
     };
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
   if (!tokenResolution.token) {
     return {
       baseIntegrationId: baseIntegration.id,

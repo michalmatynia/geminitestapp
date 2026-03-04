@@ -30,9 +30,7 @@ const mocks = vi.hoisted(() => ({
   documentState: null as PromptExploderDocument | null,
   returnTarget: 'image-studio' as 'image-studio' | 'case-resolver',
   activeValidationScope: 'prompt_exploder',
-  activeValidationRuleStack: 'prompt-exploder' as
-    | string
-    | { id?: string; name?: string; ruleIds?: string[] },
+  activeValidationRuleStack: 'prompt-exploder' as string,
   setPromptText: vi.fn(),
   setDocumentState: vi.fn(),
   setSelectedSegmentId: vi.fn(),
@@ -182,12 +180,8 @@ describe('LibraryContext segmentation actions', () => {
     expect(parsed.records[0]?.segmentCount).toBe(1);
   });
 
-  it('captures segmentation context when validation stack is an object and stores stack id', async () => {
-    mocks.activeValidationRuleStack = {
-      id: 'stack_custom',
-      name: 'Custom stack',
-      ruleIds: ['segment.custom'],
-    };
+  it('captures segmentation context with canonical custom validation stack id', async () => {
+    mocks.activeValidationRuleStack = 'stack_custom';
 
     render(
       <LibraryProvider>

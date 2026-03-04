@@ -86,7 +86,6 @@ export function useCanvasInteractionsNodes({
   notifyLocked,
   confirmNodeSwitch,
   selectedNodeIdSet,
-  selectedNodeId,
   selectedNodeIds,
   setNodes,
   setNodeSelection,
@@ -104,7 +103,6 @@ export function useCanvasInteractionsNodes({
   setRuntimeState,
   pruneRuntimeInputsInternal,
   viewportRef,
-  canvasRef,
   view,
   setLastDrop,
   ensureNodeVisible,
@@ -116,7 +114,6 @@ export function useCanvasInteractionsNodes({
   notifyLocked: () => void;
   confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
   selectedNodeIdSet: Set<string>;
-  selectedNodeId: string | null;
   selectedNodeIds: string[];
   setNodes: (
     nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
@@ -155,7 +152,6 @@ export function useCanvasInteractionsNodes({
     remainingEdges: Edge[]
   ) => RuntimeState;
   viewportRef: React.RefObject<HTMLDivElement | null>;
-  canvasRef: React.RefObject<SVGSVGElement | null>;
   view: { x: number; y: number; scale: number };
   setLastDrop: (pos: { x: number; y: number }) => void;
   ensureNodeVisible: (node: AiNode) => void;
@@ -536,7 +532,7 @@ export function useCanvasInteractionsNodes({
         return;
       }
 
-      if (selectedNodeId === nodeId && selectedNodeIds.length <= 1) return;
+      if (selectedNodeIdSet.has(nodeId) && selectedNodeIds.length <= 1) return;
 
       if (confirmNodeSwitch) {
         const result = confirmNodeSwitch(nodeId);
@@ -551,7 +547,6 @@ export function useCanvasInteractionsNodes({
       confirmNodeSwitch,
       selectEdge,
       selectNode,
-      selectedNodeId,
       selectedNodeIdSet,
       selectedNodeIds.length,
       selectedNodeIds,
@@ -692,7 +687,6 @@ export function useCanvasInteractionsNodes({
     [
       isPathLocked,
       viewportRef,
-      canvasRef,
       view,
       setNodes,
       selectNode,

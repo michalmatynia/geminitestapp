@@ -18,19 +18,10 @@ const makeNode = (id: string): AiNode =>
   }) as AiNode;
 
 const buildArgs = (overrides?: Partial<Parameters<typeof useCanvasStateHandlers>[0]>) => ({
-  isPathLocked: false,
   toast: vi.fn(),
   viewportRef: { current: document.createElement('div') },
   nodes: [makeNode('node-a'), makeNode('node-b')],
-  selectedNodeId: null,
   selectedNodeIds: [],
-  edges: [],
-  setNodes: vi.fn(),
-  setRuntimeState: vi.fn(),
-  selectionToolMode: 'replace' as const,
-  selectionScopeMode: 'replace' as const,
-  setNodeSelection: vi.fn(),
-  toggleNodeSelection: vi.fn(),
   startPan: vi.fn(),
   endPan: vi.fn(),
   setIsPanning: vi.fn(),
@@ -43,7 +34,6 @@ describe('useCanvasStateHandlers resolveActiveNodeSelectionIds', () => {
   it('returns selectedNodeIds filtered to existing nodes', () => {
     const args = buildArgs({
       selectedNodeIds: ['node-b', 'node-b', 'unknown', ' node-a '],
-      selectedNodeId: 'node-a',
     });
 
     const { result } = renderHook(() => useCanvasStateHandlers(args));
@@ -51,15 +41,15 @@ describe('useCanvasStateHandlers resolveActiveNodeSelectionIds', () => {
     expect(result.current.resolveActiveNodeSelectionIds()).toEqual(['node-b', 'node-a']);
   });
 
-  it('falls back to selectedNodeId when multi-selection is empty', () => {
-    const args = buildArgs({ selectedNodeId: 'node-b' });
+  it('returns empty selection when multi-selection is empty', () => {
+    const args = buildArgs();
     const { result } = renderHook(() => useCanvasStateHandlers(args));
 
-    expect(result.current.resolveActiveNodeSelectionIds()).toEqual(['node-b']);
+    expect(result.current.resolveActiveNodeSelectionIds()).toEqual([]);
   });
 
   it('returns empty selection when nothing valid is selected', () => {
-    const args = buildArgs({ selectedNodeId: 'missing', selectedNodeIds: ['ghost'] });
+    const args = buildArgs({ selectedNodeIds: ['ghost'] });
     const { result } = renderHook(() => useCanvasStateHandlers(args));
 
     expect(result.current.resolveActiveNodeSelectionIds()).toEqual([]);

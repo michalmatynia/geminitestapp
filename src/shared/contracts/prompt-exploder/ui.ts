@@ -39,7 +39,7 @@ export const promptExploderSegmentationRecordSchema = z.object({
   segmentCount: z.number().int().nonnegative(),
   returnTarget: z.enum(['image-studio', 'case-resolver']),
   validationScope: z.string(),
-  validationRuleStack: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+  validationRuleStack: z.string().trim().min(1).optional(),
   capturedAt: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -85,7 +85,7 @@ export type PromptExploderSegmentationAnalysisRecord = {
   capturedAt: string;
   returnTarget: PromptExploderSegmentationReturnTarget;
   validationScope: string;
-  validationRuleStack: string | { id?: string; name?: string; ruleIds?: string[] } | undefined;
+  validationRuleStack: string | undefined;
   sourcePrompt: string;
   sourcePromptLength: number;
   reassembledPrompt: string;

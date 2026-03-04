@@ -131,8 +131,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
   }, [segmentationRecords, selectedSegmentationRecordId]);
   const activeValidationRuleStackId = useMemo(() => {
     if (!activeValidationRuleStack) return 'none';
-    if (typeof activeValidationRuleStack === 'string') return activeValidationRuleStack;
-    return activeValidationRuleStack.id ?? activeValidationRuleStack.name ?? 'anonymous';
+    return activeValidationRuleStack;
   }, [activeValidationRuleStack]);
 
   // ── Sync selection ─────────────────────────────────────────────────────────

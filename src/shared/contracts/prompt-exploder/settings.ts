@@ -93,7 +93,7 @@ export const promptExploderSettingsSchema = z.object({
   runtime: z
     .object({
       ruleProfile: promptExploderRuntimeRuleProfileSchema.default('all'),
-      validationRuleStack: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+      validationRuleStack: z.string().trim().min(1).optional(),
       caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
       orchestratorEnabled: z.boolean().optional(),
       benchmarkSuite: z.string().optional(),
@@ -154,33 +154,13 @@ export type PromptExploderSettings = z.infer<typeof promptExploderSettingsSchema
 export const promptExploderRuntimeValidationScopeSchema = z.enum([
   'prompt_exploder',
   'case_resolver_prompt_exploder',
-  'global',
-  'segment',
-  'document',
 ]);
 export type PromptExploderRuntimeValidationScope = z.infer<
   typeof promptExploderRuntimeValidationScopeSchema
 >;
 
-export const promptExploderValidationRuleStackSchema = z.union([
-  z.string().trim().min(1),
-  z.object({
-    id: z.string().trim().min(1),
-    name: z.string().optional(),
-    rules: z.array(z.unknown()).optional(),
-    ruleIds: z.array(z.string()).optional(),
-    isCustom: z.boolean().optional(),
-  }),
-]);
-export type PromptExploderValidationRuleStack =
-  | string
-  | {
-      id: string;
-      name?: string;
-      rules?: PromptValidationRule[];
-      ruleIds?: string[];
-      isCustom?: boolean;
-    };
+export const promptExploderValidationRuleStackSchema = z.string().trim().min(1);
+export type PromptExploderValidationRuleStack = string;
 
 export type PromptExploderValidationRuleStackOption = {
   id: string;

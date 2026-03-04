@@ -28,7 +28,7 @@ const isCaseResolverExploderScope = (scope: string | null | undefined): boolean 
 export function ensurePromptExploderPatternPack(
   settings: PromptEngineSettings,
   options?: {
-    scope?: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder';
+    scope?: PromptExploderRuntimeValidationScope;
   }
 ): PromptExploderPatternPackResult {
   const baseSettings = settings?.promptValidation ? settings : defaultPromptEngineSettings;
@@ -145,7 +145,7 @@ export function ensurePromptExploderPatternPack(
 
 export function getPromptExploderScopedRules(
   settings: PromptEngineSettings,
-  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' = 'prompt_exploder',
+  scope: PromptExploderRuntimeValidationScope = 'prompt_exploder',
   options?: { includePatternPack?: boolean }
 ): PromptValidationRule[] {
   const includePatternPack = options?.includePatternPack ?? true;

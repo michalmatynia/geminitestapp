@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
-import { decryptSecret } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
@@ -441,18 +441,14 @@ export async function postBaseImportParametersHandler(
   if (!connection) {
     throw badRequestError('Selected Base.com connection was not found.');
   }
-  if (!connection?.baseApiToken && !connection?.password) {
-    throw badRequestError('No Base API token configured.');
-  }
-
-  let token = '';
-  if (connection.baseApiToken) {
-    token = decryptSecret(connection.baseApiToken);
-  } else if (connection.password) {
-    token = decryptSecret(connection.password);
-  }
+  const tokenResolution = resolveBaseConnectionToken({
+    baseApiToken: connection.baseApiToken,
+  });
+  const token = tokenResolution.token;
   if (!token) {
-    throw badRequestError('No Base API token configured.');
+    throw badRequestError(
+      tokenResolution.error ?? 'No Base API token configured. Legacy password token fallback is disabled.'
+    );
   }
   const requestedSampleSize = data.sampleSize ?? 8;
   const sampleSize = Math.min(Math.max(1, requestedSampleSize), 20);

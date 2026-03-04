@@ -30,7 +30,7 @@ export function useAiPathsErrorState({
   const validation = useAiPathsValidationActions({
     setAiPathsValidation,
     setLastError: setLastErrorString,
-    toast: toast as unknown as Toast,
+    toast,
   });
 
   const reportAiPathsError = useCallback(

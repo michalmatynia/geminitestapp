@@ -261,7 +261,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: clearRuntimeInputsForEdgesMock,
-        reportAiPathsError: vi.fn(),
         toast: vi.fn(),
       })
     );
@@ -334,7 +333,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: vi.fn(),
-        reportAiPathsError: vi.fn(),
         toast: vi.fn(),
       })
     );
@@ -381,7 +379,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: vi.fn(),
-        reportAiPathsError: vi.fn(),
         toast: vi.fn(),
       })
     );

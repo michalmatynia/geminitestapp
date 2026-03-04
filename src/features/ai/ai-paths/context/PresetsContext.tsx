@@ -16,7 +16,12 @@ import type {
   DbNodePreset,
   DatabaseConfig,
 } from '@/shared/lib/ai-paths';
-import { createPresetId, migrateDatabaseConfigCollections } from '@/shared/lib/ai-paths';
+import {
+  createPresetId,
+  migrateDatabaseConfigCollections,
+  databaseConfigSchema,
+} from '@/shared/lib/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -104,6 +109,24 @@ const DEFAULT_PRESET_DRAFT: ClusterPresetDraft = {
 
 const DEFAULT_EXPANDED_GROUPS = new Set(['Triggers']);
 
+const isDatabaseOperation = (value: unknown): value is DatabaseConfig['operation'] =>
+  value === 'query' ||
+  value === 'update' ||
+  value === 'insert' ||
+  value === 'delete' ||
+  value === 'action' ||
+  value === 'distinct';
+
+const normalizeDatabasePresetConfig = (value: unknown): DatabaseConfig => {
+  if (!isObjectRecord(value)) return { operation: 'query' };
+  const candidate = {
+    ...value,
+    operation: isDatabaseOperation(value['operation']) ? value['operation'] : 'query',
+  };
+  const parsed = databaseConfigSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : { operation: 'query' };
+};
+
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)
 // ---------------------------------------------------------------------------
@@ -181,9 +204,7 @@ export function PresetsProvider({
 
   const normalizeDbNodePreset = useCallback((raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
-    const baseConfig = (raw.config && typeof raw.config === 'object'
-      ? raw.config
-      : { operation: 'query' }) as unknown as DatabaseConfig;
+    const baseConfig = normalizeDatabasePresetConfig(raw.config);
     const migrationResult = migrateDatabaseConfigCollections(baseConfig);
     const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
     return {

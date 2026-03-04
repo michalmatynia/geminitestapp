@@ -39,21 +39,14 @@ export const promptExploderLearnedTemplateSchema = z.object({
 export type PromptExploderLearnedTemplate = z.infer<typeof promptExploderLearnedTemplateSchema>;
 
 export const promptExploderRuntimeValidationScopeSchema = z.enum([
-  'segment',
-  'document',
-  'global',
-  'case_resolver_prompt_exploder',
   'prompt_exploder',
+  'case_resolver_prompt_exploder',
 ]);
 export type PromptExploderRuntimeValidationScope = z.infer<
   typeof promptExploderRuntimeValidationScopeSchema
 >;
 
-export const promptExploderValidationRuleStackSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().optional(),
-  ruleIds: z.array(z.string()).optional(),
-});
-export type PromptExploderValidationRuleStack =
-  | string
-  | z.infer<typeof promptExploderValidationRuleStackSchema>;
+export const promptExploderValidationRuleStackSchema = z.string().trim().min(1);
+export type PromptExploderValidationRuleStack = z.infer<
+  typeof promptExploderValidationRuleStackSchema
+>;

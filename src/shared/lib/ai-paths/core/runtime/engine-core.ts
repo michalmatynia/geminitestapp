@@ -81,8 +81,7 @@ const readRuntimeRetryPolicy = (node: AiNode): RuntimeRetryPolicy => {
     typeof retryConfig['backoffMs'] === 'number' && Number.isFinite(retryConfig['backoffMs'])
       ? Math.max(0, Math.trunc(retryConfig['backoffMs']))
       : DEFAULT_RETRY_BACKOFF_MS;
-  const legacyEnabledValue = (retryConfig as { enabled?: unknown }).enabled;
-  const isRetryEnabled = legacyEnabledValue === true || attemptsValue > 1;
+  const isRetryEnabled = attemptsValue > 1;
 
   return {
     enabled: isRetryEnabled,
@@ -169,14 +168,7 @@ export async function evaluateGraphInternal(
 
   const triggerContext = options.triggerContext ?? null;
   const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
-  const resolvedOnHalt =
-    options.onHalt ??
-    (
-      (options as Record<string, unknown>)['control'] as
-        | { onHalt?: EvaluateGraphOptions['onHalt'] }
-        | undefined
-    )?.onHalt ??
-    undefined;
+  const resolvedOnHalt = options.onHalt;
 
   const emitHalt = async (
     reason: 'blocked' | 'max_iterations' | 'completed' | 'failed'

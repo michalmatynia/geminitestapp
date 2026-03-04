@@ -170,8 +170,7 @@ const mergeTemplatesById = (
 
 const resolveStackId = (stack: PromptExploderValidationRuleStack | null | undefined): string => {
   if (!stack) return 'none';
-  if (typeof stack === 'string') return stack;
-  return stack.id ?? 'anonymous';
+  return stack;
 };
 
 const buildRuntimeCacheKey = (args: {
@@ -452,10 +451,7 @@ export const resolvePromptValidationRuntime = (
 
     recordPromptValidationTiming('runtime_select_ms', performance.now() - startedAt, {
       scope: stackResolution.scope,
-      stack:
-        typeof stackResolution.stack === 'string'
-          ? stackResolution.stack
-          : stackResolution.stack?.id || 'anonymous',
+      stack: stackResolution.stack || 'anonymous',
       profile: args.runtimeRuleProfile,
       correlationId,
       mode: 'cache_miss',
@@ -521,10 +517,7 @@ export const explodePromptWithValidationRuntime = (args: {
   const recordPipelineTiming = (status: 'ok' | 'error'): void => {
     recordPromptValidationTiming('runtime_pipeline_ms', performance.now() - pipelineStartedAt, {
       scope: args.runtime.identity.scope,
-      stack:
-        typeof args.runtime.identity.stack === 'string'
-          ? args.runtime.identity.stack
-          : args.runtime.identity.stack?.id || 'anonymous',
+      stack: args.runtime.identity.stack || 'anonymous',
       correlationId: args.runtime.correlationId,
       status,
     });
@@ -542,10 +535,7 @@ export const explodePromptWithValidationRuntime = (args: {
     });
     recordPromptValidationTiming('explode_ms', performance.now() - explodeStartedAt, {
       scope: args.runtime.identity.scope,
-      stack:
-        typeof args.runtime.identity.stack === 'string'
-          ? args.runtime.identity.stack
-          : args.runtime.identity.stack?.id || 'anonymous',
+      stack: args.runtime.identity.stack || 'anonymous',
       correlationId: args.runtime.correlationId,
       attempt: '1',
     });

@@ -209,11 +209,11 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
     const fallbackTemplateId = requestedTemplateId
       ? ''
       : toTrimmedString(
-          await getExportActiveTemplateId({
-            connectionId: data.connectionId,
-            inventoryId: resolvedInventoryId,
-          })
-        );
+        await getExportActiveTemplateId({
+          connectionId: data.connectionId,
+          inventoryId: resolvedInventoryId,
+        })
+      );
     const templateIdToUse = requestedTemplateId || fallbackTemplateId;
     if (templateIdToUse) {
       const templates: Template[] = await listExportTemplates();
@@ -267,21 +267,21 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
 
   const productProducerIds = !imagesOnly
     ? Array.from(
-        new Set(
-          (product.producers ?? [])
-            .map((producer) => getProducerRefId(producer))
-            .filter((producerId): producerId is string => Boolean(producerId))
-        )
+      new Set(
+        (product.producers ?? [])
+          .map((producer) => getProducerRefId(producer))
+          .filter((producerId): producerId is string => Boolean(producerId))
       )
+    )
     : [];
   const productTagIds = !imagesOnly
     ? Array.from(
-        new Set(
-          (product.tags ?? [])
-            .map((tag) => tag.tagId?.trim())
-            .filter((tagId): tagId is string => Boolean(tagId))
-        )
+      new Set(
+        (product.tags ?? [])
+          .map((tag) => tag.tagId?.trim())
+          .filter((tagId): tagId is string => Boolean(tagId))
       )
+    )
     : [];
 
   let producerNameById: Record<string, string> | null = null;

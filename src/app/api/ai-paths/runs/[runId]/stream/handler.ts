@@ -92,10 +92,10 @@ async function sendCatchUp(
 
   const changedNodes = lastNodeCursor
     ? await repo.listRunNodesSince(
-        runId,
-        { updatedAt: lastNodeCursor.ts, nodeId: lastNodeCursor.nodeId },
-        { limit: NODE_BATCH_LIMIT }
-      )
+      runId,
+      { updatedAt: lastNodeCursor.ts, nodeId: lastNodeCursor.nodeId },
+      { limit: NODE_BATCH_LIMIT }
+    )
     : await repo.listRunNodes(runId);
   if (changedNodes.length > 0) {
     send('nodes', changedNodes);

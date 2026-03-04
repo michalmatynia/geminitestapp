@@ -113,9 +113,9 @@ export const templateSimilarityScore = (
   );
   const sampleScore = template.sampleText
     ? Math.max(
-        learningDiceSimilarity(sourceText, template.sampleText),
-        learningJaccardSimilarity(sourceText, template.sampleText)
-      )
+      learningDiceSimilarity(sourceText, template.sampleText),
+      learningJaccardSimilarity(sourceText, template.sampleText)
+    )
     : 0;
   const anchorScore = learningAnchorCoverageScore(sourceText, template.anchorTokens || []);
   return Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
@@ -216,11 +216,11 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
   const similarTemplateMatch =
     mergeMode === 'auto' && !exactTemplate
       ? findSimilarTemplateMatch({
-          templates: args.templates,
-          segmentType: args.segmentType,
-          sourceText,
-          similarityThreshold: args.similarityThreshold,
-        })
+        templates: args.templates,
+        segmentType: args.segmentType,
+        sourceText,
+        similarityThreshold: args.similarityThreshold,
+      })
       : null;
 
   const targetedTemplate =
@@ -277,33 +277,33 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
 
   const nextTemplate: PromptExploderLearnedTemplate = existingTemplate
     ? {
-        ...existingTemplate,
-        approvals: nextApprovals,
-        state: nextState,
-        updatedAt: now,
-        anchorTokens: mergeTemplateAnchorTokens(
-          existingTemplate.anchorTokens || [],
-          learningTokens(sourceText)
-        ),
-        sampleText: mergeTemplateSampleText(existingTemplate.sampleText || '', sampleText),
-      }
+      ...existingTemplate,
+      approvals: nextApprovals,
+      state: nextState,
+      updatedAt: now,
+      anchorTokens: mergeTemplateAnchorTokens(
+        existingTemplate.anchorTokens || [],
+        learningTokens(sourceText)
+      ),
+      sampleText: mergeTemplateSampleText(existingTemplate.sampleText || '', sampleText),
+    }
     : {
-        id: nextTemplateId,
-        segmentType: args.segmentType,
-        state: nextState,
-        title: args.title,
-        normalizedTitle,
-        anchorTokens: learningTokens(sourceText),
-        sampleText,
-        approvals: 1,
-        createdAt: now,
-        updatedAt: now,
-      };
+      id: nextTemplateId,
+      segmentType: args.segmentType,
+      state: nextState,
+      title: args.title,
+      normalizedTitle,
+      anchorTokens: learningTokens(sourceText),
+      sampleText,
+      approvals: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
 
   const nextTemplates = existingTemplate
     ? args.templates.map((template) =>
-        template.id === existingTemplate.id ? nextTemplate : template
-      )
+      template.id === existingTemplate.id ? nextTemplate : template
+    )
     : [...args.templates, nextTemplate];
 
   const mergeOutcome =

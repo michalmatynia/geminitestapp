@@ -35,7 +35,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunStartedAtMsRef = useRef<number | null>(null);
   const fetchEntityByTypeRef = useRef<
     (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>
-  >(async () => null);
+      >(async () => null);
 
   // 1. Centralized State
   const state = useAiPathsRuntimeState();

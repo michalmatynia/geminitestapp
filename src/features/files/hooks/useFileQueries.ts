@@ -50,7 +50,7 @@ export function useDeleteFile(): DeleteMutation {
 export function useUpdateFileTags(): UpdateMutation<
   ExpandedImageFile,
   { id: string; tags: string[] }
-> {
+  > {
   return createUpdateMutationV2({
     mutationFn: ({ id, tags }: { id: string; tags: string[] }) =>
       api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),

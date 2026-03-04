@@ -91,12 +91,12 @@ export const addAutofixOperationToRule = (
     kind === 'params_json'
       ? { kind: 'params_json', comment: null }
       : {
-          kind: 'replace',
-          pattern: '',
-          flags: '',
-          replacement: '',
-          comment: null,
-        };
+        kind: 'replace',
+        pattern: '',
+        flags: '',
+        replacement: '',
+        comment: null,
+      };
 
   patchRule({
     autofix: {

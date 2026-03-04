@@ -91,9 +91,9 @@ export const buildPromptExploderLibraryItem = (args: {
     derivePromptExploderLibraryItemName(args.prompt);
   const documentSnapshot = args.documentState
     ? clonePromptExploderDocument({
-        ...args.documentState,
-        sourcePrompt: args.prompt,
-      })
+      ...args.documentState,
+      sourcePrompt: args.prompt,
+    })
     : null;
 
   return {

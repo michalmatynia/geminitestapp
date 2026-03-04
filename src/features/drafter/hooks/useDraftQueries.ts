@@ -76,7 +76,7 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
 export function useUpdateDraftMutation(): MutationResult<
   ProductDraft,
   { id: string; data: UpdateProductDraftInput }
-> {
+  > {
   return createUpdateMutationV2<ProductDraft, { id: string; data: UpdateProductDraftInput }>({
     mutationFn: ({ id, data }) => api.put<ProductDraft>(`/api/drafts/${id}`, data),
     meta: {

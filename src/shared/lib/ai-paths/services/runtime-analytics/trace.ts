@@ -121,14 +121,14 @@ export const summarizeRuntimeTraceAnalytics = (input: {
   const avgDurationMs =
     durations.length > 0
       ? Math.round(
-          durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
-        )
+        durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+      )
       : null;
   const p95DurationMs =
     durations.length > 0
       ? durations[
-          Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
-        ]!
+        Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+      ]!
       : null;
   const topSlowNodes = Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.durationCount > 0)

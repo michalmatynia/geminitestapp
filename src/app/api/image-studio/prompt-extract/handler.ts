@@ -115,15 +115,15 @@ function runProgrammaticAttempt(
 
   const formatted = applyAutofix
     ? formatProgrammaticPrompt(
-        prompt,
-        promptValidationSettings,
-        {
-          scope: 'image_studio_extraction',
-        },
-        {
-          precomputedIssuesBefore: validationBefore,
-        }
-      )
+      prompt,
+      promptValidationSettings,
+      {
+        scope: 'image_studio_extraction',
+      },
+      {
+        precomputedIssuesBefore: validationBefore,
+      }
+    )
     : { prompt, changed: false };
   const candidatePrompt = formatted.prompt;
   const direct = extractParamsFromPrompt(candidatePrompt);

@@ -286,9 +286,9 @@ describe('case-resolver nodefile relations', () => {
       documentFileIdsByNodeFileAssetId: {},
       nodeIdsByNodeFileAssetId: {},
     });
-    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrow(
-      'Inline Case Resolver node-file snapshots are no longer supported.'
-    );
     expect(sanitizedGraph).toBe(graph);
+    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrowError(
+      /Inline Case Resolver node-file snapshots are no longer supported/i
+    );
   });
 });

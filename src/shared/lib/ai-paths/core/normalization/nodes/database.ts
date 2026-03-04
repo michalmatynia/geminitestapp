@@ -34,20 +34,20 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
     Boolean(databaseConfig.actionCategory || databaseConfig.action);
   const parameterInferenceGuard = databaseConfig.parameterInferenceGuard
     ? {
-        enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,
-        targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
-        definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
-        definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
-        enforceOptionLabels: databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
-        allowUnknownParameterIds:
+      enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,
+      targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
+      definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
+      definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
+      enforceOptionLabels: databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
+      allowUnknownParameterIds:
           databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
-      }
+    }
     : undefined;
   const runtimeConfig = node.config?.runtime
     ? {
-        ...node.config.runtime,
-        ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
-      }
+      ...node.config.runtime,
+      ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
+    }
     : { waitForInputs: true };
   return {
     ...node,

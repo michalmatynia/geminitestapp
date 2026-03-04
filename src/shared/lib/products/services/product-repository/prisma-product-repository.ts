@@ -213,8 +213,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       ...rest,
       ...(normalizedParameters !== undefined
         ? {
-            parameters: normalizedParameters as Prisma.JsonValue,
-          }
+          parameters: normalizedParameters as Prisma.JsonValue,
+        }
         : {}),
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
@@ -250,8 +250,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         ...rest,
         ...(normalizedParameters !== undefined
           ? {
-              parameters: normalizedParameters as Prisma.InputJsonValue,
-            }
+            parameters: normalizedParameters as Prisma.InputJsonValue,
+          }
           : {}),
         ...(id ? { id } : {}),
       }) as Prisma.ProductCreateManyInput;
@@ -287,8 +287,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       ...rest,
       ...(normalizedParameters !== undefined
         ? {
-            parameters: normalizedParameters as Prisma.InputJsonValue,
-          }
+          parameters: normalizedParameters as Prisma.InputJsonValue,
+        }
         : {}),
     }) as Prisma.ProductUpdateInput;
 

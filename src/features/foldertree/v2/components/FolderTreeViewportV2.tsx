@@ -233,10 +233,10 @@ export function FolderTreeViewportV2({
   const useFallbackRows = virtualItems.length === 0 && rows.length > 0;
   const renderedRows = useFallbackRows
     ? rows.map((_, index) => ({
-        key: `fallback-${index}`,
-        index,
-        start: index * defaultRowHeight,
-      }))
+      key: `fallback-${index}`,
+      index,
+      start: index * defaultRowHeight,
+    }))
     : virtualItems;
   const totalSize = useFallbackRows
     ? rows.length * defaultRowHeight
@@ -303,40 +303,40 @@ export function FolderTreeViewportV2({
         onDragOver={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = dnd.resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                event.dataTransfer.dropEffect = 'move';
-              }
+              const draggedNodeId = dnd.resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+            }
             : undefined
         }
         onDrop={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = dnd.resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                void (async (): Promise<void> => {
-                  try {
-                    if (onNodeDrop) {
-                      await onNodeDrop(
-                        {
-                          draggedNodeId,
-                          targetId: null,
-                          position: 'inside',
-                        },
-                        controller
-                      );
-                    } else {
-                      await controller.dropNodeToRoot(draggedNodeId);
-                    }
-                  } finally {
-                    dnd.clearDragState();
+              const draggedNodeId = dnd.resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!dnd.resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              void (async (): Promise<void> => {
+                try {
+                  if (onNodeDrop) {
+                    await onNodeDrop(
+                      {
+                        draggedNodeId,
+                        targetId: null,
+                        position: 'inside',
+                      },
+                      controller
+                    );
+                  } else {
+                    await controller.dropNodeToRoot(draggedNodeId);
                   }
-                })();
-              }
+                } finally {
+                  dnd.clearDragState();
+                }
+              })();
+            }
             : undefined
         }
       >
@@ -498,48 +498,48 @@ export function FolderTreeViewportV2({
                     onDragOver={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                            const draggedNodeId = dnd.resolveDraggedNode(event);
-                            if (!draggedNodeId || draggedNodeId === node.id) return;
+                          const draggedNodeId = dnd.resolveDraggedNode(event);
+                          if (!draggedNodeId || draggedNodeId === node.id) return;
 
-                            const position = dnd.resolveNodeDropPosition(
-                              event,
-                              draggedNodeId,
-                              viewNode
-                            );
-                            if (!position) return;
+                          const position = dnd.resolveNodeDropPosition(
+                            event,
+                            draggedNodeId,
+                            viewNode
+                          );
+                          if (!position) return;
 
-                            event.preventDefault();
-                            event.stopPropagation();
-                            event.dataTransfer.dropEffect = 'move';
+                          event.preventDefault();
+                          event.stopPropagation();
+                          event.dataTransfer.dropEffect = 'move';
 
-                            if (
-                              controller.dragState?.targetId !== node.id ||
+                          if (
+                            controller.dragState?.targetId !== node.id ||
                               controller.dragState?.position !== position
-                            ) {
-                              controller.updateDragTarget(node.id, position);
-                            }
+                          ) {
+                            controller.updateDragTarget(node.id, position);
+                          }
 
-                            if (
-                              viewNode.type === 'folder' &&
+                          if (
+                            viewNode.type === 'folder' &&
                               !row.isExpanded &&
                               autoExpandOnHoverMs > 0
-                            ) {
-                              if (dnd.autoExpandTargetRef.current !== node.id) {
-                                if (dnd.autoExpandTimerRef.current)
-                                  clearTimeout(dnd.autoExpandTimerRef.current);
-                                dnd.autoExpandTargetRef.current = node.id;
-                                dnd.autoExpandTimerRef.current = setTimeout(() => {
-                                  controller.expandNode(node.id);
-                                }, autoExpandOnHoverMs);
-                              }
-                            } else {
-                              if (dnd.autoExpandTimerRef.current) {
+                          ) {
+                            if (dnd.autoExpandTargetRef.current !== node.id) {
+                              if (dnd.autoExpandTimerRef.current)
                                 clearTimeout(dnd.autoExpandTimerRef.current);
-                                dnd.autoExpandTimerRef.current = null;
-                              }
-                              dnd.autoExpandTargetRef.current = null;
+                              dnd.autoExpandTargetRef.current = node.id;
+                              dnd.autoExpandTimerRef.current = setTimeout(() => {
+                                controller.expandNode(node.id);
+                              }, autoExpandOnHoverMs);
                             }
+                          } else {
+                            if (dnd.autoExpandTimerRef.current) {
+                              clearTimeout(dnd.autoExpandTimerRef.current);
+                              dnd.autoExpandTimerRef.current = null;
+                            }
+                            dnd.autoExpandTargetRef.current = null;
                           }
+                        }
                         : undefined
                     }
                     onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
@@ -559,42 +559,42 @@ export function FolderTreeViewportV2({
                     onDrop={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                            const draggedNodeId = dnd.resolveDraggedNode(event);
-                            if (!draggedNodeId || draggedNodeId === node.id) return;
+                          const draggedNodeId = dnd.resolveDraggedNode(event);
+                          if (!draggedNodeId || draggedNodeId === node.id) return;
 
-                            const position = dnd.resolveNodeDropPosition(
-                              event,
-                              draggedNodeId,
-                              viewNode
-                            );
-                            if (!position) return;
+                          const position = dnd.resolveNodeDropPosition(
+                            event,
+                            draggedNodeId,
+                            viewNode
+                          );
+                          if (!position) return;
 
-                            event.preventDefault();
-                            event.stopPropagation();
+                          event.preventDefault();
+                          event.stopPropagation();
 
-                            void (async (): Promise<void> => {
-                              try {
-                                if (onNodeDrop) {
-                                  await onNodeDrop(
-                                    {
-                                      draggedNodeId,
-                                      targetId: node.id,
-                                      position,
-                                    },
-                                    controller
-                                  );
+                          void (async (): Promise<void> => {
+                            try {
+                              if (onNodeDrop) {
+                                await onNodeDrop(
+                                  {
+                                    draggedNodeId,
+                                    targetId: node.id,
+                                    position,
+                                  },
+                                  controller
+                                );
+                              } else {
+                                if (position === 'inside') {
+                                  await controller.moveNode(draggedNodeId, node.id);
                                 } else {
-                                  if (position === 'inside') {
-                                    await controller.moveNode(draggedNodeId, node.id);
-                                  } else {
-                                    await controller.reorderNode(draggedNodeId, node.id, position);
-                                  }
+                                  await controller.reorderNode(draggedNodeId, node.id, position);
                                 }
-                              } finally {
-                                dnd.clearDragState();
                               }
-                            })();
-                          }
+                            } finally {
+                              dnd.clearDragState();
+                            }
+                          })();
+                        }
                         : undefined
                     }
                   >

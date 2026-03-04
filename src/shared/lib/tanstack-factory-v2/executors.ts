@@ -8,7 +8,7 @@ export const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
   context: QueryFunctionContext<TQueryKey>
 ): Promise<TQueryFnData> =>
-  (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+    (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
 
 export const createManualQueryExecutor = <
   TQueryFnData,
@@ -16,11 +16,11 @@ export const createManualQueryExecutor = <
   TResult,
   TQueryKey extends QueryKey = QueryKey,
 >(
-  queryClient: QueryClient,
-  config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>,
-  executor: (input: ManualQueryExecutorInput<TQueryFnData, TQueryKey>) => Promise<TResult>,
-  options?: { swallowErrors?: boolean }
-): (() => Promise<TResult | undefined>) => {
+    queryClient: QueryClient,
+    config: EnsureQueryDataV2Config<TQueryFnData, TError, TQueryKey>,
+    executor: (input: ManualQueryExecutorInput<TQueryFnData, TQueryKey>) => Promise<TResult>,
+    options?: { swallowErrors?: boolean }
+  ): (() => Promise<TResult | undefined>) => {
   const { queryKey, queryFn, meta, telemetryContext, transformError, staleTime } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);

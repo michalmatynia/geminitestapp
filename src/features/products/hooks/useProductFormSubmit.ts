@@ -132,15 +132,15 @@ function buildFormData(
           typeof entry.valuesByLanguage === 'object' &&
           !Array.isArray(entry.valuesByLanguage)
             ? Object.entries(entry.valuesByLanguage).reduce(
-                (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-                  const normalizedLang = lang.trim().toLowerCase();
-                  const normalizedValue = typeof value === 'string' ? value.trim() : '';
-                  if (!normalizedLang || !normalizedValue) return acc;
-                  acc[normalizedLang] = normalizedValue;
-                  return acc;
-                },
-                {}
-              )
+              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                const normalizedLang = lang.trim().toLowerCase();
+                const normalizedValue = typeof value === 'string' ? value.trim() : '';
+                if (!normalizedLang || !normalizedValue) return acc;
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
+              {}
+            )
             : {};
         const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
         const fallbackLocalizedValue =

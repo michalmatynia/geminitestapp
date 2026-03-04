@@ -25,10 +25,10 @@ export const syncChatbotSessions: SyncHandler = async ({ mongo, prisma, normaliz
           updatedAt: toDate(doc.updatedAt) ?? new Date(),
           messages: Array.isArray(doc.messages)
             ? doc.messages.map((message) => ({
-                role: message.role,
-                content: message.content,
-                createdAt: toDate(message.createdAt) ?? new Date(),
-              }))
+              role: message.role,
+              content: message.content,
+              createdAt: toDate(message.createdAt) ?? new Date(),
+            }))
             : [],
         };
       }

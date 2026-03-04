@@ -500,8 +500,8 @@ const compileAdvancedPrismaRule = (
     compiledRules.length === 1
       ? compiledRules[0]!
       : ({
-          [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
-        } as Prisma.ProductWhereInput);
+        [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
+      } as Prisma.ProductWhereInput);
 
   if (!rule.not) return combined;
 

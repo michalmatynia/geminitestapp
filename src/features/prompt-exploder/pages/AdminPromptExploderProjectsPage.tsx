@@ -79,8 +79,8 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     () =>
       editingProjectId
         ? (projects.find(
-            (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
-          ) ?? null)
+          (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
+        ) ?? null)
         : null,
     [editingProjectId, projects]
   );
@@ -88,8 +88,8 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     () =>
       projectPendingDeleteId
         ? (projects.find(
-            (project: PromptExploderLibraryItem): boolean => project.id === projectPendingDeleteId
-          ) ?? null)
+          (project: PromptExploderLibraryItem): boolean => project.id === projectPendingDeleteId
+        ) ?? null)
         : null,
     [projectPendingDeleteId, projects]
   );
@@ -152,8 +152,8 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
 
     const existing = editingProjectId
       ? (promptLibraryState.items.find(
-          (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
-        ) ?? null)
+        (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
+      ) ?? null)
       : null;
     const now = new Date().toISOString();
     const shouldClearDocument =

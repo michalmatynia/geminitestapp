@@ -399,17 +399,17 @@ export function usePromptExploderState() {
       );
       const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
-            prompt: trimmed,
-            runtime: runtimeResolution.runtime,
-            similarityThreshold,
-          })
+          prompt: trimmed,
+          runtime: runtimeResolution.runtime,
+          similarityThreshold,
+        })
         : explodePromptText({
-            prompt: trimmed,
-            validationRules: runtimeResolution.runtime.runtimeValidationRules,
-            learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
-            similarityThreshold,
-            validationScope: runtimeResolution.runtime.identity.scope,
-          });
+          prompt: trimmed,
+          validationRules: runtimeResolution.runtime.runtimeValidationRules,
+          learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
+          similarityThreshold,
+          validationScope: runtimeResolution.runtime.identity.scope,
+        });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,

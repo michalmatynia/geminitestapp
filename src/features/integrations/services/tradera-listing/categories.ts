@@ -30,16 +30,16 @@ export const fetchTraderaCategoriesForConnection = async (
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
       ? {
-          proxy: {
-            server: playwrightSettings.proxyServer,
-            ...(playwrightSettings.proxyUsername
-              ? { username: playwrightSettings.proxyUsername }
-              : {}),
-            ...(playwrightSettings.proxyPassword
-              ? { password: playwrightSettings.proxyPassword }
-              : {}),
-          },
-        }
+        proxy: {
+          server: playwrightSettings.proxyServer,
+          ...(playwrightSettings.proxyUsername
+            ? { username: playwrightSettings.proxyUsername }
+            : {}),
+          ...(playwrightSettings.proxyPassword
+            ? { password: playwrightSettings.proxyPassword }
+            : {}),
+        },
+      }
       : {}),
   });
   const deviceContextOptions: BrowserContextOptions = deviceProfile

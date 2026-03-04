@@ -203,10 +203,10 @@ export function ImportExportProvider({
       `active-template:${importTemplateScopeKey || 'none'}`,
       importTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-            '/api/integrations/imports/base/active-template',
-            normalizedSelectedBaseConnectionId,
-            normalizedImportInventoryId
-          )
+          '/api/integrations/imports/base/active-template',
+          normalizedSelectedBaseConnectionId,
+          normalizedImportInventoryId
+        )
         : '/api/integrations/imports/base/active-template',
       { enabled: importTemplateScopeReady }
     );
@@ -215,10 +215,10 @@ export function ImportExportProvider({
       `export-active-template:${exportTemplateScopeKey || 'none'}`,
       exportTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-            '/api/integrations/exports/base/active-template',
-            normalizedSelectedBaseConnectionId,
-            normalizedExportInventoryId
-          )
+          '/api/integrations/exports/base/active-template',
+          normalizedSelectedBaseConnectionId,
+          normalizedExportInventoryId
+        )
         : '/api/integrations/exports/base/active-template',
       { enabled: exportTemplateScopeReady }
     );

@@ -177,27 +177,27 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const [recentProbe, activeProbe, queueStatsProbe] = await Promise.all([
     RUN_RATE_MAX > 0
       ? withSoftTimeout(
-          repo.listRuns({
-            userId: access.userId,
-            createdAfter: new Date(now - windowMs).toISOString(),
-            limit: RUN_RATE_MAX,
-            offset: 0,
-            includeTotal: false,
-          }),
-          RUN_RATE_QUERY_TIMEOUT_MS
-        )
+        repo.listRuns({
+          userId: access.userId,
+          createdAfter: new Date(now - windowMs).toISOString(),
+          limit: RUN_RATE_MAX,
+          offset: 0,
+          includeTotal: false,
+        }),
+        RUN_RATE_QUERY_TIMEOUT_MS
+      )
       : null,
     RUN_ACTIVE_MAX > 0
       ? withSoftTimeout(
-          repo.listRuns({
-            userId: access.userId,
-            statuses: activeStatuses,
-            limit: RUN_ACTIVE_MAX,
-            offset: 0,
-            includeTotal: false,
-          }),
-          RUN_RATE_QUERY_TIMEOUT_MS
-        )
+        repo.listRuns({
+          userId: access.userId,
+          statuses: activeStatuses,
+          limit: RUN_ACTIVE_MAX,
+          offset: 0,
+          includeTotal: false,
+        }),
+        RUN_RATE_QUERY_TIMEOUT_MS
+      )
       : null,
     RUN_GLOBAL_QUEUED_MAX > 0
       ? withSoftTimeout(repo.getQueueStats(), RUN_RATE_QUERY_TIMEOUT_MS)

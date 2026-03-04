@@ -170,11 +170,11 @@ const sanitizeContext = (
       value,
       ...(hadStringTruncation
         ? {
-            truncation: {
-              reason: 'string_value_truncation',
-              maxLength: MAX_STRING_LENGTH,
-            },
-          }
+          truncation: {
+            reason: 'string_value_truncation',
+            maxLength: MAX_STRING_LENGTH,
+          },
+        }
         : {}),
     };
   } catch {

@@ -488,10 +488,10 @@ export const processBaseImportRun = async (
       parameterRepository.listParameters({ catalogId: targetCatalog.id }),
       templateParameterImportSettings.matchBy === 'base_id_then_name'
         ? getCatalogParameterLinks({
-            catalogId: targetCatalog.id,
-            connectionId: connection.connectionId,
-            inventoryId: run.params.inventoryId,
-          })
+          catalogId: targetCatalog.id,
+          connectionId: connection.connectionId,
+          inventoryId: run.params.inventoryId,
+        })
         : Promise.resolve({}),
     ]);
 
@@ -591,9 +591,9 @@ export const processBaseImportRun = async (
       const prefetchedListings =
         allProductIdsForBatch.size > 0
           ? await findProductListingsByProductsAndConnectionAcrossProviders(
-              Array.from(allProductIdsForBatch),
-              connection.connectionId
-            )
+            Array.from(allProductIdsForBatch),
+            connection.connectionId
+          )
           : new Map<string, { listing: ProductListing; repository: ProductListingRepository }>();
 
       for (const item of dueItems) {

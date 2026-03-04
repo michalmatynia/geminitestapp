@@ -99,13 +99,13 @@ export async function apiClient<T>(
     const response =
       timeout > 0
         ? await Promise.race<Response>([
-            fetchPromise,
-            new Promise<Response>((_, reject) => {
-              timer = setTimeout(() => {
-                reject(new Error(`Request timeout after ${timeout}ms`));
-              }, timeout);
-            }),
-          ])
+          fetchPromise,
+          new Promise<Response>((_, reject) => {
+            timer = setTimeout(() => {
+              reject(new Error(`Request timeout after ${timeout}ms`));
+            }, timeout);
+          }),
+        ])
         : await fetchPromise;
 
     if (response.status === 204) {

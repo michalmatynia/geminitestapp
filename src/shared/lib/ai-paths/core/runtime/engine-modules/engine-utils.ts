@@ -256,11 +256,11 @@ export const buildWaitingOnDetails = (
         : {}),
       ...(Array.isArray(rawWaitingOnPorts)
         ? {
-            waitingOnPorts: rawWaitingOnPorts
-              .filter((p: unknown): p is string => typeof p === 'string')
-              .map((p: string): string => p.trim())
-              .filter((p: string): boolean => p.length > 0),
-          }
+          waitingOnPorts: rawWaitingOnPorts
+            .filter((p: unknown): p is string => typeof p === 'string')
+            .map((p: string): string => p.trim())
+            .filter((p: string): boolean => p.length > 0),
+        }
         : {}),
     });
   });

@@ -214,9 +214,9 @@ export function useCanvasConnection(args: {
       const viewport = viewportRef.current?.getBoundingClientRect();
       const nextPos = viewport
         ? {
-            x: (event.clientX - viewport.left - view.x) / view.scale,
-            y: (event.clientY - viewport.top - view.y) / view.scale,
-          }
+          x: (event.clientX - viewport.left - view.x) / view.scale,
+          y: (event.clientY - viewport.top - view.y) / view.scale,
+        }
         : start;
       setEdges((prev: Edge[]): Edge[] => {
         const remaining = prev.filter((edge: Edge): boolean => edge.id !== edgeToMove.id);

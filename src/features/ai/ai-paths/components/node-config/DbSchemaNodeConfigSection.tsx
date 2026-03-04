@@ -399,13 +399,13 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 {(schemaConfig.mode === 'all'
                   ? schemaCollections
                   : schemaCollections.filter((collection) =>
-                      matchesCollectionSelection(
-                        collection,
-                        new Set(
-                          (schemaConfig.collections ?? []).map((c: string) => c.toLowerCase())
-                        )
+                    matchesCollectionSelection(
+                      collection,
+                      new Set(
+                        (schemaConfig.collections ?? []).map((c: string) => c.toLowerCase())
                       )
                     )
+                  )
                 ).map((coll) => (
                   <div key={`${coll.provider ?? 'db'}:${coll.name}`} className='mb-2'>
                     <div className='font-medium text-purple-300'>
@@ -427,8 +427,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 ))}
                 {schemaConfig.mode === 'selected' &&
                   (!schemaConfig.collections || schemaConfig.collections.length === 0) && (
-                    <div className='italic text-gray-500'>No collections selected</div>
-                  )}
+                  <div className='italic text-gray-500'>No collections selected</div>
+                )}
               </div>
             </Card>
 

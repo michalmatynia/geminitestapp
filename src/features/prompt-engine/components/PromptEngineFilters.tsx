@@ -81,7 +81,7 @@ export function PromptEngineFilters(): React.JSX.Element {
               })),
             ],
           } satisfies FilterField,
-        ]),
+      ]),
     {
       key: 'includeDisabled',
       label: 'Include Disabled',

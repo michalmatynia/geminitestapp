@@ -48,7 +48,7 @@ export function SectionNodeItem({
   const isRowExpanded = isExpanded || isTreeExpanded;
   const isSelected = pbState.selectedNodeId === section.id;
   const isDragging = draggedMasterSectionId === section.id;
-  const isHidden = isCmsSectionHidden(section.settings['isHidden']);
+  const isHidden = isCmsSectionHidden(section.settings?.['isHidden']);
   const draggedSectionId = drag.section.id ?? draggedMasterSectionId;
   const draggedSection = allSections.find((candidate) => candidate.id === draggedSectionId);
   const isNestedSameParent = draggedSection?.parentSectionId === section.id;

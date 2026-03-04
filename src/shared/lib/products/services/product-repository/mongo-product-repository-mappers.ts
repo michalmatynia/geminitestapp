@@ -54,6 +54,21 @@ const assertNoLegacyLocalizedShape = (
   });
 };
 
+const assertCanonicalLocalizedScalarField = (
+  value: unknown,
+  field: 'name_en' | 'name_pl' | 'name_de' | 'description_en' | 'description_pl' | 'description_de',
+  productId: string
+): void => {
+  if (value === undefined || value === null) return;
+  if (typeof value === 'string') return;
+  throw validationError('Invalid product localized scalar field payload.', {
+    productId,
+    field,
+    reason: 'invalid_type',
+    valueType: typeof value,
+  });
+};
+
 const buildCanonicalLocalizedField = (scalar: {
   en: string | null | undefined;
   pl: string | null | undefined;
@@ -67,15 +82,24 @@ const buildCanonicalLocalizedField = (scalar: {
 };
 
 const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): string | null => {
-  const direct = toTrimmedString(doc.categoryId);
-  if (direct) return direct;
   if (doc.categories !== undefined && doc.categories !== null) {
     throw validationError('Legacy product category document shape is no longer supported.', {
       productId,
       field: 'categories',
     });
   }
-  return null;
+  const rawCategoryId = doc.categoryId;
+  if (rawCategoryId === undefined || rawCategoryId === null) return null;
+  if (typeof rawCategoryId !== 'string') {
+    throw validationError('Invalid product categoryId payload.', {
+      productId,
+      field: 'categoryId',
+      reason: 'invalid_type',
+      valueType: typeof rawCategoryId,
+    });
+  }
+  const direct = rawCategoryId.trim();
+  return direct.length > 0 ? direct : null;
 };
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
@@ -95,14 +119,14 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-            (acc: Record<string, string>, [languageCode, languageValue]) => {
-              const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
-              if (!normalizedCode || typeof languageValue !== 'string') return acc;
-              acc[normalizedCode] = languageValue;
-              return acc;
-            },
-            {}
-          )
+          (acc: Record<string, string>, [languageCode, languageValue]) => {
+            const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
+            if (!normalizedCode || typeof languageValue !== 'string') return acc;
+            acc[normalizedCode] = languageValue;
+            return acc;
+          },
+          {}
+        )
         : {};
     const current = byParameterId.get(parameterId);
     if (!current) {
@@ -274,6 +298,12 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
   assertNoLegacyLocalizedShape(doc.name, 'name', productId);
   assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
+  assertCanonicalLocalizedScalarField(doc.name_pl, 'name_pl', productId);
+  assertCanonicalLocalizedScalarField(doc.name_de, 'name_de', productId);
+  assertCanonicalLocalizedScalarField(doc.description_en, 'description_en', productId);
+  assertCanonicalLocalizedScalarField(doc.description_pl, 'description_pl', productId);
+  assertCanonicalLocalizedScalarField(doc.description_de, 'description_de', productId);
   const normalizedName = buildCanonicalLocalizedField({
     en: doc.name_en,
     pl: doc.name_pl,
@@ -333,6 +363,12 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
   const productId = doc.id ?? doc._id;
   assertNoLegacyLocalizedShape(doc.name, 'name', productId);
   assertNoLegacyLocalizedShape(doc.description, 'description', productId);
+  assertCanonicalLocalizedScalarField(doc.name_en, 'name_en', productId);
+  assertCanonicalLocalizedScalarField(doc.name_pl, 'name_pl', productId);
+  assertCanonicalLocalizedScalarField(doc.name_de, 'name_de', productId);
+  assertCanonicalLocalizedScalarField(doc.description_en, 'description_en', productId);
+  assertCanonicalLocalizedScalarField(doc.description_pl, 'description_pl', productId);
+  assertCanonicalLocalizedScalarField(doc.description_de, 'description_de', productId);
   const normalizedName = buildCanonicalLocalizedField({
     en: doc.name_en,
     pl: doc.name_pl,

@@ -53,6 +53,7 @@ export default defineConfig({
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
           fileParallelism: false,
+          pool: 'forks',
           include: configDefaults.include,
           exclude: [
             ...configDefaults.exclude,

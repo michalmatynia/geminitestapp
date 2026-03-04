@@ -19,12 +19,12 @@ export function TextAtomBlock(): React.ReactNode {
   const letters = (block.blocks ?? []).length
     ? (block.blocks ?? [])
     : Array.from(text).map(
-        (char: string, index: number): BlockInstance => ({
-          id: `text-atom-${block.id}-${index}`,
-          type: 'TextAtomLetter',
-          settings: { textContent: char },
-        })
-      );
+      (char: string, index: number): BlockInstance => ({
+        id: `text-atom-${block.id}-${index}`,
+        type: 'TextAtomLetter',
+        settings: { textContent: char },
+      })
+    );
 
   if (!letters.length) return null;
 

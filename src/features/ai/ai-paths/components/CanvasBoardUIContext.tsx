@@ -23,6 +23,7 @@ export type CanvasRendererMode = 'svg';
 export interface CanvasBoardUIContextValue {
   // View & Viewport
   view: { x: number; y: number; scale: number };
+  dragState: { nodeId: string; offsetX: number; offsetY: number } | null;
   viewportSize: { width: number; height: number } | null;
   detailLevel: SvgDetailLevel;
 

@@ -29,6 +29,7 @@ import {
   createCaseResolverAssetFile,
   normalizeCaseResolverFolderTimestamps,
 } from './settings-workspace-helpers';
+import { coerceCaseResolverEdgeToCanonicalShape } from './settings.edge-validation';
 
 const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
   {
@@ -40,6 +41,28 @@ const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorks
 const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
   CaseResolverWorkspace,
   CaseResolverWorkspaceNormalizationDiagnostics
+>();
+
+export type CaseResolverWorkspaceLegacySanitizationDiagnostics = {
+  legacyEdgeConvertedCount: number;
+  legacyEdgeDroppedCount: number;
+  inlineNodeFileSnapshotStrippedCount: number;
+  fileGraphFallbackDropCount: number;
+  relationGraphFallbackDropped: boolean;
+};
+
+const CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceLegacySanitizationDiagnostics =
+  {
+    legacyEdgeConvertedCount: 0,
+    legacyEdgeDroppedCount: 0,
+    inlineNodeFileSnapshotStrippedCount: 0,
+    fileGraphFallbackDropCount: 0,
+    relationGraphFallbackDropped: false,
+  };
+
+const caseResolverWorkspaceLegacySanitizationDiagnosticsByWorkspace = new WeakMap<
+  CaseResolverWorkspace,
+  CaseResolverWorkspaceLegacySanitizationDiagnostics
 >();
 
 const normalizeCaseResolverWorkspaceDiagnostics = (
@@ -61,6 +84,30 @@ const attachCaseResolverWorkspaceNormalizationDiagnostics = (
   return workspace;
 };
 
+const normalizeLegacySanitizationDiagnostics = (
+  diagnostics: Partial<CaseResolverWorkspaceLegacySanitizationDiagnostics> | null | undefined
+): CaseResolverWorkspaceLegacySanitizationDiagnostics => ({
+  legacyEdgeConvertedCount: Math.max(0, Math.floor(diagnostics?.legacyEdgeConvertedCount ?? 0)),
+  legacyEdgeDroppedCount: Math.max(0, Math.floor(diagnostics?.legacyEdgeDroppedCount ?? 0)),
+  inlineNodeFileSnapshotStrippedCount: Math.max(
+    0,
+    Math.floor(diagnostics?.inlineNodeFileSnapshotStrippedCount ?? 0)
+  ),
+  fileGraphFallbackDropCount: Math.max(0, Math.floor(diagnostics?.fileGraphFallbackDropCount ?? 0)),
+  relationGraphFallbackDropped: diagnostics?.relationGraphFallbackDropped === true,
+});
+
+const attachCaseResolverWorkspaceLegacySanitizationDiagnostics = (
+  workspace: CaseResolverWorkspace,
+  diagnostics: Partial<CaseResolverWorkspaceLegacySanitizationDiagnostics> | null | undefined
+): CaseResolverWorkspace => {
+  caseResolverWorkspaceLegacySanitizationDiagnosticsByWorkspace.set(
+    workspace,
+    normalizeLegacySanitizationDiagnostics(diagnostics)
+  );
+  return workspace;
+};
+
 export const getCaseResolverWorkspaceNormalizationDiagnostics = (
   workspace: CaseResolverWorkspace | null | undefined
 ): CaseResolverWorkspaceNormalizationDiagnostics =>
@@ -68,6 +115,14 @@ export const getCaseResolverWorkspaceNormalizationDiagnostics = (
     ? (caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.get(workspace) ??
       CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY)
     : CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY;
+
+export const getCaseResolverWorkspaceLegacySanitizationDiagnostics = (
+  workspace: CaseResolverWorkspace | null | undefined
+): CaseResolverWorkspaceLegacySanitizationDiagnostics =>
+  workspace
+    ? (caseResolverWorkspaceLegacySanitizationDiagnosticsByWorkspace.get(workspace) ??
+      CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY)
+    : CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY;
 
 const resolveSafeCaseParentId = (
   caseId: string,
@@ -89,6 +144,124 @@ const resolveSafeCaseParentId = (
     current = parent.parentCaseId ?? null;
   }
   return parentCaseId;
+};
+
+const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY = 'nodeFileSnapshotStorage';
+const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
+const CASE_RESOLVER_EMPTY_GRAPH = { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} };
+
+const sanitizeLegacyEdgeArray = (
+  value: unknown,
+  diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics
+): unknown => {
+  if (!Array.isArray(value)) return value;
+  const next: unknown[] = [];
+  value.forEach((entry: unknown): void => {
+    const coerced = coerceCaseResolverEdgeToCanonicalShape(entry);
+    if (coerced.converted) {
+      diagnostics.legacyEdgeConvertedCount += 1;
+    }
+    if (!coerced.edge) {
+      diagnostics.legacyEdgeDroppedCount += 1;
+      return;
+    }
+    next.push(coerced.edge);
+  });
+  return next;
+};
+
+const sanitizeLegacyFileGraphPayload = (
+  fileEntry: unknown,
+  diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics
+): unknown => {
+  if (!fileEntry || typeof fileEntry !== 'object' || Array.isArray(fileEntry)) {
+    return fileEntry;
+  }
+  const fileRecord = fileEntry as Record<string, unknown>;
+  const graph = fileRecord['graph'];
+  if (!graph || typeof graph !== 'object' || Array.isArray(graph)) {
+    return fileEntry;
+  }
+  const graphRecord = graph as Record<string, unknown>;
+  const nextEdges = sanitizeLegacyEdgeArray(graphRecord['edges'], diagnostics);
+  if (nextEdges === graphRecord['edges']) return fileEntry;
+  return {
+    ...fileRecord,
+    graph: {
+      ...graphRecord,
+      edges: nextEdges,
+    },
+  };
+};
+
+export const sanitizeLegacyCaseResolverWorkspacePayload = (
+  workspaceRecord: Record<string, unknown>
+): {
+  workspaceRecord: Record<string, unknown>;
+  diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics;
+} => {
+  const diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics = {
+    ...CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY,
+  };
+  const nextWorkspaceRecord: Record<string, unknown> = { ...workspaceRecord };
+
+  if (Array.isArray(nextWorkspaceRecord['files'])) {
+    nextWorkspaceRecord['files'] = (nextWorkspaceRecord['files'] as unknown[]).map(
+      (fileEntry: unknown): unknown => sanitizeLegacyFileGraphPayload(fileEntry, diagnostics)
+    );
+  }
+
+  const relationGraphSource = nextWorkspaceRecord['relationGraph'];
+  if (
+    relationGraphSource &&
+    typeof relationGraphSource === 'object' &&
+    !Array.isArray(relationGraphSource)
+  ) {
+    const relationGraphRecord = relationGraphSource as Record<string, unknown>;
+    const nextEdges = sanitizeLegacyEdgeArray(relationGraphRecord['edges'], diagnostics);
+    if (nextEdges !== relationGraphRecord['edges']) {
+      nextWorkspaceRecord['relationGraph'] = {
+        ...relationGraphRecord,
+        edges: nextEdges,
+      };
+    }
+  }
+
+  if (Array.isArray(nextWorkspaceRecord['assets'])) {
+    nextWorkspaceRecord['assets'] = (nextWorkspaceRecord['assets'] as unknown[]).map(
+      (assetEntry: unknown): unknown => {
+        if (!assetEntry || typeof assetEntry !== 'object' || Array.isArray(assetEntry)) {
+          return assetEntry;
+        }
+        const assetRecord = assetEntry as Record<string, unknown>;
+        const kind = typeof assetRecord['kind'] === 'string' ? assetRecord['kind'].trim() : '';
+        const textContent =
+          typeof assetRecord['textContent'] === 'string' ? assetRecord['textContent'].trim() : '';
+        if (kind !== 'node_file' || textContent.length === 0) {
+          return assetEntry;
+        }
+        diagnostics.inlineNodeFileSnapshotStrippedCount += 1;
+        const metadata =
+          assetRecord['metadata'] &&
+          typeof assetRecord['metadata'] === 'object' &&
+          !Array.isArray(assetRecord['metadata'])
+            ? ({ ...(assetRecord['metadata'] as Record<string, unknown>) } as Record<string, unknown>)
+            : {};
+        metadata[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY] =
+          CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
+        return {
+          ...assetRecord,
+          textContent: '',
+          metadata,
+        };
+      }
+    );
+  }
+
+  return {
+    workspaceRecord: nextWorkspaceRecord,
+    diagnostics,
+  };
 };
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
@@ -134,7 +307,11 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       diagnostics: CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY,
     };
   }
-  const workspaceRecord = workspace as unknown as Record<string, unknown>;
+  const sanitizedLegacyPayload = sanitizeLegacyCaseResolverWorkspacePayload(
+    workspace as unknown as Record<string, unknown>
+  );
+  const workspaceRecord = sanitizedLegacyPayload.workspaceRecord;
+  const legacySanitizationDiagnostics = sanitizedLegacyPayload.diagnostics;
   const now = new Date().toISOString();
   const workspaceRevision = normalizeWorkspaceRevision(workspaceRecord['workspaceRevision']);
   const lastMutationId = sanitizeOptionalId(workspaceRecord['lastMutationId']);
@@ -176,13 +353,25 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
       );
       const normalizedUpdatedAt = normalizeTimestamp(file.updatedAt, normalizedCreatedAt);
-      return createCaseResolverFile({
-        ...file,
-        id,
-        fileType: normalizedFileType,
-        createdAt: normalizedCreatedAt,
-        updatedAt: normalizedUpdatedAt,
-      });
+      try {
+        return createCaseResolverFile({
+          ...file,
+          id,
+          fileType: normalizedFileType,
+          createdAt: normalizedCreatedAt,
+          updatedAt: normalizedUpdatedAt,
+        });
+      } catch {
+        legacySanitizationDiagnostics.fileGraphFallbackDropCount += 1;
+        return createCaseResolverFile({
+          ...file,
+          id,
+          fileType: normalizedFileType,
+          createdAt: normalizedCreatedAt,
+          updatedAt: normalizedUpdatedAt,
+          graph: CASE_RESOLVER_EMPTY_GRAPH,
+        });
+      }
     })
     .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file));
 

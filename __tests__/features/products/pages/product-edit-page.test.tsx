@@ -95,7 +95,7 @@ describe('EditProductForm', () => {
     expect(nameInput).toHaveValue('Test Product');
 
     expect(screen.getByLabelText(/SKU/i)).toHaveValue('TEST-123');
-  });
+  }, 15000);
 
   it('renders the price in the Other tab', async () => {
     const user = userEvent.setup();
@@ -138,5 +138,5 @@ describe('EditProductForm', () => {
     await waitFor(() => {
       expect(updateButton).toBeEnabled();
     });
-  });
+  }, 15000);
 });

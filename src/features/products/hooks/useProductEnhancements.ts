@@ -22,7 +22,7 @@ export function useOptimisticProductUpdate(): UseMutationResult<
   Error,
   { id: string; data: Partial<ProductWithImages> },
   { previousData: ProductWithImages[] | undefined }
-> {
+  > {
   return useOptimisticMutation<
     ProductWithImages,
     Error,
@@ -84,13 +84,13 @@ export function useProductCacheWarmup(productId?: string): void {
     },
     ...(productId
       ? [
-          {
-            queryKey: getProductDetailQueryKey(productId),
-            queryFn: () => getProductById(productId),
-            priority: 'high' as const,
-            conditions: (): boolean => !!productId,
-          },
-        ]
+        {
+          queryKey: getProductDetailQueryKey(productId),
+          queryFn: () => getProductById(productId),
+          priority: 'high' as const,
+          conditions: (): boolean => !!productId,
+        },
+      ]
       : []),
   ]);
 }
@@ -99,7 +99,7 @@ export function useProductCacheWarmup(productId?: string): void {
 export function useProductPrefetch(): {
   prefetchProduct: (productId: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
   prefetchProductEdit: (productId: string) => { onFocus: () => void };
-} {
+  } {
   const { prefetchOnHover, prefetchOnFocus } = useSmartPrefetch();
 
   const prefetchProduct = (

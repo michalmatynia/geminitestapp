@@ -39,8 +39,8 @@ export const applyBenchmarkSuggestions = (args: {
   const invalidSegmentTitles: string[] = [];
   const templateById = args.shouldUpsertTemplates
     ? new Map<string, PromptExploderLearnedTemplate>(
-        args.initialTemplates.map((template) => [template.id, template])
-      )
+      args.initialTemplates.map((template) => [template.id, template])
+    )
     : null;
   const touchedTemplateIds = new Set<string>();
 

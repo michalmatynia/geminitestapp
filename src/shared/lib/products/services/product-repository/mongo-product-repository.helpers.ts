@@ -98,15 +98,15 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-            (map: Record<string, string>, [lang, langValue]: [string, unknown]) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              const normalizedValue = typeof langValue === 'string' ? langValue.trim() : '';
-              if (!normalizedLang || !normalizedValue) return map;
-              map[normalizedLang] = normalizedValue;
-              return map;
-            },
+          (map: Record<string, string>, [lang, langValue]: [string, unknown]) => {
+            const normalizedLang = lang.trim().toLowerCase();
+            const normalizedValue = typeof langValue === 'string' ? langValue.trim() : '';
+            if (!normalizedLang || !normalizedValue) return map;
+            map[normalizedLang] = normalizedValue;
+            return map;
+          },
             {} as Record<string, string>
-          )
+        )
         : {};
     acc.push({
       parameterId,

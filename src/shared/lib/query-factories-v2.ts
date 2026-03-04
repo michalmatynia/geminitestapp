@@ -188,8 +188,8 @@ export function createMultiQueryV2<
     queries: queryOptions as any,
     ...(combine
       ? {
-          combine: (results: any): TCombine => combine(results as MultiQueryResultsV2<TQueries>),
-        }
+        combine: (results: any): TCombine => combine(results as MultiQueryResultsV2<TQueries>),
+      }
       : {}),
   });
 }
@@ -250,9 +250,9 @@ export function createSuspenseMultiQueryV2<
     queries: queryOptions as any,
     ...(combine
       ? {
-          combine: (results: any): TCombine =>
-            combine(results as SuspenseMultiQueryResultsV2<TQueries>),
-        }
+        combine: (results: any): TCombine =>
+          combine(results as SuspenseMultiQueryResultsV2<TQueries>),
+      }
       : {}),
   });
 }

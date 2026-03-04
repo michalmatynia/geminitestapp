@@ -52,13 +52,13 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ...(body.batchSize !== undefined ? { batchSize: body.batchSize } : {}),
     ...(body.fieldRules !== undefined
       ? {
-          fieldRules: body.fieldRules.map((rule) => ({
-            id: rule.id ?? randomUUID(),
-            appField: rule.appField,
-            baseField: rule.baseField,
-            direction: rule.direction,
-          })),
-        }
+        fieldRules: body.fieldRules.map((rule) => ({
+          id: rule.id ?? randomUUID(),
+          appField: rule.appField,
+          baseField: rule.baseField,
+          direction: rule.direction,
+        })),
+      }
       : {}),
     ...(body.conflictPolicy !== undefined ? { conflictPolicy: body.conflictPolicy } : {}),
   });

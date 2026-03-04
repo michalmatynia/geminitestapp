@@ -792,7 +792,7 @@ const normalizeSequencePreset = (
             fallbackSteps.find(
               (step) => step.type === 'upscale' && step.enabled
             ) as ImageStudioSequenceUpscaleStep
-          ).config.strategy
+        ).config.strategy
         : 'scale',
     upscaleScale:
       fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
@@ -800,7 +800,7 @@ const normalizeSequencePreset = (
             fallbackSteps.find(
               (step) => step.type === 'upscale' && step.enabled
             ) as ImageStudioSequenceUpscaleStep
-          ).config.scale
+        ).config.scale
         : 2,
     upscaleTargetWidth:
       fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
@@ -808,7 +808,7 @@ const normalizeSequencePreset = (
             fallbackSteps.find(
               (step) => step.type === 'upscale' && step.enabled
             ) as ImageStudioSequenceUpscaleStep
-          ).config.targetWidth
+        ).config.targetWidth
         : 2048,
     upscaleTargetHeight:
       fallbackSteps.find((step) => step.type === 'upscale' && step.enabled)?.type === 'upscale'
@@ -816,7 +816,7 @@ const normalizeSequencePreset = (
             fallbackSteps.find(
               (step) => step.type === 'upscale' && step.enabled
             ) as ImageStudioSequenceUpscaleStep
-          ).config.targetHeight
+        ).config.targetHeight
         : 2048,
   });
 

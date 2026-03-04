@@ -148,10 +148,10 @@ export default function PageAnalyticsTracker(): null {
     const screen =
       typeof window !== 'undefined'
         ? {
-            width: window.screen?.width ?? 0,
-            height: window.screen?.height ?? 0,
-            dpr: window.devicePixelRatio ?? 1,
-          }
+          width: window.screen?.width ?? 0,
+          height: window.screen?.height ?? 0,
+          dpr: window.devicePixelRatio ?? 1,
+        }
         : null;
 
     const clientTs = new Date().toISOString();

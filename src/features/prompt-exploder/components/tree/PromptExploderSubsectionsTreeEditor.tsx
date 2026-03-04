@@ -111,8 +111,8 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
 
   const selectedMetadata = controller.selectedNodeId
     ? readPromptExploderTreeMetadata(
-        masterNodes.find((node) => node.id === controller.selectedNodeId) ?? { metadata: undefined }
-      )
+      masterNodes.find((node) => node.id === controller.selectedNodeId) ?? { metadata: undefined }
+    )
     : null;
 
   const selectedSubsection =
@@ -135,8 +135,8 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
   const selectedItem =
     selectedMetadata?.kind === 'subsection_item'
       ? (subsections
-          .map((subsection) => findItemById(subsection.items ?? [], selectedMetadata.entityId))
-          .find(Boolean) ?? null)
+        .map((subsection) => findItemById(subsection.items ?? [], selectedMetadata.entityId))
+        .find(Boolean) ?? null)
       : null;
 
   const appendSubsection = (): void => {
@@ -250,10 +250,10 @@ export function PromptExploderSubsectionsTreeEditor(): React.JSX.Element | null 
                     targetId === null
                       ? null
                       : readPromptExploderTreeMetadata(
-                          masterNodes.find((node) => node.id === targetId) ?? {
-                            metadata: undefined,
-                          }
-                        );
+                        masterNodes.find((node) => node.id === targetId) ?? {
+                          metadata: undefined,
+                        }
+                      );
                   if (!dragged) return false;
                   if (targetId === null) {
                     return dragged.kind === 'subsection';

@@ -58,10 +58,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const categories = forceFresh
     ? await (async () => {
-        const primaryProvider = await getProductDataProvider();
-        const repository = await getCategoryRepository(primaryProvider);
-        return repository.listCategories({ catalogId });
-      })()
+      const primaryProvider = await getProductDataProvider();
+      const repository = await getCategoryRepository(primaryProvider);
+      return repository.listCategories({ catalogId });
+    })()
     : await CachedProductService.listCategories({ catalogId });
 
   timings['repository'] = performance.now() - repositoryStart;

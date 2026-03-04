@@ -281,8 +281,8 @@ export async function POST_intl_handler(
         currencies:
           currencyIds.length > 0
             ? {
-                create: currencyIds.map((currencyId: string) => ({ currencyId })),
-              }
+              create: currencyIds.map((currencyId: string) => ({ currencyId })),
+            }
             : undefined,
       },
       include: { currencies: true },
@@ -335,8 +335,8 @@ export async function POST_intl_handler(
         countries:
           countryIds.length > 0
             ? {
-                create: countryIds.map((countryId: string) => ({ countryId })),
-              }
+              create: countryIds.map((countryId: string) => ({ countryId })),
+            }
             : undefined,
       },
       include: { countries: { include: { country: true } } },

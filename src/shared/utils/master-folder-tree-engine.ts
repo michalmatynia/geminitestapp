@@ -190,9 +190,9 @@ const detachInvalidParentsAndCycles = (nodes: MasterTreeNode[]): MasterTreeNode[
   next = next.map((node: MasterTreeNode) =>
     cycleSet.has(node.id)
       ? {
-          ...node,
-          parentId: null,
-        }
+        ...node,
+        parentId: null,
+      }
       : node
   );
 

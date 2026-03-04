@@ -64,7 +64,7 @@ export function FolderTreeContextMenu({
     onSelect: item.onSelect
       ? (): void => {
           item.onSelect!(node, controller);
-        }
+      }
       : undefined,
   }));
 

@@ -179,16 +179,16 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                   !filteredTags.find(
                     (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                    <Button
-                      variant='ghost'
-                      onClick={(): void => {
-                        void handleCreateTag();
-                      }}
-                      className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors font-normal'
-                    >
+                  <Button
+                    variant='ghost'
+                    onClick={(): void => {
+                      void handleCreateTag();
+                    }}
+                    className='w-full justify-start rounded-none px-4 py-2.5 text-sm text-blue-400 hover:bg-white/5 transition-colors font-normal'
+                  >
                       Create &quot;{tagInput}&quot;
-                    </Button>
-                  )}
+                  </Button>
+                )}
               </div>
             </Card>
           )}
@@ -320,8 +320,8 @@ export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX
                           (selected: { id: string }) => selected.id === candidate.id
                         )
                     ).length === 0 && (
-                      <div className='px-4 py-2.5 text-sm text-gray-500'>No matches</div>
-                    )}
+                    <div className='px-4 py-2.5 text-sm text-gray-500'>No matches</div>
+                  )}
                 </div>
               </Card>
             )}

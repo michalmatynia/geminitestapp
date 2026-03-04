@@ -572,20 +572,20 @@ export const buildFieldIssues = ({
           (replacementScope === 'global' || replacementFields.includes(fieldName));
         const resolvedReplacement = replacementActive
           ? resolvePatternReplacementValue({
-              pattern,
-              fieldValue: candidateValue,
-              values,
-              latestProductValues,
-            })
+            pattern,
+            fieldValue: candidateValue,
+            values,
+            latestProductValues,
+          })
           : null;
         const effectiveReplacement = resolvedReplacement;
         const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
         const nextValue = hasEffectiveReplacement
           ? applyResolvedReplacement({
-              value: candidateValue,
-              pattern,
-              replacement: effectiveReplacement,
-            })
+            value: candidateValue,
+            pattern,
+            replacement: effectiveReplacement,
+          })
           : candidateValue;
         const isNoopReplacement = hasEffectiveReplacement && nextValue === candidateValue;
         const shouldSuppressNoopReplacementProposal =

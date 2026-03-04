@@ -16,7 +16,7 @@ const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknow
   if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
   ) {
     return trimmed.slice(1, -1);
   }

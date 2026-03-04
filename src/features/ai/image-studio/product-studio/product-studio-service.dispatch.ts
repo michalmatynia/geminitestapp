@@ -505,9 +505,9 @@ export async function sendProductImageToStudio(params: {
   const effectivePrompt =
     routeDecision.executionRoute === 'ai_model_full_sequence'
       ? buildModelNativeSequencePrompt({
-          basePrompt: generationPrompt,
-          sequenceStepTypes,
-        })
+        basePrompt: generationPrompt,
+        sequenceStepTypes,
+      })
       : generationPrompt;
   const sourceSlotFilepath =
     trimString(sourceSlot.imageFile?.filepath) ?? trimString(sourceSlot.imageUrl);

@@ -196,16 +196,16 @@ export const hydrateMongoProducerMappingDetails = async (
   const externalFilter: Filter<MongoExternalProducerDoc> =
     externalIds.length > 0
       ? ({
-          connectionId: connectionIds.length === 1 ? connectionIds[0] : { $in: connectionIds },
-          $or: [{ _id: { $in: externalCandidates } }, { externalId: { $in: externalIds } }],
-        } as Filter<MongoExternalProducerDoc>)
+        connectionId: connectionIds.length === 1 ? connectionIds[0] : { $in: connectionIds },
+        $or: [{ _id: { $in: externalCandidates } }, { externalId: { $in: externalIds } }],
+      } as Filter<MongoExternalProducerDoc>)
       : ({ _id: { $exists: false } } as Filter<MongoExternalProducerDoc>);
 
   const internalFilter: Filter<MongoInternalProducerDoc> =
     internalIds.length > 0
       ? ({
-          $or: [{ id: { $in: internalIds } }, { _id: { $in: internalCandidates } }],
-        } as Filter<MongoInternalProducerDoc>)
+        $or: [{ id: { $in: internalIds } }, { _id: { $in: internalCandidates } }],
+      } as Filter<MongoInternalProducerDoc>)
       : ({ _id: { $exists: false } } as Filter<MongoInternalProducerDoc>);
 
   const [externalDocs, internalDocs] = await Promise.all([

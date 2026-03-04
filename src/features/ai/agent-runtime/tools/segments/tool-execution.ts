@@ -261,8 +261,8 @@ export async function runAgentTool(
             if (results.length > 0) {
               const allowedResults = targetHostname
                 ? results.filter((result: { url: string }) =>
-                    isAllowedUrl(result.url, targetHostname)
-                  )
+                  isAllowedUrl(result.url, targetHostname)
+                )
                 : results;
 
               if (targetHostname && allowedResults.length === 0) {

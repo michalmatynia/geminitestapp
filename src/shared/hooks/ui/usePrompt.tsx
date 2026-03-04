@@ -30,7 +30,7 @@ export interface UsePromptReturn {
 export function usePrompt(): UsePromptReturn {
   const [config, setPromptConfig] = useState<
     (PromptConfig & { resolve: (value: string | null) => void }) | null
-  >(null);
+      >(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const prompt = useCallback((newConfig: PromptConfig) => {

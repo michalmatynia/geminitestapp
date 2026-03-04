@@ -195,6 +195,8 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
   const modelSelectionBadgeWidth = Math.max(76, modelSelectionLabel.length * 6 + 14);
   const showNodeAnimations =
     enableNodeAnimations && (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
+  const isNodeBeingDragged = ui.dragState?.nodeId === node.id;
+  const nodeCursor = isNodeBeingDragged ? 'grabbing' : 'grab';
   const handleNodeDoubleClick = (event: React.MouseEvent<SVGRectElement>): void => {
     event.stopPropagation();
     event.preventDefault();
@@ -207,7 +209,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
       key={node.id}
       data-node-root={node.id}
       transform={`translate(${node.position.x} ${node.position.y})`}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: nodeCursor }}
     >
       {isBlockerProcessing ? (
         <rect
@@ -236,7 +238,7 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
         stroke={isPrimarySelected ? '#bae6fd' : isSelected ? '#7dd3fc' : palette.stroke}
         strokeWidth={isPrimarySelected ? 2.4 : isSelected ? 1.9 : 1.25}
         pointerEvents='all'
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: nodeCursor }}
         onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
           void onPointerDownNode(event, node.id);
         }}
@@ -448,12 +450,26 @@ export const CanvasSvgNode = React.memo(function CanvasSvgNode({
             }
             stroke={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
             strokeWidth='1'
-            style={{ cursor: 'pointer', pointerEvents: 'all' }}
+            style={{ cursor: nodeCursor, pointerEvents: 'all' }}
             onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
               event.stopPropagation();
+              void onPointerDownNode(event, node.id);
+            }}
+            onPointerMove={(event: React.PointerEvent<SVGRectElement>) => {
+              onPointerMoveNode(event, node.id);
+            }}
+            onPointerUp={(event: React.PointerEvent<SVGRectElement>) => {
+              onPointerUpNode(event, node.id);
+            }}
+            onPointerCancel={(event: React.PointerEvent<SVGRectElement>) => {
+              onPointerUpNode(event, node.id);
             }}
             onClick={(event: React.MouseEvent<SVGRectElement>) => {
               event.stopPropagation();
+              if (consumeSuppressedNodeClick(node.id)) {
+                event.preventDefault();
+                return;
+              }
               void onFireTrigger(node);
             }}
           />

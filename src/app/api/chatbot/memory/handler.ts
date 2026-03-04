@@ -24,12 +24,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(tag ? { tags: { has: tag } } : {}),
     ...(query
       ? {
-          OR: [
-            { content: { contains: query, mode: 'insensitive' as const } },
-            { summary: { contains: query, mode: 'insensitive' as const } },
-            { tags: { has: query } },
-          ],
-        }
+        OR: [
+          { content: { contains: query, mode: 'insensitive' as const } },
+          { summary: { contains: query, mode: 'insensitive' as const } },
+          { tags: { has: query } },
+        ],
+      }
       : {}),
   };
 

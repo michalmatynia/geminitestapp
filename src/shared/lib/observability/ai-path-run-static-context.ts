@@ -233,8 +233,8 @@ export const buildAiPathRunStaticContext = async (
           'value'
         ] === 'boolean'
           ? (preflightItems.find((item) => item['label'] === 'dependencyStrictReady')?.[
-              'value'
-            ] as boolean)
+            'value'
+          ] as boolean)
           : null,
       dataContractErrorCount: readNumber(
         preflightItems.find((item) => item['label'] === 'dataContractErrorCount')?.['value']
@@ -247,8 +247,8 @@ export const buildAiPathRunStaticContext = async (
       ),
       samples: Array.isArray(preflightItems.find((item) => item['label'] === 'samples')?.['value'])
         ? (preflightItems.find((item) => item['label'] === 'samples')?.['value'] as unknown[])
-            .map((value) => readTrimmedString(value))
-            .filter((value): value is string => Boolean(value))
+          .map((value) => readTrimmedString(value))
+          .filter((value): value is string => Boolean(value))
         : [],
     },
     registry: {

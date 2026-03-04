@@ -264,15 +264,15 @@ export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNo
   const currentRun =
     state.currentRun && typeof state.currentRun.id === 'string'
       ? {
-          id: state.currentRun.id,
-          status: state.currentRun.status,
-          startedAt: state.currentRun.startedAt ?? null,
-          finishedAt: state.currentRun.finishedAt ?? null,
-          pathId: state.currentRun.pathId ?? null,
-          pathName: state.currentRun.pathName ?? null,
-          createdAt: state.currentRun.createdAt,
-          updatedAt: state.currentRun.updatedAt ?? null,
-        }
+        id: state.currentRun.id,
+        status: state.currentRun.status,
+        startedAt: state.currentRun.startedAt ?? null,
+        finishedAt: state.currentRun.finishedAt ?? null,
+        pathId: state.currentRun.pathId ?? null,
+        pathName: state.currentRun.pathName ?? null,
+        createdAt: state.currentRun.createdAt,
+        updatedAt: state.currentRun.updatedAt ?? null,
+      }
       : null;
   const payload: Record<string, unknown> = {
     inputs,
@@ -391,8 +391,8 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
             (databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)['onZeroAffected'] ===
               'ignore')
             ? ((databaseRecord['writeOutcomePolicy'] as Record<string, unknown>)[
-                'onZeroAffected'
-              ] as 'warn' | 'ignore')
+              'onZeroAffected'
+            ] as 'warn' | 'ignore')
             : 'fail',
       },
     } as DatabaseConfig;

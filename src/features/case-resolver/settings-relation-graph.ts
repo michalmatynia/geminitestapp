@@ -157,10 +157,7 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[
   const seen = new Set<string>();
   const edges: Edge[] = [];
   value.forEach((entry: unknown, index: number): void => {
-    const edge = parseCanonicalCaseResolverEdge(
-      entry,
-      `case_resolver.relation_graph.edges[${index}]`
-    );
+    const edge = parseCanonicalCaseResolverEdge(entry, `case_resolver.relation_graph.edges[${index}]`);
     const id = edge.id.trim();
     const source = edge.source?.trim() ?? '';
     const target = edge.target?.trim() ?? '';

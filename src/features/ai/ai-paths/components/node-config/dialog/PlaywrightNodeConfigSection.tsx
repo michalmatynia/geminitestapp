@@ -116,14 +116,14 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
     () =>
       selectedPersona
         ? [
-            `Headless: ${selectedPersona.settings.headless ? 'on' : 'off'}`,
-            `SlowMo: ${selectedPersona.settings.slowMo}ms`,
-            `Timeout: ${selectedPersona.settings.timeout}ms`,
-            selectedPersona.settings.emulateDevice && selectedPersona.settings.deviceName
-              ? `Device: ${selectedPersona.settings.deviceName}`
-              : 'Device: none',
-            selectedPersona.settings.humanizeMouse ? 'Humanized input: on' : 'Humanized input: off',
-          ]
+          `Headless: ${selectedPersona.settings.headless ? 'on' : 'off'}`,
+          `SlowMo: ${selectedPersona.settings.slowMo}ms`,
+          `Timeout: ${selectedPersona.settings.timeout}ms`,
+          selectedPersona.settings.emulateDevice && selectedPersona.settings.deviceName
+            ? `Device: ${selectedPersona.settings.deviceName}`
+            : 'Device: none',
+          selectedPersona.settings.humanizeMouse ? 'Humanized input: on' : 'Humanized input: off',
+        ]
         : null,
     [selectedPersona]
   );

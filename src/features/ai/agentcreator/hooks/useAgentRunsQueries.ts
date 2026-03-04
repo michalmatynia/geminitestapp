@@ -87,7 +87,7 @@ export function useAgentAudits(
 export function useDeleteAgentRunMutation(): MutationResult<
   void,
   { runId: string; force?: boolean }
-> {
+  > {
   const mutationKey = agentRunsKeys.lists();
   return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) =>

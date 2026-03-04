@@ -564,9 +564,9 @@ export function PatternRuntimePanel(): React.JSX.Element {
             options={
               availableSnapshots.length > 0
                 ? availableSnapshots.map((snapshot) => ({
-                    value: snapshot.id,
-                    label: `${snapshot.name} (${snapshot.ruleCount})`,
-                  }))
+                  value: snapshot.id,
+                  label: `${snapshot.name} (${snapshot.ruleCount})`,
+                }))
                 : [{ value: '', label: 'No snapshots' }]
             }
           />

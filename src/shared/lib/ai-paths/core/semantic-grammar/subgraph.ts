@@ -179,10 +179,10 @@ export const applySemanticSubgraphToPathConfig = (
       semanticNodeTypeId.length > 0
         ? semanticNodeTypeId
         : resolveNodeTypeId({
-            type: node.type,
-            title: node.title,
-            config: node.config as AiNode['config'] | undefined,
-          });
+          type: node.type,
+          title: node.title,
+          config: node.config as AiNode['config'] | undefined,
+        });
     return {
       id: remappedId,
       instanceId: remappedId,
@@ -222,15 +222,15 @@ export const applySemanticSubgraphToPathConfig = (
         target: toNodeId,
         ...(typeof edge.fromPort === 'string' || edge.fromPort === null
           ? {
-              fromPort: edge.fromPort,
-              sourceHandle: edge.fromPort,
-            }
+            fromPort: edge.fromPort,
+            sourceHandle: edge.fromPort,
+          }
           : {}),
         ...(typeof edge.toPort === 'string' || edge.toPort === null
           ? {
-              toPort: edge.toPort,
-              targetHandle: edge.toPort,
-            }
+            toPort: edge.toPort,
+            targetHandle: edge.toPort,
+          }
           : {}),
         ...(typeof edge.label === 'string' || edge.label === null ? { label: edge.label } : {}),
         ...(typeof edge.type === 'string' ? { type: edge.type } : {}),

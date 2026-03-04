@@ -122,9 +122,9 @@ export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.
               color: contentTextColor,
               ...(isCodeMode
                 ? {
-                    fontFamily:
+                  fontFamily:
                       'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-                  }
+                }
                 : {}),
             }}
             required

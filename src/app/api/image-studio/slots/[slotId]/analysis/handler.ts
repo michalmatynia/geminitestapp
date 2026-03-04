@@ -161,9 +161,9 @@ async function resolveAnalysisSource(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : analysisBadRequest(
-          IMAGE_STUDIO_ANALYSIS_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server analysis requires a resolvable source image.'
-        );
+        IMAGE_STUDIO_ANALYSIS_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server analysis requires a resolvable source image.'
+      );
   }
 
   if (uploadedClientImage) {

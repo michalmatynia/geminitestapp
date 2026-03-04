@@ -87,7 +87,7 @@ export function useUpdateUserPreferences(): UseMutationResult<
   void,
   Error,
   Partial<ProductListPreferences>
-> {
+  > {
   return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(updateUserPreferences, {
     queryKey: userPreferencesQueryKey,
     onQueued: () => {

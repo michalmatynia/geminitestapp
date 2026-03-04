@@ -27,24 +27,24 @@ export const readContextRegistryEvidence = (
 
   const refs = Array.isArray(contextRegistry['refs'])
     ? contextRegistry['refs']
-        .map((ref) => {
-          const record = asRecord(ref);
-          const id = readTrimmedString(record?.['id']);
-          const kind = readTrimmedString(record?.['kind']);
-          if (!id || !kind) return null;
+      .map((ref) => {
+        const record = asRecord(ref);
+        const id = readTrimmedString(record?.['id']);
+        const kind = readTrimmedString(record?.['kind']);
+        if (!id || !kind) return null;
 
-          return {
-            id,
-            kind,
-            ...(readTrimmedString(record?.['providerId'])
-              ? { providerId: readTrimmedString(record?.['providerId'])! }
-              : {}),
-            ...(readTrimmedString(record?.['entityType'])
-              ? { entityType: readTrimmedString(record?.['entityType'])! }
-              : {}),
-          };
-        })
-        .filter((ref): ref is AlertEvidenceContextRegistry['refs'][number] => Boolean(ref))
+        return {
+          id,
+          kind,
+          ...(readTrimmedString(record?.['providerId'])
+            ? { providerId: readTrimmedString(record?.['providerId'])! }
+            : {}),
+          ...(readTrimmedString(record?.['entityType'])
+            ? { entityType: readTrimmedString(record?.['entityType'])! }
+            : {}),
+        };
+      })
+      .filter((ref): ref is AlertEvidenceContextRegistry['refs'][number] => Boolean(ref))
     : [];
 
   if (refs.length === 0) return null;

@@ -303,8 +303,8 @@ export async function runExtractionRequest({
         }
         const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
           ? recoveryPlan.listingUrls.filter(
-              (url: unknown): url is string => typeof url === 'string'
-            )
+            (url: unknown): url is string => typeof url === 'string'
+          )
           : [];
         if (listingUrls.length > 0) {
           const recoveryUrls = targetHostname
@@ -485,9 +485,9 @@ export async function runExtractionRequest({
           'h1',
           'h2',
           'h3',
-          "[class*='title' i]",
-          "[class*='name' i]",
-          "[class*='heading' i]",
+          '[class*=\'title\' i]',
+          '[class*=\'name\' i]',
+          '[class*=\'heading\' i]',
         ];
         extractedNames = cleanProductNames(
           await extractProductNamesFromSelectors(page, headingSelectors)

@@ -455,7 +455,7 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
           kind: 'replace',
           pattern: '&apos;|&#39;',
           flags: 'gi',
-          replacement: "'",
+          replacement: '\'',
           comment: null,
         },
         {
@@ -592,11 +592,11 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
         : null;
     const hadAutofixInStorage = Array.isArray(rawRulesArray)
       ? rawRulesArray.some(
-          (rule: unknown) =>
-            Boolean(rule) &&
+        (rule: unknown) =>
+          Boolean(rule) &&
             typeof rule === 'object' &&
             'autofix' in (rule as Record<string, unknown>)
-        )
+      )
       : false;
 
     const defaultById = new Map(
@@ -642,11 +642,11 @@ export function parsePromptValidationRules(
     if (result.success) {
       const hadAutofix = Array.isArray(parsed)
         ? parsed.some(
-            (rule: unknown) =>
-              Boolean(rule) &&
+          (rule: unknown) =>
+            Boolean(rule) &&
               typeof rule === 'object' &&
               'autofix' in (rule as Record<string, unknown>)
-          )
+        )
         : false;
       if (hadAutofix) return { ok: true, rules: result.data };
 

@@ -117,11 +117,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const normalizedConnectionId = data.connectionId?.trim();
     const connection = normalizedConnectionId
       ? connections.find(
-          (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
-        )
+        (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
+      )
       : connections.find(
-          (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
-        );
+        (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
+      );
     if (!connection?.baseApiToken && !connection?.password) {
       throw badRequestError('No Base API token configured.');
     }

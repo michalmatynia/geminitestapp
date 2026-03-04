@@ -13,12 +13,12 @@ export function FrontendTextAtomSection(): React.ReactNode {
   const letters = blocks.length
     ? blocks
     : Array.from(text).map(
-        (char: string, index: number): BlockInstance => ({
-          id: `text-atom-section-${index}`,
-          type: 'TextAtomLetter',
-          settings: { textContent: char },
-        })
-      );
+      (char: string, index: number): BlockInstance => ({
+        id: `text-atom-section-${index}`,
+        type: 'TextAtomLetter',
+        settings: { textContent: char },
+      })
+    );
 
   if (!letters.length) return null;
 

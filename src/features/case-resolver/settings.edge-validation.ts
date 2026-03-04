@@ -27,6 +27,78 @@ const buildInvalidCaseResolverEdgeError = (
     ...(meta ?? {}),
   });
 
+const normalizeLegacyEdgeHandle = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  if (normalized === 'textfield') return 'wysiwygText';
+  if (normalized === 'content') return 'plaintextContent';
+  return normalized;
+};
+
+type CoerceCanonicalEdgeResult =
+  | {
+      edge: Record<string, unknown>;
+      converted: boolean;
+    }
+  | {
+      edge: null;
+      converted: boolean;
+    };
+
+export const coerceCaseResolverEdgeToCanonicalShape = (
+  input: unknown
+): CoerceCanonicalEdgeResult => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { edge: null, converted: false };
+  }
+  const record = input as Record<string, unknown>;
+  const hasLegacyKeys =
+    'from' in record || 'to' in record || 'fromPort' in record || 'toPort' in record;
+  if (!hasLegacyKeys) {
+    return { edge: { ...record }, converted: false };
+  }
+
+  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
+  const source =
+    (typeof record['source'] === 'string' && record['source'].trim().length > 0
+      ? record['source'].trim()
+      : null) ??
+    (typeof record['from'] === 'string' ? record['from'].trim() : '');
+  const target =
+    (typeof record['target'] === 'string' && record['target'].trim().length > 0
+      ? record['target'].trim()
+      : null) ??
+    (typeof record['to'] === 'string' ? record['to'].trim() : '');
+  if (!id || !source || !target) {
+    return { edge: null, converted: true };
+  }
+
+  const sourceHandle =
+    normalizeLegacyEdgeHandle(record['sourceHandle']) ?? normalizeLegacyEdgeHandle(record['fromPort']);
+  const targetHandle =
+    normalizeLegacyEdgeHandle(record['targetHandle']) ?? normalizeLegacyEdgeHandle(record['toPort']);
+
+  const edge: Record<string, unknown> = {
+    id,
+    source,
+    target,
+    ...(typeof record['label'] === 'string' ? { label: record['label'] } : {}),
+    ...(typeof record['type'] === 'string' ? { type: record['type'] } : {}),
+    ...(record['data'] &&
+    typeof record['data'] === 'object' &&
+    !Array.isArray(record['data'])
+      ? { data: record['data'] }
+      : {}),
+    ...(typeof record['createdAt'] === 'string' ? { createdAt: record['createdAt'] } : {}),
+    ...(typeof record['updatedAt'] === 'string' ? { updatedAt: record['updatedAt'] } : {}),
+    ...(sourceHandle ? { sourceHandle } : {}),
+    ...(targetHandle ? { targetHandle } : {}),
+  };
+
+  return { edge, converted: true };
+};
+
 export const parseCanonicalCaseResolverEdge = (input: unknown, context: string): Edge => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {

@@ -55,9 +55,9 @@ export function PlaceholderMatrixDialog({
   const resolvedTargets: PlaceholderTargetOption[] = targetOptions?.length
     ? targetOptions
     : [
-        { value: 'query', label: 'Query template' },
-        { value: 'aiPrompt', label: 'AI prompt' },
-      ];
+      { value: 'query', label: 'Query template' },
+      { value: 'aiPrompt', label: 'AI prompt' },
+    ];
   const hasMultipleTargets = resolvedTargets.length > 1;
   const selectedTarget = resolvedTargets.find(
     (option: PlaceholderTargetOption) => option.value === target

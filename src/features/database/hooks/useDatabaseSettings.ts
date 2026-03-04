@@ -37,7 +37,7 @@ export function useProviderDiagnostics(): SingleQuery<ProviderDiagnosticsRespons
 export function useSyncDatabaseMutation(): MutationResult<
   { error?: string },
   DatabaseSyncDirection
-> {
+  > {
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: (payload: DatabaseSyncDirection) =>
@@ -60,7 +60,7 @@ export function useSyncDatabaseMutation(): MutationResult<
 export function useSettingsBackfillMutation(): MutationResult<
   SettingsBackfillResult,
   { dryRun: boolean; limit: number }
-> {
+  > {
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
     mutationFn: (payload: { dryRun: boolean; limit: number }) =>

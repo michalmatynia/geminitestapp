@@ -94,42 +94,42 @@ export function CenterPreviewCanvas({
           canCompareSelectedVariants &&
           compareVariantImageA &&
           compareVariantImageB ? (
-          <SplitVariantPreview
-            sourceSlotImageSrc={compareVariantImageA}
-            workingSlotImageSrc={compareVariantImageB}
-          />
-        ) : splitVariantView &&
+            <SplitVariantPreview
+              sourceSlotImageSrc={compareVariantImageA}
+              workingSlotImageSrc={compareVariantImageB}
+            />
+          ) : splitVariantView &&
           canCompareWithSource &&
           sourceSlotImageSrc &&
           workingSlotImageSrc ? (
-          <SplitVariantPreview
-            sourceSlotImageSrc={sourceSlotImageSrc}
-            workingSlotImageSrc={workingSlotImageSrc}
-          />
-        ) : (
-          <div className={previewCanvasClassName}>
-            <VectorDrawingCanvas
-              shapes={liveMaskShapes}
-              src={activeCanvasImageSrc}
-              baseCanvasWidthPx={projectCanvasSize?.width ?? 1024}
-              baseCanvasHeightPx={projectCanvasSize?.height ?? 1024}
-              maskPreviewEnabled={maskPreviewEnabled}
-              maskPreviewInvert={maskInvert}
-              maskPreviewFeather={maskFeather}
-              showCenterGuides={centerGuidesEnabled}
-              selectionEnabled={canvasSelectionEnabled}
-              imageMoveEnabled={imageTransformMode === 'move'}
-              imageOffset={canvasImageOffset}
-              onImageOffsetChange={(offset) => {
-                setCanvasImageOffset(offset);
-              }}
-              backgroundLayerEnabled={canvasBackgroundLayerEnabled}
-              backgroundColor={canvasBackgroundColor}
-              onViewCropRectChange={handlePreviewCanvasCropRectChange}
-              onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
-            />
-          </div>
-        )}
+              <SplitVariantPreview
+                sourceSlotImageSrc={sourceSlotImageSrc}
+                workingSlotImageSrc={workingSlotImageSrc}
+              />
+            ) : (
+              <div className={previewCanvasClassName}>
+                <VectorDrawingCanvas
+                  shapes={liveMaskShapes}
+                  src={activeCanvasImageSrc}
+                  baseCanvasWidthPx={projectCanvasSize?.width ?? 1024}
+                  baseCanvasHeightPx={projectCanvasSize?.height ?? 1024}
+                  maskPreviewEnabled={maskPreviewEnabled}
+                  maskPreviewInvert={maskInvert}
+                  maskPreviewFeather={maskFeather}
+                  showCenterGuides={centerGuidesEnabled}
+                  selectionEnabled={canvasSelectionEnabled}
+                  imageMoveEnabled={imageTransformMode === 'move'}
+                  imageOffset={canvasImageOffset}
+                  onImageOffsetChange={(offset) => {
+                    setCanvasImageOffset(offset);
+                  }}
+                  backgroundLayerEnabled={canvasBackgroundLayerEnabled}
+                  backgroundColor={canvasBackgroundColor}
+                  onViewCropRectChange={handlePreviewCanvasCropRectChange}
+                  onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
+                />
+              </div>
+            )}
 
         <div className='absolute bottom-4 left-4 z-30'>
           <SplitViewControls

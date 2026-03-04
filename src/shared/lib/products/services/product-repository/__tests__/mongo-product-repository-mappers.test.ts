@@ -61,6 +61,50 @@ describe('mongo product repository mappers', () => {
     ).toThrowError(/Legacy product category document shape is no longer supported/);
   });
 
+  it('rejects legacy category relation field even when categoryId is present', () => {
+    expect(() =>
+      toProductResponse({
+        _id: 'product-3b',
+        id: 'product-3b',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        categoryId: 'category-canonical',
+        categories: [{ categoryId: 'category-legacy' }],
+        catalogId: 'catalog-1',
+        published: false,
+      } as unknown as WithId<ProductDocument>)
+    ).toThrowError(/Legacy product category document shape is no longer supported/);
+  });
+
+  it('rejects non-string categoryId payloads', () => {
+    expect(() =>
+      toProductResponse({
+        _id: 'product-3c',
+        id: 'product-3c',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        categoryId: 123,
+        catalogId: 'catalog-1',
+        published: false,
+      } as unknown as WithId<ProductDocument>)
+    ).toThrowError(/Invalid product categoryId payload/);
+  });
+
+  it('rejects non-string localized scalar payloads', () => {
+    expect(() =>
+      toProductResponse({
+        _id: 'product-3d',
+        id: 'product-3d',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        name_en: 42,
+        categoryId: 'category-1',
+        catalogId: 'catalog-1',
+        published: false,
+      } as unknown as WithId<ProductDocument>)
+    ).toThrowError(/Invalid product localized scalar field payload/);
+  });
+
   it('rejects legacy producer relation keys instead of reconstructing producer relations', () => {
     expect(() =>
       toProductResponse({

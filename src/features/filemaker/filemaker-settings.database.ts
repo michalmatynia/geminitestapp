@@ -775,43 +775,43 @@ export const normalizeFilemakerDatabase = (
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
   const outputPersons = stripCompatibilityFields
     ? syncedPersons.map(
-        (person: FilemakerPerson): FilemakerPerson => ({
-          ...person,
-          street: '',
-          streetNumber: '',
-          city: '',
-          postalCode: '',
-          country: '',
-          countryId: '',
-          phoneNumbers: [],
-        })
-      )
+      (person: FilemakerPerson): FilemakerPerson => ({
+        ...person,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+        phoneNumbers: [],
+      })
+    )
     : syncedPersons;
   const outputOrganizations = stripCompatibilityFields
     ? resolvedOrganizations.map(
-        (organization: FilemakerOrganization): FilemakerOrganization => ({
-          ...organization,
-          street: '',
-          streetNumber: '',
-          city: '',
-          postalCode: '',
-          country: '',
-          countryId: '',
-        })
-      )
+      (organization: FilemakerOrganization): FilemakerOrganization => ({
+        ...organization,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+      })
+    )
     : resolvedOrganizations;
   const outputEvents = stripCompatibilityFields
     ? resolvedEvents.map(
-        (event: FilemakerEvent): FilemakerEvent => ({
-          ...event,
-          street: '',
-          streetNumber: '',
-          city: '',
-          postalCode: '',
-          country: '',
-          countryId: '',
-        })
-      )
+      (event: FilemakerEvent): FilemakerEvent => ({
+        ...event,
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+      })
+    )
     : resolvedEvents;
 
   return {

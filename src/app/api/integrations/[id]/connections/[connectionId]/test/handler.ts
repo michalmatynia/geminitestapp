@@ -335,12 +335,12 @@ export async function postTestConnectionHandler(
         slowMo,
         ...(proxyEnabled && proxyServer
           ? {
-              proxy: {
-                server: proxyServer,
-                ...(proxyUsername && { username: proxyUsername }),
-                ...(proxyPassword && { password: proxyPassword }),
-              },
-            }
+            proxy: {
+              server: proxyServer,
+              ...(proxyUsername && { username: proxyUsername }),
+              ...(proxyPassword && { password: proxyPassword }),
+            },
+          }
           : {}),
       });
 

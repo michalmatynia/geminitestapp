@@ -108,7 +108,7 @@ export function useEnhancedUsers(): {
   users: UseQueryResult<unknown>;
   permissions: UseQueryResult<unknown>;
   activity: UseQueryResult<unknown>;
-} {
+  } {
   // User list with long-term caching
   const users = useAdaptiveQuery(
     [...authKeys.users.all, 'list'],

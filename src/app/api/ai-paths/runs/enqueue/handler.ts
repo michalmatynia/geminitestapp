@@ -153,9 +153,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return nodeValidationEnabled
       ? compileGraph(normalizedNodes, normalizedEdges)
       : compileGraph(normalizedNodes, normalizedEdges, {
-          scopeMode: 'reachable_from_roots',
-          ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
-        });
+        scopeMode: 'reachable_from_roots',
+        ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+      });
   });
   if (nodeValidationEnabled && !compileReport.ok) {
     const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');

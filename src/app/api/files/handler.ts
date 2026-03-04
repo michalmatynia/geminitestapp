@@ -15,9 +15,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const tagsParam = searchParams.get('tags')?.trim() || null;
   const tags = tagsParam
     ? tagsParam
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean)
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean)
     : [];
 
   const files = await imageFileService.listImageFiles({ filename: filename ?? undefined, tags });

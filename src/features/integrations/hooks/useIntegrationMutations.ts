@@ -20,7 +20,7 @@ import { invalidateIntegrationConnections } from './integrationCache';
 export function useCreateIntegration(): MutationResult<
   Integration,
   { name: string; slug: string }
-> {
+  > {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<Integration, { name: string; slug: string }>({
     mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),

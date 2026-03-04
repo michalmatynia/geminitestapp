@@ -146,7 +146,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
 export function useUpdateSettingsBulk(): MutationResult<
   SystemSetting[],
   Array<{ key: string; value: string }>
-> {
+  > {
   return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
     mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (

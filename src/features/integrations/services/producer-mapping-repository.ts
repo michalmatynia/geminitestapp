@@ -484,10 +484,10 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
         const resolvedExternalProducerId =
           input.externalProducerId !== undefined
             ? await resolveExternalProducerRefPrisma(
-                tx,
-                current.connectionId,
-                input.externalProducerId
-              )
+              tx,
+              current.connectionId,
+              input.externalProducerId
+            )
             : undefined;
 
         const record = await tx.producerMapping.update({

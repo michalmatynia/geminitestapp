@@ -57,7 +57,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
     const next = line[index + 1] ?? '';
 
     if (state.inSingle) {
-      if (!state.escaped && char === "'") state.inSingle = false;
+      if (!state.escaped && char === '\'') state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -76,7 +76,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
       return { code: line.slice(0, index), comment: line.slice(index + 2) };
     }
 
-    if (char === "'") {
+    if (char === '\'') {
       state.inSingle = true;
       state.escaped = false;
       continue;

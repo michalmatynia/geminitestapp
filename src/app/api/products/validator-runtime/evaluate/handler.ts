@@ -308,9 +308,9 @@ const parseAiJson = (value: string): Record<string, unknown> | null => {
   if (!trimmed) return null;
   const stripped = trimmed.startsWith('```')
     ? trimmed
-        .replace(/^```[a-zA-Z]*\n?/, '')
-        .replace(/```$/, '')
-        .trim()
+      .replace(/^```[a-zA-Z]*\n?/, '')
+      .replace(/```$/, '')
+      .trim()
     : trimmed;
   try {
     const parsed = JSON.parse(stripped) as unknown;
@@ -395,9 +395,9 @@ const resolveReplacementFromResult = (
   const replacementPaths = [
     ...(Array.isArray(config['replacementPaths'])
       ? (config['replacementPaths'] as unknown[])
-          .filter((entry: unknown): entry is string => typeof entry === 'string')
-          .map((entry: string) => entry.trim())
-          .filter((entry: string) => entry.length > 0)
+        .filter((entry: unknown): entry is string => typeof entry === 'string')
+        .map((entry: string) => entry.trim())
+        .filter((entry: string) => entry.length > 0)
       : []),
     ...(typeof config['replacementPath'] === 'string' && config['replacementPath'].trim().length > 0
       ? [config['replacementPath'].trim()]

@@ -111,8 +111,8 @@ export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
         const rowStyle: React.CSSProperties | undefined = isMenuCollapsed
           ? undefined
           : {
-              paddingLeft: 10 + depth * 14,
-            };
+            paddingLeft: 10 + depth * 14,
+          };
 
         const rowClassName = cn(
           'group flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition cursor-pointer border-l-2 h-auto font-normal',

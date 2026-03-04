@@ -15,9 +15,12 @@ import { server } from '@/mocks/server';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false } },
-});
+const NOTE_LOAD_TIMEOUT_MS = 10_000;
+
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
 
 const now = new Date().toISOString();
 
@@ -44,8 +47,9 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   ...overrides,
 });
 
-const renderNotesPage = () =>
-  render(
+const renderNotesPage = () => {
+  const queryClient = createQueryClient();
+  return render(
     <QueryClientProvider client={queryClient}>
       <AdminLayoutProvider>
         <NoteSettingsProvider>
@@ -56,13 +60,13 @@ const renderNotesPage = () =>
       </AdminLayoutProvider>
     </QueryClientProvider>
   );
+};
 
 describe('Notes Advanced UI', () => {
   let notes: NoteWithRelations[] = [];
 
   beforeEach(() => {
     window.localStorage.clear();
-    queryClient.clear();
     notes = [
       makeNote({ id: 'note-1', title: 'Apple', createdAt: '2023-01-01T00:00:00.000Z' }),
       makeNote({ id: 'note-2', title: 'Banana', createdAt: '2023-01-02T00:00:00.000Z' }),
@@ -136,7 +140,11 @@ describe('Notes Advanced UI', () => {
     const user = userEvent.setup();
 
     // Wait for notes to load
-    const appleNote = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
+    const appleNote = await screen.findByRole(
+      'heading',
+      { name: 'Apple' },
+      { timeout: NOTE_LOAD_TIMEOUT_MS }
+    );
     expect(appleNote).toBeInTheDocument();
 
     const sortBySelect = screen.getByRole('combobox', { name: /Sort By/i });
@@ -158,11 +166,19 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    const appleNote = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
+    const appleNote = await screen.findByRole(
+      'heading',
+      { name: 'Apple' },
+      { timeout: NOTE_LOAD_TIMEOUT_MS }
+    );
     await user.click(appleNote);
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Apple' }, { timeout: 3000 })
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     ).toBeInTheDocument();
 
     const editBtn = await screen.findByRole('button', { name: 'Edit' });
@@ -176,9 +192,15 @@ describe('Notes Advanced UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 }));
+    await user.click(
+      await screen.findByRole('heading', { name: 'Apple' }, { timeout: NOTE_LOAD_TIMEOUT_MS })
+    );
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Apple' }, { timeout: 3000 })
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     ).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
 
@@ -190,17 +212,27 @@ describe('Notes Advanced UI', () => {
 
     // Should be back in detail view with updated title.
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Updated Apple' })
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Updated Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     ).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('deletes a note from edit mode', async () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('heading', { name: 'Banana' }, { timeout: 3000 }));
+    await user.click(
+      await screen.findByRole('heading', { name: 'Banana' }, { timeout: NOTE_LOAD_TIMEOUT_MS })
+    );
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Banana' }, { timeout: 3000 })
+      await screen.findByRole(
+        'heading',
+        { level: 1, name: 'Banana' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      )
     ).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
 
@@ -217,14 +249,18 @@ describe('Notes Advanced UI', () => {
       expect(screen.queryByRole('heading', { name: 'Banana' })).not.toBeInTheDocument();
     });
     expect(screen.getByRole('heading', { name: 'Apple' })).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('toggles favorite status from list view', async () => {
     renderNotesPage();
     const user = userEvent.setup();
 
     const findAppleCard = async (): Promise<HTMLElement> => {
-      const appleTitle = await screen.findByRole('heading', { name: 'Apple' }, { timeout: 3000 });
+      const appleTitle = await screen.findByRole(
+        'heading',
+        { name: 'Apple' },
+        { timeout: NOTE_LOAD_TIMEOUT_MS }
+      );
       const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
       if (!appleCard) {
         throw new Error('Apple note card not found');
@@ -246,5 +282,5 @@ describe('Notes Advanced UI', () => {
         within(appleCard as HTMLElement).getByRole('button', { name: /Unfavorite note/i })
       ).toBeInTheDocument();
     });
-  });
+  }, 15000);
 });

@@ -213,9 +213,9 @@ export function useCanvasNodeDrag(args: {
       const defaultConfig = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
       const mergedConfig = payload.config
         ? {
-            ...(defaultConfig ?? {}),
-            ...payload.config,
-          }
+          ...(defaultConfig ?? {}),
+          ...payload.config,
+        }
         : defaultConfig;
 
       const nodeIds = new Set(nodes.map((node: AiNode): string => node.id));

@@ -196,19 +196,19 @@ export async function upscaleImageWithSharp(input: {
   const resolved =
     input.strategy === 'target_resolution'
       ? resolveUpscaleOutputDimensionsByResolution(
+        input.sourceWidth,
+        input.sourceHeight,
+        input.targetWidth ?? Number.NaN,
+        input.targetHeight ?? Number.NaN
+      )
+      : {
+        ...resolveUpscaleOutputDimensions(
           input.sourceWidth,
           input.sourceHeight,
-          input.targetWidth ?? Number.NaN,
-          input.targetHeight ?? Number.NaN
-        )
-      : {
-          ...resolveUpscaleOutputDimensions(
-            input.sourceWidth,
-            input.sourceHeight,
-            input.scale ?? Number.NaN
-          ),
-          scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
-        };
+          input.scale ?? Number.NaN
+        ),
+        scale: normalizeUpscaleScale(input.scale ?? Number.NaN),
+      };
   const { width, height } = resolved;
   const outputBuffer = await sharp(input.sourceBuffer)
     .resize({

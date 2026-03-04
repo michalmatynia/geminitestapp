@@ -119,11 +119,11 @@ const useAuthContextValue = ({
     const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
     const parsedPolicy = storedPolicyRaw
       ? normalizeAuthSecurityPolicy(
-          parseJsonSetting<Partial<AuthSecurityPolicy>>(
-            storedPolicyRaw,
-            DEFAULT_AUTH_SECURITY_POLICY
-          )
+        parseJsonSetting<Partial<AuthSecurityPolicy>>(
+          storedPolicyRaw,
+          DEFAULT_AUTH_SECURITY_POLICY
         )
+      )
       : DEFAULT_AUTH_SECURITY_POLICY;
     return parsedPolicy;
   }, [settingsQuery.data]);

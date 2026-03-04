@@ -1,4 +1,25 @@
 import { z } from 'zod';
+import { dtoBaseSchema } from './base';
+import { imageFileSchema } from './files';
+import { asset3DRecordSchema } from './viewer3d';
+import type { ImageStudioRunRequest } from './image-studio';
+import {
+  imageStudioCenterShadowPolicySchema,
+  imageStudioCenterDetectionModeSchema,
+  type ImageStudioCenterDetectionMode,
+  type ImageStudioCenterObjectBounds,
+  imageStudioCenterObjectBoundsSchema,
+  imageStudioAnalysisModeSchema,
+  imageStudioCropModeSchema,
+  imageStudioCropRectSchema,
+  imageStudioCropCanvasContextSchema,
+  imageStudioUpscaleModeSchema,
+  imageStudioUpscaleStrategySchema,
+  imageStudioUpscaleSmoothingQualitySchema,
+  imageStudioCenterModeSchema,
+  imageStudioAutoScalerModeSchema,
+} from './image-studio-shared';
+
 // --- Composite ---
 
 export const compositeLayerConfigSchema = z.object({
@@ -568,34 +589,5 @@ export type ImageStudioAutoScaleMetadata = {
   whitespaceAfter?: ImageStudioWhitespaceMetrics | null;
   objectAreaPercentBefore?: number | null;
   objectAreaPercentAfter?: number | null;
-};
-
-export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
-
-export type ImageStudioRunHistoryEventSource = 'api' | 'queue' | 'worker' | 'stream' | 'client';
-
-export type ImageStudioRunHistoryEvent = {
-  id: string;
-  type: string;
-  source: ImageStudioRunHistoryEventSource;
-  message: string;
-  at: string;
-  payload?: Record<string, unknown>;
-};
-
-export type ImageStudioRunRecord = {
-  id: string;
-  projectId: string;
-  status: ImageStudioRunStatus;
-  dispatchMode: 'queued' | 'inline' | null;
-  request: ImageStudioRunRequest;
-  expectedOutputs: number;
-  outputs: Array<{ id: string; filepath: string }>;
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEvents: ImageStudioRunHistoryEvent[];
 };
 

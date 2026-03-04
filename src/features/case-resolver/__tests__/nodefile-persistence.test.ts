@@ -168,7 +168,7 @@ describe('case resolver nodefile persistence', () => {
     });
   });
 
-  it('fails workspace persist when inline nodefile snapshots are present', async () => {
+  it('rejects inline nodefile snapshots during workspace persist', async () => {
     const inlineSnapshot = JSON.stringify({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',

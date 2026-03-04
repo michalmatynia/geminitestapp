@@ -145,24 +145,24 @@ export const computeStarterWorkflowGraphHash = (
 ): string => {
   const nodes = Array.isArray(config.nodes)
     ? config.nodes
-        .map((node) => buildCanonicalNodeShape(node as unknown as Record<string, unknown>))
-        .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+      .map((node) => buildCanonicalNodeShape(node as unknown as Record<string, unknown>))
+      .sort((left, right) => String(left.id).localeCompare(String(right.id)))
     : [];
   const edges = Array.isArray(config.edges)
     ? config.edges
-        .map((edge) => buildCanonicalEdgeShape(edge as unknown as Record<string, unknown>))
-        .sort((left, right) =>
-          [String(left.from), String(left.to), String(left.fromPort), String(left.toPort)]
-            .join('|')
-            .localeCompare(
-              [
-                String(right.from),
-                String(right.to),
-                String(right.fromPort),
-                String(right.toPort),
-              ].join('|')
-            )
-        )
+      .map((edge) => buildCanonicalEdgeShape(edge as unknown as Record<string, unknown>))
+      .sort((left, right) =>
+        [String(left.from), String(left.to), String(left.fromPort), String(left.toPort)]
+          .join('|')
+          .localeCompare(
+            [
+              String(right.from),
+              String(right.to),
+              String(right.fromPort),
+              String(right.toPort),
+            ].join('|')
+          )
+      )
     : [];
   return hashString(JSON.stringify(sortObjectDeep({ nodes, edges })));
 };
@@ -560,8 +560,8 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
           : 'update',
         ...(downgradeResultPort
           ? {
-              updateTemplate: latestTemplate.replaceAll('{{result.', '{{value.'),
-            }
+            updateTemplate: latestTemplate.replaceAll('{{result.', '{{value.'),
+          }
           : {}),
         ...(latestMappings !== null ? { mappings: adaptedMappings } : {}),
       };
@@ -643,11 +643,11 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
     edges: nextEdges,
     ...(currentExtensions || latestExtensions
       ? {
-          extensions: {
-            ...(currentExtensions ?? {}),
-            ...(latestExtensions ?? {}),
-          },
-        }
+        extensions: {
+          ...(currentExtensions ?? {}),
+          ...(latestExtensions ?? {}),
+        },
+      }
       : {}),
   } as PathConfig;
 

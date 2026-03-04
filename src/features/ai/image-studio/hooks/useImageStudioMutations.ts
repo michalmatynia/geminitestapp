@@ -114,7 +114,7 @@ export type StudioAssetImportResult = {
 export function useCreateStudioProject(): CreateMutation<
   CreateStudioProjectResult,
   CreateStudioProjectPayload
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: (data: CreateStudioProjectPayload) =>
       api.post<CreateStudioProjectResult>('/api/image-studio/projects', data),
@@ -134,7 +134,7 @@ export function useCreateStudioProject(): CreateMutation<
 export function useRenameStudioProject(): UpdateMutation<
   UpdateStudioProjectResult,
   UpdateStudioProjectPayload
-> {
+  > {
   return createUpdateMutationV2({
     mutationFn: ({ projectId, nextProjectId }: UpdateStudioProjectPayload) =>
       api.patch<UpdateStudioProjectResult>(
@@ -157,7 +157,7 @@ export function useRenameStudioProject(): UpdateMutation<
 export function useResizeStudioProjectCanvas(): UpdateMutation<
   ResizeStudioProjectCanvasResult,
   ResizeStudioProjectCanvasPayload
-> {
+  > {
   return createUpdateMutationV2({
     mutationFn: async (
       payload: ResizeStudioProjectCanvasPayload
@@ -496,9 +496,9 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         );
         const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
           ? response.deletedSlotIds
-              .filter((value: unknown): value is string => typeof value === 'string')
-              .map((value: string) => normalizeStudioSlotId(value))
-              .filter((value: string) => value.length > 0)
+            .filter((value: unknown): value is string => typeof value === 'string')
+            .map((value: string) => normalizeStudioSlotId(value))
+            .filter((value: string) => value.length > 0)
           : [];
         deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
         deleteTimingsByRequestRef.current.set(slotId, response?.timingsMs ?? null);

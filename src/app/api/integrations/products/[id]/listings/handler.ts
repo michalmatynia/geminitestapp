@@ -52,8 +52,8 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
   const preferredConnection =
     (defaultConnectionId
       ? connections.find(
-          (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
-        )
+        (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
+      )
       : null) ??
     connections.find((connection: (typeof connections)[number]) =>
       Boolean(connection.baseApiToken || connection.password)
@@ -224,14 +224,14 @@ export async function POST_handler(
           : { source: 'manual-listing' },
       relistPolicy: isTraderaIntegrationSlug(integration.slug)
         ? {
-            enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
-            leadMinutes:
+          enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
+          leadMinutes:
               data.autoRelistLeadMinutes ?? connection.traderaAutoRelistLeadMinutes ?? 180,
-            durationHours: data.durationHours ?? connection.traderaDefaultDurationHours ?? 72,
-            templateId: templateIdProvided
-              ? (data.templateId ?? null)
-              : (connection.traderaDefaultTemplateId ?? null),
-          }
+          durationHours: data.durationHours ?? connection.traderaDefaultDurationHours ?? 72,
+          templateId: templateIdProvided
+            ? (data.templateId ?? null)
+            : (connection.traderaDefaultTemplateId ?? null),
+        }
         : null,
     });
 

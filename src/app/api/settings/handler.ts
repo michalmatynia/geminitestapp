@@ -484,9 +484,9 @@ export async function GET_handler(
     const fallbackFromAll =
       scope === 'heavy'
         ? (() => {
-            const allKnown = getLastKnownSettings('all');
-            return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
-          })()
+          const allKnown = getLastKnownSettings('all');
+          return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
+        })()
         : null;
     const fallbackFromLight = scope === 'all' ? getLastKnownSettings('light') : null;
     let fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];

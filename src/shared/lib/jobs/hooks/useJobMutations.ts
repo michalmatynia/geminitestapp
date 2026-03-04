@@ -17,7 +17,7 @@ import { jobKeys } from './useJobQueries';
 export function useProductAiJobMutation(): UpdateMutation<
   unknown,
   { jobId: string; action: 'retry' | 'cancel' }
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => performProductAiJobAction(jobId, action),
     mutationKey: jobKeys.all,
@@ -80,7 +80,7 @@ export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }>
 export function useChatbotJobMutation(): UpdateMutation<
   unknown,
   { jobId: string; action: 'retry' | 'cancel' }
-> {
+  > {
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
     mutationKey: jobKeys.all,

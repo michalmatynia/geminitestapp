@@ -215,13 +215,13 @@ export async function putValidatorPatternByIdHandler(
   const nextLaunchAppliesToScopes =
     body.launchAppliesToScopes !== undefined
       ? normalizeProductValidationPatternLaunchScopes(
-          body.launchAppliesToScopes,
-          body.appliesToScopes ?? current.appliesToScopes
-        )
+        body.launchAppliesToScopes,
+        body.appliesToScopes ?? current.appliesToScopes
+      )
       : normalizeProductValidationPatternLaunchScopes(
-          current.launchAppliesToScopes,
-          current.appliesToScopes
-        );
+        current.launchAppliesToScopes,
+        current.appliesToScopes
+      );
   const nextAppliesToScopes =
     body.appliesToScopes !== undefined
       ? normalizeProductValidationPatternScopes(body.appliesToScopes)
@@ -229,13 +229,13 @@ export async function putValidatorPatternByIdHandler(
   const nextReplacementAppliesToScopes =
     body.replacementAppliesToScopes !== undefined
       ? normalizeProductValidationPatternReplacementScopes(
-          body.replacementAppliesToScopes,
-          body.appliesToScopes ?? current.appliesToScopes
-        )
+        body.replacementAppliesToScopes,
+        body.appliesToScopes ?? current.appliesToScopes
+      )
       : normalizeProductValidationPatternReplacementScopes(
-          current.replacementAppliesToScopes,
-          current.appliesToScopes
-        );
+        current.replacementAppliesToScopes,
+        current.appliesToScopes
+      );
   const nextRuntimeEnabled =
     body.runtimeEnabled !== undefined ? body.runtimeEnabled : current.runtimeEnabled;
   const nextRuntimeType = body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;

@@ -59,11 +59,11 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     })),
     ...(selectedModelMissingFromCatalog
       ? [
-          {
-            value: selectedModelId,
-            label: `${selectedModelId} (not currently in Brain catalog)`,
-          },
-        ]
+        {
+          value: selectedModelId,
+          label: `${selectedModelId} (not currently in Brain catalog)`,
+        },
+      ]
       : []),
   ];
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
@@ -233,8 +233,8 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
       {hasPollConsumer && (
         <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           {modelConfig.waitForResult === false
-            ? "Poll is connected to this Model's jobId. The Model will emit only jobId, so use Poll.result for your Viewer."
-            : "Poll is connected to this Model's jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job."}
+            ? 'Poll is connected to this Model\'s jobId. The Model will emit only jobId, so use Poll.result for your Viewer.'
+            : 'Poll is connected to this Model\'s jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job.'}
         </Card>
       )}
       <p className='text-[11px] text-gray-500'>

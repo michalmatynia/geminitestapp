@@ -39,9 +39,9 @@ export const withQueryKeyMeta = <TQueryKey extends QueryKey>(
   meta: TanstackFactoryMeta,
   queryKey: TQueryKey
 ): TanstackFactoryMeta => ({
-  ...meta,
-  queryKey,
-});
+    ...meta,
+    queryKey,
+  });
 
 export const withMutationKeyMeta = (
   meta: TanstackFactoryMeta,

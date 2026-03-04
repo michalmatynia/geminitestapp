@@ -419,17 +419,17 @@ const mongoRepository: ProductListingRepository = {
     const integrations =
       integrationLookup.length > 0
         ? await db
-            .collection('integrations')
-            .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
-            .toArray()
+          .collection('integrations')
+          .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
+          .toArray()
         : [];
 
     const connections =
       connectionLookup.length > 0
         ? await db
-            .collection('integration_connections')
-            .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
-            .toArray()
+          .collection('integration_connections')
+          .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
+          .toArray()
         : [];
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
     const connectionMap = new Map(connections.map((c) => [c._id.toString(), c]));
@@ -755,7 +755,7 @@ export async function listProductListingsByProductIdsAcrossProviders(
 
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
-> {
+  > {
   const [prismaListings, mongoListings] = await Promise.all([
     prismaRepository.listAllListings(),
     mongoRepository.listAllListings(),

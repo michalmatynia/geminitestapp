@@ -1757,7 +1757,10 @@ describe('case-resolver workspace', () => {
               name: 'Case Edge Ports',
               folder: '',
               graph: {
-                nodes: [createPromptNode('node-a'), createPromptNode('node-b')],
+                nodes: [
+                  createCanonicalTextPromptNode('node-a', 'text_note'),
+                  createCanonicalTextPromptNode('node-b', 'text_note'),
+                ],
                 edges: [
                   {
                     id: 'edge-legacy',
@@ -1768,12 +1771,13 @@ describe('case-resolver workspace', () => {
                   },
                 ],
                 nodeMeta: {
-                  'node-b': {
+                  'node-a': {
+                    ...DEFAULT_CASE_RESOLVER_NODE_META,
                     role: 'text_note',
-                    includeInOutput: true,
-                    quoteMode: 'none',
-                    surroundPrefix: '',
-                    surroundSuffix: '',
+                  },
+                  'node-b': {
+                    ...DEFAULT_CASE_RESOLVER_NODE_META,
+                    role: 'text_note',
                   },
                 },
                 edgeMeta: {},

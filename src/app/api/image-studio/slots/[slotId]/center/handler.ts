@@ -415,10 +415,10 @@ export async function postCenterSlotHandler(
     const normalizedError =
       error instanceof z.ZodError
         ? centerBadRequest(
-            IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
-            'Center scaler schema validation failed.',
-            { responseErrors: error.format() }
-          )
+          IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
+          'Center scaler schema validation failed.',
+          { responseErrors: error.format() }
+        )
         : error;
 
     void logSystemEvent({

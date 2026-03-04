@@ -481,15 +481,15 @@ export function parseSegmentsLoop(
     ) {
       const blockLines = isRequirementsHeading
         ? consumeBlockUntilBoundary(cursor, [
-            studioRelightingBoundary,
-            pipelineBoundary,
-            finalQaBoundary,
-          ])
+          studioRelightingBoundary,
+          pipelineBoundary,
+          finalQaBoundary,
+        ])
         : consumeParagraphBlock(
-            cursor,
-            [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
-            runtime
-          );
+          cursor,
+          [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
+          runtime
+        );
       const body = blockLines.slice(1);
       const subsections = parseSequenceSubsections({
         lines: body,

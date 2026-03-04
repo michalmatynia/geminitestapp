@@ -260,13 +260,13 @@ export async function postExportToBaseHandler(
 
     const baseImageDiagnostics = exportImagesAsBase64
       ? buildImageDiagnosticsLogger({
-          productId,
-          connectionId: data.connectionId,
-          inventoryId: targetInventoryId,
-          exportImagesAsBase64,
-          imageBase64Mode,
-          imageTransform,
-        })
+        productId,
+        connectionId: data.connectionId,
+        inventoryId: targetInventoryId,
+        exportImagesAsBase64,
+        imageBase64Mode,
+        imageTransform,
+      })
       : undefined;
 
     const exportExec = await executeBaseExport({

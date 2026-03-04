@@ -153,27 +153,26 @@ const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary 
   };
 };
 
-const DetailsGrid = ({
-  rows,
-}: {
+const DetailsGrid = (props: {
   rows: Array<{ label: string; value: string }>;
-}): React.JSX.Element => (
-  <div className='grid grid-cols-[150px_1fr] gap-x-3 gap-y-1 text-xs'>
-    {rows.map((row) => (
-      <React.Fragment key={row.label}>
-        <div className='text-gray-500'>{row.label}</div>
-        <div className='break-all text-gray-200'>{row.value || 'n/a'}</div>
-      </React.Fragment>
-    ))}
-  </div>
-);
+}): React.JSX.Element => {
+  const { rows } = props;
 
-export function VersionNodeDetailsModal({
-  isOpen,
-  item: node,
-  onClose,
-  getSlotImageSrc,
-}: VersionNodeDetailsModalProps): React.JSX.Element {
+  return (
+    <div className='grid grid-cols-[150px_1fr] gap-x-3 gap-y-1 text-xs'>
+      {rows.map((row) => (
+        <React.Fragment key={row.label}>
+          <div className='text-gray-500'>{row.label}</div>
+          <div className='break-all text-gray-200'>{row.value || 'n/a'}</div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+export function VersionNodeDetailsModal(props: VersionNodeDetailsModalProps): React.JSX.Element {
+  const { isOpen, item: node, onClose, getSlotImageSrc } = props;
+
   const content = useMemo(() => {
     if (!node) return null;
 

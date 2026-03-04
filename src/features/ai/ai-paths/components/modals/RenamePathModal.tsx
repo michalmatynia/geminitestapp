@@ -27,13 +27,9 @@ const FIELDS: SettingsField<RenameFormState>[] = [
   },
 ];
 
-export function RenamePathModal({
-  isOpen,
-  onClose,
-  item,
-  setDraftName,
-  onSave,
-}: RenamePathModalProps): React.JSX.Element | null {
+export function RenamePathModal(props: RenamePathModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, item, setDraftName, onSave } = props;
+
   const values: RenameFormState = { name: item?.name ?? '' };
 
   const handleChange = (vals: Partial<RenameFormState>) => {

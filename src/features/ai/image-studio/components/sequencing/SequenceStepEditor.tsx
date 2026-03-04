@@ -30,11 +30,9 @@ type SequenceStepEditorProps = {
   step: ImageStudioSequenceStep;
 };
 
-export function SequenceStepEditor({
-  stepId,
-  operation,
-  step,
-}: SequenceStepEditorProps): React.JSX.Element {
+export function SequenceStepEditor(props: SequenceStepEditorProps): React.JSX.Element {
+  const { stepId, operation, step } = props;
+
   const {
     activeGenerationModel,
     cropShapeOptions,

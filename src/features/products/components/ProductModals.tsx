@@ -32,15 +32,13 @@ const SelectIntegrationModal = dynamic(
 // Rendered inside ProductFormProvider; syncs form state into refs/setState
 // owned by the outer EditProductModal so the shared FormModal shell can react.
 
-function ProductFormEditBridge({
-  onIsSavingChange,
-  onHasUnsavedChangesChange,
-  submitRef,
-}: {
+function ProductFormEditBridge(props: {
   onIsSavingChange: (v: boolean) => void;
   onHasUnsavedChangesChange: (v: boolean) => void;
   submitRef: React.MutableRefObject<(() => void) | null>;
 }): null {
+  const { onIsSavingChange, onHasUnsavedChangesChange, submitRef } = props;
+
   const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormContext();
 
   // Keep submit ref always fresh (no deps needed — render-time assignment is fine for refs)
@@ -63,13 +61,12 @@ function ProductFormEditBridge({
 // Extracted from ProductFormModalInner so it can live inside the shared
 // FormModal shell without nesting a second Dialog.
 
-function ProductFormEditBody({
-  submitButtonText,
-  validationInstanceScopeOverride,
-}: {
+function ProductFormEditBody(props: {
   submitButtonText: string;
   validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
 }): React.JSX.Element {
+  const { submitButtonText, validationInstanceScopeOverride } = props;
+
   const { showFileManager, handleMultiFileSelect, product, getValues } = useProductFormContext();
   const formInstanceKey = product?.id?.trim() || 'product-edit';
 
@@ -131,19 +128,15 @@ function EditProductSkeletonContent(): React.JSX.Element {
 // One <FormModal> (one <Dialog>) for the entire edit flow: skeleton → form.
 // The Dialog never unmounts between states so only one open animation plays.
 
-function EditProductModal({
-  editingProduct,
-  isEditHydrating,
-  onCloseEdit,
-  onEditSuccess,
-  onEditSave,
-}: {
+function EditProductModal(props: {
   editingProduct: ProductWithImages | null;
   isEditHydrating: boolean;
   onCloseEdit: () => void;
   onEditSuccess: () => void;
   onEditSave?: (saved: ProductWithImages) => void;
 }): React.JSX.Element | null {
+  const { editingProduct, isEditHydrating, onCloseEdit, onEditSuccess, onEditSave } = props;
+
   const [formIsSaving, setFormIsSaving] = useState(false);
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const formSubmitRef = useRef<(() => void) | null>(null);

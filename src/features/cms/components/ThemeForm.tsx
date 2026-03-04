@@ -48,13 +48,9 @@ const DEFAULT_SPACING: CmsThemeSpacing = {
   containerMaxWidth: '1200px',
 };
 
-export function ThemeForm({
-  initialData,
-  onSubmit,
-  isSaving,
-  onCancel,
-  submitText,
-}: ThemeFormProps): React.JSX.Element {
+export function ThemeForm(props: ThemeFormProps): React.JSX.Element {
+  const { initialData, onSubmit, isSaving, onCancel, submitText } = props;
+
   const [name, setName] = useState(initialData?.name ?? '');
   const [colors, setColors] = useState<CmsThemeColors>(initialData?.colors ?? DEFAULT_COLORS);
   const [typography, setTypography] = useState<CmsThemeTypography>(

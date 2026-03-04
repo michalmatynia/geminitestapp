@@ -22,18 +22,20 @@ export interface AnalysisResultSectionProps {
   ) => void;
 }
 
-export function AnalysisResultSection({
-  result,
-  resultSourceSlotId,
-  persistedPlanSnapshot,
-  currentWorkingSlotId,
-  availableSlots,
-  slotSelectionLocked,
-  analysisSourceSignatureMissing,
-  analysisCurrentSourceMetadataMissing,
-  analysisPlanIsStale,
-  queueAnalysisApplyIntent,
-}: AnalysisResultSectionProps): React.JSX.Element {
+export function AnalysisResultSection(props: AnalysisResultSectionProps): React.JSX.Element {
+  const {
+    result,
+    resultSourceSlotId,
+    persistedPlanSnapshot,
+    currentWorkingSlotId,
+    availableSlots,
+    slotSelectionLocked,
+    analysisSourceSignatureMissing,
+    analysisCurrentSourceMetadataMissing,
+    analysisPlanIsStale,
+    queueAnalysisApplyIntent,
+  } = props;
+
   const resolvedSourceSlotId =
     resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
   const normalizedWorkingSlotId = currentWorkingSlotId.trim();

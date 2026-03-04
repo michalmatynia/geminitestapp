@@ -7,17 +7,14 @@ import { Input, Label } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
-function FieldInput({
-  label,
-  value,
-  placeholder,
-  onChange,
-}: {
+function FieldInput(props: {
   label: string;
   value: string;
   placeholder: string;
   onChange: (v: string) => void;
 }): React.JSX.Element {
+  const { label, value, placeholder, onChange } = props;
+
   return (
     <div className='flex items-center gap-2'>
       <span className='w-20 shrink-0 text-right text-[10px] text-gray-500'>{label}</span>

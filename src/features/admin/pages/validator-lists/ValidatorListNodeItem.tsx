@@ -14,13 +14,9 @@ import { useValidatorListTreeContext } from './ValidatorListTreeContext';
 
 export type ValidatorListNodeItemProps = FolderTreeViewportRenderNodeInput;
 
-export function ValidatorListNodeItem({
-  node,
-  depth,
-  isSelected,
-  isDragging,
-  select,
-}: ValidatorListNodeItemProps): React.JSX.Element | null {
+export function ValidatorListNodeItem(props: ValidatorListNodeItemProps): React.JSX.Element | null {
+  const { node, depth, isSelected, isDragging, select } = props;
+
   const { listById, onEdit, onToggleLock, onRemove, isPending } = useValidatorListTreeContext();
 
   const listId = fromValidatorListNodeId(node.id);

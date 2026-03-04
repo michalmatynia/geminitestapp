@@ -14,15 +14,17 @@ export type RegexAiProposalSectionProps = {
   normalizedFlags: string;
 };
 
-export function RegexAiProposalSection({
-  regexConfig: _regexConfig,
-  hasAiProposal,
-  activeVariant,
-  onApplyVariant,
-  aiProposals,
-  onUseProposal,
-  normalizedFlags,
-}: RegexAiProposalSectionProps): React.JSX.Element | null {
+export function RegexAiProposalSection(props: RegexAiProposalSectionProps): React.JSX.Element | null {
+  const {
+    regexConfig: _regexConfig,
+    hasAiProposal,
+    activeVariant,
+    onApplyVariant,
+    aiProposals,
+    onUseProposal,
+    normalizedFlags,
+  } = props;
+
   if (!hasAiProposal && aiProposals.length === 0) return null;
 
   return (

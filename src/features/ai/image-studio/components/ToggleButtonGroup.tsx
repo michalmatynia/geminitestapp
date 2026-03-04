@@ -13,13 +13,9 @@ interface ToggleButtonGroupProps<T extends string> {
   size?: 'xs' | 'sm' | 'default' | undefined;
 }
 
-export function ToggleButtonGroup<T extends string>({
-  value,
-  onChange,
-  options,
-  className,
-  size = 'sm',
-}: ToggleButtonGroupProps<T>): React.JSX.Element {
+export function ToggleButtonGroup<T extends string>(props: ToggleButtonGroupProps<T>): React.JSX.Element {
+  const { value, onChange, options, className, size = 'sm' } = props;
+
   return (
     <div
       className={cn(

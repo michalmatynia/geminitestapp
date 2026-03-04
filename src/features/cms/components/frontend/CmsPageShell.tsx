@@ -12,13 +12,9 @@ type CmsPageShellProps = {
   children: React.ReactNode;
 };
 
-export function CmsPageShell({
-  menu,
-  theme,
-  colorSchemes,
-  showMenu = true,
-  children,
-}: CmsPageShellProps): React.ReactNode {
+export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
+  const { menu, theme, colorSchemes, showMenu = true, children } = props;
+
   const menuVisible = menu.showMenu && showMenu;
   const basePadding = typeof theme.pagePadding === 'number' ? theme.pagePadding : 0;
   const baseMargin = typeof theme.pageMargin === 'number' ? theme.pageMargin : 0;

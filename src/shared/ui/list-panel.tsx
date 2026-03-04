@@ -46,33 +46,35 @@ const variantStyles: Record<ListPanelVariant, string> = {
   flat: 'bg-transparent p-0 shadow-none',
 };
 
-export function ListPanel({
-  title,
-  description,
-  eyebrow,
-  icon,
-  headerActions,
-  header,
-  refresh,
-  alerts,
-  filters,
-  actions,
-  footer,
-  children,
-  className,
-  contentClassName,
-  headerClassName,
-  titleClassName,
-  descriptionClassName,
-  alertsClassName,
-  filtersClassName,
-  actionsClassName,
-  footerClassName,
-  variant = 'default',
-  isLoading = false,
-  loadingMessage = 'Loading...',
-  emptyState,
-}: ListPanelProps) {
+export function ListPanel(props: ListPanelProps) {
+  const {
+    title,
+    description,
+    eyebrow,
+    icon,
+    headerActions,
+    header,
+    refresh,
+    alerts,
+    filters,
+    actions,
+    footer,
+    children,
+    className,
+    contentClassName,
+    headerClassName,
+    titleClassName,
+    descriptionClassName,
+    alertsClassName,
+    filtersClassName,
+    actionsClassName,
+    footerClassName,
+    variant = 'default',
+    isLoading = false,
+    loadingMessage = 'Loading...',
+    emptyState,
+  } = props;
+
   return (
     <section className={cn(variantStyles[variant], className)}>
       {header || title ? (

@@ -24,19 +24,21 @@ export interface ContentDisplayModalProps {
  * Reusable modal template for displaying read-only content.
  * Used for logs, previews, results, and other non-interactive modals.
  */
-export function ContentDisplayModal({
-  open,
-  onOpenChange,
-  onClose,
-  title,
-  subtitle,
-  children,
-  size = 'md',
-  variant = 'default',
-  padding = 'default',
-  showClose = true,
-  className,
-}: ContentDisplayModalProps): React.JSX.Element {
+export function ContentDisplayModal(props: ContentDisplayModalProps): React.JSX.Element {
+  const {
+    open,
+    onOpenChange,
+    onClose,
+    title,
+    subtitle,
+    children,
+    size = 'md',
+    variant = 'default',
+    padding = 'default',
+    showClose = true,
+    className,
+  } = props;
+
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen && onClose) {
       onClose();

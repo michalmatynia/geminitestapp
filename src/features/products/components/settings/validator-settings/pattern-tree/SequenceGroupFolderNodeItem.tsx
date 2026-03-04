@@ -12,20 +12,24 @@ import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
 export type SequenceGroupFolderNodeItemProps = FolderTreeViewportRenderNodeInput;
 
-export function SequenceGroupFolderNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isRenaming,
-  isDragging,
-  isDropTarget,
-  dropPosition,
-  select,
-  toggleExpand,
-  startRename,
-}: SequenceGroupFolderNodeItemProps): React.JSX.Element | null {
+export function SequenceGroupFolderNodeItem(
+  props: SequenceGroupFolderNodeItemProps
+): React.JSX.Element | null {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isRenaming,
+    isDragging,
+    isDropTarget,
+    dropPosition,
+    select,
+    toggleExpand,
+    startRename,
+  } = props;
+
   const {
     controller,
     sequenceGroupById,

@@ -11,13 +11,10 @@ export interface ParserMappingListProps {
   removeMapping: (index: number) => void;
 }
 
-export function ParserMappingList({
-  entries,
-  updateMappingKey,
-  updateMappingPath,
-  uniqueSuggestedPathOptions,
-  removeMapping,
-}: ParserMappingListProps): React.JSX.Element {
+export function ParserMappingList(props: ParserMappingListProps): React.JSX.Element {
+  const { entries, updateMappingKey, updateMappingPath, uniqueSuggestedPathOptions, removeMapping } =
+    props;
+
   return (
     <div className='space-y-3'>
       {entries.map(([key, path], index) => (

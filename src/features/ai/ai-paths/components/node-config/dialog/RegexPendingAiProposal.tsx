@@ -12,14 +12,10 @@ type RegexPendingAiProposalProps = {
   selectedSnippetIndex: number;
 };
 
-export function RegexPendingAiProposal({
-  codeSnippets,
-  onAccept,
-  onReject,
-  onSelectSnippetIndex,
-  pendingAiRegex,
-  selectedSnippetIndex,
-}: RegexPendingAiProposalProps): React.JSX.Element {
+export function RegexPendingAiProposal(props: RegexPendingAiProposalProps): React.JSX.Element {
+  const { codeSnippets, onAccept, onReject, onSelectSnippetIndex, pendingAiRegex, selectedSnippetIndex } =
+    props;
+
   return (
     <div className='rounded-md border border-purple-500/40 bg-purple-500/10 p-3'>
       <div className='flex items-center justify-between gap-2'>

@@ -14,14 +14,9 @@ interface SlotInlineEditModalProps extends EntityModalProps<ImageStudioSlotRecor
   children: React.ReactNode;
 }
 
-export function SlotInlineEditModal({
-  isOpen,
-  onClose,
-  item: selectedSlot,
-  onCopyId,
-  header,
-  children,
-}: SlotInlineEditModalProps): React.JSX.Element | null {
+export function SlotInlineEditModal(props: SlotInlineEditModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, item: selectedSlot, onCopyId, header, children } = props;
+
   if (!selectedSlot) return null;
 
   return (

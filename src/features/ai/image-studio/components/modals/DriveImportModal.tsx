@@ -16,14 +16,9 @@ interface DriveImportModalProps extends ModalStateProps {
   onSelectFile: (files: ImageFileSelection[]) => void;
 }
 
-export function DriveImportModal({
-  isOpen,
-  onClose,
-  title,
-  isUploading,
-  localUploadTrigger,
-  onSelectFile,
-}: DriveImportModalProps): React.JSX.Element | null {
+export function DriveImportModal(props: DriveImportModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, title, isUploading, localUploadTrigger, onSelectFile } = props;
+
   const fileManagerRuntimeValue = useMemo(() => ({ onSelectFile }), [onSelectFile]);
 
   return (

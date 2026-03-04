@@ -86,7 +86,7 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: case_file, node_file, asset_image, asset_pdf',
     folderHint: 'Example: folder',
   },
-  case_resolver_cases: {
+  case_resolver_case_hierarchy: {
     title: 'Case Resolver Cases',
     description: 'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
     fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
@@ -178,7 +178,7 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifyError: true,
     successMessage: 'Case resolver tree updated.',
   },
-  case_resolver_cases: {
+  case_resolver_case_hierarchy: {
     notifySuccess: true,
     notifyError: true,
     successMessage: 'Case hierarchy updated.',

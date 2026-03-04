@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { normalizeNodes, sanitizeEdges, aiJobsApi } from '@/shared/lib/ai-paths';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import {
+  useRuntimeActions,
+  useRuntimeState,
+} from '@/features/ai/ai-paths/context/RuntimeContext';
 
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
@@ -15,7 +19,9 @@ import { createRunId } from './runtime/utils';
 import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
-  const [sendingToAi, setSendingToAi] = useState(false);
+  const runtimeContextState = useRuntimeState();
+  const runtimeContextActions = useRuntimeActions();
+  const sendingToAi = runtimeContextState.sendingToAi;
   const brainAssignment = useBrainAssignment({
     capability: 'ai_paths.model',
   });
@@ -216,7 +222,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       return;
     }
 
-    setSendingToAi(true);
+    runtimeContextActions.setSendingToAi(true);
     let directJobId: string | null = null;
 
     try {
@@ -308,7 +314,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       );
       args.toast('Send to AI failed.', { variant: 'error' });
     } finally {
-      setSendingToAi(false);
+      runtimeContextActions.setSendingToAi(false);
     }
   };
 
@@ -359,11 +365,12 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     currentRunIdRef.current = null;
     currentRunStartedAtRef.current = null;
     currentRunStartedAtMsRef.current = null;
-    setSendingToAi(false);
+    runtimeContextActions.setSendingToAi(false);
     state.setRunStatus('idle');
     state.resetRuntimeNodeStatuses({});
     state.setRuntimeEvents([]);
   }, [
+    runtimeContextActions,
     server.stopServerRunStream,
     state.resetRuntimeNodeStatuses,
     state.setRunStatus,

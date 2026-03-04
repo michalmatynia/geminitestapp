@@ -10,7 +10,6 @@ import { AiPathsSettingsPageProvider } from './ai-paths-settings/AiPathsSettings
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 import { useAiPathsSettingsPageValue } from './ai-paths-settings/useAiPathsSettingsPageValue';
-import { AiPathsStateBridger } from './ai-paths-settings/AiPathsStateBridger';
 
 export type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -37,7 +36,6 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
   return (
     <AiPathsSettingsPageProvider value={pageContextValue}>
       <AiPathsSettingsOrchestratorProvider value={state}>
-        <AiPathsStateBridger state={state} />
         <AiPathsSettingsView />
       </AiPathsSettingsOrchestratorProvider>
     </AiPathsSettingsPageProvider>

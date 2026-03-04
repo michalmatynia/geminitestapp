@@ -373,6 +373,7 @@ export function AdminCaseResolverCasesProvider({
             maxTotalMs: 15_000,
             attemptTimeoutMs: 5_000,
             includeDetachedHistory: false,
+            includeDetachedDocuments: false,
           }),
           bootstrapTimeoutPromise,
         ]);

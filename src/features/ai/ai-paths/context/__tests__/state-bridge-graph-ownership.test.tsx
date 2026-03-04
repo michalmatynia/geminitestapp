@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/hooks/useStateBridge';
+import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/__tests__/helpers/useStateBridge';
 import { AiPathsProvider, useGraphActions, useGraphState } from '@/features/ai/ai-paths/context';
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 

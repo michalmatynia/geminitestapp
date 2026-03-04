@@ -4,8 +4,9 @@ import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-pr
 import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
 
 export const parseBoolean = (value: unknown): boolean => value === true;
+export const CASE_RESOLVER_CASES_MASTER_INSTANCE = 'case_resolver_case_hierarchy';
 export const CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF =
-  getFolderTreeInstanceSettingsHref('case_resolver_cases');
+  getFolderTreeInstanceSettingsHref(CASE_RESOLVER_CASES_MASTER_INSTANCE);
 export const buildCaseResolverCaseHref = (caseId: string): string =>
   `/admin/case-resolver?fileId=${encodeURIComponent(caseId)}`;
 

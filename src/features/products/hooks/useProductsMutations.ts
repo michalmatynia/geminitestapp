@@ -145,7 +145,7 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
 export function useConvertAllImagesToBase64(): UpdateMutation<{ ok: boolean }, void> {
   return createUpdateMutationV2({
     mutationFn: async (): Promise<{ ok: boolean }> => {
-      await api.post<unknown>('/api/products/images/base64/all');
+      await api.post<unknown>('/api/v2/products/images/base64/all');
       return { ok: true };
     },
     mutationKey: QUERY_KEYS.products.all,
@@ -164,7 +164,7 @@ export function useConvertAllImagesToBase64(): UpdateMutation<{ ok: boolean }, v
 export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, string[]> {
   return createUpdateMutationV2({
     mutationFn: async (productIds: string[]): Promise<{ ok: boolean }> => {
-      await api.post<unknown>('/api/products/images/base64', { productIds });
+      await api.post<unknown>('/api/v2/products/images/base64', { productIds });
       return { ok: true };
     },
     mutationKey: QUERY_KEYS.products.all,
@@ -183,7 +183,7 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<{ ok: boolean }, 
 export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: string; sku: string }> {
   return createCreateMutationV2({
     mutationFn: async ({ id, sku }): Promise<{ id: string }> =>
-      await api.post<{ id: string }>(`/api/products/${id}/duplicate`, { sku }),
+      await api.post<{ id: string }>(`/api/v2/products/${id}/duplicate`, { sku }),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useDuplicateProduct',
@@ -219,7 +219,7 @@ export function useUpdateProductField(): UpdateMutation<
     { previousLists: unknown; previousDetail: unknown }
   >({
     mutationFn: async ({ id, field, value }): Promise<void> => {
-      await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
+      await api.patch<unknown>(`/api/v2/products/${id}`, { [field]: value });
     },
     onMutate: async ({ id, field, value }) => {
       // Optimistically update the list and detail caches

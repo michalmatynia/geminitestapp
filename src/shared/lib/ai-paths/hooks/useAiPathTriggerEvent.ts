@@ -11,6 +11,7 @@ import {
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/shared/lib/ai-paths/core/constants';
+import { isLegacyPathIndexCompatEnabled } from '@/shared/lib/ai-paths/legacy-compat/flags';
 import { enqueueAiPathRun, listAiPathRuns } from '@/shared/lib/ai-paths/api/client';
 import {
   normalizeLoadedPathName,
@@ -160,7 +161,9 @@ const loadPathConfigsFromSettings = async (
   const map = new Map<string, string>(
     data.map((item: { key: string; value: string }) => [item.key, item.value])
   );
-  const indexRaw = map.get(PATH_INDEX_KEY) ?? map.get(LEGACY_PATH_INDEX_KEY);
+  const indexRaw =
+    map.get(PATH_INDEX_KEY) ??
+    (isLegacyPathIndexCompatEnabled() ? map.get(LEGACY_PATH_INDEX_KEY) : undefined);
   if (!indexRaw?.trim()) {
     return { configs: {}, settingsPathOrder: [] };
   }

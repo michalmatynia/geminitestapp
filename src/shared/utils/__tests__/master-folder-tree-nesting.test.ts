@@ -309,8 +309,8 @@ describe('cross-profile nesting rules', () => {
     });
   });
 
-  describe('case_resolver_cases profile', () => {
-    const profile = defaultFolderTreeProfilesV2.case_resolver_cases;
+  describe('case_resolver_case_hierarchy profile', () => {
+    const profile = defaultFolderTreeProfilesV2.case_resolver_case_hierarchy;
 
     it('allows case_entry nesting inside another case_entry folder', () => {
       const nodes: MasterTreeNode[] = [

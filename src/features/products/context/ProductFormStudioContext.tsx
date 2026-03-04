@@ -58,7 +58,7 @@ const loadStudioProjectId = async (productId: string): Promise<string | null> =>
   }
 
   const request = api
-    .get<ProductStudioConfigResponse>(`/api/products/${encodeURIComponent(productId)}/studio`, {
+    .get<ProductStudioConfigResponse>(`/api/v2/products/${encodeURIComponent(productId)}/studio`, {
       cache: 'no-store',
       logError: false,
     })
@@ -150,7 +150,7 @@ export function ProductFormStudioProvider({
           projectId?: string | null;
         };
       }>(
-        `/api/products/${encodeURIComponent(productId)}/studio`,
+        `/api/v2/products/${encodeURIComponent(productId)}/studio`,
         {
           projectId: nextProjectId,
         },

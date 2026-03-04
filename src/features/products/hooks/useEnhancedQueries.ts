@@ -32,7 +32,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
   const productsQuery = useNormalizedQuery<ProductRecord>(
     productKeys.enhanced(),
     async (): Promise<ProductRecord[]> => {
-      return await api.get<ProductRecord[]>('/api/products');
+      return await api.get<ProductRecord[]>('/api/v2/products');
     }
   );
 
@@ -41,7 +41,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     {
       queryKey: productKeys.enhanced(),
       queryFn: async (): Promise<ProductRecord[]> => {
-        return await api.get<ProductRecord[]>('/api/products');
+        return await api.get<ProductRecord[]>('/api/v2/products');
       },
     },
     (
@@ -68,7 +68,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
           Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];
         return await api.get<ProductCategory[]>(
-          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+          `/api/v2/products/categories?catalogId=${encodeURIComponent(catalogId)}`
         );
       },
       { priority: 'medium', delay: 2000 }
@@ -78,7 +78,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
       'product-tags',
       productKeys.tagsAll(),
       async (): Promise<ProductTag[]> => {
-        return await api.get<ProductTag[]>('/api/products/tags');
+        return await api.get<ProductTag[]>('/api/v2/products/tags');
       },
       { priority: 'low', delay: 5000 }
     );
@@ -89,7 +89,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
     {
       queryKey: productKeys.enhancedCount(),
       queryFn: async (): Promise<{ count: number }> => {
-        return await api.get<{ count: number }>('/api/products/count');
+        return await api.get<{ count: number }>('/api/v2/products/count');
       },
       interval: 60000, // 1 minute
     },

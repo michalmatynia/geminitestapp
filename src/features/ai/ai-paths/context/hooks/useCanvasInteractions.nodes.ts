@@ -209,7 +209,7 @@ export function useCanvasInteractionsNodes({
   }, [setNodes]);
 
   const forceEndNodeDrag = useCallback(
-    (pointerId?: number): void => {
+    (_pointerId?: number): void => {
       const activePointerCapture = pointerCaptureRef.current;
       if (activePointerCapture) {
         releasePointerCaptureSafe(activePointerCapture.target, activePointerCapture.pointerId);

@@ -81,7 +81,7 @@ describe('v2 products metadata handler compatibility', () => {
     expect(payload[0]?.['groupType']).toBe('standard');
   });
 
-  it('creates price-group from wrapped legacy payload', async () => {
+  it('creates price-group from direct payload', async () => {
     const currencyFindUniqueMock = vi.fn().mockResolvedValueOnce({ id: 'PLN' });
     const priceGroupFindUniqueMock = vi.fn().mockResolvedValue(null);
     const priceGroupCreateMock = vi.fn().mockResolvedValue({
@@ -106,11 +106,9 @@ describe('v2 products metadata handler compatibility', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        data: {
-          name: 'Standard',
-          currencyCode: 'PLN',
-          isDefault: true,
-        },
+        name: 'Standard',
+        currencyCode: 'PLN',
+        isDefault: true,
       }),
     });
 

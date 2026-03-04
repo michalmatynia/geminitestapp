@@ -102,6 +102,7 @@ export function useCaseResolverStateWorkspaceHydration({
           maxTotalMs: 6_500,
           attemptTimeoutMs: 2_200,
           includeDetachedHistory: true,
+          includeDetachedDocuments: true,
         });
       } else {
         const result = await fetchCaseResolverWorkspaceIfStale(
@@ -109,6 +110,8 @@ export function useCaseResolverStateWorkspaceHydration({
           currentRevision,
           {
             includeDetachedHistory: true,
+            includeDetachedDocuments: true,
+            requiredFileId: requestedFileId,
           }
         );
         if (result.updated) {

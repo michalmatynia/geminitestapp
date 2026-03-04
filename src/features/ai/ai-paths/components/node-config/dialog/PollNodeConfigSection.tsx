@@ -141,7 +141,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
       </div>
       {resolvedPollConfig.mode === 'job' && (
         <p className='text-[11px] text-gray-500'>
-          Polls /api/products/ai-jobs/{'{{jobId}}'} until completion and outputs result + status.
+          Polls /api/v2/products/ai-jobs/{'{{jobId}}'} until completion and outputs result + status.
         </p>
       )}
       {resolvedPollConfig.mode === 'database' && (

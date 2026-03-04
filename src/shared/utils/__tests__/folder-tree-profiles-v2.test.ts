@@ -18,7 +18,7 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.product_categories.version).toBe(2);
     expect(parsed.cms_page_builder.version).toBe(2);
     expect(parsed.case_resolver.version).toBe(2);
-    expect(parsed.case_resolver_cases.version).toBe(2);
+    expect(parsed.case_resolver_case_hierarchy.version).toBe(2);
     expect(parsed.case_resolver_document_relations.version).toBe(2);
     expect(parsed.case_resolver_nodefile_relations.version).toBe(2);
     expect(parsed.case_resolver_scanfile_relations.version).toBe(2);
@@ -427,7 +427,7 @@ describe('folder-tree-profiles-v2', () => {
       matchFields: ['name', 'path', 'metadata'],
       minQueryLength: 1,
     });
-    expect(defaultFolderTreeProfilesV2.case_resolver_cases.search).toEqual({
+    expect(defaultFolderTreeProfilesV2.case_resolver_case_hierarchy.search).toEqual({
       enabled: true,
       debounceMs: 120,
       filterMode: 'filter_tree',

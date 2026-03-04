@@ -20,14 +20,10 @@ import type {
 } from '@/shared/lib/db/services/database-sync-types';
 import type { UpdateFilter } from 'mongodb';
 
-const unwrapPayload = (value: unknown): Record<string, unknown> => {
+const parseObjectPayload = async (req: NextRequest): Promise<Record<string, unknown>> => {
+  const value = await req.json();
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  const record = value as Record<string, unknown>;
-  const nested = record['data'];
-  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-    return nested as Record<string, unknown>;
-  }
-  return record;
+  return value as Record<string, unknown>;
 };
 
 const readString = (record: Record<string, unknown>, key: string): string | null => {
@@ -248,7 +244,7 @@ export async function PUT_products_metadata_id_handler(
   params: { type: string; id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const data = unwrapPayload(await req.json());
+  const data = await parseObjectPayload(req);
 
   if (type === 'producers') {
     const repo = await getProducerRepository();

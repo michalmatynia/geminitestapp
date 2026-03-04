@@ -38,6 +38,7 @@ import { CaseFilterPanel } from './CaseFilterPanel';
 import { CaseListHeader } from './list/CaseListHeader';
 
 import {
+  CASE_RESOLVER_CASES_MASTER_INSTANCE,
   CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
   buildCaseResolverCaseHref,
   sortCaseTreeNodes,
@@ -399,7 +400,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     panel: { hasPersistedState: hasPersistedUiState },
     viewport: { scrollToNodeRef },
   } = useMasterFolderTreeShell({
-    instance: 'case_resolver_cases',
+    instance: CASE_RESOLVER_CASES_MASTER_INSTANCE,
     nodes: masterNodes,
     adapter,
   });
@@ -815,7 +816,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             />
           </CaseListNodeRuntimeProvider>
           <MasterTreeSettingsButton
-            instance='case_resolver_cases'
+            instance={CASE_RESOLVER_CASES_MASTER_INSTANCE}
             href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
           />
         </div>

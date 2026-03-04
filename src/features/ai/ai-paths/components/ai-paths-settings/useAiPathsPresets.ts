@@ -1,8 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-
-import type { DatabaseConfig } from '@/shared/contracts/ai-paths-core';
+import React, { useCallback, useEffect } from 'react';
 import type {
   AiNode,
   ClusterPreset,
@@ -17,11 +15,11 @@ import {
   DB_QUERY_PRESETS_KEY,
   TEMPLATE_INPUT_PORTS,
   createPresetId,
-  migrateDatabaseConfigCollections,
   parsePathList,
 } from '@/shared/lib/ai-paths';
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
+import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 
@@ -47,13 +45,6 @@ type UseAiPathsPresetsArgs = {
     context: Record<string, unknown>,
     fallbackMessage?: string
   ) => void;
-};
-
-const DEFAULT_PRESET_DRAFT: ClusterPresetDraft = {
-  name: '',
-  description: '',
-  bundlePorts: 'context\nmeta\ntrigger\ntriggerName\nentityJson\nentityId\nentityType\nresult',
-  template: 'Write a summary for {{context.entity.title}}',
 };
 
 export interface AiPathsPresets {
@@ -104,28 +95,98 @@ export function useAiPathsPresets({
   confirm,
   reportAiPathsError,
 }: UseAiPathsPresetsArgs): AiPathsPresets {
-  const [clusterPresets, setClusterPresets] = useState<ClusterPreset[]>([]);
-  const [dbQueryPresets, setDbQueryPresets] = useState<DbQueryPreset[]>([]);
-  const [dbNodePresets, setDbNodePresets] = useState<DbNodePreset[]>([]);
-  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
-  const [presetDraft, setPresetDraft] = useState<ClusterPresetDraft>(DEFAULT_PRESET_DRAFT);
-  const [presetsModalOpen, setPresetsModalOpen] = useState(false);
-  const [presetsJson, setPresetsJson] = useState('');
-  const [expandedPaletteGroups, setExpandedPaletteGroups] = useState<Set<string>>(
-    new Set(['Triggers'])
-  );
-  const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  const presetsState = usePresetsState();
+  const presetsActions = usePresetsActions();
 
-  const saveClusterPresets = async (nextPresets: ClusterPreset[]): Promise<void> => {
+  const clusterPresets = presetsState.clusterPresets;
+  const dbQueryPresets = presetsState.dbQueryPresets;
+  const dbNodePresets = presetsState.dbNodePresets;
+  const editingPresetId = presetsState.editingPresetId;
+  const presetDraft = presetsState.presetDraft;
+  const presetsModalOpen = presetsState.presetsModalOpen;
+  const presetsJson = presetsState.presetsJson;
+  const expandedPaletteGroups = presetsState.expandedPaletteGroups;
+  const paletteCollapsed = presetsState.paletteCollapsed;
+
+  const setClusterPresets = useCallback<React.Dispatch<React.SetStateAction<ClusterPreset[]>>>(
+    (next): void => {
+      presetsActions.setClusterPresets(next);
+    },
+    [presetsActions]
+  );
+
+  const setDbQueryPresets = useCallback<React.Dispatch<React.SetStateAction<DbQueryPreset[]>>>(
+    (next): void => {
+      presetsActions.setDbQueryPresets(next);
+    },
+    [presetsActions]
+  );
+
+  const setDbNodePresets = useCallback<React.Dispatch<React.SetStateAction<DbNodePreset[]>>>(
+    (next): void => {
+      presetsActions.setDbNodePresets(next);
+    },
+    [presetsActions]
+  );
+
+  const setPresetDraft = useCallback<React.Dispatch<React.SetStateAction<ClusterPresetDraft>>>(
+    (next): void => {
+      presetsActions.setPresetDraft(next);
+    },
+    [presetsActions]
+  );
+
+  const setPresetsModalOpen = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(presetsState.presetsModalOpen) : next;
+      presetsActions.setPresetsModalOpen(resolved);
+    },
+    [presetsActions, presetsState.presetsModalOpen]
+  );
+
+  const setPresetsJson = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(presetsState.presetsJson) : next;
+      presetsActions.setPresetsJson(resolved);
+    },
+    [presetsActions, presetsState.presetsJson]
+  );
+
+  const setExpandedPaletteGroups = useCallback<
+    React.Dispatch<React.SetStateAction<Set<string>>>
+  >(
+    (next): void => {
+      presetsActions.setExpandedPaletteGroups(next);
+    },
+    [presetsActions]
+  );
+
+  const setPaletteCollapsed = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(presetsState.paletteCollapsed) : next;
+      presetsActions.setPaletteCollapsed(resolved);
+    },
+    [presetsActions, presetsState.paletteCollapsed]
+  );
+
+  const setEditingPresetId = useCallback((id: string | null): void => {
+    presetsActions.setEditingPresetId(id);
+  }, [presetsActions]);
+
+  const handleResetPresetDraft = useCallback((): void => {
+    presetsActions.resetPresetDraft();
+  }, [presetsActions]);
+
+  const saveClusterPresets = useCallback(async (nextPresets: ClusterPreset[]): Promise<void> => {
     try {
       await updateAiPathsSetting(CLUSTER_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
       reportAiPathsError(error, { action: 'saveClusterPresets' }, 'Failed to save presets:');
       toast('Failed to save cluster presets.', { variant: 'error' });
     }
-  };
+  }, [reportAiPathsError, toast]);
 
-  const saveDbQueryPresets = async (nextPresets: DbQueryPreset[]): Promise<void> => {
+  const saveDbQueryPresets = useCallback(async (nextPresets: DbQueryPreset[]): Promise<void> => {
     try {
       await updateAiPathsSetting(DB_QUERY_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
@@ -133,9 +194,9 @@ export function useAiPathsPresets({
       toast('Failed to save query presets.', { variant: 'error' });
       throw error;
     }
-  };
+  }, [reportAiPathsError, toast]);
 
-  const saveDbNodePresets = async (nextPresets: DbNodePreset[]): Promise<void> => {
+  const saveDbNodePresets = useCallback(async (nextPresets: DbNodePreset[]): Promise<void> => {
     try {
       await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
@@ -146,65 +207,22 @@ export function useAiPathsPresets({
       );
       toast('Failed to save database presets.', { variant: 'error' });
     }
-  };
+  }, [reportAiPathsError, toast]);
 
-  const normalizePreset = (raw: Partial<ClusterPreset>): ClusterPreset => {
-    const now = new Date().toISOString();
-    const bundlePorts = Array.isArray(raw.bundlePorts) ? raw.bundlePorts : [];
-    return {
-      id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
-      name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Cluster Preset',
-      description: typeof raw.description === 'string' ? raw.description : '',
-      bundlePorts,
-      template: typeof raw.template === 'string' ? raw.template : '',
-      createdAt: raw.createdAt ?? now,
-      updatedAt: raw.updatedAt ?? now,
-    };
-  };
-
-  const normalizeDbQueryPreset = (raw: Partial<DbQueryPreset>): DbQueryPreset => {
-    const now = new Date().toISOString();
-    return {
-      id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
-      name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Query Preset',
-      queryTemplate:
-        typeof raw.queryTemplate === 'string' && raw.queryTemplate.trim()
-          ? raw.queryTemplate
-          : '{\n  "_id": "{{value}}"\n}',
-      updateTemplate: typeof raw.updateTemplate === 'string' ? raw.updateTemplate : '',
-      createdAt: raw.createdAt ?? now,
-      updatedAt: raw.updatedAt ?? now,
-    };
-  };
-
-  const normalizeDbNodePreset = (raw: Partial<DbNodePreset>): DbNodePreset => {
-    const now = new Date().toISOString();
-    const baseConfig = (raw.config && typeof raw.config === 'object'
-      ? raw.config
-      : { operation: 'query' }) as unknown as DatabaseConfig;
-    const migrationResult = migrateDatabaseConfigCollections(baseConfig);
-    const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
-    return {
-      id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
-      name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
-      description: typeof raw.description === 'string' ? raw.description : '',
-      config: migratedConfig,
-      createdAt: raw.createdAt ?? now,
-      updatedAt: raw.updatedAt ?? now,
-    };
-  };
-
-  const togglePaletteGroup = (title: string): void => {
-    setExpandedPaletteGroups((prev: Set<string>) => {
-      const next = new Set(prev);
-      if (next.has(title)) {
-        next.delete(title);
-      } else {
-        next.add(title);
-      }
-      return next;
+  useEffect(() => {
+    presetsActions.setPresetPersistenceHandlers({
+      saveDbQueryPresets,
+      saveDbNodePresets,
     });
-  };
+    return () => {
+      presetsActions.setPresetPersistenceHandlers({});
+    };
+  }, [presetsActions, saveDbNodePresets, saveDbQueryPresets]);
+
+  const normalizePreset = presetsActions.normalizeClusterPreset;
+  const normalizeDbQueryPreset = presetsActions.normalizeDbQueryPreset;
+  const normalizeDbNodePreset = presetsActions.normalizeDbNodePreset;
+  const togglePaletteGroup = presetsActions.togglePaletteGroup;
 
   const handleSavePreset = async (): Promise<void> => {
     const name = presetDraft.name.trim();
@@ -274,8 +292,7 @@ export function useAiPathsPresets({
         setClusterPresets(nextPresets);
         await saveClusterPresets(nextPresets);
         if (editingPresetId === presetId) {
-          setEditingPresetId(null);
-          setPresetDraft(DEFAULT_PRESET_DRAFT);
+          handleResetPresetDraft();
         }
         toast('Preset deleted.', { variant: 'success' });
       },
@@ -462,11 +479,6 @@ export function useAiPathsPresets({
       template: templateNode.config?.template?.template ?? '',
     });
     toast('Preset draft loaded from selection.', { variant: 'success' });
-  };
-
-  const handleResetPresetDraft = (): void => {
-    setEditingPresetId(null);
-    setPresetDraft(DEFAULT_PRESET_DRAFT);
   };
 
   return {

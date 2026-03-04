@@ -365,7 +365,7 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.folderRecords).toEqual([{ path: 'parent-folder', ownerCaseId: 'case-parent' }]);
   });
 
-  it('includes legacy documents in scoped case when folder ownership matches but parentCaseId is missing', () => {
+  it('does not include unassigned documents based only on folder ownership records', () => {
     const workspace = buildWorkspaceFixture();
     const legacyDoc = createCaseResolverFile({
       id: 'doc-legacy',
@@ -396,8 +396,10 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       },
     });
 
-    expect(scoped.files.map((file: CaseResolverFile) => file.id)).toContain('doc-legacy');
-    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id)).toContain('asset-legacy');
+    expect(scoped.files.map((file: CaseResolverFile) => file.id)).not.toContain('doc-legacy');
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id)).not.toContain(
+      'asset-legacy'
+    );
   });
 
   it('includes unresolved documents in scoped case when related links point into scope', () => {

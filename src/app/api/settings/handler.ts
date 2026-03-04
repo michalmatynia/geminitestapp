@@ -65,6 +65,12 @@ import {
 } from '@/shared/lib/settings/settings-logic';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
+const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';
+const CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY = 'case_resolver_workspace_v2_documents';
+const CASE_RESOLVER_DETACHED_WORKSPACE_KEYS = new Set<string>([
+  CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+]);
 
 type SettingDocument = {
   key: string;
@@ -177,6 +183,35 @@ const readCurrentSettingValue = async (
   return provider === 'mongodb' ? readMongo() : readPrisma();
 };
 
+const maybeFilterDetachedCaseResolverPayloadByFileId = ({
+  key,
+  value,
+  fileId,
+}: {
+  key: string;
+  value: string;
+  fileId: string;
+}): string => {
+  if (fileId.length === 0 || !CASE_RESOLVER_DETACHED_WORKSPACE_KEYS.has(key)) return value;
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown> | null;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return value;
+    const rawFiles = parsed['files'];
+    if (!Array.isArray(rawFiles)) return value;
+    const filteredFiles = rawFiles.filter((entry: unknown): boolean => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+      const entryId = (entry as Record<string, unknown>)['id'];
+      return typeof entryId === 'string' && entryId === fileId;
+    });
+    return JSON.stringify({
+      ...parsed,
+      files: filteredFiles,
+    });
+  } catch {
+    return value;
+  }
+};
+
 const normalizeScope = (scope?: string | null): SettingsScope => {
   if (scope === 'heavy' || scope === 'light' || scope === 'all') return scope;
   return DEFAULT_SCOPE;
@@ -195,6 +230,7 @@ const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> =>
           'agent_personas',
           'case_resolver_workspace_v2',
           'case_resolver_workspace_v2_history',
+          'case_resolver_workspace_v2_documents',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',
@@ -227,6 +263,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
           'agent_personas',
           'case_resolver_workspace_v2',
           'case_resolver_workspace_v2_history',
+          'case_resolver_workspace_v2_documents',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',
@@ -240,6 +277,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
           'agent_personas',
           'case_resolver_workspace_v2',
           'case_resolver_workspace_v2_history',
+          'case_resolver_workspace_v2_documents',
           'product_validator_decision_log',
           'ai_insights_analytics_history',
           'ai_insights_runtime_analytics_history',
@@ -386,6 +424,8 @@ export async function GET_handler(
   }
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
   const requestedKey = req.nextUrl.searchParams.get('key')?.trim() ?? '';
+  const requestedCaseResolverFileId =
+    req.nextUrl.searchParams.get('caseResolverFileId')?.trim() ?? '';
   const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
 
   // Use no-store for settings to ensure freshness
@@ -465,11 +505,20 @@ export async function GET_handler(
       }
       // Stored revision > client revision — fall through to return full payload
     }
-    const payload: SettingRecord[] = value === null ? [] : [{ key: requestedKey, value }];
+    const resolvedValue =
+      value === null
+        ? null
+        : maybeFilterDetachedCaseResolverPayloadByFileId({
+          key: requestedKey,
+          value,
+          fileId: requestedCaseResolverFileId,
+        });
+    const payload: SettingRecord[] =
+      resolvedValue === null ? [] : [{ key: requestedKey, value: resolvedValue }];
     const response = NextResponse.json(payload, {
       headers: {
         'Cache-Control': SETTINGS_CACHE_CONTROL,
-        'X-Cache': value === null ? 'key-miss' : 'key-hit',
+        'X-Cache': resolvedValue === null ? 'key-miss' : 'key-hit',
       },
     });
     await attachProviderHeader(response);

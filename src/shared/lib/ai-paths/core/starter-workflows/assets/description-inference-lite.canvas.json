@@ -365,7 +365,7 @@
       "outputs": ["value", "bundle"],
       "config": {
         "http": {
-          "url": "/api/products/ai-paths/description-context?catalogId={{bundle.catalogId}}&categoryId={{bundle.categoryId}}",
+          "url": "/api/v2/products/ai-paths/description-context?catalogId={{bundle.catalogId}}&categoryId={{bundle.categoryId}}",
           "method": "GET",
           "headers": "{}",
           "bodyTemplate": "",

@@ -23,7 +23,7 @@ async function productsHandler(req: NextRequest, version: ApiVersion): Promise<R
       return await handleCreateProduct(req, version);
     default:
       return StandardErrors.invalidRequest(`Method ${req.method} not allowed`)
-        .withMeta(version, '/api/products', req.method)
+        .withMeta(version, '/api/v2/products', req.method)
         .toResponse(405);
   }
 }
@@ -50,7 +50,7 @@ async function handleGetProducts(
 
   if (!products || (products.length === 0 && page === 1)) {
     return StandardErrors.notFound('Products')
-      .withMeta(version, '/api/products', 'GET')
+      .withMeta(version, '/api/v2/products', 'GET')
       .toResponse(404);
   }
 
@@ -73,7 +73,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
 
     if (!contentType.includes('application/json')) {
       return StandardErrors.invalidRequest('Content-Type must be application/json')
-        .withMeta(version, '/api/products', 'POST')
+        .withMeta(version, '/api/v2/products', 'POST')
         .toResponse(400);
     }
 
@@ -84,14 +84,14 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
       return StandardErrors.validationError([
         { field: 'sku', message: 'SKU is required', code: 'REQUIRED_FIELD' },
       ])
-        .withMeta(version, '/api/products', 'POST')
+        .withMeta(version, '/api/v2/products', 'POST')
         .toResponse(400);
     }
 
     const existing = await CachedProductService.getProductBySku(sku);
     if (existing) {
       return StandardErrors.duplicateResource('sku', sku)
-        .withMeta(version, '/api/products', 'POST')
+        .withMeta(version, '/api/v2/products', 'POST')
         .toResponse(409);
     }
 
@@ -108,7 +108,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
   } catch (error) {
     if (error instanceof SyntaxError) {
       return StandardErrors.invalidRequest('Invalid JSON in request body')
-        .withMeta(version, '/api/products', 'POST')
+        .withMeta(version, '/api/v2/products', 'POST')
         .toResponse(400);
     }
     throw error;

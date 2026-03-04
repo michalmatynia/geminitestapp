@@ -1,27 +1,15 @@
 'use client';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import type {
-  AiNode,
   Edge,
-  NodeDefinition,
   RuntimeState,
   PathMeta,
   PathConfig,
 } from '@/shared/lib/ai-paths';
-import {
-  palette,
-  derivePaletteNodeTypeId,
-  TRIGGER_INPUT_PORTS,
-  TRIGGER_OUTPUT_PORTS,
-  triggers,
-  triggerButtonsApi,
-} from '@/shared/lib/ai-paths';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import { triggers } from '@/shared/lib/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useToast, type Toast } from '@/shared/ui';
+import { useToast } from '@/shared/ui';
 import { pruneRuntimeInputsState } from '@/features/ai/ai-paths/logic/runtime-pruning';
 
 import { useAiPathsCanvasInteractions } from './useAiPathsCanvasInteractions';
@@ -41,13 +29,16 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
+import { useContextSettingsState } from './hooks/state/useContextSettingsState';
 import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
 import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
 import { useUiSettingsState } from './hooks/state/useUiSettingsState';
 
-import { useAiPathsValidationActions } from './hooks/useAiPathsValidationActions';
 import { useAiPathsNodeConfigActions } from './hooks/useAiPathsNodeConfigActions';
 import { useAiPathsRuntimeManagement } from './hooks/useAiPathsRuntimeManagement';
+import { usePaletteWithTriggerButtons } from './hooks/usePaletteWithTriggerButtons';
+import { useAiPathsSettingsDerivedState } from './hooks/useAiPathsSettingsDerivedState';
+import { useAiPathsErrorState } from './hooks/useAiPathsErrorState';
 
 type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -106,65 +97,48 @@ export function useAiPathsSettingsState({
     setHistoryRetentionPasses,
     historyRetentionOptionsMax,
     setHistoryRetentionOptionsMax,
-    parserSamples,
-    setParserSamples,
-    updaterSamples,
-    setUpdaterSamples,
-    pathDebugSnapshots,
-    setPathDebugSnapshots,
-    lastRunAt,
-    setLastRunAt,
-    lastError,
-    setLastError,
-    runtimeState,
-    setRuntimeState,
   } = useExecutionSettingsState();
 
   const {
-    loading,
-    setLoading,
     isPathSwitching,
     setIsPathSwitching,
-    selectedNodeId,
-    setSelectedNodeId,
-    configOpen,
-    setConfigOpen,
-    nodeConfigDirty,
-    setNodeConfigDirty,
-    loadNonce,
-    setLoadNonce,
-    simulationOpenNodeId,
-    setSimulationOpenNodeId,
   } = useUiSettingsState();
+  const {
+    selectedNodeId,
+    configOpen,
+    nodeConfigDirty,
+    simulationOpenNodeId,
+    runtimeState,
+    parserSamples,
+    updaterSamples,
+    pathDebugSnapshots,
+    lastRunAt,
+    lastError,
+    loading,
+    loadNonce,
+    setRuntimeState,
+    setParserSamples,
+    setUpdaterSamples,
+    setPathDebugSnapshots,
+    setLastRunAt,
+    setLastError,
+    setSelectedNodeId,
+    setConfigOpen,
+    setNodeConfigDirty,
+    setSimulationOpenNodeId,
+    setLoading,
+    setLoadNonce,
+  } = useContextSettingsState();
 
-  const setLastErrorString = useCallback(
-    (error: string | null): void => {
-      setLastError(error ? { message: error, time: new Date().toISOString() } : null);
-    },
-    [setLastError]
-  );
-
-  const validation = useAiPathsValidationActions({
-    setAiPathsValidation: setAiPathsValidationState,
-    setLastError: setLastErrorString,
-    toast: toast as unknown as Toast,
+  const {
+    validation,
+    reportAiPathsError,
+    persistLastError,
+  } = useAiPathsErrorState({
+    setAiPathsValidationState,
+    setLastError,
+    toast,
   });
-
-  const reportAiPathsError = useCallback(
-    (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
-      validation.reportAiPathsError(error, context, fallbackMessage);
-    },
-    [validation.reportAiPathsError]
-  );
-
-  const persistLastError = useCallback(
-    async (
-      payload: { message: string; time: string; pathId?: string | null } | null
-    ): Promise<void> => {
-      await validation.persistLastError(payload?.message ?? null);
-    },
-    [validation.persistLastError]
-  );
 
   const nodeConfig = useAiPathsNodeConfigActions({
     selectedNodeId,
@@ -184,10 +158,14 @@ export function useAiPathsSettingsState({
     toast,
   });
 
-  const selectedNode = useMemo(
-    (): AiNode | null => nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null,
-    [nodes, selectedNodeId]
-  );
+  const { selectedNode, pathFlagsById, autoSaveLabel, autoSaveClasses } =
+    useAiPathsSettingsDerivedState({
+      nodes,
+      selectedNodeId,
+      paths,
+      pathConfigs,
+      autoSaveStatus: persistence.autoSaveStatus,
+    });
 
   const {
     viewportRef,
@@ -281,67 +259,7 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
   });
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
-    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async () => {
-      const response = await triggerButtonsApi.list({ entityType: 'custom' });
-      if (!response.ok) throw new Error(response.error);
-      return response.data;
-    },
-    meta: {
-      source: 'ai.ai-paths.settings.trigger-buttons',
-      operation: 'list',
-      resource: 'aiPaths.triggerButtons',
-      domain: 'global',
-    },
-  });
-
-  const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
-    const buttons = (triggerButtonsQuery.data ?? [])
-      .filter((button: AiTriggerButtonRecord): boolean => button.enabled !== false)
-      .reduce((acc: AiTriggerButtonRecord[], button: AiTriggerButtonRecord) => {
-        if (!button.id || acc.some((item: AiTriggerButtonRecord) => item.id === button.id)) {
-          return acc;
-        }
-        acc.push(button);
-        return acc;
-      }, []);
-    if (buttons.length === 0) return palette;
-
-    const usedTitles = new Set<string>(palette.map((node: NodeDefinition) => node.title));
-    const derived: NodeDefinition[] = [];
-    buttons.forEach((button: AiTriggerButtonRecord) => {
-      const nameLabel = button.name.trim();
-      const displayLabel = button.display.label.trim();
-      const label = nameLabel || displayLabel;
-      if (!label) return;
-
-      const baseTitle = `Trigger: ${label}`;
-      let title = baseTitle;
-      let suffix = 2;
-      while (usedTitles.has(title)) {
-        title = `${baseTitle} (${suffix})`;
-        suffix += 1;
-      }
-      usedTitles.add(title);
-      const triggerConfig = { trigger: { event: button.id } };
-      derived.push({
-        type: 'trigger',
-        nodeTypeId: derivePaletteNodeTypeId({
-          type: 'trigger',
-          title,
-          config: triggerConfig,
-        }),
-        title,
-        description: `User trigger button: ${label} (${button.id}).`,
-        inputs: TRIGGER_INPUT_PORTS,
-        outputs: TRIGGER_OUTPUT_PORTS,
-        config: triggerConfig,
-      });
-    });
-
-    return [...palette, ...derived];
-  }, [triggerButtonsQuery.data, palette]);
+  const paletteWithTriggerButtons = usePaletteWithTriggerButtons();
 
   const {
     parserSampleLoading,
@@ -425,22 +343,6 @@ export function useAiPathsSettingsState({
       await persistence.persistPathSettings(nextPaths, configId, config);
     },
     [persistence.persistPathSettings]
-  );
-
-  const pathFlagsById = useMemo(
-    () =>
-      paths.reduce(
-        (acc, path) => {
-          const config = pathConfigs[path.id];
-          acc[path.id] = {
-            isLocked: config?.isLocked ?? false,
-            isActive: config?.isActive ?? true,
-          };
-          return acc;
-        },
-        {} as Record<string, { isLocked: boolean; isActive: boolean }>
-      ),
-    [paths, pathConfigs]
   );
 
   const runHistory = useAiPathsRunHistory({
@@ -595,32 +497,6 @@ export function useAiPathsSettingsState({
     toast,
     reportAiPathsError,
   });
-
-  const autoSaveLabel = useMemo((): string => {
-    switch (persistence.autoSaveStatus) {
-      case 'saving':
-        return 'Saving...';
-      case 'saved':
-        return 'Saved';
-      case 'error':
-        return 'Save error';
-      default:
-        return '';
-    }
-  }, [persistence.autoSaveStatus]);
-
-  const autoSaveClasses = useMemo((): string => {
-    switch (persistence.autoSaveStatus) {
-      case 'saving':
-        return 'text-yellow-500';
-      case 'saved':
-        return 'text-green-500';
-      case 'error':
-        return 'text-red-500';
-      default:
-        return '';
-    }
-  }, [persistence.autoSaveStatus]);
 
   return {
     // Docs

@@ -308,7 +308,7 @@ export function ProductStudioProvider({
     setStudioActionError(null);
     try {
       const response = await api.get<ProductStudioVariantsResponse>(
-        `/api/products/${encodeURIComponent(product.id)}/studio/variants`,
+        `/api/v2/products/${encodeURIComponent(product.id)}/studio/variants`,
         {
           params: { imageSlotIndex: selectedImageIndex, projectId: studioProjectId },
           cache: 'no-store',
@@ -344,7 +344,7 @@ export function ProductStudioProvider({
     setAuditError(null);
     try {
       const response = await api.get<{ entries: ProductStudioAuditEntry[] }>(
-        `/api/products/${encodeURIComponent(product.id)}/studio/audit`,
+        `/api/v2/products/${encodeURIComponent(product.id)}/studio/audit`,
         {
           params: { imageSlotIndex: selectedImageIndex, limit: 40 },
           cache: 'no-store',
@@ -392,7 +392,7 @@ export function ProductStudioProvider({
     setOpeningInImageStudio(true);
     try {
       const response = await api.post<{ projectId: string; sourceSlot: { id: string } }>(
-        `/api/products/${encodeURIComponent(product.id)}/studio/link`,
+        `/api/v2/products/${encodeURIComponent(product.id)}/studio/link`,
         {
           imageSlotIndex: selectedImageIndex,
           projectId: studioProjectId,

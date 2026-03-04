@@ -48,7 +48,7 @@ export function useProductListCategories({
     queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
       if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
       return api.get<Record<string, ProductCategory[]>>(
-        `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
+        `/api/v2/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
         {
           signal,
           timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,

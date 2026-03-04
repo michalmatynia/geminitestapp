@@ -16,7 +16,7 @@ export function useSendToStudioMutation() {
     { productId: string; imageSlotIndex: number; projectId: string }
   >({
     mutationFn: ({ productId, imageSlotIndex, projectId }) =>
-      api.post(`/api/products/${encodeURIComponent(productId)}/studio/send`, {
+      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
         imageSlotIndex,
         projectId,
       }),
@@ -39,7 +39,7 @@ export function useAcceptVariantMutation() {
     { productId: string; imageSlotIndex: number; generationSlotId: string; projectId: string }
   >({
     mutationFn: ({ productId, imageSlotIndex, generationSlotId, projectId }) =>
-      api.post(`/api/products/${encodeURIComponent(productId)}/studio/accept`, {
+      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/accept`, {
         imageSlotIndex,
         generationSlotId,
         projectId,
@@ -63,7 +63,7 @@ export function useRotateImageSlotMutation() {
     { productId: string; imageSlotIndex: number; direction: 'left' | 'right' }
   >({
     mutationFn: ({ productId, imageSlotIndex, direction }) =>
-      api.post(`/api/products/${encodeURIComponent(productId)}/studio/rotate`, {
+      api.post(`/api/v2/products/${encodeURIComponent(productId)}/studio/rotate`, {
         imageSlotIndex,
         direction,
       }),

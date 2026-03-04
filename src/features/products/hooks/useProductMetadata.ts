@@ -278,7 +278,7 @@ export function useProductMetadata({
 
     let cancelled = false;
     void api
-      .get<ProductCategory>(`/api/products/categories/${encodeURIComponent(selectedCategoryId)}`, {
+      .get<ProductCategory>(`/api/v2/products/categories/${encodeURIComponent(selectedCategoryId)}`, {
         logError: false,
       })
       .then((category: ProductCategory) => {

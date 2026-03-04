@@ -9,6 +9,7 @@ import { type CurrencyCreateInput } from '@/shared/contracts/internationalizatio
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { recordLegacyCompatCounter } from '@/shared/lib/observability/legacy-compat-counters';
 import prisma from '@/shared/lib/db/prisma';
 import { type CountryCode } from '@prisma/client';
 import type {
@@ -16,11 +17,17 @@ import type {
   MongoLanguageDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 
-const unwrapPayload = (value: unknown): Record<string, unknown> => {
+const unwrapPayload = (value: unknown, source: string): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const record = value as Record<string, unknown>;
   const nested = record['data'];
   if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    recordLegacyCompatCounter('legacy_payload_received', {
+      source,
+      context: {
+        compatibilityShape: 'wrapped_data',
+      },
+    });
     return nested as Record<string, unknown>;
   }
   return record;
@@ -231,7 +238,7 @@ export async function POST_intl_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const data = unwrapPayload(await req.json());
+  const data = unwrapPayload(await req.json(), `api.v2.metadata.${type}.POST`);
   const provider = await getInternationalizationProvider();
 
   if (type === 'currencies') {

@@ -25,7 +25,7 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (!catalogId) return [];
       return await api.get<ProductCategoryWithChildren[]>(
-        `/api/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}&fresh=1`,
+        `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}&fresh=1`,
         { cache: 'no-store' }
       );
     },

@@ -141,7 +141,7 @@ export const handleCreateNameLengthMirrorPattern = async (args: {
         target?: string;
       }>;
     }>(
-      '/api/products/validator-patterns/templates/name-segment-dimensions',
+      '/api/v2/products/validator-patterns/templates/name-segment-dimensions',
       {},
       { logError: false }
     );
@@ -216,7 +216,7 @@ export const handleCreateNameCategoryMirrorPattern = async (args: {
         action?: string;
         target?: string;
       }>;
-    }>('/api/products/validator-patterns/templates/name-segment-category', {}, { logError: false });
+    }>('/api/v2/products/validator-patterns/templates/name-segment-category', {}, { logError: false });
     void invalidateValidatorConfig(queryClient);
     const createdCount = (templateResult.outcomes ?? []).filter(
       (item) => item.action === 'created'

@@ -683,7 +683,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
       try {
         await api.post<Record<string, unknown>>(
-          '/api/products/validator-decisions',
+          '/api/v2/products/validator-decisions',
           {
             action: 'deny',
             productId: product?.id ?? null,
@@ -736,7 +736,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
       try {
         await api.post<Record<string, unknown>>(
-          '/api/products/validator-decisions',
+          '/api/v2/products/validator-decisions',
           {
             action: 'accept',
             productId: product?.id ?? null,

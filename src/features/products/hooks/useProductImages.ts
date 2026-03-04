@@ -102,7 +102,7 @@ export function useProductImages(
     { productId: string; imageFileId: string }
   >({
     mutationFn: ({ productId, imageFileId }) =>
-      api.delete<void>(`/api/products/${productId}/images/${imageFileId}`),
+      api.delete<void>(`/api/v2/products/${productId}/images/${imageFileId}`),
     mutationKey: QUERY_KEYS.products.all,
     meta: {
       source: 'products.hooks.useProductImages.disconnectImage',

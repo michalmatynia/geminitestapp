@@ -29,7 +29,6 @@ import {
   createCaseResolverAssetFile,
   normalizeCaseResolverFolderTimestamps,
 } from './settings-workspace-helpers';
-import { coerceCaseResolverEdgeToCanonicalShape } from './settings.edge-validation';
 
 const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
   {
@@ -44,8 +43,6 @@ const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
 >();
 
 export type CaseResolverWorkspaceLegacySanitizationDiagnostics = {
-  legacyEdgeConvertedCount: number;
-  legacyEdgeDroppedCount: number;
   inlineNodeFileSnapshotStrippedCount: number;
   fileGraphFallbackDropCount: number;
   relationGraphFallbackDropped: boolean;
@@ -54,8 +51,6 @@ export type CaseResolverWorkspaceLegacySanitizationDiagnostics = {
 
 const CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceLegacySanitizationDiagnostics =
   {
-    legacyEdgeConvertedCount: 0,
-    legacyEdgeDroppedCount: 0,
     inlineNodeFileSnapshotStrippedCount: 0,
     fileGraphFallbackDropCount: 0,
     relationGraphFallbackDropped: false,
@@ -89,8 +84,6 @@ const attachCaseResolverWorkspaceNormalizationDiagnostics = (
 const normalizeLegacySanitizationDiagnostics = (
   diagnostics: Partial<CaseResolverWorkspaceLegacySanitizationDiagnostics> | null | undefined
 ): CaseResolverWorkspaceLegacySanitizationDiagnostics => ({
-  legacyEdgeConvertedCount: Math.max(0, Math.floor(diagnostics?.legacyEdgeConvertedCount ?? 0)),
-  legacyEdgeDroppedCount: Math.max(0, Math.floor(diagnostics?.legacyEdgeDroppedCount ?? 0)),
   inlineNodeFileSnapshotStrippedCount: Math.max(
     0,
     Math.floor(diagnostics?.inlineNodeFileSnapshotStrippedCount ?? 0)
@@ -155,50 +148,6 @@ const resolveSafeCaseParentId = (
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY = 'nodeFileSnapshotStorage';
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
 
-const sanitizeLegacyEdgeArray = (
-  value: unknown,
-  diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics
-): unknown => {
-  if (!Array.isArray(value)) return value;
-  const next: unknown[] = [];
-  value.forEach((entry: unknown): void => {
-    const coerced = coerceCaseResolverEdgeToCanonicalShape(entry);
-    if (coerced.converted) {
-      diagnostics.legacyEdgeConvertedCount += 1;
-    }
-    if (!coerced.edge) {
-      diagnostics.legacyEdgeDroppedCount += 1;
-      return;
-    }
-    next.push(coerced.edge);
-  });
-  return next;
-};
-
-const sanitizeLegacyFileGraphPayload = (
-  fileEntry: unknown,
-  diagnostics: CaseResolverWorkspaceLegacySanitizationDiagnostics
-): unknown => {
-  if (!fileEntry || typeof fileEntry !== 'object' || Array.isArray(fileEntry)) {
-    return fileEntry;
-  }
-  const fileRecord = fileEntry as Record<string, unknown>;
-  const graph = fileRecord['graph'];
-  if (!graph || typeof graph !== 'object' || Array.isArray(graph)) {
-    return fileEntry;
-  }
-  const graphRecord = graph as Record<string, unknown>;
-  const nextEdges = sanitizeLegacyEdgeArray(graphRecord['edges'], diagnostics);
-  if (nextEdges === graphRecord['edges']) return fileEntry;
-  return {
-    ...fileRecord,
-    graph: {
-      ...graphRecord,
-      edges: nextEdges,
-    },
-  };
-};
-
 export const sanitizeLegacyCaseResolverWorkspacePayload = (
   workspaceRecord: Record<string, unknown>
 ): {
@@ -209,28 +158,6 @@ export const sanitizeLegacyCaseResolverWorkspacePayload = (
     ...CASE_RESOLVER_WORKSPACE_LEGACY_SANITIZATION_DIAGNOSTICS_EMPTY,
   };
   const nextWorkspaceRecord: Record<string, unknown> = { ...workspaceRecord };
-
-  if (Array.isArray(nextWorkspaceRecord['files'])) {
-    nextWorkspaceRecord['files'] = (nextWorkspaceRecord['files'] as unknown[]).map(
-      (fileEntry: unknown): unknown => sanitizeLegacyFileGraphPayload(fileEntry, diagnostics)
-    );
-  }
-
-  const relationGraphSource = nextWorkspaceRecord['relationGraph'];
-  if (
-    relationGraphSource &&
-    typeof relationGraphSource === 'object' &&
-    !Array.isArray(relationGraphSource)
-  ) {
-    const relationGraphRecord = relationGraphSource as Record<string, unknown>;
-    const nextEdges = sanitizeLegacyEdgeArray(relationGraphRecord['edges'], diagnostics);
-    if (nextEdges !== relationGraphRecord['edges']) {
-      nextWorkspaceRecord['relationGraph'] = {
-        ...relationGraphRecord,
-        edges: nextEdges,
-      };
-    }
-  }
 
   if (Array.isArray(nextWorkspaceRecord['assets'])) {
     nextWorkspaceRecord['assets'] = (nextWorkspaceRecord['assets'] as unknown[]).map(

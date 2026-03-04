@@ -17,14 +17,10 @@ import type {
   MongoPriceGroupDoc,
 } from '@/shared/lib/db/services/database-sync-types';
 
-const unwrapPayload = (value: unknown): Record<string, unknown> => {
+const parseObjectPayload = async (req: NextRequest): Promise<Record<string, unknown>> => {
+  const value = await req.json();
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  const record = value as Record<string, unknown>;
-  const nested = record['data'];
-  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-    return nested as Record<string, unknown>;
-  }
-  return record;
+  return value as Record<string, unknown>;
 };
 
 const readString = (record: Record<string, unknown>, key: string): string | null => {
@@ -273,7 +269,7 @@ export async function POST_products_metadata_handler(
     const provider = await getProductDataProvider();
     if (provider === 'mongodb') {
       const mongo = await getMongoDb();
-      const payload = unwrapPayload(await req.json());
+      const payload = await parseObjectPayload(req);
 
       const explicitCurrencyId = readString(payload, 'currencyId');
       const currencyCodeFromPayload = readString(payload, 'currencyCode')?.toUpperCase() ?? null;
@@ -345,7 +341,7 @@ export async function POST_products_metadata_handler(
       return NextResponse.json(mapMongoPriceGroupResponse(created, currencyById));
     }
 
-    const payload = unwrapPayload(await req.json());
+    const payload = await parseObjectPayload(req);
     const currencyId = await resolveCurrencyId(payload);
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type') ?? readString(payload, 'groupType');

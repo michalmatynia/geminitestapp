@@ -142,7 +142,7 @@ export function useUpdateProductMutation(): UseMutationResult<
     const products = await api
       .get<
         ProductWithImages[]
-      >(`/api/products?sku=${encodeURIComponent(normalizedSku)}`, { cache: 'no-store', logError: false })
+      >(`/api/v2/products?sku=${encodeURIComponent(normalizedSku)}`, { cache: 'no-store', logError: false })
       .catch(() => null);
 
     if (!products) return null;
@@ -173,7 +173,7 @@ export function useUpdateProductMutation(): UseMutationResult<
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), PRODUCT_UPDATE_FORM_TIMEOUT_MS);
           try {
-            return await fetch(`/api/products/${targetId}`, {
+            return await fetch(`/api/v2/products/${targetId}`, {
               method: 'PUT',
               body: formData,
               headers: withCsrfHeaders(),

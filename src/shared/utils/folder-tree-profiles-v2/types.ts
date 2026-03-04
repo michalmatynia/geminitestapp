@@ -36,7 +36,7 @@ export const folderTreeInstanceValues = [
   'product_categories',
   'cms_page_builder',
   'case_resolver',
-  'case_resolver_cases',
+  'case_resolver_case_hierarchy',
   'case_resolver_document_relations',
   'case_resolver_nodefile_relations',
   'case_resolver_scanfile_relations',

@@ -5,6 +5,7 @@ import {
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 export const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';
+export const CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY = 'case_resolver_workspace_v2_documents';
 
 export type SettingsRecordLike = {
   key?: unknown;

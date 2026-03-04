@@ -16,15 +16,6 @@ type ResolveScopedWorkspaceArgs = {
   indexes?: CaseResolverRuntimeIndexes;
 };
 
-const forEachFolderPathAncestor = (folderPath: string, callback: (path: string) => void): void => {
-  const normalizedFolderPath = folderPath.trim();
-  if (!normalizedFolderPath) return;
-  const folderParts = normalizedFolderPath.split('/').filter(Boolean);
-  for (let index = 0; index < folderParts.length; index += 1) {
-    callback(folderParts.slice(0, index + 1).join('/'));
-  }
-};
-
 const resolveCaseContextId = ({
   selectedFileId,
   requestedFileId,
@@ -85,18 +76,6 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   visitCase(scopedRootCaseId);
   if (scopedCaseIds.size === 0) return workspace;
 
-  const folderOwnedByScopedCase = (folderPath: string): boolean => {
-    let isOwnedByScopedCase = false;
-    forEachFolderPathAncestor(folderPath, (ancestorPath: string): void => {
-      if (isOwnedByScopedCase) return;
-      const ownerCaseIds = indexes.folderOwnerCaseIdsByPath.get(ancestorPath) ?? [];
-      isOwnedByScopedCase = ownerCaseIds.some((ownerCaseId: string): boolean =>
-        scopedCaseIds.has(ownerCaseId)
-      );
-    });
-    return isOwnedByScopedCase;
-  };
-
   const scopedFileIds = new Set<string>();
   workspace.files.forEach((file: CaseResolverFile): void => {
     if (file.fileType === 'case') {
@@ -107,10 +86,6 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
     }
     const ownerCaseId = file.parentCaseId?.trim() ?? '';
     if (ownerCaseId && scopedCaseIds.has(ownerCaseId)) {
-      scopedFileIds.add(file.id);
-      return;
-    }
-    if (!ownerCaseId && folderOwnedByScopedCase(file.folder)) {
       scopedFileIds.add(file.id);
     }
   });

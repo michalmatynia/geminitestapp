@@ -453,6 +453,7 @@ export function useCaseResolverStateRequestedContext({
           maxTotalMs: CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_MAX_TOTAL_MS,
           attemptTimeoutMs: CASE_RESOLVER_REQUESTED_CONTEXT_FETCH_ATTEMPT_TIMEOUT_MS,
           includeDetachedHistory: true,
+          includeDetachedDocuments: true,
         }
       );
       if (!isMountedRef.current) return;

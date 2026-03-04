@@ -315,7 +315,7 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       minQueryLength: 1,
     },
   },
-  case_resolver_cases: {
+  case_resolver_case_hierarchy: {
     version: 2,
     placeholders: {
       preset: 'classic',

@@ -1,6 +1,9 @@
 'use client';
 
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type {
+  AiPathLegacyCompatCounterSnapshot,
+  AiPathRuntimeAnalyticsSummary,
+} from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -100,6 +103,39 @@ export function useAiPathRuntimeAnalytics(
       domain: 'ai_paths',
       queryKey,
       tags: ['ai-paths', 'runtime-analytics'],
+    },
+  });
+}
+
+export function useAiPathsLegacyCompatCountersQuery(
+  enabled: boolean = true
+): SingleQuery<AiPathLegacyCompatCounterSnapshot> {
+  const queryKey = QUERY_KEYS.ai.aiPaths.legacyCompatCounters();
+  return createSingleQueryV2({
+    queryKey,
+    queryFn: async () => {
+      const response = await api.get<{ snapshot?: AiPathLegacyCompatCounterSnapshot }>(
+        '/api/ai-paths/legacy-compat/counters'
+      );
+      if (!response.snapshot) {
+        throw new Error('Missing legacy compatibility counter snapshot payload.');
+      }
+      return response.snapshot;
+    },
+    id: 'legacy-compat-counters',
+    enabled,
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    meta: {
+      source: 'aiPaths.hooks.useAiPathsLegacyCompatCountersQuery',
+      operation: 'detail',
+      resource: 'ai-paths.legacy-compat-counters',
+      domain: 'ai_paths',
+      queryKey,
+      tags: ['ai-paths', 'legacy-compat', 'counters'],
     },
   });
 }

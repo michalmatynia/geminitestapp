@@ -67,7 +67,7 @@ export function useProductEditHydration({
         ? QUERY_KEYS.products.detail(id)
         : [...QUERY_KEYS.products.details(), 'inactive'],
     queryFn: () =>
-      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, {
+      api.get<ProductWithImages>(`/api/v2/products/${editingProduct?.id}`, {
         timeout: PRODUCT_DETAIL_TIMEOUT_MS,
       }),
     staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
@@ -90,7 +90,7 @@ export function useProductEditHydration({
       void prefetchQueryV2(queryClient, {
         queryKey,
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(productId)}?fresh=1`, {
+          api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(productId)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
@@ -123,7 +123,7 @@ export function useProductEditHydration({
       void fetchQueryV2(queryClient, {
         queryKey,
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
+          api.get<ProductWithImages>(`/api/v2/products/${encodeURIComponent(product.id)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
@@ -213,7 +213,7 @@ export function useProductEditHydration({
       queryKey,
       queryFn: ({ signal }) =>
         api.get<ProductWithImages>(
-          `/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
+          `/api/v2/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`,
           {
             signal,
             cache: 'no-store',

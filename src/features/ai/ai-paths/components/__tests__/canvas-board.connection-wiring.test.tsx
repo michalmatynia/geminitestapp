@@ -6,7 +6,7 @@ import type { AiNode } from '@/shared/lib/ai-paths';
 import { AiPathsProvider, useGraphState } from '@/features/ai/ai-paths/context';
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { ToastProvider } from '@/shared/ui/toast';
-import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/hooks/useStateBridge';
+import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/__tests__/helpers/useStateBridge';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({

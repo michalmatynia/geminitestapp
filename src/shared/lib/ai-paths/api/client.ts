@@ -319,11 +319,11 @@ export const dbApi = {
 
 export const entityApi = {
   update: entityUpdate,
-  getProduct: async (id: string) => apiFetch<unknown>(`/api/products/${id}`),
+  getProduct: async (id: string) => apiFetch<unknown>(`/api/v2/products/${id}`),
   getNote: async (id: string) => apiFetch<unknown>(`/api/notes/${id}`),
-  deleteProduct: async (id: string) => apiDelete<unknown>(`/api/products/${id}`),
+  deleteProduct: async (id: string) => apiDelete<unknown>(`/api/v2/products/${id}`),
   deleteNote: async (id: string) => apiDelete<unknown>(`/api/notes/${id}`),
-  createProduct: async (payload: unknown) => apiPost<unknown>('/api/products', payload),
+  createProduct: async (payload: unknown) => apiPost<unknown>('/api/v2/products', payload),
   createNote: async (payload: unknown) => apiPost<unknown>('/api/notes', payload),
 };
 
@@ -391,7 +391,7 @@ export const aiGenerationApi = {
     return { ok: true, data: { result: '' } };
   },
   updateProductDescription: async (productId: string, description: string) =>
-    apiPatch<unknown>(`/api/products/${productId}`, { description }),
+    apiPatch<unknown>(`/api/v2/products/${productId}`, { description }),
 };
 
 export const playwrightNodeApi = {

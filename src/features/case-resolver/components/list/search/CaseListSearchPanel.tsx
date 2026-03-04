@@ -22,7 +22,11 @@ import {
   resolveSearchableDocumentContent,
   resolveIdentifierSearchLabel,
 } from '../../CaseResolverNodeFileUtils';
-import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
+import {
+  CASE_RESOLVER_CASES_MASTER_INSTANCE,
+  CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
+  formatCaseTimestamp,
+} from '../case-list-utils';
 import {
   CaseListSearchActionsProvider,
   useCaseListSearchActionsContext,
@@ -513,7 +517,7 @@ export function CaseListSearchPanel({
         </div>
 
         <MasterTreeSettingsButton
-          instance='case_resolver_cases'
+          instance={CASE_RESOLVER_CASES_MASTER_INSTANCE}
           href={CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF}
         />
       </div>

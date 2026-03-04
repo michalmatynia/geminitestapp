@@ -72,7 +72,7 @@ export function useProductOperations(
       const products = await fetchQueryV2<ProductWithImages[]>(queryClient, {
         queryKey,
         queryFn: async (): Promise<ProductWithImages[]> =>
-          await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`, {
+          await api.get<ProductWithImages[]>(`/api/v2/products?sku=${encodeURIComponent(sku)}`, {
             timeout: SKU_LOOKUP_TIMEOUT_MS,
           }),
         staleTime: 0,

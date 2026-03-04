@@ -11,6 +11,7 @@ import { getCaseResolverWorkspaceRevision } from './utils/workspace-persistence-
 import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
+  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
   readWorkspaceMetadata,
@@ -32,6 +33,11 @@ import {
   parseCaseResolverWorkspaceDetachedHistoryPayload,
   type CaseResolverWorkspaceDetachedHistoryPayload,
 } from './workspace-persistence-detached-history';
+import {
+  applyCaseResolverWorkspaceDetachedDocumentsPayload,
+  parseCaseResolverWorkspaceDetachedDocumentsPayload,
+  type CaseResolverWorkspaceDetachedDocumentsPayload,
+} from './workspace-persistence-detached-documents';
 
 export type WorkspaceRecordFetchAttempt = {
   key: string;
@@ -54,6 +60,19 @@ export type WorkspaceRecordAttemptResult =
       sawTransportFailure: boolean;
       budgetExhausted: boolean;
     };
+
+const isDetachedPayloadRelevantForRequiredFile = ({
+  workspace,
+  requiredFileId,
+}: {
+  workspace: CaseResolverWorkspace;
+  requiredFileId: string;
+}): boolean => {
+  if (requiredFileId.length === 0) return true;
+  const requiredFile = workspace.files.find((file): boolean => file.id === requiredFileId);
+  if (!requiredFile) return true;
+  return requiredFile.fileType === 'document' || requiredFile.fileType === 'scanfile';
+};
 
 const fetchWorkspaceRecordByKeyAttempts = async ({
   source,
@@ -185,6 +204,7 @@ const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
   startedAt,
   maxTotalMs,
   attemptTimeoutMs,
+  requiredFileId,
 }: {
   source: string;
   scope: 'light' | 'heavy';
@@ -192,6 +212,7 @@ const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
   startedAt: number;
   maxTotalMs: number;
   attemptTimeoutMs: number;
+  requiredFileId: string;
 }): Promise<CaseResolverWorkspaceDetachedHistoryPayload | null> => {
   const attempts = buildSettingRecordFetchAttempts({
     key: CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
@@ -203,9 +224,13 @@ const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
     const elapsedMs = Date.now() - startedAt;
     const remainingBudgetMs = maxTotalMs - elapsedMs;
     if (remainingBudgetMs <= 0) return null;
+    const attemptUrl =
+      requiredFileId.length > 0
+        ? `${attempt.url}&caseResolverFileId=${encodeURIComponent(requiredFileId)}`
+        : attempt.url;
     try {
       const response = await fetchSettingsPayloadWithTimeout({
-        url: attempt.url,
+        url: attemptUrl,
         timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
       });
       if (!response.ok) continue;
@@ -224,6 +249,68 @@ const fetchWorkspaceDetachedHistoryPayloadByKey = async ({
         action: 'refresh_detached_history_failed',
         durationMs: Date.now() - startedAt,
         message: error instanceof Error ? error.message : 'Unknown detached history fetch error.',
+      });
+    }
+  }
+
+  return null;
+};
+
+const fetchWorkspaceDetachedDocumentsPayloadByKey = async ({
+  source,
+  scope,
+  fresh,
+  startedAt,
+  maxTotalMs,
+  attemptTimeoutMs,
+  requiredFileId,
+}: {
+  source: string;
+  scope: 'light' | 'heavy';
+  fresh: boolean;
+  startedAt: number;
+  maxTotalMs: number;
+  attemptTimeoutMs: number;
+  requiredFileId: string;
+}): Promise<CaseResolverWorkspaceDetachedDocumentsPayload | null> => {
+  const attempts = buildSettingRecordFetchAttempts({
+    key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+    strategy: scope === 'heavy' ? 'heavy_only' : 'light_only',
+    fresh,
+  });
+
+  for (const attempt of attempts) {
+    const elapsedMs = Date.now() - startedAt;
+    const remainingBudgetMs = maxTotalMs - elapsedMs;
+    if (remainingBudgetMs <= 0) return null;
+    const attemptUrl =
+      requiredFileId.length > 0
+        ? `${attempt.url}&caseResolverFileId=${encodeURIComponent(requiredFileId)}`
+        : attempt.url;
+    try {
+      const response = await fetchSettingsPayloadWithTimeout({
+        url: attemptUrl,
+        timeoutMs: Math.min(attemptTimeoutMs, remainingBudgetMs),
+      });
+      if (!response.ok) continue;
+      const payload = (await response.json()) as unknown;
+      const record = resolveSettingRecordFromSettingsPayload(
+        payload,
+        CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY
+      );
+      if (!record || typeof record.value !== 'string') continue;
+      const detachedDocumentsPayload = parseCaseResolverWorkspaceDetachedDocumentsPayload(
+        record.value
+      );
+      if (!detachedDocumentsPayload) continue;
+      return detachedDocumentsPayload;
+    } catch (error: unknown) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_detached_documents_failed',
+        durationMs: Date.now() - startedAt,
+        message:
+          error instanceof Error ? error.message : 'Unknown detached documents fetch error.',
       });
     }
   }
@@ -292,6 +379,7 @@ export const fetchCaseResolverWorkspaceRecord = async (
     maxTotalMs?: number;
     attemptTimeoutMs?: number;
     includeDetachedHistory?: boolean;
+    includeDetachedDocuments?: boolean;
   }
 ): Promise<CaseResolverWorkspace | null> => {
   const result = await fetchCaseResolverWorkspaceRecordDetailed(source, options);
@@ -308,12 +396,14 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     maxTotalMs?: number;
     attemptTimeoutMs?: number;
     includeDetachedHistory?: boolean;
+    includeDetachedDocuments?: boolean;
   }
 ): Promise<CaseResolverWorkspaceRecordFetchResult> => {
   const startedAt = Date.now();
   const fetchStrategy = options?.strategy ?? 'light_then_heavy';
   const fetchFresh = options?.fresh !== false;
   const includeDetachedHistory = options?.includeDetachedHistory === true;
+  const includeDetachedDocuments = options?.includeDetachedDocuments === true;
   const requiredFileId = options?.requiredFileId?.trim() ?? '';
   const attemptProfile = options?.attemptProfile ?? 'default';
   const attempts = buildWorkspaceRecordFetchAttempts({
@@ -344,22 +434,46 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
     logHeavyFallback: fetchStrategy === 'light_then_heavy',
   });
   if (primaryResult.status === 'resolved') {
-    const detachedHistoryPayload = includeDetachedHistory
-      ? await fetchWorkspaceDetachedHistoryPayloadByKey({
-        source,
-        scope: primaryResult.scope,
-        fresh: fetchFresh,
-        startedAt,
-        maxTotalMs,
-        attemptTimeoutMs,
-      })
-      : null;
-    const workspaceWithDetachedHistory = includeDetachedHistory
-      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+    const shouldFetchDetachedPayloads = isDetachedPayloadRelevantForRequiredFile({
+      workspace: primaryResult.workspace,
+      requiredFileId,
+    });
+    const [detachedDocumentsPayload, detachedHistoryPayload] = await Promise.all([
+      includeDetachedDocuments && shouldFetchDetachedPayloads
+        ? fetchWorkspaceDetachedDocumentsPayloadByKey({
+          source,
+          scope: primaryResult.scope,
+          fresh: fetchFresh,
+          startedAt,
+          maxTotalMs,
+          attemptTimeoutMs,
+          requiredFileId,
+        })
+        : Promise.resolve(null),
+      includeDetachedHistory && shouldFetchDetachedPayloads
+        ? fetchWorkspaceDetachedHistoryPayloadByKey({
+          source,
+          scope: primaryResult.scope,
+          fresh: fetchFresh,
+          startedAt,
+          maxTotalMs,
+          attemptTimeoutMs,
+          requiredFileId,
+        })
+        : Promise.resolve(null),
+    ]);
+    const workspaceWithDetachedDocuments = includeDetachedDocuments
+      ? applyCaseResolverWorkspaceDetachedDocumentsPayload({
         workspace: primaryResult.workspace,
-        detachedHistoryPayload,
+        detachedDocumentsPayload,
       })
       : primaryResult.workspace;
+    const workspaceWithDetachedHistory = includeDetachedHistory
+      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+        workspace: workspaceWithDetachedDocuments,
+        detachedHistoryPayload,
+      })
+      : workspaceWithDetachedDocuments;
     if (includeDetachedHistory && detachedHistoryPayload) {
       const detachedHistoryRevision = detachedHistoryPayload.workspaceRevision;
       const workspaceRevision = getCaseResolverWorkspaceRevision(primaryResult.workspace);
@@ -450,11 +564,15 @@ export const fetchCaseResolverWorkspaceIfStale = async (
   currentRevision: number,
   options?: {
     includeDetachedHistory?: boolean;
+    includeDetachedDocuments?: boolean;
+    requiredFileId?: string | null;
   }
 ): Promise<FetchIfStaleResult> => {
   const startedAt = Date.now();
   const normalizedRevision = Math.max(0, Math.floor(currentRevision));
   const includeDetachedHistory = options?.includeDetachedHistory === true;
+  const includeDetachedDocuments = options?.includeDetachedDocuments === true;
+  const requiredFileId = options?.requiredFileId?.trim() ?? '';
   const url =
     `/api/settings?key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}` +
     `&fresh=1&ifRevisionGt=${normalizedRevision}`;
@@ -504,22 +622,46 @@ export const fetchCaseResolverWorkspaceIfStale = async (
       return { updated: false, revision: normalizedRevision };
     }
     const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
-    const detachedHistoryPayload = includeDetachedHistory
-      ? await fetchWorkspaceDetachedHistoryPayloadByKey({
-        source,
-        scope: 'light',
-        fresh: true,
-        startedAt,
-        maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-        attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
-      })
-      : null;
-    const workspaceWithDetachedHistory = includeDetachedHistory
-      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+    const shouldFetchDetachedPayloads = isDetachedPayloadRelevantForRequiredFile({
+      workspace,
+      requiredFileId,
+    });
+    const [detachedDocumentsPayload, detachedHistoryPayload] = await Promise.all([
+      includeDetachedDocuments && shouldFetchDetachedPayloads
+        ? fetchWorkspaceDetachedDocumentsPayloadByKey({
+          source,
+          scope: 'light',
+          fresh: true,
+          startedAt,
+          maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+          attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+          requiredFileId,
+        })
+        : Promise.resolve(null),
+      includeDetachedHistory && shouldFetchDetachedPayloads
+        ? fetchWorkspaceDetachedHistoryPayloadByKey({
+          source,
+          scope: 'light',
+          fresh: true,
+          startedAt,
+          maxTotalMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+          attemptTimeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+          requiredFileId,
+        })
+        : Promise.resolve(null),
+    ]);
+    const workspaceWithDetachedDocuments = includeDetachedDocuments
+      ? applyCaseResolverWorkspaceDetachedDocumentsPayload({
         workspace,
-        detachedHistoryPayload,
+        detachedDocumentsPayload,
       })
       : workspace;
+    const workspaceWithDetachedHistory = includeDetachedHistory
+      ? applyCaseResolverWorkspaceDetachedHistoryPayload({
+        workspace: workspaceWithDetachedDocuments,
+        detachedHistoryPayload,
+      })
+      : workspaceWithDetachedDocuments;
     logCaseResolverWorkspaceEvent({
       source,
       action: 'conditional_fetch_updated',

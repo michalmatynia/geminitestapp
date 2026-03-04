@@ -1,7 +1,7 @@
 'use client';
 
 import { type Query, type UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   cancelAiPathRun,
@@ -15,6 +15,11 @@ import {
 } from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  useRunHistoryActions,
+  useRunHistoryState,
+} from '@/features/ai/ai-paths/context/RunHistoryContext';
+import type { RunHistoryFilter as RunHistoryContextFilter } from '@/features/ai/ai-paths/context/RunHistoryContext';
 
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
 
@@ -75,35 +80,139 @@ type UseAiPathsRunHistoryResult = {
   handleRequeueDeadLetter: (runId: string) => Promise<void>;
 };
 
+function isSameRunList(prev: AiPathRunRecord[], next: AiPathRunRecord[]): boolean {
+  if (prev === next) return true;
+  if (prev.length !== next.length) return false;
+  for (let index = 0; index < prev.length; index += 1) {
+    const prevRun = prev[index];
+    const nextRun = next[index];
+    if (!prevRun || !nextRun) return false;
+    if (prevRun === nextRun) continue;
+    if (prevRun.id !== nextRun.id) return false;
+    if (prevRun.status !== nextRun.status) return false;
+    if (prevRun.updatedAt !== nextRun.updatedAt) return false;
+    if (prevRun.startedAt !== nextRun.startedAt) return false;
+    if (prevRun.finishedAt !== nextRun.finishedAt) return false;
+  }
+  return true;
+}
+
 export function useAiPathsRunHistory({
   activePathId,
   toast,
 }: UseAiPathsRunHistoryArgs): UseAiPathsRunHistoryResult {
-  const [runDetailOpen, setRunDetailOpen] = useState(false);
-  const [runDetailLoading, setRunDetailLoading] = useState(false);
-  const [runFilter, setRunFilter] = useState<RunHistoryFilter>('all');
-  const [runDetail, setRunDetail] = useState<{
-    run: AiPathRunRecord;
-    nodes: AiPathRunNodeRecord[];
-    events: AiPathRunEventRecord[];
-  } | null>(null);
-  const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
-  const [expandedRunHistory, setExpandedRunHistory] = useState<Record<string, boolean>>({});
-  const [runHistorySelection, setRunHistorySelection] = useState<Record<string, string>>({});
-  const [runStreamStatus, setRunStreamStatus] = useState<
-    'connecting' | 'live' | 'stopped' | 'paused'
-  >('stopped');
-  const [runStreamPaused, setRunStreamPaused] = useState(false);
-  const [runEventsOverflow, setRunEventsOverflow] = useState(false);
-  const [runEventsBatchLimit, setRunEventsBatchLimit] = useState<number | null>(null);
+  const runHistoryState = useRunHistoryState();
+  const runHistoryActions = useRunHistoryActions();
+
+  const runDetailOpen = runHistoryState.runDetailOpen;
+  const runDetailLoading = runHistoryState.runDetailLoading;
+  const runDetail = runHistoryState.runDetail;
+  const runHistoryNodeId = runHistoryState.runHistoryNodeId;
+  const expandedRunHistory = runHistoryState.expandedRunHistory;
+  const runHistorySelection = runHistoryState.runHistorySelection;
+  const runStreamStatus = runHistoryState.runStreamStatus;
+  const runStreamPaused = runHistoryState.runStreamPaused;
+  const runEventsOverflow = runHistoryState.runEventsOverflow;
+  const runEventsBatchLimit = runHistoryState.runEventsBatchLimit;
+
+  const normalizeRunFilter = useCallback(
+    (value: RunHistoryContextFilter): RunHistoryFilter => {
+      if (value === 'active' || value === 'running' || value === 'queued') return 'active';
+      if (value === 'failed') return 'failed';
+      if (value === 'dead') return 'dead';
+      return 'all';
+    },
+    []
+  );
+
+  const runFilter = useMemo<RunHistoryFilter>(
+    () => normalizeRunFilter(runHistoryState.runFilter),
+    [normalizeRunFilter, runHistoryState.runFilter]
+  );
+
+  const setRunFilter = useCallback<React.Dispatch<React.SetStateAction<RunHistoryFilter>>>(
+    (next): void => {
+      const resolved =
+        typeof next === 'function' ? next(normalizeRunFilter(runHistoryState.runFilter)) : next;
+      runHistoryActions.setRunFilter(resolved);
+    },
+    [normalizeRunFilter, runHistoryActions, runHistoryState.runFilter]
+  );
+
+  const setExpandedRunHistory = useCallback<
+    React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  >(
+    (next): void => {
+      runHistoryActions.setExpandedRunHistory(next);
+    },
+    [runHistoryActions]
+  );
+
+  const setRunHistorySelection = useCallback<
+    React.Dispatch<React.SetStateAction<Record<string, string>>>
+  >(
+    (next): void => {
+      runHistoryActions.setRunHistorySelection(next);
+    },
+    [runHistoryActions]
+  );
+
+  const setRunDetailOpen = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(runHistoryState.runDetailOpen) : next;
+      runHistoryActions.setRunDetailOpen(resolved);
+    },
+    [runHistoryActions, runHistoryState.runDetailOpen]
+  );
+
+  const setRunDetailLoading = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(runHistoryState.runDetailLoading) : next;
+      runHistoryActions.setRunDetailLoading(resolved);
+    },
+    [runHistoryActions, runHistoryState.runDetailLoading]
+  );
+
+  const setRunDetail = useCallback<
+    React.Dispatch<
+      React.SetStateAction<{
+        run: AiPathRunRecord;
+        nodes: AiPathRunNodeRecord[];
+        events: AiPathRunEventRecord[];
+      } | null>
+    >
+  >(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(runHistoryState.runDetail) : next;
+      runHistoryActions.setRunDetail(resolved);
+    },
+    [runHistoryActions, runHistoryState.runDetail]
+  );
+
+  const setRunStreamPaused = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(runHistoryState.runStreamPaused) : next;
+      runHistoryActions.setRunStreamPaused(resolved);
+    },
+    [runHistoryActions, runHistoryState.runStreamPaused]
+  );
+
+  const setRunHistoryNodeId = useCallback<React.Dispatch<React.SetStateAction<string | null>>>(
+    (next): void => {
+      const resolved =
+        typeof next === 'function' ? next(runHistoryState.runHistoryNodeId) : (next ?? null);
+      runHistoryActions.setRunHistoryNodeId(resolved);
+    },
+    [runHistoryActions, runHistoryState.runHistoryNodeId]
+  );
 
   useEffect(() => {
     if (!runDetailOpen || !runDetail?.run?.id) {
-      setRunStreamStatus('stopped');
+      runHistoryActions.setRunStreamStatus('stopped');
       return;
     }
     if (runStreamPaused) {
-      setRunStreamStatus('paused');
+      runHistoryActions.setRunStreamStatus('paused');
       return;
     }
 
@@ -128,37 +237,10 @@ export function useAiPathsRunHistory({
       ? `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream?${params.toString()}`
       : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
     const source = new EventSource(url);
-    setRunStreamStatus('connecting');
-
-    const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setRunDetail(
-        (
-          prev: {
-            run: AiPathRunRecord;
-            nodes: AiPathRunNodeRecord[];
-            events: AiPathRunEventRecord[];
-          } | null
-        ) => {
-          if (!prev) return prev;
-          const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
-          const merged = [...prev.events];
-          incoming.forEach((event: AiPathRunEventRecord) => {
-            if (!existingIds.has(event.id)) {
-              merged.push(event);
-            }
-          });
-          merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return aTime - bTime;
-          });
-          return { ...prev, events: merged };
-        }
-      );
-    };
+    runHistoryActions.setRunStreamStatus('connecting');
 
     source.addEventListener('ready', () => {
-      setRunStreamStatus('live');
+      runHistoryActions.setRunStreamStatus('live');
     });
     source.addEventListener('run', (event: MessageEvent) => {
       try {
@@ -198,43 +280,43 @@ export function useAiPathsRunHistory({
           | AiPathRunEventRecord[]
           | { events?: AiPathRunEventRecord[]; overflow?: boolean; limit?: number };
         if (Array.isArray(payload)) {
-          mergeEvents(payload);
-          setRunEventsOverflow(false);
-          setRunEventsBatchLimit(null);
+          runHistoryActions.mergeRunEvents(payload);
+          runHistoryActions.setRunEventsOverflow(false);
+          runHistoryActions.setRunEventsBatchLimit(null);
           return;
         }
         const events = Array.isArray(payload.events) ? payload.events : [];
-        mergeEvents(events);
+        runHistoryActions.mergeRunEvents(events);
         if (typeof payload.limit === 'number') {
-          setRunEventsBatchLimit(payload.limit);
+          runHistoryActions.setRunEventsBatchLimit(payload.limit);
         }
         if (payload.overflow) {
-          setRunEventsOverflow(true);
+          runHistoryActions.setRunEventsOverflow(true);
         } else {
-          setRunEventsOverflow(false);
+          runHistoryActions.setRunEventsOverflow(false);
         }
       } catch {
         // ignore parse errors
       }
     });
     source.addEventListener('done', () => {
-      setRunStreamStatus('stopped');
+      runHistoryActions.setRunStreamStatus('stopped');
       source.close();
     });
     source.addEventListener('error', () => {
-      setRunStreamStatus('stopped');
+      runHistoryActions.setRunStreamStatus('stopped');
     });
 
     return (): void => {
       source.close();
-      setRunStreamStatus('stopped');
+      runHistoryActions.setRunStreamStatus('stopped');
     };
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events]);
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events, runHistoryActions, setRunDetail]);
 
   useEffect(() => {
-    setRunEventsOverflow(false);
-    setRunEventsBatchLimit(null);
-  }, [runDetail?.run?.id]);
+    runHistoryActions.setRunEventsOverflow(false);
+    runHistoryActions.setRunEventsBatchLimit(null);
+  }, [runDetail?.run?.id, runHistoryActions]);
 
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
@@ -338,66 +420,113 @@ export function useAiPathsRunHistory({
     if (!runsQuery.data?.ok) return [] as AiPathRunRecord[];
     return runsQuery.data.data.runs ?? [];
   }, [runsQuery.data]);
+  const refetchRuns = runsQuery.refetch;
 
-  const handleOpenRunDetail = async (runId: string): Promise<void> => {
-    setRunDetailOpen(true);
-    setRunDetailLoading(true);
-    try {
-      const response = await getAiPathRun(runId);
-      if (!response.ok) {
-        throw new Error(response.error || 'Failed to load run details.');
+  useEffect(() => {
+    runHistoryActions.setRunList((prev) => (isSameRunList(prev, runList) ? prev : runList));
+  }, [runHistoryActions, runList]);
+
+  useEffect(() => {
+    runHistoryActions.setRunsRefreshing(runsQuery.isFetching);
+  }, [runHistoryActions, runsQuery.isFetching]);
+
+  const handleOpenRunDetail = useCallback(
+    async (runId: string): Promise<void> => {
+      setRunDetailOpen(true);
+      setRunDetailLoading(true);
+      try {
+        const response = await getAiPathRun(runId);
+        if (!response.ok) {
+          throw new Error(response.error || 'Failed to load run details.');
+        }
+        const data = response.data as {
+          run: AiPathRunRecord;
+          nodes: AiPathRunNodeRecord[];
+          events: AiPathRunEventRecord[];
+        };
+        setRunDetail(data);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to load run details.', {
+          variant: 'error',
+        });
+        setRunDetail(null);
+      } finally {
+        setRunDetailLoading(false);
       }
-      const data = response.data as {
-        run: AiPathRunRecord;
-        nodes: AiPathRunNodeRecord[];
-        events: AiPathRunEventRecord[];
-      };
-      setRunDetail(data);
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to load run details.', {
-        variant: 'error',
+    },
+    [setRunDetail, setRunDetailLoading, setRunDetailOpen, toast]
+  );
+
+  const handleResumeRun = useCallback(
+    async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
+      const response = await resumeAiPathRun(runId, mode);
+      if (!response.ok) {
+        toast(response.error || 'Failed to resume run.', { variant: 'error' });
+        return;
+      }
+      toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
+        variant: 'success',
       });
-      setRunDetail(null);
-    } finally {
-      setRunDetailLoading(false);
-    }
-  };
+      void refetchRuns();
+    },
+    [refetchRuns, toast]
+  );
 
-  const handleResumeRun = async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
-    const response = await resumeAiPathRun(runId, mode);
-    if (!response.ok) {
-      toast(response.error || 'Failed to resume run.', { variant: 'error' });
-      return;
-    }
-    toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
-      variant: 'success',
+  const handleCancelRun = useCallback(
+    async (runId: string): Promise<void> => {
+      const response = await cancelAiPathRun(runId);
+      if (!response.ok) {
+        toast(response.error || 'Failed to cancel run.', { variant: 'error' });
+        return;
+      }
+      const payload = (response.data ?? {}) as { canceled?: boolean; message?: string };
+      const wasCanceled = payload.canceled !== false;
+      toast(
+        payload.message || (wasCanceled ? 'Run canceled.' : 'Run already finished or removed.'),
+        {
+          variant: wasCanceled ? 'success' : 'info',
+        }
+      );
+      void refetchRuns();
+    },
+    [refetchRuns, toast]
+  );
+
+  const handleRequeueDeadLetter = useCallback(
+    async (runId: string): Promise<void> => {
+      const response = await resumeAiPathRun(runId, 'replay');
+      if (!response.ok) {
+        toast(response.error || 'Failed to requeue run.', { variant: 'error' });
+        return;
+      }
+      toast('Dead-letter run requeued.', { variant: 'success' });
+      void refetchRuns();
+    },
+    [refetchRuns, toast]
+  );
+
+  useEffect(() => {
+    runHistoryActions.setOpenRunDetailHandler((runId: string): void => {
+      void handleOpenRunDetail(runId);
     });
-    void runsQuery.refetch();
-  };
+    return () => {
+      runHistoryActions.setOpenRunDetailHandler(null);
+    };
+  }, [handleOpenRunDetail, runHistoryActions]);
 
-  const handleCancelRun = async (runId: string): Promise<void> => {
-    const response = await cancelAiPathRun(runId);
-    if (!response.ok) {
-      toast(response.error || 'Failed to cancel run.', { variant: 'error' });
-      return;
-    }
-    const payload = (response.data ?? {}) as { canceled?: boolean; message?: string };
-    const wasCanceled = payload.canceled !== false;
-    toast(payload.message || (wasCanceled ? 'Run canceled.' : 'Run already finished or removed.'), {
-      variant: wasCanceled ? 'success' : 'info',
+  useEffect(() => {
+    runHistoryActions.setRunOperationHandlers({
+      refreshRuns: async (): Promise<void> => {
+        await refetchRuns();
+      },
+      resumeRun: handleResumeRun,
+      cancelRun: handleCancelRun,
+      requeueDeadLetter: handleRequeueDeadLetter,
     });
-    void runsQuery.refetch();
-  };
-
-  const handleRequeueDeadLetter = async (runId: string): Promise<void> => {
-    const response = await resumeAiPathRun(runId, 'replay');
-    if (!response.ok) {
-      toast(response.error || 'Failed to requeue run.', { variant: 'error' });
-      return;
-    }
-    toast('Dead-letter run requeued.', { variant: 'success' });
-    void runsQuery.refetch();
-  };
+    return () => {
+      runHistoryActions.setRunOperationHandlers(null);
+    };
+  }, [handleCancelRun, handleRequeueDeadLetter, handleResumeRun, refetchRuns, runHistoryActions]);
 
   return {
     runsQuery,

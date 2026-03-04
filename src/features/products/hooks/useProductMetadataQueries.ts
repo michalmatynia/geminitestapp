@@ -72,7 +72,7 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
     queryFn: async (): Promise<ProductCategory[]> => {
       if (!catalogId) return [];
       const tree = await api.get<ProductCategoryWithChildren[]>(
-        `/api/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
+        `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
       );
       return flattenCategoryTree(tree);
     },
@@ -96,7 +96,7 @@ export function useMultiCategories(catalogIds: string[]): UseQueryResult<Product
         queryKey,
         queryFn: async (): Promise<ProductCategory[]> =>
           await api.get<ProductCategory[]>(
-            `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+            `/api/v2/products/categories?catalogId=${encodeURIComponent(catalogId)}`
           ),
         meta: {
           source: 'products.hooks.useMultiCategories',
@@ -118,7 +118,7 @@ export function useTags(catalogId?: string): ListQuery<ProductTag> {
     queryFn: async (): Promise<ProductTag[]> => {
       if (!catalogId) return [];
       return await api.get<ProductTag[]>(
-        `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+        `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
       );
     },
     enabled: Boolean(catalogId),
@@ -141,7 +141,7 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
         queryKey,
         queryFn: async (): Promise<ProductTag[]> =>
           await api.get<ProductTag[]>(
-            `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+            `/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`
           ),
         meta: {
           source: 'products.hooks.useMultiTags',
@@ -160,7 +160,7 @@ export function useProducers(): ListQuery<Producer> {
   const queryKey = productMetadataKeys.producers();
   return createListQueryV2({
     queryKey,
-    queryFn: async (): Promise<Producer[]> => await api.get<Producer[]>('/api/products/producers'),
+    queryFn: async (): Promise<Producer[]> => await api.get<Producer[]>('/api/v2/products/producers'),
     meta: {
       source: 'products.hooks.useProducers',
       operation: 'list',
@@ -180,8 +180,8 @@ export function useSaveProducerMutation(): SaveMutation<
   return createMutationV2({
     mutationFn: ({ id, data }) =>
       id
-        ? api.put<Producer>(`/api/products/producers/${id}`, data)
-        : api.post<Producer>('/api/products/producers', data),
+        ? api.put<Producer>(`/api/v2/products/producers/${id}`, data)
+        : api.post<Producer>('/api/v2/products/producers', data),
     mutationKey,
     meta: {
       source: 'products.hooks.useSaveProducerMutation',
@@ -200,7 +200,7 @@ export function useSaveProducerMutation(): SaveMutation<
 export function useDeleteProducerMutation(): DeleteMutation {
   const mutationKey = productMetadataKeys.producers();
   return createDeleteMutationV2({
-    mutationFn: (id: string) => api.delete<void>(`/api/products/producers/${id}`),
+    mutationFn: (id: string) => api.delete<void>(`/api/v2/products/producers/${id}`),
     mutationKey,
     meta: {
       source: 'products.hooks.useDeleteProducerMutation',
@@ -222,7 +222,7 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
       if (!catalogId) return [];
-      return await api.get<ProductParameter[]>('/api/products/parameters', {
+      return await api.get<ProductParameter[]>('/api/v2/products/parameters', {
         params: {
           catalogId,
           fresh: 1,
@@ -249,7 +249,7 @@ export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimple
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
       if (!catalogId) return [];
       return await api.get<ProductSimpleParameter[]>(
-        `/api/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
+        `/api/v2/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
       );
     },
     enabled: Boolean(catalogId),
@@ -271,7 +271,7 @@ export function useMultiParameters(catalogIds: string[]): UseQueryResult<Product
       return {
         queryKey,
         queryFn: async (): Promise<ProductParameter[]> =>
-          await api.get<ProductParameter[]>('/api/products/parameters', {
+          await api.get<ProductParameter[]>('/api/v2/products/parameters', {
             params: {
               catalogId,
               fresh: 1,
@@ -334,7 +334,7 @@ export function useProductMetadataPrefetch(catalogId?: string): () => void {
       queryKey: normalizeQueryKey(productMetadataKeys.categories(catalogId)),
       queryFn: async () => {
         const tree = await api.get<ProductCategoryWithChildren[]>(
-          `/api/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
+          `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
         );
         return flattenCategoryTree(tree);
       },
@@ -351,7 +351,7 @@ export function useProductMetadataPrefetch(catalogId?: string): () => void {
     void prefetchQueryV2(queryClient, {
       queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
       queryFn: () =>
-        api.get<ProductTag[]>(`/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
+        api.get<ProductTag[]>(`/api/v2/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
       meta: {
         source: 'products.hooks.useProductMetadataPrefetch.tags',
         operation: 'list',
@@ -365,7 +365,7 @@ export function useProductMetadataPrefetch(catalogId?: string): () => void {
     void prefetchQueryV2(queryClient, {
       queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
       queryFn: () =>
-        api.get<ProductParameter[]>('/api/products/parameters', {
+        api.get<ProductParameter[]>('/api/v2/products/parameters', {
           params: { catalogId, fresh: 1 },
           cache: 'no-store',
         }),

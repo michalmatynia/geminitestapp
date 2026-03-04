@@ -50,7 +50,10 @@ The migration objective is one source of truth per domain with no bridge echo/su
 ## Session status (live)
 
 1. Session 1 - Completed on 2026-03-04.
-2. Session 2 - In progress on 2026-03-04 (initial bridge surface prune landed).
+2. Session 2 - Completed on 2026-03-04.
+3. Session 3 - Completed on 2026-03-04.
+4. Session 4 - Completed on 2026-03-04.
+5. Session 5 - In progress on 2026-03-04.
 
 ## Session 1: Baseline + Guardrails
 
@@ -97,6 +100,8 @@ Progress (2026-03-04):
 3. Routed `useAiPathsCanvasInteractions` node/edge reads+writes through `GraphContext` so graph mutations use a single writer path.
 4. Migrated settings canvas `view`/`panState`/`dragState`/`connecting`/`connectingPos` ownership to `CanvasContext` via adapted settings hooks.
 5. Removed redundant legacy graph arguments from `useAiPathsCanvasInteractions` API and updated callsites/tests.
+6. Moved settings selection dialog flags (`selectedNodeId`, `configOpen`, `nodeConfigDirty`, `simulationOpenNodeId`) to `SelectionContext` ownership with dispatch-compatible adapters in `useAiPathsSettingsState`.
+7. Moved settings runtime payload fields (`runtimeState`, parser/updater samples, path debug snapshots, `lastRunAt`, `lastError`) to `RuntimeContext` ownership with dispatch-compatible adapters.
 
 ## Session 3: Selection/Runtime/Persistence ownership cutover
 
@@ -118,6 +123,13 @@ Acceptance:
 2. Runtime diagnostics/history remain correct.
 3. No context-to-monolith back-propagation required for active paths.
 
+Progress (2026-03-04):
+
+1. Moved core graph/path state ownership in settings from local `useState` to `GraphContext` via dispatch-compatible adapters in `useCoreSettingsState`.
+2. Moved execution mode fields (`executionMode`, `flowIntensity`, `runMode`, `strictFlowMode`) from local settings state to `GraphContext` ownership via adapted `useExecutionSettingsState`.
+3. Migrated `useAiPathsRunHistory` UI/streaming state ownership to `RunHistoryContext` and wired context `openRunDetail` handler injection.
+4. Migrated runtime `sendingToAi` flag ownership in `useAiPathsRuntime` to `RuntimeContext`.
+
 ## Session 4: Bridge shutdown
 
 Scope:
@@ -138,6 +150,12 @@ Acceptance:
 1. No production import path uses `useStateBridge*`.
 2. Canvas/graph/runtime behavior remains stable under repeated rerenders and path switching.
 
+Progress (2026-03-04):
+
+1. Removed `AiPathsStateBridger` from `AiPathsSettings` runtime render tree.
+2. Moved bridge harness usage to test-only helper under `context/__tests__/helpers` and deleted production `AiPathsStateBridger.tsx`.
+3. Relocated `useStateBridge.ts` from `context/hooks` to `context/__tests__/helpers/useStateBridge.ts` and updated bridge-focused tests to import test-only bridge helpers.
+
 ## Session 5: Orchestrator decomposition
 
 Scope:
@@ -155,6 +173,14 @@ Acceptance:
 
 1. No monolithic state object required for rendering.
 2. Orchestrator context carries composed facades only.
+
+Progress (2026-03-04):
+
+1. Extracted selection/runtime/persistence context-backed state adapters out of `useAiPathsSettingsState` into `hooks/state/useContextSettingsState.ts`, reducing direct context wiring inside the monolithic orchestrator hook.
+2. Extracted trigger-button palette enrichment from `useAiPathsSettingsState` into `hooks/usePaletteWithTriggerButtons.ts`.
+3. Extracted derived orchestrator view state (`selectedNode`, `pathFlagsById`, autosave label/classes) into `hooks/useAiPathsSettingsDerivedState.ts`.
+4. Migrated `useAiPathsPresets` state ownership from local `useState` to `PresetsContext` while preserving existing preset operation APIs for callers.
+5. Extracted validation/error orchestration from `useAiPathsSettingsState` into `hooks/useAiPathsErrorState.ts`.
 
 ## Session 6: Legacy prune + compatibility cleanup
 

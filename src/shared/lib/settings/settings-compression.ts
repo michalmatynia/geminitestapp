@@ -5,9 +5,11 @@ export const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
 
 const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
 const CASE_RESOLVER_WORKSPACE_HISTORY_KEY = 'case_resolver_workspace_v2_history';
+const CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY = 'case_resolver_workspace_v2_documents';
 const COMPRESSIBLE_SETTING_KEYS = new Set<string>([
   CASE_RESOLVER_WORKSPACE_KEY,
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
+  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
 ]);
 
 export const shouldCompressSettingValue = (key: string): boolean =>

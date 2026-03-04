@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { AiPathsStateBridger } from '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger';
+import { AiPathsStateBridger } from './helpers/AiPathsStateBridger';
 import type { UseAiPathsSettingsStateReturn } from '@/features/ai/ai-paths/components/ai-paths-settings/types';
 import { AiPathsProvider, useCanvasActions, useCanvasState } from '@/features/ai/ai-paths/context';
 import type { RuntimeState } from '@/shared/lib/ai-paths';

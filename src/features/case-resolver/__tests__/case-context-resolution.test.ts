@@ -47,7 +47,7 @@ describe('case resolver case context resolution', () => {
     expect(resolveCaseContainerIdForFileId(filesById, documentFile.id)).toBe(caseFile.id);
   });
 
-  it('resolves case container id for uniquely owned folder paths', () => {
+  it('resolves case container id only for direct uniquely owned folder paths', () => {
     const caseFile = createCaseResolverFile({
       id: 'case-a',
       fileType: 'case',
@@ -62,9 +62,20 @@ describe('case resolver case context resolution', () => {
           { path: 'zus', ownerCaseId: caseFile.id },
           { path: 'zus/outgoing', ownerCaseId: caseFile.id },
         ],
-        folderPath: 'zus/outgoing/contracts',
+        folderPath: 'zus/outgoing',
       })
     ).toBe(caseFile.id);
+
+    expect(
+      resolveCaseContainerIdForFolderPath({
+        filesById,
+        folderRecords: [
+          { path: 'zus', ownerCaseId: caseFile.id },
+          { path: 'zus/outgoing', ownerCaseId: caseFile.id },
+        ],
+        folderPath: 'zus/outgoing/contracts',
+      })
+    ).toBeNull();
   });
 
   it('keeps active case null while requested case is still missing', () => {

@@ -121,7 +121,7 @@ export const useProductValidatorIssues = ({
         lastSentRuntimeKeyRef.current = runtimeValuesKey;
         void api
           .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
-            '/api/products/validator-runtime/evaluate',
+            '/api/v2/products/validator-runtime/evaluate',
             {
               values: runtimeValues ?? values,
               latestProductValues,

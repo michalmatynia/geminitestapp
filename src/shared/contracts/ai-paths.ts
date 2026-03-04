@@ -275,6 +275,24 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
 
 export type AiPathRuntimeAnalyticsSummary = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
 
+export const aiPathLegacyCompatCountersSchema = z.object({
+  legacy_key_read: z.number(),
+  legacy_payload_received: z.number(),
+  compat_route_hit: z.number(),
+});
+
+export type AiPathLegacyCompatCounters = z.infer<typeof aiPathLegacyCompatCountersSchema>;
+
+export const aiPathLegacyCompatCounterSnapshotSchema = z.object({
+  counters: aiPathLegacyCompatCountersSchema,
+  total: z.number(),
+  generatedAt: z.string(),
+});
+
+export type AiPathLegacyCompatCounterSnapshot = z.infer<
+  typeof aiPathLegacyCompatCounterSnapshotSchema
+>;
+
 export const pathMetaSchema = z.object({
   id: z.string(),
   name: z.string(),

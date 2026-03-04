@@ -88,7 +88,7 @@ export async function getCategories(
   catalogId: string | null
 ): Promise<ProductCategoryWithChildren[]> {
   try {
-    return await api.get<ProductCategoryWithChildren[]>('/api/products/categories/tree', {
+    return await api.get<ProductCategoryWithChildren[]>('/api/v2/products/categories/tree', {
       params: { catalogId: catalogId || undefined, fresh: 1 },
       cache: 'no-store',
     });
@@ -102,7 +102,7 @@ export async function getCategories(
 
 export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
   try {
-    return await api.get<ProductCategory[]>('/api/products/categories', {
+    return await api.get<ProductCategory[]>('/api/v2/products/categories', {
       params: { catalogId: catalogId || undefined, fresh: 1 },
       cache: 'no-store',
     });
@@ -115,100 +115,100 @@ export async function getCategoriesFlat(catalogId: string | null): Promise<Produ
 }
 
 export async function createCategory(data: Partial<ProductCategory>): Promise<ProductCategory> {
-  return api.post<ProductCategory>('/api/products/categories', data);
+  return api.post<ProductCategory>('/api/v2/products/categories', data);
 }
 
 export async function updateCategory(
   id: string,
   data: Partial<ProductCategory>
 ): Promise<ProductCategory> {
-  return api.put<ProductCategory>(`/api/products/categories/${id}`, data);
+  return api.put<ProductCategory>(`/api/v2/products/categories/${id}`, data);
 }
 
 export async function reorderCategory(payload: ReorderCategoryPayload): Promise<ProductCategory> {
-  return api.post<ProductCategory>('/api/products/categories/reorder', payload);
+  return api.post<ProductCategory>('/api/v2/products/categories/reorder', payload);
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  return api.delete(`/api/products/categories/${id}`);
+  return api.delete(`/api/v2/products/categories/${id}`);
 }
 
 export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
-  return api.get<ProductTag[]>('/api/products/tags', {
+  return api.get<ProductTag[]>('/api/v2/products/tags', {
     params: { catalogId: catalogId || undefined },
   });
 }
 
 export async function createTag(data: Partial<ProductTag>): Promise<ProductTag> {
-  return api.post<ProductTag>('/api/products/tags', data);
+  return api.post<ProductTag>('/api/v2/products/tags', data);
 }
 
 export async function updateTag(id: string, data: Partial<ProductTag>): Promise<ProductTag> {
-  return api.put<ProductTag>(`/api/products/tags/${id}`, data);
+  return api.put<ProductTag>(`/api/v2/products/tags/${id}`, data);
 }
 
 export async function deleteTag(id: string): Promise<void> {
-  return api.delete(`/api/products/tags/${id}`);
+  return api.delete(`/api/v2/products/tags/${id}`);
 }
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
-  return api.get<ProductParameter[]>('/api/products/parameters', {
+  return api.get<ProductParameter[]>('/api/v2/products/parameters', {
     params: { catalogId: catalogId || undefined, fresh: 1 },
     cache: 'no-store',
   });
 }
 
 export async function createParameter(data: Partial<ProductParameter>): Promise<ProductParameter> {
-  return api.post<ProductParameter>('/api/products/parameters', data);
+  return api.post<ProductParameter>('/api/v2/products/parameters', data);
 }
 
 export async function updateParameter(
   id: string,
   data: Partial<ProductParameter>
 ): Promise<ProductParameter> {
-  return api.put<ProductParameter>(`/api/products/parameters/${id}`, data);
+  return api.put<ProductParameter>(`/api/v2/products/parameters/${id}`, data);
 }
 
 export async function deleteParameter(id: string): Promise<void> {
-  return api.delete(`/api/products/parameters/${id}`);
+  return api.delete(`/api/v2/products/parameters/${id}`);
 }
 
 export async function getValidatorSettings(): Promise<ProductValidatorSettings> {
-  return api.get<ProductValidatorSettings>('/api/products/validator-settings');
+  return api.get<ProductValidatorSettings>('/api/v2/products/validator-settings');
 }
 
 export async function updateValidatorSettings(
   data: Partial<ProductValidatorSettings>
 ): Promise<ProductValidatorSettings> {
-  return api.put<ProductValidatorSettings>('/api/products/validator-settings', data);
+  return api.put<ProductValidatorSettings>('/api/v2/products/validator-settings', data);
 }
 
 export async function getValidationPatterns(): Promise<ProductValidationPattern[]> {
-  return api.get<ProductValidationPattern[]>('/api/products/validator-patterns');
+  return api.get<ProductValidationPattern[]>('/api/v2/products/validator-patterns');
 }
 
 export async function createValidationPattern(
   data: CreateValidationPatternPayload
 ): Promise<ProductValidationPattern> {
-  return api.post<ProductValidationPattern>('/api/products/validator-patterns', data);
+  return api.post<ProductValidationPattern>('/api/v2/products/validator-patterns', data);
 }
 
 export async function updateValidationPattern(
   id: string,
   data: UpdateValidationPatternPayload
 ): Promise<ProductValidationPattern> {
-  return api.put<ProductValidationPattern>(`/api/products/validator-patterns/${id}`, data);
+  return api.put<ProductValidationPattern>(`/api/v2/products/validator-patterns/${id}`, data);
 }
 
 export async function deleteValidationPattern(id: string): Promise<void> {
-  return api.delete(`/api/products/validator-patterns/${id}`);
+  return api.delete(`/api/v2/products/validator-patterns/${id}`);
 }
 
 export async function reorderValidationPatterns(payload: {
   updates: ReorderValidationPatternUpdatePayload[];
 }): Promise<{ updated: ProductValidationPattern[] }> {
   return api.post<{ updated: ProductValidationPattern[] }>(
-    '/api/products/validator-patterns/reorder',
+    '/api/v2/products/validator-patterns/reorder',
     payload
   );
 }
@@ -216,16 +216,16 @@ export async function reorderValidationPatterns(payload: {
 export async function importValidationPatterns(
   payload: ProductValidatorImportRequest
 ): Promise<ProductValidatorImportResult> {
-  return api.post<ProductValidatorImportResult>('/api/products/validator-patterns/import', payload);
+  return api.post<ProductValidatorImportResult>('/api/v2/products/validator-patterns/import', payload);
 }
 
 export async function getProductValidatorConfig(
   includeDisabled: boolean = false
 ): Promise<ProductValidatorConfig> {
   if (includeDisabled) {
-    return api.get<ProductValidatorConfig>('/api/products/validator-config', {
+    return api.get<ProductValidatorConfig>('/api/v2/products/validator-config', {
       params: { includeDisabled: true },
     });
   }
-  return api.get<ProductValidatorConfig>('/api/products/validator-config');
+  return api.get<ProductValidatorConfig>('/api/v2/products/validator-config');
 }

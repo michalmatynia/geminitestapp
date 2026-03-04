@@ -1,27 +1,22 @@
-import { useState } from 'react';
+import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
 import type {
   AiPathsValidationConfig,
-  ParserSampleState,
   PathBlockedRunPolicy,
-  PathDebugSnapshot,
   PathExecutionMode,
   PathFlowIntensity,
   PathRunMode,
-  RuntimeState,
-  UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
-  EMPTY_RUNTIME_STATE,
 } from '@/shared/lib/ai-paths';
+import { useGraphActions, useGraphState } from '@/features/ai/ai-paths/context/GraphContext';
 
 export function useExecutionSettingsState() {
-  const [executionMode, setExecutionMode] = useState<PathExecutionMode>('server');
-  const [flowIntensity, setFlowIntensity] = useState<PathFlowIntensity>('medium');
-  const [runMode, setRunMode] = useState<PathRunMode>('manual');
-  const [strictFlowMode, setStrictFlowMode] = useState<boolean>(true);
+  const graphState = useGraphState();
+  const graphActions = useGraphActions();
+
   const [blockedRunPolicy, setBlockedRunPolicy] = useState<PathBlockedRunPolicy>('fail_run');
   const [aiPathsValidationState, setAiPathsValidationState] = useState<AiPathsValidationConfig>(
     DEFAULT_AI_PATHS_VALIDATION_CONFIG
@@ -32,27 +27,47 @@ export function useExecutionSettingsState() {
   const [historyRetentionOptionsMax, setHistoryRetentionOptionsMax] = useState<number>(
     AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT
   );
-  const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>({});
-  const [updaterSamples, setUpdaterSamples] = useState<Record<string, UpdaterSampleState>>({});
-  const [runtimeState, setRuntimeState] = useState<RuntimeState>(EMPTY_RUNTIME_STATE);
-  const [pathDebugSnapshots, setPathDebugSnapshots] = useState<Record<string, PathDebugSnapshot>>(
-    {}
+
+  const setExecutionMode = useCallback<Dispatch<SetStateAction<PathExecutionMode>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.executionMode) : next;
+      graphActions.setExecutionMode(resolved);
+    },
+    [graphActions, graphState.executionMode]
   );
-  const [lastRunAt, setLastRunAt] = useState<string | null>(null);
-  const [lastError, setLastError] = useState<{
-    message: string;
-    time: string;
-    pathId?: string | null;
-  } | null>(null);
+
+  const setFlowIntensity = useCallback<Dispatch<SetStateAction<PathFlowIntensity>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.flowIntensity) : next;
+      graphActions.setFlowIntensity(resolved);
+    },
+    [graphActions, graphState.flowIntensity]
+  );
+
+  const setRunMode = useCallback<Dispatch<SetStateAction<PathRunMode>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.runMode) : next;
+      graphActions.setRunMode(resolved);
+    },
+    [graphActions, graphState.runMode]
+  );
+
+  const setStrictFlowMode = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (next): void => {
+      const resolved = typeof next === 'function' ? next(graphState.strictFlowMode) : next;
+      graphActions.setStrictFlowMode(Boolean(resolved));
+    },
+    [graphActions, graphState.strictFlowMode]
+  );
 
   return {
-    executionMode,
+    executionMode: graphState.executionMode,
     setExecutionMode,
-    flowIntensity,
+    flowIntensity: graphState.flowIntensity,
     setFlowIntensity,
-    runMode,
+    runMode: graphState.runMode,
     setRunMode,
-    strictFlowMode,
+    strictFlowMode: graphState.strictFlowMode,
     setStrictFlowMode,
     blockedRunPolicy,
     setBlockedRunPolicy,
@@ -62,17 +77,5 @@ export function useExecutionSettingsState() {
     setHistoryRetentionPasses,
     historyRetentionOptionsMax,
     setHistoryRetentionOptionsMax,
-    parserSamples,
-    setParserSamples,
-    updaterSamples,
-    setUpdaterSamples,
-    runtimeState,
-    setRuntimeState,
-    pathDebugSnapshots,
-    setPathDebugSnapshots,
-    lastRunAt,
-    setLastRunAt,
-    lastError,
-    setLastError,
   };
 }

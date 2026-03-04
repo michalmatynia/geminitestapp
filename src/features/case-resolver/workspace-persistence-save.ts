@@ -18,6 +18,7 @@ import {
 import { logCaseResolverWorkspaceEvent } from './workspace-observability';
 
 import {
+  CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
   type SettingsRecordLike,
@@ -38,6 +39,11 @@ import {
   buildCaseResolverWorkspaceDetachedHistoryPayload,
   stripCaseResolverWorkspaceDetachedHistory,
 } from './workspace-persistence-detached-history';
+import {
+  applyCaseResolverWorkspaceDetachedDocumentsPayload,
+  buildCaseResolverWorkspaceDetachedDocumentsPayload,
+  stripCaseResolverWorkspaceDetachedDocuments,
+} from './workspace-persistence-detached-documents';
 
 const CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED = 'keyed';
 const CASE_RESOLVER_WORKSPACE_PERSISTED_HISTORY_LIMIT_DEFAULT = 12;
@@ -339,7 +345,17 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     ? JSON.stringify(detachedHistoryPayload)
     : '';
   const detachedHistoryPayloadBytes = serializedDetachedHistoryPayload.length;
-  const workspaceForPersistPrimary = stripCaseResolverWorkspaceDetachedHistory(workspaceForPersist);
+  const detachedDocumentsPayload = buildCaseResolverWorkspaceDetachedDocumentsPayload(
+    workspaceForPersist
+  );
+  const hasDetachedDocumentsPayload = detachedDocumentsPayload.files.length > 0;
+  const serializedDetachedDocumentsPayload = hasDetachedDocumentsPayload
+    ? JSON.stringify(detachedDocumentsPayload)
+    : '';
+  const detachedDocumentsPayloadBytes = serializedDetachedDocumentsPayload.length;
+  const workspaceForPersistPrimary = stripCaseResolverWorkspaceDetachedHistory(
+    stripCaseResolverWorkspaceDetachedDocuments(workspaceForPersist)
+  );
   const serializedWorkspace = JSON.stringify(workspaceForPersistPrimary);
   const payloadBytes = serializedWorkspace.length;
   const payloadSummary = summarizeWorkspacePersistPayload(workspaceForPersist);
@@ -365,6 +381,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
         `assets=${formatByteCount(payloadSummary.assetBytes)}`,
         `history=${formatByteCount(payloadSummary.historyBytes)}(${payloadSummary.historyEntryCount} entries)`,
         `detached_history=${formatByteCount(detachedHistoryPayloadBytes)}`,
+        `detached_documents=${formatByteCount(detachedDocumentsPayloadBytes)}`,
         `nodefile_inline=${formatByteCount(payloadSummary.nodeFileInlineBytes)}`,
         `settings=${formatByteCount(payloadSummary.settingsBytes)}`,
         `largest=${payloadSummary.largestEntries.join(', ')}`,
@@ -394,6 +411,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
         `assets=${formatByteCount(payloadSummary.assetBytes)}`,
         `history=${formatByteCount(payloadSummary.historyBytes)}(${payloadSummary.historyEntryCount} entries)`,
         `detached_history=${formatByteCount(detachedHistoryPayloadBytes)}`,
+        `detached_documents=${formatByteCount(detachedDocumentsPayloadBytes)}`,
         `nodefile_inline=${formatByteCount(payloadSummary.nodeFileInlineBytes)}`,
         `settings=${formatByteCount(payloadSummary.settingsBytes)}`,
         `largest=${payloadSummary.largestEntries.join(', ')}`,
@@ -405,6 +423,70 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       conflict: false,
       error: message,
     };
+  }
+
+  if (hasDetachedDocumentsPayload) {
+    let detachedDocumentsResponse: Response;
+    try {
+      detachedDocumentsResponse = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: CASE_RESOLVER_WORKSPACE_DOCUMENTS_KEY,
+          value: serializedDetachedDocumentsPayload,
+        }),
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to persist detached Case Resolver workspace documents.';
+      logCaseResolverWorkspaceEvent({
+        source: input.source,
+        action: 'persist_detached_documents_failed',
+        mutationId: input.mutationId,
+        expectedRevision: input.expectedRevision,
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
+        payloadBytes: detachedDocumentsPayloadBytes,
+        durationMs: Date.now() - startedAt,
+        message,
+      });
+      return {
+        ok: false,
+        conflict: false,
+        error: message,
+      };
+    }
+    if (!detachedDocumentsResponse.ok) {
+      const detachedRawText = await detachedDocumentsResponse.text();
+      const detachedPayload = detachedRawText.trim().length
+        ? safeParseJson<SettingsRecordLike>(detachedRawText)
+        : null;
+      const message =
+        (detachedPayload &&
+        typeof detachedPayload.value === 'string' &&
+        detachedPayload.value.trim().length > 0
+          ? detachedPayload.value
+          : null) ??
+        `Failed to persist detached Case Resolver workspace documents (${detachedDocumentsResponse.status}).`;
+      logCaseResolverWorkspaceEvent({
+        source: input.source,
+        action: 'persist_detached_documents_failed',
+        mutationId: input.mutationId,
+        expectedRevision: input.expectedRevision,
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspaceForPersistPipeline),
+        payloadBytes: detachedDocumentsPayloadBytes,
+        durationMs: Date.now() - startedAt,
+        message,
+      });
+      return {
+        ok: false,
+        conflict: false,
+        error: message,
+      };
+    }
   }
 
   if (hasDetachedHistoryPayload) {
@@ -498,7 +580,10 @@ export const persistCaseResolverWorkspaceSnapshot = async (
 
   if (response.ok) {
     const nextWorkspace = applyCaseResolverWorkspaceDetachedHistoryPayload({
-      workspace: readWorkspaceFromSettingRecord(payload, serializedWorkspace),
+      workspace: applyCaseResolverWorkspaceDetachedDocumentsPayload({
+        workspace: readWorkspaceFromSettingRecord(payload, serializedWorkspace),
+        detachedDocumentsPayload: hasDetachedDocumentsPayload ? detachedDocumentsPayload : null,
+      }),
       detachedHistoryPayload: hasDetachedHistoryPayload ? detachedHistoryPayload : null,
     });
     logCaseResolverWorkspaceEvent({

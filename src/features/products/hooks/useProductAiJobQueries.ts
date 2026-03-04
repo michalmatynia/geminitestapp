@@ -18,7 +18,7 @@ export function useAiJobStatus(jobId: string | null): SingleQuery<{ job: AiJobSt
     queryKey,
     queryFn: async (): Promise<{ job: AiJobStatus } | null> => {
       if (!jobId) return null;
-      return await api.get<{ job: AiJobStatus }>(`/api/products/ai-jobs/${jobId}`);
+      return await api.get<{ job: AiJobStatus }>(`/api/v2/products/ai-jobs/${jobId}`);
     },
     enabled: !!jobId,
     refetchInterval: (query) => {
@@ -53,7 +53,7 @@ export function useEnqueueAiJobMutation(): MutationResult<
   const mutationKey = QUERY_KEYS.products.aiJobs.lists();
   return createCreateMutationV2({
     mutationFn: async (params) =>
-      await api.post<{ jobId: string }>('/api/products/ai-jobs/enqueue', params),
+      await api.post<{ jobId: string }>('/api/v2/products/ai-jobs/enqueue', params),
     mutationKey,
     meta: {
       source: 'products.hooks.useEnqueueAiJobMutation',
@@ -76,7 +76,7 @@ export function useBulkAiJobsMutation(): MutationResult<
   const mutationKey = QUERY_KEYS.products.aiJobs.lists();
   return createCreateMutationV2({
     mutationFn: async (params) =>
-      await api.post<{ count: number }>('/api/products/ai-jobs/bulk', params),
+      await api.post<{ count: number }>('/api/v2/products/ai-jobs/bulk', params),
     mutationKey,
     meta: {
       source: 'products.hooks.useBulkAiJobsMutation',

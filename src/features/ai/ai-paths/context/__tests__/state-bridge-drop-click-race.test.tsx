@@ -7,7 +7,7 @@ import {
   useGraphActions,
   useGraphState,
 } from '@/features/ai/ai-paths/context';
-import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/hooks/useStateBridge';
+import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/__tests__/helpers/useStateBridge';
 import { normalizeNodes, type AiNode, type Edge } from '@/shared/lib/ai-paths';
 
 const buildNode = (id: string, x: number, y: number): AiNode =>

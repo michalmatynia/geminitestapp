@@ -397,6 +397,75 @@ module.exports = tseslint.config(
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/app/**/*',
+      'src/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger.tsx',
+      'src/features/ai/ai-paths/context/hooks/useStateBridge.ts',
+      'src/features/ai/ai-paths/context/hooks/index.ts',
+      'src/features/ai/ai-paths/context/index.ts',
+      'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts',
+      'src/features/products/hooks/useAiPathSettings.ts',
+      'src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/features/ai/ai-paths/context',
+              importNames: [
+                'useStateBridgeSelection',
+                'useStateBridgeCanvas',
+                'useStateBridgeGraph',
+                'useStateBridgeRuntime',
+                'useStateBridgePersistence',
+                'useStateBridgePresets',
+                'useStateBridgeRunHistory',
+                'useStateBridgeAll',
+              ],
+              message:
+                'State bridge hooks are legacy compatibility only. Use context-native hooks/actions instead.',
+            },
+            {
+              name: '@/features/ai/ai-paths/context/hooks/useStateBridge',
+              message:
+                'State bridge hooks are legacy compatibility only. Use context-native hooks/actions instead.',
+            },
+            {
+              name: '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger',
+              message:
+                'AiPathsStateBridger is a temporary compatibility seam. Do not add new runtime imports.',
+            },
+            {
+              name: '@/shared/lib/ai-paths',
+              importNames: ['LEGACY_PATH_INDEX_KEY'],
+              message:
+                'LEGACY_PATH_INDEX_KEY reads are migration-only. Do not introduce new legacy key dependencies.',
+            },
+            {
+              name: '@/shared/lib/ai-paths/core/constants',
+              importNames: ['LEGACY_PATH_INDEX_KEY'],
+              message:
+                'LEGACY_PATH_INDEX_KEY reads are migration-only. Do not introduce new legacy key dependencies.',
+            },
+          ],
+          patterns: [
+            {
+              group: [
+                '**/context/hooks/useStateBridge',
+                '**/components/ai-paths-settings/AiPathsStateBridger',
+              ],
+              message:
+                'Bridge compatibility modules are deprecated. Use context-native hooks/actions instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/features/ai/ai-paths/**/*.{ts,tsx}'],
     ignores: [
       'src/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger.tsx',

@@ -22,7 +22,7 @@ export async function getProducts(
   };
   if (signal) options.signal = signal;
   options.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductWithImages[]>('/api/products', options);
+  return api.get<ProductWithImages[]>('/api/v2/products', options);
 }
 
 export async function countProducts(filters: ProductFilter, signal?: AbortSignal): Promise<number> {
@@ -35,7 +35,7 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
     };
     if (signal) options.signal = signal;
     options.timeout = PRODUCT_READ_TIMEOUT_MS;
-    const data = await api.get<{ count: number }>('/api/products/count', options);
+    const data = await api.get<{ count: number }>('/api/v2/products/count', options);
     return data.count ?? 0;
   } catch (_error) {
     return 0;
@@ -43,7 +43,7 @@ export async function countProducts(filters: ProductFilter, signal?: AbortSignal
 }
 
 /**
- * Fetches products + total count in a single request via GET /api/products/paged.
+ * Fetches products + total count in a single request via GET /api/v2/products/paged.
  * Prefer this over calling getProducts() and countProducts() separately.
  */
 export async function getProductsWithCount(
@@ -59,11 +59,11 @@ export async function getProductsWithCount(
   };
   if (signal) options.signal = signal;
   options.timeout = PRODUCT_READ_TIMEOUT_MS;
-  return api.get<ProductsPagedResult>('/api/products/paged', options);
+  return api.get<ProductsPagedResult>('/api/v2/products/paged', options);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
-  return api.post<ProductWithImages>('/api/products', formData, {
+  return api.post<ProductWithImages>('/api/v2/products', formData, {
     headers: {}, // Let browser set multipart/form-data with boundary
     timeout: PRODUCT_WRITE_TIMEOUT_MS, // Product creation involves many DB ops + image uploads
   });
@@ -73,14 +73,14 @@ export async function updateProduct(
   id: string,
   data: Partial<ProductWithImages> | FormData
 ): Promise<ProductWithImages> {
-  return api.put<ProductWithImages>(`/api/products/${id}`, data, {
+  return api.put<ProductWithImages>(`/api/v2/products/${id}`, data, {
     timeout: PRODUCT_WRITE_TIMEOUT_MS,
   });
 }
 
 export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   try {
-    await api.delete(`/api/products/${id}`);
+    await api.delete(`/api/v2/products/${id}`);
     return { success: true };
   } catch (_error) {
     return { success: false };
@@ -88,7 +88,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
 }
 
 export async function getProductById(id: string): Promise<ProductWithImages> {
-  return api.get<ProductWithImages>(`/api/products/${id}`, {
+  return api.get<ProductWithImages>(`/api/v2/products/${id}`, {
     timeout: PRODUCT_READ_TIMEOUT_MS,
   });
 }

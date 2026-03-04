@@ -9,6 +9,8 @@ import {
 } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
+import { isLegacyPathIndexCompatEnabled } from '@/shared/lib/ai-paths/legacy-compat/flags';
+import { recordLegacyCompatCounter } from '@/shared/lib/observability/legacy-compat-counters';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 const settingPayloadSchema = z.object({
@@ -37,6 +39,9 @@ const deletePayloadSchema = z
 
 const MAX_SETTINGS_QUERY_KEYS = 500;
 const MAX_SETTINGS_QUERY_KEY_LENGTH = 200;
+const LEGACY_PATH_INDEX_KEY = 'ai_paths_index_v1';
+const LEGACY_PATH_INDEX_DISABLED_MESSAGE =
+  'Legacy AI Paths key "ai_paths_index_v1" is disabled. Use "ai_paths_index".';
 
 const parseRequestedKeys = (req: NextRequest): string[] => {
   const raw = req.nextUrl.searchParams.getAll('keys');
@@ -67,11 +72,37 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
+  const legacyPathIndexCompatEnabled = isLegacyPathIndexCompatEnabled();
+  if (requestedKeys.includes(LEGACY_PATH_INDEX_KEY)) {
+    recordLegacyCompatCounter('legacy_key_read', {
+      source: 'api.ai-paths.settings.GET.request',
+      context: {
+        key: LEGACY_PATH_INDEX_KEY,
+        requestedKeys: requestedKeys.length,
+        legacyCompatEnabled: legacyPathIndexCompatEnabled,
+      },
+    });
+    if (!legacyPathIndexCompatEnabled) {
+      throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
+    }
+  }
   const startedAt = Date.now();
-  const settings =
+  const loadedSettings =
     requestedKeys.length > 0
       ? await listAiPathsSettings(requestedKeys)
       : await listAiPathsSettings();
+  const settings = legacyPathIndexCompatEnabled
+    ? loadedSettings
+    : loadedSettings.filter((item) => item.key !== LEGACY_PATH_INDEX_KEY);
+  if (legacyPathIndexCompatEnabled && settings.some((item) => item.key === LEGACY_PATH_INDEX_KEY)) {
+    recordLegacyCompatCounter('legacy_key_read', {
+      source: 'api.ai-paths.settings.GET.response',
+      context: {
+        key: LEGACY_PATH_INDEX_KEY,
+        records: settings.length,
+      },
+    });
+  }
   const durationMs = Date.now() - startedAt;
   const payloadBytes = settings.reduce((sum, item) => sum + item.key.length + item.value.length, 0);
 
@@ -85,6 +116,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         recordCount: settings.length,
         payloadBytes,
         requestedKeys: requestedKeys.length,
+        legacyPathIndexCompatEnabled,
       },
     });
   }
@@ -110,12 +142,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
   if (parsedBulk.success) {
+    if (
+      !isLegacyPathIndexCompatEnabled() &&
+      parsedBulk.data.items.some((item) => item.key === LEGACY_PATH_INDEX_KEY)
+    ) {
+      throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
+    }
     await upsertAiPathsSettingsBulk(parsedBulk.data.items);
     return NextResponse.json(parsedBulk.data.items);
   }
 
   const parsedSingle = settingPayloadSchema.safeParse(body);
   if (parsedSingle.success) {
+    if (!isLegacyPathIndexCompatEnabled() && parsedSingle.data.key === LEGACY_PATH_INDEX_KEY) {
+      throw badRequestError(LEGACY_PATH_INDEX_DISABLED_MESSAGE);
+    }
     await upsertAiPathsSetting(parsedSingle.data.key, parsedSingle.data.value);
     return NextResponse.json(parsedSingle.data);
   }

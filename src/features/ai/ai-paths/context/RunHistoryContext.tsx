@@ -37,7 +37,18 @@ export interface RunDetailData {
   events: AiPathRunEventRecord[];
 }
 
+export interface RunHistoryOperationHandlers {
+  refreshRuns?: (() => Promise<void> | void) | undefined;
+  resumeRun?: ((runId: string, mode: 'resume' | 'replay') => Promise<void> | void) | undefined;
+  cancelRun?: ((runId: string) => Promise<void> | void) | undefined;
+  requeueDeadLetter?: ((runId: string) => Promise<void> | void) | undefined;
+}
+
 export interface RunHistoryState {
+  // Runs list state
+  runList: AiPathRunRecord[];
+  runsRefreshing: boolean;
+
   // Detail panel state
   runDetailOpen: boolean;
   runDetailLoading: boolean;
@@ -59,6 +70,17 @@ export interface RunHistoryState {
 }
 
 export interface RunHistoryActions {
+  // Runs list actions
+  setRunList: (
+    runList: AiPathRunRecord[] | ((prev: AiPathRunRecord[]) => AiPathRunRecord[])
+  ) => void;
+  setRunsRefreshing: (refreshing: boolean) => void;
+  refreshRuns: () => Promise<void>;
+  resumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
+  cancelRun: (runId: string) => Promise<void>;
+  requeueDeadLetter: (runId: string) => Promise<void>;
+  setRunOperationHandlers: (handlers: RunHistoryOperationHandlers | null) => void;
+
   // Detail panel actions
   setRunDetailOpen: (open: boolean) => void;
   setRunDetailLoading: (loading: boolean) => void;
@@ -121,6 +143,10 @@ interface RunHistoryProviderProps {
 }
 
 export function RunHistoryProvider({ children }: RunHistoryProviderProps): React.ReactNode {
+  // Runs list state
+  const [runList, setRunListInternal] = useState<AiPathRunRecord[]>([]);
+  const [runsRefreshing, setRunsRefreshingInternal] = useState(false);
+
   // Detail panel state
   const [runDetailOpen, setRunDetailOpenInternal] = useState(false);
   const [runDetailLoading, setRunDetailLoadingInternal] = useState(false);
@@ -144,18 +170,48 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
 
   // Injectable run detail opener
   const openRunDetailHandlerRef = useRef<((runId: string) => void) | null>(null);
+  const runOperationHandlersRef = useRef<RunHistoryOperationHandlers>({});
 
   const setOpenRunDetailHandler = useCallback((fn: ((runId: string) => void) | null) => {
     openRunDetailHandlerRef.current = fn;
+  }, []);
+
+  const setRunOperationHandlers = useCallback((handlers: RunHistoryOperationHandlers | null) => {
+    runOperationHandlersRef.current = handlers ?? {};
   }, []);
 
   const openRunDetail = useCallback((runId: string) => {
     openRunDetailHandlerRef.current?.(runId);
   }, []);
 
+  const refreshRuns = useCallback(async (): Promise<void> => {
+    await runOperationHandlersRef.current.refreshRuns?.();
+  }, []);
+
+  const resumeRun = useCallback(async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
+    await runOperationHandlersRef.current.resumeRun?.(runId, mode);
+  }, []);
+
+  const cancelRun = useCallback(async (runId: string): Promise<void> => {
+    await runOperationHandlersRef.current.cancelRun?.(runId);
+  }, []);
+
+  const requeueDeadLetter = useCallback(async (runId: string): Promise<void> => {
+    await runOperationHandlersRef.current.requeueDeadLetter?.(runId);
+  }, []);
+
   // Actions are stable
   const actions = useMemo<RunHistoryActions>(
     () => ({
+      // Runs list actions
+      setRunList: setRunListInternal,
+      setRunsRefreshing: setRunsRefreshingInternal,
+      refreshRuns,
+      resumeRun,
+      cancelRun,
+      requeueDeadLetter,
+      setRunOperationHandlers,
+
       // Detail panel actions
       setRunDetailOpen: setRunDetailOpenInternal,
       setRunDetailLoading: setRunDetailLoadingInternal,
@@ -218,11 +274,21 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       openRunDetail,
       setOpenRunDetailHandler,
     }),
-    [openRunDetail, setOpenRunDetailHandler]
+    [
+      cancelRun,
+      openRunDetail,
+      refreshRuns,
+      requeueDeadLetter,
+      resumeRun,
+      setOpenRunDetailHandler,
+      setRunOperationHandlers,
+    ]
   );
 
   const state = useMemo<RunHistoryState>(
     () => ({
+      runList,
+      runsRefreshing,
       runDetailOpen,
       runDetailLoading,
       runDetail,
@@ -236,6 +302,8 @@ export function RunHistoryProvider({ children }: RunHistoryProviderProps): React
       runEventsBatchLimit,
     }),
     [
+      runList,
+      runsRefreshing,
       runDetailOpen,
       runDetailLoading,
       runDetail,

@@ -164,7 +164,7 @@ describe('useMasterFolderTreeShell', () => {
 
   it('hydrates uncontrolled expanded state once and does not replay on settings refetch churn', async () => {
     const controller = createMockController();
-    const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_cases');
+    const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_case_hierarchy');
     let settingsStore = createSettingsStore({
       entries: {
         [uiStateKey]: JSON.stringify({
@@ -179,7 +179,7 @@ describe('useMasterFolderTreeShell', () => {
 
     const { rerender } = renderHook(() =>
       useMasterFolderTreeShell({
-        instance: 'case_resolver_cases',
+        instance: 'case_resolver_case_hierarchy',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
       })
@@ -219,7 +219,7 @@ describe('useMasterFolderTreeShell', () => {
 
   it('preserves persisted empty expansion arrays and surfaces persisted state metadata', async () => {
     const controller = createMockController();
-    const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_cases');
+    const uiStateKey = getFolderTreeUiStateV2Key('case_resolver_case_hierarchy');
     const settingsStore = createSettingsStore({
       entries: {
         [uiStateKey]: JSON.stringify({
@@ -234,7 +234,7 @@ describe('useMasterFolderTreeShell', () => {
 
     const { result } = renderHook(() =>
       useMasterFolderTreeShell({
-        instance: 'case_resolver_cases',
+        instance: 'case_resolver_case_hierarchy',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
       })

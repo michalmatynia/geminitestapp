@@ -45,7 +45,7 @@ export interface StandardDataTablePanelProps<TData> {
   emptyState?: React.ReactNode | undefined;
   initialSorting?: SortingState | undefined;
   sortingStorageKey?: string | undefined;
-  getRowId?: (row: TData) => string | number | undefined;
+  getRowId?: (row: TData) => string | number;
   getSubRows?: (row: TData) => TData[] | undefined;
   getRowClassName?: (row: Row<TData>) => string | undefined;
   maxHeight?: string | number | undefined;
@@ -113,6 +113,98 @@ function StandardDataTablePanelGeneratedHeader(): React.JSX.Element | null {
   );
 }
 
+type StandardDataTablePanelRenderRuntimeValue = {
+  resolvedPanelHeader?: React.ReactNode | undefined;
+  resolvedAlerts?: React.ReactNode | undefined;
+  resolvedFilters?: React.ReactNode | undefined;
+  actions?: React.ReactNode | undefined;
+  resolvedFooter?: React.ReactNode | undefined;
+  className?: string | undefined;
+  contentClassName?: string | undefined;
+  variant?: 'default' | 'flat' | undefined;
+  showPanelLoading: boolean;
+  loadingMessage?: string | undefined;
+  emptyState?: React.ReactNode | undefined;
+  children?: React.ReactNode | undefined;
+  table: {
+    columns: ColumnDef<unknown, unknown>[];
+    data: unknown[];
+    showTableLoading: boolean;
+    initialSorting?: SortingState | undefined;
+    sortingStorageKey?: string | undefined;
+    getRowId?: ((row: unknown) => string | number) | undefined;
+    getSubRows?: ((row: unknown) => unknown[] | undefined) | undefined;
+    getRowClassName?: ((row: Row<unknown>) => string | undefined) | undefined;
+    maxHeight?: string | number | undefined;
+    stickyHeader?: boolean | undefined;
+    rowSelection?: import('@tanstack/react-table').RowSelectionState | undefined;
+    onRowSelectionChange?:
+      | import('@tanstack/react-table').OnChangeFn<import('@tanstack/react-table').RowSelectionState>
+      | undefined;
+    skeletonRows?: React.ReactNode | undefined;
+    expanded?: ExpandedState | undefined;
+    onExpandedChange?: OnChangeFn<ExpandedState> | undefined;
+    renderRowDetails?: ((props: { row: Row<unknown> }) => React.ReactNode | undefined) | undefined;
+    enableVirtualization?: boolean | undefined;
+  };
+};
+
+const {
+  Context: StandardDataTablePanelRenderRuntimeContext,
+  useStrictContext: useStandardDataTablePanelRenderRuntime,
+} = createStrictContext<StandardDataTablePanelRenderRuntimeValue>({
+  hookName: 'useStandardDataTablePanelRenderRuntime',
+  providerName: 'StandardDataTablePanelRenderRuntimeProvider',
+  displayName: 'StandardDataTablePanelRenderRuntimeContext',
+});
+
+function StandardDataTablePanelRenderRuntime(): React.JSX.Element {
+  const runtime = useStandardDataTablePanelRenderRuntime();
+  const { table } = runtime;
+  return (
+    <ListPanel
+      {...(runtime.resolvedPanelHeader !== undefined ? { header: runtime.resolvedPanelHeader } : {})}
+      {...(runtime.resolvedAlerts !== undefined ? { alerts: runtime.resolvedAlerts } : {})}
+      {...(runtime.resolvedFilters !== undefined ? { filters: runtime.resolvedFilters } : {})}
+      {...(runtime.actions !== undefined ? { actions: runtime.actions } : {})}
+      {...(runtime.resolvedFooter !== undefined ? { footer: runtime.resolvedFooter } : {})}
+      {...(runtime.className !== undefined ? { className: runtime.className } : {})}
+      contentClassName={cn('min-w-0', runtime.contentClassName)}
+      {...(runtime.variant !== undefined ? { variant: runtime.variant } : {})}
+      isLoading={runtime.showPanelLoading}
+      {...(runtime.loadingMessage !== undefined ? { loadingMessage: runtime.loadingMessage } : {})}
+      {...(runtime.emptyState !== undefined ? { emptyState: runtime.emptyState } : {})}
+    >
+      {runtime.children !== undefined ? (
+        runtime.children
+      ) : (
+        <DataTable
+          columns={table.columns}
+          data={table.data}
+          isLoading={table.showTableLoading}
+          {...(runtime.emptyState !== undefined ? { emptyState: runtime.emptyState } : {})}
+          {...(table.initialSorting !== undefined ? { initialSorting: table.initialSorting } : {})}
+          {...(table.sortingStorageKey !== undefined ? { sortingStorageKey: table.sortingStorageKey } : {})}
+          {...(table.getRowId !== undefined ? { getRowId: table.getRowId } : {})}
+          {...(table.getSubRows !== undefined ? { getSubRows: table.getSubRows } : {})}
+          {...(table.getRowClassName !== undefined ? { getRowClassName: table.getRowClassName } : {})}
+          {...(table.maxHeight !== undefined ? { maxHeight: table.maxHeight } : {})}
+          {...(table.stickyHeader !== undefined ? { stickyHeader: table.stickyHeader } : {})}
+          {...(table.rowSelection !== undefined ? { rowSelection: table.rowSelection } : {})}
+          {...(table.onRowSelectionChange !== undefined
+            ? { onRowSelectionChange: table.onRowSelectionChange }
+            : {})}
+          {...(table.skeletonRows !== undefined ? { skeletonRows: table.skeletonRows } : {})}
+          {...(table.expanded !== undefined ? { expanded: table.expanded } : {})}
+          {...(table.onExpandedChange !== undefined ? { onExpandedChange: table.onExpandedChange } : {})}
+          {...(table.renderRowDetails !== undefined ? { renderRowDetails: table.renderRowDetails } : {})}
+          enableVirtualization={table.enableVirtualization}
+        />
+      )}
+    </ListPanel>
+  );
+}
+
 /**
  * A standard UI pattern combining a ListPanel (with header, filters, footer)
  * and a DataTable. This reduces boilerplate in admin-style views.
@@ -175,49 +267,80 @@ export function StandardDataTablePanel<TData>({
     (hasGeneratedHeader ? <StandardDataTablePanelGeneratedHeader /> : undefined);
   const showPanelLoading = isLoading && loadingVariant === 'panel';
   const showTableLoading = isLoading && loadingVariant === 'table';
+  const renderRuntimeValue = React.useMemo<StandardDataTablePanelRenderRuntimeValue>(
+    () => ({
+      resolvedPanelHeader,
+      resolvedAlerts,
+      resolvedFilters,
+      actions,
+      resolvedFooter,
+      className,
+      contentClassName,
+      variant,
+      showPanelLoading,
+      loadingMessage,
+      emptyState,
+      children,
+      table: {
+        columns: columns as ColumnDef<unknown, unknown>[],
+        data: data as unknown[],
+        showTableLoading,
+        initialSorting,
+        sortingStorageKey,
+        getRowId: getRowId as ((row: unknown) => string | number) | undefined,
+        getSubRows: getSubRows as ((row: unknown) => unknown[] | undefined) | undefined,
+        getRowClassName: getRowClassName as ((row: Row<unknown>) => string | undefined) | undefined,
+        maxHeight,
+        stickyHeader,
+        rowSelection,
+        onRowSelectionChange,
+        skeletonRows,
+        expanded,
+        onExpandedChange,
+        renderRowDetails: renderRowDetails as
+          | ((props: { row: Row<unknown> }) => React.ReactNode | undefined)
+          | undefined,
+        enableVirtualization,
+      },
+    }),
+    [
+      actions,
+      children,
+      className,
+      columns,
+      contentClassName,
+      data,
+      emptyState,
+      enableVirtualization,
+      expanded,
+      getRowClassName,
+      getRowId,
+      getSubRows,
+      initialSorting,
+      loadingMessage,
+      maxHeight,
+      onExpandedChange,
+      onRowSelectionChange,
+      renderRowDetails,
+      resolvedAlerts,
+      resolvedFilters,
+      resolvedFooter,
+      resolvedPanelHeader,
+      rowSelection,
+      showPanelLoading,
+      showTableLoading,
+      skeletonRows,
+      sortingStorageKey,
+      stickyHeader,
+      variant,
+    ]
+  );
 
   return (
     <StandardDataTablePanelHeaderRuntimeContext.Provider value={headerRuntimeValue}>
-      <ListPanel
-        {...(resolvedPanelHeader !== undefined ? { header: resolvedPanelHeader } : {})}
-        {...(resolvedAlerts !== undefined ? { alerts: resolvedAlerts } : {})}
-        {...(resolvedFilters !== undefined ? { filters: resolvedFilters } : {})}
-        {...(actions !== undefined ? { actions } : {})}
-        {...(resolvedFooter !== undefined ? { footer: resolvedFooter } : {})}
-        {...(className !== undefined ? { className } : {})}
-        contentClassName={cn('min-w-0', contentClassName)}
-        {...(variant !== undefined ? { variant } : {})}
-        isLoading={showPanelLoading}
-        {...(loadingMessage !== undefined ? { loadingMessage } : {})}
-        {...(emptyState !== undefined ? { emptyState } : {})}
-      >
-        {children !== undefined ? (
-          children
-        ) : (
-          <DataTable
-            columns={columns}
-            data={data}
-            isLoading={showTableLoading}
-            {...(emptyState !== undefined ? { emptyState } : {})}
-            {...(initialSorting !== undefined ? { initialSorting } : {})}
-            {...(sortingStorageKey !== undefined ? { sortingStorageKey } : {})}
-            {...(getRowId !== undefined
-              ? { getRowId: getRowId as (row: TData) => string | number }
-              : {})}
-            {...(getSubRows !== undefined ? { getSubRows } : {})}
-            {...(getRowClassName !== undefined ? { getRowClassName } : {})}
-            {...(maxHeight !== undefined ? { maxHeight } : {})}
-            {...(stickyHeader !== undefined ? { stickyHeader } : {})}
-            {...(rowSelection !== undefined ? { rowSelection } : {})}
-            {...(onRowSelectionChange !== undefined ? { onRowSelectionChange } : {})}
-            {...(skeletonRows !== undefined ? { skeletonRows } : {})}
-            {...(expanded !== undefined ? { expanded } : {})}
-            {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
-            {...(renderRowDetails !== undefined ? { renderRowDetails } : {})}
-            enableVirtualization={enableVirtualization}
-          />
-        )}
-      </ListPanel>
+      <StandardDataTablePanelRenderRuntimeContext.Provider value={renderRuntimeValue}>
+        <StandardDataTablePanelRenderRuntime />
+      </StandardDataTablePanelRenderRuntimeContext.Provider>
     </StandardDataTablePanelHeaderRuntimeContext.Provider>
   );
 }

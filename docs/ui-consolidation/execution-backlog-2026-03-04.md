@@ -185,4 +185,5 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 - Delta: `-12` opportunities after Wave 1 + early Wave 2 extraction.
 - Latest scan (`2026-03-04T23:33:39.803Z`): 0 opportunities, 0 high-priority.
 - Latest scan (`2026-03-04T23:41:01.602Z`): 0 opportunities, 0 high-priority, 0 duplicate-name clusters (`27` thin wrappers ignored).
-- Guardrail check (`2026-03-04T23:35+`): passed (`propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0`).
+- Latest scan (`2026-03-04T23:55:36.075Z`): 0 opportunities, 0 high-priority, 0 raw clusters (`duplicateName=0 | propSignature=0 | tokenSimilarity=0`).
+- Guardrail check (`2026-03-04T23:55+`): passed (`propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0 | duplicateNameClusters=0 | propSignatureClusters=0 | tokenSimilarityClusters=0`).

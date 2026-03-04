@@ -21,18 +21,20 @@ export interface FolderNodeItemProps {
   toggleExpand: () => void;
 }
 
-export function FolderNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isRenaming,
-  isDropTarget,
-  dropPosition,
-  select,
-  toggleExpand,
-}: FolderNodeItemProps): React.JSX.Element | null {
+export function FolderNodeItem(props: FolderNodeItemProps): React.JSX.Element | null {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isRenaming,
+    isDropTarget,
+    dropPosition,
+    select,
+    toggleExpand,
+  } = props;
+
   const {
     controller,
     onSelectFolder,

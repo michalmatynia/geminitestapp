@@ -24,16 +24,18 @@ export type RegexAiPromptSectionProps = {
   };
 };
 
-export function RegexAiPromptSection({
-  regexConfig,
-  onUpdateRegex,
-  connectedModel,
-  onSendToAi,
-  sendingToAi,
-  resolvedAiPrompt,
-  nodeId,
-  placeholderTooltips,
-}: RegexAiPromptSectionProps): React.JSX.Element {
+export function RegexAiPromptSection(props: RegexAiPromptSectionProps): React.JSX.Element {
+  const {
+    regexConfig,
+    onUpdateRegex,
+    connectedModel,
+    onSendToAi,
+    sendingToAi,
+    resolvedAiPrompt,
+    nodeId,
+    placeholderTooltips,
+  } = props;
+
   return (
     <div className='space-y-3'>
       <div className='flex items-center justify-between'>

@@ -19,16 +19,10 @@ export interface CardNodeItemProps {
   toggleExpand: () => void;
 }
 
-export function CardNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isRenaming,
-  select,
-  toggleExpand,
-}: CardNodeItemProps): React.JSX.Element | null {
+export function CardNodeItem(props: CardNodeItemProps): React.JSX.Element | null {
+  const { node, depth, hasChildren, isExpanded, isSelected, isRenaming, select, toggleExpand } =
+    props;
+
   const {
     controller,
     slotById,

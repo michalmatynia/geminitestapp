@@ -79,6 +79,10 @@ const { Context: PanelFiltersRuntimeContext, useStrictContext: usePanelFiltersRu
     displayName: 'PanelFiltersRuntimeContext',
   });
 
+export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<
+  string | undefined
+>(undefined);
+
 /**
  * PanelFilters - Renders dynamic filter controls based on FilterField configuration
  * Supports: text input, select dropdown, date input, checkbox, number input
@@ -97,6 +101,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   actions,
   className,
 }) => {
+  const runtimeSearchPlaceholder = React.useContext(PanelFiltersSearchPlaceholderRuntimeContext);
+  const effectiveSearchPlaceholder = searchPlaceholder || runtimeSearchPlaceholder || 'Search...';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
   const [localSearch, setLocalSearch] = useState(externalSearch);
 
@@ -139,15 +145,15 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
 
   return (
     <div className={cn('space-y-3', className)}>
-      {(searchPlaceholder || showToggleButton) && (
+      {(effectiveSearchPlaceholder || showToggleButton) && (
         <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
           {/* Search Bar */}
-          {searchPlaceholder && (
+          {effectiveSearchPlaceholder && (
             <div className='relative flex-1'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
               <Input
                 type='text'
-                placeholder={searchPlaceholder}
+                placeholder={effectiveSearchPlaceholder}
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
                 className='pl-8 pr-8'

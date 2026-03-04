@@ -2,7 +2,10 @@
 
 import React, { ReactNode } from 'react';
 
-import { PanelFilters } from './panels/PanelFilters';
+import {
+  PanelFilters,
+  PanelFiltersSearchPlaceholderRuntimeContext,
+} from './panels/PanelFilters';
 import { FilterField } from '@/shared/contracts/ui';
 
 /**
@@ -103,19 +106,20 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       )}
 
       {/* Main Filters */}
-      <PanelFilters
-        filters={filters}
-        values={values}
-        search={search}
-        searchPlaceholder={filterSearchPlaceholder}
-        onFilterChange={onFilterChange}
-        {...(onSearchChange !== undefined ? { onSearchChange } : {})}
-        {...(onReset !== undefined ? { onReset } : {})}
-        compact={compact}
-        collapsible={collapsible}
-        {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
-        {...(actions !== undefined ? { actions } : {})}
-      />
+      <PanelFiltersSearchPlaceholderRuntimeContext.Provider value={filterSearchPlaceholder}>
+        <PanelFilters
+          filters={filters}
+          values={values}
+          search={search}
+          onFilterChange={onFilterChange}
+          {...(onSearchChange !== undefined ? { onSearchChange } : {})}
+          {...(onReset !== undefined ? { onReset } : {})}
+          compact={compact}
+          collapsible={collapsible}
+          {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+          {...(actions !== undefined ? { actions } : {})}
+        />
+      </PanelFiltersSearchPlaceholderRuntimeContext.Provider>
 
       {/* Children slot (e.g. tag lists) */}
       {children && <div className='mt-3'>{children}</div>}

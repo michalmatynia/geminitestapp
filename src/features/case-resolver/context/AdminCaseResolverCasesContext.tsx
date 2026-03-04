@@ -8,6 +8,7 @@ import type {
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
+  CaseResolverWorkspaceRecordFetchResult,
 } from '@/shared/contracts/case-resolver';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -22,6 +23,7 @@ import {
   CASE_RESOLVER_WORKSPACE_KEY,
   getCaseResolverWorkspaceLegacySanitizationDiagnostics,
   getCaseResolverWorkspaceSafeParseDiagnostics,
+  getCaseResolverWorkspaceSafeParseStatus,
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
@@ -31,7 +33,7 @@ import {
 import {
   fetchCaseResolverWorkspaceIfStale,
   fetchCaseResolverWorkspaceMetadata,
-  fetchCaseResolverWorkspaceRecord,
+  fetchCaseResolverWorkspaceRecordDetailed,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
   primeCaseResolverNavigationWorkspace,
@@ -49,6 +51,7 @@ import {
   type CaseSentFilter,
   type CaseHierarchyFilter,
   type CaseReferencesFilter,
+  type CaseResolverCasesLoadState,
   type AdminCaseResolverCasesContextValue,
 } from './admin-cases/types';
 
@@ -112,6 +115,10 @@ export function AdminCaseResolverCasesProvider({
     () => getCaseResolverWorkspaceSafeParseDiagnostics(parsedWorkspace),
     [parsedWorkspace]
   );
+  const workspaceSafeParseStatus = useMemo(
+    () => getCaseResolverWorkspaceSafeParseStatus(parsedWorkspace),
+    [parsedWorkspace]
+  );
   const workspaceLegacySanitizationDiagnostics = useMemo(
     () => getCaseResolverWorkspaceLegacySanitizationDiagnostics(parsedWorkspace),
     [parsedWorkspace]
@@ -172,6 +179,10 @@ export function AdminCaseResolverCasesProvider({
   const lastWorkspaceParseFallbackSignatureRef = useRef<string>('');
   const lastWorkspaceRecoveryPersistSignatureRef = useRef<string>('');
   const [isRouteWorkspaceSyncing, setIsRouteWorkspaceSyncing] = React.useState(false);
+  const [casesLoadState, setCasesLoadState] = React.useState<CaseResolverCasesLoadState>(
+    isCasesRoute ? 'loading' : 'ready'
+  );
+  const [casesLoadMessage, setCasesLoadMessage] = React.useState<string | null>(null);
 
   const state = useAdminCaseResolverCasesState(parsedWorkspace);
 
@@ -245,6 +256,10 @@ export function AdminCaseResolverCasesProvider({
     setDidHydrateCaseListViewDefaults,
     confirmation,
     setConfirmation,
+    casesLoadState: stateCasesLoadState,
+    setCasesLoadState: stateSetCasesLoadState,
+    casesLoadMessage: stateCasesLoadMessage,
+    setCasesLoadMessage: stateSetCasesLoadMessage,
     requestedCaseIdentifierFilterFromQuery,
     appliedCaseIdentifierFilterFromQueryRef,
   } = state;
@@ -310,7 +325,74 @@ export function AdminCaseResolverCasesProvider({
     setHeldCaseId(null);
   }, [setHeldCaseId]);
 
+  const adoptWorkspaceSnapshot = useCallback(
+    (incoming: CaseResolverWorkspace, sourceAction: string): boolean => {
+      let adopted = false;
+      const nextRevision = getCaseResolverWorkspaceRevision(incoming);
+      setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+        if (
+          !shouldAdoptIncomingCaseResolverCasesWorkspace({
+            current,
+            incoming,
+          })
+        ) {
+          return current;
+        }
+        adopted = true;
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(incoming);
+        lastPersistedWorkspaceRevisionRef.current = nextRevision;
+        logCaseResolverWorkspaceEvent({
+          source: 'cases_page',
+          action: sourceAction,
+          workspaceRevision: nextRevision,
+        });
+        return incoming;
+      });
+      if (adopted) {
+        primeCaseResolverNavigationWorkspace(incoming);
+      }
+      return adopted;
+    },
+    [setWorkspace, lastPersistedWorkspaceValueRef, lastPersistedWorkspaceRevisionRef]
+  );
+
+  const applyWorkspaceRecordResult = useCallback(
+    (
+      result: CaseResolverWorkspaceRecordFetchResult,
+      sourceAction: string
+    ): { adopted: boolean; state: CaseResolverCasesLoadState } => {
+      if (result.status === 'resolved') {
+        const adopted = adoptWorkspaceSnapshot(result.workspace, sourceAction);
+        const nextState =
+          result.source === 'resolved_legacy_migrated' ? 'recovered_from_legacy' : 'ready';
+        setCasesLoadState(nextState);
+        setCasesLoadMessage(
+          result.source === 'resolved_legacy_migrated'
+            ? 'Recovered from legacy workspace key and migrated to v2.'
+            : null
+        );
+        return { adopted, state: nextState };
+      }
+      if (result.status === 'missing_required_file') {
+        setCasesLoadState('ready');
+        setCasesLoadMessage(null);
+        return { adopted: false, state: 'ready' };
+      }
+      if (result.status === 'no_record') {
+        setCasesLoadState('no_record');
+        setCasesLoadMessage(result.message);
+        return { adopted: false, state: 'no_record' };
+      }
+      setCasesLoadState('unavailable');
+      setCasesLoadMessage(result.message);
+      return { adopted: false, state: 'unavailable' };
+    },
+    [adoptWorkspaceSnapshot]
+  );
+
   const handleRefreshWorkspace = useCallback(async (): Promise<void> => {
+    setCasesLoadState('loading');
+    setCasesLoadMessage(null);
     const currentRevision = getCaseResolverWorkspaceRevision(workspace);
     const shouldForceRecordFetch = shouldBootstrapCaseResolverCasesFromRecord(workspace);
     const metadata = shouldForceRecordFetch
@@ -322,46 +404,55 @@ export function AdminCaseResolverCasesProvider({
       metadata.exists === false ||
       metadata.revision >= currentRevision;
     if (!shouldFetchWorkspace) {
+      setCasesLoadState('ready');
+      setCasesLoadMessage(null);
       toast('Workspace already up to date.', { variant: 'success' });
       return;
     }
-    const snapshot = await fetchCaseResolverWorkspaceRecord('cases_page_manual_refresh', {
+    const snapshot = await fetchCaseResolverWorkspaceRecordDetailed('cases_page_manual_refresh', {
       attemptProfile: shouldForceRecordFetch ? 'context_fast' : 'default',
       maxTotalMs: shouldForceRecordFetch ? 6_500 : undefined,
       attemptTimeoutMs: shouldForceRecordFetch ? 2_200 : undefined,
     });
-    if (!snapshot) return;
-    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      if (
-        !shouldAdoptIncomingCaseResolverCasesWorkspace({
-          current,
-          incoming: snapshot,
-        })
-      ) {
-        return current;
-      }
-      const nextRevision = getCaseResolverWorkspaceRevision(snapshot);
-      lastPersistedWorkspaceValueRef.current = JSON.stringify(snapshot);
-      lastPersistedWorkspaceRevisionRef.current = nextRevision;
-      return snapshot;
-    });
-    toast('Workspace refreshed.', { variant: 'success' });
-  }, [setWorkspace, toast, workspace]);
+    const applied = applyWorkspaceRecordResult(snapshot, 'manual_refresh_workspace');
+    if (applied.state === 'ready' || applied.state === 'recovered_from_legacy') {
+      toast('Workspace refreshed.', { variant: 'success' });
+      return;
+    }
+    if (applied.state === 'no_record') {
+      toast('No Case Resolver workspace data found.', { variant: 'warning' });
+      return;
+    }
+    toast('Failed to refresh workspace.', { variant: 'error' });
+  }, [applyWorkspaceRecordResult, toast, workspace]);
 
   useEffect(() => {
     const fallbackApplied = workspaceSafeParseDiagnostics.parseFallbackApplied;
     const strippedCount = workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount;
     const convertedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount;
     const droppedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount;
-    if (!fallbackApplied && strippedCount === 0 && convertedCount === 0 && droppedCount === 0) {
+    const droppedInvalidFilesCount = workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount;
+    const orphanParentLinksClearedCount =
+      workspaceLegacySanitizationDiagnostics.orphanParentLinksClearedCount;
+    if (
+      !fallbackApplied &&
+      strippedCount === 0 &&
+      convertedCount === 0 &&
+      droppedCount === 0 &&
+      droppedInvalidFilesCount === 0 &&
+      orphanParentLinksClearedCount === 0
+    ) {
       return;
     }
     const signature = [
       rawWorkspace ?? '<null>',
       fallbackApplied ? 'fallback:1' : 'fallback:0',
+      `fallback_class:${workspaceSafeParseStatus}`,
       strippedCount,
       convertedCount,
       droppedCount,
+      droppedInvalidFilesCount,
+      orphanParentLinksClearedCount,
     ].join('|');
     if (lastWorkspaceParseFallbackSignatureRef.current === signature) return;
     lastWorkspaceParseFallbackSignatureRef.current = signature;
@@ -374,17 +465,37 @@ export function AdminCaseResolverCasesProvider({
         `legacy_edges_converted=${convertedCount}`,
         `legacy_edges_dropped=${droppedCount}`,
         `inline_node_snapshots_stripped=${strippedCount}`,
+        `fallback_class=${workspaceSafeParseStatus}`,
         `reason=${workspaceSafeParseDiagnostics.parseFallbackReason ?? 'none'}`,
       ].join(' '),
     });
+    if (droppedInvalidFilesCount > 0) {
+      logCaseResolverWorkspaceEvent({
+        source: 'cases_page',
+        action: 'cases_workspace_file_or_case_dropped_invalid_fragment',
+        workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+        message: `count=${droppedInvalidFilesCount}`,
+      });
+    }
+    if (orphanParentLinksClearedCount > 0) {
+      logCaseResolverWorkspaceEvent({
+        source: 'cases_page',
+        action: 'cases_workspace_orphan_parent_links_cleared',
+        workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+        message: `count=${orphanParentLinksClearedCount}`,
+      });
+    }
   }, [
     parsedWorkspace,
     rawWorkspace,
+    workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount,
     workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount,
     workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount,
     workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount,
+    workspaceLegacySanitizationDiagnostics.orphanParentLinksClearedCount,
     workspaceSafeParseDiagnostics.parseFallbackApplied,
     workspaceSafeParseDiagnostics.parseFallbackReason,
+    workspaceSafeParseStatus,
   ]);
 
   useEffect(() => {
@@ -447,6 +558,8 @@ export function AdminCaseResolverCasesProvider({
     if (!isCasesRoute) return;
     let isCancelled = false;
     setIsRouteWorkspaceSyncing(true);
+    setCasesLoadState('loading');
+    setCasesLoadMessage(null);
     void (async (): Promise<void> => {
       try {
         const inMemoryRevision = Math.max(
@@ -461,67 +574,41 @@ export function AdminCaseResolverCasesProvider({
           const cachedRevision = getCaseResolverWorkspaceRevision(cachedWorkspace);
           if (cachedRevision > inMemoryRevision) {
             if (isCancelled) return;
-            setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-              if (
-                !shouldAdoptIncomingCaseResolverCasesWorkspace({
-                  current,
-                  incoming: cachedWorkspace,
-                })
-              ) {
-                return current;
-              }
-              lastPersistedWorkspaceValueRef.current = JSON.stringify(cachedWorkspace);
-              lastPersistedWorkspaceRevisionRef.current = cachedRevision;
-              logCaseResolverWorkspaceEvent({
-                source: 'cases_page',
-                action: 'route_sync_workspace_nav_cache',
-                workspaceRevision: cachedRevision,
-              });
-              return cachedWorkspace;
-            });
+            adoptWorkspaceSnapshot(cachedWorkspace, 'route_sync_workspace_nav_cache');
+            setCasesLoadState('ready');
+            setCasesLoadMessage(null);
             return;
           }
         }
 
-        // Single conditional fetch: server returns the workspace only when its revision
-        // is greater than inMemoryRevision, otherwise returns a lightweight upToDate signal.
-        // Replaces the previous 2-request waterfall (metadata pre-flight + workspace fetch).
         const shouldForceRecordFetch = shouldBootstrapCaseResolverCasesFromRecord(workspace);
-        const result = shouldForceRecordFetch
-          ? null
-          : await fetchCaseResolverWorkspaceIfStale('cases_page_route_sync', inMemoryRevision);
-        if (isCancelled) return;
-        let latestWorkspace = result?.updated ? result.workspace : null;
-        if (!latestWorkspace && shouldForceRecordFetch) {
-          latestWorkspace = await fetchCaseResolverWorkspaceRecord('cases_page_route_sync', {
-            attemptProfile: 'context_fast',
-            maxTotalMs: 6_500,
-            attemptTimeoutMs: 2_200,
-          });
+        if (!shouldForceRecordFetch) {
+          const result = await fetchCaseResolverWorkspaceIfStale('cases_page_route_sync', inMemoryRevision);
           if (isCancelled) return;
-        }
-        if (!latestWorkspace) return;
-        const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
-        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-          if (
-            !shouldAdoptIncomingCaseResolverCasesWorkspace({
-              current,
-              incoming: latestWorkspace,
-            })
-          ) {
-            return current;
+          if (result.updated) {
+            adoptWorkspaceSnapshot(result.workspace, 'route_sync_workspace');
+            setCasesLoadState('ready');
+            setCasesLoadMessage(null);
+            return;
           }
-          lastPersistedWorkspaceValueRef.current = JSON.stringify(latestWorkspace);
-          lastPersistedWorkspaceRevisionRef.current = latestRevision;
-          logCaseResolverWorkspaceEvent({
-            source: 'cases_page',
-            action: 'route_sync_workspace',
-            workspaceRevision: latestRevision,
-          });
-          return latestWorkspace;
+          if (canHydrateWorkspaceFromStore) {
+            setCasesLoadState('ready');
+            setCasesLoadMessage(null);
+            return;
+          }
+        }
+
+        const snapshotResult = await fetchCaseResolverWorkspaceRecordDetailed('cases_page_route_sync', {
+          attemptProfile: shouldForceRecordFetch ? 'context_fast' : 'default',
+          maxTotalMs: shouldForceRecordFetch ? 6_500 : undefined,
+          attemptTimeoutMs: shouldForceRecordFetch ? 2_200 : undefined,
         });
-        // Prime navigation cache so repeat navigations within 2 min skip the network entirely
-        primeCaseResolverNavigationWorkspace(latestWorkspace);
+        if (isCancelled) return;
+        const applied = applyWorkspaceRecordResult(snapshotResult, 'route_sync_workspace');
+        if (applied.state === 'no_record' && canHydrateWorkspaceFromStore) {
+          setCasesLoadState('ready');
+          setCasesLoadMessage(null);
+        }
       } finally {
         if (!isCancelled) {
           setIsRouteWorkspaceSyncing(false);
@@ -532,31 +619,31 @@ export function AdminCaseResolverCasesProvider({
       isCancelled = true;
       setIsRouteWorkspaceSyncing(false);
     };
-  }, [isCasesRoute, lastPersistedWorkspaceRevisionRef, parsedWorkspace, setWorkspace, workspace]);
+  }, [
+    adoptWorkspaceSnapshot,
+    applyWorkspaceRecordResult,
+    canHydrateWorkspaceFromStore,
+    isCasesRoute,
+    lastPersistedWorkspaceRevisionRef,
+    parsedWorkspace,
+    workspace,
+  ]);
 
   useEffect(() => {
     if (!isCasesRoute) return;
     if (!canHydrateWorkspaceFromStore) return;
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
-    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      if (
-        !shouldAdoptIncomingCaseResolverCasesWorkspace({
-          current,
-          incoming: parsedWorkspace,
-        })
-      ) {
-        return current;
-      }
-      lastPersistedWorkspaceValueRef.current = JSON.stringify(parsedWorkspace);
-      lastPersistedWorkspaceRevisionRef.current = incomingRevision;
-      logCaseResolverWorkspaceEvent({
-        source: 'cases_page',
-        action: 'hydrate_workspace',
-        workspaceRevision: incomingRevision,
-      });
-      return parsedWorkspace;
-    });
-  }, [canHydrateWorkspaceFromStore, isCasesRoute, parsedWorkspace, setWorkspace]);
+    const adopted = adoptWorkspaceSnapshot(parsedWorkspace, 'hydrate_workspace');
+    if (adopted) {
+      setCasesLoadState('ready');
+      setCasesLoadMessage(null);
+      return;
+    }
+    if (incomingRevision > 0 || parsedWorkspace.files.length > 0) {
+      setCasesLoadState('ready');
+      setCasesLoadMessage(null);
+    }
+  }, [adoptWorkspaceSnapshot, canHydrateWorkspaceFromStore, isCasesRoute, parsedWorkspace]);
 
   useEffect(() => {
     if (didHydrateCaseListViewDefaults || !preferencesQuery.isFetched) return;
@@ -675,6 +762,8 @@ export function AdminCaseResolverCasesProvider({
   const value = useMemo(
     (): AdminCaseResolverCasesContextValue => ({
       workspace,
+      casesLoadState: stateCasesLoadState,
+      casesLoadMessage: stateCasesLoadMessage,
       caseDraft,
       isCreatingCase,
       isCreateCaseModalOpen,

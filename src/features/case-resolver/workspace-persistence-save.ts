@@ -96,8 +96,8 @@ const normalizeNodeFileAssetForPersist = (
       ? { ...asset.metadata }
       : {};
   if (
-    typeof storageMode === 'string' &&
-    storageMode.trim().length > 0 &&
+    typeof storageMode !== 'string' ||
+    storageMode.trim().length === 0 ||
     storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED
   ) {
     metadata[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY] =

@@ -11,10 +11,24 @@ import {
 } from '@/features/drafter/services/draft-repository';
 import prisma from '@/shared/lib/db/prisma';
 
+let canMutateDraftRepositoryTables = true;
+
 describe('DraftRepository (Prisma)', () => {
+  const shouldSkipDraftRepositoryTests = (): boolean =>
+    !process.env['DATABASE_URL'] || !canMutateDraftRepositoryTables;
+
   beforeEach(async () => {
-    if (!process.env['DATABASE_URL']) return;
-    await prisma.productDraft.deleteMany({});
+    if (shouldSkipDraftRepositoryTests()) return;
+    try {
+      await prisma.productDraft.deleteMany({});
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (code === 'EPERM') {
+        canMutateDraftRepositoryTables = false;
+        return;
+      }
+      throw error;
+    }
   });
 
   afterAll(async () => {
@@ -22,7 +36,7 @@ describe('DraftRepository (Prisma)', () => {
   });
 
   it('should create and retrieve a draft', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     const data = {
       name: 'Test Draft',
@@ -39,7 +53,7 @@ describe('DraftRepository (Prisma)', () => {
   });
 
   it('should list all drafts ordered by createdAt desc', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     await createDraft({ name: 'Draft 1' });
     // Small delay to ensure distinct createdAt
@@ -54,7 +68,7 @@ describe('DraftRepository (Prisma)', () => {
   });
 
   it('should update a draft', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     const draft = await createDraft({ name: 'Old Name' });
     const updated = await updateDraft(draft.id, { name: 'New Name' });
@@ -66,7 +80,7 @@ describe('DraftRepository (Prisma)', () => {
   });
 
   it('should delete a draft', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     const draft = await createDraft({ name: 'To Delete' });
     await deleteDraft(draft.id);
@@ -76,14 +90,14 @@ describe('DraftRepository (Prisma)', () => {
   });
 
   it('should return null when getting non-existent draft', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     const retrieved = await getDraft('non-existent');
     expect(retrieved).toBeNull();
   });
 
   it('should handle array fields like catalogIds correctly', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipDraftRepositoryTests()) return;
 
     const catalogIds = ['cat1', 'cat2'];
     const draft = await createDraft({

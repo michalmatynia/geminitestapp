@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, useRef, type ReactNode } from 'react';
 
 import type {
   AiNode,
@@ -17,6 +17,31 @@ import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/sha
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+export type GraphMutationReason =
+  | 'drop'
+  | 'drag'
+  | 'select'
+  | 'delete'
+  | 'bridge_sync'
+  | 'load_path'
+  | 'update'
+  | 'unknown';
+
+export interface GraphMutationMeta {
+  reason?: GraphMutationReason;
+  source?: string;
+  allowNodeCountDecrease?: boolean;
+}
+
+export interface GraphMutationRecord {
+  revision: number;
+  reason: GraphMutationReason;
+  source: string | null;
+  timestamp: string;
+  changedNodes: boolean;
+  changedEdges: boolean;
+}
 
 export interface GraphState {
   // Core graph data
@@ -40,18 +65,26 @@ export interface GraphState {
   // Path flags
   isPathLocked: boolean;
   isPathActive: boolean;
+  graphRevision: number;
+  lastMutation: GraphMutationRecord | null;
 }
 
 export interface GraphActions {
   // Node actions
-  setNodes: (nodes: AiNode[] | ((prev: AiNode[]) => AiNode[])) => void;
+  setNodes: (
+    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   addNode: (node: AiNode) => void;
   updateNode: (nodeId: string, update: Partial<AiNode>) => void;
   updateNodeConfig: (nodeId: string, config: NodeConfig) => void;
   removeNode: (nodeId: string) => void;
 
   // Edge actions
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void;
+  setEdges: (
+    edges: Edge[] | ((prev: Edge[]) => Edge[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   addEdge: (edge: Edge) => void;
   removeEdge: (edgeId: string) => void;
   clearEdges: () => void;
@@ -162,42 +195,170 @@ export function GraphProvider({
   // Path flags
   const [isPathLocked, setIsPathLockedInternal] = useState(false);
   const [isPathActive, setIsPathActiveInternal] = useState(true);
+  const [graphRevision, setGraphRevision] = useState(0);
+  const [lastMutation, setLastMutation] = useState<GraphMutationRecord | null>(null);
+
+  const graphRevisionRef = useRef(0);
+  const pendingMutationMetaRef = useRef<GraphMutationMeta | null>(null);
+
+  graphRevisionRef.current = graphRevision;
+
+  const registerGraphMutation = useCallback(
+    ({
+      changedNodes,
+      changedEdges,
+      fallbackReason,
+    }: {
+      changedNodes: boolean;
+      changedEdges: boolean;
+      fallbackReason?: GraphMutationReason;
+    }): void => {
+      if (!changedNodes && !changedEdges) return;
+      const meta = pendingMutationMetaRef.current;
+      pendingMutationMetaRef.current = null;
+      const reason = meta?.reason ?? fallbackReason ?? 'unknown';
+      const nextRevision = graphRevisionRef.current + 1;
+      graphRevisionRef.current = nextRevision;
+      setGraphRevision(nextRevision);
+      setLastMutation({
+        revision: nextRevision,
+        reason,
+        source: typeof meta?.source === 'string' ? meta.source : null,
+        timestamp: new Date().toISOString(),
+        changedNodes,
+        changedEdges,
+      });
+    },
+    []
+  );
+
+  const setNodes = useCallback(
+    (
+      nextNodes:
+        | AiNode[]
+        | ((prev: AiNode[]) => AiNode[]),
+      mutationMeta?: GraphMutationMeta
+    ): void => {
+      const reason = mutationMeta?.reason ?? 'unknown';
+      const shouldEnforceNodeCountInvariant =
+        reason === 'drag' || reason === 'select' || reason === 'bridge_sync';
+      pendingMutationMetaRef.current = mutationMeta ?? { reason };
+      let changedNodes = false;
+      setNodesInternal((prev: AiNode[]): AiNode[] => {
+        const resolved = typeof nextNodes === 'function' ? nextNodes(prev) : nextNodes;
+        const normalized = normalizeNodes(resolved);
+        if (
+          shouldEnforceNodeCountInvariant &&
+          normalized.length < prev.length &&
+          mutationMeta?.allowNodeCountDecrease !== true
+        ) {
+          console.warn(
+            '[ai-paths] Rejected non-destructive node mutation that would decrease node count.',
+            {
+              reason,
+              source: mutationMeta?.source ?? null,
+              previousCount: prev.length,
+              nextCount: normalized.length,
+              revision: graphRevisionRef.current,
+            }
+          );
+          pendingMutationMetaRef.current = null;
+          return prev;
+        }
+        changedNodes =
+          normalized.length !== prev.length ||
+          normalized.some((node: AiNode, index: number): boolean => node !== prev[index]);
+        return normalized;
+      });
+      if (changedNodes) {
+        registerGraphMutation({
+          changedNodes: true,
+          changedEdges: false,
+          fallbackReason: reason,
+        });
+      } else {
+        pendingMutationMetaRef.current = null;
+      }
+    },
+    [registerGraphMutation]
+  );
+
+  const setEdges = useCallback(
+    (
+      nextEdges:
+        | Edge[]
+        | ((prev: Edge[]) => Edge[]),
+      mutationMeta?: GraphMutationMeta
+    ): void => {
+      const reason = mutationMeta?.reason ?? 'unknown';
+      pendingMutationMetaRef.current = mutationMeta ?? { reason };
+      let changedEdges = false;
+      setEdgesInternal((prev: Edge[]): Edge[] => {
+        const resolved = typeof nextEdges === 'function' ? nextEdges(prev) : nextEdges;
+        changedEdges =
+          resolved.length !== prev.length ||
+          resolved.some((edge: Edge, index: number): boolean => edge !== prev[index]);
+        return resolved;
+      });
+      if (changedEdges) {
+        registerGraphMutation({
+          changedNodes: false,
+          changedEdges: true,
+          fallbackReason: reason,
+        });
+      } else {
+        pendingMutationMetaRef.current = null;
+      }
+    },
+    [registerGraphMutation]
+  );
 
   // Memoized node operations
   const addNode = useCallback((node: AiNode) => {
-    setNodesInternal((prev) => [...prev, node]);
-  }, []);
+    setNodes((prev) => [...prev, node], { reason: 'drop', source: 'graph.addNode' });
+  }, [setNodes]);
 
   const updateNode = useCallback((nodeId: string, update: Partial<AiNode>) => {
-    setNodesInternal((prev) =>
-      prev.map((node) => (node.id === nodeId ? { ...node, ...update } : node))
+    setNodes(
+      (prev) => prev.map((node) => (node.id === nodeId ? { ...node, ...update } : node)),
+      { reason: 'update', source: 'graph.updateNode' }
     );
-  }, []);
+  }, [setNodes]);
 
   const updateNodeConfig = useCallback((nodeId: string, config: NodeConfig) => {
-    setNodesInternal((prev) =>
-      prev.map((node) => (node.id === nodeId ? { ...node, config } : node))
+    setNodes(
+      (prev) => prev.map((node) => (node.id === nodeId ? { ...node, config } : node)),
+      { reason: 'update', source: 'graph.updateNodeConfig' }
     );
-  }, []);
+  }, [setNodes]);
 
   const removeNode = useCallback((nodeId: string) => {
-    setNodesInternal((prev) => prev.filter((node) => node.id !== nodeId));
+    setNodes(
+      (prev) => prev.filter((node) => node.id !== nodeId),
+      { reason: 'delete', source: 'graph.removeNode', allowNodeCountDecrease: true }
+    );
     // Also remove connected edges
-    setEdgesInternal((prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId));
-  }, []);
+    setEdges(
+      (prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId),
+      { reason: 'delete', source: 'graph.removeNode' }
+    );
+  }, [setEdges, setNodes]);
 
   // Memoized edge operations
   const addEdge = useCallback((edge: Edge) => {
-    setEdgesInternal((prev) => [...prev, edge]);
-  }, []);
+    setEdges((prev) => [...prev, edge], { reason: 'update', source: 'graph.addEdge' });
+  }, [setEdges]);
 
   const removeEdge = useCallback((edgeId: string) => {
-    setEdgesInternal((prev) => prev.filter((edge) => edge.id !== edgeId));
-  }, []);
+    setEdges(
+      (prev) => prev.filter((edge) => edge.id !== edgeId),
+      { reason: 'delete', source: 'graph.removeEdge' }
+    );
+  }, [setEdges]);
 
   const clearEdges = useCallback(() => {
-    setEdgesInternal([]);
-  }, []);
+    setEdges([], { reason: 'delete', source: 'graph.clearEdges' });
+  }, [setEdges]);
 
   // Bulk operations
   const loadGraph = useCallback(
@@ -216,8 +377,8 @@ export function GraphProvider({
     }) => {
       const normalizedNodes = normalizeNodes(data.nodes);
       const sanitizedEdges = sanitizeEdges(normalizedNodes, data.edges);
-      setNodesInternal(normalizedNodes);
-      setEdgesInternal(sanitizedEdges);
+      setNodes(normalizedNodes, { reason: 'load_path', source: 'graph.loadGraph' });
+      setEdges(sanitizedEdges, { reason: 'load_path', source: 'graph.loadGraph' });
       if (data.pathName !== undefined) setPathNameInternal(data.pathName);
       if (data.pathDescription !== undefined) setPathDescriptionInternal(data.pathDescription);
       if (data.activeTrigger !== undefined) setActiveTriggerInternal(data.activeTrigger);
@@ -228,12 +389,12 @@ export function GraphProvider({
       if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
       if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
     },
-    []
+    [setEdges, setNodes]
   );
 
   const resetGraph = useCallback(() => {
-    setNodesInternal(initialNodes);
-    setEdgesInternal(initialEdges);
+    setNodes(initialNodes, { reason: 'load_path', source: 'graph.resetGraph' });
+    setEdges(initialEdges, { reason: 'load_path', source: 'graph.resetGraph' });
     setPathNameInternal(DEFAULT_PATH_NAME);
     setPathDescriptionInternal(DEFAULT_PATH_DESCRIPTION);
     setActiveTriggerInternal(DEFAULT_TRIGGER);
@@ -242,20 +403,20 @@ export function GraphProvider({
     setStrictFlowModeInternal(DEFAULT_STRICT_FLOW_MODE);
     setIsPathLockedInternal(false);
     setIsPathActiveInternal(true);
-  }, []);
+  }, [setEdges, setNodes]);
 
   // Actions are stable
   const actions = useMemo<GraphActions>(
     () => ({
       // Node actions
-      setNodes: setNodesInternal,
+      setNodes,
       addNode,
       updateNode,
       updateNodeConfig,
       removeNode,
 
       // Edge actions
-      setEdges: setEdgesInternal,
+      setEdges,
       addEdge,
       removeEdge,
       clearEdges,
@@ -285,10 +446,12 @@ export function GraphProvider({
       resetGraph,
     }),
     [
+      setNodes,
       addNode,
       updateNode,
       updateNodeConfig,
       removeNode,
+      setEdges,
       addEdge,
       removeEdge,
       clearEdges,
@@ -313,6 +476,8 @@ export function GraphProvider({
       strictFlowMode,
       isPathLocked,
       isPathActive,
+      graphRevision,
+      lastMutation,
     }),
     [
       nodes,
@@ -329,6 +494,8 @@ export function GraphProvider({
       strictFlowMode,
       isPathLocked,
       isPathActive,
+      graphRevision,
+      lastMutation,
     ]
   );
 

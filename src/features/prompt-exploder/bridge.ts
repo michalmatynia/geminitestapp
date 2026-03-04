@@ -8,7 +8,6 @@ import type {
   PromptExploderCaseResolverPartyBundle,
   PromptExploderCaseResolverPartyCandidate,
   PromptExploderCaseResolverPartyKind,
-  PromptExploderCaseResolverPartyRole,
   PromptExploderCaseResolverPlaceDate,
   PromptExploderBridgePayloadSnapshot,
   PromptExploderBridgeSaveOptions,
@@ -28,11 +27,17 @@ export type {
   PromptExploderCaseResolverPartyBundle,
   PromptExploderCaseResolverPartyCandidate,
   PromptExploderCaseResolverPartyKind,
-  PromptExploderCaseResolverPartyRole,
   PromptExploderCaseResolverPlaceDate,
   PromptExploderBridgePayloadSnapshot,
   PromptExploderBridgeSaveOptions,
 };
+
+export type PromptExploderCaseResolverPartyRole =
+  | 'addresser'
+  | 'addressee'
+  | 'subject'
+  | 'reference'
+  | 'other';
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
 type BridgeStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

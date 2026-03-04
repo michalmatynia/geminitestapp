@@ -1311,151 +1311,151 @@ describe('case-resolver workspace', () => {
     expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS);
   });
 
-  it('rejects non-canonical text node prompt ports', () => {
-    expect(() =>
-      parseCaseResolverWorkspace(
-        JSON.stringify({
-          version: 2,
-          workspaceRevision: 0,
-          lastMutationId: null,
-          lastMutationAt: null,
-          folders: [],
-          files: [
-            {
-              id: 'case-invalid-text-ports',
-              name: 'Case Invalid Text Ports',
-              folder: '',
-              graph: {
-                nodes: [createPromptNode('doc-node')],
-                edges: [],
-                nodeMeta: {
-                  'doc-node': {
-                    role: 'text_note',
-                    includeInOutput: true,
-                    quoteMode: 'none',
-                    surroundPrefix: '',
-                    surroundSuffix: '',
-                  },
-                },
-                edgeMeta: {},
-              },
-            },
-          ],
-          assets: [],
-          activeFileId: 'case-invalid-text-ports',
-        })
-      )
-    ).toThrowError(/canonical prompt ports/i);
-  });
-
-  it('rejects template text nodes in workspace graphs', () => {
-    expect(() =>
-      parseCaseResolverWorkspace(
-        JSON.stringify({
-          version: 2,
-          workspaceRevision: 0,
-          lastMutationId: null,
-          lastMutationAt: null,
-          folders: [],
-          files: [
-            {
-              id: 'case-legacy-template',
-              name: 'Case Legacy Template',
-              folder: '',
-              graph: {
-                nodes: [createTemplateNode('legacy-doc-node', '<p>Legacy template text</p>')],
-                edges: [],
-                nodeMeta: {
-                  'legacy-doc-node': {
-                    ...DEFAULT_CASE_RESOLVER_NODE_META,
-                    role: 'text_note',
-                    includeInOutput: true,
-                  },
-                },
-                edgeMeta: {},
-              },
-            },
-          ],
-          assets: [],
-          activeFileId: 'case-legacy-template',
-        })
-      )
-    ).toThrowError(/text nodes must use prompt node type/i);
-  });
-
-  it('rejects template document-drop nodes in workspace graphs', () => {
-    expect(() =>
-      parseCaseResolverWorkspace(
-        JSON.stringify({
-          version: 2,
-          workspaceRevision: 0,
-          lastMutationId: null,
-          lastMutationAt: null,
-          folders: [],
-          files: [
-            {
-              id: 'case-template-drop',
-              name: 'Case Template Drop',
-              folder: '',
-              graph: {
-                nodes: [createTemplateNode('legacy-drop-node', 'Legacy Canvas Node File')],
-                edges: [],
-                nodeMeta: {},
-                edgeMeta: {},
-                documentDropNodeId: 'legacy-drop-node',
-              },
-            },
-          ],
-          assets: [],
-          activeFileId: 'case-template-drop',
-        })
-      )
-    ).toThrowError(/document-drop node must use prompt node type/i);
-  });
-
-  it('rejects template document-link nodes in workspace graphs', () => {
-    expect(() =>
-      parseCaseResolverWorkspace(
-        JSON.stringify({
-          version: 2,
-          workspaceRevision: 0,
-          lastMutationId: null,
-          lastMutationAt: null,
-          folders: [],
-          files: [
-            {
-              id: 'case-template-links',
-              name: 'Case Template Links',
-              folder: '',
-              graph: {
-                nodes: [createTemplateNode('legacy-link-node', 'Legacy linked docs node')],
-                edges: [],
-                nodeMeta: {},
-                edgeMeta: {},
-                documentFileLinksByNode: {
-                  'legacy-link-node': ['doc-a'],
+  it('drops invalid file graphs with non-canonical text node prompt ports', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-invalid-text-ports',
+            name: 'Case Invalid Text Ports',
+            folder: '',
+            graph: {
+              nodes: [createPromptNode('doc-node')],
+              edges: [],
+              nodeMeta: {
+                'doc-node': {
+                  role: 'text_note',
+                  includeInOutput: true,
+                  quoteMode: 'none',
+                  surroundPrefix: '',
+                  surroundSuffix: '',
                 },
               },
+              edgeMeta: {},
             },
-            {
-              id: 'doc-a',
-              fileType: 'document',
-              name: 'Doc A',
-              folder: '',
-              parentCaseId: 'case-template-links',
-              graph: {
-                nodes: [],
-                edges: [],
-                nodeMeta: {},
-                edgeMeta: {},
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-invalid-text-ports',
+      })
+    );
+    expect(workspace.files).toEqual([]);
+    expect(workspace.activeFileId).toBeNull();
+  });
+
+  it('drops invalid file graphs with template text nodes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-legacy-template',
+            name: 'Case Legacy Template',
+            folder: '',
+            graph: {
+              nodes: [createTemplateNode('legacy-doc-node', '<p>Legacy template text</p>')],
+              edges: [],
+              nodeMeta: {
+                'legacy-doc-node': {
+                  ...DEFAULT_CASE_RESOLVER_NODE_META,
+                  role: 'text_note',
+                  includeInOutput: true,
+                },
+              },
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-legacy-template',
+      })
+    );
+    expect(workspace.files).toEqual([]);
+    expect(workspace.activeFileId).toBeNull();
+  });
+
+  it('drops invalid file graphs with template document-drop nodes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-template-drop',
+            name: 'Case Template Drop',
+            folder: '',
+            graph: {
+              nodes: [createTemplateNode('legacy-drop-node', 'Legacy Canvas Node File')],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+              documentDropNodeId: 'legacy-drop-node',
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-template-drop',
+      })
+    );
+    expect(workspace.files).toEqual([]);
+    expect(workspace.activeFileId).toBeNull();
+  });
+
+  it('drops invalid file graphs with template document-link nodes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-template-links',
+            name: 'Case Template Links',
+            folder: '',
+            graph: {
+              nodes: [createTemplateNode('legacy-link-node', 'Legacy linked docs node')],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+              documentFileLinksByNode: {
+                'legacy-link-node': ['doc-a'],
               },
             },
-          ],
-          assets: [],
-          activeFileId: 'case-template-links',
-        })
-      )
-    ).toThrowError(/document-link nodes must use prompt node type/i);
+          },
+          {
+            id: 'doc-a',
+            fileType: 'document',
+            name: 'Doc A',
+            folder: '',
+            parentCaseId: 'case-template-links',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-template-links',
+      })
+    );
+    expect(workspace.files[0]?.graph.nodes).toEqual([]);
+    expect(workspace.files[0]?.graph.edges).toEqual([]);
   });
 
   it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {

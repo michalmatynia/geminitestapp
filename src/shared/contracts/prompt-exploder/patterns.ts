@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
-  promptExploderSegmentTypeSchema,
   type PromptExploderSegmentType,
+  promptExploderSegmentTypeSchema,
 } from './base';
 
 /**
@@ -10,11 +10,6 @@ import {
 
 export const promptExploderPatternRuleMapSchema = z.record(z.string(), z.array(z.string()));
 export type PromptExploderPatternRuleMap = z.infer<typeof promptExploderPatternRuleMapSchema>;
-
-export type ParsedPromptHeading = {
-  code: string | null;
-  title: string;
-};
 
 export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
   'segment.boundary.hr_line',

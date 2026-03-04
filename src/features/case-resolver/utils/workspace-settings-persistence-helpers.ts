@@ -4,6 +4,7 @@ import {
 } from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v2';
+export const CASE_RESOLVER_WORKSPACE_LEGACY_KEY = 'case_resolver_workspace';
 
 export type SettingsRecordLike = {
   key?: unknown;

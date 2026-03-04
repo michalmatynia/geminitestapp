@@ -2,7 +2,7 @@ import {
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
-import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio-shared';
+import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio';
 import {
   type PixelData,
   type WhiteBackgroundModel,

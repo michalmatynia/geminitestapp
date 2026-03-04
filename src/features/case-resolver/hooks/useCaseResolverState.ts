@@ -48,7 +48,7 @@ import {
 } from '../settings';
 import {
   logCaseResolverWorkspaceEvent,
-  primeCaseResolverNavigationWorkspace,
+  readCaseResolverNavigationWorkspace,
   getCaseResolverWorkspaceRevision,
   } from '../workspace-persistence';
 import {

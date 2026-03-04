@@ -10,7 +10,7 @@ import {
   type PromptExploderLearnedTemplate,
   type PromptExploderRuntimeValidationScope,
   type PromptExploderValidationRuleStack,
-} from './prompt-exploder';
+} from './prompt-exploder-core';
 
 export type PromptExploderRuleSegmentType = PromptExploderSegmentType;
 

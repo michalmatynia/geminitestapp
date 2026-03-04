@@ -58,7 +58,6 @@ const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
     selectedNodeId: null,
     selectedNodeIds: [],
     setNodes: vi.fn(),
-    updateNode: vi.fn(),
     removeNode: vi.fn(),
     setNodeSelection: vi.fn(),
     toggleNodeSelection: vi.fn(),
@@ -83,6 +82,23 @@ const buildHookProps = (): Parameters<typeof useCanvasInteractionsNodes>[0] => {
     setLastDrop: vi.fn(),
     ensureNodeVisible: vi.fn(),
     toast: vi.fn(),
+  };
+};
+
+const resolveLastSetNodesMutation = (
+  props: Parameters<typeof useCanvasInteractionsNodes>[0],
+  prevNodes: AiNode[] = props.nodes
+): { nodes: AiNode[]; mutationMeta: unknown } | null => {
+  const calls = (props.setNodes as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+  const lastCall = calls[calls.length - 1];
+  if (!lastCall) return null;
+  const [nextNodes, mutationMeta] = lastCall as [
+    AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    unknown,
+  ];
+  return {
+    nodes: typeof nextNodes === 'function' ? nextNodes(prevNodes) : nextNodes,
+    mutationMeta,
   };
 };
 
@@ -123,7 +139,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.updateNode).not.toHaveBeenCalled();
+    expect(props.setNodes).not.toHaveBeenCalled();
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
   });
 
@@ -157,9 +173,12 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
-    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
-      position: { x: 50, y: 50 },
+    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(mutation).not.toBeNull();
+    expect(mutation?.mutationMeta).toMatchObject({
+      reason: 'drag',
     });
+    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({ x: 50, y: 50 });
     expect(props.endDrag).toHaveBeenCalledTimes(1);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(true);
     expect(result.current.consumeSuppressedNodeClick('node-1')).toBe(false);
@@ -202,8 +221,14 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).toHaveBeenCalledWith('node-1', 0, 0);
-    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
-      position: { x: 120, y: 100 },
+    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(mutation).not.toBeNull();
+    expect(mutation?.mutationMeta).toMatchObject({
+      reason: 'drag',
+    });
+    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({
+      x: 120,
+      y: 100,
     });
   });
 
@@ -242,8 +267,14 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
 
     const maxX = CANVAS_WIDTH - NODE_WIDTH - 16;
     const maxY = CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16;
-    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
-      position: { x: maxX, y: maxY },
+    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(mutation).not.toBeNull();
+    expect(mutation?.mutationMeta).toMatchObject({
+      reason: 'drag',
+    });
+    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({
+      x: maxX,
+      y: maxY,
     });
   });
 
@@ -278,7 +309,7 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.updateNode).not.toHaveBeenCalled();
+    expect(props.setNodes).not.toHaveBeenCalled();
   });
 
   it('allows pointer moves with zero buttons when pointer capture is still active', async () => {
@@ -318,8 +349,14 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).toHaveBeenCalledWith('node-1', 60, 60);
-    expect(props.updateNode).toHaveBeenCalledWith('node-1', {
-      position: { x: 90, y: 80 },
+    const mutation = resolveLastSetNodesMutation(props, props.nodes);
+    expect(mutation).not.toBeNull();
+    expect(mutation?.mutationMeta).toMatchObject({
+      reason: 'drag',
+    });
+    expect(mutation?.nodes.find((node) => node.id === 'node-1')?.position).toEqual({
+      x: 90,
+      y: 80,
     });
   });
 
@@ -353,6 +390,6 @@ describe('useCanvasInteractionsNodes drag threshold', () => {
     });
 
     expect(props.startDrag).not.toHaveBeenCalled();
-    expect(props.updateNode).not.toHaveBeenCalled();
+    expect(props.setNodes).not.toHaveBeenCalled();
   });
 });

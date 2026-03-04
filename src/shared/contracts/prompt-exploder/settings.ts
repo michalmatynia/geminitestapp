@@ -97,6 +97,7 @@ export const promptExploderSettingsSchema = z.object({
       benchmarkSuite: z.string().optional(),
       benchmarkLowConfidenceThreshold: z.number().optional(),
       benchmarkSuggestionLimit: z.number().optional(),
+      customBenchmarkCases: z.string().optional(),
     })
     .default({
       ruleProfile: 'all',
@@ -112,6 +113,7 @@ export const promptExploderSettingsSchema = z.object({
       minApprovalsForMatching: z.number().int().min(1).default(1),
       maxTemplates: z.number().int().min(1).default(1000),
       autoActivateLearnedTemplates: z.boolean().default(false),
+      benchmarkSuggestionUpsertTemplates: z.boolean().default(true),
     })
     .default({
       enabled: true,
@@ -123,6 +125,7 @@ export const promptExploderSettingsSchema = z.object({
       minApprovalsForMatching: 1,
       maxTemplates: 1000,
       autoActivateLearnedTemplates: false,
+      benchmarkSuggestionUpsertTemplates: true,
     }),
   ai: z
     .object({
@@ -168,10 +171,13 @@ export type PromptExploderValidationRuleStack =
     };
 
 export type PromptExploderValidationRuleStackOption = {
+  id: string;
+  name: string;
   value: PromptExploderValidationRuleStack;
   label: string;
   description: string;
   scope: ValidatorScope;
+  ruleCount?: number;
 };
 
 export const promptExploderValidationStackResolutionReasonSchema = z.enum([
@@ -243,4 +249,10 @@ export type UpsertLearnedTemplateArgs = {
   targetTemplateId?: string | null;
   now?: string;
   createTemplateId?: (args: CreateTemplateIdArgs) => string;
+};
+
+export type PromptExploderPatternPackResult = {
+  nextSettings: PromptEngineSettings;
+  addedRuleIds: string[];
+  updatedRuleIds: string[];
 };

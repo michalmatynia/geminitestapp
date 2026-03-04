@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import { NODE_WIDTH, getPortOffsetY, validateConnection } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
+import type { GraphMutationMeta } from '../GraphContext';
 
 export interface UseCanvasInteractionsConnectionsValue {
   handleRemoveEdge: (edgeId: string) => void;
@@ -52,7 +53,10 @@ export function useCanvasInteractionsConnections({
   isPathLocked: boolean;
   notifyLocked: () => void;
   confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void;
+  setEdges: (
+    edges: Edge[] | ((prev: Edge[]) => Edge[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
@@ -94,7 +98,10 @@ export function useCanvasInteractionsConnections({
       const target = edges.find((edge) => edge.id === edgeId) ?? null;
       if (!target) return;
 
-      setEdges((prev: Edge[]) => prev.filter((e) => e.id !== edgeId));
+      setEdges((prev: Edge[]) => prev.filter((e) => e.id !== edgeId), {
+        reason: 'delete',
+        source: 'canvas.connection.remove-edge',
+      });
 
       // Cleanup runtime inputs for removed edge
       const remaining = edges.filter((e) => e.id !== edgeId);
@@ -132,7 +139,7 @@ export function useCanvasInteractionsConnections({
       const removed = edges.filter(shouldRemove);
       const remaining = edges.filter((e) => !shouldRemove(e));
 
-      setEdges(remaining);
+      setEdges(remaining, { reason: 'delete', source: 'canvas.connection.disconnect-port' });
       setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removed, remaining));
 
       if (selectedEdgeId) {
@@ -208,7 +215,10 @@ export function useCanvasInteractionsConnections({
         toPort: port,
       };
 
-      setEdges((prev: Edge[]) => [...prev, newEdge]);
+      setEdges((prev: Edge[]) => [...prev, newEdge], {
+        reason: 'update',
+        source: 'canvas.connection.complete',
+      });
       toast('Connection created.', { variant: 'success' });
       endConnection();
     },
@@ -245,7 +255,7 @@ export function useCanvasInteractionsConnections({
         : start;
 
       const remaining = edges.filter((e) => e.id !== edgeToMove.id);
-      setEdges(remaining);
+      setEdges(remaining, { reason: 'delete', source: 'canvas.connection.reconnect-input' });
       setRuntimeState((prev: RuntimeState) =>
         pruneRuntimeInputsInternal(prev, [edgeToMove], remaining)
       );

@@ -72,6 +72,8 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
   const [confirmation, setConfirmation] = useState<CaseResolverCaseListConfirmationState>(null);
+  const [casesLoadState, setCasesLoadState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [casesLoadMessage, setCasesLoadMessage] = useState('');
 
   const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {
     const rawCaseIdentifierId = searchParams.get('caseIdentifierId');
@@ -151,6 +153,10 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
     setDidHydrateCaseListViewDefaults,
     confirmation,
     setConfirmation,
+    casesLoadState,
+    setCasesLoadState,
+    casesLoadMessage,
+    setCasesLoadMessage,
     requestedCaseIdentifierFilterFromQuery,
     appliedCaseIdentifierFilterFromQueryRef,
   };

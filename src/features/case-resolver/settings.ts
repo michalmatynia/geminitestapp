@@ -154,12 +154,18 @@ export const parseCaseResolverWorkspace = (
 export type CaseResolverWorkspaceSafeParseDiagnostics = {
   parseFallbackApplied: boolean;
   parseFallbackReason: string | null;
+  parseFallbackClass:
+    | 'none'
+    | 'invalid_json'
+    | 'graph_stripped_recovered'
+    | 'default_workspace_fallback';
 };
 
 const CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceSafeParseDiagnostics =
   {
     parseFallbackApplied: false,
     parseFallbackReason: null,
+    parseFallbackClass: 'none',
   };
 
 const caseResolverWorkspaceSafeParseDiagnosticsByWorkspace = new WeakMap<
@@ -182,6 +188,19 @@ export const getCaseResolverWorkspaceSafeParseDiagnostics = (
     ? (caseResolverWorkspaceSafeParseDiagnosticsByWorkspace.get(workspace) ??
       CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY)
     : CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY;
+
+export const getCaseResolverWorkspaceSafeParseStatus = (
+  workspace: CaseResolverWorkspace | null | undefined
+): CaseResolverWorkspaceSafeParseDiagnostics['parseFallbackClass'] =>
+  getCaseResolverWorkspaceSafeParseDiagnostics(workspace).parseFallbackClass;
+
+const resolveWorkspaceParseFallbackClass = (
+  error: unknown
+): CaseResolverWorkspaceSafeParseDiagnostics['parseFallbackClass'] => {
+  if (!(error instanceof Error)) return 'default_workspace_fallback';
+  if (error.message.includes('not valid JSON')) return 'invalid_json';
+  return 'default_workspace_fallback';
+};
 
 const stripWorkspaceGraphPayload = (
   raw: string | null | undefined
@@ -231,6 +250,7 @@ export const safeParseCaseResolverWorkspace = (
           parseFallbackApplied: true,
           parseFallbackReason:
             firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
+          parseFallbackClass: 'graph_stripped_recovered',
         });
       } catch {
         // Use default workspace fallback below.
@@ -242,6 +262,7 @@ export const safeParseCaseResolverWorkspace = (
       {
         parseFallbackApplied: true,
         parseFallbackReason: firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
+        parseFallbackClass: resolveWorkspaceParseFallbackClass(firstError),
       }
     );
   }

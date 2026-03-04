@@ -19,6 +19,7 @@ import {
   type SubgraphClipboardPayload,
 } from './useCanvasInteractions.helpers';
 import type { Toast } from '@/shared/contracts/ui';
+import type { GraphMutationMeta } from '../GraphContext';
 
 let inMemorySubgraphClipboard: SubgraphClipboardPayload | null = null;
 let pasteSequence = 0;
@@ -65,8 +66,14 @@ export function useCanvasInteractionsClipboard({
   isPathLocked: boolean;
   notifyLocked: () => void;
   toast: Toast;
-  setNodes: (nodes: AiNode[] | ((prev: AiNode[]) => AiNode[])) => void;
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void;
+  setNodes: (
+    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
+  setEdges: (
+    edges: Edge[] | ((prev: Edge[]) => Edge[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   setNodeSelection: (nodeIds: string[]) => void;
   selectEdge: (edgeId: string | null) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
@@ -158,10 +165,16 @@ export function useCanvasInteractionsClipboard({
         (edge: Edge): boolean =>
           !((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
       );
-      setNodes((prev: AiNode[]): AiNode[] =>
-        prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id))
+      setNodes(
+        (prev: AiNode[]): AiNode[] =>
+          prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id)),
+        {
+          reason: 'delete',
+          source: 'canvas.clipboard.remove-nodes',
+          allowNodeCountDecrease: true,
+        }
       );
-      setEdges(remainingEdges);
+      setEdges(remainingEdges, { reason: 'delete', source: 'canvas.clipboard.remove-nodes' });
       setRuntimeState(
         (prev: RuntimeState): RuntimeState =>
           pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
@@ -265,8 +278,8 @@ export function useCanvasInteractionsClipboard({
 
       const nextNodes = [...nodes, ...pastedNodes];
       const nextEdges = sanitizeEdges(nextNodes, [...edges, ...pastedEdges]);
-      setNodes(nextNodes);
-      setEdges(nextEdges);
+      setNodes(nextNodes, { reason: 'drop', source: 'canvas.clipboard.paste' });
+      setEdges(nextEdges, { reason: 'update', source: 'canvas.clipboard.paste' });
       setNodeSelection(pastedNodes.map((node: AiNode): string => node.id));
       selectEdge(null);
       return {

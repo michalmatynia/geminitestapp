@@ -214,52 +214,47 @@ export function useStateBridgeGraph({
   pathConfigs,
 }: StateBridgeGraphProps): void {
   const actions = useGraphActions();
-  const { nodes: contextNodes, edges: contextEdges } = useGraphState();
-  const skipNextContextNodesSyncRef = useRef(false);
-  const skipNextContextEdgesSyncRef = useRef(false);
-  const pendingContextNodesHashRef = useRef<string | null>(null);
-  const pendingContextEdgesHashRef = useRef<string | null>(null);
+  const { nodes: contextNodes, edges: contextEdges, graphRevision } = useGraphState();
+  const pendingContextNodesSyncRef = useRef<{ hash: string; revision: number } | null>(null);
+  const pendingContextEdgesSyncRef = useRef<{ hash: string; revision: number } | null>(null);
   const lastSourceNodesHashRef = useRef<string>(stableStringify(nodes));
   const lastSourceEdgesHashRef = useRef<string>(stableStringify(edges));
+  const lastSourcePathIdRef = useRef<string | null | undefined>(activePathId);
   const sourceNodesHash = stableStringify(nodes);
   const sourceEdgesHash = stableStringify(edges);
   const contextNodesHash = stableStringify(contextNodes);
   const contextEdgesHash = stableStringify(contextEdges);
   const sourceNodesChangedThisRender = lastSourceNodesHashRef.current !== sourceNodesHash;
   const sourceEdgesChangedThisRender = lastSourceEdgesHashRef.current !== sourceEdgesHash;
+  const sourcePathChangedThisRender = lastSourcePathIdRef.current !== activePathId;
 
-  // Mark a source->context push before layout effects run, so context->source
-  // cannot overwrite freshly loaded graph state in the same render cycle.
   if (sourceNodesChangedThisRender) {
     lastSourceNodesHashRef.current = sourceNodesHash;
-    skipNextContextNodesSyncRef.current = true;
-    if (pendingContextNodesHashRef.current === sourceNodesHash) {
-      pendingContextNodesHashRef.current = null;
-    }
   }
   if (sourceEdgesChangedThisRender) {
     lastSourceEdgesHashRef.current = sourceEdgesHash;
-    skipNextContextEdgesSyncRef.current = true;
-    if (pendingContextEdgesHashRef.current === sourceEdgesHash) {
-      pendingContextEdgesHashRef.current = null;
-    }
+  }
+  if (sourcePathChangedThisRender) {
+    lastSourcePathIdRef.current = activePathId;
   }
 
   useEffect(() => {
     if (onNodesChangeFromContext) {
-      const pendingHash = pendingContextNodesHashRef.current;
-      if (pendingHash) {
-        if (sourceNodesHash === pendingHash) {
-          pendingContextNodesHashRef.current = null;
-        } else if (!sourceNodesChangedThisRender) {
-          return;
+      const pendingSync = pendingContextNodesSyncRef.current;
+      if (pendingSync) {
+        if (sourceNodesHash === pendingSync.hash) {
+          pendingContextNodesSyncRef.current = null;
         } else {
-          pendingContextNodesHashRef.current = null;
+          return;
         }
       }
     }
     if (sourceNodesHash === contextNodesHash) return;
-    actions.setNodes(nodes);
+    actions.setNodes(nodes, {
+      reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
+      source: 'state_bridge.source_to_context.nodes',
+      allowNodeCountDecrease: sourcePathChangedThisRender || sourceNodesChangedThisRender,
+    });
   }, [
     actions,
     contextNodesHash,
@@ -267,23 +262,25 @@ export function useStateBridgeGraph({
     onNodesChangeFromContext,
     sourceNodesChangedThisRender,
     sourceNodesHash,
+    sourcePathChangedThisRender,
   ]);
 
   useEffect(() => {
     if (onEdgesChangeFromContext) {
-      const pendingHash = pendingContextEdgesHashRef.current;
-      if (pendingHash) {
-        if (sourceEdgesHash === pendingHash) {
-          pendingContextEdgesHashRef.current = null;
-        } else if (!sourceEdgesChangedThisRender) {
-          return;
+      const pendingSync = pendingContextEdgesSyncRef.current;
+      if (pendingSync) {
+        if (sourceEdgesHash === pendingSync.hash) {
+          pendingContextEdgesSyncRef.current = null;
         } else {
-          pendingContextEdgesHashRef.current = null;
+          return;
         }
       }
     }
     if (sourceEdgesHash === contextEdgesHash) return;
-    actions.setEdges(edges);
+    actions.setEdges(edges, {
+      reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
+      source: 'state_bridge.source_to_context.edges',
+    });
   }, [
     actions,
     contextEdgesHash,
@@ -291,29 +288,44 @@ export function useStateBridgeGraph({
     onEdgesChangeFromContext,
     sourceEdgesChangedThisRender,
     sourceEdgesHash,
+    sourcePathChangedThisRender,
   ]);
 
   useLayoutEffect((): void => {
     if (!onNodesChangeFromContext) return;
-    if (skipNextContextNodesSyncRef.current) {
-      skipNextContextNodesSyncRef.current = false;
-      return;
-    }
     if (sourceNodesHash === contextNodesHash) return;
-    pendingContextNodesHashRef.current = contextNodesHash;
+    const pendingSync = pendingContextNodesSyncRef.current;
+    if (pendingSync && pendingSync.hash === contextNodesHash) return;
+    pendingContextNodesSyncRef.current = {
+      hash: contextNodesHash,
+      revision: graphRevision,
+    };
     onNodesChangeFromContext(contextNodes);
-  }, [contextNodes, contextNodesHash, onNodesChangeFromContext, sourceNodesHash]);
+  }, [
+    contextNodes,
+    contextNodesHash,
+    graphRevision,
+    onNodesChangeFromContext,
+    sourceNodesHash,
+  ]);
 
   useLayoutEffect((): void => {
     if (!onEdgesChangeFromContext) return;
-    if (skipNextContextEdgesSyncRef.current) {
-      skipNextContextEdgesSyncRef.current = false;
-      return;
-    }
     if (sourceEdgesHash === contextEdgesHash) return;
-    pendingContextEdgesHashRef.current = contextEdgesHash;
+    const pendingSync = pendingContextEdgesSyncRef.current;
+    if (pendingSync && pendingSync.hash === contextEdgesHash) return;
+    pendingContextEdgesSyncRef.current = {
+      hash: contextEdgesHash,
+      revision: graphRevision,
+    };
     onEdgesChangeFromContext(contextEdges);
-  }, [contextEdges, contextEdgesHash, onEdgesChangeFromContext, sourceEdgesHash]);
+  }, [
+    contextEdges,
+    contextEdgesHash,
+    graphRevision,
+    onEdgesChangeFromContext,
+    sourceEdgesHash,
+  ]);
 
   useEffect(() => {
     if (activePathId !== undefined) {

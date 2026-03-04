@@ -610,6 +610,9 @@ SCRAPER_GUARD_API_MAX=
 - Do not trust older notes that refer to root-level `app/`, `lib/`, or `types/`
   unless you verify the modern location.
 - Prefer feature `public.ts` / `server.ts` entrypoints from app-layer code.
+- Do not write transient diagnostics/log artifacts to the repository root.
+  Store files such as `tsc_errors.txt`, `test_results_final.txt`, and similar
+  one-off outputs under `tmp/gemini/` (create it if needed) for easy cleanup.
 - Expect mixed persistence behavior; do not assume Prisma-only or Mongo-only.
 - Expect Redis absence in local/dev and queue inline fallback behavior.
 - Check docs generation and architecture scripts when touching AI Paths,

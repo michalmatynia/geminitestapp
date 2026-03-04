@@ -69,6 +69,7 @@ export type CaseResolverWorkspaceRecordFetchResult =
       workspace: CaseResolverWorkspace;
       attemptKey: string;
       scope: 'light' | 'heavy';
+      source: 'resolved_v2' | 'resolved_legacy_migrated';
       durationMs: number;
     }
   | {
@@ -78,8 +79,13 @@ export type CaseResolverWorkspaceRecordFetchResult =
       message: string;
     }
   | {
+      status: 'no_record';
+      durationMs: number;
+      message: string;
+    }
+  | {
       status: 'unavailable';
-      reason: 'no_workspace_record' | 'transport_error' | 'budget_exhausted';
+      reason: 'transport_error' | 'budget_exhausted';
       durationMs: number;
       message: string;
     };

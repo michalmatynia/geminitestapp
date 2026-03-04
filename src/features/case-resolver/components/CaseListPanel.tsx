@@ -119,6 +119,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const {
     workspace,
     isLoading,
+    casesLoadState,
+    casesLoadMessage,
     setIsCreateCaseModalOpen,
     setCaseDraft,
     setEditingCaseId,
@@ -138,6 +140,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     caseShowNestedContent,
     setCaseShowNestedContent,
     handleSaveListViewDefaults,
+    handleRefreshWorkspace,
   } = useAdminCaseResolverCases();
   const {
     files,
@@ -152,7 +155,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const [isHierarchyLocked, setIsHierarchyLocked] = useState(true);
   const [isSavingDefaults, setIsSavingDefaults] = useState(false);
   const [treeSearchQuery, setTreeSearchQuery] = useState('');
-  const showLoadingSkeleton = isLoading;
+  const showLoadingSkeleton = isLoading || casesLoadState === 'loading';
 
   const handleSaveDefaults = useCallback(async (): Promise<void> => {
     setIsSavingDefaults(true);
@@ -653,6 +656,15 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       isLoading={false}
       contentClassName='space-y-3'
     >
+      {casesLoadState === 'recovered_from_legacy' ? (
+        <Card
+          variant='subtle'
+          padding='sm'
+          className='border-amber-300/30 bg-amber-500/10 text-xs text-amber-200'
+        >
+          Workspace recovered from legacy key and migrated to v2.
+        </Card>
+      ) : null}
       {isSearchActive ? (
         <CaseListSearchPanel
           workspace={workspace}
@@ -670,6 +682,60 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         />
       ) : showLoadingSkeleton ? (
         <CaseListLoadingSkeleton />
+      ) : casesLoadState === 'no_record' ? (
+        <Card
+          variant='subtle'
+          padding='lg'
+          className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+        >
+          <FolderOpen className='mb-4 size-10 text-muted-foreground/20' />
+          <p className='text-sm font-medium text-muted-foreground'>No workspace data found.</p>
+          <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
+            {casesLoadMessage || 'Case Resolver workspace key is missing.'}
+          </p>
+          <div className='mt-4 flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                void handleRefreshWorkspace();
+              }}
+            >
+              Retry
+            </Button>
+            <Button
+              variant='outline'
+              size='icon-lg'
+              aria-label='Create new case'
+              onClick={() => {
+                handleCreateCaseLocal(null);
+              }}
+            >
+              <PlusIcon className='h-6 w-6' />
+            </Button>
+          </div>
+        </Card>
+      ) : casesLoadState === 'unavailable' ? (
+        <Card
+          variant='subtle'
+          padding='lg'
+          className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
+        >
+          <p className='text-sm font-medium text-muted-foreground'>Could not load cases workspace.</p>
+          <p className='mt-2 max-w-xl text-xs text-muted-foreground/80'>
+            {casesLoadMessage || 'Retry loading workspace data.'}
+          </p>
+          <Button
+            variant='outline'
+            size='sm'
+            className='mt-4'
+            onClick={() => {
+              void handleRefreshWorkspace();
+            }}
+          >
+            Retry
+          </Button>
+        </Card>
       ) : files.length === 0 ? (
         <Card
           variant='subtle'
@@ -677,6 +743,11 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
         >
           <Folder className='mb-4 size-10 text-muted-foreground/20' />
+          {casesLoadState === 'recovered_from_legacy' ? (
+            <p className='mb-2 rounded-full border border-amber-300/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-amber-300'>
+              Recovered From Legacy Workspace
+            </p>
+          ) : null}
           <p className='text-sm text-muted-foreground'>No cases found. Create your first case.</p>
           <Button
             variant='outline'

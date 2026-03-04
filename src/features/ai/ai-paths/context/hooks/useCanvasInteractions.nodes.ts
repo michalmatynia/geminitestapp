@@ -18,6 +18,7 @@ import {
 } from './useCanvasInteractions.helpers';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 import type { Toast } from '@/shared/contracts/ui';
+import type { GraphMutationMeta } from '../GraphContext';
 
 export interface UseCanvasInteractionsNodesValue {
   handlePointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => Promise<void>;
@@ -87,7 +88,6 @@ export function useCanvasInteractionsNodes({
   selectedNodeId,
   selectedNodeIds,
   setNodes,
-  updateNode,
   removeNode,
   setNodeSelection,
   toggleNodeSelection,
@@ -118,8 +118,10 @@ export function useCanvasInteractionsNodes({
   selectedNodeIdSet: Set<string>;
   selectedNodeId: string | null;
   selectedNodeIds: string[];
-  setNodes: (nodes: AiNode[] | ((prev: AiNode[]) => AiNode[])) => void;
-  updateNode: (id: string, data: Partial<AiNode>) => void;
+  setNodes: (
+    nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   removeNode: (id: string) => void;
   setNodeSelection: (nodeIds: string[]) => void;
   toggleNodeSelection: (nodeId: string) => void;
@@ -143,7 +145,10 @@ export function useCanvasInteractionsNodes({
     onConfirm: () => void;
     onCancel?: () => void;
   }) => void;
-  setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void;
+  setEdges: (
+    edges: Edge[] | ((prev: Edge[]) => Edge[]),
+    mutationMeta?: GraphMutationMeta
+  ) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
   pruneRuntimeInputsInternal: (
     state: RuntimeState,
@@ -183,10 +188,21 @@ export function useCanvasInteractionsNodes({
     }
     if (pendingDragRef.current) {
       const { nodeId: id, x, y } = pendingDragRef.current;
-      updateNode(id, { position: { x, y } });
+      setNodes(
+        (prev: AiNode[]): AiNode[] =>
+          prev.map((item: AiNode): AiNode =>
+            item.id === id
+              ? {
+                  ...item,
+                  position: { x, y },
+                }
+              : item
+          ),
+        { reason: 'drag', source: 'canvas.drag.flush' }
+      );
       pendingDragRef.current = null;
     }
-  }, [updateNode]);
+  }, [setNodes]);
 
   const forceEndNodeDrag = useCallback(
     (pointerId?: number): void => {
@@ -399,16 +415,18 @@ export function useCanvasInteractionsNodes({
       if (dragSelection && dragSelection.basePositions.size > 1) {
         const deltaX = canvasX - dragSelection.anchorCanvasX;
         const deltaY = canvasY - dragSelection.anchorCanvasY;
-        setNodes((prev: AiNode[]): AiNode[] =>
-          prev.map((item: AiNode): AiNode => {
-            const base = dragSelection.basePositions.get(item.id);
-            if (!base) return item;
-            const clamped = clampNodePosition(base.x + deltaX, base.y + deltaY);
-            return {
-              ...item,
-              position: clamped,
-            };
-          })
+        setNodes(
+          (prev: AiNode[]): AiNode[] =>
+            prev.map((item: AiNode): AiNode => {
+              const base = dragSelection.basePositions.get(item.id);
+              if (!base) return item;
+              const clamped = clampNodePosition(base.x + deltaX, base.y + deltaY);
+              return {
+                ...item,
+                position: clamped,
+              };
+            }),
+          { reason: 'drag', source: 'canvas.drag.group' }
         );
         return;
       }
@@ -422,14 +440,25 @@ export function useCanvasInteractionsNodes({
         rafIdRef.current = requestAnimationFrame(() => {
           if (pendingDragRef.current) {
             const { nodeId: id, x, y } = pendingDragRef.current;
-            updateNode(id, { position: { x, y } });
+            setNodes(
+              (prev: AiNode[]): AiNode[] =>
+                prev.map((item: AiNode): AiNode =>
+                  item.id === id
+                    ? {
+                        ...item,
+                        position: { x, y },
+                      }
+                    : item
+                ),
+              { reason: 'drag', source: 'canvas.drag.raf' }
+            );
             pendingDragRef.current = null;
           }
           rafIdRef.current = null;
         });
       }
     },
-    [dragState, setNodes, startDrag, updateLastPointerCanvasPosFromClient, updateNode]
+    [dragState, setNodes, startDrag, updateLastPointerCanvasPosFromClient]
   );
 
   const handlePointerUpNode = useCallback(
@@ -546,8 +575,10 @@ export function useCanvasInteractionsNodes({
         if (isSingleNode && nodeIdsToDelete[0]) {
           removeNode(nodeIdsToDelete[0]);
         } else {
-          setNodes((prev: AiNode[]): AiNode[] =>
-            prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id))
+          setNodes(
+            (prev: AiNode[]): AiNode[] =>
+              prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id)),
+            { reason: 'delete', source: 'canvas.delete.multi', allowNodeCountDecrease: true }
           );
         }
 
@@ -558,7 +589,7 @@ export function useCanvasInteractionsNodes({
           (e) => !((e.from && nodeIdSet.has(e.from)) || (e.to && nodeIdSet.has(e.to)))
         );
 
-        setEdges(remainingEdges);
+        setEdges(remainingEdges, { reason: 'delete', source: 'canvas.delete.multi' });
         setRuntimeState((prev: RuntimeState) =>
           pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
         );
@@ -653,7 +684,10 @@ export function useCanvasInteractionsNodes({
         ...(mergedConfig ? { config: mergedConfig } : {}),
       };
 
-      setNodes((prev: AiNode[]) => [...prev, newNode]);
+      setNodes((prev: AiNode[]) => [...prev, newNode], {
+        reason: 'drop',
+        source: 'canvas.drop.palette',
+      });
       selectNode(newNodeId);
       setLastDrop(clamped);
       ensureNodeVisible(newNode);

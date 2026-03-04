@@ -466,8 +466,14 @@ export function useCaseResolverStateRequestedContext({
         return;
       }
 
-      if (refreshedWorkspaceResult.status === 'unavailable') {
-        if (refreshedWorkspaceResult.reason === 'budget_exhausted') {
+      if (
+        refreshedWorkspaceResult.status === 'unavailable' ||
+        refreshedWorkspaceResult.status === 'no_record'
+      ) {
+        if (
+          refreshedWorkspaceResult.status === 'unavailable' &&
+          refreshedWorkspaceResult.reason === 'budget_exhausted'
+        ) {
           logRequestedContextTransition('requested_context_fetch_budget_exhausted', {
             message: `Fetch chain exhausted budget before resolving context. ${refreshedWorkspaceResult.message}`,
             requestKey,
@@ -506,7 +512,11 @@ export function useCaseResolverStateRequestedContext({
               `store_fetching=${isStoreFetching ? 'true' : 'false'}`,
               `store_has_requested=${storeWorkspaceHasRequestedFile ? 'true' : 'false'}`,
               `prompt_return_flow=${isPromptExploderReturnFlow ? 'true' : 'false'}`,
-              `refresh_reason=${refreshedWorkspaceResult.reason}`,
+              `refresh_reason=${
+                refreshedWorkspaceResult.status === 'unavailable'
+                  ? refreshedWorkspaceResult.reason
+                  : refreshedWorkspaceResult.status
+              }`,
             ].join(' '),
             requestKey,
             resolvedVia: 'snapshot_fetch',

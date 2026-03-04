@@ -44,6 +44,13 @@ export type CaseResolverCaseListConfirmationState = {
   isDangerous?: boolean;
 } | null;
 
+export type CaseResolverCasesLoadState =
+  | 'loading'
+  | 'ready'
+  | 'no_record'
+  | 'unavailable'
+  | 'recovered_from_legacy';
+
 export type AdminCaseResolverCasesContextValue = {
   // State
   workspace: CaseResolverWorkspace;
@@ -147,4 +154,6 @@ export type AdminCaseResolverCasesContextValue = {
   caseIdentifierOptions: Array<{ value: string; label: string }>;
   folderOptions: Array<{ value: string; label: string }>;
   isLoading: boolean;
+  casesLoadState: CaseResolverCasesLoadState;
+  casesLoadMessage: string | null;
 };

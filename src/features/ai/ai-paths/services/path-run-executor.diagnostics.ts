@@ -10,6 +10,13 @@ export type BlockedNodeDiagnostic = {
   waitingOnPorts: string[];
 };
 
+export type FailedNodeDiagnostic = {
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  message: string | null;
+};
+
 export const normalizePortList = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   return value
@@ -68,6 +75,48 @@ export const buildBlockedRunFailureMessage = (blockedNodes: BlockedNodeDiagnosti
       ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
       : '';
   return `Run blocked by ${title}${waiting}${suffix}.`;
+};
+
+export const collectFailedNodeDiagnostics = (
+  nodes: AiNode[],
+  outputs: Record<string, RuntimePortValues> | undefined
+): FailedNodeDiagnostic[] => {
+  if (!outputs) return [];
+  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode) => [node.id, node]));
+  return Object.entries(outputs)
+    .map(([nodeId, value]): FailedNodeDiagnostic | null => {
+      const status =
+        typeof value?.['status'] === 'string' ? value['status'].trim().toLowerCase() : '';
+      if (status !== 'failed') return null;
+      const node = nodeById.get(nodeId);
+      const message =
+        typeof value?.['error'] === 'string' && value['error'].trim().length > 0
+          ? value['error'].trim()
+          : typeof value?.['message'] === 'string' && value['message'].trim().length > 0
+            ? value['message'].trim()
+            : null;
+      return {
+        nodeId,
+        nodeType: node?.type ?? 'unknown',
+        nodeTitle: node?.title ?? null,
+        message,
+      };
+    })
+    .filter((entry: FailedNodeDiagnostic | null): entry is FailedNodeDiagnostic => Boolean(entry));
+};
+
+export const buildFailedRunFailureMessage = (failedNodes: FailedNodeDiagnostic[]): string => {
+  const [first] = failedNodes;
+  if (!first) {
+    return 'Run failed: one or more required processing nodes failed.';
+  }
+  const title = first.nodeTitle ?? first.nodeId;
+  const detail = first.message ? ` (${first.message})` : '';
+  const suffix =
+    failedNodes.length > 1
+      ? ` (+${failedNodes.length - 1} more failed node${failedNodes.length === 2 ? '' : 's'})`
+      : '';
+  return `Run failed at ${title}${detail}${suffix}.`;
 };
 
 export const shouldFailBlockedRun = (args: {

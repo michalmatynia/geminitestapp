@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeGridTemplates } from '@/features/cms/components/page-builder/grid-templates';
-import { normalizeSectionTemplates } from '@/features/cms/components/page-builder/section-template-store';
+import {
+  GRID_TEMPLATE_SETTINGS_KEY,
+  normalizeGridTemplates,
+} from '@/features/cms/components/page-builder/grid-templates';
+import {
+  SECTION_TEMPLATE_SETTINGS_KEY,
+  normalizeSectionTemplates,
+} from '@/features/cms/components/page-builder/section-template-store';
 
 const baseSection = {
   id: 'section-1',
@@ -13,6 +19,11 @@ const baseSection = {
 };
 
 describe('page-builder template stores', () => {
+  it('uses canonical v2 settings keys', () => {
+    expect(SECTION_TEMPLATE_SETTINGS_KEY).toBe('cms_section_templates.v2');
+    expect(GRID_TEMPLATE_SETTINGS_KEY).toBe('cms_grid_templates.v2');
+  });
+
   it('keeps only canonical section template records', () => {
     const templates = normalizeSectionTemplates([
       {

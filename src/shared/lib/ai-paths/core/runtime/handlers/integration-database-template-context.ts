@@ -63,6 +63,22 @@ const formatCollectionSchema = (
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
+const isCollectionSchema = (value: unknown): value is CollectionSchema => {
+  const record = toRecord(value);
+  return Boolean(record && typeof record['name'] === 'string' && Array.isArray(record['fields']));
+};
+
+const resolveCollectionList = (value: unknown): CollectionSchema[] => {
+  if (Array.isArray(value)) {
+    return value.filter((entry: unknown): entry is CollectionSchema => isCollectionSchema(entry));
+  }
+  const record = toRecord(value);
+  if (!record) return [];
+  return Object.values(record).filter((entry: unknown): entry is CollectionSchema =>
+    isCollectionSchema(entry)
+  );
+};
+
 const normalizeRuntimeEntityType = (value: string | null | undefined): string => {
   const normalized = normalizeNonEmptyString(value)?.toLowerCase() ?? '';
   if (normalized === 'products') return 'product';
@@ -205,14 +221,7 @@ export function prepareDatabaseTemplateContext({
   DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
     placeholderContext[`DB Provider: ${provider}`] = provider;
   });
-  const collectionsRaw = schemaData?.collections
-    ? Array.isArray(schemaData.collections)
-      ? schemaData.collections
-      : Object.values(schemaData.collections)
-    : [];
-  const collections: CollectionSchema[] = Array.from(
-    collectionsRaw as unknown as CollectionSchema[]
-  );
+  const collections = resolveCollectionList(schemaData?.collections);
   if (collections.length) {
     collections.forEach((collection: CollectionSchema) => {
       const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);

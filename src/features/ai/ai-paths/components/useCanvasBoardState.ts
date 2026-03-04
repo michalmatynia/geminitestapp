@@ -10,7 +10,11 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
-import type { AiNode, PathFlowIntensity } from '@/shared/lib/ai-paths';
+import {
+  evaluateRunPreflight,
+  type AiNode,
+  type PathFlowIntensity,
+} from '@/shared/lib/ai-paths';
 import {
   MINIMAP_VISIBILITY_STORAGE_KEY,
   type SvgConnectorTooltipState,
@@ -19,7 +23,11 @@ import {
   mergeRuntimePayload,
 } from './CanvasBoard.utils';
 import { buildConnectorInfo, type ConnectorInfo } from './canvas-board-connectors';
-import { type CanvasBoardState, type UseCanvasBoardStateProps } from './CanvasBoard.types';
+import {
+  type CanvasBoardState,
+  type TriggerPreflightHint,
+  type UseCanvasBoardStateProps,
+} from './CanvasBoard.types';
 
 export function useCanvasBoardState({
   confirmNodeSwitch,
@@ -275,6 +283,65 @@ export function useCanvasBoardState({
     [graphState.edges, getNodeRuntimeData, getPortValue, nodeById]
   );
 
+  const triggerPreflightById = React.useMemo((): ReadonlyMap<string, TriggerPreflightHint> => {
+    const next = new Map<string, TriggerPreflightHint>();
+    const triggerNodes = graphState.nodes.filter(
+      (node: AiNode): boolean => node.type === 'trigger'
+    );
+    if (triggerNodes.length === 0) return next;
+
+    triggerNodes.forEach((triggerNode: AiNode) => {
+      const preflight = evaluateRunPreflight({
+        nodes: graphState.nodes,
+        edges: graphState.edges,
+        aiPathsValidation: graphState.aiPathsValidation,
+        strictFlowMode: graphState.strictFlowMode,
+        triggerNodeId: triggerNode.id,
+        runtimeState: runtimeStateContext.runtimeState,
+        parserSamples: runtimeStateContext.parserSamples,
+        updaterSamples: runtimeStateContext.updaterSamples,
+        mode: 'full',
+      });
+      if (!preflight.shouldBlock) return;
+
+      let blockedMessage = preflight.blockMessage?.trim() ?? '';
+      if (preflight.blockReason === 'compile') {
+        const compileError = preflight.compileReport.findings.find(
+          (finding): boolean => finding.severity === 'error'
+        );
+        if (compileError?.message?.trim()) {
+          blockedMessage = compileError.message.trim();
+        }
+      }
+      if (preflight.blockReason === 'data_contract') {
+        const contractIssue = preflight.dataContractReport.issues.find(
+          (issue): boolean => issue.severity === 'error'
+        );
+        if (contractIssue?.message?.trim()) {
+          blockedMessage = contractIssue.message.trim();
+        }
+      }
+      if (!blockedMessage) {
+        blockedMessage = 'Run blocked by preflight checks. Fix wiring before firing trigger.';
+      }
+
+      next.set(triggerNode.id, {
+        blockedMessage,
+        blockReason: preflight.blockReason,
+      });
+    });
+
+    return next;
+  }, [
+    graphState.aiPathsValidation,
+    graphState.edges,
+    graphState.nodes,
+    graphState.strictFlowMode,
+    runtimeStateContext.parserSamples,
+    runtimeStateContext.runtimeState,
+    runtimeStateContext.updaterSamples,
+  ]);
+
   return {
     view: canvasState.view,
     panState: canvasState.panState,
@@ -292,6 +359,7 @@ export function useCanvasBoardState({
     runtimeEvents: runtimeStateContext.runtimeEvents,
     runtimeRunStatus: runtimeStateContext.runtimeRunStatus,
     nodeDurations: runtimeStateContext.nodeDurations,
+    triggerPreflightById,
     fireTrigger: runtimeActions.fireTrigger,
     selectedNodeId: selectionState.selectedNodeId,
     selectedNodeIds: selectionState.selectedNodeIds,

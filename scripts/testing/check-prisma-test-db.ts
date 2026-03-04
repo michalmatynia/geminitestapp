@@ -1,4 +1,8 @@
+import 'dotenv/config';
+
+import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
 
 const REQUIRED_MODELS = [
   'page',
@@ -49,45 +53,51 @@ async function main(): Promise<void> {
   process.env['INTEGRATION_DB_PROVIDER'] = 'prisma';
   process.env['AUTH_DB_PROVIDER'] = 'prisma';
 
-  const prisma = new PrismaClient();
+  const pool = new Pool({ connectionString: process.env['DATABASE_URL'] });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
 
   try {
-    await prisma.$queryRaw`SELECT 1`;
-  } catch (error) {
-    fail(
-      `Cannot reach Prisma test database. ${(error as Error)?.message ?? 'Unknown connection error.'}`
-    );
-  }
-
-  const missingDelegates: string[] = [];
-  for (const model of REQUIRED_MODELS) {
-    if (!getDelegate(prisma, model)) {
-      missingDelegates.push(model);
-    }
-  }
-  if (missingDelegates.length > 0) {
-    fail(
-      `Prisma client is missing required delegates: ${missingDelegates.join(', ')}. Run prisma generate or align the schema before running integration-prisma tests.`
-    );
-  }
-
-  for (const model of REQUIRED_MODELS) {
-    const delegate = getDelegate(prisma, model);
-    if (!delegate) continue;
     try {
-      await delegate.findFirst({ select: { id: true } });
+      await prisma.$queryRaw`SELECT 1`;
     } catch (error) {
-      if (isPrismaAvailabilityError(error)) {
-        fail(
-          `Prisma model "${model}" is not available in the connected database (${(error as Error).message}). Run migrations/db push and retry.`
-        );
-      }
-      throw error;
+      fail(
+        `Cannot reach Prisma test database. ${(error as Error)?.message ?? 'Unknown connection error.'}`
+      );
     }
-  }
 
-  console.log('[preflight:prisma] Database connectivity and required model probes passed.');
-  await prisma.$disconnect();
+    const missingDelegates: string[] = [];
+    for (const model of REQUIRED_MODELS) {
+      if (!getDelegate(prisma, model)) {
+        missingDelegates.push(model);
+      }
+    }
+    if (missingDelegates.length > 0) {
+      fail(
+        `Prisma client is missing required delegates: ${missingDelegates.join(', ')}. Run prisma generate or align the schema before running integration-prisma tests.`
+      );
+    }
+
+    for (const model of REQUIRED_MODELS) {
+      const delegate = getDelegate(prisma, model);
+      if (!delegate) continue;
+      try {
+        await delegate.findFirst({ select: { id: true } });
+      } catch (error) {
+        if (isPrismaAvailabilityError(error)) {
+          fail(
+            `Prisma model "${model}" is not available in the connected database (${(error as Error).message}). Run migrations/db push and retry.`
+          );
+        }
+        throw error;
+      }
+    }
+
+    console.log('[preflight:prisma] Database connectivity and required model probes passed.');
+  } finally {
+    await prisma.$disconnect().catch(() => undefined);
+    await pool.end().catch(() => undefined);
+  }
 }
 
 main().catch(async (error: unknown) => {

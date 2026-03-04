@@ -56,7 +56,10 @@ export interface ServerExecutionArgs {
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
   settleTransientNodeStatuses: (
     terminalStatus: 'completed' | 'failed' | 'canceled',
-    currentOutputs?: Record<string, unknown>
+    currentOutputs?: Record<string, unknown>,
+    options?: {
+      settleQueued?: boolean;
+    }
   ) => void;
   setRunStatus: (status: RunStatus) => void;
   setLastRunAt: (at: string | null) => void;
@@ -112,7 +115,10 @@ export interface LocalExecutionArgs {
   setLastRunAt: (at: string | null) => void;
   settleTransientNodeStatuses: (
     terminalStatus: 'completed' | 'failed' | 'canceled',
-    currentOutputs?: Record<string, unknown>
+    currentOutputs?: Record<string, unknown>,
+    options?: {
+      settleQueued?: boolean;
+    }
   ) => void;
   resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
   normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;

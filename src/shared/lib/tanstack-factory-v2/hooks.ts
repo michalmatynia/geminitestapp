@@ -33,24 +33,24 @@ import { emitFactoryTelemetry, withQueryKeyMeta } from './telemetry';
 import { applyQueryRuntimeGuards } from './guards';
 import { invokeQueryFactoryFn } from './executors';
 
-export function useTelemetrizedQueryFn<
+const createTelemetrizedQueryFnInternal = <
   TQueryFnData,
   TError,
   TQueryKey extends QueryKey,
   TPageParam = never,
 >(
-  config: {
+    config: {
     meta: TanstackFactoryMeta;
     queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
     telemetryContext?: Record<string, unknown> | undefined;
     transformError?: (error: unknown) => TError;
     entity?: 'query' | 'query-batch';
   },
-  normalizedQueryKey: TQueryKey
-): (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData> {
+    normalizedQueryKey: TQueryKey,
+    attemptRef: { current: number }
+  ): (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData> => {
   const { meta, queryFn, telemetryContext, transformError, entity = 'query' } = config;
   const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
-  const attemptRef = useRef(0);
 
   return async (context: QueryFunctionContext<TQueryKey, TPageParam>): Promise<TQueryFnData> => {
     const attempt = attemptRef.current + 1;
@@ -104,6 +104,24 @@ export function useTelemetrizedQueryFn<
       throw finalError;
     }
   };
+};
+
+export function useTelemetrizedQueryFn<
+  TQueryFnData,
+  TError,
+  TQueryKey extends QueryKey,
+  TPageParam = never,
+>(
+  config: {
+    meta: TanstackFactoryMeta;
+    queryFn: (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData>;
+    telemetryContext?: Record<string, unknown> | undefined;
+    transformError?: (error: unknown) => TError;
+    entity?: 'query' | 'query-batch';
+  },
+  normalizedQueryKey: TQueryKey
+): (context: QueryFunctionContext<TQueryKey, TPageParam>) => Promise<TQueryFnData> {
+  return createTelemetrizedQueryFnInternal(config, normalizedQueryKey, useRef(0));
 }
 
 export function useTelemetrizedMultiQueryOptionsV2<
@@ -122,7 +140,7 @@ export function useTelemetrizedMultiQueryOptionsV2<
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
   const guardedOptions = applyQueryRuntimeGuards(options);
-  const telemetrizedQueryFn = useTelemetrizedQueryFn(
+  const telemetrizedQueryFn = createTelemetrizedQueryFnInternal(
     {
       meta,
       queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
@@ -130,7 +148,8 @@ export function useTelemetrizedMultiQueryOptionsV2<
       transformError,
       entity: 'query-batch',
     },
-    normalizedQueryKey
+    normalizedQueryKey,
+    { current: 0 }
   );
 
   return {
@@ -160,7 +179,7 @@ export function useTelemetrizedSuspenseMultiQueryOptionsV2<
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
   const guardedOptions = applyQueryRuntimeGuards(options as any);
-  const telemetrizedQueryFn = useTelemetrizedQueryFn(
+  const telemetrizedQueryFn = createTelemetrizedQueryFnInternal(
     {
       meta,
       queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
@@ -168,7 +187,8 @@ export function useTelemetrizedSuspenseMultiQueryOptionsV2<
       transformError,
       entity: 'query-batch',
     },
-    normalizedQueryKey
+    normalizedQueryKey,
+    { current: 0 }
   );
 
   return {

@@ -42,16 +42,14 @@ describe('base-token-resolver', () => {
     expect(resolved.error).toContain('Legacy password token fallback is disabled');
   });
 
-  it('accepts plaintext token for legacy/plain storage', () => {
+  it('rejects plaintext token storage and requires encrypted canonical token', () => {
     const resolved = resolveBaseConnectionToken({
       baseApiToken: 'plain-token',
     });
 
-    expect(resolved).toEqual({
-      token: 'plain-token',
-      source: 'baseApiToken',
-      error: null,
-    });
+    expect(resolved.token).toBeNull();
+    expect(resolved.source).toBeNull();
+    expect(resolved.error).toContain('is not encrypted');
   });
 
   it('returns actionable error for undecryptable encrypted-like token', () => {

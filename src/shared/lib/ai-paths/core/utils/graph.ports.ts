@@ -8,10 +8,6 @@ export const getPortOffsetY = (index: number, _totalPorts: number): number => {
 
 export const normalizePortName = (port: string): string => {
   const trimmed = typeof port === 'string' ? port.trim() : '';
-  const normalized = trimmed.toLowerCase();
-  if (normalized === 'productjson') return 'entityJson';
-  if (normalized === 'simulation') return 'context';
-  if (normalized === 'text') return 'value';
   return trimmed;
 };
 
@@ -31,7 +27,7 @@ export const isValidConnection = (
   if (
     to.type === 'trigger' &&
     toPort === 'context' &&
-    (from.type !== 'simulation' || (fromPort !== 'context' && fromPort !== 'simulation'))
+    (from.type !== 'simulation' || fromPort !== 'context')
   ) {
     return false;
   }

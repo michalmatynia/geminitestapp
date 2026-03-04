@@ -22,8 +22,6 @@ export * from './tradera-listing/categories';
 
 import {
   isTraderaApiIntegrationSlug,
-  isTraderaBrowserIntegrationSlug,
-  isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
@@ -108,12 +106,9 @@ export const runTraderaListing = async (
 
     const systemSettings = await loadTraderaSystemSettings();
     const integrationSlug = integration.slug;
-    const preferApi = toTruthyBoolean(process.env['TRADERA_PREFER_API'], false);
-    const useApi =
-      isTraderaApiIntegrationSlug(integrationSlug) ||
-      (isTraderaIntegrationSlug(integrationSlug) && preferApi);
+    const useApi = isTraderaApiIntegrationSlug(integrationSlug);
 
-    if (useApi && !isTraderaBrowserIntegrationSlug(integrationSlug)) {
+    if (useApi) {
       const result = await runTraderaApiListing({ listing: listing as any, connection });
       const settings = resolveEffectiveListingSettings(listing as any, connection, systemSettings);
       const expiresAt = resolveExpiry(settings.durationHours);

@@ -17,7 +17,7 @@ export const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord
 ): TraderaApiCredentials => {
   const appId = toPositiveInt(connection.traderaApiAppId);
-  const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
+  const userId = toPositiveInt(connection.traderaApiUserId);
   const appKey = connection.traderaApiAppKey
     ? decryptSecret(connection.traderaApiAppKey).trim()
     : '';

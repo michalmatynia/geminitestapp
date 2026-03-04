@@ -1,7 +1,7 @@
 import type { SectionInstance } from '../../types/page-builder';
 import { cmsSectionInstanceSchema } from '@/shared/contracts/cms';
 
-export const SECTION_TEMPLATE_SETTINGS_KEY = 'cms_section_templates.v1';
+export const SECTION_TEMPLATE_SETTINGS_KEY = 'cms_section_templates.v2';
 
 export type SectionTemplateRecord = {
   id: string;

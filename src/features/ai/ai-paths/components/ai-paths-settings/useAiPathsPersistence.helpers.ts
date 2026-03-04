@@ -7,6 +7,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
+  stableStringify,
 } from '@/shared/lib/ai-paths';
 
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
@@ -78,6 +79,18 @@ export const resolvePathSaveBlockedMessage = (
   }
   // Deactivated paths are excluded from runs, but should remain editable/savable.
   return null;
+};
+
+const RAW_PATH_SAVE_MESSAGE_PATTERNS = [
+  /ai path config contains/i,
+  /invalid ai paths runtime state payload/i,
+  /^invalid payload\b/i,
+] as const;
+
+export const shouldExposePathSaveRawMessage = (rawMessage: string): boolean => {
+  const normalized = rawMessage.trim();
+  if (!normalized) return false;
+  return RAW_PATH_SAVE_MESSAGE_PATTERNS.some((pattern) => pattern.test(normalized));
 };
 
 export type PathNodeRoleLintResult = {
@@ -162,6 +175,74 @@ export const collectInvalidPathSavePayloadIssues = (
     path: formatIssuePath(issue.path),
     message: issue.message,
   }));
+};
+
+export type PersistedNodeConfigMismatch = {
+  reason: 'expected_node_missing' | 'persisted_node_missing' | 'config_mismatch';
+  expectedNodeId: string;
+  resolvedExpectedNodeId: string | null;
+  persistedNodeId: string | null;
+};
+
+const hasSameNodeSignature = (left: AiNode, right: AiNode): boolean =>
+  left.type === right.type &&
+  left.title === right.title &&
+  Number(left.position?.x ?? Number.NaN) === Number(right.position?.x ?? Number.NaN) &&
+  Number(left.position?.y ?? Number.NaN) === Number(right.position?.y ?? Number.NaN);
+
+const findNodeBySignature = (candidates: AiNode[], needle: AiNode): AiNode | undefined =>
+  candidates.find((node: AiNode): boolean => hasSameNodeSignature(node, needle));
+
+export const resolvePersistedNodeConfigMismatch = (args: {
+  expectedNode: AiNode;
+  expectedConfig: PathConfig;
+  persistedConfig: PathConfig;
+}): PersistedNodeConfigMismatch | null => {
+  const expectedNodes = Array.isArray(args.expectedConfig.nodes) ? args.expectedConfig.nodes : [];
+  const persistedNodes = Array.isArray(args.persistedConfig.nodes)
+    ? args.persistedConfig.nodes
+    : [];
+  const expectedNodeIndex = expectedNodes.findIndex(
+    (node: AiNode): boolean => node.id === args.expectedNode.id
+  );
+  const expectedNodeByIndex = expectedNodeIndex >= 0 ? expectedNodes[expectedNodeIndex] : undefined;
+  const resolvedExpectedNode =
+    expectedNodes.find((node: AiNode): boolean => node.id === args.expectedNode.id) ??
+    (expectedNodeByIndex?.type === args.expectedNode.type ? expectedNodeByIndex : undefined) ??
+    findNodeBySignature(expectedNodes, args.expectedNode);
+  if (!resolvedExpectedNode) {
+    return {
+      reason: 'expected_node_missing',
+      expectedNodeId: args.expectedNode.id,
+      resolvedExpectedNodeId: null,
+      persistedNodeId: null,
+    };
+  }
+
+  const persistedNode =
+    persistedNodes.find((node: AiNode): boolean => node.id === resolvedExpectedNode.id) ??
+    findNodeBySignature(persistedNodes, resolvedExpectedNode);
+  if (!persistedNode) {
+    return {
+      reason: 'persisted_node_missing',
+      expectedNodeId: args.expectedNode.id,
+      resolvedExpectedNodeId: resolvedExpectedNode.id,
+      persistedNodeId: null,
+    };
+  }
+
+  const expectedConfigHash = stableStringify(resolvedExpectedNode.config ?? null);
+  const persistedConfigHash = stableStringify(persistedNode.config ?? null);
+  if (expectedConfigHash === persistedConfigHash) {
+    return null;
+  }
+
+  return {
+    reason: 'config_mismatch',
+    expectedNodeId: args.expectedNode.id,
+    resolvedExpectedNodeId: resolvedExpectedNode.id,
+    persistedNodeId: persistedNode.id,
+  };
 };
 
 export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {

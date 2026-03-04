@@ -8,8 +8,24 @@ import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from '@/shared/ui';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
+
+const isCollectionSchema = (value: unknown): value is CollectionSchema =>
+  isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
+
+const resolveCollectionList = (value: unknown): CollectionSchema[] => {
+  if (Array.isArray(value)) {
+    return value.filter((entry: unknown): entry is CollectionSchema => isCollectionSchema(entry));
+  }
+  if (isObjectRecord(value)) {
+    return Object.values(value).filter((entry: unknown): entry is CollectionSchema =>
+      isCollectionSchema(entry)
+    );
+  }
+  return [];
+};
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
@@ -20,28 +36,16 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   };
 
   if (schema.provider === 'multi') {
-    const collectionsRaw = Array.isArray(schema.collections)
-      ? schema.collections
-      : Object.values(schema.collections ?? {});
-    const collections: CollectionSchema[] = Array.from(
-      collectionsRaw as unknown as CollectionSchema[]
-    );
+    const collections = resolveCollectionList(schema.collections);
     if (collections.length) {
       return collections.map((collection) => stripUndefinedProvider(collection));
     }
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
-      const source = schema.sources?.[provider] as
-        | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
-        | null
-        | undefined;
-      if (!source?.collections) return;
-      const sourceCollectionsRaw = Array.isArray(source.collections)
-        ? source.collections
-        : Object.values(source.collections);
-      const sourceCollections: CollectionSchema[] = Array.from(
-        sourceCollectionsRaw as unknown as CollectionSchema[]
-      );
+      const sources = isObjectRecord(schema.sources) ? schema.sources : null;
+      const source = sources ? sources[provider] : null;
+      if (!isObjectRecord(source)) return;
+      const sourceCollections = resolveCollectionList(source['collections']);
       if (!sourceCollections.length) return;
       sourceCollections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
@@ -51,12 +55,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   }
 
   const provider = schema.provider as 'mongodb' | 'prisma';
-  const baseCollectionsRaw = Array.isArray(schema.collections)
-    ? schema.collections
-    : Object.values(schema.collections ?? {});
-  const baseCollections: CollectionSchema[] = Array.from(
-    baseCollectionsRaw as unknown as CollectionSchema[]
-  );
+  const baseCollections = resolveCollectionList(schema.collections);
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,

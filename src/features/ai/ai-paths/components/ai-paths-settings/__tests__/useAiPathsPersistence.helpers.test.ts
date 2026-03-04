@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 
-import { collectInvalidPathSavePayloadIssues } from '../useAiPathsPersistence.helpers';
+import {
+  collectInvalidPathSavePayloadIssues,
+  resolvePersistedNodeConfigMismatch,
+  shouldExposePathSaveRawMessage,
+} from '../useAiPathsPersistence.helpers';
 import { pruneSingleCardinalityIncomingEdges } from '../edge-cardinality-repair';
 
 describe('collectInvalidPathSavePayloadIssues', () => {
@@ -32,6 +36,22 @@ describe('collectInvalidPathSavePayloadIssues', () => {
         }),
       ])
     );
+  });
+});
+
+describe('shouldExposePathSaveRawMessage', () => {
+  it('exposes canonical path contract errors only', () => {
+    expect(shouldExposePathSaveRawMessage('AI Path config contains invalid or non-canonical edges.')).toBe(true);
+    expect(shouldExposePathSaveRawMessage('Invalid AI Paths runtime state payload.')).toBe(true);
+    expect(shouldExposePathSaveRawMessage('Invalid payload')).toBe(true);
+  });
+
+  it('keeps generic save errors hidden behind fallback messaging', () => {
+    expect(shouldExposePathSaveRawMessage('Failed to update AI Paths settings (500)')).toBe(false);
+    expect(
+      shouldExposePathSaveRawMessage('Agent persona settings contain deprecated AI snapshot keys.')
+    ).toBe(false);
+    expect(shouldExposePathSaveRawMessage('')).toBe(false);
   });
 });
 
@@ -135,5 +155,60 @@ describe('pruneSingleCardinalityIncomingEdges', () => {
 
     expect(repaired.edges).toHaveLength(2);
     expect(repaired.removedEdges).toHaveLength(0);
+  });
+});
+
+describe('resolvePersistedNodeConfigMismatch', () => {
+  it('returns null when the saved node config matches the expected config', () => {
+    const config = createDefaultPathConfig('node_save_match');
+    const expectedNode = config.nodes[0] as AiNode;
+    const mismatch = resolvePersistedNodeConfigMismatch({
+      expectedNode,
+      expectedConfig: config,
+      persistedConfig: config,
+    });
+    expect(mismatch).toBeNull();
+  });
+
+  it('reports persisted_node_missing when expected node cannot be found after save', () => {
+    const config = createDefaultPathConfig('node_save_missing');
+    const expectedNode = config.nodes[0] as AiNode;
+    const persistedConfig = {
+      ...config,
+      nodes: config.nodes.filter((node: AiNode): boolean => node.id !== expectedNode.id),
+    };
+    const mismatch = resolvePersistedNodeConfigMismatch({
+      expectedNode,
+      expectedConfig: config,
+      persistedConfig,
+    });
+    expect(mismatch).toEqual(
+      expect.objectContaining({
+        reason: 'persisted_node_missing',
+        expectedNodeId: expectedNode.id,
+      })
+    );
+  });
+
+  it('reports config_mismatch when node exists but config payload differs', () => {
+    const config = createDefaultPathConfig('node_save_mismatch');
+    const expectedNode = config.nodes[0] as AiNode;
+    const persistedConfig = {
+      ...config,
+      nodes: config.nodes.map((node: AiNode): AiNode =>
+        node.id === expectedNode.id ? ({ ...node, config: { constant: { value: 'changed' } } } as AiNode) : node
+      ),
+    };
+    const mismatch = resolvePersistedNodeConfigMismatch({
+      expectedNode,
+      expectedConfig: config,
+      persistedConfig,
+    });
+    expect(mismatch).toEqual(
+      expect.objectContaining({
+        reason: 'config_mismatch',
+        expectedNodeId: expectedNode.id,
+      })
+    );
   });
 });

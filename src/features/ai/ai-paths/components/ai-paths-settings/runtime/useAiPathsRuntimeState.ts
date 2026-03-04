@@ -175,8 +175,12 @@ export function useAiPathsRuntimeState() {
   const settleTransientNodeStatuses = useCallback(
     (
       terminalStatus: 'completed' | 'failed' | 'canceled',
-      currentOutputs: Record<string, unknown> = {}
+      currentOutputs: Record<string, unknown> = {},
+      options?: {
+        settleQueued?: boolean;
+      }
     ): void => {
+      const settleQueued = options?.settleQueued === true;
       const currentStatuses = runtimeNodeStatusesRef.current;
       const nextStatuses: AiPathRuntimeNodeStatusMap = { ...currentStatuses };
       const candidateNodeIds = new Set<string>([
@@ -188,7 +192,13 @@ export function useAiPathsRuntimeState() {
         const outputStatus = ((currentOutputs[nodeId] ?? {}) as Record<string, unknown>)['status'];
         const normalizedStatus = normalizeNodeStatus(nextStatuses[nodeId] ?? outputStatus);
         if (!normalizedStatus) return;
-        if (NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus)) return;
+        const isNonSettledStatus = NON_SETTLED_RUNTIME_NODE_STATUSES.has(normalizedStatus);
+        if (
+          isNonSettledStatus &&
+          !(settleQueued && normalizedStatus === 'queued')
+        ) {
+          return;
+        }
         if (nextStatuses[nodeId] === terminalStatus) return;
         nextStatuses[nodeId] = terminalStatus;
         changed = true;

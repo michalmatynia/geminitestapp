@@ -174,7 +174,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           message: `Node ${triggerNode.title ?? triggerNode.id} failed before enqueue.`,
           metadata: { error: message },
         });
-        args.settleTransientNodeStatuses('failed');
+        args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
         args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         return;
@@ -215,7 +215,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             nodePayloadIssues: nodePayloadIssues.slice(0, 5),
           },
         });
-        args.settleTransientNodeStatuses('failed');
+        args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
         args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();
@@ -275,7 +275,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             enqueuePayloadIssues: enqueuePayloadIssues.slice(0, 5),
           },
         });
-        args.settleTransientNodeStatuses('failed');
+        args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
         args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();
@@ -317,7 +317,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             enqueueSerializationIssues: enqueueSerializationIssues.slice(0, 5),
           },
         });
-        args.settleTransientNodeStatuses('failed');
+        args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
         args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();
@@ -365,7 +365,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               : `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
             metadata: { error: enqueueError },
           });
-          args.settleTransientNodeStatuses('failed');
+          args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
           args.setRunStatus('idle');
           args.toast(enqueueError, { variant: blocked ? 'warning' : 'error' });
           stopServerRunStream();
@@ -386,7 +386,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             level: 'error',
             message,
           });
-          args.settleTransientNodeStatuses('failed');
+          args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
           args.setRunStatus('idle');
           args.toast(message, { variant: 'error' });
           stopServerRunStream();
@@ -417,13 +417,13 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
         args.setNodeStatus({
           nodeId: triggerNode.id,
-          status: 'queued',
+          status: 'completed',
           source: 'server',
           nodeType: triggerNode.type,
           nodeTitle: triggerNode.title ?? null,
-          kind: 'node_status',
+          kind: 'node_finished',
           level: 'info',
-          message: `Node ${triggerNode.title ?? triggerNode.id} queued.`,
+          message: `Node ${triggerNode.title ?? triggerNode.id} completed.`,
         });
 
         if (runPayload?.runtimeState) {
@@ -507,11 +507,11 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             }));
           }
           if (terminalStatus === 'completed') {
-            args.settleTransientNodeStatuses('completed');
+            args.settleTransientNodeStatuses('completed', {}, { settleQueued: true });
           } else if (terminalStatus === 'canceled') {
-            args.settleTransientNodeStatuses('canceled');
+            args.settleTransientNodeStatuses('canceled', {}, { settleQueued: true });
           } else {
-            args.settleTransientNodeStatuses('failed');
+            args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
           }
           args.setRunStatus('idle');
           stopServerRunStream();
@@ -549,16 +549,6 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             }
             const runStatus = asString(run.status);
             if (runStatus === 'running') {
-              args.setNodeStatus({
-                nodeId: triggerNode.id,
-                status: 'running',
-                source: 'server',
-                nodeType: triggerNode.type,
-                nodeTitle: triggerNode.title ?? null,
-                kind: 'node_started',
-                level: 'info',
-                message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
-              });
               return;
             }
             if (!runStatus || !TERMINAL_RUN_STATUSES.has(runStatus as TerminalRunStatus)) {
@@ -848,7 +838,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           message: `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
           metadata: { error: message },
         });
-        args.settleTransientNodeStatuses('failed');
+        args.settleTransientNodeStatuses('failed', {}, { settleQueued: true });
         args.setRunStatus('idle');
         args.toast(message, { variant: 'error' });
         stopServerRunStream();

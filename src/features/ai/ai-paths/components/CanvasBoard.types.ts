@@ -6,6 +6,7 @@ import type {
   RuntimeState,
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
+  RunPreflightBlockReason,
 } from '@/shared/lib/ai-paths';
 import {
   type CanvasRendererMode,
@@ -24,6 +25,11 @@ import {
 } from '../context/CanvasContext';
 
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
+
+export type TriggerPreflightHint = {
+  blockedMessage: string;
+  blockReason: RunPreflightBlockReason;
+};
 
 export interface CanvasBoardState {
   // View State
@@ -54,6 +60,7 @@ export interface CanvasBoardState {
   runtimeEvents: AiPathRuntimeEvent[] | undefined;
   runtimeRunStatus: RuntimeRunStatus;
   nodeDurations: Record<string, number>;
+  triggerPreflightById?: ReadonlyMap<string, TriggerPreflightHint>;
 
   // Actions
   fireTrigger: (node: AiNode, event?: React.MouseEvent<Element>) => Promise<void>;

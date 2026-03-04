@@ -104,4 +104,63 @@ describe('handleFetcher', () => {
     expect((result['context'] as Record<string, unknown>)['entityJson']).toBeUndefined();
     expect((result['context'] as Record<string, unknown>)['product']).toBeUndefined();
   });
+
+  it('throws when simulation source mode cannot hydrate configured entity', async () => {
+    const fetchEntityCached = vi.fn(async () => null);
+    const node = buildNode({
+      config: {
+        fetcher: {
+          sourceMode: 'simulation_id',
+          entityType: 'product',
+          entityId: 'p-404',
+        },
+      },
+    });
+    const context = buildContext(
+      node,
+      {
+        trigger: true,
+      },
+      {
+        fetchEntityCached,
+        strictFlowMode: true,
+      }
+    );
+
+    await expect(handleFetcher(context)).rejects.toThrow(
+      'could not hydrate product:p-404'
+    );
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-404');
+  });
+
+  it('does not throw when live context mode cannot hydrate entity', async () => {
+    const fetchEntityCached = vi.fn(async () => null);
+    const node = buildNode({
+      config: {
+        fetcher: {
+          sourceMode: 'live_context',
+        },
+      },
+    });
+    const context = buildContext(
+      node,
+      {
+        trigger: true,
+        context: {
+          entityId: 'p-live',
+          entityType: 'product',
+        },
+      },
+      {
+        fetchEntityCached,
+        strictFlowMode: true,
+      }
+    );
+
+    const result = await handleFetcher(context);
+
+    expect(result['entityId']).toBe('p-live');
+    expect(result['entityType']).toBe('product');
+    expect(fetchEntityCached).toHaveBeenCalledWith('product', 'p-live');
+  });
 });

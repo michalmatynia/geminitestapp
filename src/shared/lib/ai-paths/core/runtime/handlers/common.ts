@@ -7,6 +7,7 @@ import type {
   LogicalConditionConfig,
   LogicalConditionOperator,
 } from '@/shared/contracts/ai-paths-core/nodes';
+import { logicalConditionConfigSchema } from '@/shared/contracts/ai-paths-core/nodes';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import { coerceInput, coerceInputArray, safeStringify } from '../../utils';
@@ -140,6 +141,13 @@ export const handleCompare: NodeHandler = ({
 
 type LogicalInputPort = 'value' | 'result' | 'context' | 'bundle';
 
+const normalizeLogicalInputPort = (value: unknown): LogicalInputPort => {
+  if (value === 'value' || value === 'result' || value === 'context' || value === 'bundle') {
+    return value;
+  }
+  return 'value';
+};
+
 const resolveLogicalConditionInput = (
   inputPort: LogicalInputPort,
   fieldPath: string | undefined,
@@ -206,14 +214,17 @@ export const handleLogicalCondition: NodeHandler = ({
   node,
   nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
-  const config = (node.config?.['logicalCondition'] ?? {
-    combinator: 'and',
-    conditions: [],
-  }) as unknown as LogicalConditionConfig;
+  const parsedConfig = logicalConditionConfigSchema.safeParse(node.config?.['logicalCondition']);
+  const config: LogicalConditionConfig = parsedConfig.success
+    ? parsedConfig.data
+    : {
+      combinator: 'and',
+      conditions: [],
+    };
   const { combinator, conditions: rawConditions } = config;
   const conditions = rawConditions ?? [];
 
-  const primaryPort = (conditions[0]?.inputPort as LogicalInputPort) ?? 'value';
+  const primaryPort = normalizeLogicalInputPort(conditions[0]?.inputPort);
   const primaryValue = coerceInput(nodeInputs[primaryPort]);
 
   if (!conditions || conditions.length === 0) {
@@ -227,7 +238,7 @@ export const handleLogicalCondition: NodeHandler = ({
     valid = true;
     for (const condition of conditions) {
       const val = resolveLogicalConditionInput(
-        condition.inputPort as LogicalInputPort,
+        normalizeLogicalInputPort(condition.inputPort),
         condition.fieldPath,
         nodeInputs
       );
@@ -247,7 +258,7 @@ export const handleLogicalCondition: NodeHandler = ({
     valid = false;
     for (const condition of conditions) {
       const val = resolveLogicalConditionInput(
-        condition.inputPort as LogicalInputPort,
+        normalizeLogicalInputPort(condition.inputPort),
         condition.fieldPath,
         nodeInputs
       );

@@ -33,7 +33,6 @@ export type GraphMutationReason =
   | 'drag'
   | 'select'
   | 'delete'
-  | 'bridge_sync'
   | 'load_path'
   | 'update'
   | 'unknown';
@@ -277,10 +276,7 @@ export function GraphProvider({
     ): void => {
       const reason = mutationMeta?.reason ?? 'unknown';
       const shouldEnforceNodeCountInvariant =
-        reason === 'drag' ||
-        reason === 'select' ||
-        reason === 'bridge_sync' ||
-        reason === 'load_path';
+        reason === 'drag' || reason === 'select' || reason === 'load_path';
       pendingMutationMetaRef.current = mutationMeta ?? { reason };
       let changedNodes = false;
       setNodesInternal((prev: AiNode[]): AiNode[] => {

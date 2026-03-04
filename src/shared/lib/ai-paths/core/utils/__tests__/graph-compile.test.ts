@@ -1067,7 +1067,7 @@ describe('compileGraph', () => {
     expect(sanitized.map((edge) => edge.toPort).sort()).toEqual(['body', 'params', 'url']);
   });
 
-  it('keeps starter + legacy compatibility wiring (bundle/meta/images/text)', () => {
+  it('keeps canonical starter wiring and drops legacy text-port edges', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'regex-1',
@@ -1151,12 +1151,74 @@ describe('compileGraph', () => {
     ];
 
     const sanitized = sanitizeEdges(nodes, edges);
-    expect(sanitized).toHaveLength(5);
+    expect(sanitized).toHaveLength(3);
     expect(sanitized.find((edge) => edge.id === 'edge-value-bundle')?.toPort).toBe('bundle');
     expect(sanitized.find((edge) => edge.id === 'edge-result-meta')?.toPort).toBe('meta');
     expect(sanitized.find((edge) => edge.id === 'edge-context-images')?.toPort).toBe('images');
-    expect(sanitized.find((edge) => edge.id === 'edge-description-text')?.toPort).toBe('value');
-    expect(sanitized.find((edge) => edge.id === 'edge-parameters-text')?.toPort).toBe('value');
+    expect(sanitized.find((edge) => edge.id === 'edge-description-text')).toBeUndefined();
+    expect(sanitized.find((edge) => edge.id === 'edge-parameters-text')).toBeUndefined();
+  });
+
+  it('drops legacy productjson/simulation port aliases during sanitization', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'simulation-1',
+        type: 'simulation',
+        outputs: ['context'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        inputs: ['context'],
+      }),
+      buildNode({
+        id: 'context-1',
+        type: 'context',
+        outputs: ['entityJson'],
+      }),
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        inputs: ['entityJson'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-legacy-simulation',
+        from: 'simulation-1',
+        to: 'fetcher-1',
+        fromPort: 'simulation',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-canonical-simulation',
+        from: 'simulation-1',
+        to: 'fetcher-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-legacy-productjson',
+        from: 'context-1',
+        to: 'parser-1',
+        fromPort: 'productjson',
+        toPort: 'entityJson',
+      },
+      {
+        id: 'edge-canonical-entityjson',
+        from: 'context-1',
+        to: 'parser-1',
+        fromPort: 'entityJson',
+        toPort: 'entityJson',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(2);
+    expect(sanitized.find((edge) => edge.id === 'edge-legacy-simulation')).toBeUndefined();
+    expect(sanitized.find((edge) => edge.id === 'edge-legacy-productjson')).toBeUndefined();
+    expect(sanitized.find((edge) => edge.id === 'edge-canonical-simulation')).toBeDefined();
+    expect(sanitized.find((edge) => edge.id === 'edge-canonical-entityjson')).toBeDefined();
   });
 
   it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {

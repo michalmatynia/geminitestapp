@@ -30,7 +30,10 @@ const resolveCandidate = (
   if (!candidate) return { token: null, error: null };
 
   if (!looksLikeEncryptedSecret(candidate)) {
-    return { token: candidate, error: null };
+    return {
+      token: null,
+      error: `Stored ${source} is not encrypted. Run token-encryption migration and re-save the connection token.`,
+    };
   }
 
   try {

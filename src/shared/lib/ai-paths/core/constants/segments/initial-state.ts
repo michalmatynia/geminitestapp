@@ -8,7 +8,9 @@ import {
 } from './ports';
 import { DEFAULT_CONTEXT_ROLE } from './base';
 
-export const initialNodes = [
+const INITIAL_NODE_TIMESTAMP = '1970-01-01T00:00:00.000Z';
+
+export const initialNodes: AiNode[] = [
   {
     id: 'node-context',
     instanceId: 'node-context',
@@ -19,6 +21,8 @@ export const initialNodes = [
     inputs: CONTEXT_INPUT_PORTS,
     outputs: CONTEXT_OUTPUT_PORTS,
     position: { x: 520, y: 590 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
     config: {
       context: {
         role: DEFAULT_CONTEXT_ROLE,
@@ -35,6 +39,8 @@ export const initialNodes = [
     inputs: ['entityJson'],
     outputs: ['images', 'title', 'productId', 'content_en'],
     position: { x: 820, y: 590 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
     config: {
       parser: {
         mappings: {
@@ -56,6 +62,8 @@ export const initialNodes = [
     inputs: ['images', 'title'],
     outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 510 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
   },
   {
     id: 'node-vision-model',
@@ -67,6 +75,8 @@ export const initialNodes = [
     inputs: ['prompt', 'images'],
     outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 510 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
     config: {
       model: {
         temperature: 0.4,
@@ -85,6 +95,8 @@ export const initialNodes = [
     inputs: ['result', 'title'],
     outputs: PROMPT_OUTPUT_PORTS,
     position: { x: 1120, y: 690 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
   },
   {
     id: 'node-desc-model',
@@ -96,6 +108,8 @@ export const initialNodes = [
     inputs: ['prompt'],
     outputs: MODEL_OUTPUT_PORTS,
     position: { x: 1400, y: 690 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
     config: {
       model: {
         temperature: 0.6,
@@ -114,6 +128,8 @@ export const initialNodes = [
     inputs: DATABASE_INPUT_PORTS,
     outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
     position: { x: 1680, y: 600 },
+    createdAt: INITIAL_NODE_TIMESTAMP,
+    updatedAt: INITIAL_NODE_TIMESTAMP,
     config: {
       database: {
         operation: 'update',
@@ -143,7 +159,7 @@ export const initialNodes = [
       },
     },
   },
-] as unknown as AiNode[];
+];
 
 export const initialEdges: Edge[] = [
   {

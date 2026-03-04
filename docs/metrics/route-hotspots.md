@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-03-04T00:58:49.624Z
+Generated at: 2026-03-04T19:22:39.615Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,26 +8,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/exports/base/[setting]/route.ts` | 85 |
 | `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 83 |
-| `src/app/api/integrations/imports/base/[setting]/route.ts` | 69 |
-| `src/app/api/products/[id]/studio/[action]/route.ts` | 40 |
+| `src/app/api/v2/products/[id]/studio/[action]/route.ts` | 40 |
 | `src/app/api/marketplace/[resource]/route.ts` | 37 |
-| `src/app/api/products/[id]/route.ts` | 31 |
-| `src/app/api/price-groups/[id]/route.ts` | 28 |
-| `src/app/api/countries/[id]/route.ts` | 26 |
-| `src/app/api/currencies/[id]/route.ts` | 26 |
-| `src/app/api/ai/schema/[entity]/route.ts` | 25 |
-| `src/app/api/languages/[id]/route.ts` | 25 |
+| `src/app/api/v2/products/[id]/route.ts` | 31 |
+| `src/app/api/v2/integrations/imports/base/runs/route.ts` | 25 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
-| `src/app/api/products/sync/profiles/[id]/route.ts` | 23 |
+| `src/app/api/v2/products/sync/profiles/[id]/route.ts` | 23 |
+| `src/app/api/ai/schema/[entity]/route.ts` | 22 |
+| `src/app/api/v2/integrations/exports/base/[setting]/route.ts` | 22 |
+| `src/app/api/v2/integrations/imports/base/[setting]/route.ts` | 22 |
 | `src/app/api/v2/metadata/[type]/[id]/route.ts` | 22 |
 | `src/app/api/v2/products/entities/[type]/[id]/route.ts` | 22 |
 | `src/app/api/v2/products/metadata/[type]/[id]/route.ts` | 22 |
 | `src/app/api/auth/users/[id]/security/route.ts` | 21 |
 | `src/app/api/drafts/[id]/route.ts` | 21 |
-| `src/app/api/products/validator-patterns/route.ts` | 21 |
+| `src/app/api/v2/products/validator-patterns/route.ts` | 21 |
 | `src/app/api/ai/context/related/[id]/route.ts` | 20 |
+| `src/app/api/v2/products/categories/[id]/route.ts` | 20 |
+| `src/app/api/v2/products/categories/route.ts` | 20 |
+| `src/app/api/v2/products/parameters/route.ts` | 20 |
 
 ## Top App Pages by LOC
 
@@ -56,13 +56,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/integrations/exports/base/[setting]/route.ts`
 - `src/app/api/chatbot/agent/[runId]/[action]/route.ts`
-- `src/app/api/integrations/imports/base/[setting]/route.ts`
-- `src/app/api/products/[id]/studio/[action]/route.ts`
+- `src/app/api/v2/products/[id]/studio/[action]/route.ts`
 - `src/app/api/marketplace/[resource]/route.ts`
-- `src/app/api/products/[id]/route.ts`
-- `src/app/api/price-groups/[id]/route.ts`
-- `src/app/api/countries/[id]/route.ts`
-- `src/app/api/currencies/[id]/route.ts`
+- `src/app/api/v2/products/[id]/route.ts`
+- `src/app/api/v2/integrations/imports/base/runs/route.ts`
+- `src/app/api/auth/users/[id]/route.ts`
+- `src/app/api/v2/products/sync/profiles/[id]/route.ts`
 - `src/app/api/ai/schema/[entity]/route.ts`
+- `src/app/api/v2/integrations/exports/base/[setting]/route.ts`
+- `src/app/api/v2/integrations/imports/base/[setting]/route.ts`

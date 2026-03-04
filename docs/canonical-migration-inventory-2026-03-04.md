@@ -24,6 +24,9 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 | Folder Tree / CMS | master folder-tree profile v2 per-instance keys | legacy combined profile payload migration logic | Completed |
 | Integrations / Prompt Exploder | v2 routes/contracts only | legacy payload adapters and compat tests in selected areas | Completed |
 | Base Token Storage | canonical Base token source in `baseApiToken` | legacy runtime fallback to `password` for Base API auth | Completed |
+| Base Token Encryption | canonical encrypted `baseApiToken` values | runtime acceptance of plaintext Base API tokens | Completed |
+| Tradera API Credentials | canonical `traderaApiAppKey` + `traderaApiToken` fields | runtime fallback from Tradera API credentials to `password` | Completed |
+| Tradera API User ID | canonical `traderaApiUserId` field | runtime fallback from Tradera API user ID to `username` | Completed |
 | Auth Security | MFA/auth secret encryption uses dedicated auth key contract | runtime fallback from `AUTH_ENCRYPTION_KEY` to integration key | Completed |
 | Prompt Exploder Persistence | canonical-only prompt exploder runtime identifiers | legacy persisted-setting migration module and alias constants | Completed |
 | Prompt Exploder Runtime Scope | snake_case runtime scope contract only | mixed runtime-scope alias acceptance (`case-resolver-prompt-exploder`) | Completed |
@@ -256,7 +259,6 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `src/features/cms/components/frontend/CmsPageRenderer.tsx` now skips malformed components without canonical `content.sectionId` instead of creating `legacy-section-*` ids.
 - Added regression guard coverage:
   - `src/features/cms/components/frontend/__tests__/CmsPageRenderer.nested.test.tsx` verifies no render occurs for missing/blank section ids.
-  - `src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` now blocks reintroduction of `legacy-section-` runtime fallback token.
 
 ## Executed Item 23 (AI Paths DB Query Provider Migration Compatibility Prune)
 
@@ -296,6 +298,154 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 - Each handler now passes canonical token carrier shape to token resolver:
   - `resolveBaseConnectionToken({ baseApiToken: connection.baseApiToken })`
 - This completes runtime removal of `resolveBaseConnectionToken(connection)` callsites in source.
+
+## Executed Item 26 (AI Paths Parser Image-Port Alias Compatibility Prune)
+
+- Removed runtime parser image-port alias compatibility from shared port normalization:
+  - `src/shared/lib/ai-paths/core/utils/graph.ports.ts` no longer rewrites legacy aliases:
+    - `images (urls)`
+    - `images(urls)`
+    - `image urls`
+  - canonical `images` remains the supported output/input port identifier.
+- Updated normalization/runtime regression coverage:
+  - `src/shared/lib/ai-paths/core/normalization/__tests__/parser-port-normalization.test.ts`
+    - now asserts no automatic canonicalization of legacy parser image-port aliases.
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/generation.model-handler.test.ts`
+    - prompt-node fixture input ports use canonical `images`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of legacy parser image-port alias snippets in `src/shared/lib/ai-paths/core/utils/graph.ports.ts`.
+
+## Executed Item 27 (Tradera API Credential Fallback Prune)
+
+- Removed runtime Tradera API credential fallback to legacy `password`:
+  - `src/features/integrations/services/tradera-listing/api.ts` now resolves app key/token only from canonical `traderaApiAppKey` and `traderaApiToken`.
+  - `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` no longer reads `connection.password` as a fallback for Tradera API app key/token.
+- Added runtime prune guard coverage:
+  - `__tests__/features/integrations/services/tradera-api-runtime-prune.test.ts` blocks reintroduction of password-fallback snippets.
+- Added canonical migration helper and DB migration script:
+  - `src/features/integrations/services/tradera-api-credential-storage-migration.ts`
+  - `__tests__/features/integrations/services/tradera-api-credential-storage-migration.test.ts`
+  - `scripts/db/migrate-tradera-api-credential-storage-v2.ts`
+  - npm script: `migrate:tradera-api-credential-storage:v2`
+
+## Executed Item 28 (AI Paths Text-Port Alias Compatibility Prune)
+
+- Removed runtime `text -> value` port alias compatibility from shared port normalization:
+  - `src/shared/lib/ai-paths/core/utils/graph.ports.ts` no longer rewrites `text` ports to canonical `value`.
+- Updated graph compile sanitization coverage to canonical-only behavior:
+  - `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts`
+    - legacy `toPort: 'text'` edges are now dropped instead of being auto-normalized to `value`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `normalized === 'text'` compatibility snippets in `src/shared/lib/ai-paths/core/utils/graph.ports.ts`.
+
+## Executed Item 29 (Base Token Plaintext Compatibility Prune)
+
+- Removed runtime plaintext Base token compatibility in resolver:
+  - `src/features/integrations/services/base-token-resolver.ts` now rejects non-encrypted `baseApiToken` values.
+  - canonical Base runtime expects encrypted token payloads only.
+- Updated regression coverage:
+  - `__tests__/features/integrations/services/base-token-resolver.test.ts` now verifies plaintext tokens are rejected.
+  - updated Base import route tests to use encrypted canonical tokens.
+  - added `__tests__/features/integrations/services/base-token-encryption-migration.test.ts`.
+- Added canonical migration helper and DB migration script:
+  - `src/features/integrations/services/base-token-encryption-migration.ts`
+  - `scripts/db/migrate-base-token-encryption-v2.ts`
+  - npm script: `migrate:base-token-encryption:v2`
+
+## Executed Item 30 (AI Paths ProductJson/Simulation Port Alias Compatibility Prune)
+
+- Removed runtime legacy port-name alias rewrites from shared port normalization:
+  - `src/shared/lib/ai-paths/core/utils/graph.ports.ts` no longer rewrites:
+    - `productjson -> entityJson`
+    - `simulation -> context`
+- Removed trigger connection compatibility branch tied to legacy simulation port alias:
+  - `isValidConnection` now allows simulation->trigger context wiring only via canonical `fromPort: 'context'`.
+- Updated graph compile sanitization coverage:
+  - `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts`
+    - legacy `fromPort: 'productjson'` and `fromPort: 'simulation'` edges are now dropped, while canonical `entityJson`/`context` edges remain.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `productjson`, `simulation`, and legacy simulation-port compatibility snippets in `src/shared/lib/ai-paths/core/utils/graph.ports.ts`.
+
+## Executed Item 31 (Tradera API Execution Mode Compatibility Prune)
+
+- Removed runtime `TRADERA_PREFER_API` compatibility override from Tradera listing orchestration:
+  - `src/features/integrations/services/tradera-listing-service.ts` now selects API mode only for canonical `tradera-api` integration slug.
+  - non-API Tradera integrations stay on canonical browser execution mode.
+- Extended Tradera runtime prune guard coverage:
+  - `__tests__/features/integrations/services/tradera-api-runtime-prune.test.ts` now blocks reintroduction of `TRADERA_PREFER_API` and mixed-slug API fallback snippets.
+
+## Executed Item 32 (Tradera API User ID Fallback Prune)
+
+- Removed runtime Tradera API user-id fallback to legacy `username`:
+  - `src/features/integrations/services/tradera-listing/api.ts` now resolves user ID only from canonical `traderaApiUserId`.
+  - `src/app/api/v2/integrations/[id]/connections/[connectionId]/test/handler.ts` no longer falls back from `traderaApiUserId` to `username`.
+- Extended Tradera runtime prune guard coverage:
+  - `__tests__/features/integrations/services/tradera-api-runtime-prune.test.ts` now blocks reintroduction of `?? toPositiveInt(connection.username)` fallback snippets.
+- Added canonical migration helper and DB migration script:
+  - `src/features/integrations/services/tradera-api-user-id-storage-migration.ts`
+  - `__tests__/features/integrations/services/tradera-api-user-id-storage-migration.test.ts`
+  - `scripts/db/migrate-tradera-api-user-id-storage-v2.ts`
+  - npm script: `migrate:tradera-api-user-id-storage:v2`
+
+## Executed Item 33 (CMS Page-Builder Template Settings Key Cutover)
+
+- Migrated page-builder template persistence keys to canonical `v2` runtime settings:
+  - `cms_section_templates.v2`
+  - `cms_grid_templates.v2`
+- Runtime page-builder template reads/writes now target canonical keys only:
+  - `src/features/cms/components/page-builder/section-template-store.ts`
+  - `src/features/cms/components/page-builder/grid-templates.ts`
+- Added canonical migration script to copy/prune legacy key payloads across Prisma and Mongo:
+  - `scripts/db/migrate-cms-page-builder-template-settings-v2.ts`
+  - npm script: `migrate:cms:page-builder-template-settings:v2`
+- Extended CMS runtime prune coverage:
+  - `src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` now blocks reintroduction of `cms_section_templates.v1` and `cms_grid_templates.v1` in runtime source.
+- Extended page-builder template store tests:
+  - `src/features/cms/components/page-builder/__tests__/template-stores.test.ts` now asserts canonical `v2` setting keys.
+
+## Executed Item 34 (Import/Export Legacy Data Migration Verification)
+
+- Executed the full Base import/export migration suite in dry-run and write modes:
+  - `migrate:base-connection-token-storage:v2`
+  - `migrate:base-token-encryption:v2`
+  - `migrate:base-import-parameter-link-map:v2`
+  - `migrate:base-import-run-connection-ids:v2`
+  - `migrate:base-active-template-preferences:v2`
+  - `migrate:base-export-warehouse-preferences:v2`
+  - `migrate:base-export-template-parameter-sources:v2`
+- Executed Tradera API credential-storage migration in dry-run and write modes:
+  - `migrate:tradera-api-credential-storage:v2`
+- Result:
+  - no pending legacy payload rewrites detected (`changed: false`, `writesApplied: 0` across providers for active migration surfaces, including write-mode runs).
+  - providers reported no Base/Tradera-API integration rows where expected (warnings only), with no runtime compatibility reintroduction.
+- Re-validated canonical enforcement + prune guardrails:
+  - `npm run ai-paths:check:canonical`
+  - parity tests: `src/app/api/v2/integrations/{imports/base,exports/base}/routes-parity.test.ts` and `src/app/api/v2/integrations/routes-parity.test.ts`
+  - token/credential runtime prune tests:
+    - `__tests__/features/integrations/services/base-token-resolver.test.ts`
+    - `__tests__/features/integrations/services/base-token-encryption-migration.test.ts`
+    - `__tests__/features/integrations/services/tradera-api-runtime-prune.test.ts`
+  - TypeScript compile check (`npx tsc --noEmit --incremental false`).
+
+## Executed Item 35 (Tradera API User-ID Migration Verification)
+
+- Executed Tradera API user-id storage migration in dry-run and write modes:
+  - `migrate:tradera-api-user-id-storage:v2`
+- Result:
+  - no pending legacy username->user-id rewrites detected (`changed: false`, `writesApplied: 0` across Prisma and Mongo providers).
+  - providers reported no Tradera API integration rows where migration data was expected (warnings only).
+- Re-validated runtime prune + migration contracts:
+  - `__tests__/features/integrations/services/tradera-api-user-id-storage-migration.test.ts`
+  - `__tests__/features/integrations/services/tradera-api-runtime-prune.test.ts`
+
+## Executed Item 36 (Prompt Exploder Rules-Key Compatibility Prune)
+
+- Removed legacy Prompt Exploder settings hydration fallback that read rules from a separate compatibility key:
+  - removed runtime read of `PROMPT_ENGINE_SETTINGS_KEY + '_rules'` in `src/features/prompt-exploder/context/settings/useSettingsDataImpl.ts`.
+- Runtime now hydrates `sessionLearnedRules` from canonical prompt-engine payload only:
+  - `promptSettings.promptValidation.learnedRules`.
+- Extended Prompt Exploder runtime prune guardrails:
+  - `src/features/prompt-exploder/__tests__/runtime-prune.test.ts` now blocks reintroduction of `_rules`-suffix key fallback usage.
 
 ## Next Item
 

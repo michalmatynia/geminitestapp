@@ -125,32 +125,38 @@ const hashString = (value: string): string => {
   return (hash >>> 0).toString(16).padStart(8, '0');
 };
 
-const buildCanonicalNodeShape = (node: Record<string, unknown>): CanonicalNodeShape => ({
-  id: normalizeText(node['id']),
-  type: normalizeText(node['type']),
-  inputs: Array.isArray(node['inputs']) ? [...(node['inputs'] as string[])] : [],
-  outputs: Array.isArray(node['outputs']) ? [...(node['outputs'] as string[])] : [],
-  config: sortObjectDeep(toRecord(node['config']) ?? {}),
-});
+const buildCanonicalNodeShape = (node: unknown): CanonicalNodeShape => {
+  const record = toRecord(node) ?? {};
+  return {
+    id: normalizeText(record['id']),
+    type: normalizeText(record['type']),
+    inputs: Array.isArray(record['inputs']) ? [...(record['inputs'] as string[])] : [],
+    outputs: Array.isArray(record['outputs']) ? [...(record['outputs'] as string[])] : [],
+    config: sortObjectDeep(toRecord(record['config']) ?? {}),
+  };
+};
 
-const buildCanonicalEdgeShape = (edge: Record<string, unknown>): CanonicalEdgeShape => ({
-  from: normalizeText(edge['from'] ?? edge['source']),
-  to: normalizeText(edge['to'] ?? edge['target']),
-  fromPort: normalizeText(edge['fromPort'] ?? edge['sourceHandle']),
-  toPort: normalizeText(edge['toPort'] ?? edge['targetHandle']),
-});
+const buildCanonicalEdgeShape = (edge: unknown): CanonicalEdgeShape => {
+  const record = toRecord(edge) ?? {};
+  return {
+    from: normalizeText(record['from'] ?? record['source']),
+    to: normalizeText(record['to'] ?? record['target']),
+    fromPort: normalizeText(record['fromPort'] ?? record['sourceHandle']),
+    toPort: normalizeText(record['toPort'] ?? record['targetHandle']),
+  };
+};
 
 export const computeStarterWorkflowGraphHash = (
   config: Pick<PathConfig, 'nodes' | 'edges'>
 ): string => {
   const nodes = Array.isArray(config.nodes)
     ? config.nodes
-      .map((node) => buildCanonicalNodeShape(node as unknown as Record<string, unknown>))
+      .map((node) => buildCanonicalNodeShape(node))
       .sort((left, right) => String(left.id).localeCompare(String(right.id)))
     : [];
   const edges = Array.isArray(config.edges)
     ? config.edges
-      .map((edge) => buildCanonicalEdgeShape(edge as unknown as Record<string, unknown>))
+      .map((edge) => buildCanonicalEdgeShape(edge))
       .sort((left, right) =>
         [String(left.from), String(left.to), String(left.fromPort), String(left.toPort)]
           .join('|')
@@ -440,12 +446,14 @@ export const materializeStarterWorkflowPathConfig = (
   });
 };
 
-const edgeSignature = (edge: Record<string, unknown>): string =>
-  [
-    normalizeText(edge['from'] ?? edge['source']),
-    normalizeText(edge['to'] ?? edge['target']),
-    normalizeText(edge['fromPort'] ?? edge['sourceHandle']),
+const edgeSignature = (edge: unknown): string => {
+  const record = toRecord(edge) ?? {};
+  return [
+    normalizeText(record['from'] ?? record['source']),
+    normalizeText(record['to'] ?? record['target']),
+    normalizeText(record['fromPort'] ?? record['sourceHandle']),
   ].join('|');
+};
 
 const renderTemplateToken = (sourcePort: string, sourcePath: string): string => {
   const normalizedPort = normalizeText(sourcePort) || 'value';
@@ -493,9 +501,7 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
   const latestNodesById = new Map((latest.nodes ?? []).map((node) => [node.id, node] as const));
   const latestEdgesById = new Map((latest.edges ?? []).map((edge) => [edge.id, edge] as const));
   const latestEdgesBySignature = new Map(
-    (latest.edges ?? []).map(
-      (edge) => [edgeSignature(edge as unknown as Record<string, unknown>), edge] as const
-    )
+    (latest.edges ?? []).map((edge) => [edgeSignature(edge), edge] as const)
   );
   const currentIncomingPorts = buildIncomingPortMap(current);
   const promotedIncomingPorts = new Map(
@@ -506,7 +512,7 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
   (current.edges ?? []).forEach((edge) => {
     const latestEdge =
       latestEdgesById.get(edge.id) ??
-      latestEdgesBySignature.get(edgeSignature(edge as unknown as Record<string, unknown>));
+      latestEdgesBySignature.get(edgeSignature(edge));
     if (!latestEdge) return;
     const toNodeId = normalizeText(latestEdge.to ?? latestEdge.target);
     const toPort = normalizeText(latestEdge.toPort ?? latestEdge.targetHandle);
@@ -610,7 +616,7 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
   const nextEdges = (current.edges ?? []).map((edge) => {
     const latestEdge =
       latestEdgesById.get(edge.id) ??
-      latestEdgesBySignature.get(edgeSignature(edge as unknown as Record<string, unknown>));
+      latestEdgesBySignature.get(edgeSignature(edge));
     if (!latestEdge) return edge;
     const nextEdge = {
       ...latestEdge,

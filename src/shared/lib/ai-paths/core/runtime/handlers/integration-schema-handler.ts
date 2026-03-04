@@ -7,6 +7,7 @@ import type {
 import type { CollectionSchema } from '@/shared/contracts/database';
 
 import { dbApi, type ApiResponse } from '@/shared/lib/ai-paths/api';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import type { SchemaResponse } from '../../../api/client';
 
@@ -15,6 +16,21 @@ import type { SchemaResponse } from '../../../api/client';
 let schemaCacheResult: ApiResponse<unknown> | null = null;
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
+
+const isCollectionSchema = (value: unknown): value is CollectionSchema =>
+  isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
+
+const resolveCollectionList = (value: unknown): CollectionSchema[] => {
+  if (Array.isArray(value)) {
+    return value.filter((entry: unknown): entry is CollectionSchema => isCollectionSchema(entry));
+  }
+  if (isObjectRecord(value)) {
+    return Object.values(value).filter((entry: unknown): entry is CollectionSchema =>
+      isCollectionSchema(entry)
+    );
+  }
+  return [];
+};
 
 export const getCachedSchema = async (): Promise<ApiResponse<unknown>> => {
   const now = Date.now();
@@ -38,9 +54,7 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
   ];
 
   const rawCollections = schema.collections;
-  const collections: CollectionSchema[] = Array.isArray(rawCollections)
-    ? rawCollections
-    : Object.values(rawCollections as Record<string, CollectionSchema>);
+  const collections = resolveCollectionList(rawCollections);
 
   for (const collection of collections) {
     lines.push(`Collection: ${collection.name}`);
@@ -74,12 +88,7 @@ const filterCollections = (
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
 
-  const baseCollectionsRaw = Array.isArray(schema.collections)
-    ? schema.collections
-    : Object.values(schema.collections);
-  const baseCollections: CollectionSchema[] = Array.from(
-    baseCollectionsRaw as unknown as CollectionSchema[]
-  );
+  const baseCollections = resolveCollectionList(schema.collections);
 
   if (schema.provider === 'multi') {
     const collections = baseCollections.filter((c): boolean =>
@@ -143,12 +152,7 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
-    const baseCollectionsRaw = Array.isArray(schema.collections)
-      ? schema.collections
-      : Object.values(schema.collections);
-    const baseCollections: CollectionSchema[] = Array.from(
-      baseCollectionsRaw as unknown as CollectionSchema[]
-    );
+    const baseCollections = resolveCollectionList(schema.collections);
 
     schema.collections = baseCollections.map((c): CollectionSchema => {
       const result: CollectionSchema = {

@@ -8,6 +8,7 @@ import {
 } from '@/shared/lib/ai-paths/run-sources';
 import type {
   AiNode,
+  Edge,
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
   AiPathRunEventListOptions,
@@ -21,6 +22,7 @@ import type {
   AiPathRunStatus,
   AiPathRunUpdate,
 } from '@/shared/contracts/ai-paths';
+import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths-core';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const RUNS_COLLECTION = 'ai_path_runs';
@@ -170,6 +172,26 @@ const toRequiredIsoString = (date: unknown): string => {
   return toIsoString(date) ?? new Date(0).toISOString();
 };
 
+const toRunGraph = (value: unknown): AiPathRunRecord['graph'] => {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const rawNodes = record['nodes'];
+  const nodes = Array.isArray(rawNodes)
+    ? rawNodes.flatMap((entry: unknown): AiNode[] => {
+      const parsed = aiNodeSchema.safeParse(entry);
+      return parsed.success ? [parsed.data] : [];
+    })
+    : [];
+  const rawEdges = record['edges'];
+  const edges: Edge[] = Array.isArray(rawEdges)
+    ? rawEdges.flatMap((entry: unknown): Edge[] => {
+      const parsed = edgeSchema.safeParse(entry);
+      return parsed.success ? [parsed.data] : [];
+    })
+    : [];
+  return { nodes, edges };
+};
+
 const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   id: doc.id || doc._id,
   userId: doc.userId ?? null,
@@ -180,7 +202,7 @@ const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   triggerEvent: doc.triggerEvent ?? null,
   triggerNodeId: doc.triggerNodeId ?? null,
   triggerContext: doc.triggerContext ?? undefined,
-  graph: (doc.graph as unknown as AiPathRunRecord['graph']) ?? null,
+  graph: toRunGraph(doc.graph),
   runtimeState: (doc.runtimeState as unknown) ?? null,
   meta: doc.meta ?? null,
   context: undefined, // Or map if present in doc

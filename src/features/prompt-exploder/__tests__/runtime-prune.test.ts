@@ -16,6 +16,7 @@ const forbiddenRuntimeCompatTokens = [
 ];
 const forbiddenRuntimeCompatPatterns: RegExp[] = [
   /launchAppliesToScopes:\s*rule\.launchAppliesToScopes\s*\?\?\s*rule\.appliesToScopes/s,
+  /PROMPT_ENGINE_SETTINGS_KEY\s*\+\s*['_"]_rules['"]/s,
 ];
 
 const collectSourceFiles = (dir: string): string[] => {

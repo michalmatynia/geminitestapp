@@ -36,6 +36,25 @@ const toNullableJsonInput = (
   return value as Prisma.InputJsonValue;
 };
 
+type PrismaRunNodeStatus = Prisma.AiPathRunNodeCreateInput['status'];
+
+const toPrismaRunNodeStatus = (value: unknown): PrismaRunNodeStatus => {
+  if (value === 'completed' || value === 'cached' || value === 'failed' || value === 'skipped') {
+    return value;
+  }
+  if (value === 'blocked') return 'blocked';
+  if (value === 'running' || value === 'processing' || value === 'polling') {
+    return 'running';
+  }
+  if (value === 'waiting_callback' || value === 'advance_pending') {
+    return 'running';
+  }
+  if (value === 'canceled' || value === 'timeout') {
+    return 'failed';
+  }
+  return 'pending';
+};
+
 interface MapRunInput {
   id: string | number;
   userId?: string | null;
@@ -465,8 +484,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     nodeId: string,
     nodeData: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
   ): Promise<AiPathRunNodeRecord> {
-    const status =
-      (nodeData.status as unknown as Prisma.AiPathRunNodeCreateInput['status']) ?? 'pending';
+    const status = toPrismaRunNodeStatus(nodeData.status);
     const node = await prisma.aiPathRunNode.upsert({
       where: { runId_nodeId: { runId, nodeId } },
       update: nodeData as Prisma.AiPathRunNodeUpdateInput,

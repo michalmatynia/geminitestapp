@@ -4,9 +4,12 @@ import { createDefaultPathConfig } from '@/shared/lib/ai-paths';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import {
+  compactTriggerContextForEnqueue,
   collectInvalidRunEnqueuePayloadIssues,
   collectInvalidRunEnqueueSerializationIssues,
   collectInvalidRunNodePayloadIssues,
+  isInvalidEnqueuePayloadError,
+  sanitizeTriggerContextForEnqueue,
 } from '../payload-validation';
 
 describe('collectInvalidRunNodePayloadIssues', () => {
@@ -122,5 +125,86 @@ describe('collectInvalidRunEnqueueSerializationIssues', () => {
     expect(issues.length).toBeGreaterThan(0);
     expect(issues[0]).toMatchObject({ path: '(root)' });
     expect(issues[0]?.message.toLowerCase()).toContain('serialize');
+  });
+});
+
+describe('sanitizeTriggerContextForEnqueue', () => {
+  it('drops non-serializable/circular values and normalizes non-finite numbers', () => {
+    const circular: Record<string, unknown> = {};
+    circular['self'] = circular;
+    const sanitized = sanitizeTriggerContextForEnqueue({
+      event: {
+        pointer: {
+          clientX: Number.POSITIVE_INFINITY,
+          clientY: Number.NaN,
+          button: 0,
+        },
+        ignored: () => 'noop',
+      },
+      circular,
+      list: [1, Number.NEGATIVE_INFINITY, BigInt(3), undefined],
+    });
+
+    expect(sanitized).toMatchObject({
+      event: {
+        pointer: {
+          clientX: null,
+          clientY: null,
+          button: 0,
+        },
+      },
+      list: [1, null, '3'],
+    });
+    expect(sanitized['circular']).toEqual({});
+  });
+});
+
+describe('compactTriggerContextForEnqueue', () => {
+  it('reduces oversized trigger contexts while preserving key routing metadata', () => {
+    const hugeContext = {
+      timestamp: '2026-03-04T00:00:00.000Z',
+      entityId: 'product-1',
+      entityType: 'product',
+      source: {
+        pathId: 'path_1',
+        pathName: 'Description',
+        tab: 'description',
+      },
+      event: {
+        id: 'manual',
+        nodeId: 'trigger-node',
+        nodeTitle: 'Trigger',
+        type: 'click',
+        pointer: {
+          clientX: 100,
+          clientY: 200,
+          button: 0,
+        },
+      },
+      largePayload: Array.from({ length: 32 }, (_value, index) => ({
+        id: index,
+        blob: `${index}:${'x'.repeat(1_500)}`,
+      })),
+    } as Record<string, unknown>;
+
+    const compact = compactTriggerContextForEnqueue(hugeContext);
+    const compactJson = JSON.stringify(compact);
+
+    expect(compact['entityId']).toBe('product-1');
+    expect(compact['entityType']).toBe('product');
+    expect(compact['source']).toMatchObject({ pathId: 'path_1' });
+    expect(compact['event']).toMatchObject({ nodeId: 'trigger-node' });
+    expect(compact['largePayload']).toBeUndefined();
+    expect(typeof compactJson).toBe('string');
+    expect(compactJson.length).toBeLessThan(12_000);
+  });
+});
+
+describe('isInvalidEnqueuePayloadError', () => {
+  it('detects canonical invalid payload errors from enqueue responses', () => {
+    expect(isInvalidEnqueuePayloadError('Invalid payload')).toBe(true);
+    expect(isInvalidEnqueuePayloadError('invalid payload: nodes[0]')).toBe(true);
+    expect(isInvalidEnqueuePayloadError('Failed to enqueue server run.')).toBe(false);
+    expect(isInvalidEnqueuePayloadError(undefined)).toBe(false);
   });
 });

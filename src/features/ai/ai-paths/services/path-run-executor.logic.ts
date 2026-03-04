@@ -1,9 +1,9 @@
 import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
+  AiPathNodeStatus,
   AiNode,
   AiPathRunRecord,
-  AiPathRunStatus,
   Edge,
   RuntimePortValues,
   RuntimeState,
@@ -62,10 +62,33 @@ export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   return EMPTY_RUNTIME_STATE;
 };
 
-export const toRuntimeLifecycleStatus = (runStatus: AiPathRunStatus): RuntimeState['status'] => {
-  if (runStatus === 'running' || runStatus === 'queued') return 'running';
-  if (runStatus === 'paused') return 'paused';
-  return 'idle';
+export const toRuntimeNodeStatus = (value: unknown): AiPathNodeStatus | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case 'idle':
+    case 'queued':
+    case 'running':
+    case 'completed':
+    case 'cached':
+    case 'failed':
+    case 'canceled':
+    case 'skipped':
+    case 'blocked':
+    case 'polling':
+    case 'waiting_callback':
+    case 'advance_pending':
+    case 'pending':
+    case 'processing':
+    case 'timeout':
+      return normalized;
+    case 'paused':
+      return 'running';
+    case 'dead_lettered':
+      return 'failed';
+    default:
+      return null;
+  }
 };
 
 export const mergeRuntimePortMaps = (

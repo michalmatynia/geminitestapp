@@ -1,4 +1,5 @@
 import type { NodeType } from '@/shared/contracts/ai-paths';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 import { palette as NODE_DEFINITIONS } from '../definitions';
 import { COMMON_RUNTIME_FIELDS } from './node-docs.constants';
 import { CONFIG_DOCS_BY_TYPE } from './node-docs.registry';
@@ -49,6 +50,12 @@ const definitionByType = new Map(
   NODE_DEFINITIONS.map((def: (typeof NODE_DEFINITIONS)[number]) => [def.type, def])
 );
 
+const resolveDefaultConfigFromDefinition = (definition: unknown): Record<string, unknown> | null => {
+  if (!isObjectRecord(definition)) return null;
+  const config = definition['config'];
+  return isObjectRecord(config) ? config : null;
+};
+
 export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: NodeType) => {
   const fallbackDefinition =
     type === 'description_updater'
@@ -69,6 +76,7 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
         : type === 'playwright'
           ? ['Built-in script templates are available in the Playwright node config dialog.']
           : undefined;
+  const defaultConfig = resolveDefaultConfigFromDefinition(def);
   return {
     type,
     title: def?.title ?? type,
@@ -76,11 +84,7 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
     inputs: def?.inputs ?? [],
     outputs: def?.outputs ?? [],
     config: CONFIG_DOCS_BY_TYPE[type] ?? COMMON_RUNTIME_FIELDS,
-    ...((def as unknown as { config?: unknown })?.config &&
-    typeof (def as unknown as { config: Record<string, unknown> }).config === 'object' &&
-    !Array.isArray((def as unknown as { config: Record<string, unknown> }).config)
-      ? { defaultConfig: (def as unknown as { config: Record<string, unknown> }).config }
-      : {}),
+    ...(defaultConfig ? { defaultConfig } : {}),
     ...(notes ? { notes } : {}),
   };
 });

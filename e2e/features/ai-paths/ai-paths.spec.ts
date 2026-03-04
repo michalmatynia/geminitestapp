@@ -170,7 +170,7 @@ const ensureCanvasHasNodes = async (page: Page): Promise<void> => {
   await page.getByRole('tab', { name: 'Paths' }).click();
   const firstPathButton = page.locator('table tbody tr td:first-child button').first();
   if (!(await clickIfVisible(firstPathButton))) {
-    await page.getByRole('button', { name: 'New Path' }).click();
+    await page.getByRole('button', { name: 'New Path', exact: true }).click();
     await expect(firstPathButton).toBeVisible({ timeout: 10_000 });
     await firstPathButton.click();
   }
@@ -360,7 +360,7 @@ test.describe('AI Paths Admin Page', () => {
     const uniquePathName = `E2E Test Path ${Date.now()}`;
 
     await page.getByRole('tab', { name: 'Paths' }).click();
-    await page.getByRole('button', { name: 'New Path' }).click();
+    await page.getByRole('button', { name: 'New Path', exact: true }).click();
     await page.getByRole('tab', { name: 'Canvas' }).click();
 
     const pathNameDisplay = page.locator('button[data-doc-id="canvas_path_name_field"]').first();

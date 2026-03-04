@@ -52,7 +52,6 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
 };
 
 const AiPathsSettingsPageContext = createContext<AiPathsSettingsPageContextValue | null>(null);
-const EMPTY_PAGE_CONTEXT = {} as AiPathsSettingsPageContextValue;
 
 export function AiPathsSettingsPageProvider({
   value,
@@ -70,11 +69,8 @@ export function AiPathsSettingsPageProvider({
 
 export function useAiPathsSettingsPageContext(): AiPathsSettingsPageContextValue {
   const context = useContext(AiPathsSettingsPageContext);
-  if (context) {
-    return context;
+  if (!context) {
+    throw new Error('useAiPathsSettingsPageContext must be used within AiPathsSettingsPageProvider');
   }
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('AiPathsSettingsPageContext provider missing; using empty fallback context.');
-  }
-  return EMPTY_PAGE_CONTEXT;
+  return context;
 }

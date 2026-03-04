@@ -1,7 +1,7 @@
 import type { SectionInstance } from '../../types/page-builder';
 import { cmsSectionInstanceSchema } from '@/shared/contracts/cms';
 
-export const GRID_TEMPLATE_SETTINGS_KEY = 'cms_grid_templates.v1';
+export const GRID_TEMPLATE_SETTINGS_KEY = 'cms_grid_templates.v2';
 
 export type GridTemplateRecord = {
   id: string;

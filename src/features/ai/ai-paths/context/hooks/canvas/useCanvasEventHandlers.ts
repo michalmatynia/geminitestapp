@@ -17,6 +17,7 @@ export function useCanvasEventHandlers(args: {
   const { nav, resolveViewportPointFromClient, updateLastPointerCanvasPosFromClient } = args;
 
   const wheelGestureActiveUntilRef = useRef(0);
+  const wheelGestureSourceRef = useRef<'wheel-modifier' | 'safari' | null>(null);
   const safariGestureScaleRef = useRef<number | null>(null);
   const latestScaleRef = useRef(args.view.scale);
   latestScaleRef.current = args.view.scale;
@@ -59,9 +60,11 @@ export function useCanvasEventHandlers(args: {
 
   const isWheelLikelyZoomGesture = useCallback((event: WheelLikeEvent): boolean => {
     // Allow normal wheel/trackpad scroll to bubble so the page can scroll vertically.
-    // We only treat wheel as canvas zoom for explicit pinch-like gestures.
+    // We only treat wheel as canvas zoom for explicit modifier pinch gestures or
+    // Safari gesture continuations that were started via gesture events.
     if (event.ctrlKey || event.metaKey) return true;
-    return performance.now() < wheelGestureActiveUntilRef.current;
+    if (performance.now() >= wheelGestureActiveUntilRef.current) return false;
+    return wheelGestureSourceRef.current === 'safari';
   }, []);
 
   const applyWheelZoomFromEvent = useCallback(
@@ -97,8 +100,10 @@ export function useCanvasEventHandlers(args: {
       const likelyZoomGesture = isWheelLikelyZoomGesture(event);
       const withinActiveGestureWindow = now < wheelGestureActiveUntilRef.current;
       if (!likelyZoomGesture && !withinActiveGestureWindow) return;
+      if (!likelyZoomGesture) return;
 
-      wheelGestureActiveUntilRef.current = now + (likelyZoomGesture ? 1800 : 540);
+      wheelGestureSourceRef.current = event.ctrlKey || event.metaKey ? 'wheel-modifier' : 'safari';
+      wheelGestureActiveUntilRef.current = now + 1800;
       event.preventDefault();
       event.stopPropagation?.();
       applyWheelZoomFromEvent(event);
@@ -156,6 +161,7 @@ export function useCanvasEventHandlers(args: {
       const anchorClient = resolveAnchorClient(event);
       if (!anchorClient || !isPointInsideCanvas(anchorClient.x, anchorClient.y)) return;
       rawEvent.preventDefault();
+      wheelGestureSourceRef.current = 'safari';
       wheelGestureActiveUntilRef.current = performance.now() + 1800;
       const nextScale = Number(event.scale);
       safariGestureScaleRef.current = Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
@@ -180,6 +186,7 @@ export function useCanvasEventHandlers(args: {
       safariGestureScaleRef.current = nextGestureScale;
       if (!Number.isFinite(scaleFactor) || Math.abs(scaleFactor - 1) < 0.0001) return;
 
+      wheelGestureSourceRef.current = 'safari';
       wheelGestureActiveUntilRef.current = performance.now() + 1800;
       const anchor = resolveViewportPointFromClient(anchorClient.x, anchorClient.y);
       const targetScale = clampScale(latestScaleRef.current * scaleFactor);
@@ -190,6 +197,10 @@ export function useCanvasEventHandlers(args: {
 
     const handleGestureEnd = (): void => {
       safariGestureScaleRef.current = null;
+      if (wheelGestureSourceRef.current === 'safari') {
+        wheelGestureSourceRef.current = null;
+        wheelGestureActiveUntilRef.current = 0;
+      }
     };
 
     viewportElement.addEventListener('gesturestart', handleGestureStart, { passive: false });

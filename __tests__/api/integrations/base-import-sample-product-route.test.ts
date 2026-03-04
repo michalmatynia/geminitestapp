@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { encryptSecret } from '@/shared/lib/security/encryption';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
@@ -29,10 +30,10 @@ type SampleProductResponse = {
 describe('base import sample-product route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env['INTEGRATION_ENCRYPTION_KEY'] = Buffer.from('b'.repeat(32)).toString('base64');
+    const encryptedToken = encryptSecret('token-1');
     listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
-    listConnectionsMock.mockResolvedValue([
-      { id: 'conn-1', baseApiToken: 'encrypted-token', password: null },
-    ]);
+    listConnectionsMock.mockResolvedValue([{ id: 'conn-1', baseApiToken: encryptedToken, password: null }]);
     callBaseApiMock.mockResolvedValue({
       products: [{ product_id: 'p-1' }],
     });
@@ -69,7 +70,7 @@ describe('base import sample-product route', () => {
     const payload = (await response.json()) as SampleProductResponse;
 
     expect(response.status).toBe(200);
-    expect(callBaseApiMock).toHaveBeenCalledWith('encrypted-token', 'getInventoryProductsList', {
+    expect(callBaseApiMock).toHaveBeenCalledWith('token-1', 'getInventoryProductsList', {
       inventory_id: 'inventory-1',
       limit: 1,
     });

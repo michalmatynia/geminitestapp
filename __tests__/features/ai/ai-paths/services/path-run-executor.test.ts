@@ -305,6 +305,50 @@ describe('PathRunExecutor', () => {
     );
   });
 
+  it('should fail run when required processing node finishes with failed status', async () => {
+    vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
+      async (options: EvaluateGraphArgs) => {
+        if (options.onNodeFinish) {
+          await options.onNodeFinish({
+            runId: options.runId!,
+            runStartedAt: new Date().toISOString(),
+            node: options.nodes[0]!,
+            nodeInputs: {},
+            prevOutputs: {},
+            nextOutputs: {
+              status: 'failed',
+              error: 'Model provider timed out',
+            },
+            iteration: 0,
+            changed: true,
+          });
+        }
+        return {
+          status: 'completed',
+          outputs: {
+            [options.nodes[0]!.id]: {
+              status: 'failed',
+              error: 'Model provider timed out',
+            },
+          },
+        } as any;
+      }
+    );
+
+    const run = await mockRepo.createRun({
+      pathId: 'test',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+
+    await executePathRun(run);
+
+    const updatedRun = await mockRepo.findRunById(run.id);
+    expect(updatedRun?.status).toBe('failed');
+    expect(updatedRun?.errorMessage).toContain('Run failed at Const');
+    expect(updatedRun?.errorMessage).toContain('Model provider timed out');
+  });
+
   it('should handle node errors correctly', async () => {
     vi.mocked(evaluateGraphWithIteratorAutoContinue).mockImplementation(
       async (options: EvaluateGraphArgs) => {

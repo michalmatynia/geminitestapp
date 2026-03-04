@@ -7,11 +7,22 @@ import { SignalDots } from './SignalDots';
 import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 
 const FLOWING_RUNTIME_NODE_STATUSES = new Set([
-  'queued',
   'running',
   'polling',
   'waiting_callback',
   'advance_pending',
+  'pending',
+  'processing',
+]);
+
+const TERMINAL_RUNTIME_NODE_STATUSES = new Set([
+  'completed',
+  'failed',
+  'canceled',
+  'cached',
+  'blocked',
+  'skipped',
+  'timeout',
 ]);
 
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
@@ -113,9 +124,11 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
           typeof runtimeNodeStatuses[toNodeId] === 'string'
             ? runtimeNodeStatuses[toNodeId].trim().toLowerCase()
             : '';
+        const fromIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(fromRuntimeStatus);
+        const toIsFlowing = FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
+        const toIsTerminal = TERMINAL_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
         const isRuntimeActiveEdge =
-          FLOWING_RUNTIME_NODE_STATUSES.has(fromRuntimeStatus) ||
-          FLOWING_RUNTIME_NODE_STATUSES.has(toRuntimeStatus);
+          toIsFlowing || (fromIsFlowing && !toIsTerminal);
         const isFlowing = activeEdgeIds.has(edge.id) || isRuntimeActiveEdge;
         const isActivePath =
           !isManualConnector &&

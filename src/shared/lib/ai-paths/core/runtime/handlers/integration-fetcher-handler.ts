@@ -102,6 +102,7 @@ export const handleFetcher: NodeHandler = async ({
   toast,
   activePathId,
   now,
+  strictFlowMode,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const triggerSignal = coerceInput(nodeInputs['trigger']);
   if (triggerSignal === undefined || triggerSignal === null || triggerSignal === false) {
@@ -230,6 +231,19 @@ export const handleFetcher: NodeHandler = async ({
       resolvedEntity = simulated.entity;
       sourceTag = 'simulation_fetcher';
     }
+  }
+
+  const hasResolvedEntity =
+    isObjectRecord(resolvedEntity) && Object.keys(resolvedEntity).length > 0;
+  const shouldFailMissingSimulationEntity =
+    sourceTag === 'simulation_fetcher' &&
+    Boolean(resolvedEntityId && resolvedEntityType) &&
+    (sourceMode === 'simulation_id' || strictFlowMode);
+
+  if (shouldFailMissingSimulationEntity && !hasResolvedEntity) {
+    throw new Error(
+      `Fetcher ${node.title ?? node.id} could not hydrate ${resolvedEntityType}:${resolvedEntityId}. Check fetcher simulation entity configuration.`
+    );
   }
 
   const context = buildFetcherContextPayload({

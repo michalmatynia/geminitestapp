@@ -153,4 +153,37 @@ describe('CanvasSvgNode trigger interactions', () => {
 
     expect(getByText('Launching...')).toBeTruthy();
   });
+
+  it('shows pre-run wiring blocker state on trigger chip before firing', () => {
+    const node = buildTriggerNode();
+    const ui = buildUi({
+      nodes: [node],
+      triggerPreflightById: new Map([
+        [
+          node.id,
+          {
+            blockedMessage:
+              'Node "Context Filter" is missing required input wiring for port "context".',
+            blockReason: 'compile',
+          },
+        ],
+      ]),
+    });
+
+    const { container, getByText } = render(
+      <svg>
+        <CanvasSvgNode node={node} ui={ui} />
+      </svg>
+    );
+
+    const triggerActionRect = container.querySelector(
+      '[data-node-action="fire-trigger"]'
+    ) as SVGRectElement | null;
+    expect(triggerActionRect).toBeTruthy();
+    if (!triggerActionRect) return;
+
+    expect(triggerActionRect.getAttribute('data-trigger-blocked')).toBe('true');
+    expect(triggerActionRect.style.cursor).toBe('help');
+    expect(getByText('Fix Wiring')).toBeTruthy();
+  });
 });

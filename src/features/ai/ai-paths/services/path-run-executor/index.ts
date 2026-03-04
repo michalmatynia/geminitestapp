@@ -16,7 +16,6 @@ import {
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
-  AiPathNodeStatus,
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunRepository,
@@ -39,7 +38,9 @@ import {
 import { fetchEntityByType } from '../path-run-executor.entities';
 import {
   buildBlockedRunFailureMessage,
+  buildFailedRunFailureMessage,
   collectBlockedNodeDiagnostics,
+  collectFailedNodeDiagnostics,
   shouldFailBlockedRun,
 } from '../path-run-executor.diagnostics';
 import { createCancellationMonitor } from '../path-run-executor.monitoring';
@@ -50,7 +51,7 @@ import {
   mergeRuntimePortMaps,
   resolveTriggerNodeId,
   sanitizeRuntimeState,
-  toRuntimeLifecycleStatus,
+  toRuntimeNodeStatus,
   toRuntimeProfileHighlight,
 } from '../path-run-executor.logic';
 import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
@@ -264,7 +265,7 @@ export const executePathRun = async (
       traceId,
     });
 
-    const { strictFlowMode, nodeValidationEnabled } = preflight;
+    const { strictFlowMode, nodeValidationEnabled, requiredProcessingNodeIds } = preflight;
 
     const canceledBeforeExecution = await monitor.start();
     if (canceledBeforeExecution) {
@@ -397,10 +398,8 @@ export const executePathRun = async (
           const attempt = nodeAttemptMap.get(node.id) ?? 1;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const finishedAt = new Date().toISOString();
-          const rawStatus = nextOutputs['status'] as AiPathRunStatus | undefined;
-          const status =
-            (cached ? 'cached' : rawStatus != null ? toRuntimeLifecycleStatus(rawStatus) : null) ??
-            'completed';
+          const rawStatus = toRuntimeNodeStatus(nextOutputs['status']);
+          const status = (cached ? 'cached' : rawStatus) ?? 'completed';
 
           profiling.finalizeRuntimeNodeSpan({
             spanId: nodeSpanId,
@@ -425,7 +424,7 @@ export const executePathRun = async (
           await Promise.all([
             repo
               .upsertRunNode(run.id, node.id, {
-                status: status as AiPathNodeStatus,
+                status: status,
                 outputs: safeOutputs,
                 finishedAt,
                 nodeType: node.type,
@@ -593,6 +592,17 @@ export const executePathRun = async (
         finalError = buildBlockedRunFailureMessage(
           collectBlockedNodeDiagnostics(nodes, accOutputs)
         );
+      }
+    }
+    if (finalStatus === 'completed') {
+      const requiredProcessingNodeIdSet = new Set<string>(requiredProcessingNodeIds);
+      const failedRequiredNodes = collectFailedNodeDiagnostics(nodes, accOutputs).filter(
+        (node) =>
+          requiredProcessingNodeIdSet.size === 0 || requiredProcessingNodeIdSet.has(node.nodeId)
+      );
+      if (failedRequiredNodes.length > 0) {
+        finalStatus = 'failed';
+        finalError = buildFailedRunFailureMessage(failedRequiredNodes);
       }
     }
 

@@ -131,7 +131,7 @@ export async function postTestConnectionHandler(
 
     pushStep('Decrypting credentials', 'pending', 'Validating Tradera API credentials');
     const appId = toPositiveInt(connection.traderaApiAppId);
-    const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
+    const userId = toPositiveInt(connection.traderaApiUserId);
     const encryptedAppKey = connection.traderaApiAppKey;
     const encryptedToken = connection.traderaApiToken;
 

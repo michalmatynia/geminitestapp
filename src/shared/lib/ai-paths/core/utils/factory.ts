@@ -219,7 +219,8 @@ export const createPathMeta = (config: PathConfig): PathMeta => {
 
 export const createAiDescriptionPath = (id: string): PathConfig => {
   const now = new Date().toISOString();
-  const rawNodes = [
+  type RawGraphNode = Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>;
+  const rawNodes: RawGraphNode[] = [
     {
       id: 'node-context',
       type: 'context',
@@ -304,11 +305,11 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     },
   ];
   const rawGraphNodes: AiNode[] = rawNodes.map(
-    (node): AiNode => ({
+    (node: RawGraphNode): AiNode => ({
       createdAt: now,
       updatedAt: null,
       data: {},
-      ...(node as Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>),
+      ...node,
     })
   );
 

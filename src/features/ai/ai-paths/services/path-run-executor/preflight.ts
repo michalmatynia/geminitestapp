@@ -136,5 +136,10 @@ export async function runExecutorPreflight(input: {
     });
   }
 
-  return { validationConfig, strictFlowMode, nodeValidationEnabled };
+  return {
+    validationConfig,
+    strictFlowMode,
+    nodeValidationEnabled,
+    requiredProcessingNodeIds: compileReport.processingNodeIds,
+  };
 }

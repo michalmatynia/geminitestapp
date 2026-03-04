@@ -22,7 +22,9 @@ import {
   lintPathNodeRoles,
   mergeNodeOverride,
   normalizeConfigForHash,
+  resolvePersistedNodeConfigMismatch,
   resolvePathSaveBlockedMessage,
+  shouldExposePathSaveRawMessage,
   stripNodeConfig,
 } from '../../useAiPathsPersistence.helpers';
 import { pruneSingleCardinalityIncomingEdges } from '../../edge-cardinality-repair';
@@ -329,45 +331,27 @@ export function usePathPersistence(
         const persistedConfig = await persistPathSettings(nextPaths, args.activePathId, config);
         const finalConfig = persistedConfig ?? config;
         if (options?.nodeOverride) {
-          const expectedNode = options.nodeOverride;
-          const normalizedExpectedConfig = sanitizePathConfig(config);
-          const samePosition = (left: AiNode, right: AiNode): boolean =>
-            Number(left.position?.x ?? Number.NaN) === Number(right.position?.x ?? Number.NaN) &&
-            Number(left.position?.y ?? Number.NaN) === Number(right.position?.y ?? Number.NaN);
-          const findBySignature = (candidates: AiNode[], needle: AiNode): AiNode | undefined =>
-            candidates.find(
-              (node: AiNode): boolean =>
-                node.type === needle.type &&
-                node.title === needle.title &&
-                samePosition(node, needle)
+          const mismatch = resolvePersistedNodeConfigMismatch({
+            expectedNode: options.nodeOverride,
+            expectedConfig: sanitizePathConfig(config),
+            persistedConfig: finalConfig,
+          });
+          if (mismatch) {
+            const message =
+              'Failed to save node settings. Persisted node configuration did not match the requested update.';
+            args.reportAiPathsError(
+              new Error(message),
+              {
+                action: silent ? 'verifyNodeConfigSilent' : 'verifyNodeConfig',
+                pathId: args.activePathId,
+                ...mismatch,
+              },
+              'Failed to verify persisted AI Paths node settings:'
             );
-          const expectedNodeIndex = config.nodes.findIndex(
-            (node: AiNode): boolean => node.id === expectedNode.id
-          );
-          const normalizedExpectedNodeByIndex =
-            expectedNodeIndex >= 0 ? normalizedExpectedConfig.nodes[expectedNodeIndex] : undefined;
-          const normalizedExpectedNode: AiNode | undefined =
-            normalizedExpectedConfig.nodes.find(
-              (node: AiNode): boolean => node.id === expectedNode.id
-            ) ??
-            (normalizedExpectedNodeByIndex?.type === expectedNode.type
-              ? normalizedExpectedNodeByIndex
-              : undefined) ??
-            findBySignature(normalizedExpectedConfig.nodes, expectedNode);
-          const persistedNode: AiNode | undefined = normalizedExpectedNode
-            ? (finalConfig.nodes.find(
-              (node: AiNode): boolean => node.id === normalizedExpectedNode.id
-            ) ?? findBySignature(finalConfig.nodes, normalizedExpectedNode))
-            : undefined;
-          const expectedConfigHash = stableStringify(normalizedExpectedNode?.config ?? null);
-          const persistedConfigHash = stableStringify(persistedNode?.config ?? null);
-          if (!persistedNode || expectedConfigHash !== persistedConfigHash) {
-            console.warn('[AI Paths] Node save verification mismatch after successful write.', {
-              pathId: args.activePathId,
-              expectedNodeId: expectedNode.id,
-              resolvedExpectedNodeId: normalizedExpectedNode?.id ?? null,
-              persistedNodeId: persistedNode?.id ?? null,
-            });
+            if (!silent) {
+              args.toast(message, { variant: 'error' });
+            }
+            return false;
           }
         }
         const finalUpdatedAt =
@@ -401,10 +385,7 @@ export function usePathPersistence(
         return true;
       } catch (error) {
         const rawMessage = error instanceof Error ? error.message.trim() : '';
-        const shouldExposeRawMessage =
-          rawMessage.length > 0 &&
-          (/ai path config contains/i.test(rawMessage) ||
-            /invalid ai paths runtime state payload/i.test(rawMessage));
+        const shouldExposeRawMessage = shouldExposePathSaveRawMessage(rawMessage);
         args.reportAiPathsError(
           error,
           { action: silent ? 'savePathSilent' : 'savePath', pathId: args.activePathId },

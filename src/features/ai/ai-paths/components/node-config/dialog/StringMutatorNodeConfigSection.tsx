@@ -56,16 +56,20 @@ const parseOptionalNumber = (value: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+type StringMutatorOperationDraft = StringMutatorOperation & { id?: string };
+
 export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
   if (selectedNode?.type !== 'string_mutator') return null;
 
   const stringConfig = selectedNode.config?.stringMutator ?? { operations: [] };
-  const operations = Array.isArray(stringConfig.operations) ? stringConfig.operations : [];
+  const operations: StringMutatorOperationDraft[] = Array.isArray(stringConfig.operations)
+    ? stringConfig.operations
+    : [];
   const [newType, setNewType] = useState<StringMutatorOperation['type']>('replace');
 
-  const updateOperations = (nextOperations: StringMutatorOperation[]): void => {
+  const updateOperations = (nextOperations: StringMutatorOperationDraft[]): void => {
     updateSelectedNodeConfig({
       stringMutator: {
         ...stringConfig,
@@ -85,9 +89,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
     const next = operations.map((operation, idx) => {
       if (idx !== index) return operation;
       const base = createOperation(type);
-      return 'id' in operation
-        ? ({ ...base, id: (operation as { id: string }).id } as unknown as StringMutatorOperation)
-        : base;
+      return typeof operation.id === 'string' ? { ...base, id: operation.id } : base;
     });
     updateOperations(next);
   };

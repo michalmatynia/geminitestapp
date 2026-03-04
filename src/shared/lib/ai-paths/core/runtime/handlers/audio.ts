@@ -90,12 +90,31 @@ const parseOscillatorSignal = (value: unknown): OscillatorSignal | null => {
   });
 };
 
+type GlobalAudioConstructors = {
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+};
+
+const resolveGlobalAudioConstructors = (): GlobalAudioConstructors => {
+  const root = globalThis as Record<string, unknown>;
+  const audioContext = root['AudioContext'];
+  const webkitAudioContext = root['webkitAudioContext'];
+  return {
+    ...(typeof audioContext === 'function'
+      ? { AudioContext: audioContext as typeof AudioContext }
+      : {}),
+    ...(typeof webkitAudioContext === 'function'
+      ? { webkitAudioContext: webkitAudioContext as typeof AudioContext }
+      : {}),
+  };
+};
+
+const isAudioPlaybackState = (value: unknown): value is AudioPlaybackState =>
+  isObjectRecord(value) && value['activeByNode'] instanceof Map;
+
 const hasWebAudio = (): boolean => {
   if (typeof globalThis === 'undefined') return false;
-  const candidate = globalThis as unknown as {
-    AudioContext?: typeof AudioContext;
-    webkitAudioContext?: typeof AudioContext;
-  };
+  const candidate = resolveGlobalAudioConstructors();
   return (
     typeof candidate.AudioContext === 'function' ||
     typeof candidate.webkitAudioContext === 'function'
@@ -103,11 +122,9 @@ const hasWebAudio = (): boolean => {
 };
 
 const getAudioState = (): AudioPlaybackState => {
-  const root = globalThis as unknown as Record<string, unknown>;
+  const root = globalThis as Record<string, unknown>;
   const current = root[AUDIO_STATE_KEY];
-  if (isObjectRecord(current) && current['activeByNode'] instanceof Map) {
-    return current as unknown as AudioPlaybackState;
-  }
+  if (isAudioPlaybackState(current)) return current;
   const created: AudioPlaybackState = {
     context: null,
     activeByNode: new Map<string, ActivePlayback>(),
@@ -119,10 +136,7 @@ const getAudioState = (): AudioPlaybackState => {
 const resolveAudioContext = async (): Promise<AudioContext | null> => {
   if (!hasWebAudio()) return null;
   const state = getAudioState();
-  const globalAudio = globalThis as unknown as {
-    AudioContext?: typeof AudioContext;
-    webkitAudioContext?: typeof AudioContext;
-  };
+  const globalAudio = resolveGlobalAudioConstructors();
   const Ctor = globalAudio.AudioContext ?? globalAudio.webkitAudioContext;
   if (!Ctor) return null;
   if (!state.context || state.context.state === 'closed') {
@@ -206,9 +220,7 @@ export const handleAudioOscillator: NodeHandler = ({
   nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
   const configRaw = node.config?.['audioOscillator'];
-  const config = (isObjectRecord(configRaw)
-    ? configRaw
-    : DEFAULT_OSCILLATOR_SIGNAL) as unknown as OscillatorSignal;
+  const config = buildOscillatorSignal(isObjectRecord(configRaw) ? configRaw : undefined);
   const triggerValue = coerceInput(nodeInputs['trigger']);
   const armed = triggerValue === undefined ? true : Boolean(triggerValue);
 

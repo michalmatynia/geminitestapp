@@ -11,6 +11,8 @@ const forbiddenRuntimeCompatTokens = [
   '@/features/cms/migrations/page-builder-template-contract-migration',
   'migrateCmsPageBuilderTemplateSettingValue',
   'legacy-section-',
+  'cms_section_templates.v1',
+  'cms_grid_templates.v1',
 ];
 
 const collectSourceFiles = (dir: string): string[] => {

@@ -360,7 +360,24 @@ const closeResources = async (): Promise<void> => {
   await prisma.$disconnect().catch(() => {});
   if (process.env['MONGODB_URI']) {
     const client = await getMongoClient().catch(() => null);
-    await client?.close().catch(() => {});
+    if (client) {
+      // Detach Mongo observability listeners before shutdown to avoid
+      // fire-and-forget logger writes racing a closed client.
+      const detach = client as unknown as {
+        removeAllListeners: (event?: string) => void;
+      };
+      [
+        'connectionPoolCreated',
+        'connectionPoolCleared',
+        'connectionCheckOutFailed',
+        'connectionClosed',
+        'commandFailed',
+        'commandSucceeded',
+      ].forEach((eventName: string) => {
+        detach.removeAllListeners(eventName);
+      });
+      await client.close().catch(() => {});
+    }
   }
 };
 

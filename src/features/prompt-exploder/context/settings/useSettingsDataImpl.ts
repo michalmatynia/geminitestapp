@@ -303,15 +303,11 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
   useEffect(() => {
     if (settingsQuery.isLoading) return;
     if (promptExploderSettingsValidationError) return;
-    const rulesJson = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY + '_rules');
-    const rules = parsePromptValidationRules(rulesJson ?? '');
-    if (rules && 'ok' in rules && rules.ok) {
-      setSessionLearnedRules(rules.rules);
-    }
+    setSessionLearnedRules(promptSettings.promptValidation.learnedRules ?? []);
     setSessionLearnedTemplates(promptExploderSettings.learning.templates);
   }, [
     settingsQuery.isLoading,
-    settingsMap,
+    promptSettings.promptValidation.learnedRules,
     promptExploderSettings.learning.templates,
     promptExploderSettingsValidationError,
   ]);

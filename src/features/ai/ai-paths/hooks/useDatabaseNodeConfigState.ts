@@ -18,7 +18,6 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { type Toast } from '@/shared/ui';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 
@@ -164,7 +163,7 @@ export function useDatabaseNodeConfigState() {
     queryTemplateValue,
     isUpdateAction,
     updateSelectedNodeConfig,
-    toast: toast as unknown as Toast,
+    toast,
     setTestQueryResult,
     setTestQueryLoading,
   });
@@ -186,7 +185,13 @@ export function useDatabaseNodeConfigState() {
 
   const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
     queryKey: ['ai-paths', 'database', 'schema'] as const,
-    queryFn: () => dbApi.schema() as unknown as Promise<SchemaData>,
+    queryFn: async (): Promise<SchemaData> => {
+      const result = await dbApi.schema();
+      if (!result.ok) {
+        throw new Error(result.error || 'Failed to fetch schema.');
+      }
+      return result.data;
+    },
     meta: {
       source: 'ai.ai-paths.database-node.schema',
       operation: 'list',

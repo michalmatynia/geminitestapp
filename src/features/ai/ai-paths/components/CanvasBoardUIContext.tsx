@@ -16,7 +16,7 @@ import type { ConnectorInfo } from './canvas-board-connectors';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
-import type { RuntimeRunStatus } from './CanvasBoard.types';
+import type { RuntimeRunStatus, TriggerPreflightHint } from './CanvasBoard.types';
 
 export type CanvasRendererMode = 'svg';
 
@@ -48,6 +48,7 @@ export interface CanvasBoardUIContextValue {
   runtimeRunStatus: RuntimeRunStatus;
   nodeDurations: Record<string, number>;
   nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
+  triggerPreflightById?: ReadonlyMap<string, TriggerPreflightHint>;
 
   // Pulse & Effects
   inputPulseNodes: Set<string>;

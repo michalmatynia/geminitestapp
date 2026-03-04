@@ -329,6 +329,23 @@ Progress (2026-03-04):
 103. Pruned run-history list-response cast in `useAiPathsRunHistory` by normalizing `listAiPathRuns` results through `aiPathRunRecordSchema.safeParse`, returning canonical run arrays without `as unknown as` API adapters.
 104. Pruned db-node preset config cast in `PresetsContext` by replacing `as unknown as DatabaseConfig` with schema-based coercion (`databaseConfigSchema.safeParse`) and canonical operation fallback (`query`), with regression coverage in `PresetsContext.normalizeDbNodePreset.test.tsx`.
 105. Pruned server-execution stream casts in `useAiPathsServerExecution` by replacing `as unknown as AiPathRunNodeRecord[]` parsing with `aiPathRunNodeSchema.safeParse` normalization and emitting fully-typed runtime stream events (`type: 'log'`) without `as unknown as AiPathRuntimeEvent`.
+106. Pruned database-node config hook casts in `useDatabaseNodeConfigState` by wiring canonical orchestrator `toast` directly into `useDatabaseQueryExecution` and replacing schema fetch `dbApi.schema()` cast adapters with explicit API-result handling (`result.ok` guard + `result.data` return).
+107. Pruned db-schema node UI collection casts in `DbSchemaNodeConfigSection` by replacing `as unknown as CollectionSchema[]` adapters with typed collection guards (`isCollectionSchema`) and normalization (`resolveCollectionList`) across multi-source and provider-specific schema flows.
+108. Pruned runtime schema/template collection casts by replacing `as unknown as CollectionSchema[]` adapters in `integration-schema-handler` and `integration-database-template-context` with typed collection normalization helpers (`resolveCollectionList` + `isCollectionSchema`) shared at callsite level.
+109. Pruned node-docs definition config casts in `core/docs/node-docs.ts` by replacing `def as unknown as { config... }` adapters with guarded extraction via `resolveDefaultConfigFromDefinition` (`isObjectRecord` + indexed `config` read).
+110. Pruned logical-condition handler cast in `runtime/handlers/common.ts` by replacing `as unknown as LogicalConditionConfig` with `logicalConditionConfigSchema.safeParse` normalization and explicit `inputPort` coercion (`normalizeLogicalInputPort`) for condition evaluation.
+111. Pruned string-mutator dialog cast in `StringMutatorNodeConfigSection` by introducing `StringMutatorOperationDraft` (`StringMutatorOperation & { id?: string }`) and preserving operation IDs without `as unknown as StringMutatorOperation`.
+112. Pruned trigger-buttons editor key casts in `AdminAiPathsTriggerButtonsPage` by replacing `'locations' as unknown as keyof TriggerButtonDraft` and `'id' as unknown as keyof TriggerButtonDraft` with direct typed keys.
+113. Pruned initial-segments node cast in `core/constants/segments/initial-state.ts` by declaring `initialNodes` as `AiNode[]` directly and removing `as unknown as AiNode[]`.
+114. Pruned starter-workflows registry casts by widening canonical helpers (`buildCanonicalNodeShape`, `buildCanonicalEdgeShape`, `edgeSignature`) to accept `unknown` and normalize via `toRecord`, removing all `as unknown as Record<string, unknown>` callsite adapters.
+115. Pruned repository-layer cast adapters by replacing Prisma run-node status `as unknown as` coercion with explicit `toPrismaRunNodeStatus` mapping in `prisma-path-run-repository` and replacing Mongo run-graph `as unknown as` coercion with schema-validated `toRunGraph` normalization in `mongo-path-run-repository`.
+116. Pruned audio runtime handler cast adapters in `runtime/handlers/audio.ts` by replacing `globalThis as unknown as ...`/`AudioPlaybackState` shims with guarded constructor/state resolvers (`resolveGlobalAudioConstructors`, `isAudioPlaybackState`) and direct oscillator config normalization via `buildOscillatorSignal`.
+117. Pruned dead bridge-era graph mutation reason from `GraphContext` by removing `bridge_sync` from `GraphMutationReason` and dropping it from node-count invariant enforcement; graph mutation guards now track only canonical reasons (`drag`, `select`, `load_path`).
+118. Pruned settings page context fallback seam by removing the empty-context compatibility return from `useAiPathsSettingsPageContext`; the hook now enforces canonical provider ownership and throws when `AiPathsSettingsPageProvider` is missing.
+119. Added migration hardening guardrail `migration.no-unknown-casts.test.ts` to fail CI when `as unknown as` reappears in non-test AI-Paths runtime source trees (`src/features/ai/ai-paths`, `src/shared/lib/ai-paths`).
+120. Pruned residual path-save raw-message compatibility token matching in `useAiPathsPersistence.helpers` by removing deprecated snapshot-key branching; raw passthrough now remains limited to canonical path/runtime validation failures only.
+121. Pruned starter-workflow factory node-shape cast in `core/utils/factory.ts` by typing raw seed nodes as `Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>` and removing the cast adapter in `createAiDescriptionPath`.
+122. Extended canonical guardrails in `scripts/ai-paths/check-canonical.mjs` to block reintroduction of legacy path-save raw-message patterns (`/deprecated ai snapshot keys/i`, `/legacy ai paths/i`) while requiring canonical validation patterns (`/ai path config contains/i`, `/invalid ai paths runtime state payload/i`, `/^invalid payload\\b/i`).
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -424,6 +441,28 @@ Progress (2026-03-04):
       3. `/api/ai-paths/legacy-compat/counters`
    2. Enforced canonical route surface via parity guards:
       1. `src/app/api/v2/integrations/routes-parity.test.ts` now asserts removed legacy aliases remain deleted.
+7. Re-ran focused AI-Paths regression bundle after seams 120-121 and drag/wiring hardening lint repairs:
+   1. `canvas-svg-trigger-node-interactions.test.tsx`
+   2. `canvas-svg-trigger-node-interaction-regression.test.tsx`
+   3. `canvas-connection-preview.test.tsx`
+   4. `canvas-board.connection-wiring.test.tsx`
+   5. `useCanvasInteractions.nodes.drag-threshold.test.tsx`
+   6. `useCanvasInteractions.connections.race.test.tsx`
+   7. `AiPathsCanvasView.switching-delete-guard.test.tsx`
+   8. `useAiPathsPersistence.helpers.test.ts`
+   9. `useAiPathsPersistence.prefetch.test.tsx`
+   10. `migration.no-unknown-casts.test.ts`
+   Result: 10 files passed, 40 tests passed.
+8. Re-ran starter-workflow/factory regression bundle after seam 121:
+   1. `starter-workflows/__tests__/registry.test.ts`
+   2. `semantic-grammar/__tests__/semantic-grammar.test.ts`
+   3. `normalization/__tests__/validation-pattern-defaults.test.ts`
+   4. `normalization/__tests__/input-contract-backfill.test.ts`
+   Result: 4 files passed, 15 tests passed.
+9. Re-ran canonical and quality gates:
+   1. `npm run ai-paths:check:canonical` -> passed (`4206` files scanned).
+   2. `npm run lint` -> passed (`eslint src`).
+   3. `npm run build` -> passed (`next build` exit `0`) with a non-blocking trace-copy warning for missing temp file `tmp/integration-slug-audit.cjs`.
 
 ## Deprecation map
 

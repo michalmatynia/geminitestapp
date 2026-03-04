@@ -32,6 +32,8 @@ const DATABASE_NORMALIZATION_FILE = 'src/shared/lib/ai-paths/core/normalization/
 const COLLECTION_NAMES_FILE = 'src/shared/lib/ai-paths/core/utils/collection-names.ts';
 const ENGINE_CORE_FILE = 'src/shared/lib/ai-paths/core/runtime/engine-core.ts';
 const GRAPH_PORTS_FILE = 'src/shared/lib/ai-paths/core/utils/graph.ports.ts';
+const PATH_PERSISTENCE_HELPERS_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.helpers.ts';
 const TRIGGER_FETCHER_MIGRATION_FILE =
   'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
 
@@ -298,19 +300,51 @@ const checkLegacyDbQueryProviderMigrationPrune = (sourceFiles) => {
   }
 };
 
-const checkLegacyParserImagePortAliasPrune = () => {
+const checkLegacyPortAliasPrune = () => {
   const text = readFile(GRAPH_PORTS_FILE);
   const forbiddenSnippets = [
     "normalized === 'images (urls)'",
     "normalized === 'images(urls)'",
     "normalized === 'image urls'",
+    "normalized === 'text'",
+    "normalized === 'productjson'",
+    "normalized === 'simulation'",
+    "fromPort !== 'simulation'",
   ];
 
   for (const snippet of forbiddenSnippets) {
     if (text.includes(snippet)) {
       reportViolation(
         GRAPH_PORTS_FILE,
-        `legacy parser image-port alias compatibility snippet detected: ${snippet}`
+        `legacy port alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkPathSaveRawMessageCompatibilityPrune = () => {
+  const text = readFile(PATH_PERSISTENCE_HELPERS_FILE);
+  const forbiddenSnippets = ['/deprecated ai snapshot keys/i', '/legacy ai paths/i'];
+  const requiredSnippets = [
+    '/ai path config contains/i',
+    '/invalid ai paths runtime state payload/i',
+    '/^invalid payload\\b/i',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        PATH_PERSISTENCE_HELPERS_FILE,
+        `legacy path-save raw-message compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        PATH_PERSISTENCE_HELPERS_FILE,
+        `missing canonical path-save raw-message pattern: ${snippet}`
       );
     }
   }
@@ -332,7 +366,8 @@ const main = () => {
   checkRuntimeHaltLegacyControlPrune();
   checkTriggerFetcherLegacyMigrationPrune(sourceFiles);
   checkLegacyDbQueryProviderMigrationPrune(sourceFiles);
-  checkLegacyParserImagePortAliasPrune();
+  checkLegacyPortAliasPrune();
+  checkPathSaveRawMessageCompatibilityPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

@@ -6,6 +6,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { postBaseImportParametersHandler } from '@/app/api/v2/integrations/imports/base/parameters/handler';
+import { encryptSecret } from '@/shared/lib/security/encryption';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
@@ -45,10 +46,10 @@ type BaseImportParametersResponse = {
 describe('base import parameters handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env['INTEGRATION_ENCRYPTION_KEY'] = Buffer.from('b'.repeat(32)).toString('base64');
+    const encryptedToken = encryptSecret('token-1');
     listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
-    listConnectionsMock.mockResolvedValue([
-      { id: 'conn-1', baseApiToken: 'encrypted-token', password: null },
-    ]);
+    listConnectionsMock.mockResolvedValue([{ id: 'conn-1', baseApiToken: encryptedToken, password: null }]);
     setImportParameterCacheMock.mockResolvedValue(undefined);
   });
 
@@ -113,7 +114,7 @@ describe('base import parameters handler', () => {
     );
     expect(callBaseApiMock).toHaveBeenNthCalledWith(
       1,
-      'encrypted-token',
+      'token-1',
       'getInventoryProductsList',
       {
         inventory_id: 'inventory-1',
@@ -122,7 +123,7 @@ describe('base import parameters handler', () => {
     );
     expect(callBaseApiMock).toHaveBeenNthCalledWith(
       2,
-      'encrypted-token',
+      'token-1',
       'getInventoryProductsData',
       {
         inventory_id: 'inventory-1',
@@ -162,7 +163,7 @@ describe('base import parameters handler', () => {
     expect(payload.productId).toBe('p-99');
     expect(payload.keys).toEqual(expect.arrayContaining(['text_fields.features.Brand']));
     expect(callBaseApiMock).toHaveBeenCalledTimes(1);
-    expect(callBaseApiMock).toHaveBeenCalledWith('encrypted-token', 'getInventoryProductsData', {
+    expect(callBaseApiMock).toHaveBeenCalledWith('token-1', 'getInventoryProductsData', {
       inventory_id: 'inventory-1',
       products: ['p-99'],
     });

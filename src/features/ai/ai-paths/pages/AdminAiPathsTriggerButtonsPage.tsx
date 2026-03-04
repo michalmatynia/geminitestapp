@@ -546,7 +546,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         helperText: 'How the button behaves when clicked.',
       },
       {
-        key: 'locations' as unknown as keyof TriggerButtonDraft,
+        key: 'locations',
         label: 'Location Visibility',
         type: 'custom',
         render: () => (
@@ -586,7 +586,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         ),
       },
       {
-        key: 'id' as unknown as keyof TriggerButtonDraft,
+        key: 'id',
         label: 'Used In AI Paths',
         type: 'custom',
         render: () => (

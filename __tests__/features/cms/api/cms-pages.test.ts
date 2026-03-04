@@ -240,8 +240,28 @@ describe('CMS Pages API', () => {
         slugIds: [slug.id],
         themeId: theme.id,
         components: [
-          { type: 'hero', content: { title: 'Hello World' }, order: 0 },
-          { type: 'text', content: { body: 'Lorem ipsum' }, order: 1 },
+          {
+            type: 'hero',
+            order: 0,
+            content: {
+              zone: 'template',
+              settings: { title: 'Hello World' },
+              blocks: [],
+              sectionId: 'section-hero',
+              parentSectionId: null,
+            },
+          },
+          {
+            type: 'text',
+            order: 1,
+            content: {
+              zone: 'template',
+              settings: { body: 'Lorem ipsum' },
+              blocks: [],
+              sectionId: 'section-text',
+              parentSectionId: null,
+            },
+          },
         ],
       };
 

@@ -40,17 +40,19 @@ type PlaceholderMatrixDialogProps = {
   syncing?: boolean | undefined;
 };
 
-export function PlaceholderMatrixDialog({
-  open,
-  onOpenChange,
-  groups,
-  target,
-  onTargetChange,
-  onInsert,
-  targetOptions,
-  onSync,
-  syncing = false,
-}: PlaceholderMatrixDialogProps): React.JSX.Element {
+export function PlaceholderMatrixDialog(props: PlaceholderMatrixDialogProps): React.JSX.Element {
+  const {
+    open,
+    onOpenChange,
+    groups,
+    target,
+    onTargetChange,
+    onInsert,
+    targetOptions,
+    onSync,
+    syncing = false,
+  } = props;
+
   const visibleGroups = groups.filter((group: PlaceholderGroup) => group.entries.length > 0);
   const resolvedTargets: PlaceholderTargetOption[] = targetOptions?.length
     ? targetOptions

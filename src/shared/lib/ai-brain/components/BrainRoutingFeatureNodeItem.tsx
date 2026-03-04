@@ -20,17 +20,12 @@ export interface BrainRoutingFeatureNodeItemProps {
   toggleExpand: () => void;
 }
 
-export function BrainRoutingFeatureNodeItem({
-  node,
-  group,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isDragging,
-  select,
-  toggleExpand,
-}: BrainRoutingFeatureNodeItemProps): React.JSX.Element {
+export function BrainRoutingFeatureNodeItem(
+  props: BrainRoutingFeatureNodeItemProps
+): React.JSX.Element {
+  const { node, group, depth, hasChildren, isExpanded, isSelected, isDragging, select, toggleExpand } =
+    props;
+
   return (
     <TreeRow
       asChild

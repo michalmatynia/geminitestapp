@@ -12,16 +12,10 @@ import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
 export type PatternNodeItemProps = FolderTreeViewportRenderNodeInput;
 
-export function PatternNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isDragging,
-  select,
-  toggleExpand,
-}: PatternNodeItemProps): React.JSX.Element | null {
+export function PatternNodeItem(props: PatternNodeItemProps): React.JSX.Element | null {
+  const { node, depth, hasChildren, isExpanded, isSelected, isDragging, select, toggleExpand } =
+    props;
+
   const {
     patternById,
     isPending,

@@ -7,10 +7,6 @@ import {
 } from '@/shared/contracts/case-resolver';
 
 import {
-  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
-} from './settings';
-
-import {
   getCaseResolverWorkspaceRevision,
 } from './utils/workspace-persistence-utils';
 
@@ -20,7 +16,6 @@ import {
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
-  buildSettingRecordFetchAttempts,
   resolveSettingRecordFromSettingsPayload,
   readWorkspaceMetadata,
   resolveWorkspaceRecordFromSettingsPayload,
@@ -307,45 +302,6 @@ export const fetchCaseResolverWorkspaceRecordDetailed = async (
   let lastMissingRequiredAttemptKey = primaryResult.lastMissingRequiredAttemptKey;
   let sawTransportFailure = primaryResult.sawTransportFailure;
   let budgetExhausted = primaryResult.budgetExhausted;
-
-  if (!budgetExhausted) {
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'refresh_fallback_to_legacy',
-      durationMs: Date.now() - startedAt,
-      message: `fallback=legacy_keyed key=${CASE_RESOLVER_LEGACY_WORKSPACE_KEY}`,
-    });
-    const legacyResult = await fetchWorkspaceRecordByKeyAttempts({
-      source,
-      workspaceKey: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
-      attempts: buildSettingRecordFetchAttempts({
-        key: CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
-        strategy: 'light_only',
-        fresh: fetchFresh,
-      }),
-      startedAt,
-      maxTotalMs,
-      attemptTimeoutMs,
-      requiredFileId,
-      logHeavyFallback: false,
-    });
-    if (legacyResult.status === 'resolved') {
-      return {
-        status: 'resolved',
-        workspace: legacyResult.workspace,
-        attemptKey: legacyResult.attemptKey,
-        scope: legacyResult.scope,
-        durationMs: Date.now() - startedAt,
-      };
-    }
-    lastFailureMessage = legacyResult.lastFailureMessage;
-    sawWorkspaceRecordMissingRequiredFile =
-      sawWorkspaceRecordMissingRequiredFile || legacyResult.sawMissingRequiredFile;
-    lastMissingRequiredAttemptKey =
-      legacyResult.lastMissingRequiredAttemptKey ?? lastMissingRequiredAttemptKey;
-    sawTransportFailure = sawTransportFailure || legacyResult.sawTransportFailure;
-    budgetExhausted = budgetExhausted || legacyResult.budgetExhausted;
-  }
 
   if (budgetExhausted) {
     logCaseResolverWorkspaceEvent({

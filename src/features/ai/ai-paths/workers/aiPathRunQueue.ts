@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import 'server-only';
 
 import { 
@@ -31,6 +31,11 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { serviceUnavailableError } from '@/shared/errors/app-error';
 import { createDebugQueueLogger } from './ai-path-run-queue-utils';
+
+import { 
+  type AiPathRunQueueStatus, 
+} from '@/shared/contracts/ai-paths-runtime';
+import { type AiPathRunQueueHotStatus } from './ai-path-run-queue/types';
 
 export { 
   getAiPathRunQueueStatus, 
@@ -171,7 +176,7 @@ const waitForQueueReconciliation = async (): Promise<void> => {
   await reconcileInFlight;
 };
 
-export const assertAiPathRunQueueReady = async (): Promise<any> => {
+export const assertAiPathRunQueueReady = async (): Promise<AiPathRunQueueStatus> => {
   const aiPathsEnabled = await getAiPathsEnabledCached().catch(() => false);
   if (!aiPathsEnabled) {
     throw serviceUnavailableError(
@@ -211,7 +216,7 @@ export const assertAiPathRunQueueReady = async (): Promise<any> => {
   );
 };
 
-export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<any> => {
+export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQueueHotStatus> => {
   const aiPathsEnabled = await getAiPathsEnabledCached().catch(() => false);
   if (!aiPathsEnabled) {
     throw serviceUnavailableError(

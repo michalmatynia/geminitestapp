@@ -73,7 +73,7 @@ export function useFolderTreeUiState(
     try {
       return parseFolderTreeUiStateV2Entry(rawUiStateV2);
     } catch (error) {
-      runtime.recordMetric('migration_failure');
+      runtime.recordMetric('ui_state_parse_failure');
       logClientError(error, {
         context: {
           source: 'useFolderTreeUiState',

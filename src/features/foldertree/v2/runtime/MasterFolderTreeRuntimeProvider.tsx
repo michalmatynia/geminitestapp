@@ -31,8 +31,7 @@ export type FolderTreeRuntimeBus = {
       | 'transaction_rollback'
       | 'frame_budget_miss'
       | 'row_rerender'
-      | 'migration_success'
-      | 'migration_failure',
+      | 'ui_state_parse_failure',
     value?: number
   ) => void;
   getMetricsSnapshot: () => Record<string, number>;

@@ -129,7 +129,7 @@ describe('case-resolver workspace persistence', () => {
     }
   });
 
-  it('strips deprecated inline node-file snapshots before persist', async () => {
+  it('rejects deprecated inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -156,13 +156,13 @@ describe('case-resolver workspace persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      const persistedAsset = result.workspace.assets.find((asset) => asset.id === 'node-file-inline');
-      expect(persistedAsset?.kind).toBe('node_file');
-      expect(persistedAsset?.textContent ?? '').toBe('');
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain(
+        'Inline Case Resolver node-file snapshots are no longer supported.'
+      );
     }
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -711,7 +711,7 @@ describe('case-resolver workspace persistence', () => {
     ]).toBe('keyed');
   });
 
-  it('strips inline node-file snapshot text during workspace compaction', () => {
+  it('rejects inline node-file snapshot text during workspace compaction', () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -725,11 +725,9 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
 
-    const compacted = compactCaseResolverWorkspaceForPersist(workspace);
-    const compactedAsset = compacted.assets.find((asset) => asset.id === 'node-asset-inline');
-
-    expect(compactedAsset?.kind).toBe('node_file');
-    expect('textContent' in (compactedAsset ?? {})).toBe(false);
+    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrow(
+      'Inline Case Resolver node-file snapshots are no longer supported.'
+    );
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

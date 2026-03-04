@@ -251,7 +251,7 @@ describe('case-resolver nodefile relations', () => {
     });
   });
 
-  it('strips inline snapshot payloads in relation/sanitizer pipelines', () => {
+  it('rejects inline snapshot payloads in relation/sanitizer pipelines', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -278,7 +278,6 @@ describe('case-resolver nodefile relations', () => {
     });
 
     const index = buildCaseResolverNodeFileRelationIndexFromAssets({ assets, files });
-    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
     const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
 
     expect(index).toEqual({
@@ -287,12 +286,9 @@ describe('case-resolver nodefile relations', () => {
       documentFileIdsByNodeFileAssetId: {},
       nodeIdsByNodeFileAssetId: {},
     });
-    expect(sanitizedAssets).toEqual([
-      expect.objectContaining({
-        id: 'node-asset-inline',
-        textContent: '',
-      }),
-    ]);
+    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrow(
+      'Inline Case Resolver node-file snapshots are no longer supported.'
+    );
     expect(sanitizedGraph).toBe(graph);
   });
 });

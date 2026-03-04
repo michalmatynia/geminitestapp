@@ -260,7 +260,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     try {
       parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
     } catch {
-      // Drop incompatible legacy/invalid edges instead of crashing workspace normalization.
+      // Strip incompatible legacy/invalid edges so normalization remains non-blocking.
     }
   });
   const edgesByNodeId = parsedEdges

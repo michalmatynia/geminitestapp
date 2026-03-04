@@ -178,32 +178,21 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
 export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
   assets,
   files: _files,
-  mode = 'strip',
 }: {
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
-  mode?: 'strip' | 'reject';
 }): CaseResolverAssetFile[] => {
-  if (mode === 'reject') {
-    const inlineSnapshotAsset = assets.find((asset: CaseResolverAssetFile): boolean =>
-      hasInlineNodeFileSnapshotText(asset)
-    );
-    if (inlineSnapshotAsset) {
-      throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-        source: 'case_resolver.node_file_asset_sanitize',
-        assetId: inlineSnapshotAsset.id,
-      });
-    }
+  const inlineSnapshotAsset = assets.find((asset: CaseResolverAssetFile): boolean =>
+    hasInlineNodeFileSnapshotText(asset)
+  );
+  if (inlineSnapshotAsset) {
+    throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
+      source: 'case_resolver.node_file_asset_sanitize',
+      assetId: inlineSnapshotAsset.id,
+    });
   }
 
-  return assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile =>
-    hasInlineNodeFileSnapshotText(asset)
-      ? {
-        ...asset,
-        textContent: '',
-      }
-      : asset
-  );
+  return assets;
 };
 
 export const sanitizeCaseResolverGraphNodeFileRelations = ({

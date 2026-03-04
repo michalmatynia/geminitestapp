@@ -11,7 +11,8 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import {
   FILEMAKER_DATABASE_KEY,
-  parseFilemakerDatabaseForCaseResolver,
+  createDefaultFilemakerDatabase,
+  parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import type {
@@ -32,7 +33,6 @@ import {
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
-  CASE_RESOLVER_LEGACY_WORKSPACE_KEY,
   CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -80,6 +80,7 @@ import { useCaseResolverStateWorkspaceDiagnostics } from './useCaseResolverState
 import { useCaseResolverStateWorkspaceMutations } from './useCaseResolverState.workspace-mutations';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
+const EMPTY_FILEMAKER_DATABASE_PAYLOAD = JSON.stringify(createDefaultFilemakerDatabase());
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
@@ -134,10 +135,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedPromptExploderSessionId.length > 0 &&
     (requestedFileId?.trim() ?? '').length > 0;
 
-  const rawWorkspaceFromStore =
-    settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ??
-    settingsStore.get(CASE_RESOLVER_LEGACY_WORKSPACE_KEY) ??
-    null;
+  const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -145,7 +143,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const rawCaseResolverDefaultDocumentFormat = settingsStore.get(
     CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY
   );
-  const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
 
   const hasWorkspaceFromStore = useMemo(
@@ -221,8 +218,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
     };
   }, [rawCaseResolverDefaultDocumentFormat, rawCaseResolverSettings]);
   const filemakerDatabase = useMemo(
-    () => parseFilemakerDatabaseForCaseResolver(rawFilemakerDatabase),
-    [rawFilemakerDatabase]
+    () => parseFilemakerDatabase(null),
+    []
   );
   const caseResolverCaptureSettings = useMemo(
     (): CaseResolverCaptureSettingsType =>
@@ -268,6 +265,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const handledRequestedFileIdRef = useRef<string | null>(null);
   const requestedStoreRefreshFileIdRef = useRef<string | null>(null);
   const requestedUnavailableAutoRetryFileIdRef = useRef<string | null>(null);
+  const hasPurgedFilemakerPayloadRef = useRef(false);
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
     initialWorkspaceState,
@@ -396,6 +394,40 @@ export function useCaseResolverState(): CaseResolverStateValue {
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (hasPurgedFilemakerPayloadRef.current) return;
+    hasPurgedFilemakerPayloadRef.current = true;
+    const rawFilemakerPayload = settingsStore.get(FILEMAKER_DATABASE_KEY);
+    if (typeof rawFilemakerPayload !== 'string' || rawFilemakerPayload.trim().length === 0) {
+      return;
+    }
+    if (rawFilemakerPayload.trim() === EMPTY_FILEMAKER_DATABASE_PAYLOAD) {
+      return;
+    }
+
+    void fetch('/api/settings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: FILEMAKER_DATABASE_KEY,
+        value: EMPTY_FILEMAKER_DATABASE_PAYLOAD,
+      }),
+    })
+      .then((response): void => {
+        if (!response.ok) return;
+        settingsStoreRef.current.refetch();
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'filemaker_payload_removed',
+        });
+      })
+      .catch((): void => {
+        // Best-effort cleanup only.
+      });
+  }, [settingsStore]);
 
   useEffect(() => {
     workspaceRef.current = workspace;

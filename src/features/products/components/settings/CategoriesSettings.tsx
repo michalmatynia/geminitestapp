@@ -27,20 +27,22 @@ import {
   EmptyState,
   FolderTreePanel,
   Skeleton,
-  TreeActionButton,
-  TreeActionSlot,
-  TreeCaret,
   SelectSimple,
   useToast,
   Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { cn, type MasterTreeNode } from '@/shared/utils';
+import type { MasterTreeNode } from '@/shared/utils';
 
-import { buildMasterNodesFromCategoryTree, fromCategoryMasterNodeId } from './category-master-tree';
+import { buildMasterNodesFromCategoryTree } from './category-master-tree';
 import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
+import {
+  CategoryTreeNodeRuntimeProvider,
+  type CategoryTreeNodeRuntimeContextValue,
+} from './CategoryTreeNodeRuntimeContext';
+import { CategoryTreeNodeRenderer } from './CategoryTreeNodeRenderer';
 import { useProductSettingsContext } from './ProductSettingsContext';
 
 const cloneCategoryTree = (nodes: ProductCategoryWithChildren[]): ProductCategoryWithChildren[] =>
@@ -159,24 +161,27 @@ export function CategoriesSettings(): React.JSX.Element {
     expandAll();
   }, [expandAll, selectedCatalogId]);
 
-  const handleOpenCreateModal = (parentId: string | null = null): void => {
-    if (!selectedCatalogId) {
-      toast('Please select a catalog first', { variant: 'error' });
-      return;
-    }
-    setEditingCategory(null);
-    setFormData({
-      name: '',
-      description: '',
-      color: '#10b981',
-      parentId,
-      catalogId: selectedCatalogId,
-    });
-    setModalCatalogId(selectedCatalogId);
-    setShowModal(true);
-  };
+  const handleOpenCreateModal = useCallback(
+    (parentId: string | null = null): void => {
+      if (!selectedCatalogId) {
+        toast('Please select a catalog first', { variant: 'error' });
+        return;
+      }
+      setEditingCategory(null);
+      setFormData({
+        name: '',
+        description: '',
+        color: '#10b981',
+        parentId,
+        catalogId: selectedCatalogId,
+      });
+      setModalCatalogId(selectedCatalogId);
+      setShowModal(true);
+    },
+    [selectedCatalogId, toast]
+  );
 
-  const handleOpenEditModal = (category: ProductCategoryWithChildren): void => {
+  const handleOpenEditModal = useCallback((category: ProductCategoryWithChildren): void => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
@@ -187,7 +192,7 @@ export function CategoriesSettings(): React.JSX.Element {
     });
     setModalCatalogId(category.catalogId);
     setShowModal(true);
-  };
+  }, []);
 
   const handleDelete = useCallback((category: ProductCategoryWithChildren): void => {
     setCategoryToDelete(category);
@@ -375,6 +380,25 @@ export function CategoriesSettings(): React.JSX.Element {
     []
   );
 
+  const categoryTreeNodeRuntimeValue = useMemo(
+    (): CategoryTreeNodeRuntimeContextValue => ({
+      categoryById,
+      placeholderClasses,
+      DragHandleIcon,
+      onCreateCategory: handleOpenCreateModal,
+      onEditCategory: handleOpenEditModal,
+      onDeleteCategory: handleDelete,
+    }),
+    [
+      categoryById,
+      placeholderClasses,
+      DragHandleIcon,
+      handleOpenCreateModal,
+      handleOpenEditModal,
+      handleDelete,
+    ]
+  );
+
   return (
     <>
       <div className='space-y-5'>
@@ -470,113 +494,15 @@ export function CategoriesSettings(): React.JSX.Element {
                       className='bg-card/30 border-dashed border-border/70 py-4'
                     />
                   ) : (
-                    <FolderTreeViewportV2
-                      controller={controller}
-                      className='space-y-0.5'
-                      rootDropUi={rootDropUi}
-                      resolveDropPosition={resolveCategoryDropPosition}
-                      renderNode={({
-                        node,
-                        depth,
-                        hasChildren,
-                        isExpanded,
-                        dropPosition,
-                        toggleExpand,
-                      }) => {
-                        const categoryId = fromCategoryMasterNodeId(node.id);
-                        if (!categoryId) return null;
-                        const category = categoryById.get(categoryId);
-                        if (!category) return null;
-                        const showDropLine = dropPosition === 'before' || dropPosition === 'after';
-
-                        return (
-                          <div className='relative'>
-                            <div
-                              className={cn(
-                                'pointer-events-none absolute inset-x-2 h-px rounded-full transition-opacity duration-150',
-                                dropPosition === 'before' ? 'top-[2px]' : 'bottom-[2px]',
-                                placeholderClasses.lineActive,
-                                showDropLine ? 'opacity-100' : 'opacity-0'
-                              )}
-                            />
-                            <div
-                              className={cn(
-                                'group flex w-full select-none items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
-                                'text-gray-200 hover:bg-muted/40',
-                                dropPosition === 'inside'
-                                  ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45'
-                                  : ''
-                              )}
-                              style={{ paddingLeft: `${depth * 16 + 8}px` }}
-                              title={category.name}
-                            >
-                              <span className='inline-flex cursor-grab items-center justify-center opacity-0 transition group-hover:opacity-100 active:cursor-grabbing'>
-                                <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
-                              </span>
-                              <TreeCaret
-                                isOpen={isExpanded}
-                                hasChildren={hasChildren}
-                                onToggle={
-                                  hasChildren
-                                    ? (): void => {
-                                      toggleExpand();
-                                    }
-                                    : undefined
-                                }
-                                ariaLabel={
-                                  isExpanded
-                                    ? `Collapse ${category.name}`
-                                    : `Expand ${category.name}`
-                                }
-                                placeholderClassName='w-4'
-                                buttonClassName='hover:bg-gray-700'
-                                iconClassName='size-3.5'
-                              />
-                              <span className='flex-1 truncate'>{category.name}</span>
-
-                              <TreeActionSlot show='hover' align='inline'>
-                                <TreeActionButton
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    handleOpenCreateModal(category.id);
-                                  }}
-                                  size='sm'
-                                  tone='muted'
-                                  className='px-1.5 text-[11px]'
-                                  title='Add subcategory'
-                                >
-                                  Add
-                                </TreeActionButton>
-                                <TreeActionButton
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    handleOpenEditModal(category);
-                                  }}
-                                  size='sm'
-                                  tone='muted'
-                                  className='px-1.5 text-[11px]'
-                                  title='Edit category'
-                                >
-                                  Edit
-                                </TreeActionButton>
-                                <TreeActionButton
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    handleDelete(category);
-                                  }}
-                                  size='sm'
-                                  tone='danger'
-                                  className='px-1.5 text-[11px]'
-                                  title='Delete category'
-                                >
-                                  Delete
-                                </TreeActionButton>
-                              </TreeActionSlot>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    />
+                    <CategoryTreeNodeRuntimeProvider value={categoryTreeNodeRuntimeValue}>
+                      <FolderTreeViewportV2
+                        controller={controller}
+                        className='space-y-0.5'
+                        rootDropUi={rootDropUi}
+                        resolveDropPosition={resolveCategoryDropPosition}
+                        renderNode={(nodeProps) => <CategoryTreeNodeRenderer {...nodeProps} />}
+                      />
+                    </CategoryTreeNodeRuntimeProvider>
                   )}
                 </FolderTreePanel>
               )}

@@ -12,18 +12,19 @@ import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
   PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
 } from './settings/PageBuilderSettingsPage';
-import { SectionNodeItem, ZoneFooterNode, SectionDropTarget } from './tree';
 import {
   ComponentTreePanelProvider,
   type ComponentTreePanelContextValue,
 } from './tree/ComponentTreePanelContext';
 import {
-  CMS_ZONE_LABELS,
+  ComponentTreeNodeRuntimeProvider,
+  type ComponentTreeNodeRuntimeContextValue,
+} from './tree/ComponentTreeNodeRuntimeContext';
+import { ComponentTreeNodeRenderer } from './tree/ComponentTreeNodeRenderer';
+import {
   CMS_ZONE_ORDER,
   buildCmsMasterNodes,
   fromCmsSectionNodeId,
-  fromCmsZoneFooterNodeId,
-  fromCmsZoneNodeId,
   toCmsSectionNodeId,
   toCmsZoneNodeId,
 } from './utils/cms-master-tree';
@@ -237,6 +238,14 @@ export function ComponentTreePanel(): React.ReactNode {
       moveSectionByMaster,
     ]
   );
+  const nodeRuntimeContextValue = useMemo<ComponentTreeNodeRuntimeContextValue>(
+    () => ({
+      rootSectionsByZone,
+      sectionById,
+      sectionIndexById,
+    }),
+    [rootSectionsByZone, sectionById, sectionIndexById]
+  );
 
   return (
     <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
@@ -277,76 +286,14 @@ export function ComponentTreePanel(): React.ReactNode {
               />
             </div>
           ) : (
-            <FolderTreeViewportV2
-              controller={structureController}
-              enableDnd={false}
-              className='space-y-0.5'
-              renderNode={({ node, depth, hasChildren, isExpanded, toggleExpand }) => {
-                const zoneFromNode = fromCmsZoneNodeId(node.id);
-                if (zoneFromNode) {
-                  const zoneSections = rootSectionsByZone[zoneFromNode];
-                  return (
-                    <div className='border-b border-border/50 px-4 py-2.5'>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={toggleExpand}
-                        className='flex h-auto w-full items-center justify-start gap-1.5 p-0 text-xs font-semibold uppercase tracking-wider text-gray-400 transition hover:bg-transparent hover:text-gray-300 font-bold'
-                      >
-                        <span className='inline-block w-3.5 text-center'>
-                          {isExpanded ? '▾' : '▸'}
-                        </span>
-                        <span>{CMS_ZONE_LABELS[zoneFromNode]}</span>
-                        {zoneSections.length > 0 ? (
-                          <span className='ml-1 text-[10px] text-gray-500'>
-                            ({zoneSections.length})
-                          </span>
-                        ) : null}
-                      </Button>
-                    </div>
-                  );
-                }
-
-                const sectionId = fromCmsSectionNodeId(node.id);
-                if (sectionId) {
-                  const section = sectionById.get(sectionId);
-                  if (!section) return null;
-                  const sectionIndex = sectionIndexById.get(sectionId) ?? 0;
-                  const nestedOffset = Math.max(0, depth - 1) * 16;
-                  return (
-                    <div
-                      className='px-2'
-                      style={{ marginLeft: `${nestedOffset}px` }}
-                      data-cms-tree-depth={String(Math.max(0, depth - 1))}
-                    >
-                      <SectionDropTarget
-                        zone={section.zone}
-                        toParentSectionId={section.parentSectionId ?? null}
-                        toIndex={sectionIndex}
-                      />
-                      <SectionNodeItem
-                        section={section}
-                        sectionIndex={sectionIndex}
-                        hasTreeChildren={hasChildren}
-                        isTreeExpanded={isExpanded}
-                        toggleTreeExpand={toggleExpand}
-                      />
-                    </div>
-                  );
-                }
-
-                const zoneFromFooter = fromCmsZoneFooterNodeId(node.id);
-                if (!zoneFromFooter) return null;
-                return (
-                  <div className='px-2 pb-2'>
-                    <ZoneFooterNode
-                      zone={zoneFromFooter}
-                      sectionCount={rootSectionsByZone[zoneFromFooter].length}
-                    />
-                  </div>
-                );
-              }}
-            />
+            <ComponentTreeNodeRuntimeProvider value={nodeRuntimeContextValue}>
+              <FolderTreeViewportV2
+                controller={structureController}
+                enableDnd={false}
+                className='space-y-0.5'
+                renderNode={(input) => <ComponentTreeNodeRenderer {...input} />}
+              />
+            </ComponentTreeNodeRuntimeProvider>
           )}
         </FolderTreePanel>
       </ComponentTreePanelProvider>

@@ -1,6 +1,6 @@
 # Prop Drilling Scan
 
-Generated at: 2026-03-04T21:10:20.391Z
+Generated at: 2026-03-04T21:11:57.935Z
 
 ## Snapshot
 
@@ -8,8 +8,8 @@ Generated at: 2026-03-04T21:10:20.391Z
 - JSX files scanned: 1388
 - Components detected: 2055
 - Components forwarding parent props: 230
-- Resolved forwarded transitions: 1435
-- Candidate chains (depth >= 3): 20
+- Resolved forwarded transitions: 1434
+- Candidate chains (depth >= 3): 19
 - High-priority chains (depth >= 4): 0
 - Unknown spread forwarding edges: 14
 
@@ -88,25 +88,24 @@ Generated at: 2026-03-04T21:10:20.391Z
 | Rank | Score | Depth | Root | Sink | Root Fanout | Features | Prop Path |
 | ---: | ---: | ---: | --- | --- | ---: | ---: | --- |
 | 1 | 89 | 3 | `ValidatedField` | `Label` | 1 | 2 | `required -> required -> className` |
-| 2 | 83 | 3 | `DocumentRelationSearchPanel` | `RelationTreeBrowser` | 1 | 1 | `relationTreeInstance -> relationTreeInstance -> instance` |
-| 3 | 83 | 3 | `EditProductPage` | `ProductFormCoreProvider` | 1 | 1 | `product -> product -> product` |
-| 4 | 83 | 3 | `FilterPanel` | `Input` | 1 | 1 | `searchPlaceholder -> searchPlaceholder -> placeholder` |
-| 5 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
-| 6 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `variant -> variant -> variant` |
-| 7 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `padding -> padding -> padding` |
-| 8 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `title -> title -> title` |
-| 9 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `description -> description -> description` |
-| 10 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `headerActions -> headerActions -> actions` |
-| 11 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `refresh -> refresh -> refresh` |
-| 12 | 83 | 3 | `SelectModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
-| 13 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> onClick` |
-| 14 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> disabled` |
-| 15 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSize -> pageSize -> value` |
-| 16 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSizeOptions -> pageSizeOptions -> options` |
-| 17 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `isLoading -> isLoading -> disabled` |
-| 18 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageChange -> onPageChange -> onValueChange` |
-| 19 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `onPageChange -> onPageChange -> onClick` |
-| 20 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageSizeChange -> onPageSizeChange -> onValueChange` |
+| 2 | 83 | 3 | `EditProductPage` | `ProductFormCoreProvider` | 1 | 1 | `product -> product -> product` |
+| 3 | 83 | 3 | `FilterPanel` | `Input` | 1 | 1 | `searchPlaceholder -> searchPlaceholder -> placeholder` |
+| 4 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
+| 5 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `variant -> variant -> variant` |
+| 6 | 83 | 3 | `SettingsFormModal` | `AppModal` | 1 | 1 | `padding -> padding -> padding` |
+| 7 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `title -> title -> title` |
+| 8 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `description -> description -> description` |
+| 9 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `headerActions -> headerActions -> actions` |
+| 10 | 83 | 3 | `StandardDataTablePanel` | `SectionHeader` | 1 | 1 | `refresh -> refresh -> refresh` |
+| 11 | 83 | 3 | `SelectModal` | `AppModal` | 1 | 1 | `size -> size -> size` |
+| 12 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> onClick` |
+| 13 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `page -> page -> disabled` |
+| 14 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSize -> pageSize -> value` |
+| 15 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `pageSizeOptions -> pageSizeOptions -> options` |
+| 16 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `isLoading -> isLoading -> disabled` |
+| 17 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageChange -> onPageChange -> onValueChange` |
+| 18 | 83 | 3 | `PanelPagination` | `Button` | 1 | 1 | `onPageChange -> onPageChange -> onClick` |
+| 19 | 83 | 3 | `PanelPagination` | `SelectSimple` | 1 | 1 | `onPageSizeChange -> onPageSizeChange -> onValueChange` |
 
 ## Top Chain Details
 
@@ -124,21 +123,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `ValidatedField` -> `FormField`: `required` -> `required` at src/features/products/components/form/ValidatedField.tsx:61
   - `FormField` -> `Label`: `required` -> `className` at src/shared/ui/form-section.tsx:111
 
-### 2. DocumentRelationSearchPanel -> RelationTreeBrowser
-
-- Score: 83
-- Depth: 3
-- Root fanout: 1
-- Prop path: relationTreeInstance -> relationTreeInstance -> instance
-- Component path:
-  - `DocumentRelationSearchPanel` (src/features/case-resolver/relation-search/components/DocumentRelationSearchPanel.tsx)
-  - `DocumentRelationSearchInner` (src/features/case-resolver/relation-search/components/DocumentRelationSearchPanel.tsx)
-  - `RelationTreeBrowser` (src/features/case-resolver/relation-search/components/RelationTreeBrowser.tsx)
-- Transition lines:
-  - `DocumentRelationSearchPanel` -> `DocumentRelationSearchInner`: `relationTreeInstance` -> `relationTreeInstance` at src/features/case-resolver/relation-search/components/DocumentRelationSearchPanel.tsx:132
-  - `DocumentRelationSearchInner` -> `RelationTreeBrowser`: `relationTreeInstance` -> `instance` at src/features/case-resolver/relation-search/components/DocumentRelationSearchPanel.tsx:60
-
-### 3. EditProductPage -> ProductFormCoreProvider
+### 2. EditProductPage -> ProductFormCoreProvider
 
 - Score: 83
 - Depth: 3
@@ -152,7 +137,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `EditProductPage` -> `ProductFormProvider`: `product` -> `product` at src/features/products/components/EditProductForm.tsx:82
   - `ProductFormProvider` -> `ProductFormCoreProvider`: `product` -> `product` at src/features/products/context/ProductFormContext.tsx:406
 
-### 4. FilterPanel -> Input
+### 3. FilterPanel -> Input
 
 - Score: 83
 - Depth: 3
@@ -166,7 +151,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `FilterPanel` -> `PanelFilters`: `searchPlaceholder` -> `searchPlaceholder` at src/shared/ui/templates/FilterPanel.tsx:106
   - `PanelFilters` -> `Input`: `searchPlaceholder` -> `placeholder` at src/shared/ui/templates/panels/PanelFilters.tsx:148
 
-### 5. SettingsFormModal -> AppModal
+### 4. SettingsFormModal -> AppModal
 
 - Score: 83
 - Depth: 3
@@ -180,7 +165,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `SettingsFormModal` -> `FormModal`: `size` -> `size` at src/shared/ui/templates/SettingsFormModal.tsx:46
   - `FormModal` -> `AppModal`: `size` -> `size` at src/shared/ui/FormModal.tsx:212
 
-### 6. SettingsFormModal -> AppModal
+### 5. SettingsFormModal -> AppModal
 
 - Score: 83
 - Depth: 3
@@ -194,7 +179,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `SettingsFormModal` -> `FormModal`: `variant` -> `variant` at src/shared/ui/templates/SettingsFormModal.tsx:46
   - `FormModal` -> `AppModal`: `variant` -> `variant` at src/shared/ui/FormModal.tsx:212
 
-### 7. SettingsFormModal -> AppModal
+### 6. SettingsFormModal -> AppModal
 
 - Score: 83
 - Depth: 3
@@ -208,7 +193,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `SettingsFormModal` -> `FormModal`: `padding` -> `padding` at src/shared/ui/templates/SettingsFormModal.tsx:46
   - `FormModal` -> `AppModal`: `padding` -> `padding` at src/shared/ui/FormModal.tsx:212
 
-### 8. StandardDataTablePanel -> SectionHeader
+### 7. StandardDataTablePanel -> SectionHeader
 
 - Score: 83
 - Depth: 3
@@ -222,7 +207,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `StandardDataTablePanel` -> `ListPanel`: `title` -> `title` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
   - `ListPanel` -> `SectionHeader`: `title` -> `title` at src/shared/ui/list-panel.tsx:81
 
-### 9. StandardDataTablePanel -> SectionHeader
+### 8. StandardDataTablePanel -> SectionHeader
 
 - Score: 83
 - Depth: 3
@@ -236,7 +221,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `StandardDataTablePanel` -> `ListPanel`: `description` -> `description` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
   - `ListPanel` -> `SectionHeader`: `description` -> `description` at src/shared/ui/list-panel.tsx:81
 
-### 10. StandardDataTablePanel -> SectionHeader
+### 9. StandardDataTablePanel -> SectionHeader
 
 - Score: 83
 - Depth: 3
@@ -250,7 +235,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `StandardDataTablePanel` -> `ListPanel`: `headerActions` -> `headerActions` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
   - `ListPanel` -> `SectionHeader`: `headerActions` -> `actions` at src/shared/ui/list-panel.tsx:81
 
-### 11. StandardDataTablePanel -> SectionHeader
+### 10. StandardDataTablePanel -> SectionHeader
 
 - Score: 83
 - Depth: 3
@@ -264,7 +249,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `StandardDataTablePanel` -> `ListPanel`: `refresh` -> `refresh` at src/shared/ui/templates/StandardDataTablePanel.tsx:134
   - `ListPanel` -> `SectionHeader`: `refresh` -> `refresh` at src/shared/ui/list-panel.tsx:81
 
-### 12. SelectModal -> AppModal
+### 11. SelectModal -> AppModal
 
 - Score: 83
 - Depth: 3
@@ -278,7 +263,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `SelectModal` -> `FormModal`: `size` -> `size` at src/shared/ui/templates/modals/SelectModal.tsx:85
   - `FormModal` -> `AppModal`: `size` -> `size` at src/shared/ui/FormModal.tsx:212
 
-### 13. PanelPagination -> Button
+### 12. PanelPagination -> Button
 
 - Score: 83
 - Depth: 3
@@ -292,7 +277,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `PanelPagination` -> `Pagination`: `page` -> `page` at src/shared/ui/templates/panels/PanelPagination.tsx:34
   - `Pagination` -> `Button`: `page` -> `onClick` at src/shared/ui/pagination.tsx:118
 
-### 14. PanelPagination -> Button
+### 13. PanelPagination -> Button
 
 - Score: 83
 - Depth: 3
@@ -306,7 +291,7 @@ Generated at: 2026-03-04T21:10:20.391Z
   - `PanelPagination` -> `Pagination`: `page` -> `page` at src/shared/ui/templates/panels/PanelPagination.tsx:34
   - `Pagination` -> `Button`: `page` -> `disabled` at src/shared/ui/pagination.tsx:118
 
-### 15. PanelPagination -> SelectSimple
+### 14. PanelPagination -> SelectSimple
 
 - Score: 83
 - Depth: 3
@@ -319,6 +304,20 @@ Generated at: 2026-03-04T21:10:20.391Z
 - Transition lines:
   - `PanelPagination` -> `Pagination`: `pageSize` -> `pageSize` at src/shared/ui/templates/panels/PanelPagination.tsx:34
   - `Pagination` -> `SelectSimple`: `pageSize` -> `value` at src/shared/ui/pagination.tsx:100
+
+### 15. PanelPagination -> SelectSimple
+
+- Score: 83
+- Depth: 3
+- Root fanout: 1
+- Prop path: pageSizeOptions -> pageSizeOptions -> options
+- Component path:
+  - `PanelPagination` (src/shared/ui/templates/panels/PanelPagination.tsx)
+  - `Pagination` (src/shared/ui/pagination.tsx)
+  - `SelectSimple` (src/shared/ui/select-simple.tsx)
+- Transition lines:
+  - `PanelPagination` -> `Pagination`: `pageSizeOptions` -> `pageSizeOptions` at src/shared/ui/templates/panels/PanelPagination.tsx:34
+  - `Pagination` -> `SelectSimple`: `pageSizeOptions` -> `options` at src/shared/ui/pagination.tsx:100
 
 ## Execution Notes
 

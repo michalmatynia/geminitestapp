@@ -201,6 +201,18 @@ Unify Prompt Exploder recognition, learning, governance, and operational quality
 - Reuse these utilities in admin page save/load/delete handlers and expand prompt-library tests for those workflows.
 - Status: Completed in current iteration.
 
+33. Contract Freeze + Legacy Baseline Telemetry
+
+- Freeze canonical Prompt Exploder stack/bridge identifiers and publish migration mapping.
+- Add runtime counters for legacy stack alias usage, fallback usage, bridge alias normalization, and strict-mode retry fallback path.
+- Status: Completed in current iteration.
+
+34. Persistence Contract Migration Utility + Script
+
+- Add Prompt Exploder persisted-settings migration utility for stack/scope/bridge canonicalization.
+- Add provider-aware DB script with dry-run/apply modes and per-key migration reporting.
+- Status: Completed in current iteration.
+
 ## Quality Targets
 
 - Benchmark expected-type recall >= 95%.

@@ -1,8 +1,11 @@
 import { VALIDATOR_SCOPE_DESCRIPTIONS, VALIDATOR_SCOPE_LABELS } from '@/shared/contracts/validator';
 import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
+import { PROMPT_EXPLODER_LEGACY_VALIDATION_STACK_ALIASES } from '@/shared/contracts/prompt-exploder';
 import type {
+  PromptExploderLegacyValidationStackAlias,
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationStackResolutionReason,
   PromptExploderValidationStackResolution,
@@ -61,12 +64,18 @@ const normalizeStackValue = (
 
 const normalizeStackAliasKey = (value: string): string => value.trim().toLowerCase();
 
+const LEGACY_STACK_ALIAS_KEYS = new Set<string>(
+  Object.keys(PROMPT_EXPLODER_LEGACY_VALIDATION_STACK_ALIASES).map(normalizeStackAliasKey)
+);
+
 const toRuntimeScope = (validatorScope: ValidatorScope): PromptExploderRuntimeValidationScope =>
   validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
 
-const canonicalStackIdFromScope = (scope: ValidatorScope): PromptExploderValidationRuleStack =>
+const canonicalStackIdFromScope = (
+  scope: ValidatorScope
+): 'case-resolver-prompt-exploder' | 'prompt-exploder' =>
   scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
     ? 'case-resolver-prompt-exploder'
     : 'prompt-exploder';
@@ -136,8 +145,17 @@ const resolveKnownStackAlias = (
   stack: string,
   patternLists: ValidatorPatternList[]
 ): PromptExploderValidationStackResolution | null => {
-  const aliasScope = KNOWN_STACK_SCOPE_ALIASES[normalizeStackAliasKey(stack)];
+  const aliasKey = normalizeStackAliasKey(stack);
+  const aliasScope = KNOWN_STACK_SCOPE_ALIASES[aliasKey];
   if (!aliasScope) return null;
+
+  if (LEGACY_STACK_ALIAS_KEYS.has(aliasKey)) {
+    recordPromptValidationCounter('runtime_legacy_stack_alias', 1, {
+      alias: aliasKey as PromptExploderLegacyValidationStackAlias,
+      canonicalStackId: canonicalStackIdFromScope(aliasScope),
+      validatorScope: aliasScope,
+    });
+  }
 
   const matchedList = findFirstListByScope(patternLists, aliasScope);
   if (matchedList) {

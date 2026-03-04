@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { POST as legacyPost } from '@/app/api/integrations/imports/base/route';
-import { POST as runsPost } from '@/app/api/integrations/imports/base/runs/route';
+import { POST as importsBasePost } from '@/app/api/v2/integrations/imports/base/route';
+import { POST as runsPost } from '@/app/api/v2/integrations/imports/base/runs/route';
 
 const startBaseImportRunResponseMock = vi.hoisted(() => vi.fn());
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
@@ -51,9 +51,9 @@ describe('base import route unification', () => {
     });
   });
 
-  it('legacy action=import delegates to run starter and returns no-store response', async () => {
-    const response = await legacyPost(
-      new NextRequest('http://localhost/api/integrations/imports/base', {
+  it('imports/base action=import delegates to run starter and returns no-store response', async () => {
+    const response = await importsBasePost(
+      new NextRequest('http://localhost/api/v2/integrations/imports/base', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ describe('base import route unification', () => {
 
   it('runs endpoint delegates to the same run starter payload contract', async () => {
     const response = await runsPost(
-      new NextRequest('http://localhost/api/integrations/imports/base/runs', {
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({

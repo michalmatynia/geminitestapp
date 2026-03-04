@@ -119,13 +119,13 @@ const renderButton = (overrides?: Partial<React.ComponentProps<typeof BaseQuickE
 
 const setupDefaultApiMocks = (): void => {
   apiGetMock.mockImplementation((url: string) => {
-    if (url.startsWith('/api/integrations/exports/base/default-connection')) {
+    if (url.startsWith('/api/v2/integrations/exports/base/default-connection')) {
       return Promise.resolve({ connectionId: 'conn-base-1' });
     }
-    if (url.startsWith('/api/integrations/exports/base/default-inventory')) {
+    if (url.startsWith('/api/v2/integrations/exports/base/default-inventory')) {
       return Promise.resolve({ inventoryId: 'inv-main' });
     }
-    if (url.startsWith('/api/integrations/exports/base/active-template')) {
+    if (url.startsWith('/api/v2/integrations/exports/base/active-template')) {
       return Promise.resolve({ templateId: null });
     }
     return Promise.reject(new Error(`Unexpected GET ${url}`));

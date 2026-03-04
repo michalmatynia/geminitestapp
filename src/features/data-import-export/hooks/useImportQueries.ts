@@ -42,7 +42,7 @@ export function useIntegrationConnections(): ListQuery<IntegrationWithConnection
   const queryKey = integrationKeys.withConnections();
   return createListQueryV2({
     queryKey,
-    queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
+    queryFn: () => api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections'),
     meta: {
       source: 'importExport.hooks.useIntegrationConnections',
       operation: 'list',
@@ -592,21 +592,21 @@ export function useSaveExportSettingsMutation(): MutationResult<
       const normalizedConnectionId = params.selectedBaseConnectionId?.trim() || null;
       const normalizedWarehouseId = params.exportWarehouseId?.trim() || null;
       await Promise.all([
-        api.post('/api/integrations/exports/base/active-template', {
+        api.post('/api/v2/integrations/exports/base/active-template', {
           templateId: normalizedTemplateId,
           connectionId: normalizedConnectionId,
           inventoryId: normalizedInventoryId,
         }),
-        api.post('/api/integrations/exports/base/default-inventory', {
+        api.post('/api/v2/integrations/exports/base/default-inventory', {
           inventoryId: normalizedInventoryId,
         }),
-        api.post('/api/integrations/exports/base/default-connection', {
+        api.post('/api/v2/integrations/exports/base/default-connection', {
           connectionId: normalizedConnectionId,
         }),
-        api.post('/api/integrations/exports/base/stock-fallback', {
+        api.post('/api/v2/integrations/exports/base/stock-fallback', {
           enabled: params.exportStockFallbackEnabled,
         }),
-        api.post('/api/integrations/exports/base/image-retry-presets', {
+        api.post('/api/v2/integrations/exports/base/image-retry-presets', {
           presets: params.imageRetryPresets,
         }),
         ...(normalizedInventoryId
@@ -651,7 +651,7 @@ export function useSaveDefaultConnectionMutation(): MutationResult<
     }): Promise<{ connectionId: string | null }> => {
       const normalizedConnectionId = connectionId?.trim() || null;
       return api.post<{ connectionId: string | null }>(
-        '/api/integrations/exports/base/default-connection',
+        '/api/v2/integrations/exports/base/default-connection',
         { connectionId: normalizedConnectionId }
       );
     },

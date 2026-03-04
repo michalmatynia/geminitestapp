@@ -338,6 +338,17 @@ export const resolvePromptValidationRuntime = (
         scope: stackResolution.scope ?? 'global',
         stack: resolveStackId(stackResolution.stack),
       });
+      if (
+        stackResolution.reason === 'default_scope' ||
+        stackResolution.reason === 'scope_fallback' ||
+        stackResolution.reason === 'invalid_stack'
+      ) {
+        recordPromptValidationCounter('runtime_legacy_stack_fallback', 1, {
+          scope: stackResolution.scope ?? 'global',
+          stack: resolveStackId(stackResolution.stack),
+          reason: stackResolution.reason,
+        });
+      }
     }
     recordPromptValidationTiming('scope_resolve_ms', performance.now() - stackStartedAt, {
       scope: stackResolution.scope ?? 'global',

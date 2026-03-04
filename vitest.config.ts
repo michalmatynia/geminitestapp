@@ -30,6 +30,7 @@ const mongoIntegrationTestFiles = [
   '__tests__/features/notesapp/services/mongo-note-repository.test.ts',
   '__tests__/features/products/services/mongo-parameter-repository.test.ts',
   '__tests__/features/products/services/mongo-product-repository.test.ts',
+  '__tests__/features/products/services/mongo-product-legacy-shape-guard.test.ts',
   '__tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-delete-action.test.ts',
   'src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-mongo-update-action.test.ts',

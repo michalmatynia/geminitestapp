@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { GET, POST } from '@/app/api/price-groups/route';
+import { GET, POST } from '@/app/api/v2/products/metadata/[type]/route';
 import prisma from '@/shared/lib/db/prisma';
 
 type PriceGroupResponse = {
@@ -15,6 +15,7 @@ type PriceGroupResponse = {
 };
 
 describe('Price Groups API', () => {
+  const priceGroupsRouteContext = { params: Promise.resolve({ type: 'price-groups' }) };
   beforeEach(async () => {
     await prisma.priceGroup.deleteMany({});
     await prisma.currency.deleteMany({});
@@ -24,9 +25,12 @@ describe('Price Groups API', () => {
     await prisma.$disconnect();
   });
 
-  describe('GET /api/price-groups', () => {
+  describe('GET /api/v2/products/metadata/price-groups', () => {
     it('should return empty list initially', async () => {
-      const res = await GET(new NextRequest('http://localhost/api/price-groups'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/products/metadata/price-groups'),
+        priceGroupsRouteContext
+      );
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toEqual([]);
@@ -46,7 +50,10 @@ describe('Price Groups API', () => {
         },
       });
 
-      const res = await GET(new NextRequest('http://localhost/api/price-groups'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/products/metadata/price-groups'),
+        priceGroupsRouteContext
+      );
       const groups = (await res.json()) as PriceGroupResponse[];
       expect(res.status).toEqual(200);
       expect(groups).toHaveLength(1);
@@ -54,7 +61,7 @@ describe('Price Groups API', () => {
     });
   });
 
-  describe('POST /api/price-groups', () => {
+  describe('POST /api/v2/products/metadata/price-groups', () => {
     it('should create a standard price group', async () => {
       const currency = await prisma.currency.create({
         data: { code: 'USD', name: 'US Dollar' },
@@ -71,12 +78,12 @@ describe('Price Groups API', () => {
         isDefault: true,
       };
 
-      const req = new NextRequest('http://localhost/api/price-groups', {
+      const req = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
         method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, priceGroupsRouteContext);
       const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
@@ -109,12 +116,12 @@ describe('Price Groups API', () => {
         addToPrice: 10,
       };
 
-      const req = new NextRequest('http://localhost/api/price-groups', {
+      const req = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
         method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, priceGroupsRouteContext);
       const group = (await res.json()) as PriceGroupResponse;
 
       expect(res.status).toEqual(200);
@@ -138,12 +145,12 @@ describe('Price Groups API', () => {
         addToPrice: 10,
       };
 
-      const req = new NextRequest('http://localhost/api/price-groups', {
+      const req = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
         method: 'POST',
         body: JSON.stringify(newGroup),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, priceGroupsRouteContext);
       expect(res.status).toEqual(400);
       const body = (await res.json()) as { error: string };
       expect(body.error).toContain('Invalid payload');

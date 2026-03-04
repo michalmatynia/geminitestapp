@@ -22,12 +22,12 @@ export const integrationSelectionQueryKeys = integrationSelectionKeys;
 
 export const fetchPreferredBaseConnection = async (): Promise<{ connectionId?: string | null }> => {
   return await api.get<{ connectionId?: string | null }>(
-    '/api/integrations/exports/base/default-connection'
+    '/api/v2/integrations/exports/base/default-connection'
   );
 };
 
 export const fetchIntegrationsWithConnections = async (): Promise<IntegrationWithConnections[]> => {
-  return await api.get<IntegrationWithConnections[]>('/api/integrations/with-connections');
+  return await api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections');
 };
 
 // Why: Integration selection has complex side effects:

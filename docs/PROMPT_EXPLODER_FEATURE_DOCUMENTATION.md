@@ -124,6 +124,34 @@ Primary in-app tabs (Prompt Exploder main page):
   - `prompt_exploder:draft_prompt`
   - `prompt_exploder:apply_to_studio_prompt`
 
+## 5.1 Contract Freeze (2026-03-04)
+
+Canonical IDs for migration:
+
+- Validation stack IDs:
+  - `prompt-exploder`
+  - `case-resolver-prompt-exploder`
+- Runtime scopes:
+  - `prompt_exploder`
+  - `case_resolver_prompt_exploder`
+- Bridge source canonical cross-tool values:
+  - `prompt-exploder`
+  - `image-studio`
+  - `case-resolver`
+- Bridge target canonical cross-tool values:
+  - `prompt-exploder`
+  - `image-studio`
+  - `case-resolver`
+
+Legacy aliases still accepted during migration window:
+
+- Validation stack aliases:
+  - `prompt_exploder -> prompt-exploder`
+  - `case_resolver_prompt_exploder -> case-resolver-prompt-exploder`
+- Bridge aliases:
+  - `prompt_exploder -> prompt-exploder`
+  - `studio -> image-studio`
+
 ## 6. APIs and Observability
 
 - Runtime health endpoint:

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  consumePromptExploderApplyPayload,
   consumePromptExploderApplyPromptForCaseResolver,
   PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
   savePromptExploderApplyPromptForCaseResolver,
@@ -357,5 +358,22 @@ describe('prompt exploder bridge parties', () => {
       sessionId: undefined,
       documentVersionAtStart: undefined,
     });
+  });
+
+  it('normalizes legacy bridge source and target aliases', () => {
+    const freshCreatedAt = new Date().toISOString();
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Legacy bridge aliases',
+        source: 'prompt_exploder',
+        target: 'studio',
+        createdAt: freshCreatedAt,
+      })
+    );
+
+    const payload = consumePromptExploderApplyPayload('image-studio');
+    expect(payload?.source).toBe('prompt-exploder');
+    expect(payload?.target).toBe('image-studio');
   });
 });

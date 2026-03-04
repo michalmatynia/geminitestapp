@@ -35,7 +35,7 @@ describe('parseValidatorScope', () => {
 
   it('parses settings envelope with lists and keeps case resolver plain text scope', () => {
     const savedValue = JSON.stringify({
-      version: 1,
+      version: 2,
       lists: [
         {
           id: 'custom-case-resolver-plain-text',

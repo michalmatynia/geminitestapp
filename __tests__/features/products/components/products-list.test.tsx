@@ -286,8 +286,8 @@ describe('Admin Products List UI', () => {
         return HttpResponse.json([]);
       }),
       http.get('/api/products/validator-config', () => HttpResponse.json([])),
-      http.get('/api/integrations/with-connections', () => HttpResponse.json([])),
-      http.get('/api/integrations/exports/base/default-connection', () =>
+      http.get('/api/v2/integrations/with-connections', () => HttpResponse.json([])),
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: null })
       ),
       http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([])),
@@ -355,10 +355,10 @@ describe('Admin Products List UI', () => {
   it('shows notification and blocks OneClick export when inventory is not configured', async () => {
     let exportCalls = 0;
     server.use(
-      http.get('/api/integrations/exports/base/default-connection', () =>
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: 'base-conn-1' })
       ),
-      http.get('/api/integrations/exports/base/default-inventory', () =>
+      http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: null })
       ),
       http.post('/api/integrations/products/:id/export-to-base', () => {
@@ -381,13 +381,13 @@ describe('Admin Products List UI', () => {
   it('shows notification and blocks OneClick export when configured inventory is not available for connection', async () => {
     let exportCalls = 0;
     server.use(
-      http.get('/api/integrations/exports/base/default-connection', () =>
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: 'base-conn-1' })
       ),
-      http.get('/api/integrations/exports/base/default-inventory', () =>
+      http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: 'inv-missing' })
       ),
-      http.post('/api/integrations/imports/base', async () =>
+      http.post('/api/v2/integrations/imports/base', async () =>
         HttpResponse.json({
           inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
         })
@@ -414,18 +414,18 @@ describe('Admin Products List UI', () => {
     let exportPayload: Record<string, unknown> | null = null;
 
     server.use(
-      http.get('/api/integrations/exports/base/default-connection', () =>
+      http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: 'base-conn-1' })
       ),
-      http.get('/api/integrations/exports/base/default-inventory', () =>
+      http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: 'inv-1' })
       ),
-      http.post('/api/integrations/imports/base', async () =>
+      http.post('/api/v2/integrations/imports/base', async () =>
         HttpResponse.json({
           inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
         })
       ),
-      http.get('/api/integrations/exports/base/active-template', ({ request }) => {
+      http.get('/api/v2/integrations/exports/base/active-template', ({ request }) => {
         const url = new URL(request.url);
         capturedTemplateScope = {
           connectionId: url.searchParams.get('connectionId') ?? '',

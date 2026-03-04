@@ -82,31 +82,6 @@ export const resolveCategoryLabelByLocale = (
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
-
-  const categories = (product as unknown as Record<string, unknown>)['categories'];
-  if (!categories) return '';
-
-  if (Array.isArray(categories)) {
-    const first = categories[0] as Record<string, unknown> | undefined;
-    if (!first) return '';
-    return toTrimmedString(
-      (first['categoryId'] as string | undefined) ||
-        (first['category_id'] as string | undefined) ||
-        (first['id'] as string | undefined) ||
-        (first['value'] as string | undefined)
-    );
-  }
-
-  if (typeof categories === 'object' && categories !== null) {
-    const obj = categories as Record<string, unknown>;
-    return toTrimmedString(
-      (obj['categoryId'] as string | undefined) ||
-        (obj['category_id'] as string | undefined) ||
-        (obj['id'] as string | undefined) ||
-        (obj['value'] as string | undefined)
-    );
-  }
-
   return '';
 };
 

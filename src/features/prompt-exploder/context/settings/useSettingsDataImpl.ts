@@ -35,6 +35,7 @@ import {
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { LearningDraft } from './SettingsDraftsContext';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 
@@ -271,6 +272,11 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
         }),
       };
     } catch (error) {
+      if (strictStackMode) {
+        recordPromptValidationCounter('runtime_legacy_strict_retry', 1, {
+          scope: preferredValidatorScope,
+        });
+      }
       const selection = resolvePromptValidationRuntime({
         promptSettings,
         promptExploderSettings,

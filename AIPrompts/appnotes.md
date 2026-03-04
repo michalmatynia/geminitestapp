@@ -5,8 +5,8 @@ Migrated:
 -Ai-Paths
 -Products
 -Runtime
--validation patterns
--prompt exploder
+-validation patterns (not the folder tree)
+-prompt exploder (not the folder tree)
 
 
 *I cannot save cases

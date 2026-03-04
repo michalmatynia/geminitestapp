@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET, POST } from '@/app/api/integrations/product-listings/route';
+import { GET, POST } from '@/app/api/v2/integrations/product-listings/route';
 
 const listByProductIdsMock = vi.hoisted(() => vi.fn());
 const listAllListingsMock = vi.hoisted(() => vi.fn());
@@ -36,7 +36,7 @@ describe('api/integrations/product-listings', () => {
     ]);
 
     const response = await GET(
-      new NextRequest('http://localhost/api/integrations/product-listings', {
+      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
         method: 'GET',
       })
     );
@@ -65,7 +65,7 @@ describe('api/integrations/product-listings', () => {
     ]);
 
     const response = await GET(
-      new NextRequest('http://localhost/api/integrations/product-listings', {
+      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
         method: 'GET',
       })
     );
@@ -91,7 +91,7 @@ describe('api/integrations/product-listings', () => {
     ]);
 
     const response = await POST(
-      new NextRequest('http://localhost/api/integrations/product-listings', {
+      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
         method: 'POST',
         body: JSON.stringify({
           productIds: ['product-3', 'product-3'],
@@ -111,7 +111,7 @@ describe('api/integrations/product-listings', () => {
 
   it('returns 400 for invalid POST payload', async () => {
     const response = await POST(
-      new NextRequest('http://localhost/api/integrations/product-listings', {
+      new NextRequest('http://localhost/api/v2/integrations/product-listings', {
         method: 'POST',
         body: JSON.stringify({
           productIds: [],

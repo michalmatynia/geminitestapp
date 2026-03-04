@@ -1,17 +1,22 @@
-import type {
-  PromptExploderBridgePayload,
-  PromptExploderBridgePayloadStatus,
-  PromptExploderBridgeSource,
-  PromptExploderBridgeTarget,
-  PromptExploderCaseResolverContext,
-  PromptExploderCaseResolverMetadata,
-  PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidate,
-  PromptExploderCaseResolverPartyKind,
-  PromptExploderCaseResolverPlaceDate,
-  PromptExploderBridgePayloadSnapshot,
-  PromptExploderBridgeSaveOptions,
+import {
+  PROMPT_EXPLODER_CANONICAL_BRIDGE_SOURCES,
+  PROMPT_EXPLODER_CANONICAL_BRIDGE_TARGETS,
+  PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES,
+  PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES,
+  type PromptExploderBridgePayload,
+  type PromptExploderBridgePayloadStatus,
+  type PromptExploderBridgeSource,
+  type PromptExploderBridgeTarget,
+  type PromptExploderCaseResolverContext,
+  type PromptExploderCaseResolverMetadata,
+  type PromptExploderCaseResolverPartyBundle,
+  type PromptExploderCaseResolverPartyCandidate,
+  type PromptExploderCaseResolverPartyKind,
+  type PromptExploderCaseResolverPlaceDate,
+  type PromptExploderBridgePayloadSnapshot,
+  type PromptExploderBridgeSaveOptions,
 } from '@/shared/contracts/prompt-exploder';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
@@ -53,6 +58,8 @@ const BRIDGE_PAYLOAD_STATUSES: PromptExploderBridgePayloadStatus[] = [
   'dismissed',
   'failed',
 ];
+const CANONICAL_BRIDGE_SOURCES = new Set<string>(PROMPT_EXPLODER_CANONICAL_BRIDGE_SOURCES);
+const CANONICAL_BRIDGE_TARGETS = new Set<string>(PROMPT_EXPLODER_CANONICAL_BRIDGE_TARGETS);
 
 const isQuotaExceededError = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false;
@@ -191,6 +198,56 @@ const toNonNegativeInt = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const recordLegacyBridgeAliasUsage = (
+  field: 'source' | 'target',
+  alias: string,
+  canonical: string
+): void => {
+  recordPromptValidationCounter('runtime_legacy_bridge_alias', 1, {
+    field,
+    alias,
+    canonical,
+  });
+};
+
+const normalizeBridgeSource = (value: unknown): PromptExploderBridgeSource => {
+  const normalized = toTrimmedString(value).toLowerCase();
+  if (!normalized) return 'image-studio';
+
+  const legacyAlias =
+    PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES[
+      normalized as keyof typeof PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES
+    ];
+  if (legacyAlias) {
+    recordLegacyBridgeAliasUsage('source', normalized, legacyAlias);
+    return legacyAlias;
+  }
+
+  if (CANONICAL_BRIDGE_SOURCES.has(normalized)) {
+    return normalized as PromptExploderBridgeSource;
+  }
+  return 'image-studio';
+};
+
+const normalizeBridgeTarget = (value: unknown): PromptExploderBridgeTarget => {
+  const normalized = toTrimmedString(value).toLowerCase();
+  if (!normalized) return 'image-studio';
+
+  const legacyAlias =
+    PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES[
+      normalized as keyof typeof PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES
+    ];
+  if (legacyAlias) {
+    recordLegacyBridgeAliasUsage('target', normalized, legacyAlias);
+    return legacyAlias;
+  }
+
+  if (CANONICAL_BRIDGE_TARGETS.has(normalized)) {
+    return normalized as PromptExploderBridgeTarget;
+  }
+  return 'image-studio';
+};
+
 const sanitizeCaseResolverPartyCandidate = (
   value: unknown,
   role: PromptExploderCaseResolverPartyRole
@@ -258,23 +315,8 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
   try {
     const parsed = JSON.parse(raw) as Partial<PromptExploderBridgePayload>;
     if (typeof parsed.prompt !== 'string') return null;
-    const source: PromptExploderBridgeSource =
-      parsed.source === 'image-studio' ||
-      parsed.source === 'prompt-exploder' ||
-      parsed.source === 'case-resolver'
-        ? parsed.source
-        : 'image-studio';
-    const target: PromptExploderBridgeTarget =
-      parsed.target === 'prompt-exploder' ||
-      parsed.target === 'image-studio' ||
-      parsed.target === 'case-resolver' ||
-      parsed.target === 'external' ||
-      parsed.target === 'clipboard' ||
-      parsed.target === 'file' ||
-      parsed.target === 'studio' ||
-      parsed.target === 'prompt_exploder'
-        ? parsed.target
-        : 'image-studio';
+    const source = normalizeBridgeSource(parsed.source);
+    const target = normalizeBridgeTarget(parsed.target);
     const createdAt =
       typeof parsed.createdAt === 'string' && parsed.createdAt.trim().length > 0
         ? parsed.createdAt

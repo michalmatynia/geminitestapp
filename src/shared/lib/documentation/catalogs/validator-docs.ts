@@ -600,10 +600,12 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     symbol: 'parseValidatorPatternLists',
     file: 'src/features/admin/pages/validator-scope.ts',
     purpose: 'Parses settings JSON payload into normalized validator pattern lists.',
-    params: ['value: persisted setting string.'],
+    params: ['value: persisted setting payload.'],
     returns: 'Normalized list array.',
     errors: ['JSON parse errors fallback to defaults.'],
-    edgeCases: ['Expects an array payload; non-array inputs fallback to defaults.'],
+    edgeCases: [
+      'Requires canonical envelope shape `{ version: 2, lists: [...] }`; legacy payload variants fallback to defaults.',
+    ],
     example: 'parseValidatorPatternLists(rawSetting)',
   },
   {

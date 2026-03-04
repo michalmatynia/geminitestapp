@@ -159,22 +159,13 @@ const buildMongoCategoryCondition = (
 ): Filter<ProductDocument> | null => {
   if (condition.operator === 'isEmpty') {
     return {
-      $or: [
-        { categoryId: { $exists: false } },
-        { categoryId: null },
-        { categoryId: '' },
-        { categories: { $exists: false } },
-        { categories: { $size: 0 } },
-      ],
+      $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
     } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'isNotEmpty') {
     return {
-      $or: [
-        { categoryId: { $exists: true, $nin: [null, ''] } },
-        { 'categories.0': { $exists: true } },
-      ],
+      categoryId: { $exists: true, $nin: [null, ''] },
     } as Filter<ProductDocument>;
   }
 
@@ -183,15 +174,11 @@ const buildMongoCategoryCondition = (
 
   if (condition.operator === 'contains') {
     const regex = { $regex: escapeRegex(value), $options: 'i' };
-    return {
-      $or: [{ categoryId: regex }, { 'categories.categoryId': regex }],
-    } as Filter<ProductDocument>;
+    return { categoryId: regex } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'eq') {
-    return {
-      $or: [{ categoryId: value }, { 'categories.categoryId': value }],
-    } as Filter<ProductDocument>;
+    return { categoryId: value } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'neq') {
@@ -581,9 +568,7 @@ export const buildMongoWhere = async (
   }
 
   if (filters.categoryId) {
-    filter = appendAndCondition(filter, {
-      $or: [{ categoryId: filters.categoryId }, { 'categories.categoryId': filters.categoryId }],
-    } as Filter<ProductDocument>);
+    filter = appendAndCondition(filter, { categoryId: filters.categoryId } as Filter<ProductDocument>);
   }
 
   if (filters.baseExported !== undefined || filters.advancedFilter) {

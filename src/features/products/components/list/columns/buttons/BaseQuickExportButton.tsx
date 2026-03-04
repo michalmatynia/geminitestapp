@@ -83,7 +83,7 @@ export function BaseQuickExportButton({
           queryKey: normalizeQueryKey(defaultExportInventoryQueryKey),
           queryFn: () =>
             api.get<{ inventoryId?: string | null }>(
-              '/api/integrations/exports/base/default-inventory'
+              '/api/v2/integrations/exports/base/default-inventory'
             ),
           staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
           meta: {
@@ -142,7 +142,7 @@ export function BaseQuickExportButton({
       }
 
       const scopedTemplate = await api.get<{ templateId?: string | null }>(
-        `/api/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
+        `/api/v2/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
       );
       const templateId = scopedTemplate?.templateId?.trim() || '';
 

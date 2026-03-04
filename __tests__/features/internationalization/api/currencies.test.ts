@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { GET, POST } from '@/app/api/currencies/route';
+import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
 import prisma from '@/shared/lib/db/prisma';
 
 type CurrencyResponse = {
@@ -16,6 +16,7 @@ type CurrencyResponse = {
 let canMutateCurrenciesApiTables = true;
 
 describe('Currencies API', () => {
+  const currenciesRouteContext = { params: Promise.resolve({ type: 'currencies' }) };
   const shouldSkipCurrenciesApiTests = (): boolean =>
     !process.env['DATABASE_URL'] || !canMutateCurrenciesApiTables;
 
@@ -41,11 +42,14 @@ describe('Currencies API', () => {
     await prisma.$disconnect();
   });
 
-  describe('GET /api/currencies', () => {
+  describe('GET /api/v2/metadata/currencies', () => {
     it('should seed default currencies on first call', async () => {
       if (shouldSkipCurrenciesApiTests()) return;
 
-      const res = await GET(new NextRequest('http://localhost/api/currencies'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/metadata/currencies'),
+        currenciesRouteContext
+      );
       const currencies = (await res.json()) as CurrencyResponse[];
 
       expect(res.status).toEqual(200);
@@ -63,7 +67,7 @@ describe('Currencies API', () => {
     });
   });
 
-  describe('POST /api/currencies', () => {
+  describe('POST /api/v2/metadata/currencies', () => {
     it('should create a new currency', async () => {
       if (shouldSkipCurrenciesApiTests()) return;
 
@@ -73,12 +77,12 @@ describe('Currencies API', () => {
         symbol: '$',
       };
 
-      const req = new NextRequest('http://localhost/api/currencies', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
         method: 'POST',
         body: JSON.stringify(newCurrency),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, currenciesRouteContext);
       const currency = (await res.json()) as CurrencyResponse;
 
       expect(res.status).toEqual(200);
@@ -93,12 +97,12 @@ describe('Currencies API', () => {
         name: 'Invalid',
       };
 
-      const req = new NextRequest('http://localhost/api/currencies', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/currencies', {
         method: 'POST',
         body: JSON.stringify(invalidCurrency),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, currenciesRouteContext);
       expect(res.status).toEqual(400);
     });
   });

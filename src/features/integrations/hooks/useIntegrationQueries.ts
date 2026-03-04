@@ -105,7 +105,7 @@ export function useConnectionSession(
 export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConnections> {
   const queryKey = integrationKeys.withConnections();
   const queryFn = async (): Promise<IntegrationWithConnections[]> =>
-    api.get<IntegrationWithConnections[]>('/api/integrations/with-connections');
+    api.get<IntegrationWithConnections[]>('/api/v2/integrations/with-connections');
 
   return createListQueryV2({
     queryKey,
@@ -171,7 +171,7 @@ export function useExportTemplates(): ListQuery<ImportExportTemplate> {
 export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | null }> {
   const queryKey = integrationKeys.activeExportTemplate();
   const queryFn = async (): Promise<{ templateId?: string | null }> =>
-    api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template');
+    api.get<{ templateId?: string | null }>('/api/v2/integrations/exports/base/active-template');
 
   return createSingleQueryV2({
     id: 'active-export-template',
@@ -191,7 +191,7 @@ export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | n
 export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string | null }> {
   const queryKey = integrationKeys.defaultExportInventory();
   const queryFn = async (): Promise<{ inventoryId?: string | null }> =>
-    api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory');
+    api.get<{ inventoryId?: string | null }>('/api/v2/integrations/exports/base/default-inventory');
 
   return createSingleQueryV2({
     id: 'default-export-inventory',
@@ -211,7 +211,7 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
 export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
   const queryKey = integrationKeys.selection.defaultConnection();
   const queryFn = async (): Promise<{ connectionId?: string | null }> =>
-    api.get<{ connectionId?: string | null }>('/api/integrations/exports/base/default-connection');
+    api.get<{ connectionId?: string | null }>('/api/v2/integrations/exports/base/default-connection');
 
   return createSingleQueryV2({
     id: 'default-export-connection',
@@ -289,7 +289,7 @@ export const getActiveExportTemplateQueryOptions = (): QueryDescriptorV2<{
   return {
     queryKey,
     queryFn: () =>
-      api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+      api.get<{ templateId?: string | null }>('/api/v2/integrations/exports/base/active-template'),
     staleTime: 5 * 60 * 1000,
     meta: {
       source: 'integrations.queries.getActiveExportTemplateOptions',
@@ -309,7 +309,7 @@ export const getDefaultExportInventoryQueryOptions = (): QueryDescriptorV2<{
   return {
     queryKey,
     queryFn: () =>
-      api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+      api.get<{ inventoryId?: string | null }>('/api/v2/integrations/exports/base/default-inventory'),
     staleTime: 5 * 60 * 1000,
     meta: {
       source: 'integrations.queries.getDefaultExportInventoryOptions',

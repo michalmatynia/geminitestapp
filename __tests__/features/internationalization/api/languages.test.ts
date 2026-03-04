@@ -3,8 +3,8 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { DELETE, PUT } from '@/app/api/languages/[id]/route';
-import { GET, POST } from '@/app/api/languages/route';
+import { DELETE, PUT } from '@/app/api/v2/metadata/[type]/[id]/route';
+import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
 import prisma from '@/shared/lib/db/prisma';
 
 type LanguageResponse = {
@@ -18,6 +18,9 @@ type LanguageResponse = {
 let canMutateLanguagesApiTables = true;
 
 describe('Languages API', () => {
+  const languagesRouteContext = { params: Promise.resolve({ type: 'languages' }) };
+  const languagesIdRouteContext = (id: string) =>
+    ({ params: Promise.resolve({ type: 'languages', id }) }) as const;
   const shouldSkipLanguagesApiTests = (): boolean =>
     !process.env['DATABASE_URL'] || !canMutateLanguagesApiTables;
 
@@ -42,10 +45,13 @@ describe('Languages API', () => {
     await prisma.$disconnect();
   });
 
-  describe('GET /api/languages', () => {
+  describe('GET /api/v2/metadata/languages', () => {
     it('should seed default languages on first call', async () => {
       if (shouldSkipLanguagesApiTests()) return;
-      const res = await GET(new NextRequest('http://localhost/api/languages'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/metadata/languages'),
+        languagesRouteContext
+      );
       const languages = (await res.json()) as LanguageResponse[];
 
       expect(res.status).toEqual(200);
@@ -63,7 +69,7 @@ describe('Languages API', () => {
     });
   });
 
-  describe('POST /api/languages', () => {
+  describe('POST /api/v2/metadata/languages', () => {
     it('should create a new language', async () => {
       if (shouldSkipLanguagesApiTests()) return;
       const newLanguage = {
@@ -72,12 +78,12 @@ describe('Languages API', () => {
         nativeName: 'Français',
       };
 
-      const req = new NextRequest('http://localhost/api/languages', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/languages', {
         method: 'POST',
         body: JSON.stringify(newLanguage),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, languagesRouteContext);
       const language = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
@@ -98,12 +104,12 @@ describe('Languages API', () => {
         countryIds: [country.id],
       };
 
-      const req = new NextRequest('http://localhost/api/languages', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/languages', {
         method: 'POST',
         body: JSON.stringify(newLanguage),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, languagesRouteContext);
       const language = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
@@ -117,17 +123,17 @@ describe('Languages API', () => {
         name: 'Missing Code',
       };
 
-      const req = new NextRequest('http://localhost/api/languages', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/languages', {
         method: 'POST',
         body: JSON.stringify(invalidLanguage),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, languagesRouteContext);
       expect(res.status).toEqual(400);
     });
   });
 
-  describe('PUT /api/languages/[id]', () => {
+  describe('PUT /api/v2/metadata/languages/[id]', () => {
     it('should update language fields and countries', async () => {
       if (shouldSkipLanguagesApiTests()) return;
       const language = await prisma.language.create({
@@ -137,7 +143,7 @@ describe('Languages API', () => {
         data: { code: 'PL', name: 'Poland' },
       });
 
-      const req = new NextRequest(`http://localhost/api/languages/${language.id}`, {
+      const req = new NextRequest(`http://localhost/api/v2/metadata/languages/${language.id}`, {
         method: 'PUT',
         body: JSON.stringify({
           code: 'PL',
@@ -147,7 +153,7 @@ describe('Languages API', () => {
         }),
       });
 
-      const res = await PUT(req, { params: Promise.resolve({ id: language.id }) });
+      const res = await PUT(req, languagesIdRouteContext(language.id));
       const updated = (await res.json()) as LanguageResponse;
 
       expect(res.status).toEqual(200);
@@ -157,7 +163,7 @@ describe('Languages API', () => {
     });
   });
 
-  describe('DELETE /api/languages/[id]', () => {
+  describe('DELETE /api/v2/metadata/languages/[id]', () => {
     it('should delete language and remove assignments', async () => {
       if (shouldSkipLanguagesApiTests()) return;
       const language = await prisma.language.create({
@@ -177,9 +183,10 @@ describe('Languages API', () => {
         data: { catalogId: catalog.id, languageId: language.id },
       });
 
-      const res = await DELETE(new NextRequest('http://localhost/api/languages/' + language.id), {
-        params: Promise.resolve({ id: language.id }),
-      });
+      const res = await DELETE(
+        new NextRequest('http://localhost/api/v2/metadata/languages/' + language.id),
+        languagesIdRouteContext(language.id)
+      );
 
       expect(res.status).toEqual(204);
       const remainingLanguage = await prisma.language.findUnique({

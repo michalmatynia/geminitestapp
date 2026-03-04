@@ -215,28 +215,28 @@ export function ImportExportProvider({
       `export-active-template:${exportTemplateScopeKey || 'none'}`,
       exportTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-          '/api/integrations/exports/base/active-template',
+          '/api/v2/integrations/exports/base/active-template',
           normalizedSelectedBaseConnectionId,
           normalizedExportInventoryId
         )
-        : '/api/integrations/exports/base/active-template',
+        : '/api/v2/integrations/exports/base/active-template',
       { enabled: exportTemplateScopeReady }
     );
   const { data: defaultExportInventoryPref } = useImportPreference<{ inventoryId?: string | null }>(
     'default-inventory',
-    '/api/integrations/exports/base/default-inventory'
+    '/api/v2/integrations/exports/base/default-inventory'
   );
   const { data: defaultConnectionPref } = useImportPreference<{ connectionId?: string | null }>(
     'default-connection',
-    '/api/integrations/exports/base/default-connection'
+    '/api/v2/integrations/exports/base/default-connection'
   );
   const { data: exportStockFallbackPref } = useImportPreference<{ enabled?: boolean }>(
     'stock-fallback',
-    '/api/integrations/exports/base/stock-fallback'
+    '/api/v2/integrations/exports/base/stock-fallback'
   );
   const { data: imageRetryPresetsPref } = useImportPreference<{ presets?: ImageRetryPreset[] }>(
     'image-retry-presets',
-    '/api/integrations/exports/base/image-retry-presets',
+    '/api/v2/integrations/exports/base/image-retry-presets',
     { fallback: { presets: getDefaultImageRetryPresets() } }
   );
   const { data: sampleProductPref } = useImportPreference<{
@@ -461,7 +461,7 @@ export function ImportExportProvider({
     if (lastSavedExportActiveTemplateId.current === saveSignature) return;
     lastSavedExportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
-      endpoint: '/api/integrations/exports/base/active-template',
+      endpoint: '/api/v2/integrations/exports/base/active-template',
       data: {
         templateId: normalized,
         connectionId: normalizedSelectedBaseConnectionId,

@@ -178,6 +178,9 @@ export const mongoProductAssociationsImpl = {
         categoryId: categoryId || null,
         updatedAt: new Date(),
       },
+      $unset: {
+        categories: '',
+      },
     });
   },
 

@@ -69,6 +69,7 @@ Deliverables:
 
 - Idempotent migration script with dry-run and apply modes.
 - Migration report: records scanned, updated, skipped, invalid.
+- Script entrypoint: `scripts/db/migrate-prompt-exploder-contract-v2.ts`
 
 Exit criteria:
 

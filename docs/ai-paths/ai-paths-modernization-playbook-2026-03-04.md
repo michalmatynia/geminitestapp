@@ -224,6 +224,11 @@ Progress (2026-03-04):
 6. Extended legacy-compat guard/counter instrumentation to legacy import subroutes (`/api/integrations/imports/base/[setting]`, `/parameters`, `/sample-product`, `/runs`, `/runs/[runId]`, `/runs/[runId]/resume`, `/runs/[runId]/cancel`, `/runs/[runId]/report`) so shutdown flag behavior applies uniformly across the full legacy import surface.
 7. Added v2 imports/base parity test coverage to enforce route-surface parity and block feature-runtime regressions to legacy `/api/integrations/imports/base*` endpoint literals.
 8. Decoupled `v2` imports/base `route.ts` files from direct legacy namespace imports by introducing local `handler.ts` modules per route, and extended parity tests to fail on any future `v2 route.ts` import from `@/app/api/integrations/imports/base/*`.
+9. Added canonical `v2` exports/base setting route (`/api/v2/integrations/exports/base/[setting]`) and migrated runtime callers from `/api/integrations/exports/base/*` to `/api/v2/integrations/exports/base/*` across integrations, import/export runtime hooks, product sync settings, quick export, and starter workflow assets.
+10. Guarded legacy `/api/integrations/exports/base/[setting]` route with compatibility counter+flag checks and added exports/base parity tests to enforce `v2` route coverage plus prevent feature-runtime regressions to legacy `/api/integrations/exports/base*` literals.
+11. Added canonical `v2` integration routes for `/with-connections`, `/jobs`, `/queues/tradera`, `/product-listings`, and `/images/sync-base/all`, then migrated active runtime callers (features + shared jobs API) from legacy `/api/integrations/*` endpoints to `/api/v2/integrations/*` equivalents.
+12. Guarded legacy aliases for `/api/integrations/with-connections`, `/api/integrations/jobs`, `/api/integrations/queues/tradera`, `/api/integrations/product-listings`, and `/api/integrations/images/sync-base/all` with compatibility counter+flag checks, and added targeted v2 integrations parity tests to block regressions to these legacy endpoint literals/import patterns.
+13. Deleted legacy metadata alias route files (`/api/countries`, `/api/languages`, `/api/currencies`, `/api/price-groups` and `[id]` variants), and migrated route-level tests/MSW fixtures to canonical v2 metadata/product-metadata endpoints.
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -233,13 +238,14 @@ Session 6 explicit deletion checklist (prepared):
    3. `src/features/ai/ai-paths/context/__tests__/state-bridge-canvas-ownership.test.tsx`
    4. `src/features/ai/ai-paths/context/__tests__/state-bridge-drop-click-race.test.tsx`
    5. `src/features/ai/ai-paths/context/__tests__/state-bridge-graph-ownership.test.tsx`
-2. Delete legacy alias route files after compatibility flags default to `false` and counter telemetry remains quiet:
+2. Completed on 2026-03-04: deleted legacy metadata alias routes:
    1. `src/app/api/countries/route.ts`, `src/app/api/countries/[id]/route.ts`
    2. `src/app/api/languages/route.ts`, `src/app/api/languages/[id]/route.ts`
    3. `src/app/api/currencies/route.ts`, `src/app/api/currencies/[id]/route.ts`
    4. `src/app/api/price-groups/route.ts`, `src/app/api/price-groups/[id]/route.ts`
-   5. `src/app/api/integrations/imports/base/**/*` legacy alias surface
-3. Delete legacy compatibility counters endpoint after alias route deletion:
+3. Delete remaining legacy integrations alias route files after compatibility flags default to `false` and counter telemetry remains quiet:
+   1. `src/app/api/integrations/imports/base/**/*` legacy alias surface
+4. Delete legacy compatibility counters endpoint after alias route deletion:
    1. `src/app/api/ai-paths/legacy-compat/counters/handler.ts`
    2. `src/app/api/ai-paths/legacy-compat/counters/route.ts`
    3. `src/app/api/ai-paths/legacy-compat/counters/handler.test.ts`

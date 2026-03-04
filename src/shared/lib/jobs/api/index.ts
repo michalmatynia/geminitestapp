@@ -7,7 +7,7 @@ import { api } from '@/shared/lib/api-client';
  * Fetch integration jobs
  */
 export async function getIntegrationJobs(): Promise<ProductJob[]> {
-  return api.get<ProductJob[]>('/api/integrations/jobs');
+  return api.get<ProductJob[]>('/api/v2/integrations/jobs');
 }
 
 /**
@@ -143,5 +143,5 @@ export type TraderaQueueHealthResponse = {
 };
 
 export async function getTraderaQueueHealth(): Promise<TraderaQueueHealthResponse> {
-  return api.get<TraderaQueueHealthResponse>('/api/integrations/queues/tradera');
+  return api.get<TraderaQueueHealthResponse>('/api/v2/integrations/queues/tradera');
 }

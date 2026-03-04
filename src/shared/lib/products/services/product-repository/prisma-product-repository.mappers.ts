@@ -77,11 +77,7 @@ export const resolveCategoryId = (product: FullPrismaProduct): string | null => 
     for (const entry of relation) {
       if (!entry || typeof entry !== 'object') continue;
       const record = entry as Record<string, unknown>;
-      const categoryId =
-        toTrimmedString(record['categoryId']) ||
-        toTrimmedString(record['category_id']) ||
-        toTrimmedString(record['id']) ||
-        toTrimmedString(record['value']);
+      const categoryId = toTrimmedString(record['categoryId']);
       if (categoryId) return categoryId;
     }
     return null;
@@ -89,11 +85,7 @@ export const resolveCategoryId = (product: FullPrismaProduct): string | null => 
 
   if (relation && typeof relation === 'object') {
     const record = relation as Record<string, unknown>;
-    const categoryId =
-      toTrimmedString(record['categoryId']) ||
-      toTrimmedString(record['category_id']) ||
-      toTrimmedString(record['id']) ||
-      toTrimmedString(record['value']);
+    const categoryId = toTrimmedString(record['categoryId']);
     return categoryId || null;
   }
 

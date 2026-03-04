@@ -32,6 +32,7 @@ export type ValidatorListNodeMetadata = {
 };
 
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
+export const VALIDATOR_PATTERN_LISTS_VERSION = 2 as const;
 
 export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
   products: 'Products',
@@ -206,25 +207,35 @@ export const normalizeValidatorPatternLists = (
   return ensureUniqueValidatorListIds(normalized);
 };
 
+export const buildValidatorPatternListsPayload = (
+  lists: ValidatorPatternList[]
+): {
+  version: typeof VALIDATOR_PATTERN_LISTS_VERSION;
+  lists: ValidatorPatternList[];
+} => ({
+  version: VALIDATOR_PATTERN_LISTS_VERSION,
+  lists: normalizeValidatorPatternLists(lists),
+});
+
+const validatorPatternListsPayloadSchema = z.object({
+  version: z.literal(VALIDATOR_PATTERN_LISTS_VERSION),
+  lists: z.array(z.unknown()),
+});
+
 export const parseValidatorPatternLists = (value: unknown): ValidatorPatternList[] => {
   if (!value) return buildDefaultValidatorPatternLists();
   try {
     const raw = typeof value === 'string' ? (JSON.parse(value) as unknown) : value;
-    const defaults = buildDefaultValidatorPatternLists();
-    const rawLists = Array.isArray(raw)
-      ? raw
-      : raw && typeof raw === 'object' && Array.isArray((raw as { lists?: unknown }).lists)
-        ? (raw as { lists: unknown[] }).lists
-        : null;
-
-    if (Array.isArray(rawLists)) {
+    const parsedPayload = validatorPatternListsPayloadSchema.safeParse(raw);
+    if (parsedPayload.success) {
+      const defaults = buildDefaultValidatorPatternLists();
       return normalizeValidatorPatternLists(
-        rawLists.map((entry: unknown, index: number) =>
+        parsedPayload.data.lists.map((entry: unknown, index: number) =>
           normalizeValidatorListRecord(entry, defaults[index] ?? defaults[0]!)
         )
       );
     }
-    return defaults;
+    return buildDefaultValidatorPatternLists();
   } catch {
     return buildDefaultValidatorPatternLists();
   }

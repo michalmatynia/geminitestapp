@@ -596,10 +596,10 @@ Generated from `src/features/products/components/settings/validator-settings/val
 - File: `src/features/admin/pages/validator-scope.ts`
 - Symbol: `parseValidatorPatternLists`
 - Purpose: Parses settings JSON payload into normalized validator pattern lists.
-- Parameters: value: persisted setting string.
+- Parameters: value: persisted setting payload.
 - Returns: Normalized list array.
 - Errors: JSON parse errors fallback to defaults.
-- Edge Cases: Supports both legacy array payload and object payload with lists key.
+- Edge Cases: Requires canonical payload `{ version: 2, lists: [...] }`; invalid or legacy payload variants fallback to defaults.
 - Example: `parseValidatorPatternLists(rawSetting)`
 
 ### ui.ValidatorSettings

@@ -20,6 +20,14 @@
   - `false`: unknown stack falls back to default stack behavior.
   - unset: strict outside production, relaxed in production.
 
+Contract migration note:
+
+- Stack IDs and bridge IDs are frozen to canonical hyphenated forms.
+- Legacy snake_case/`studio` aliases are temporarily normalized and counted for migration baseline.
+- Persistence migration script:
+  - Dry-run: `npm run migrate:prompt-exploder:contract:v2`
+  - Apply: `npm run migrate:prompt-exploder:contract:v2 -- --write`
+
 ## Pre-Release Gates
 
 1. Run:
@@ -94,7 +102,19 @@
   2. Check strict-stack mode and stack naming consistency in settings.
   3. Fix list/stack config and watch fallback counter trend.
 
-4. **Latency regression**
+4. **Legacy compatibility traffic does not trend to zero**
+
+- Symptom: one or more of these counters stays non-zero after migration apply:
+  - `runtime_legacy_stack_alias`
+  - `runtime_legacy_stack_fallback`
+  - `runtime_legacy_bridge_alias`
+  - `runtime_legacy_strict_retry`
+- Actions:
+  1. Inspect settings payloads and bridge payload emitters for legacy IDs.
+  2. Migrate persisted values to canonical IDs.
+  3. Remove remaining legacy emitters in Case Resolver/Image Studio handoff flows.
+
+5. **Latency regression**
 
 - Symptom: pipeline/explode/compile p95 above target.
 - Actions:

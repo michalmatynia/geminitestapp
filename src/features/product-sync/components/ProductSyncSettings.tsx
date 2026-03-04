@@ -348,7 +348,7 @@ export function ProductSyncSettings(): React.JSX.Element {
         setApplyingConnectionDefaults(true);
         try {
           await api.post<{ connectionId: string | null }>(
-            '/api/integrations/exports/base/default-connection',
+            '/api/v2/integrations/exports/base/default-connection',
             { connectionId }
           );
           for (const profile of profilesToUpdate) {

@@ -116,6 +116,9 @@ describe('mongoProductRepository.replaceProductCategory', () => {
         categoryId,
         updatedAt: expect.any(Date),
       },
+      $unset: {
+        categories: '',
+      },
     });
   });
 

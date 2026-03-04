@@ -30,29 +30,6 @@ export const toTrimmedString = (value: unknown): string => {
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
-
-  const relations = (product as ProductWithImages & { categories?: unknown }).categories;
-  if (Array.isArray(relations)) {
-    for (const relation of relations) {
-      if (!relation || typeof relation !== 'object') continue;
-      const record = relation as Record<string, unknown>;
-      const relationCategoryId =
-        toTrimmedString(record['categoryId']) ||
-        toTrimmedString(record['category_id']) ||
-        toTrimmedString(record['id']) ||
-        toTrimmedString(record['value']);
-      if (relationCategoryId) return relationCategoryId;
-    }
-  } else if (relations && typeof relations === 'object') {
-    const record = relations as Record<string, unknown>;
-    const relationCategoryId =
-      toTrimmedString(record['categoryId']) ||
-      toTrimmedString(record['category_id']) ||
-      toTrimmedString(record['id']) ||
-      toTrimmedString(record['value']);
-    if (relationCategoryId) return relationCategoryId;
-  }
-
   return '';
 };
 

@@ -4,6 +4,7 @@ import {
   parseValidatorPatternLists,
   parseValidatorScope,
   buildDefaultValidatorPatternLists,
+  buildValidatorPatternListsPayload,
   normalizeValidatorListRecord,
   normalizeValidatorPatternLists,
   ensureUniqueValidatorListIds,
@@ -224,30 +225,37 @@ describe('parseValidatorPatternLists', () => {
     expect(lists.map((list) => list.id)).toEqual(DEFAULT_SCOPE_IDS);
   });
 
-  it('accepts an array payload directly', () => {
+  it('accepts canonical object payloads', () => {
     const defaults = parseValidatorPatternLists(null);
-    const result = parseValidatorPatternLists([defaults[0]]);
+    const result = parseValidatorPatternLists(buildValidatorPatternListsPayload([defaults[0]!]));
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('products');
   });
 
-  it('accepts object payloads with a lists array', () => {
+  it('accepts canonical JSON payload strings', () => {
     const defaults = parseValidatorPatternLists(null);
     const caseResolverList = defaults.find((entry) => entry.id === 'case-resolver-prompt-exploder');
     expect(caseResolverList).toBeTruthy();
 
-    const parsed = parseValidatorPatternLists({ lists: [caseResolverList] });
+    const parsed = parseValidatorPatternLists(
+      JSON.stringify(buildValidatorPatternListsPayload([caseResolverList!]))
+    );
 
     expect(parsed).toHaveLength(1);
     expect(parsed[0]?.id).toBe('case-resolver-prompt-exploder');
     expect(parsed[0]?.scope).toBe('case-resolver-prompt-exploder');
   });
 
-  it('accepts a JSON-serialized array string', () => {
+  it('falls back to defaults for legacy direct array payloads', () => {
     const defaults = parseValidatorPatternLists(null);
-    const result = parseValidatorPatternLists(JSON.stringify([defaults[0]]));
-    expect(result).toHaveLength(1);
-    expect(result[0]?.id).toBe('products');
+    const result = parseValidatorPatternLists([defaults[0]]);
+    expect(result.map((list) => list.id)).toEqual(DEFAULT_SCOPE_IDS);
+  });
+
+  it('falls back to defaults for legacy envelope payloads without canonical version', () => {
+    const defaults = parseValidatorPatternLists(null);
+    const result = parseValidatorPatternLists({ version: 1, lists: [defaults[0]] });
+    expect(result.map((list) => list.id)).toEqual(DEFAULT_SCOPE_IDS);
   });
 
   it('falls back to defaults for malformed JSON string', () => {

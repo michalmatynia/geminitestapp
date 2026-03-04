@@ -3,8 +3,8 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { PUT } from '@/app/api/countries/[id]/route';
-import { GET, POST } from '@/app/api/countries/route';
+import { PUT } from '@/app/api/v2/metadata/[type]/[id]/route';
+import { GET, POST } from '@/app/api/v2/metadata/[type]/route';
 import prisma from '@/shared/lib/db/prisma';
 
 type CountryResponse = {
@@ -17,6 +17,9 @@ type CountryResponse = {
 let canMutateCountriesApiTables = true;
 
 describe('Countries API', () => {
+  const countriesRouteContext = { params: Promise.resolve({ type: 'countries' }) };
+  const countriesIdRouteContext = (id: string) =>
+    ({ params: Promise.resolve({ type: 'countries', id }) }) as const;
   const shouldSkipCountriesApiTests = (): boolean =>
     !process.env['DATABASE_URL'] || !canMutateCountriesApiTables;
 
@@ -46,10 +49,13 @@ describe('Countries API', () => {
     await prisma.$disconnect();
   });
 
-  describe('GET /api/countries', () => {
+  describe('GET /api/v2/metadata/countries', () => {
     it('should seed default countries, currencies, and languages on first call', async () => {
       if (shouldSkipCountriesApiTests()) return;
-      const res = await GET(new NextRequest('http://localhost/api/countries'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/metadata/countries'),
+        countriesRouteContext
+      );
       const countries = (await res.json()) as CountryResponse[];
 
       expect(res.status).toEqual(200);
@@ -78,11 +84,14 @@ describe('Countries API', () => {
     it('should return existing countries without duplicating on subsequent calls', async () => {
       if (shouldSkipCountriesApiTests()) return;
       // First call to seed
-      await GET(new NextRequest('http://localhost/api/countries'));
+      await GET(new NextRequest('http://localhost/api/v2/metadata/countries'), countriesRouteContext);
       const initialCount = await prisma.country.count();
 
       // Second call
-      const res = await GET(new NextRequest('http://localhost/api/countries'));
+      const res = await GET(
+        new NextRequest('http://localhost/api/v2/metadata/countries'),
+        countriesRouteContext
+      );
       const countries = (await res.json()) as CountryResponse[];
       const secondCount = await prisma.country.count();
 
@@ -92,7 +101,7 @@ describe('Countries API', () => {
     });
   });
 
-  describe('POST /api/countries', () => {
+  describe('POST /api/v2/metadata/countries', () => {
     it('should create a new country', async () => {
       if (shouldSkipCountriesApiTests()) return;
       const newCountry = {
@@ -105,12 +114,12 @@ describe('Countries API', () => {
         name: 'Germany Custom',
       };
 
-      const req = new NextRequest('http://localhost/api/countries', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
         method: 'POST',
         body: JSON.stringify(newCountry),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, countriesRouteContext);
       const country = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);
@@ -131,12 +140,12 @@ describe('Countries API', () => {
         currencyIds: [currency.id],
       };
 
-      const req = new NextRequest('http://localhost/api/countries', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
         method: 'POST',
         body: JSON.stringify(newCountry),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, countriesRouteContext);
       const country = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);
@@ -151,17 +160,17 @@ describe('Countries API', () => {
         name: 'Invalid',
       };
 
-      const req = new NextRequest('http://localhost/api/countries', {
+      const req = new NextRequest('http://localhost/api/v2/metadata/countries', {
         method: 'POST',
         body: JSON.stringify(invalidCountry),
       });
 
-      const res = await POST(req);
+      const res = await POST(req, countriesRouteContext);
       expect(res.status).toEqual(400);
     });
   });
 
-  describe('PUT /api/countries/[id]', () => {
+  describe('PUT /api/v2/metadata/countries/[id]', () => {
     it('should update country currencies', async () => {
       if (shouldSkipCountriesApiTests()) return;
       const country = await prisma.country.create({
@@ -171,7 +180,7 @@ describe('Countries API', () => {
         data: { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
       });
 
-      const req = new NextRequest('http://localhost/api/countries/' + country.id, {
+      const req = new NextRequest('http://localhost/api/v2/metadata/countries/' + country.id, {
         method: 'PUT',
         body: JSON.stringify({
           code: 'PL',
@@ -180,7 +189,7 @@ describe('Countries API', () => {
         }),
       });
 
-      const res = await PUT(req, { params: Promise.resolve({ id: country.id }) });
+      const res = await PUT(req, countriesIdRouteContext(country.id));
       const updated = (await res.json()) as CountryResponse;
 
       expect(res.status).toEqual(200);

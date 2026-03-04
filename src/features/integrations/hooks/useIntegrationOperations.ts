@@ -68,7 +68,7 @@ export function useIntegrationOperations(productIds: readonly string[] = []): {
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
         return await api.post<ListingBadgesPayload>(
-          '/api/integrations/product-listings',
+          '/api/v2/integrations/product-listings',
           { productIds: scopedProductIds },
           {
             cache: 'no-store',

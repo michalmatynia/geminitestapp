@@ -305,7 +305,7 @@
       "outputs": ["value", "bundle"],
       "config": {
         "http": {
-          "url": "/api/integrations/exports/base/default-connection",
+          "url": "/api/v2/integrations/exports/base/default-connection",
           "method": "GET",
           "headers": "{}",
           "bodyTemplate": "",
@@ -350,7 +350,7 @@
       "outputs": ["value", "bundle"],
       "config": {
         "http": {
-          "url": "/api/integrations/exports/base/default-inventory",
+          "url": "/api/v2/integrations/exports/base/default-inventory",
           "method": "GET",
           "headers": "{}",
           "bodyTemplate": "",

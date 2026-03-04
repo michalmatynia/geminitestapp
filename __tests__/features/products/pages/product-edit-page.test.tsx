@@ -57,13 +57,13 @@ describe('EditProductForm', () => {
   beforeEach(() => {
     queryClient.clear();
     server.use(
-      http.get('/api/languages', () =>
+      http.get('/api/v2/metadata/languages', () =>
         HttpResponse.json([
           { id: 'l1', code: 'EN', name: 'English' },
           { id: 'l2', code: 'PL', name: 'Polish' },
         ])
       ),
-      http.get('/api/price-groups', () => HttpResponse.json([])),
+      http.get('/api/v2/products/metadata/price-groups', () => HttpResponse.json([])),
       http.get('/api/catalogs', () =>
         HttpResponse.json([
           { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] },

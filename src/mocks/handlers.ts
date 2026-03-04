@@ -325,7 +325,7 @@ export const handlers = [
     return HttpResponse.json(tree);
   }),
 
-  // Price groups (canonical + legacy compatibility)
+  // Price groups
   http.get('/api/v2/products/metadata/price-groups', () => {
     return HttpResponse.json([
       {
@@ -338,41 +338,17 @@ export const handlers = [
       },
     ]);
   }),
-  http.get('/api/price-groups', () => {
-    return HttpResponse.json([
-      {
-        id: 'pg-1',
-        groupId: 'default',
-        name: 'Default Price Group',
-        currencyId: 'curr-1',
-        currency: { id: 'curr-1', code: 'USD', name: 'US Dollar' },
-        isDefault: true,
-      },
-    ]);
-  }),
 
-  // Languages (canonical + legacy compatibility)
+  // Languages
   http.get('/api/v2/metadata/languages', () => {
     return HttpResponse.json([
       { id: 'lang-1', code: 'EN', name: 'English' },
       { id: 'lang-2', code: 'PL', name: 'Polish' },
     ]);
   }),
-  http.get('/api/languages', () => {
-    return HttpResponse.json([
-      { id: 'lang-1', code: 'EN', name: 'English' },
-      { id: 'lang-2', code: 'PL', name: 'Polish' },
-    ]);
-  }),
 
-  // Currencies (canonical + legacy compatibility)
+  // Currencies
   http.get('/api/v2/metadata/currencies', () => {
-    return HttpResponse.json([
-      { id: 'curr-1', code: 'USD', name: 'US Dollar' },
-      { id: 'curr-2', code: 'PLN', name: 'Polish Zloty' },
-    ]);
-  }),
-  http.get('/api/currencies', () => {
     return HttpResponse.json([
       { id: 'curr-1', code: 'USD', name: 'US Dollar' },
       { id: 'curr-2', code: 'PLN', name: 'Polish Zloty' },
@@ -399,14 +375,14 @@ export const handlers = [
   }),
 
   // Product listings integrations
-  http.get('/api/integrations/product-listings', () => {
+  http.get('/api/v2/integrations/product-listings', () => {
     return HttpResponse.json({});
   }),
-  http.post('/api/integrations/product-listings', () => {
+  http.post('/api/v2/integrations/product-listings', () => {
     return HttpResponse.json({});
   }),
 
-  http.get('/api/integrations/queues/tradera', () => {
+  http.get('/api/v2/integrations/queues/tradera', () => {
     return HttpResponse.json({
       ok: true,
       mode: 'inline',

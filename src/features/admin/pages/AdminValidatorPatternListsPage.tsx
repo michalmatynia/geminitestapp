@@ -25,6 +25,7 @@ import {
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  buildValidatorPatternListsPayload,
   normalizeValidatorPatternLists,
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
@@ -270,7 +271,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       return;
     }
 
-    const value = serializeSetting({ version: 1, lists: normalized });
+    const value = serializeSetting(buildValidatorPatternListsPayload(normalized));
 
     try {
       await updateSetting.mutateAsync({ key: VALIDATOR_PATTERN_LISTS_KEY, value });

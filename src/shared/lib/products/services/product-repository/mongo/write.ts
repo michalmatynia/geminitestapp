@@ -31,16 +31,6 @@ export const mongoProductWriteImpl = {
       ean: data.ean || null,
       gtin: data.gtin || null,
       asin: data.asin || null,
-      name: {
-        en: data.name_en || null,
-        pl: data.name_pl || null,
-        de: data.name_de || null,
-      },
-      description: {
-        en: data.description_en || null,
-        pl: data.description_pl || null,
-        de: data.description_de || null,
-      },
       name_en: data.name_en || null,
       name_pl: data.name_pl || null,
       name_de: data.name_de || null,
@@ -89,6 +79,7 @@ export const mongoProductWriteImpl = {
         updatedAt: now,
       },
     };
+    const legacyUnset: Record<string, ''> = {};
 
     if (data.sku !== undefined) updates.$set.sku = data.sku;
     if (data.baseProductId !== undefined) updates.$set.baseProductId = data.baseProductId;
@@ -100,28 +91,28 @@ export const mongoProductWriteImpl = {
 
     if (data.name_en !== undefined) {
       updates.$set.name_en = data.name_en;
-      updates.$set['name.en'] = data.name_en;
+      legacyUnset['name'] = '';
     }
     if (data.name_pl !== undefined) {
       updates.$set.name_pl = data.name_pl;
-      updates.$set['name.pl'] = data.name_pl;
+      legacyUnset['name'] = '';
     }
     if (data.name_de !== undefined) {
       updates.$set.name_de = data.name_de;
-      updates.$set['name.de'] = data.name_de;
+      legacyUnset['name'] = '';
     }
 
     if (data.description_en !== undefined) {
       updates.$set.description_en = data.description_en;
-      updates.$set['description.en'] = data.description_en;
+      legacyUnset['description'] = '';
     }
     if (data.description_pl !== undefined) {
       updates.$set.description_pl = data.description_pl;
-      updates.$set['description.pl'] = data.description_pl;
+      legacyUnset['description'] = '';
     }
     if (data.description_de !== undefined) {
       updates.$set.description_de = data.description_de;
-      updates.$set['description.de'] = data.description_de;
+      legacyUnset['description'] = '';
     }
 
     if (data.supplierName !== undefined) updates.$set.supplierName = data.supplierName;
@@ -133,12 +124,18 @@ export const mongoProductWriteImpl = {
     if (data.sizeWidth !== undefined) updates.$set.sizeWidth = data.sizeWidth;
     if (data.weight !== undefined) updates.$set.weight = data.weight;
     if (data.length !== undefined) updates.$set.length = data.length;
-    if (data.categoryId !== undefined) updates.$set.categoryId = data.categoryId;
+    if (data.categoryId !== undefined) {
+      updates.$set.categoryId = data.categoryId;
+      legacyUnset['categories'] = '';
+    }
     if (data.parameters !== undefined)
       updates.$set.parameters = normalizeProductParameterValues(data.parameters);
     if (data.imageLinks !== undefined) updates.$set.imageLinks = data.imageLinks;
     if (data.imageBase64s !== undefined) updates.$set.imageBase64s = data.imageBase64s;
     if (data.noteIds !== undefined) updates.$set.noteIds = data.noteIds;
+    if (Object.keys(legacyUnset).length > 0) {
+      updates.$unset = legacyUnset;
+    }
 
     const result = await collection.findOneAndUpdate(filter, updates, {
       returnDocument: 'after',

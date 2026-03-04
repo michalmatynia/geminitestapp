@@ -227,7 +227,7 @@ export function useUpdatePreferredTemplate() {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createUpdateMutationV2<void, { templateId: string }>({
     mutationFn: (variables) =>
-      api.post<void>('/api/integrations/exports/base/templates/preferred', variables),
+      api.post<void>('/api/v2/integrations/exports/base/active-template', variables),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useUpdatePreferredTemplate',
@@ -243,7 +243,7 @@ export function useUpdatePreferredTemplate() {
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<{ message?: string }, void>({
-    mutationFn: () => api.post<{ message?: string }>('/api/integrations/images/sync-base/all', {}),
+    mutationFn: () => api.post<{ message?: string }>('/api/v2/integrations/images/sync-base/all', {}),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useSyncAllBaseImagesMutation',
@@ -259,8 +259,8 @@ export function useSyncAllBaseImagesMutation() {
 export function useUpdatePreferredInventory() {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createUpdateMutationV2<void, { inventoryId: string; connectionId: string }>({
-    mutationFn: (variables) =>
-      api.post<void>('/api/integrations/exports/base/inventories/preferred', variables),
+    mutationFn: ({ inventoryId }) =>
+      api.post<void>('/api/v2/integrations/exports/base/default-inventory', { inventoryId }),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useUpdatePreferredInventory',
@@ -276,7 +276,7 @@ export function useUpdatePreferredInventory() {
 export function useUpdateDefaultExportConnection() {
   return createUpdateMutationV2<void, { connectionId: string }>({
     mutationFn: (variables) =>
-      api.post<void>('/api/integrations/exports/base/default-connection', variables),
+      api.post<void>('/api/v2/integrations/exports/base/default-connection', variables),
     mutationKey: QUERY_KEYS.integrations.selection.defaultConnection(),
     meta: {
       source: 'integrations.hooks.useUpdateDefaultExportConnection',

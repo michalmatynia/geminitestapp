@@ -17,7 +17,7 @@ export const useImageRetryPresets = (): ImageRetryPreset[] => {
     queryKey: QUERY_KEYS.integrations.imageRetryPresets(),
     queryFn: async ({ signal }): Promise<ImageRetryPreset[]> => {
       const payload = await api.get<{ presets?: ImageRetryPreset[] }>(
-        '/api/integrations/exports/base/image-retry-presets',
+        '/api/v2/integrations/exports/base/image-retry-presets',
         { signal }
       );
       return payload.presets

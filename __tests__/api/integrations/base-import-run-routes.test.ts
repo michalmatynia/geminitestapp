@@ -20,10 +20,10 @@ vi.mock('@/features/integrations/workers/baseImportQueue', () => ({
   enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
 }));
 
-import { POST as cancelPost } from '@/app/api/integrations/imports/base/runs/[runId]/cancel/route';
-import { GET as reportGet } from '@/app/api/integrations/imports/base/runs/[runId]/report/route';
-import { POST as resumePost } from '@/app/api/integrations/imports/base/runs/[runId]/resume/route';
-import { GET as runDetailGet } from '@/app/api/integrations/imports/base/runs/[runId]/route';
+import { POST as cancelPost } from '@/app/api/v2/integrations/imports/base/runs/[runId]/cancel/route';
+import { GET as reportGet } from '@/app/api/v2/integrations/imports/base/runs/[runId]/report/route';
+import { POST as resumePost } from '@/app/api/v2/integrations/imports/base/runs/[runId]/resume/route';
+import { GET as runDetailGet } from '@/app/api/v2/integrations/imports/base/runs/[runId]/route';
 
 type BaseImportRunDetailResponse = {
   run: { id: string; status: string };
@@ -79,7 +79,7 @@ describe('base import run routes', () => {
 
     const response = await runDetailGet(
       new NextRequest(
-        'http://localhost/api/integrations/imports/base/runs/run-1?statuses=pending,failed&page=2&pageSize=100&includeItems=false'
+        'http://localhost/api/v2/integrations/imports/base/runs/run-1?statuses=pending,failed&page=2&pageSize=100&includeItems=false'
       ),
       { params: Promise.resolve({ runId: 'run-1' }) }
     );
@@ -114,7 +114,7 @@ describe('base import run routes', () => {
     });
 
     const response = await resumePost(
-      new NextRequest('http://localhost/api/integrations/imports/base/runs/run-resume-1/resume', {
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-resume-1/resume', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ statuses: ['failed', 'pending'] }),
@@ -147,7 +147,7 @@ describe('base import run routes', () => {
     });
 
     const response = await cancelPost(
-      new NextRequest('http://localhost/api/integrations/imports/base/runs/run-cancel-1/cancel', {
+      new NextRequest('http://localhost/api/v2/integrations/imports/base/runs/run-cancel-1/cancel', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({}),
@@ -211,7 +211,7 @@ describe('base import run routes', () => {
 
     const response = await reportGet(
       new NextRequest(
-        'http://localhost/api/integrations/imports/base/runs/run-report-1/report?format=json'
+        'http://localhost/api/v2/integrations/imports/base/runs/run-report-1/report?format=json'
       ),
       { params: Promise.resolve({ runId: 'run-report-1' }) }
     );

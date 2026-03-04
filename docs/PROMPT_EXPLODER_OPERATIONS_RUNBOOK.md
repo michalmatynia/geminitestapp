@@ -6,24 +6,18 @@
 - `beta`: use `runtime.ruleProfile = pattern_pack` by default, enable learned templates progressively.
 - `default`: use configured profile based on monitored benchmark stability.
 
-## Runtime Feature Flags
+## Runtime Controls
 
-- `NEXT_PUBLIC_PROMPT_VALIDATION_ORCHESTRATOR_V2`:
-  - `true`/`1`/`on`: force orchestrator path on.
-  - `false`/`0`/`off`: force legacy path.
-  - unset: follow settings + canary rollout.
-- `NEXT_PUBLIC_PROMPT_VALIDATION_ORCHESTRATOR_CANARY_PERCENT`:
-  - integer `0-100`.
-  - when set below `100`, rollout is cohort-hashed by runtime cache key.
-- `NEXT_PUBLIC_PROMPT_VALIDATION_STRICT_STACK_MODE`:
-  - `true`: unknown validation stack errors are surfaced.
-  - `false`: unknown stack falls back to default stack behavior.
-  - unset: strict outside production, relaxed in production.
+- Orchestrator runtime is controlled by Prompt Exploder settings (`runtime.orchestratorEnabled`).
+- Rollout env overrides/canary toggles were removed in hard cutover.
+- Validation stack resolution is strict:
+  - unknown or unsupported stacks raise errors.
+  - no runtime fallback recovery path is available.
 
 Contract migration note:
 
 - Stack IDs and bridge IDs are frozen to canonical hyphenated forms.
-- Legacy snake_case/`studio` aliases are temporarily normalized and counted for migration baseline.
+- Runtime no longer normalizes legacy snake_case/`studio` aliases.
 - Persistence migration script:
   - Dry-run: `npm run migrate:prompt-exploder:contract:v2`
   - Apply: `npm run migrate:prompt-exploder:contract:v2 -- --write`
@@ -92,35 +86,23 @@ Contract migration note:
 - Actions:
   1. Confirm inflight per scope in health `load` snapshot.
   2. Reduce trigger frequency (UI auto-reexplode loops, duplicate manual clicks).
-  3. Keep canary rollout below `100` until pressure normalizes.
+  3. Temporarily disable `runtime.orchestratorEnabled` or switch profile to `pattern_pack`.
 
-3. **Fallback rate spikes**
+3. **Unexpected fallback signal**
 
 - Symptom: `runtime_selection_fallback / runtime_selection_total` exceeds target.
 - Actions:
-  1. Verify configured validation stack exists and is mapped for current scope.
-  2. Check strict-stack mode and stack naming consistency in settings.
-  3. Fix list/stack config and watch fallback counter trend.
+  1. Confirm deployment includes strict stack resolver changes (fallback should remain at zero).
+  2. Verify persisted settings/bridge payloads were migrated to canonical IDs.
+  3. Inspect stale clients writing legacy values and force refresh/redeploy.
 
-4. **Legacy compatibility traffic does not trend to zero**
-
-- Symptom: one or more of these counters stays non-zero after migration apply:
-  - `runtime_legacy_stack_alias`
-  - `runtime_legacy_stack_fallback`
-  - `runtime_legacy_bridge_alias`
-  - `runtime_legacy_strict_retry`
-- Actions:
-  1. Inspect settings payloads and bridge payload emitters for legacy IDs.
-  2. Migrate persisted values to canonical IDs.
-  3. Remove remaining legacy emitters in Case Resolver/Image Studio handoff flows.
-
-5. **Latency regression**
+4. **Latency regression**
 
 - Symptom: pipeline/explode/compile p95 above target.
 - Actions:
   1. Confirm cache hit ratio (`runtime_cache_hit` vs `runtime_cache_miss`).
   2. Check recent pattern/rule churn causing invalidations.
-  3. Temporarily reduce rollout percent and/or switch profile to `pattern_pack`.
+  3. Temporarily disable `runtime.orchestratorEnabled` and/or switch profile to `pattern_pack`.
   4. Run benchmark suite before restoring rollout.
 
 ## Incident Recovery

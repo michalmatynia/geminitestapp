@@ -25,7 +25,6 @@ import {
 } from '../bridge';
 import {
   isPromptExploderOrchestratorEnabled,
-  isPromptValidationStrictStackMode,
   resolvePromptExploderOrchestratorRollout,
 } from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
@@ -204,48 +203,26 @@ export function usePromptExploderState() {
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
   );
-  const strictStackMode = useMemo(() => isPromptValidationStrictStackMode(), []);
   const runtimeResolution = useMemo(() => {
     const preferredValidatorScope = shouldPreferCaseResolverValidationStack
       ? 'case-resolver-prompt-exploder'
       : 'prompt-exploder';
-    try {
-      return {
-        runtime: resolvePromptValidationRuntime({
-          promptSettings,
-          promptExploderSettings,
-          validatorPatternLists,
-          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-          runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
-          learningEnabled: learningDraft.enabled,
-          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-          maxTemplates: learningDraft.maxTemplates,
-          sessionLearnedRules,
-          sessionLearnedTemplates,
-          preferredValidatorScope,
-          strictUnknownStack: strictStackMode,
-        }),
-        warning: null as Error | null,
-      };
-    } catch (error) {
-      return {
-        runtime: resolvePromptValidationRuntime({
-          promptSettings,
-          promptExploderSettings,
-          validatorPatternLists,
-          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-          runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
-          learningEnabled: learningDraft.enabled,
-          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-          maxTemplates: learningDraft.maxTemplates,
-          sessionLearnedRules,
-          sessionLearnedTemplates,
-          preferredValidatorScope,
-          strictUnknownStack: false,
-        }),
-        warning: error instanceof Error ? error : new Error(String(error)),
-      };
-    }
+    return {
+      runtime: resolvePromptValidationRuntime({
+        promptSettings,
+        promptExploderSettings,
+        validatorPatternLists,
+        runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+        runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
+        learningEnabled: learningDraft.enabled,
+        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+        maxTemplates: learningDraft.maxTemplates,
+        sessionLearnedRules,
+        sessionLearnedTemplates,
+        preferredValidatorScope,
+      }),
+      warning: null as Error | null,
+    };
   }, [
     learningDraft.enabled,
     learningDraft.maxTemplates,
@@ -257,7 +234,6 @@ export function usePromptExploderState() {
     sessionLearnedRules,
     sessionLearnedTemplates,
     shouldPreferCaseResolverValidationStack,
-    strictStackMode,
     validatorPatternLists,
   ]);
 

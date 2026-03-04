@@ -94,7 +94,6 @@ export const promptExploderSettingsSchema = z.object({
     .object({
       ruleProfile: promptExploderRuntimeRuleProfileSchema.default('all'),
       validationRuleStack: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
-      allowValidationStackFallback: z.boolean().optional(),
       caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
       orchestratorEnabled: z.boolean().optional(),
       benchmarkSuite: z.string().optional(),
@@ -195,9 +194,6 @@ export type PromptExploderValidationRuleStackOption = {
 
 export const promptExploderValidationStackResolutionReasonSchema = z.enum([
   'exact_match',
-  'default_scope',
-  'scope_fallback',
-  'invalid_stack',
   'rule_passed',
   'rule_failed',
   'rule_skipped',

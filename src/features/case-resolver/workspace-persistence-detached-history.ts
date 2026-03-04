@@ -6,6 +6,14 @@ import {
 } from './utils/workspace-persistence-utils';
 
 const CASE_RESOLVER_WORKSPACE_DETACHED_HISTORY_SCHEMA = 'case_resolver_workspace_detached_history_v1';
+const CASE_RESOLVER_DOCUMENT_HISTORY_VERSIONS = new Set(['original', 'exploded']);
+const CASE_RESOLVER_DOCUMENT_HISTORY_EDITORS = new Set([
+  'wysiwyg',
+  'markdown',
+  'code',
+  'rich-text',
+  'plain-text',
+]);
 
 type CaseResolverWorkspaceDetachedHistoryFileEntry = {
   id: string;
@@ -17,6 +25,34 @@ export type CaseResolverWorkspaceDetachedHistoryPayload = {
   workspaceRevision: number;
   lastMutationId: string | null;
   files: CaseResolverWorkspaceDetachedHistoryFileEntry[];
+};
+
+const isCaseResolverDocumentHistoryEntry = (
+  entry: unknown
+): entry is CaseResolverWorkspace['files'][number]['documentHistory'][number] => {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+  const record = entry as Record<string, unknown>;
+
+  const id = record['id'];
+  const savedAt = record['savedAt'];
+  const documentContentVersion = record['documentContentVersion'];
+  const activeDocumentVersion = record['activeDocumentVersion'];
+  const editorType = record['editorType'];
+  const documentContent = record['documentContent'];
+
+  return (
+    typeof id === 'string' &&
+    id.trim().length > 0 &&
+    typeof savedAt === 'string' &&
+    savedAt.trim().length > 0 &&
+    typeof documentContentVersion === 'number' &&
+    Number.isFinite(documentContentVersion) &&
+    typeof activeDocumentVersion === 'string' &&
+    CASE_RESOLVER_DOCUMENT_HISTORY_VERSIONS.has(activeDocumentVersion) &&
+    typeof editorType === 'string' &&
+    CASE_RESOLVER_DOCUMENT_HISTORY_EDITORS.has(editorType) &&
+    typeof documentContent === 'string'
+  );
 };
 
 const normalizeDetachedHistoryFiles = (
@@ -35,12 +71,7 @@ const normalizeDetachedHistoryFiles = (
       seen.add(id);
       return {
         id,
-        documentHistory: documentHistory.filter(
-          (historyEntry: unknown): historyEntry is Record<string, unknown> =>
-            Boolean(historyEntry) &&
-            typeof historyEntry === 'object' &&
-            !Array.isArray(historyEntry)
-        ) as CaseResolverWorkspace['files'][number]['documentHistory'],
+        documentHistory: documentHistory.filter(isCaseResolverDocumentHistoryEntry),
       };
     })
     .filter(
@@ -86,7 +117,7 @@ export const stripCaseResolverWorkspaceDetachedHistory = (
     files: workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
       const fileRecord = { ...file } as Record<string, unknown>;
       delete fileRecord['documentHistory'];
-      return fileRecord as CaseResolverWorkspace['files'][number];
+      return fileRecord as unknown as CaseResolverWorkspace['files'][number];
     }),
   };
 };

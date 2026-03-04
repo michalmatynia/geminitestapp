@@ -1,19 +1,13 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { isLegacyCompatRoutesEnabled, isLegacyPathIndexCompatEnabled } from './flags';
+import { isLegacyPathIndexCompatEnabled } from './flags';
 
-const originalCompatRoutesEnv = process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'];
 const originalLegacyIndexEnv = process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
 const originalLegacyIndexPublicEnv =
   process.env['NEXT_PUBLIC_AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
 
 describe('ai-paths legacy-compat flags', () => {
   beforeEach(() => {
-    if (originalCompatRoutesEnv === undefined) {
-      delete process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'];
-    } else {
-      process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'] = originalCompatRoutesEnv;
-    }
     if (originalLegacyIndexEnv === undefined) {
       delete process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
     } else {
@@ -28,11 +22,6 @@ describe('ai-paths legacy-compat flags', () => {
   });
 
   afterAll(() => {
-    if (originalCompatRoutesEnv === undefined) {
-      delete process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'];
-    } else {
-      process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'] = originalCompatRoutesEnv;
-    }
     if (originalLegacyIndexEnv === undefined) {
       delete process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
     } else {
@@ -46,20 +35,16 @@ describe('ai-paths legacy-compat flags', () => {
     }
   });
 
-  it('defaults compatibility flags to enabled', () => {
-    delete process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'];
+  it('defaults legacy index compatibility flag to enabled', () => {
     delete process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
     delete process.env['NEXT_PUBLIC_AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
 
-    expect(isLegacyCompatRoutesEnabled()).toBe(true);
     expect(isLegacyPathIndexCompatEnabled()).toBe(true);
   });
 
-  it('reads server-side compatibility flags from env', () => {
-    process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'] = 'false';
+  it('reads server-side legacy index compatibility flag from env', () => {
     process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = 'off';
 
-    expect(isLegacyCompatRoutesEnabled()).toBe(false);
     expect(isLegacyPathIndexCompatEnabled()).toBe(false);
   });
 

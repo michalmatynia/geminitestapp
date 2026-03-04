@@ -360,7 +360,7 @@ describe('prompt exploder bridge parties', () => {
     });
   });
 
-  it('normalizes legacy bridge source and target aliases', () => {
+  it('falls back unknown bridge aliases to canonical defaults', () => {
     const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
@@ -373,7 +373,7 @@ describe('prompt exploder bridge parties', () => {
     );
 
     const payload = consumePromptExploderApplyPayload('image-studio');
-    expect(payload?.source).toBe('prompt-exploder');
+    expect(payload?.source).toBe('image-studio');
     expect(payload?.target).toBe('image-studio');
   });
 });

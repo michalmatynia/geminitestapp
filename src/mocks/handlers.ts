@@ -430,7 +430,7 @@ export const handlers = [
     });
   }),
 
-  http.post('/api/integrations/products/:id/base/sku-check', () => {
+  http.post('/api/v2/integrations/products/:id/base/sku-check', () => {
     return HttpResponse.json({ exists: false });
   }),
 ];

@@ -152,7 +152,7 @@ describe('useProductValidatorIssues', () => {
     expect(result.current.fieldIssues['price'] ?? []).toHaveLength(1);
 
     expect(postMock).toHaveBeenCalledWith(
-      '/api/products/validator-runtime/evaluate',
+      '/api/v2/products/validator-runtime/evaluate',
       expect.objectContaining({
         patternIds: ['runtime-pattern'],
         validationScope: 'product_create',

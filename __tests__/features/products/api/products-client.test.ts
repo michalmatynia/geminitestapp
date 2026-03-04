@@ -30,7 +30,7 @@ describe('products api client timeouts', () => {
     await getProducts({});
 
     expect(api.get).toHaveBeenCalledWith(
-      '/api/products',
+      '/api/v2/products',
       expect.objectContaining({ timeout: 60_000 })
     );
   });
@@ -45,12 +45,12 @@ describe('products api client timeouts', () => {
 
     expect(api.get).toHaveBeenNthCalledWith(
       1,
-      '/api/products/count',
+      '/api/v2/products/count',
       expect.objectContaining({ timeout: 60_000 })
     );
     expect(api.get).toHaveBeenNthCalledWith(
       2,
-      '/api/products/paged',
+      '/api/v2/products/paged',
       expect.objectContaining({ timeout: 60_000 })
     );
   });
@@ -64,12 +64,12 @@ describe('products api client timeouts', () => {
     await updateProduct('product-1', formData);
 
     expect(api.post).toHaveBeenCalledWith(
-      '/api/products',
+      '/api/v2/products',
       formData,
       expect.objectContaining({ timeout: 60_000 })
     );
     expect(api.put).toHaveBeenCalledWith(
-      '/api/products/product-1',
+      '/api/v2/products/product-1',
       formData,
       expect.objectContaining({ timeout: 60_000 })
     );
@@ -81,7 +81,7 @@ describe('products api client timeouts', () => {
     await getProductById('product-1');
 
     expect(api.get).toHaveBeenCalledWith(
-      '/api/products/product-1',
+      '/api/v2/products/product-1',
       expect.objectContaining({ timeout: 60_000 })
     );
   });

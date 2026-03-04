@@ -155,7 +155,7 @@ describe('BaseQuickExportButton', () => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
       }
-      if (url === '/api/integrations/products/product-1/base/sku-check') {
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
           sku: 'SKU-001',
           exists: true,
@@ -179,14 +179,14 @@ describe('BaseQuickExportButton', () => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
       }
-      if (url === '/api/integrations/products/product-1/base/sku-check') {
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
           sku: 'SKU-001',
           exists: true,
           existingProductId: 'base-123',
         });
       }
-      if (url === '/api/integrations/products/product-1/base/link-existing') {
+      if (url === '/api/v2/integrations/products/product-1/base/link-existing') {
         return Promise.resolve({
           linked: true,
           listingId: 'listing-77',
@@ -206,7 +206,7 @@ describe('BaseQuickExportButton', () => {
 
     await waitFor(() => {
       expect(apiPostMock).toHaveBeenCalledWith(
-        '/api/integrations/products/product-1/base/link-existing',
+        '/api/v2/integrations/products/product-1/base/link-existing',
         {
           connectionId: 'conn-base-1',
           inventoryId: 'inv-main',
@@ -228,7 +228,7 @@ describe('BaseQuickExportButton', () => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
       }
-      if (url === '/api/integrations/products/product-1/base/sku-check') {
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
           sku: 'SKU-001',
           exists: true,
@@ -255,7 +255,7 @@ describe('BaseQuickExportButton', () => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
       }
-      if (url === '/api/integrations/products/product-1/base/sku-check') {
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.reject(new Error('SKU check failed'));
       }
       return Promise.reject(new Error(`Unexpected POST ${url}`));
@@ -279,7 +279,7 @@ describe('BaseQuickExportButton', () => {
       if (url === '/api/v2/integrations/imports/base') {
         return Promise.resolve({ inventories: [{ inventory_id: 'inv-main' }] });
       }
-      if (url === '/api/integrations/products/product-1/base/sku-check') {
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
         return Promise.resolve({
           sku: 'SKU-001',
           exists: false,

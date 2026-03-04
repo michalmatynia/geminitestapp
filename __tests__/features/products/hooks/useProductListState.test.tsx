@@ -319,8 +319,8 @@ describe('useProductListState', () => {
     const deferredB = createDeferred<ProductWithImages>();
 
     mocks.apiGet.mockImplementation((url: string) => {
-      if (url.includes('/api/products/product-a?fresh=1')) return deferredA.promise;
-      if (url.includes('/api/products/product-b?fresh=1')) return deferredB.promise;
+      if (url.includes('/api/v2/products/product-a?fresh=1')) return deferredA.promise;
+      if (url.includes('/api/v2/products/product-b?fresh=1')) return deferredB.promise;
       return Promise.reject(new Error(`Unexpected URL: ${url}`));
     });
 

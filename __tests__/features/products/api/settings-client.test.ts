@@ -25,7 +25,7 @@ describe('product settings api client', () => {
 
     expect(api.get).toHaveBeenNthCalledWith(
       1,
-      '/api/products/categories/tree',
+      '/api/v2/products/categories/tree',
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
@@ -37,7 +37,7 @@ describe('product settings api client', () => {
 
     expect(api.get).toHaveBeenNthCalledWith(
       2,
-      '/api/products/categories',
+      '/api/v2/products/categories',
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',
@@ -54,7 +54,7 @@ describe('product settings api client', () => {
     await getParameters('catalog-1');
 
     expect(api.get).toHaveBeenCalledWith(
-      '/api/products/parameters',
+      '/api/v2/products/parameters',
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',

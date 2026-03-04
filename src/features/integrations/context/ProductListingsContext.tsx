@@ -347,7 +347,7 @@ export function ProductListingsProvider({
             status?: 'pending' | 'ok' | 'failed';
             detail?: string;
           }>;
-        }>(`/api/integrations/${integrationId}/connections/${connectionId}/test`, {
+        }>(`/api/v2/integrations/${integrationId}/connections/${connectionId}/test`, {
           mode: 'manual',
           manualTimeoutMs: 240000,
         });

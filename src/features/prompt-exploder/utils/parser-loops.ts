@@ -26,7 +26,10 @@ import { trimTrailingBlankLines } from './parser-utils';
 import { createPromptExploderSegment } from '../parser-segment-factory';
 import { PromptExploderListItem, PromptExploderSegment } from '../types';
 
-type PromptExploderSegmentInput = Parameters<typeof createPromptExploderSegment>[0];
+type PromptExploderSegmentInput = Omit<
+  Parameters<typeof createPromptExploderSegment>[0],
+  'createSegmentId'
+>;
 
 export type LoopParserArgs = {
   runtime: PatternRuntime;

@@ -260,8 +260,6 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue', { filters }] as const,
       queueStatus: (filters?: unknown) =>
         [...QUERY_KEYS.ai.aiPaths.all, 'queue-status', filters ? { filters } : 'all'] as const,
-      legacyCompatCounters: () =>
-        [...QUERY_KEYS.ai.aiPaths.all, 'legacy-compat-counters'] as const,
     },
     insights: {
       all: ['ai', 'insights'] as const,

@@ -209,7 +209,7 @@ export function BaseQuickExportButton({
           let skuCheck: SkuCheckResponse;
           try {
             skuCheck = await api.post<SkuCheckResponse>(
-              `/api/integrations/products/${product.id}/base/sku-check`,
+              `/api/v2/integrations/products/${product.id}/base/sku-check`,
               {
                 connectionId: context.connectionId,
                 inventoryId: context.inventoryId,
@@ -273,7 +273,7 @@ export function BaseQuickExportButton({
 
     setLinkExistingPending(true);
     try {
-      await api.post(`/api/integrations/products/${product.id}/base/link-existing`, {
+      await api.post(`/api/v2/integrations/products/${product.id}/base/link-existing`, {
         connectionId: existingSkuDecision.connectionId,
         inventoryId: existingSkuDecision.inventoryId,
         externalListingId,

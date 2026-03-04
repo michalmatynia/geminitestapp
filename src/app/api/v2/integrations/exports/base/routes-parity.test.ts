@@ -15,6 +15,7 @@ const starterWorkflowsRoot = path.join(
 );
 const legacyEndpointToken = '/api/integrations/exports/base';
 const legacyApiImportToken = "@/app/api/integrations/exports/base/";
+const expectedV2RoutePaths = ['[setting]/route.ts'] as const;
 
 const collectRouteFiles = (baseDir: string): string[] => {
   if (!existsSync(baseDir)) return [];
@@ -67,12 +68,15 @@ const collectSourceFiles = (baseDir: string): string[] => {
 };
 
 describe('v2 integrations exports/base route migration', () => {
-  it('keeps /api/v2/integrations/exports/base route.ts counterparts for legacy routes', () => {
-    const legacyRoutes = collectRouteFiles(legacyRoot);
+  it('keeps expected /api/v2/integrations/exports/base route.ts files present', () => {
     const v2Routes = new Set(collectRouteFiles(v2Root));
-
-    const missing = legacyRoutes.filter((relativeRoute) => !v2Routes.has(relativeRoute));
+    const missing = expectedV2RoutePaths.filter((relativeRoute) => !v2Routes.has(relativeRoute));
     expect(missing).toEqual([]);
+  });
+
+  it('removes legacy /api/integrations/exports/base route.ts files', () => {
+    const legacyRoutes = collectRouteFiles(legacyRoot);
+    expect(legacyRoutes).toEqual([]);
   });
 
   it('keeps v2 route.ts files independent from legacy api namespace imports', () => {

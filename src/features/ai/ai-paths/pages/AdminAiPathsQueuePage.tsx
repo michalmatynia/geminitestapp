@@ -5,9 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
-import { useAiPathsLegacyCompatCountersQuery } from '@/shared/lib/ai-paths/hooks/useAiPathQueries';
 import ProductListingJobsPanel from '@/shared/lib/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, Card, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
+import { Badge, Button, ListPanel, Breadcrumbs, Hint } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -38,94 +37,6 @@ const toQueueTab = (value: string): QueueTab => {
 const TABS_ID_PREFIX = 'ai-paths-queue-tabs';
 const getTriggerId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-trigger-${tab}`;
 const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab}`;
-const COUNTER_LABELS = [
-  { key: 'legacy_key_read', label: 'Legacy Key Reads' },
-  { key: 'legacy_payload_received', label: 'Legacy Payloads' },
-  { key: 'compat_route_hit', label: 'Compat Routes' },
-] as const;
-const defaultCounterSnapshot = {
-  legacy_key_read: 0,
-  legacy_payload_received: 0,
-  compat_route_hit: 0,
-};
-const numberFormatter = new Intl.NumberFormat('en-US');
-
-const formatCounterValue = (value: number): string => numberFormatter.format(Math.max(0, value));
-
-const formatTime = (value?: string): string => {
-  if (!value) return 'n/a';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'n/a';
-  return parsed.toLocaleTimeString();
-};
-
-function LegacyCompatCountersCard(): React.JSX.Element {
-  const legacyCompatQuery = useAiPathsLegacyCompatCountersQuery();
-  const counters = legacyCompatQuery.data?.counters ?? defaultCounterSnapshot;
-  const total = legacyCompatQuery.data?.total ?? 0;
-  const statusVariant = legacyCompatQuery.isError
-    ? 'error'
-    : legacyCompatQuery.isLoading
-      ? 'processing'
-      : total > 0
-        ? 'warning'
-        : 'active';
-  const statusLabel = legacyCompatQuery.isError
-    ? 'Unavailable'
-    : legacyCompatQuery.isLoading
-      ? 'Loading'
-      : total > 0
-        ? 'Legacy Traffic Active'
-        : 'No Legacy Traffic';
-
-  return (
-    <Card variant='subtle' padding='md' className='space-y-3 border-border/60 bg-card/40'>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div>
-          <Hint size='xs' uppercase className='font-semibold text-gray-300'>
-            Legacy Compatibility Snapshot
-          </Hint>
-          <p className='mt-1 text-xs text-gray-400'>
-            Live runtime counters for legacy-key reads, legacy payloads, and compatibility routes.
-          </p>
-        </div>
-        <Badge variant={statusVariant}>{statusLabel}</Badge>
-      </div>
-
-      <div className='grid gap-2 md:grid-cols-3'>
-        {COUNTER_LABELS.map((item) => (
-          <Card
-            key={item.key}
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/60'
-          >
-            <div className='text-[10px] uppercase text-gray-500'>{item.label}</div>
-            <div className='mt-1 text-sm font-semibold text-white'>
-              {formatCounterValue(counters[item.key])}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400'>
-        <span>Total legacy hits: {formatCounterValue(total)}</span>
-        <span>
-          Updated: {formatTime(legacyCompatQuery.data?.generatedAt)}
-          {legacyCompatQuery.isFetching ? ' · refreshing' : ''}
-        </span>
-      </div>
-      {legacyCompatQuery.error ? (
-        <div className='text-[11px] text-rose-300'>
-          Failed to refresh legacy counters:{' '}
-          {legacyCompatQuery.error instanceof Error
-            ? legacyCompatQuery.error.message
-            : 'Unknown error'}
-        </div>
-      ) : null}
-    </Card>
-  );
-}
 
 export function AdminAiPathsQueuePage(): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -221,8 +132,6 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
           ) : null
         }
       >
-        <LegacyCompatCountersCard />
-
         {activeTab === 'paths-all' ? (
           <section
             role='tabpanel'

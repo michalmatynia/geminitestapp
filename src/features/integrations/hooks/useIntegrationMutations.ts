@@ -23,7 +23,7 @@ export function useCreateIntegration(): MutationResult<
   > {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createMutationV2<Integration, { name: string; slug: string }>({
-    mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),
+    mutationFn: (variables) => api.post<Integration>('/api/v2/integrations', variables),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useCreateIntegration',
@@ -50,8 +50,8 @@ export function useUpsertConnection() {
     mutationFn: async (variables): Promise<IntegrationConnection> => {
       const hasConnection = Boolean(variables.connectionId);
       const url = hasConnection
-        ? `/api/integrations/connections/${variables.connectionId}`
-        : `/api/integrations/${variables.integrationId}/connections`;
+        ? `/api/v2/integrations/connections/${variables.connectionId}`
+        : `/api/v2/integrations/${variables.integrationId}/connections`;
       const body = variables.payload;
       if (hasConnection) {
         return api.put<IntegrationConnection>(url, body);
@@ -93,7 +93,7 @@ export function useDeleteConnection() {
         ? `?replacementConnectionId=${encodeURIComponent(trimmedReplacementConnectionId)}`
         : '';
       return api.delete<Record<string, unknown>>(
-        `/api/integrations/connections/${connectionId}${query}`,
+        `/api/v2/integrations/connections/${connectionId}${query}`,
         { body: JSON.stringify({ userPassword }) }
       );
     },
@@ -131,7 +131,7 @@ export function useTestConnection() {
       ...rest
     }): Promise<TestConnectionResponse> =>
       api.post<TestConnectionResponse>(
-        `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/${type}`,
         { integrationId, connectionId, type, ...rest }
       ),
     mutationKey,
@@ -152,7 +152,7 @@ export function useDisconnectAllegro() {
     {
       mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
         api.post<Record<string, unknown>>(
-          `/api/integrations/connections/${connectionId}/allegro/disconnect`,
+          `/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/disconnect`,
           { integrationId, connectionId }
         ),
       mutationKey,
@@ -179,7 +179,7 @@ export function useBaseApiRequest() {
   >({
     mutationFn: ({ integrationId, connectionId, ...rest }) =>
       api.post<{ data?: unknown }>(
-        `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
+        `/api/v2/integrations/${integrationId}/connections/${connectionId}/base/request`,
         { integrationId, connectionId, ...rest }
       ),
     mutationKey,
@@ -206,7 +206,7 @@ export function useAllegroApiRequest() {
         statusText: string;
         data?: unknown;
         refreshed?: boolean;
-      }>(`/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`, {
+      }>(`/api/v2/integrations/${integrationId}/connections/${connectionId}/allegro/request`, {
         integrationId,
         connectionId,
         ...rest,

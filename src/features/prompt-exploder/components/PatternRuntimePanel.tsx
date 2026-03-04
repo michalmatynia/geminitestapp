@@ -285,13 +285,9 @@ export function PatternRuntimePanel(): React.JSX.Element {
           className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'
         >
           <Hint size='xxs' uppercase className='text-gray-500'>
-            Fallback Policy
+            Runtime Policy
           </Hint>
-          <div className='mt-1 text-gray-100'>
-            {promptExploderSettings.runtime.allowValidationStackFallback
-              ? 'validation stack fallback enabled'
-              : 'validation stack fallback blocked'}
-          </div>
+          <div className='mt-1 text-gray-100'>strict canonical stack resolution</div>
         </Card>
         <Card
           variant='subtle-compact'

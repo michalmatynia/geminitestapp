@@ -18,7 +18,7 @@ import type {
 } from '@/shared/lib/db/services/database-sync-types';
 
 const parseObjectPayload = async (req: NextRequest): Promise<Record<string, unknown>> => {
-  const value = await req.json();
+  const value: unknown = await req.json();
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
 };

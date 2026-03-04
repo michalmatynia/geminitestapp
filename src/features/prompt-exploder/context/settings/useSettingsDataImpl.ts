@@ -21,7 +21,6 @@ import {
   promptExploderValidationStackFromBridgeSource,
 } from '../../validation-stack';
 import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
-import { isPromptValidationStrictStackMode } from '../../feature-flags';
 import {
   resolvePromptValidationRuntime,
   type PromptValidationOrchestrationResult,
@@ -35,7 +34,6 @@ import {
   PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { LearningDraft } from './SettingsDraftsContext';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 
@@ -132,7 +130,6 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     [rawValidatorPatternLists]
   );
 
-  const strictStackMode = useMemo(() => isPromptValidationStrictStackMode(), []);
   const shouldPreferCaseResolverValidationStack =
     incomingBridgeSource === 'case-resolver' || isCaseResolverReturnTarget;
   const preferredValidatorScope = shouldPreferCaseResolverValidationStack
@@ -246,62 +243,26 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     warning: Error | null;
     guardrailIssue: string | null;
   } => {
-    const allowValidationStackFallback =
-      promptExploderSettings.runtime.allowValidationStackFallback;
-    try {
-      const selection = resolvePromptValidationRuntime({
-        promptSettings,
-        promptExploderSettings,
-        validatorPatternLists,
-        runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-        runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
-        learningEnabled: learningDraft.enabled,
-        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-        maxTemplates: learningDraft.maxTemplates,
-        sessionLearnedRules,
-        sessionLearnedTemplates,
-        preferredValidatorScope,
-        strictUnknownStack: strictStackMode,
-      });
-      return {
-        selection,
-        warning: null,
-        guardrailIssue: getPromptExploderRuntimeGuardrailIssue({
-          runtimeSelection: selection,
-          allowValidationStackFallback: allowValidationStackFallback ?? false,
-        }),
-      };
-    } catch (error) {
-      if (strictStackMode) {
-        recordPromptValidationCounter('runtime_legacy_strict_retry', 1, {
-          scope: preferredValidatorScope,
-        });
-      }
-      const selection = resolvePromptValidationRuntime({
-        promptSettings,
-        promptExploderSettings,
-        validatorPatternLists,
-        runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-        runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
-        learningEnabled: learningDraft.enabled,
-        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-        maxTemplates: learningDraft.maxTemplates,
-        sessionLearnedRules,
-        sessionLearnedTemplates,
-        preferredValidatorScope,
-        strictUnknownStack: false,
-      });
-      const warning = error instanceof Error ? error : new Error(String(error));
-      return {
-        selection,
-        warning,
-        guardrailIssue:
-          getPromptExploderRuntimeGuardrailIssue({
-            runtimeSelection: selection,
-            allowValidationStackFallback: allowValidationStackFallback ?? false,
-          }) ?? warning.message,
-      };
-    }
+    const selection = resolvePromptValidationRuntime({
+      promptSettings,
+      promptExploderSettings,
+      validatorPatternLists,
+      runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+      runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
+      learningEnabled: learningDraft.enabled,
+      minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+      maxTemplates: learningDraft.maxTemplates,
+      sessionLearnedRules,
+      sessionLearnedTemplates,
+      preferredValidatorScope,
+    });
+    return {
+      selection,
+      warning: null,
+      guardrailIssue: getPromptExploderRuntimeGuardrailIssue({
+        runtimeSelection: selection,
+      }),
+    };
   }, [
     learningDraft.enabled,
     learningDraft.maxTemplates,
@@ -313,7 +274,6 @@ export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
     preferredValidatorScope,
     sessionLearnedRules,
     sessionLearnedTemplates,
-    strictStackMode,
     validatorPatternLists,
   ]);
 

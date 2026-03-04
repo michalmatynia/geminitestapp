@@ -107,7 +107,7 @@ export async function clearChatbotJobs(
  * Cancel a listing
  */
 export async function cancelListing(productId: string, listingId: string): Promise<void> {
-  return api.delete(`/api/integrations/products/${productId}/listings/${listingId}`);
+  return api.delete(`/api/v2/integrations/products/${productId}/listings/${listingId}`);
 }
 
 /**

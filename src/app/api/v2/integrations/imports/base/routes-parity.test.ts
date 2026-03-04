@@ -11,6 +11,17 @@ const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations/imports/base'
 const featuresRoot = path.join(projectRoot, 'src/features');
 const legacyEndpointToken = '/api/integrations/imports/base';
 const legacyApiImportToken = "@/app/api/integrations/imports/base/";
+const expectedV2RoutePaths = [
+  'route.ts',
+  'parameters/route.ts',
+  'sample-product/route.ts',
+  '[setting]/route.ts',
+  'runs/route.ts',
+  'runs/[runId]/route.ts',
+  'runs/[runId]/resume/route.ts',
+  'runs/[runId]/cancel/route.ts',
+  'runs/[runId]/report/route.ts',
+] as const;
 
 const collectRouteFiles = (baseDir: string): string[] => {
   if (!existsSync(baseDir)) return [];
@@ -63,12 +74,15 @@ const collectSourceFiles = (baseDir: string): string[] => {
 };
 
 describe('v2 integrations imports/base route migration', () => {
-  it('keeps /api/v2/integrations/imports/base route.ts counterparts for legacy routes', () => {
-    const legacyRoutes = collectRouteFiles(legacyRoot);
+  it('keeps expected /api/v2/integrations/imports/base route.ts files present', () => {
     const v2Routes = new Set(collectRouteFiles(v2Root));
-
-    const missing = legacyRoutes.filter((relativeRoute) => !v2Routes.has(relativeRoute));
+    const missing = expectedV2RoutePaths.filter((relativeRoute) => !v2Routes.has(relativeRoute));
     expect(missing).toEqual([]);
+  });
+
+  it('removes legacy /api/integrations/imports/base route.ts files', () => {
+    const legacyRoutes = collectRouteFiles(legacyRoot);
+    expect(legacyRoutes).toEqual([]);
   });
 
   it('keeps v2 route.ts files independent from legacy api namespace imports', () => {

@@ -178,7 +178,7 @@ export const resolveCaseContainerIdForFolderPath = ({
       return filesById.get(ownerCaseId)?.fileType === 'case';
     });
   const uniqueOwnerCaseIds = Array.from(new Set(ownerCaseIds));
-  return uniqueOwnerCaseIds.length === 1 ? uniqueOwnerCaseIds[0] : null;
+  return uniqueOwnerCaseIds.length === 1 ? (uniqueOwnerCaseIds[0] ?? null) : null;
 };
 
 export const resolveCaseResolverActiveCaseId = ({

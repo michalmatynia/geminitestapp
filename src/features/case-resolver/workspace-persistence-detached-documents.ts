@@ -9,6 +9,7 @@ const CASE_RESOLVER_WORKSPACE_DETACHED_DOCUMENTS_SCHEMA =
   'case_resolver_workspace_detached_documents_v1';
 const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_TEXT_MAX_CHARS = 6_000;
 const CASE_RESOLVER_WORKSPACE_LIGHTWEIGHT_SCAN_SLOT_OCR_MAX_CHARS = 2_000;
+const CASE_RESOLVER_SCAN_SLOT_STATUSES = new Set(['pending', 'processing', 'completed', 'failed']);
 
 type CaseResolverWorkspaceDetachedDocumentsFileEntry = {
   id: string;
@@ -77,6 +78,29 @@ const normalizeScanSlotsForLightweightSearch = (
     };
   });
 
+const isCaseResolverScanSlot = (
+  slot: unknown
+): slot is CaseResolverWorkspace['files'][number]['scanSlots'][number] => {
+  if (!slot || typeof slot !== 'object' || Array.isArray(slot)) return false;
+  const record = slot as Record<string, unknown>;
+
+  const id = record['id'];
+  const fileId = record['fileId'];
+  const status = record['status'];
+  const progress = record['progress'];
+
+  return (
+    typeof id === 'string' &&
+    id.trim().length > 0 &&
+    typeof fileId === 'string' &&
+    fileId.trim().length > 0 &&
+    typeof status === 'string' &&
+    CASE_RESOLVER_SCAN_SLOT_STATUSES.has(status) &&
+    typeof progress === 'number' &&
+    Number.isFinite(progress)
+  );
+};
+
 const resolveDetachedDocumentsEntry = (
   file: CaseResolverWorkspace['files'][number]
 ): CaseResolverWorkspaceDetachedDocumentsFileEntry | null => {
@@ -142,10 +166,7 @@ const normalizeDetachedFiles = (
       copyString('explodedDocumentContent');
       copyString('ocrText');
       if (Array.isArray(record['scanSlots'])) {
-        normalizedEntry.scanSlots = record['scanSlots'].filter(
-          (slot: unknown): slot is Record<string, unknown> =>
-            Boolean(slot) && typeof slot === 'object' && !Array.isArray(slot)
-        ) as CaseResolverWorkspace['files'][number]['scanSlots'];
+        normalizedEntry.scanSlots = record['scanSlots'].filter(isCaseResolverScanSlot);
       }
       return normalizedEntry;
     })
@@ -214,7 +235,7 @@ export const stripCaseResolverWorkspaceDetachedDocuments = (
           delete fileRecord['documentContentPlainText'];
         }
       }
-      return fileRecord as CaseResolverWorkspace['files'][number];
+      return fileRecord as unknown as CaseResolverWorkspace['files'][number];
     }),
   };
 };
@@ -306,7 +327,7 @@ export const applyCaseResolverWorkspaceDetachedDocumentsPayload = ({
     if (Array.isArray(payload.scanSlots)) {
       fileRecord['scanSlots'] = payload.scanSlots;
     }
-    return fileRecord as CaseResolverWorkspace['files'][number];
+    return fileRecord as unknown as CaseResolverWorkspace['files'][number];
   });
   return updated ? { ...workspace, files } : workspace;
 };

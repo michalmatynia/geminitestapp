@@ -13,7 +13,7 @@ import {
 
 export type PromptExploderOrchestratorRollout = {
   enabled: boolean;
-  reason: 'settings' | 'env_override' | 'canary';
+  reason: 'settings';
   bucket: number;
   canaryPercent: number;
 };

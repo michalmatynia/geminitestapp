@@ -9,6 +9,7 @@ export const GET = apiHandler(GET_handler, {
   source: 'integrations.GET',
   requireCsrf: false,
 });
+
 export const POST = apiHandler(POST_handler, {
   source: 'integrations.POST',
   requireCsrf: false,

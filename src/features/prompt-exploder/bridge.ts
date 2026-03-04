@@ -1,8 +1,6 @@
 import {
   PROMPT_EXPLODER_CANONICAL_BRIDGE_SOURCES,
   PROMPT_EXPLODER_CANONICAL_BRIDGE_TARGETS,
-  PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES,
-  PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES,
   type PromptExploderBridgePayload,
   type PromptExploderBridgePayloadStatus,
   type PromptExploderBridgeSource,
@@ -16,7 +14,6 @@ import {
   type PromptExploderBridgePayloadSnapshot,
   type PromptExploderBridgeSaveOptions,
 } from '@/shared/contracts/prompt-exploder';
-import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
@@ -198,30 +195,9 @@ const toNonNegativeInt = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const recordLegacyBridgeAliasUsage = (
-  field: 'source' | 'target',
-  alias: string,
-  canonical: string
-): void => {
-  recordPromptValidationCounter('runtime_legacy_bridge_alias', 1, {
-    field,
-    alias,
-    canonical,
-  });
-};
-
 const normalizeBridgeSource = (value: unknown): PromptExploderBridgeSource => {
   const normalized = toTrimmedString(value).toLowerCase();
   if (!normalized) return 'image-studio';
-
-  const legacyAlias =
-    PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES[
-      normalized as keyof typeof PROMPT_EXPLODER_LEGACY_BRIDGE_SOURCE_ALIASES
-    ];
-  if (legacyAlias) {
-    recordLegacyBridgeAliasUsage('source', normalized, legacyAlias);
-    return legacyAlias;
-  }
 
   if (CANONICAL_BRIDGE_SOURCES.has(normalized)) {
     return normalized as PromptExploderBridgeSource;
@@ -232,15 +208,6 @@ const normalizeBridgeSource = (value: unknown): PromptExploderBridgeSource => {
 const normalizeBridgeTarget = (value: unknown): PromptExploderBridgeTarget => {
   const normalized = toTrimmedString(value).toLowerCase();
   if (!normalized) return 'image-studio';
-
-  const legacyAlias =
-    PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES[
-      normalized as keyof typeof PROMPT_EXPLODER_LEGACY_BRIDGE_TARGET_ALIASES
-    ];
-  if (legacyAlias) {
-    recordLegacyBridgeAliasUsage('target', normalized, legacyAlias);
-    return legacyAlias;
-  }
 
   if (CANONICAL_BRIDGE_TARGETS.has(normalized)) {
     return normalized as PromptExploderBridgeTarget;

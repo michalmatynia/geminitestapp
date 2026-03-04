@@ -4,9 +4,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 export type LegacyCompatCounterName =
   | 'legacy_key_read'
-  | 'legacy_payload_received'
-  | 'compat_route_hit';
-export type LegacyCompatCounterSnapshot = Record<LegacyCompatCounterName, number>;
+  | 'legacy_payload_received';
 
 type LegacyCompatCounterRecordInput = {
   source: string;
@@ -36,7 +34,6 @@ const LOG_MIN_INTERVAL_MS = parseIntWithBounds(
 const counters: Record<LegacyCompatCounterName, number> = {
   legacy_key_read: 0,
   legacy_payload_received: 0,
-  compat_route_hit: 0,
 };
 
 const lastLoggedAtMs: Partial<Record<LegacyCompatCounterName, number>> = {};
@@ -51,12 +48,6 @@ const shouldLogCounter = (
   const previous = lastLoggedAtMs[counter] ?? 0;
   return nowMs - previous >= LOG_MIN_INTERVAL_MS;
 };
-
-const buildLegacyCompatCounterSnapshot = (): LegacyCompatCounterSnapshot => ({
-  legacy_key_read: counters.legacy_key_read,
-  legacy_payload_received: counters.legacy_payload_received,
-  compat_route_hit: counters.compat_route_hit,
-});
 
 export const recordLegacyCompatCounter = (
   counter: LegacyCompatCounterName,
@@ -79,19 +70,4 @@ export const recordLegacyCompatCounter = (
       ...(input.context ?? {}),
     },
   });
-};
-
-export const getLegacyCompatCounterSnapshot = (): LegacyCompatCounterSnapshot =>
-  buildLegacyCompatCounterSnapshot();
-
-export const __testOnlyGetLegacyCompatCounterSnapshot = (): LegacyCompatCounterSnapshot =>
-  buildLegacyCompatCounterSnapshot();
-
-export const __testOnlyResetLegacyCompatCounters = (): void => {
-  counters.legacy_key_read = 0;
-  counters.legacy_payload_received = 0;
-  counters.compat_route_hit = 0;
-  delete lastLoggedAtMs.legacy_key_read;
-  delete lastLoggedAtMs.legacy_payload_received;
-  delete lastLoggedAtMs.compat_route_hit;
 };

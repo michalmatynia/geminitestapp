@@ -18,6 +18,7 @@ export const normalizePortName = (port: string): string => {
   ) {
     return 'images';
   }
+  if (normalized === 'text') return 'value';
   return trimmed;
 };
 

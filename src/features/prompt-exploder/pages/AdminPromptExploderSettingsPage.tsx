@@ -184,11 +184,6 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         })),
       },
       {
-        key: 'allowValidationStackFallback',
-        label: 'Allow Validation Stack Fallback',
-        type: 'switch',
-      },
-      {
         key: 'caseResolverCaptureMode',
         label: 'Case Resolver Capture Mode',
         type: 'select',

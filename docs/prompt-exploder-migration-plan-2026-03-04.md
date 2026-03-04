@@ -3,6 +3,16 @@
 Date: 2026-03-04
 Owner: Prompt Exploder + Validator maintainers
 
+Status update (2026-03-04):
+
+- Phase 0 and Phase 1 delivered (contract constants, telemetry baseline, persistence migration script/tests).
+- Runtime hard cutover delivered:
+  - orchestrator canary/env override removal,
+  - strict canonical stack resolution,
+  - strict retry/fallback path removal,
+  - parser runtime stricter compile behavior.
+- Bridge runtime alias normalization removed; canonical payloads are now required at runtime.
+
 ## Goal
 
 Migrate Prompt Exploder to a single modern runtime contract and remove legacy compatibility paths (alias scopes, fallback runtime recovery, bridge payload back-compat, and rollout toggles that keep old behavior alive).

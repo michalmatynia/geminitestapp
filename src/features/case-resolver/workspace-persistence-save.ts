@@ -170,7 +170,7 @@ export const compactCaseResolverWorkspaceForPersist = (
               delete rest['documentContentMarkdown'];
               delete rest['documentContentPlainText'];
             }
-            return rest as PersistedHistoryEntry;
+            return rest as unknown as PersistedHistoryEntry;
           })
         : [];
       if (isScanFile) {
@@ -192,7 +192,7 @@ export const compactCaseResolverWorkspaceForPersist = (
           Array.isArray(compactedFile.documentConversionWarnings) &&
           compactedFile.documentConversionWarnings.length === 0
         ) {
-          delete (compactedFile as Record<string, unknown>)['documentConversionWarnings'];
+          delete (compactedFile as unknown as Record<string, unknown>)['documentConversionWarnings'];
         }
         return compactedFile;
       }
@@ -206,7 +206,7 @@ export const compactCaseResolverWorkspaceForPersist = (
           file.documentContentHtml.trim().length > 0 &&
           'documentContent' in fileRest
       ) {
-        delete (fileRest as Record<string, unknown>)['documentContent'];
+        delete (fileRest as unknown as Record<string, unknown>)['documentContent'];
       }
       const compactedFile = {
         ...fileRest,
@@ -218,7 +218,7 @@ export const compactCaseResolverWorkspaceForPersist = (
         Array.isArray(compactedFile.documentConversionWarnings) &&
         compactedFile.documentConversionWarnings.length === 0
       ) {
-        delete (compactedFile as Record<string, unknown>)['documentConversionWarnings'];
+        delete (compactedFile as unknown as Record<string, unknown>)['documentConversionWarnings'];
       }
       return compactedFile;
     })

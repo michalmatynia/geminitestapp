@@ -254,7 +254,7 @@ export const promptValidationStackResolutionSchema = z.object({
   validatorScope: validatorScopeSchema,
   list: validatorPatternListSchema.nullable(),
   usedFallback: z.boolean(),
-  reason: z.enum(['exact_match', 'default_scope', 'scope_fallback', 'invalid_stack']),
+  reason: z.enum(['exact_match']),
 });
 
 export type PromptValidationStackResolution = z.infer<typeof promptValidationStackResolutionSchema>;
@@ -419,10 +419,6 @@ export type PromptValidationErrorName = z.infer<typeof promptValidationErrorName
 export const promptValidationCounterNameSchema = z.enum([
   'runtime_selection_total',
   'runtime_selection_fallback',
-  'runtime_legacy_stack_alias',
-  'runtime_legacy_stack_fallback',
-  'runtime_legacy_bridge_alias',
-  'runtime_legacy_strict_retry',
   'runtime_cache_hit',
   'runtime_cache_miss',
   'runtime_case_resolver_pack_fallback',

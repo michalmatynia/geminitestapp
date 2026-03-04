@@ -39,7 +39,7 @@
       "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
       "config": {
         "apiAdvanced": {
-          "url": "/api/integrations/products/{{bundle.entityId}}/export-to-base",
+          "url": "/api/v2/integrations/products/{{bundle.entityId}}/export-to-base",
           "method": "POST",
           "pathParamsJson": "{}",
           "queryParamsJson": "{}",

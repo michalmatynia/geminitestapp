@@ -15,7 +15,7 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   simulation: 'object',
   trigger: 'boolean',
   triggerName: 'string',
-  context: 'object',
+  context: ['object', 'image'],
   meta: 'object',
   entityJson: 'object',
   entityId: 'id',

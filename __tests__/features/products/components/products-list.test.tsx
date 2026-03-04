@@ -290,7 +290,7 @@ describe('Admin Products List UI', () => {
       http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: null })
       ),
-      http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([])),
+      http.get('/api/v2/integrations/products/:id/listings', () => HttpResponse.json([])),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
       http.post('/api/query-telemetry', () => HttpResponse.json({ ok: true })),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
@@ -361,7 +361,7 @@ describe('Admin Products List UI', () => {
       http.get('/api/v2/integrations/exports/base/default-inventory', () =>
         HttpResponse.json({ inventoryId: null })
       ),
-      http.post('/api/integrations/products/:id/export-to-base', () => {
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
         exportCalls += 1;
         return HttpResponse.json({ success: true });
       })
@@ -392,7 +392,7 @@ describe('Admin Products List UI', () => {
           inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
         })
       ),
-      http.post('/api/integrations/products/:id/export-to-base', () => {
+      http.post('/api/v2/integrations/products/:id/export-to-base', () => {
         exportCalls += 1;
         return HttpResponse.json({ success: true });
       })
@@ -433,14 +433,14 @@ describe('Admin Products List UI', () => {
         };
         return HttpResponse.json({ templateId: 'tpl-1' });
       }),
-      http.post('/api/integrations/products/:id/export-to-base', async ({ request }) => {
+      http.post('/api/v2/integrations/products/:id/export-to-base', async ({ request }) => {
         exportPayload = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json({ success: true });
       }),
-      http.post('http://localhost/api/integrations/products/:id/base/sku-check', () => {
+      http.post('http://localhost/api/v2/integrations/products/:id/base/sku-check', () => {
         return HttpResponse.json({ exists: false });
       }),
-      http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([]))
+      http.get('/api/v2/integrations/products/:id/listings', () => HttpResponse.json([]))
     );
 
     renderProductTable();

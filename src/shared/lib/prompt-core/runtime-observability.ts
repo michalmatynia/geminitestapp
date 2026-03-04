@@ -184,10 +184,6 @@ export const getPromptValidationObservabilitySnapshot = (
   const counterValues: Record<PromptValidationCounterName, number> = {
     runtime_selection_total: getCounterValue('runtime_selection_total'),
     runtime_selection_fallback: getCounterValue('runtime_selection_fallback'),
-    runtime_legacy_stack_alias: getCounterValue('runtime_legacy_stack_alias'),
-    runtime_legacy_stack_fallback: getCounterValue('runtime_legacy_stack_fallback'),
-    runtime_legacy_bridge_alias: getCounterValue('runtime_legacy_bridge_alias'),
-    runtime_legacy_strict_retry: getCounterValue('runtime_legacy_strict_retry'),
     runtime_cache_hit: getCounterValue('runtime_cache_hit'),
     runtime_cache_miss: getCounterValue('runtime_cache_miss'),
     runtime_case_resolver_pack_fallback: getCounterValue('runtime_case_resolver_pack_fallback'),

@@ -974,6 +974,151 @@ describe('compileGraph', () => {
     expect(sanitized).toEqual([]);
   });
 
+  it('keeps canonical API request parameter wiring (url/body/params)', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'constant-1',
+        type: 'constant',
+        title: 'Constant',
+        inputs: [],
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        inputs: ['prompt'],
+        outputs: ['result'],
+      }),
+      buildNode({
+        id: 'api-1',
+        type: 'api_advanced',
+        title: 'API',
+        inputs: ['url', 'body', 'params'],
+        outputs: ['result'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-url',
+        from: 'constant-1',
+        to: 'api-1',
+        fromPort: 'value',
+        toPort: 'url',
+      },
+      {
+        id: 'edge-body',
+        from: 'model-1',
+        to: 'api-1',
+        fromPort: 'result',
+        toPort: 'body',
+      },
+      {
+        id: 'edge-params',
+        from: 'model-1',
+        to: 'api-1',
+        fromPort: 'result',
+        toPort: 'params',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(3);
+    expect(sanitized.map((edge) => edge.toPort).sort()).toEqual(['body', 'params', 'url']);
+  });
+
+  it('keeps starter + legacy compatibility wiring (bundle/meta/images/text)', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'regex-1',
+        type: 'regex',
+        title: 'Regex',
+        inputs: ['value'],
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        inputs: ['result'],
+        outputs: ['result'],
+      }),
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: [],
+        outputs: ['context'],
+      }),
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson'],
+        outputs: ['description_en', 'parameters'],
+      }),
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        inputs: ['images', 'value'],
+        outputs: ['prompt'],
+      }),
+      buildNode({
+        id: 'viewer-1',
+        type: 'viewer',
+        title: 'Viewer',
+        inputs: ['bundle', 'meta'],
+        outputs: [],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-value-bundle',
+        from: 'regex-1',
+        to: 'viewer-1',
+        fromPort: 'value',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-result-meta',
+        from: 'db-1',
+        to: 'viewer-1',
+        fromPort: 'result',
+        toPort: 'meta',
+      },
+      {
+        id: 'edge-context-images',
+        from: 'trigger-1',
+        to: 'prompt-1',
+        fromPort: 'context',
+        toPort: 'images',
+      },
+      {
+        id: 'edge-description-text',
+        from: 'parser-1',
+        to: 'prompt-1',
+        fromPort: 'description_en',
+        toPort: 'text',
+      },
+      {
+        id: 'edge-parameters-text',
+        from: 'parser-1',
+        to: 'prompt-1',
+        fromPort: 'parameters',
+        toPort: 'text',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(5);
+    expect(sanitized.find((edge) => edge.id === 'edge-value-bundle')?.toPort).toBe('bundle');
+    expect(sanitized.find((edge) => edge.id === 'edge-result-meta')?.toPort).toBe('meta');
+    expect(sanitized.find((edge) => edge.id === 'edge-context-images')?.toPort).toBe('images');
+    expect(sanitized.find((edge) => edge.id === 'edge-description-text')?.toPort).toBe('value');
+    expect(sanitized.find((edge) => edge.id === 'edge-parameters-text')?.toPort).toBe('value');
+  });
+
   it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {
     const nodes: AiNode[] = [
       buildNode({

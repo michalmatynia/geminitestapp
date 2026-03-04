@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   AiNode,
   Edge,
@@ -61,6 +61,11 @@ export function useCanvasConnection(args: {
     clearRuntimeInputsForEdges,
     toast,
   } = args;
+  const connectingRef = useRef(connecting);
+
+  useEffect(() => {
+    connectingRef.current = connecting;
+  }, [connecting]);
 
   const getPortPosition = useCallback(
     (
@@ -87,6 +92,11 @@ export function useCanvasConnection(args: {
       }
       event.stopPropagation();
       const start = getPortPosition(node, port, 'output');
+      connectingRef.current = {
+        fromNodeId: node.id,
+        fromPort: port,
+        start,
+      };
       startConnection(node.id, port, start);
     },
     [getPortPosition, isPathLocked, notifyLocked, startConnection]
@@ -99,14 +109,17 @@ export function useCanvasConnection(args: {
         return;
       }
       event.stopPropagation();
-      if (!connecting) return;
-      if (connecting.fromNodeId === node.id && connecting.fromPort === port) {
+      const activeConnection = connecting ?? connectingRef.current;
+      if (!activeConnection) return;
+      if (activeConnection.fromNodeId === node.id && activeConnection.fromPort === port) {
+        connectingRef.current = null;
         endConnection();
         return;
       }
 
-      const fromNode = nodes.find((n: AiNode): boolean => n.id === connecting.fromNodeId);
+      const fromNode = nodes.find((n: AiNode): boolean => n.id === activeConnection.fromNodeId);
       if (!fromNode) {
+        connectingRef.current = null;
         endConnection();
         return;
       }
@@ -120,15 +133,17 @@ export function useCanvasConnection(args: {
           toast('This input accepts one connection. Insert a merge/select node for fan-in.', {
             variant: 'error',
           });
+          connectingRef.current = null;
           endConnection();
           return;
         }
       }
 
-      const validation = validateConnection(fromNode, node, connecting.fromPort, port);
+      const validation = validateConnection(fromNode, node, activeConnection.fromPort, port);
 
       if (!validation.valid) {
         toast(validation.message ?? 'Invalid connection.', { variant: 'error' });
+        connectingRef.current = null;
         endConnection();
         return;
       }
@@ -137,13 +152,14 @@ export function useCanvasConnection(args: {
         ...prev,
         {
           id: `edge-${Math.random().toString(36).slice(2, 8)}`,
-          from: connecting.fromNodeId,
+          from: activeConnection.fromNodeId,
           to: node.id,
-          fromPort: connecting.fromPort,
+          fromPort: activeConnection.fromPort,
           toPort: port,
         },
       ]);
       toast('Connection created.', { variant: 'success' });
+      connectingRef.current = null;
       endConnection();
     },
     [connecting, edges, endConnection, isPathLocked, nodes, notifyLocked, setEdges, toast]
@@ -201,7 +217,7 @@ export function useCanvasConnection(args: {
         notifyLocked();
         return;
       }
-      if (connecting) return;
+      if (connectingRef.current) return;
       let edgeToMove: Edge | null = null;
       for (let index = edges.length - 1; index >= 0; index -= 1) {
         const edge = edges[index];
@@ -230,6 +246,11 @@ export function useCanvasConnection(args: {
         selectEdge(null);
       }
       startConnection(edgeToMove.from, edgeToMove.fromPort, start);
+      connectingRef.current = {
+        fromNodeId: edgeToMove.from,
+        fromPort: edgeToMove.fromPort,
+        start,
+      };
       setConnectingPos(nextPos);
     },
     [

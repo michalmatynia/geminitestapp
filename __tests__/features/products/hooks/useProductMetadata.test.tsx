@@ -98,7 +98,7 @@ describe('useProductMetadata', () => {
     expect(vi.mocked(metadataQueries.useCategories)).toHaveBeenLastCalledWith('catalog-nested');
   });
 
-  it('derives initial category selection from legacy category relations', () => {
+  it('does not derive category selection from removed legacy category relations', () => {
     const product = {
       ...buildProduct({
         categoryId: null,
@@ -109,7 +109,7 @@ describe('useProductMetadata', () => {
 
     const { result } = renderHook(() => useProductMetadata({ product }));
 
-    expect(result.current.selectedCategoryId).toBe('cat-legacy');
+    expect(result.current.selectedCategoryId).toBeNull();
   });
 
   it('realigns primary catalog to saved category catalog on initial edit mismatch', async () => {
@@ -154,7 +154,7 @@ describe('useProductMetadata', () => {
     const { result } = renderHook(() => useProductMetadata({ product }));
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith('/api/products/categories/cat-keychain', {
+      expect(api.get).toHaveBeenCalledWith('/api/v2/products/categories/cat-keychain', {
         logError: false,
       });
     });

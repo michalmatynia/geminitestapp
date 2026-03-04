@@ -10,9 +10,6 @@ const parseBooleanEnv = (value: string | undefined, fallback: boolean): boolean 
   return fallback;
 };
 
-export const isLegacyCompatRoutesEnabled = (): boolean =>
-  parseBooleanEnv(process.env['AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED'], true);
-
 export const isLegacyPathIndexCompatEnabled = (): boolean =>
   parseBooleanEnv(
     process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] ??

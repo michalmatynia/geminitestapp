@@ -220,7 +220,19 @@ const compileRuntimePatterns = (
     );
   }
 
-  const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';
+  const scopedRules = (rules ?? []).filter((rule) => {
+    if (!rule.enabled) return false;
+    if (rule.kind !== 'regex') return false;
+    const scopes = (rule.appliesToScopes || []) as string[];
+    const activeRuleScope =
+      scope === 'case_resolver_prompt_exploder'
+        ? 'case_resolver_prompt_exploder'
+        : 'prompt_exploder';
+    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
+  });
+
+  const allowDefaultFallback =
+    scope !== 'case_resolver_prompt_exploder' && scopedRules.length === 0;
   const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
   const compileErrors: PromptValidationRuleCompileError[] = [];
@@ -241,17 +253,6 @@ const compileRuntimePatterns = (
       });
     });
   }
-
-  const scopedRules = (rules ?? []).filter((rule) => {
-    if (!rule.enabled) return false;
-    if (rule.kind !== 'regex') return false;
-    const scopes = (rule.appliesToScopes || []) as string[];
-    const activeRuleScope =
-      scope === 'case_resolver_prompt_exploder'
-        ? 'case_resolver_prompt_exploder'
-        : 'prompt_exploder';
-    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
-  });
 
   scopedRules.forEach((rule) => {
     if (rule.kind !== 'regex') return;
@@ -320,6 +321,19 @@ const compileRuntimePatterns = (
   const nonHeadingRules = regexRules.filter(
     (rule) => !rule.treatAsHeading && /^segment\.not_heading\./i.test(rule.id)
   );
+
+  if (!allowDefaultFallback && regexRules.length === 0) {
+    throw (
+      compileErrors[0] ??
+      new PromptValidationRuleCompileError(
+        `No regex rules could be compiled for Prompt Exploder scope "${scope}".`,
+        {
+          scope,
+          correlationId: correlationId ?? null,
+        }
+      )
+    );
+  }
 
   if (!allowDefaultFallback && headingRules.length === 0) {
     throw (
@@ -445,9 +459,7 @@ export const prewarmPromptExploderRuntimePatterns = (args: {
 };
 
 export const testPattern = (runtime: PatternRuntime, patternId: string, value: string): boolean => {
-  const regex =
-    runtime.byId.get(patternId) ??
-    (runtime.allowDefaultFallback ? DEFAULT_PATTERN_IDS[patternId] : undefined);
+  const regex = runtime.byId.get(patternId);
   if (!regex) return false;
   return regex.test(value);
 };

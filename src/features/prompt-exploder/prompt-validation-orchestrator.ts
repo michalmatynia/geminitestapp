@@ -40,7 +40,6 @@ type PromptValidationOrchestratorInput = {
   sessionLearnedRules?: PromptValidationRule[] | undefined;
   sessionLearnedTemplates?: PromptExploderLearnedTemplate[] | undefined;
   preferredValidatorScope?: ValidatorScope | null | undefined;
-  strictUnknownStack?: boolean | undefined;
 };
 
 export type PromptValidationOrchestrationResult = PromptValidationRuntimeSelection & {
@@ -327,7 +326,6 @@ export const resolvePromptValidationRuntime = (
       stack: args.runtimeValidationRuleStack,
       patternLists: args.validatorPatternLists,
       preferredScope: args.preferredValidatorScope ?? undefined,
-      strictUnknownStack: args.strictUnknownStack ?? false,
     });
     recordPromptValidationCounter('runtime_selection_total', 1, {
       scope: stackResolution.scope ?? 'global',
@@ -338,17 +336,6 @@ export const resolvePromptValidationRuntime = (
         scope: stackResolution.scope ?? 'global',
         stack: resolveStackId(stackResolution.stack),
       });
-      if (
-        stackResolution.reason === 'default_scope' ||
-        stackResolution.reason === 'scope_fallback' ||
-        stackResolution.reason === 'invalid_stack'
-      ) {
-        recordPromptValidationCounter('runtime_legacy_stack_fallback', 1, {
-          scope: stackResolution.scope ?? 'global',
-          stack: resolveStackId(stackResolution.stack),
-          reason: stackResolution.reason,
-        });
-      }
     }
     recordPromptValidationTiming('scope_resolve_ms', performance.now() - stackStartedAt, {
       scope: stackResolution.scope ?? 'global',

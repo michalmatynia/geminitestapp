@@ -53,7 +53,9 @@ The migration objective is one source of truth per domain with no bridge echo/su
 2. Session 2 - Completed on 2026-03-04.
 3. Session 3 - Completed on 2026-03-04.
 4. Session 4 - Completed on 2026-03-04.
-5. Session 5 - In progress on 2026-03-04.
+5. Session 5 - Completed on 2026-03-04.
+6. Session 6 - Completed on 2026-03-04.
+7. Session 7 - Completed on 2026-03-04.
 
 ## Session 1: Baseline + Guardrails
 
@@ -212,7 +214,7 @@ Acceptance:
 Progress (2026-03-04):
 
 1. Added cutover flags for compatibility shutdown:
-   1. `AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED` (default `true`) for alias routes.
+   1. `AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED` (default `true`) for alias routes (removed after alias route deletion on 2026-03-04).
    2. `AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED` (default `true`) with client fallback `NEXT_PUBLIC_AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED`.
 2. Guarded legacy alias route entrypoints (`/api/countries`, `/api/languages`, `/api/currencies`, `/api/price-groups`, `/api/integrations/imports/base` and `[id]` variants) with a shared route-disable assertion.
 3. Added settings/trigger compatibility gating for `ai_paths_index_v1`:
@@ -228,7 +230,16 @@ Progress (2026-03-04):
 10. Guarded legacy `/api/integrations/exports/base/[setting]` route with compatibility counter+flag checks and added exports/base parity tests to enforce `v2` route coverage plus prevent feature-runtime regressions to legacy `/api/integrations/exports/base*` literals.
 11. Added canonical `v2` integration routes for `/with-connections`, `/jobs`, `/queues/tradera`, `/product-listings`, and `/images/sync-base/all`, then migrated active runtime callers (features + shared jobs API) from legacy `/api/integrations/*` endpoints to `/api/v2/integrations/*` equivalents.
 12. Guarded legacy aliases for `/api/integrations/with-connections`, `/api/integrations/jobs`, `/api/integrations/queues/tradera`, `/api/integrations/product-listings`, and `/api/integrations/images/sync-base/all` with compatibility counter+flag checks, and added targeted v2 integrations parity tests to block regressions to these legacy endpoint literals/import patterns.
-13. Deleted legacy metadata alias route files (`/api/countries`, `/api/languages`, `/api/currencies`, `/api/price-groups` and `[id]` variants), and migrated route-level tests/MSW fixtures to canonical v2 metadata/product-metadata endpoints.
+13. Added canonical `v2` routes for `/api/v2/integrations/products/[id]/*` (`base/sku-check`, `base/link-existing`, `export-to-base`, `listings`, and listing actions `delete-from-base`, `purge`, `relist`, `sync-base-images`) and migrated active runtime callers (integrations hooks, jobs API cancellation, quick export flows, starter workflow asset URL) from legacy `/api/integrations/products/*` endpoints.
+14. Guarded legacy aliases for `/api/integrations/products/[id]/*` with compatibility counter+flag checks and extended `v2` integrations parity tests to enforce route presence/import boundaries plus block regressions to legacy `/api/integrations/products/*` runtime endpoint literals.
+15. Deleted legacy metadata alias route files (`/api/countries`, `/api/languages`, `/api/currencies`, `/api/price-groups` and `[id]` variants), and migrated route-level tests/MSW fixtures to canonical v2 metadata/product-metadata endpoints.
+16. Deleted migrated legacy integrations alias route entrypoints (`/api/integrations/imports/base/*`, `/api/integrations/exports/base/[setting]`, `/api/integrations/with-connections`, `/api/integrations/jobs`, `/api/integrations/queues/tradera`, `/api/integrations/product-listings`, `/api/integrations/images/sync-base/all`) and migrated remaining route-level tests/MSW fixtures to canonical `v2` integrations endpoints.
+17. Deleted migrated legacy integrations products alias route entrypoints (`/api/integrations/products/[id]/*`) and extended integrations parity tests to assert legacy route-file removal across both selected integrations aliases and product listing action aliases.
+18. Added canonical `v2` integrations routes for root + connection management/actions (`/api/v2/integrations`, `/[id]/connections`, `/connections/[id]`, `/connections/[id]/session`, connection test routes, Base/Allegro request routes, Allegro authorize/disconnect) and migrated active runtime callers in integrations hooks/context from legacy `/api/integrations/*` to `/api/v2/integrations/*`.
+19. Migrated import/export template callers from legacy `/api/integrations/{import|export}-templates` literals to canonical `/api/v2/templates/{import|export}` endpoints, then extended integrations parity checks to enforce the expanded `v2` route surface and block feature/shared regressions to legacy `/api/integrations/*` literals.
+20. Removed legacy compatibility counters API surface (`/api/ai-paths/legacy-compat/counters`), dropped admin queue page polling for legacy counter snapshots, and pruned now-unused legacy counter snapshot contracts/query keys.
+21. Deleted migrated legacy integrations connection alias route entrypoints (`/api/integrations`, `/api/integrations/[id]/connections`, `/api/integrations/connections/[id]`, `/api/integrations/connections/[id]/session`, and migrated `/api/integrations/[id]/connections/[connectionId]/*` action routes), keeping only non-migrated callback/inventory/products route entrypoints.
+22. Pruned dead legacy route-compat internals after alias deletion: removed `legacy-compat/server.ts` + tests, removed `isLegacyCompatRoutesEnabled`/`AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED`, and removed unused legacy counter snapshot helpers plus `compat_route_hit` counter shape.
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -243,12 +254,37 @@ Session 6 explicit deletion checklist (prepared):
    2. `src/app/api/languages/route.ts`, `src/app/api/languages/[id]/route.ts`
    3. `src/app/api/currencies/route.ts`, `src/app/api/currencies/[id]/route.ts`
    4. `src/app/api/price-groups/route.ts`, `src/app/api/price-groups/[id]/route.ts`
-3. Delete remaining legacy integrations alias route files after compatibility flags default to `false` and counter telemetry remains quiet:
-   1. `src/app/api/integrations/imports/base/**/*` legacy alias surface
-4. Delete legacy compatibility counters endpoint after alias route deletion:
+3. Completed on 2026-03-04: deleted migrated legacy integrations alias route entrypoints:
+   1. `src/app/api/integrations/imports/base/**/route.ts` alias surface
+   2. `src/app/api/integrations/exports/base/[setting]/route.ts`
+   3. `src/app/api/integrations/with-connections/route.ts`
+   4. `src/app/api/integrations/jobs/route.ts`
+   5. `src/app/api/integrations/queues/tradera/route.ts`
+   6. `src/app/api/integrations/product-listings/route.ts`
+   7. `src/app/api/integrations/images/sync-base/all/route.ts`
+4. Completed on 2026-03-04: deleted migrated legacy integrations products alias route entrypoints:
+   1. `src/app/api/integrations/products/[id]/**/*/route.ts` legacy alias surface
+5. Completed on 2026-03-04: deleted legacy compatibility counters endpoint after alias route deletion:
    1. `src/app/api/ai-paths/legacy-compat/counters/handler.ts`
    2. `src/app/api/ai-paths/legacy-compat/counters/route.ts`
    3. `src/app/api/ai-paths/legacy-compat/counters/handler.test.ts`
+6. Completed on 2026-03-04: deleted migrated legacy integrations connection alias route entrypoints:
+   1. `src/app/api/integrations/route.ts`
+   2. `src/app/api/integrations/[id]/connections/route.ts`
+   3. `src/app/api/integrations/connections/[id]/route.ts`
+   4. `src/app/api/integrations/connections/[id]/session/route.ts`
+   5. `src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts`
+   6. `src/app/api/integrations/[id]/connections/[connectionId]/base/test/route.ts`
+   7. `src/app/api/integrations/[id]/connections/[connectionId]/base/request/route.ts`
+   8. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/test/route.ts`
+   9. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts`
+   10. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts`
+   11. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts`
+7. Completed on 2026-03-04: pruned dead legacy route-compat internals:
+   1. deleted `src/shared/lib/ai-paths/legacy-compat/server.ts`
+   2. deleted `src/shared/lib/ai-paths/legacy-compat/server.test.ts`
+   3. removed `isLegacyCompatRoutesEnabled` from `src/shared/lib/ai-paths/legacy-compat/flags.ts`
+   4. removed unused snapshot helpers and `compat_route_hit` shape from `src/shared/lib/observability/legacy-compat-counters.ts`
 
 ## Session 7: Release hardening
 
@@ -262,6 +298,40 @@ Acceptance:
 1. All AI-Paths targeted tests pass.
 2. No lint/type regressions.
 3. Migration checklist signed off.
+
+Progress (2026-03-04):
+
+1. Ran the full AI-Paths targeted quality-gate suites from this playbook:
+   1. `useCanvasInteractions.connections.race.test.tsx`
+   2. `canvas-board.connection-wiring.test.tsx`
+   3. `useCanvasInteractions.nodes.drag-threshold.test.tsx`
+   4. `AiPathsCanvasView.switching-delete-guard.test.tsx`
+   5. `canvas-svg-trigger-node-interactions.test.tsx`
+   6. `canvas-svg-trigger-node-interaction-regression.test.tsx`
+   7. `canvas-connection-preview.test.tsx`
+   Result: 7 files passed, 21 tests passed.
+2. Re-ran integrations migration parity suites after legacy route-file pruning:
+   1. `src/app/api/v2/integrations/routes-parity.test.ts`
+   2. `src/app/api/v2/integrations/imports/base/routes-parity.test.ts`
+   3. `src/app/api/v2/integrations/exports/base/routes-parity.test.ts`
+   Result: 3 files passed, 13 tests passed.
+3. Ran compatibility smoke coverage for migrated metadata contracts:
+   1. `src/app/api/v2/metadata/handler.compat.test.ts`
+   2. `src/app/api/v2/products/metadata/handler.compat.test.ts`
+   Result: 2 files passed, 6 tests passed.
+4. Ran repository lint gate (`npm run lint`), fixed two `@typescript-eslint/no-unsafe-assignment` violations in:
+   1. `src/app/api/v2/products/metadata/handler.ts`
+   2. `src/app/api/v2/products/metadata/[type]/[id]/handler.ts`
+   Result: lint passes (`eslint src`).
+5. Ran production build gate (`npm run build`) after migration and lint fixes.
+   Result: build passes.
+6. Captured architecture diff highlights (before/after migration endpoint surface):
+   1. Removed legacy API entrypoints:
+      1. `/api/integrations/products/[id]/*` route aliases (`route.ts` files)
+      2. `/api/integrations` connection-management/action route aliases (migrated subset)
+      3. `/api/ai-paths/legacy-compat/counters`
+   2. Enforced canonical route surface via parity guards:
+      1. `src/app/api/v2/integrations/routes-parity.test.ts` now asserts removed legacy aliases remain deleted.
 
 ## Deprecation map
 

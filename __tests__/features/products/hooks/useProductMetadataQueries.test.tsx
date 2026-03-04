@@ -56,7 +56,7 @@ describe('useProductMetadataQueries invalidation', () => {
       data: { name: 'Acme', website: null },
     });
 
-    expect(api.post).toHaveBeenCalledWith('/api/products/producers', {
+    expect(api.post).toHaveBeenCalledWith('/api/v2/products/producers', {
       name: 'Acme',
       website: null,
     });
@@ -81,7 +81,7 @@ describe('useProductMetadataQueries invalidation', () => {
       data: { name: 'Acme Updated', website: 'https://example.com' },
     });
 
-    expect(api.put).toHaveBeenCalledWith('/api/products/producers/producer-1', {
+    expect(api.put).toHaveBeenCalledWith('/api/v2/products/producers/producer-1', {
       name: 'Acme Updated',
       website: 'https://example.com',
     });
@@ -99,7 +99,7 @@ describe('useProductMetadataQueries invalidation', () => {
 
     await result.current.mutateAsync('producer-1');
 
-    expect(api.delete).toHaveBeenCalledWith('/api/products/producers/producer-1');
+    expect(api.delete).toHaveBeenCalledWith('/api/v2/products/producers/producer-1');
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(1));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productMetadataKeys.all,
@@ -119,7 +119,7 @@ describe('useProductMetadataQueries invalidation', () => {
 
     await waitFor(() => expect(result.current.data).toHaveLength(1));
     expect(api.get).toHaveBeenCalledWith(
-      '/api/products/parameters',
+      '/api/v2/products/parameters',
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',

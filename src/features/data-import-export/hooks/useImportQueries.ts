@@ -73,8 +73,8 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
 export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
   const endpoint =
     scope === 'import'
-      ? '/api/integrations/import-templates'
-      : '/api/integrations/export-templates';
+      ? '/api/v2/templates/import'
+      : '/api/v2/templates/export';
   const queryKey = importExportKeys.templates(scope);
 
   return createListQueryV2({
@@ -161,8 +161,8 @@ export function useTemplateMutation(
 ): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
   const endpoint =
     scope === 'import'
-      ? '/api/integrations/import-templates'
-      : '/api/integrations/export-templates';
+      ? '/api/v2/templates/import'
+      : '/api/v2/templates/export';
   const mutationKey = importExportKeys.templates(scope);
 
   return createMutationV2({

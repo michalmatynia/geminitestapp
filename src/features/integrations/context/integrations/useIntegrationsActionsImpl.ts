@@ -250,7 +250,7 @@ export function useIntegrationsActionsImpl(args: {
       args.setShowTestSuccessModal(false);
       args.setTestSuccessMessage(null);
 
-      const requestUrl = `/api/integrations/${args.activeIntegration.id}/connections/${connection.id}/${type}`;
+      const requestUrl = `/api/v2/integrations/${args.activeIntegration.id}/connections/${connection.id}/${type}`;
       const startedAt = performance.now();
 
       try {
@@ -387,7 +387,7 @@ export function useIntegrationsActionsImpl(args: {
       toast('Create an Allegro connection first.', { variant: 'error' });
       return;
     }
-    window.location.href = `/api/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+    window.location.href = `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
   };
 
   const handleAllegroDisconnect = async (): Promise<void> => {
@@ -447,7 +447,7 @@ export function useIntegrationsActionsImpl(args: {
           allegroUseSandbox: true,
         },
       });
-      window.location.href = `/api/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+      window.location.href = `/api/v2/integrations/${args.activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to enable Allegro sandbox.', { variant: 'error' });
     } finally {

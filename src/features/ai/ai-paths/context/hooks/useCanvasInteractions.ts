@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
@@ -260,6 +260,70 @@ export function useCanvasInteractions(args?: {
     return getMarqueeRect(marqueeSelection);
   }, [marqueeSelection]);
 
+  const resolveClientPoint = useCallback(
+    (
+      event: React.MouseEvent | React.PointerEvent | React.TouchEvent
+    ): { clientX: number; clientY: number } | null => {
+      if ('touches' in event) {
+        const touch = event.touches[0] ?? event.changedTouches?.[0];
+        if (!touch) return null;
+        return { clientX: touch.clientX, clientY: touch.clientY };
+      }
+      if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        return { clientX: event.clientX, clientY: event.clientY };
+      }
+      return null;
+    },
+    []
+  );
+
+  const handlePanStart = useCallback(
+    (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (connecting) {
+        endConnection();
+        return;
+      }
+      stateHandlers.handlePanStart(event);
+    },
+    [connecting, endConnection, stateHandlers]
+  );
+
+  const handlePanMove = useCallback(
+    (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (connecting) {
+        const viewport = viewportRef.current?.getBoundingClientRect();
+        const clientPoint = resolveClientPoint(event);
+        if (!viewport || !clientPoint) return;
+        const x = (clientPoint.clientX - viewport.left - view.x) / view.scale;
+        const y = (clientPoint.clientY - viewport.top - view.y) / view.scale;
+        setConnectingPos({ x, y });
+        stateHandlers.updateLastPointerCanvasPosFromClient(clientPoint.clientX, clientPoint.clientY);
+        return;
+      }
+      stateHandlers.handlePanMove(event);
+    },
+    [
+      connecting,
+      resolveClientPoint,
+      setConnectingPos,
+      stateHandlers,
+      view.scale,
+      view.x,
+      view.y,
+      viewportRef,
+    ]
+  );
+
+  const handlePanEnd = useCallback(
+    (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      stateHandlers.handlePanEnd(event);
+      if (connecting) {
+        endConnection();
+      }
+    },
+    [connecting, endConnection, stateHandlers]
+  );
+
   useEffect(() => {
     if (!panState) return;
 
@@ -358,9 +422,9 @@ export function useCanvasInteractions(args?: {
     marqueeSelection,
     selectionMarqueeRect,
     touchLongPressIndicator,
-    handlePanStart: stateHandlers.handlePanStart,
-    handlePanMove: stateHandlers.handlePanMove,
-    handlePanEnd: stateHandlers.handlePanEnd,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
     ConfirmationModal,
     pruneRuntimeInputs: stateHandlers.pruneRuntimeInputsInternal,
     isPanning,

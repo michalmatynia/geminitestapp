@@ -32,7 +32,7 @@ import { getIntegrationConnectionsQueryKey } from './integrationCache';
 export function useIntegrations(): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
   const queryFn = async (): Promise<Integration[]> => {
-    const data = await api.get<Integration[]>('/api/integrations');
+    const data = await api.get<Integration[]>('/api/v2/integrations');
     return z.array(integrationSchema).parse(data);
   };
 
@@ -57,7 +57,7 @@ export function useIntegrationConnections(
   const queryFn = async (): Promise<IntegrationConnection[]> => {
     if (!integrationId) return [];
     const data = await api.get<IntegrationConnection[]>(
-      `/api/integrations/${integrationId}/connections`
+      `/api/v2/integrations/${integrationId}/connections`
     );
     return z.array(integrationConnectionSchema).parse(data);
   };
@@ -83,7 +83,7 @@ export function useConnectionSession(
 ): SingleQuery<unknown> {
   const queryKey = integrationKeys.connectionSession(connectionId);
   const queryFn = async (): Promise<unknown> =>
-    api.get<unknown>(`/api/integrations/connections/${connectionId}/session`);
+    api.get<unknown>(`/api/v2/integrations/connections/${connectionId}/session`);
 
   return createSingleQueryV2({
     id: connectionId,
@@ -150,7 +150,7 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
 export function useExportTemplates(): ListQuery<ImportExportTemplate> {
   const queryKey = integrationKeys.exportTemplates();
   const queryFn = async (): Promise<ImportExportTemplate[]> => {
-    const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
+    const data = await api.get<ImportExportTemplate[]>('/api/v2/templates/export');
     return z.array(importExportTemplateSchema).parse(data);
   };
 
@@ -267,7 +267,7 @@ export const getExportTemplatesQueryOptions = (): QueryDescriptorV2<ImportExport
   return {
     queryKey,
     queryFn: async (): Promise<ImportExportTemplate[]> => {
-      const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
+      const data = await api.get<ImportExportTemplate[]>('/api/v2/templates/export');
       return z.array(importExportTemplateSchema).parse(data);
     },
     staleTime: 5 * 60 * 1000,

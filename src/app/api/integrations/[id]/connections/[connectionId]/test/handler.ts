@@ -114,7 +114,7 @@ export async function postTestConnectionHandler(
 
   if (integration.slug === 'baselinker') {
     // Redirect to Base-specific test endpoint
-    const baseTestUrl = `/api/integrations/${id}/connections/${connectionId}/base/test`;
+    const baseTestUrl = `/api/v2/integrations/${id}/connections/${connectionId}/base/test`;
     return NextResponse.json(
       {
         error: `Please use the Base.com-specific test endpoint: POST ${baseTestUrl}`,

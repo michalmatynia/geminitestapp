@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
-import { NODE_WIDTH, getPortOffsetY, validateConnection } from '@/shared/lib/ai-paths';
+import {
+  NODE_WIDTH,
+  getNodeInputPortCardinality,
+  getPortOffsetY,
+  validateConnection,
+} from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
 import type { GraphMutationMeta } from '../GraphContext';
 
@@ -213,6 +218,24 @@ export function useCanvasInteractionsConnections({
         return;
       }
 
+      const targetCardinality = getNodeInputPortCardinality(node, port);
+      if (targetCardinality === 'one') {
+        const existingIncoming = edges.find((edge) => edge.to === node.id && edge.toPort === port);
+        if (existingIncoming) {
+          const isDuplicateConnection =
+            existingIncoming.from === activeConnection.fromNodeId &&
+            existingIncoming.fromPort === activeConnection.fromPort;
+          if (!isDuplicateConnection) {
+            toast('This input accepts one connection. Insert a merge/select node for fan-in.', {
+              variant: 'error',
+            });
+          }
+          connectingRef.current = null;
+          endConnection();
+          return;
+        }
+      }
+
       const validation = validateConnection(fromNode, node, activeConnection.fromPort, port);
       if (!validation.valid) {
         toast(validation.message ?? 'Invalid connection.', { variant: 'error' });
@@ -237,7 +260,7 @@ export function useCanvasInteractionsConnections({
       connectingRef.current = null;
       endConnection();
     },
-    [connecting, nodes, isPathLocked, endConnection, setEdges, toast, notifyLocked]
+    [connecting, nodes, edges, isPathLocked, endConnection, setEdges, toast, notifyLocked]
   );
 
   const handleReconnectInput = useCallback(

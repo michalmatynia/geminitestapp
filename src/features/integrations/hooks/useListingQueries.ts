@@ -14,7 +14,7 @@ export const productListingsQueryKey = (productId: string): readonly unknown[] =
   integrationKeys.listings(productId);
 
 export const fetchProductListings = (productId: string): Promise<ProductListingWithDetails[]> =>
-  api.get<ProductListingWithDetails[]>(`/api/integrations/products/${productId}/listings`);
+  api.get<ProductListingWithDetails[]>(`/api/v2/integrations/products/${productId}/listings`);
 
 export function useProductListings(productId: string): ListQuery<ProductListingWithDetails> {
   const queryKey = productListingsQueryKey(productId);

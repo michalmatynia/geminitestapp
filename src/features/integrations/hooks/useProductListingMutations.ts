@@ -128,7 +128,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       const options = requestKey ? { headers: { 'x-idempotency-key': requestKey } } : undefined;
       try {
         return await api.post<ExportResponse>(
-          `/api/integrations/products/${productId}/export-to-base`,
+          `/api/v2/integrations/products/${productId}/export-to-base`,
           payload,
           options
         );
@@ -185,7 +185,7 @@ export function useGenericCreateListingMutation(): CreateMutation<
       integrationId: string;
       connectionId: string;
     }) =>
-      api.post<Record<string, unknown>>(`/api/integrations/products/${productId}/listings`, {
+      api.post<Record<string, unknown>>(`/api/v2/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
       }),
@@ -216,7 +216,7 @@ export function useDeleteFromBaseMutation(
   return createDeleteMutationV2({
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) =>
       api.post<{ status?: string; message?: string; runId?: string | null }>(
-        `/api/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
         { inventoryId }
       ),
     mutationKey: listingQueryKey,
@@ -285,7 +285,7 @@ export function useDeleteFromBaseMutation(
 export function usePurgeListingMutation(productId: string): DeleteMutation {
   return createDeleteMutationV2({
     mutationFn: (listingId: string) =>
-      api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
+      api.delete<void>(`/api/v2/integrations/products/${productId}/listings/${listingId}/purge`),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.usePurgeListingMutation',
@@ -307,7 +307,7 @@ export function useUpdateListingInventoryIdMutation(
   return createUpdateMutationV2({
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) =>
       api.patch<Record<string, unknown>>(
-        `/api/integrations/products/${productId}/listings/${listingId}`,
+        `/api/v2/integrations/products/${productId}/listings/${listingId}`,
         { inventoryId }
       ),
     mutationKey: getProductListingsQueryKey(productId),
@@ -340,7 +340,7 @@ export function useSyncBaseImagesMutation(
       inventoryId?: string;
     }): Promise<{ status: string; count: number; added: number }> => {
       const payload = await api.post<{ status?: string; count?: number; added?: number }>(
-        `/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
         { inventoryId }
       );
       return {
@@ -376,7 +376,7 @@ export function useExportToBaseMutation(
       const options = requestKey ? { headers: { 'x-idempotency-key': requestKey } } : undefined;
       try {
         return await api.post<ExportResponse>(
-          `/api/integrations/products/${productId}/export-to-base`,
+          `/api/v2/integrations/products/${productId}/export-to-base`,
           body,
           options
         );
@@ -446,7 +446,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       autoRelistLeadMinutes?: number;
       templateId?: string | null;
     }) =>
-      api.post<Record<string, unknown>>(`/api/integrations/products/${productId}/listings`, {
+      api.post<Record<string, unknown>>(`/api/v2/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
         ...(typeof durationHours === 'number' ? { durationHours } : {}),
@@ -487,7 +487,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
         queued?: boolean;
         listingId?: string;
         queue?: { name?: string; jobId?: string; enqueuedAt?: string };
-      }>(`/api/integrations/products/${productId}/listings/${listingId}/relist`, {}),
+      }>(`/api/v2/integrations/products/${productId}/listings/${listingId}/relist`, {}),
     mutationKey: getProductListingsQueryKey(productId),
     meta: {
       source: 'integrations.hooks.useRelistTraderaMutation',

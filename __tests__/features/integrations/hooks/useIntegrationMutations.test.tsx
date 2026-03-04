@@ -56,7 +56,7 @@ describe('useIntegrationMutations invalidation', () => {
 
     await result.current.mutateAsync({ name: 'Integration', slug: 'integration' });
 
-    expect(api.post).toHaveBeenCalledWith('/api/integrations', {
+    expect(api.post).toHaveBeenCalledWith('/api/v2/integrations', {
       name: 'Integration',
       slug: 'integration',
     });
@@ -82,7 +82,7 @@ describe('useIntegrationMutations invalidation', () => {
     };
     await result.current.mutateAsync(variables);
 
-    expect(api.post).toHaveBeenCalledWith('/api/integrations/int-1/connections', variables.payload);
+    expect(api.post).toHaveBeenCalledWith('/api/v2/integrations/int-1/connections', variables.payload);
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
 
     // Invalidation logic for connections calls it multiple times
@@ -111,7 +111,7 @@ describe('useIntegrationMutations invalidation', () => {
     };
     await result.current.mutateAsync(variables);
 
-    expect(api.put).toHaveBeenCalledWith('/api/integrations/connections/conn-1', variables.payload);
+    expect(api.put).toHaveBeenCalledWith('/api/v2/integrations/connections/conn-1', variables.payload);
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.integrations.connections(),
@@ -133,7 +133,7 @@ describe('useIntegrationMutations invalidation', () => {
       userPassword: 'password-123',
     });
 
-    expect(api.delete).toHaveBeenCalledWith('/api/integrations/connections/conn-1', {
+    expect(api.delete).toHaveBeenCalledWith('/api/v2/integrations/connections/conn-1', {
       body: JSON.stringify({ userPassword: 'password-123' }),
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
@@ -157,7 +157,7 @@ describe('useIntegrationMutations invalidation', () => {
     });
 
     expect(api.delete).toHaveBeenCalledWith(
-      '/api/integrations/connections/conn-1?replacementConnectionId=conn-2',
+      '/api/v2/integrations/connections/conn-1?replacementConnectionId=conn-2',
       { body: JSON.stringify({ userPassword: 'password-123' }) }
     );
   });
@@ -175,7 +175,7 @@ describe('useIntegrationMutations invalidation', () => {
     await result.current.mutateAsync(variables);
 
     expect(api.post).toHaveBeenCalledWith(
-      '/api/integrations/connections/conn-1/allegro/disconnect',
+      '/api/v2/integrations/int-1/connections/conn-1/allegro/disconnect',
       variables
     );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());

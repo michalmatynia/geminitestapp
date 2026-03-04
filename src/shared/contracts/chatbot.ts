@@ -246,7 +246,6 @@ export type ChatbotJob = ChatbotJobDto;
 
 export const enqueueChatbotJobRequestSchema = z.object({
   sessionId: z.string(),
-  model: z.string().optional(),
   messages: z.array(
     z.object({
       role: z.enum(['user', 'assistant', 'system']),

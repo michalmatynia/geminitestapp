@@ -175,6 +175,14 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     token: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
     reason: 'chatbot legacy model-override compatibility channel reintroduced',
   },
+  {
+    token: 'requestedModel: requestedModel || null',
+    reason: 'chatbot jobs legacy requested-model compatibility channel reintroduced',
+  },
+  {
+    token: '...(requestedModel ? { requestedModel } : {}),',
+    reason: 'chatbot jobs legacy requested-model payload compatibility channel reintroduced',
+  },
 ];
 const PRODUCTS_METADATA_HANDLER_FILES = [
   'src/app/api/v2/products/metadata/handler.ts',

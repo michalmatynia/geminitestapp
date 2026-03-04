@@ -980,12 +980,18 @@ const checkSemanticGrammarEdgeAliasCompatibilityPrune = () => {
     'toPort: semanticEdge.toPort,',
   ];
   const subgraphForbiddenSnippets = [
+    ": typeof edge.source === 'string' && edge.source.trim().length > 0",
+    ": typeof edge.target === 'string' && edge.target.trim().length > 0",
     'source: fromNodeId,',
     'target: toNodeId,',
     'sourceHandle: edge.fromPort,',
     'targetHandle: edge.toPort,',
   ];
   const subgraphRequiredSnippets = [
+    'const resolveEdgeFromNodeId = (edge: Edge): string =>',
+    "typeof edge.from === 'string' ? edge.from.trim() : '';",
+    'const resolveEdgeToNodeId = (edge: Edge): string =>',
+    "typeof edge.to === 'string' ? edge.to.trim() : '';",
     'from: fromNodeId,',
     'to: toNodeId,',
     'fromPort: edge.fromPort,',

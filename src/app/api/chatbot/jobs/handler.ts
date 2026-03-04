@@ -13,6 +13,7 @@ import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
+import { isObjectRecord } from '@/shared/utils/object-utils';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
@@ -24,7 +25,6 @@ const chatMessageSchema = z.object({
 
 const enqueueJobSchema = z.object({
   sessionId: z.string().trim().min(1),
-  model: z.string().trim().min(1).optional(),
   messages: z.array(chatMessageSchema).min(1),
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
@@ -43,6 +43,18 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 }
 
 export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const clonedRequest = req.clone();
+  let rawBody: unknown = null;
+  try {
+    rawBody = await clonedRequest.json();
+  } catch {
+    rawBody = null;
+  }
+
+  if (isObjectRecord(rawBody) && Object.prototype.hasOwnProperty.call(rawBody, 'model')) {
+    throw badRequestError('Chatbot job payload contains unsupported model override.');
+  }
+
   const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(
     req,
     enqueueJobSchema,
@@ -81,7 +93,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     }
   }
 
-  const requestedModel = data.model?.trim() || '';
   const job: ChatbotJob = await chatbotJobRepository.create({
     sessionId: session.id,
     model: brainConfig.modelId,
@@ -91,7 +102,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       messages: data.messages,
       options: {
         brainApplied: brainConfig.brainApplied,
-        ...(requestedModel ? { requestedModel } : {}),
       },
     },
   });
@@ -104,7 +114,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       jobId: job.id,
       sessionId: job.sessionId,
       requestId: ctx.requestId,
-      requestedModel: requestedModel || null,
       appliedModel: brainConfig.modelId,
     });
   }

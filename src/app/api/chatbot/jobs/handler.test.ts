@@ -92,7 +92,6 @@ describe('chatbot jobs handler', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: 'session-1',
-          model: 'legacy-model',
           messages: [
             {
               role: 'user',
@@ -119,7 +118,6 @@ describe('chatbot jobs handler', () => {
         payload?: {
           model?: string;
           options?: {
-            requestedModel?: string;
             brainApplied?: {
               feature?: string;
               modelId?: string;
@@ -135,7 +133,6 @@ describe('chatbot jobs handler', () => {
         model: 'brain-model',
       },
     });
-    expect(createArgs[0].payload?.options?.requestedModel).toBe('legacy-model');
     expect(createArgs[0].payload?.options?.brainApplied).toMatchObject({
       feature: 'chatbot',
       modelId: 'brain-model',
@@ -150,5 +147,31 @@ describe('chatbot jobs handler', () => {
         enforced: true,
       },
     });
+  });
+
+  it('rejects legacy model override payloads', async () => {
+    await expect(
+      POST_handler(
+        new Request('http://localhost/api/chatbot/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'session-1',
+            model: 'legacy-model',
+            messages: [
+              {
+                role: 'user',
+                content: 'Translate this',
+              },
+            ],
+          }),
+        }) as Parameters<typeof POST_handler>[0],
+        { requestId: 'req-4' } as Parameters<typeof POST_handler>[1]
+      )
+    ).rejects.toThrow(/unsupported model override/i);
+
+    expect(createMock).not.toHaveBeenCalled();
+    expect(startChatbotJobQueueMock).not.toHaveBeenCalled();
+    expect(enqueueChatbotJobMock).not.toHaveBeenCalled();
   });
 });

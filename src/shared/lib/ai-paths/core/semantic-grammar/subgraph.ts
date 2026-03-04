@@ -22,20 +22,10 @@ export type ApplySemanticSubgraphOptions = {
 };
 
 const resolveEdgeFromNodeId = (edge: Edge): string =>
-  (typeof edge.from === 'string' && edge.from.trim().length > 0
-    ? edge.from
-    : typeof edge.source === 'string' && edge.source.trim().length > 0
-      ? edge.source
-      : ''
-  ).trim();
+  typeof edge.from === 'string' ? edge.from.trim() : '';
 
 const resolveEdgeToNodeId = (edge: Edge): string =>
-  (typeof edge.to === 'string' && edge.to.trim().length > 0
-    ? edge.to
-    : typeof edge.target === 'string' && edge.target.trim().length > 0
-      ? edge.target
-      : ''
-  ).trim();
+  typeof edge.to === 'string' ? edge.to.trim() : '';
 
 const resolveUniqueId = (desiredId: string, existingIds: Set<string>): string => {
   const trimmed = desiredId.trim();

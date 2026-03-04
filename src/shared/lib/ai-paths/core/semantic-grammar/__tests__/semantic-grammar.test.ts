@@ -11,6 +11,7 @@ import {
 import {
   applySemanticSubgraphToPathConfig,
   buildSemanticSubgraphFromPathConfig,
+  findSubgraphDanglingEdges,
 } from '../subgraph';
 
 describe('semantic grammar canvas serialization', () => {
@@ -132,5 +133,35 @@ describe('semantic grammar subgraph operations', () => {
     const parsed = parseAndDeserializeSemanticCanvas(invalid);
     expect(parsed.ok).toBe(false);
     expect(target.nodes.length).toBeGreaterThan(0);
+  });
+
+  it('treats alias-only edges as dangling in subgraph edge checks', () => {
+    const config = createDefaultPathConfig('path_semantic_alias_dangling');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
+      {
+        id: 'edge-alias-only',
+        source: fromNode.id,
+        target: toNode.id,
+      } as Edge,
+    ];
+
+    expect(findSubgraphDanglingEdges(config)).toEqual(['edge-alias-only']);
+  });
+
+  it('keeps canonical edges non-dangling in subgraph edge checks', () => {
+    const config = createDefaultPathConfig('path_semantic_canonical_not_dangling');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
+      {
+        id: 'edge-canonical',
+        from: fromNode.id,
+        to: toNode.id,
+      } as Edge,
+    ];
+
+    expect(findSubgraphDanglingEdges(config)).toEqual([]);
   });
 });

@@ -61,11 +61,6 @@ export const processJob = async (jobId: string): Promise<void> => {
     },
   });
 
-  const requestedModel =
-    typeof payload.model === 'string' && payload.model.trim().length > 0
-      ? payload.model.trim()
-      : null;
-
   await chatbotJobRepository.update(job.id, {
     status: 'completed',
     model: brainConfig.modelId,
@@ -75,7 +70,6 @@ export const processJob = async (jobId: string): Promise<void> => {
       options: {
         ...(payload.options ?? {}),
         brainApplied: brainConfig.brainApplied,
-        ...(requestedModel ? { requestedModel } : {}),
       },
     },
     finishedAt: new Date(),

@@ -228,9 +228,9 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   guard.enabled
                     ? { enabled: false }
                     : {
-                        enabled: true,
-                        targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,
-                      }
+                      enabled: true,
+                      targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,
+                    }
                 )
               }
             >

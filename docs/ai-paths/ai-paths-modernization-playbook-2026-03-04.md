@@ -1112,6 +1112,23 @@ Progress (2026-03-04):
       1. `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
       3. `npm run typecheck` -> passed.
+50. Pruned semantic-subgraph dangling-edge alias compatibility in seam 180 and re-validated canonical guards:
+   1. Enforced canonical endpoint parsing in semantic-subgraph dangling-edge detection:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts`
+      2. `resolveEdgeFromNodeId` now reads canonical `edge.from` only.
+      3. `resolveEdgeToNodeId` now reads canonical `edge.to` only.
+   2. Tightened semantic-grammar regression coverage:
+      1. `src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts`
+      2. added subgraph dangling-edge guard coverage:
+         1. alias-only edge shape (`source`/`target`) is treated as dangling.
+         2. canonical edge shape (`from`/`to`) remains non-dangling.
+   3. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. `checkSemanticGrammarEdgeAliasCompatibilityPrune` now also blocks and enforces canonical endpoint parsing snippets in `semantic-grammar/subgraph.ts` (no `edge.source`/`edge.target` fallback).
+   4. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
+      3. `npm run typecheck` -> passed.
 
 ## Deprecation map
 

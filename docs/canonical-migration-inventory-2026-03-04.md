@@ -2057,7 +2057,7 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run ai-paths:check:canonical` passes.
   - `npm run typecheck` passes.
 
-## Executed Item 118 (Chatbot Legacy Model-Override Payload Compatibility Hard-Cut)
+## Executed Item 119 (Chatbot Legacy Model-Override Payload Compatibility Hard-Cut)
 
 - Removed legacy model-override compatibility from chatbot chat-send handler:
   - `src/app/api/chatbot/handler.ts`
@@ -2080,4 +2080,29 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
 - Validation:
   - `npx vitest run src/app/api/chatbot/handler.test.ts` passes.
   - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 120 (AI Paths Semantic-Subgraph Dangling-Edge Alias Compatibility Prune)
+
+- Removed semantic-subgraph dangling-edge endpoint fallback to legacy edge aliases:
+  - `src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts`
+  - `findSubgraphDanglingEdges` now resolves endpoints from canonical fields only:
+    - `edge.from`
+    - `edge.to`
+  - removed fallback reads from:
+    - `edge.source`
+    - `edge.target`
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts`
+  - added subgraph dangling-edge canonicalization assertions:
+    - alias-only edge shape is treated as dangling.
+    - canonical edge shape remains non-dangling.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - `checkSemanticGrammarEdgeAliasCompatibilityPrune` now also:
+    - blocks reintroduction of `edge.source` / `edge.target` fallback snippets in `semantic-grammar/subgraph.ts`.
+    - requires canonical endpoint parsing snippets (`edge.from` / `edge.to`) in `semantic-grammar/subgraph.ts`.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
   - `npm run typecheck` passes.

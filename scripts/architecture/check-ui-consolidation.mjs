@@ -52,12 +52,18 @@ const run = async () => {
   const highPriorityChainCount = Number(propSummary.highPriorityChainCount);
   const totalOpportunities = Number(uiSummary.totalOpportunities);
   const highPriorityCount = Number(uiSummary.highPriorityCount);
+  const duplicateNameClusterCount = Number(uiSummary.duplicateNameClusterCount);
+  const propSignatureClusterCount = Number(uiSummary.propSignatureClusterCount);
+  const tokenSimilarityClusterCount = Number(uiSummary.tokenSimilarityClusterCount);
 
   if (
     !Number.isFinite(componentsWithForwarding) ||
     !Number.isFinite(highPriorityChainCount) ||
     !Number.isFinite(totalOpportunities) ||
-    !Number.isFinite(highPriorityCount)
+    !Number.isFinite(highPriorityCount) ||
+    !Number.isFinite(duplicateNameClusterCount) ||
+    !Number.isFinite(propSignatureClusterCount) ||
+    !Number.isFinite(tokenSimilarityClusterCount)
   ) {
     throw new Error('One or more consolidation summary metrics are invalid.');
   }
@@ -69,6 +75,9 @@ const run = async () => {
       `propDepthGte4Chains=${highPriorityChainCount}`,
       `uiOpportunities=${totalOpportunities}`,
       `uiHighPriority=${highPriorityCount}`,
+      `duplicateNameClusters=${duplicateNameClusterCount}`,
+      `propSignatureClusters=${propSignatureClusterCount}`,
+      `tokenSimilarityClusters=${tokenSimilarityClusterCount}`,
     ].join(' | ')
   );
 
@@ -84,6 +93,15 @@ const run = async () => {
   }
   if (highPriorityCount > 0) {
     failures.push(`Expected high-priority UI opportunities = 0, got ${highPriorityCount}.`);
+  }
+  if (duplicateNameClusterCount > 0) {
+    failures.push(`Expected duplicate-name clusters = 0, got ${duplicateNameClusterCount}.`);
+  }
+  if (propSignatureClusterCount > 0) {
+    failures.push(`Expected prop-signature clusters = 0, got ${propSignatureClusterCount}.`);
+  }
+  if (tokenSimilarityClusterCount > 0) {
+    failures.push(`Expected token-similarity clusters = 0, got ${tokenSimilarityClusterCount}.`);
   }
 
   if (failures.length > 0) {

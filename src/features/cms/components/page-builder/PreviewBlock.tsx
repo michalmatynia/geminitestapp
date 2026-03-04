@@ -9,6 +9,7 @@ import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalizat
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { SectionInstance, BlockInstance, PreviewBlockItemProps } from '@/shared/contracts/cms';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button, Card } from '@/shared/ui';
 
 import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
@@ -75,6 +76,34 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
   'ButtonElement',
   'TextAtom',
 ]);
+
+type PreviewFrontendSectionRendererRuntimeValue = {
+  type: string;
+  sectionId: string;
+  settings: Record<string, unknown>;
+  blocks: BlockInstance[];
+};
+
+const {
+  Context: PreviewFrontendSectionRendererRuntimeContext,
+  useStrictContext: usePreviewFrontendSectionRendererRuntime,
+} = createStrictContext<PreviewFrontendSectionRendererRuntimeValue>({
+  hookName: 'usePreviewFrontendSectionRendererRuntime',
+  providerName: 'PreviewFrontendSectionRendererRuntimeProvider',
+  displayName: 'PreviewFrontendSectionRendererRuntimeContext',
+});
+
+function PreviewFrontendSectionRenderer(): React.JSX.Element {
+  const runtime = usePreviewFrontendSectionRendererRuntime();
+  return (
+    <FrontendSectionRenderer
+      type={runtime.type}
+      sectionId={runtime.sectionId}
+      settings={runtime.settings}
+      blocks={runtime.blocks}
+    />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Top-level section preview
@@ -387,6 +416,16 @@ export function PreviewSection({ section }: PreviewSectionProps): React.ReactNod
 
   // Render section types via the storefront renderer when a dedicated editor preview is not implemented.
   if (FRONTEND_PREVIEW_SECTION_TYPES.has(section.type)) {
+    const frontendSectionRendererRuntimeValue = React.useMemo<PreviewFrontendSectionRendererRuntimeValue>(
+      () => ({
+        type: section.type,
+        sectionId: section.id,
+        settings: section.settings,
+        blocks: section.blocks,
+      }),
+      [section.type, section.id, section.settings, section.blocks]
+    );
+
     return wrapInspector(
       <div
         role='button'
@@ -399,12 +438,11 @@ export function PreviewSection({ section }: PreviewSectionProps): React.ReactNod
       >
         {renderSectionActions()}
         {divider}
-        <FrontendSectionRenderer
-          type={section.type}
-          sectionId={section.id}
-          settings={section.settings}
-          blocks={section.blocks}
-        />
+        <PreviewFrontendSectionRendererRuntimeContext.Provider
+          value={frontendSectionRendererRuntimeValue}
+        >
+          <PreviewFrontendSectionRenderer />
+        </PreviewFrontendSectionRendererRuntimeContext.Provider>
       </div>
     );
   }

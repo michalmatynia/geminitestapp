@@ -85,11 +85,12 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       expect.objectContaining({
         querySource: 'input',
         query: { id: 'abc' },
-        provider: 'mongodb',
+        resolvedProvider: 'mongodb',
       })
     );
     const bundle = result['bundle'] as Record<string, unknown>;
-    expect(bundle['providerFallback']).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(bundle, 'provider')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(bundle, 'providerFallback')).toBe(false);
   });
 
   it('does not perform parameter-id fallback query', async () => {

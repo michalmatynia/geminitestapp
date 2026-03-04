@@ -4,7 +4,11 @@ import React, { useState, useCallback } from 'react';
 import { Play, Sparkles, Workflow } from 'lucide-react';
 import { ValidatorFormatterToggle, useToast } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-import { RightSidebarPromptControlHeader } from './RightSidebarPromptControlHeader';
+import {
+  RightSidebarPromptControlHeader,
+  RightSidebarPromptControlHeaderRuntimeContext,
+  type RightSidebarPromptControlHeaderRuntimeValue,
+} from './RightSidebarPromptControlHeader';
 import { UIPresetsPanel } from '../UIPresetsPanel';
 import {
   StudioActionButtonRow,
@@ -239,18 +243,35 @@ export function ControlPromptModal({
     router.push('/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio');
   };
 
+  const handlePromptExploderClick = React.useCallback((): void => {
+    onClose();
+    handleOpenPromptExploder();
+  }, [onClose, handleOpenPromptExploder]);
+
+  const promptControlHeaderRuntimeValue =
+    React.useMemo<RightSidebarPromptControlHeaderRuntimeValue>(
+      () => ({
+        onClose,
+        onOpenPromptExploder: handlePromptExploderClick,
+        onSave: handleSavePromptToProject,
+        projectId,
+        promptSaveBusy,
+        promptText,
+      }),
+      [
+        onClose,
+        handlePromptExploderClick,
+        handleSavePromptToProject,
+        projectId,
+        promptSaveBusy,
+        promptText,
+      ]
+    );
+
   const promptControlHeader = (
-    <RightSidebarPromptControlHeader
-      onClose={onClose}
-      onOpenPromptExploder={() => {
-        onClose();
-        handleOpenPromptExploder();
-      }}
-      onSave={handleSavePromptToProject}
-      projectId={projectId}
-      promptSaveBusy={promptSaveBusy}
-      promptText={promptText}
-    />
+    <RightSidebarPromptControlHeaderRuntimeContext.Provider value={promptControlHeaderRuntimeValue}>
+      <RightSidebarPromptControlHeader />
+    </RightSidebarPromptControlHeaderRuntimeContext.Provider>
   );
 
   const promptActions = React.useMemo<StudioActionButtonConfig[]>(() => {

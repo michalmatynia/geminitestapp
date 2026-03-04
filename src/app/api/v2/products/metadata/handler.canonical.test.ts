@@ -136,6 +136,54 @@ describe('v2 products metadata handler canonical contract', () => {
     expect(payload['groupType']).toBeUndefined();
   });
 
+  it('ignores legacy groupType alias when deriving type from canonical payload', async () => {
+    const currencyFindUniqueMock = vi.fn().mockResolvedValueOnce({ id: 'PLN' });
+    const priceGroupFindUniqueMock = vi.fn().mockResolvedValue(null);
+    const priceGroupCreateMock = vi.fn().mockResolvedValue({
+      id: 'pg-2',
+      groupId: 'PLN',
+      name: 'Dependent Group',
+      type: 'dependent',
+      sourceGroupId: 'BASE',
+      currencyId: 'PLN',
+      currency: { code: 'PLN' },
+    });
+
+    prismaMock.currency = {
+      findUnique: currencyFindUniqueMock,
+    };
+    prismaMock.priceGroup = {
+      findUnique: priceGroupFindUniqueMock,
+      create: priceGroupCreateMock,
+    };
+
+    const request = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Dependent Group',
+        currencyCode: 'PLN',
+        sourceGroupId: 'BASE',
+        groupType: 'standard',
+      }),
+    });
+
+    await POST_products_metadata_handler(
+      request,
+      {} as Parameters<typeof POST_products_metadata_handler>[1],
+      { type: 'price-groups' }
+    );
+
+    expect(priceGroupCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sourceGroupId: 'BASE',
+          type: 'dependent',
+        }),
+      })
+    );
+  });
+
   it('reads price-groups from mongo provider when product provider is mongodb', async () => {
     getProductDataProviderMock.mockResolvedValue('mongodb');
 

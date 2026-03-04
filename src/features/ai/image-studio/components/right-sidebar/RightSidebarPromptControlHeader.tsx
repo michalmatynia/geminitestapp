@@ -1,8 +1,9 @@
 import React from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { Button } from '@/shared/ui';
 
-type RightSidebarPromptControlHeaderProps = {
+export type RightSidebarPromptControlHeaderRuntimeValue = {
   onClose: () => void;
   onOpenPromptExploder: () => void;
   onSave: () => void;
@@ -11,24 +12,30 @@ type RightSidebarPromptControlHeaderProps = {
   promptText: string;
 };
 
-export function RightSidebarPromptControlHeader({
-  onClose,
-  onOpenPromptExploder,
-  onSave,
-  projectId,
-  promptSaveBusy,
-  promptText,
-}: RightSidebarPromptControlHeaderProps): React.JSX.Element {
+const {
+  Context: RightSidebarPromptControlHeaderRuntimeContext,
+  useStrictContext: useRightSidebarPromptControlHeaderRuntime,
+} = createStrictContext<RightSidebarPromptControlHeaderRuntimeValue>({
+  hookName: 'useRightSidebarPromptControlHeaderRuntime',
+  providerName: 'RightSidebarPromptControlHeaderRuntimeProvider',
+  displayName: 'RightSidebarPromptControlHeaderRuntimeContext',
+});
+
+export { RightSidebarPromptControlHeaderRuntimeContext };
+
+export function RightSidebarPromptControlHeader(): React.JSX.Element {
+  const runtime = useRightSidebarPromptControlHeaderRuntime();
+
   return (
     <div className='flex items-center justify-between gap-3'>
       <div className='flex items-center gap-4'>
         <Button
           type='button'
-          onClick={onSave}
-          disabled={promptSaveBusy || !projectId.trim()}
+          onClick={runtime.onSave}
+          disabled={runtime.promptSaveBusy || !runtime.projectId.trim()}
           className='min-w-[100px] border border-white/20 hover:border-white/40'
         >
-          {promptSaveBusy ? 'Saving...' : 'Save'}
+          {runtime.promptSaveBusy ? 'Saving...' : 'Save'}
         </Button>
         <div className='flex items-center gap-2'>
           <h2 className='text-2xl font-bold text-white'>Control Prompt</h2>
@@ -41,14 +48,14 @@ export function RightSidebarPromptControlHeader({
           variant='outline'
           title='Open Prompt Exploder with current prompt'
           aria-label='Open Prompt Exploder with current prompt'
-          disabled={!promptText.trim()}
-          onClick={onOpenPromptExploder}
+          disabled={!runtime.promptText.trim()}
+          onClick={runtime.onOpenPromptExploder}
         >
           Prompt Exploder
         </Button>
         <Button
           type='button'
-          onClick={onClose}
+          onClick={runtime.onClose}
           className='min-w-[100px] border border-white/20 hover:border-white/40'
         >
           Close

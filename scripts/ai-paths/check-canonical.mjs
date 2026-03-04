@@ -938,6 +938,42 @@ const checkDatabaseProviderFallbackCompatibilityPrune = () => {
   }
 };
 
+const checkDatabaseProviderAliasCompatibilityPrune = () => {
+  const queryExecutionText = readFile(DATABASE_QUERY_EXECUTION_FILE);
+  const localExecutionHelpersText = readFile(LOCAL_EXECUTION_HELPERS_FILE);
+
+  const queryForbiddenSnippets = ["...(resolvedProvider ? { provider: resolvedProvider } : {}),"];
+  const localHelperForbiddenSnippets = ["typeof bundle['provider'] === 'string'"];
+  const requiredSnippets = ["databaseMeta['resolvedProvider'] = resolvedProvider;"];
+
+  for (const snippet of queryForbiddenSnippets) {
+    if (queryExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_QUERY_EXECUTION_FILE,
+        `legacy database provider alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of localHelperForbiddenSnippets) {
+    if (localExecutionHelpersText.includes(snippet)) {
+      reportViolation(
+        LOCAL_EXECUTION_HELPERS_FILE,
+        `legacy local-execution provider alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!localExecutionHelpersText.includes(snippet)) {
+      reportViolation(
+        LOCAL_EXECUTION_HELPERS_FILE,
+        `missing canonical local-execution provider snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -974,6 +1010,7 @@ const main = () => {
   checkDatabaseTemplateCatalogAliasCompatibilityPrune();
   checkDatabaseInputCatalogAliasCompatibilityPrune();
   checkDatabaseProviderFallbackCompatibilityPrune();
+  checkDatabaseProviderAliasCompatibilityPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

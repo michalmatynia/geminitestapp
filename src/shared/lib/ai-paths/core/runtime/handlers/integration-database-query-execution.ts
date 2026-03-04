@@ -139,7 +139,6 @@ export async function executeDatabaseQuery({
       requestedProvider,
       resolvedProvider,
       ...(querySource ? { querySource } : {}),
-      ...(resolvedProvider ? { provider: resolvedProvider } : {}),
     },
     aiPrompt,
   };

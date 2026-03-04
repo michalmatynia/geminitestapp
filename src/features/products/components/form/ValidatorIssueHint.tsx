@@ -75,6 +75,8 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
     proposedValueOverride ??
     (issue.replacementValue ? getIssueReplacementPreview(value, issue) : null);
   const hasProposedChange = Boolean(proposedValue !== null && proposedValue !== value);
+  const handleDenyClick = onDeny;
+  const handleReplaceClick = onReplace;
 
   return (
     <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
@@ -88,21 +90,21 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
         >
           {replacementBadgeText}
         </span>
-        {onDeny || (issue.replacementValue && onReplace) ? (
+        {handleDenyClick || (issue.replacementValue && handleReplaceClick) ? (
           <div className='ml-auto flex flex-wrap justify-end gap-1'>
-            {onDeny ? (
+            {handleDenyClick ? (
               <Button
                 type='button'
-                onClick={onDeny}
+                onClick={handleDenyClick}
                 className='h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
               >
                 {denyLabel}
               </Button>
             ) : null}
-            {issue.replacementValue && onReplace ? (
+            {issue.replacementValue && handleReplaceClick ? (
               <Button
                 type='button'
-                onClick={onReplace}
+                onClick={handleReplaceClick}
                 className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
               >
                 Replace

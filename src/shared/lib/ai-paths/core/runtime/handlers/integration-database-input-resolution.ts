@@ -1,4 +1,4 @@
-import { coerceInput } from '../../utils';
+import { coerceInput } from '../../utils/runtime';
 
 export type ResolveDatabaseInputsInput = {
   nodeInputs: Record<string, unknown>;

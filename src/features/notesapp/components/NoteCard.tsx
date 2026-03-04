@@ -6,7 +6,11 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { ThemeRecord, NoteWithRelations } from '@/shared/contracts/notes';
 import { cn, setNoteDragData } from '@/shared/utils';
 
-import { NoteCardHeader } from './list/NoteCardHeader';
+import {
+  NoteCardHeader,
+  NoteCardHeaderRuntimeContext,
+  type NoteCardHeaderRuntimeValue,
+} from './list/NoteCardHeader';
 import { NoteCardContent } from './list/NoteCardContent';
 import { NoteCardFooter } from './list/NoteCardFooter';
 
@@ -78,6 +82,10 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     backgroundColor: effectiveTheme.relatedNoteBackgroundColor,
     color: effectiveTheme.relatedNoteTextColor,
   } as const;
+  const noteCardHeaderRuntimeValue = React.useMemo<NoteCardHeaderRuntimeValue>(
+    () => ({ note }),
+    [note]
+  );
 
   return (
     <div
@@ -121,7 +129,9 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           : 'cursor-pointer hover:shadow-md hover:brightness-90'
       )}
     >
-      <NoteCardHeader note={note} />
+      <NoteCardHeaderRuntimeContext.Provider value={noteCardHeaderRuntimeValue}>
+        <NoteCardHeader />
+      </NoteCardHeaderRuntimeContext.Provider>
       <NoteCardContent note={note} />
       <NoteCardFooter
         note={note}

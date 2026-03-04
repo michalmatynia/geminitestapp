@@ -299,9 +299,9 @@ export async function PUT_products_metadata_id_handler(
         update['sourceGroupId'] =
           data['sourceGroupId'] === null ? null : readString(data, 'sourceGroupId');
       }
-      if ('type' in data || 'groupType' in data || 'sourceGroupId' in data) {
+      if ('type' in data || 'sourceGroupId' in data) {
         update['type'] = resolveGroupType(
-          data['type'] ?? data['groupType'],
+          data['type'],
           (update['sourceGroupId'] as string | null | undefined) ?? existing.sourceGroupId ?? null
         );
       }
@@ -345,8 +345,8 @@ export async function PUT_products_metadata_id_handler(
     const isDefault = readBoolean(data, 'isDefault');
     if (isDefault !== null) updateData.isDefault = isDefault;
     if ('sourceGroupId' in data) updateData.sourceGroupId = sourceGroupId;
-    if ('type' in data || 'groupType' in data || 'sourceGroupId' in data) {
-      updateData.type = resolveGroupType(data['type'] ?? data['groupType'], sourceGroupId);
+    if ('type' in data || 'sourceGroupId' in data) {
+      updateData.type = resolveGroupType(data['type'], sourceGroupId);
     }
     const basePriceField = readString(data, 'basePriceField');
     if (basePriceField) updateData.basePriceField = basePriceField;

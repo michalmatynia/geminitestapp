@@ -286,7 +286,7 @@ export async function POST_products_metadata_handler(
       }
 
       const sourceGroupId = readString(payload, 'sourceGroupId');
-      const typeValue = readString(payload, 'type') ?? readString(payload, 'groupType');
+      const typeValue = readString(payload, 'type');
       const groupType = resolveGroupType(typeValue, sourceGroupId);
 
       if (groupType === 'dependent' && !sourceGroupId) {
@@ -341,7 +341,7 @@ export async function POST_products_metadata_handler(
     const payload = await parseObjectPayload(req);
     const currencyId = await resolveCurrencyId(payload);
     const sourceGroupId = readString(payload, 'sourceGroupId');
-    const typeValue = readString(payload, 'type') ?? readString(payload, 'groupType');
+    const typeValue = readString(payload, 'type');
     const groupType = resolveGroupType(typeValue, sourceGroupId);
 
     if (groupType === 'dependent' && !sourceGroupId) {

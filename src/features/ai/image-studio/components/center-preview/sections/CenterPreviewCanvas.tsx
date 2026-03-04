@@ -79,6 +79,16 @@ export function CenterPreviewCanvas({
   const { compositeLoading } = useVersionGraphState();
 
   const previewCanvasClassName = cn('h-full', 'bg-slate-900');
+  const baseCanvasWidthPx = projectCanvasSize?.width ?? 1024;
+  const baseCanvasHeightPx = projectCanvasSize?.height ?? 1024;
+  const canCompare = canCompareSelectedVariants || canCompareWithSource;
+  const imageMoveEnabled = imageTransformMode === 'move';
+  const onViewCropRectChange = handlePreviewCanvasCropRectChange;
+  const onImageContentFrameChange = handlePreviewCanvasImageFrameChange;
+  const onGoToSourceSlot = handleGoToSourceSlot;
+  const onToggleSourceVariantView = handleToggleSourceVariantView;
+  const onToggleSplitVariantView = handleToggleSplitVariantView;
+  const onRevealInTree = handleRevealInTreeFromCanvas;
 
   return (
     <div className='sticky top-0 z-20 relative min-h-0 overflow-hidden bg-card/40'>
@@ -111,32 +121,32 @@ export function CenterPreviewCanvas({
                 <VectorDrawingCanvas
                   shapes={liveMaskShapes}
                   src={activeCanvasImageSrc}
-                  baseCanvasWidthPx={projectCanvasSize?.width ?? 1024}
-                  baseCanvasHeightPx={projectCanvasSize?.height ?? 1024}
+                  baseCanvasWidthPx={baseCanvasWidthPx}
+                  baseCanvasHeightPx={baseCanvasHeightPx}
                   maskPreviewEnabled={maskPreviewEnabled}
                   maskPreviewInvert={maskInvert}
                   maskPreviewFeather={maskFeather}
                   showCenterGuides={centerGuidesEnabled}
                   selectionEnabled={canvasSelectionEnabled}
-                  imageMoveEnabled={imageTransformMode === 'move'}
+                  imageMoveEnabled={imageMoveEnabled}
                   imageOffset={canvasImageOffset}
                   onImageOffsetChange={(offset) => {
                     setCanvasImageOffset(offset);
                   }}
                   backgroundLayerEnabled={canvasBackgroundLayerEnabled}
                   backgroundColor={canvasBackgroundColor}
-                  onViewCropRectChange={handlePreviewCanvasCropRectChange}
-                  onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
+                  onViewCropRectChange={onViewCropRectChange}
+                  onImageContentFrameChange={onImageContentFrameChange}
                 />
               </div>
             )}
 
         <div className='absolute bottom-4 left-4 z-30'>
           <SplitViewControls
-            canCompare={canCompareSelectedVariants || canCompareWithSource}
-            onGoToSourceSlot={handleGoToSourceSlot}
-            onToggleSourceVariantView={handleToggleSourceVariantView}
-            onToggleSplitVariantView={handleToggleSplitVariantView}
+            canCompare={canCompare}
+            onGoToSourceSlot={onGoToSourceSlot}
+            onToggleSourceVariantView={onToggleSourceVariantView}
+            onToggleSplitVariantView={onToggleSplitVariantView}
           />
         </div>
 
@@ -146,7 +156,7 @@ export function CenterPreviewCanvas({
               variant='secondary'
               size='sm'
               className='h-8 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
-              onClick={handleGoToSourceSlot}
+              onClick={onGoToSourceSlot}
             >
               Go to Source
             </Button>
@@ -156,7 +166,7 @@ export function CenterPreviewCanvas({
               variant='secondary'
               size='sm'
               className='h-8 w-8 p-0 rounded-full bg-slate-900/60 backdrop-blur-md border-white/10'
-              onClick={handleRevealInTreeFromCanvas}
+              onClick={onRevealInTree}
               title='Reveal in Tree'
             >
               <Locate className='size-4' />

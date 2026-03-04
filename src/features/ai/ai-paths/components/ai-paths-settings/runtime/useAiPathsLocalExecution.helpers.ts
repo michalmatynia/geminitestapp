@@ -118,24 +118,21 @@ export const extractDatabaseRuntimeMetadata = (
   const bundle = nextOutputs['bundle'];
   if (!isObjectRecord(bundle)) return null;
 
-  const collection =
-    typeof bundle['collection'] === 'string' && bundle['collection'].trim().length > 0
-      ? bundle['collection']
-      : null;
-  const requestedProvider =
-    typeof bundle['requestedProvider'] === 'string' && bundle['requestedProvider'].trim().length > 0
-      ? bundle['requestedProvider']
-      : null;
-  const resolvedProvider =
-    typeof bundle['resolvedProvider'] === 'string' && bundle['resolvedProvider'].trim().length > 0
-      ? bundle['resolvedProvider']
-      : typeof bundle['provider'] === 'string' && bundle['provider'].trim().length > 0
-        ? bundle['provider']
-        : null;
-  const count =
-    typeof bundle['count'] === 'number' && Number.isFinite(bundle['count'])
-      ? bundle['count']
-      : null;
+  const readOwnString = (key: string): string | null => {
+    if (!Object.prototype.hasOwnProperty.call(bundle, key)) return null;
+    const value = bundle[key];
+    return typeof value === 'string' && value.trim().length > 0 ? value : null;
+  };
+  const readOwnNumber = (key: string): number | null => {
+    if (!Object.prototype.hasOwnProperty.call(bundle, key)) return null;
+    const value = bundle[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  };
+
+  const collection = readOwnString('collection');
+  const requestedProvider = readOwnString('requestedProvider');
+  const resolvedProvider = readOwnString('resolvedProvider');
+  const count = readOwnNumber('count');
 
   const databaseMeta: Record<string, unknown> = {};
   if (collection) {

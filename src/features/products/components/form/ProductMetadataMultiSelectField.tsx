@@ -328,6 +328,8 @@ export function ProductMetadataMultiSelectField({
       label: item.name,
     }));
   })();
+  const resolvedPlaceholder = placeholder || `Select ${label.toLowerCase()}`;
+  const resolvedSearchPlaceholder = searchPlaceholder || `Search ${label.toLowerCase()}...`;
 
   return (
     <MultiSelect
@@ -337,8 +339,8 @@ export function ProductMetadataMultiSelectField({
       onChange={resolvedOnChange}
       loading={resolvedLoading}
       disabled={disabled}
-      placeholder={placeholder || `Select ${label.toLowerCase()}`}
-      searchPlaceholder={searchPlaceholder || `Search ${label.toLowerCase()}...`}
+      placeholder={resolvedPlaceholder}
+      searchPlaceholder={resolvedSearchPlaceholder}
       emptyMessage={emptyMessage}
       single={single}
     />

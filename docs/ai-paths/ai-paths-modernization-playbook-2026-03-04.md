@@ -744,6 +744,47 @@ Progress (2026-03-04):
       3. `src/features/ai/ai-paths/pages/__tests__/AdminAiPathsValidationUtils.test.ts`
       Result: `3` files passed, `16` tests passed.
    5. `npm run ai-paths:check:canonical` -> passed (`4235` files scanned).
+31. Pruned database provider-fallback metadata compatibility in seams 159-160 and re-validated canonical guards:
+   1. Removed provider-fallback compatibility propagation in database runtime handlers:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+      3. runtime outputs/execution meta no longer include `providerFallback` derived from provider response `fallback` payloads.
+   2. Removed local runtime provider-fallback extraction:
+      1. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+      2. `extractDatabaseRuntimeMetadata` now keeps canonical provider metadata only.
+   3. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      4. verifies provider `fallback` payloads do not surface as `providerFallback` metadata.
+   4. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of provider `fallback` -> `providerFallback` compatibility snippets across query/update handlers and local runtime metadata helpers, while requiring canonical provider metadata snippets.
+   5. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-input-resolution.test.ts`
+      Result: `4` files passed, `13` tests passed.
+   6. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+32. Pruned database provider alias metadata compatibility in seams 161-162 and re-validated canonical guards:
+   1. Removed duplicate `provider` alias emission from query runtime bundles:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+      2. runtime bundles now expose canonical `resolvedProvider` only.
+   2. Removed local runtime provider alias fallback:
+      1. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+      2. runtime metadata extraction now reads provider metadata from canonical `resolvedProvider` only.
+   3. Added regression coverage:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      3. verifies no legacy `provider` alias surface remains in runtime metadata extraction.
+   4. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `resolvedProvider -> provider` alias emission and `bundle.provider` fallback metadata reads, while requiring canonical `resolvedProvider` metadata snippet.
+   5. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      2. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `3` files passed, `8` tests passed.
+   6. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
 
 ## Deprecation map
 

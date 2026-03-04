@@ -816,6 +816,65 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 - Validation:
   - `npm run canonical:check:sitewide` passes with the new products-utility guard checks.
 
+## Executed Item 64 (AI Paths Database Provider-Fallback Metadata Compatibility Prune)
+
+- Removed provider-fallback compatibility metadata propagation from database runtime handlers:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+  - runtime bundles/execution meta no longer emit `providerFallback` from provider response `fallback` payloads.
+- Removed local runtime metadata extraction for deprecated provider fallback shape:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+  - `extractDatabaseRuntimeMetadata` now keeps canonical provider metadata only (`requestedProvider`, `resolvedProvider`, `provider`, `count`).
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+    - verifies response `fallback` payload does not surface as `providerFallback` in runtime bundle.
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+    - verifies response `fallback` payload does not surface as `providerFallback` in execution metadata.
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+    - verifies local runtime metadata ignores `providerFallback` payloads and returns `null` when no canonical metadata exists.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseProviderFallbackCompatibilityPrune`) now:
+    - blocks reintroduction of provider `fallback` -> `providerFallback` compatibility snippets in database query/update handlers and local execution metadata helpers.
+    - requires canonical local execution database provider metadata snippets.
+
+## Executed Item 65 (AI Paths Database Provider Alias Metadata Compatibility Prune)
+
+- Removed duplicate `provider` alias emission from database query runtime bundle:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+  - bundle metadata now exposes canonical `resolvedProvider` only.
+- Removed local runtime metadata fallback to deprecated `bundle.provider` alias:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+  - `extractDatabaseRuntimeMetadata` now reads provider metadata from canonical `resolvedProvider` only.
+- Updated regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+    - verifies real execution bundles expose `resolvedProvider` and no legacy `provider` alias.
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.helpers.test.ts`
+    - verifies `bundle.provider` without canonical provider metadata does not surface runtime database metadata.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseProviderAliasCompatibilityPrune`) now:
+    - blocks reintroduction of `resolvedProvider -> provider` alias emission and `bundle.provider` fallback metadata reads.
+    - requires canonical local execution `resolvedProvider` metadata snippet.
+
+## Executed Item 66 (Products Metadata groupType Request-Alias Compatibility Prune)
+
+- Removed legacy `groupType` request-alias reads from products metadata write handlers:
+  - `src/app/api/v2/products/metadata/handler.ts`
+    - `POST_products_metadata_handler` now resolves type from canonical `type` only.
+  - `src/app/api/v2/products/metadata/[type]/[id]/handler.ts`
+    - `PUT_products_metadata_id_handler` now resolves type updates from canonical `type` only.
+    - update gating no longer branches on `'groupType' in data`.
+- Added canonical regression coverage:
+  - `src/app/api/v2/products/metadata/handler.canonical.test.ts`
+  - new assertion verifies legacy `groupType` payloads do not drive type derivation (canonical `type`/`sourceGroupId` behavior only).
+- Hardened site-wide guardrails against alias reintroduction:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks `groupType` request-alias snippets in:
+    - `src/app/api/v2/products/metadata/handler.ts`
+    - `src/app/api/v2/products/metadata/[type]/[id]/handler.ts`
+- Validation:
+  - `npx vitest run src/app/api/v2/products/metadata/handler.canonical.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes with new guard checks.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

@@ -29,10 +29,20 @@ describe('extractDatabaseRuntimeMetadata', () => {
   it('returns null when bundle has no canonical database metadata', () => {
     const metadata = extractDatabaseRuntimeMetadata({
       bundle: {
-        providerFallback: {
-          provider: 'prisma',
-        },
+        provider: 'prisma',
       },
+    });
+
+    expect(metadata).toBeNull();
+  });
+
+  it('ignores inherited metadata keys from the prototype chain', () => {
+    const bundleWithInheritedKeys = Object.create({
+      resolvedProvider: 'prisma',
+      count: 2,
+    }) as Record<string, unknown>;
+    const metadata = extractDatabaseRuntimeMetadata({
+      bundle: bundleWithInheritedKeys,
     });
 
     expect(metadata).toBeNull();

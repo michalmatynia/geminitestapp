@@ -39,9 +39,14 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'ai-brain legacy provider-catalog merge helper reintroduced',
   },
 ];
-const FORBIDDEN_PRODUCTS_LEGACY_API_UTILITY_FILES = [
-  'src/features/products/api/versioning.ts',
-  'src/features/products/api/routes/v2-products-route.ts',
+const PRODUCTS_METADATA_HANDLER_FILES = [
+  'src/app/api/v2/products/metadata/handler.ts',
+  'src/app/api/v2/products/metadata/[type]/[id]/handler.ts',
+];
+const FORBIDDEN_PRODUCTS_GROUP_TYPE_ALIAS_SNIPPETS = [
+  "readString(payload, 'groupType')",
+  "'groupType' in data",
+  "data['groupType']",
 ];
 
 const violations = [];
@@ -156,10 +161,20 @@ const checkForbiddenRuntimeGuardTokens = (sourceFileMap) => {
   }
 };
 
-const checkForbiddenProductsLegacyApiUtilities = () => {
-  for (const relative of FORBIDDEN_PRODUCTS_LEGACY_API_UTILITY_FILES) {
-    if (fs.existsSync(path.join(ROOT, relative))) {
-      reportViolation(`forbidden products legacy api utility present: ${relative}`);
+const checkProductsMetadataGroupTypeAliasPrune = () => {
+  for (const relative of PRODUCTS_METADATA_HANDLER_FILES) {
+    const absolute = path.join(ROOT, relative);
+    if (!fs.existsSync(absolute)) {
+      reportViolation(`products metadata handler missing for canonical guard: ${relative}`);
+      continue;
+    }
+    const content = fs.readFileSync(absolute, 'utf8');
+    for (const snippet of FORBIDDEN_PRODUCTS_GROUP_TYPE_ALIAS_SNIPPETS) {
+      if (content.includes(snippet)) {
+        reportViolation(
+          `forbidden products metadata groupType request alias snippet detected: ${relative} -> ${snippet}`
+        );
+      }
     }
   }
 };
@@ -278,7 +293,7 @@ const main = () => {
   checkRequiredDocs();
   checkForbiddenLegacyRouteDirs();
   checkForbiddenRuntimeMigrationHelpers();
-  checkForbiddenProductsLegacyApiUtilities();
+  checkProductsMetadataGroupTypeAliasPrune();
 
   const sourceFiles = collectSourceFiles(SRC_DIR);
   const runtimeFiles = sourceFiles

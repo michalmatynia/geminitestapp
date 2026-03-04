@@ -123,10 +123,17 @@ Wave 2 hard-cut execution started:
      - products legacy gateway token (`LEGACY_PRODUCTS_PREFIX = '/api/products'`)
      - integrations legacy imports action rejection token (`Legacy imports/base action "import" is no longer supported.`)
      - AI Brain legacy provider-catalog merge helper token (`resolveLegacyProviderCatalogEntries`)
-10. Products legacy API utility reintroduction guard added:
+11. Products legacy API utility reintroduction guard added:
    - `scripts/canonical/check-sitewide.mjs` now fails if these removed files reappear:
      - `src/features/products/api/versioning.ts`
      - `src/features/products/api/routes/v2-products-route.ts`
+12. Products metadata request-alias hard-cut:
+   - removed `groupType` request alias handling from:
+     - `src/app/api/v2/products/metadata/handler.ts`
+     - `src/app/api/v2/products/metadata/[type]/[id]/handler.ts`
+   - canonical request/behavior coverage:
+     - `src/app/api/v2/products/metadata/handler.canonical.test.ts`
+   - site-wide guardrail now blocks `groupType` request-alias snippets in those handlers.
 
 ## Baseline (Current State)
 

@@ -4,14 +4,27 @@ import React from 'react';
 import { Pin, Star } from 'lucide-react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { Button, CopyButton, Badge } from '@/shared/ui';
 
-export type NoteCardHeaderProps = {
+export type NoteCardHeaderRuntimeValue = {
   note: NoteWithRelations;
 };
 
-export function NoteCardHeader({ note }: NoteCardHeaderProps): React.JSX.Element {
+const {
+  Context: NoteCardHeaderRuntimeContext,
+  useStrictContext: useNoteCardHeaderRuntime,
+} = createStrictContext<NoteCardHeaderRuntimeValue>({
+  hookName: 'useNoteCardHeaderRuntime',
+  providerName: 'NoteCardHeaderRuntimeProvider',
+  displayName: 'NoteCardHeaderRuntimeContext',
+});
+
+export { NoteCardHeaderRuntimeContext };
+
+export function NoteCardHeader(): React.JSX.Element {
+  const { note } = useNoteCardHeaderRuntime();
   const { handleToggleFavorite } = useNotesAppContext();
 
   const isCodeNote = (note.editorType as string) === 'code';

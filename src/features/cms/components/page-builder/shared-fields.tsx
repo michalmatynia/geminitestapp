@@ -287,22 +287,16 @@ export function ColorField({
   );
 }
 
-export function NumberField({
-  label,
-  value,
-  onChange,
-  className,
-  disabled,
-  suffix,
-  min,
-  max,
-  step,
-}: FieldProps<number> & {
+export function NumberField(
+  props: FieldProps<number> & {
   suffix?: string;
   min?: number;
   max?: number;
   step?: number;
-}): React.JSX.Element {
+  }
+): React.JSX.Element {
+  const { label, value, onChange, className, disabled, suffix, min, max, step } = props;
+
   return (
     <FormField label={label} className={className}>
       <div className='flex items-center gap-1.5 mt-1'>

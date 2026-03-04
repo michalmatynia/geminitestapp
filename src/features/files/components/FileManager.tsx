@@ -30,16 +30,18 @@ export type FileManagerRuntimeValue = {
 
 export const FileManagerRuntimeContext = React.createContext<FileManagerRuntimeValue | null>(null);
 
-export default function FileManager({
-  onSelectFile,
-  mode,
-  selectionMode,
-  autoConfirmSelection,
-  showFolderFilter,
-  defaultFolder,
-  showBulkActions,
-  showTagSearch,
-}: FileManagerProps): React.JSX.Element {
+export default function FileManager(props: FileManagerProps): React.JSX.Element {
+  const {
+    onSelectFile,
+    mode,
+    selectionMode,
+    autoConfirmSelection,
+    showFolderFilter,
+    defaultFolder,
+    showBulkActions,
+    showTagSearch,
+  } = props;
+
   const runtime = React.useContext(FileManagerRuntimeContext);
   const resolvedOnSelectFile = onSelectFile ?? runtime?.onSelectFile;
 

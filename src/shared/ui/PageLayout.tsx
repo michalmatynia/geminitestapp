@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { useMemo, type JSX, type ReactNode } from 'react';
 
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 
 import { FormActions } from './FormActions';
@@ -41,6 +42,117 @@ interface PageLayoutProps {
   containerClassName?: string;
 }
 
+type PageLayoutRuntimeValue = {
+  title: string;
+  description?: string | undefined;
+  eyebrow?: ReactNode;
+  headerActions?: ReactNode;
+  refresh?:
+    | {
+        onRefresh: () => void;
+        isRefreshing: boolean;
+      }
+    | undefined;
+  children: ReactNode;
+  tabs?:
+    | {
+        activeTab: string;
+        onTabChange: (value: string) => void;
+        tabsList: { value: string; label: string }[];
+      }
+    | undefined;
+  wrapInPanel: boolean;
+  panelClassName?: string | undefined;
+  onSave?: (() => Promise<void> | void) | undefined;
+  isSaving: boolean;
+  saveText: string;
+  stickyFooter: boolean;
+  containerClassName: string;
+};
+
+const { Context: PageLayoutRuntimeContext, useStrictContext: usePageLayoutRuntime } =
+  createStrictContext<PageLayoutRuntimeValue>({
+    hookName: 'usePageLayoutRuntime',
+    providerName: 'PageLayoutRuntimeProvider',
+    displayName: 'PageLayoutRuntimeContext',
+  });
+
+function PageLayoutTabs(): JSX.Element | null {
+  const { tabs } = usePageLayoutRuntime();
+  if (!tabs) return null;
+  return (
+    <Tabs value={tabs.activeTab} onValueChange={tabs.onTabChange} className='mb-6'>
+      <TabsList
+        className='grid w-full max-w-md'
+        style={{ gridTemplateColumns: `repeat(${tabs.tabsList.length}, minmax(0, 1fr))` }}
+      >
+        {tabs.tabsList.map((tab) => (
+          <TabsTrigger key={tab.value} value={tab.value}>
+            {tab.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
+  );
+}
+
+function PageLayoutHeader(): JSX.Element {
+  const { title, description, eyebrow, headerActions, refresh } = usePageLayoutRuntime();
+  return (
+    <SectionHeader
+      title={title}
+      className='mb-6'
+      description={description}
+      eyebrow={eyebrow}
+      actions={headerActions}
+      refresh={refresh}
+    />
+  );
+}
+
+function PageLayoutContent(): JSX.Element {
+  const { children, panelClassName, wrapInPanel } = usePageLayoutRuntime();
+  if (!wrapInPanel) {
+    return <>{children}</>;
+  }
+  return <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>{children}</div>;
+}
+
+function PageLayoutSaveFooter(): JSX.Element | null {
+  const { isSaving, onSave, saveText, stickyFooter } = usePageLayoutRuntime();
+  if (!onSave) return null;
+  return (
+    <div
+      className={cn(
+        'mt-6',
+        stickyFooter &&
+          'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
+      )}
+    >
+      <div className={cn(stickyFooter && 'container mx-auto')}>
+        <FormActions
+          onSave={() => void onSave()}
+          isSaving={isSaving}
+          saveText={saveText}
+          className={cn(stickyFooter ? 'justify-end' : '')}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PageLayoutRuntime(): JSX.Element {
+  const { containerClassName, stickyFooter } = usePageLayoutRuntime();
+  return (
+    <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
+      <PageLayoutTabs />
+      <PageLayoutHeader />
+      <PageLayoutContent />
+      <PageLayoutSaveFooter />
+    </div>
+  );
+}
+
 export function PageLayout({
   title,
   description,
@@ -57,58 +169,44 @@ export function PageLayout({
   stickyFooter = false,
   containerClassName = 'container mx-auto py-10',
 }: PageLayoutProps): React.JSX.Element {
+  const runtimeValue = useMemo<PageLayoutRuntimeValue>(
+    () => ({
+      title,
+      description,
+      eyebrow,
+      headerActions,
+      refresh,
+      children,
+      tabs,
+      wrapInPanel,
+      panelClassName,
+      onSave,
+      isSaving,
+      saveText,
+      stickyFooter,
+      containerClassName,
+    }),
+    [
+      title,
+      description,
+      eyebrow,
+      headerActions,
+      refresh,
+      children,
+      tabs,
+      wrapInPanel,
+      panelClassName,
+      onSave,
+      isSaving,
+      saveText,
+      stickyFooter,
+      containerClassName,
+    ]
+  );
+
   return (
-    <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
-      {tabs && (
-        <Tabs value={tabs.activeTab} onValueChange={tabs.onTabChange} className='mb-6'>
-          <TabsList
-            className='grid w-full max-w-md'
-            style={{ gridTemplateColumns: `repeat(${tabs.tabsList.length}, minmax(0, 1fr))` }}
-          >
-            {tabs.tabsList.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
-
-      <SectionHeader
-        title={title}
-        className='mb-6'
-        description={description}
-        eyebrow={eyebrow}
-        actions={headerActions}
-        refresh={refresh}
-      />
-
-      {wrapInPanel ? (
-        <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>
-          {children}
-        </div>
-      ) : (
-        children
-      )}
-
-      {onSave && (
-        <div
-          className={cn(
-            'mt-6',
-            stickyFooter &&
-              'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
-          )}
-        >
-          <div className={cn(stickyFooter && 'container mx-auto')}>
-            <FormActions
-              onSave={() => void onSave()}
-              isSaving={isSaving}
-              saveText={saveText}
-              className={cn(stickyFooter ? 'justify-end' : '')}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+    <PageLayoutRuntimeContext.Provider value={runtimeValue}>
+      <PageLayoutRuntime />
+    </PageLayoutRuntimeContext.Provider>
   );
 }

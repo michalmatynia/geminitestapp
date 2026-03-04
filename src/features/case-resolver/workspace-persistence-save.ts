@@ -229,11 +229,11 @@ export const compactCaseResolverWorkspaceForPersist = (
       if (asset.kind !== 'node_file') return asset;
       if (typeof asset.textContent === 'string' && asset.textContent.trim().length > 0) {
         throw validationError(
-          'Legacy inline Case Resolver node-file snapshots are no longer supported.',
+          'Case Resolver inline node-file snapshots are unsupported.',
           {
             source: 'case_resolver.workspace',
             assetId: asset.id,
-            reason: 'legacy_inline_node_file_snapshot',
+            reason: 'inline_node_file_snapshot_not_supported',
           }
         );
       }

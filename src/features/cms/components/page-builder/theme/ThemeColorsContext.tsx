@@ -10,7 +10,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
-import { extractJsonBlock, parseColorSchemePayload, normalizeAiString } from './theme-utils';
+import { parseColorSchemeFromText } from './theme-utils';
 import { useThemeSettings } from '../ThemeSettingsContext';
 
 interface ThemeColorsContextValue {
@@ -196,59 +196,9 @@ Theme context:
 ${schemeContext}`;
   }, [schemeAiPrompt, schemeContext]);
 
-  const parseSchemeFromText = useCallback(
-    (text: string): { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null => {
-      const trimmed = text.trim();
-      if (!trimmed) return null;
-      const jsonBlock = extractJsonBlock(trimmed);
-      if (jsonBlock) {
-        try {
-          const payload = JSON.parse(jsonBlock) as unknown;
-          const parsed = parseColorSchemePayload(payload);
-          if (parsed) return parsed;
-        } catch {
-          // fall through to regex parsing
-        }
-      }
-
-      const pickFromText = (labels: string[]): string | undefined => {
-        for (const label of labels) {
-          const regex = new RegExp(
-            `${label}\\s*[:=]\\s*["']?([^"'
-]+)`,
-            'i'
-          );
-          const match = trimmed.match(regex);
-          if (match?.[1]) {
-            const normalized = normalizeAiString(match[1]);
-            if (normalized) return normalized;
-          }
-        }
-        return undefined;
-      };
-
-      const colors: Partial<ColorSchemeColors> = {};
-      const background = pickFromText(['background', 'bg']);
-      if (background !== undefined) colors.background = background;
-      const surface = pickFromText(['surface', 'card', 'layer']);
-      if (surface !== undefined) colors.surface = surface;
-      const parsedText = pickFromText(['text', 'foreground']);
-      if (parsedText !== undefined) colors.text = parsedText;
-      const accent = pickFromText(['accent', 'primary']);
-      if (accent !== undefined) colors.accent = accent;
-      const border = pickFromText(['border', 'outline']);
-      if (border !== undefined) colors.border = border;
-      const name = pickFromText(['name', 'scheme', 'title']);
-
-      if (!Object.values(colors).some(Boolean) && name === undefined) return null;
-      return { ...(name !== undefined ? { name } : {}), colors };
-    },
-    []
-  );
-
   const schemeAiPreview = useMemo(
-    () => (schemeAiOutput ? parseSchemeFromText(schemeAiOutput) : null),
-    [schemeAiOutput, parseSchemeFromText]
+    () => (schemeAiOutput ? parseColorSchemeFromText(schemeAiOutput) : null),
+    [schemeAiOutput]
   );
 
   const applySchemeFromAi = useCallback(
@@ -406,7 +356,7 @@ ${schemeContext}`;
         messages,
       });
 
-      const parsed = parseSchemeFromText(accumulated);
+      const parsed = parseColorSchemeFromText(accumulated);
       if (!parsed || !Object.values(parsed.colors).some(Boolean)) {
         throw new Error('AI response did not include a color scheme.');
       }
@@ -430,7 +380,6 @@ ${schemeContext}`;
     brainAiProvider,
     brainAiModelId,
     brainAiAgentId,
-    parseSchemeFromText,
     applySchemeFromAi,
     toast,
   ]);

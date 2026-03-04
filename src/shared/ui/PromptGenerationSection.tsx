@@ -1,3 +1,5 @@
+'use client';
+
 import { CopyIcon } from 'lucide-react';
 import { useMemo, type JSX } from 'react';
 

@@ -299,7 +299,6 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
             : 'AI Brain provider catalog is invalid and could not be loaded.',
           { variant: 'error' }
         );
-        if (rawProviderCatalog?.trim()) return;
       }
       const playwrightPersonaIds = parsePlaywrightPersonaIds(
         map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)

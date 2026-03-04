@@ -57,7 +57,7 @@ export function classifyError(error: unknown): ErrorCategory {
 
   const message = error instanceof Error ? error.message : String(error);
 
-  if (/deprecated ai snapshot keys/i.test(message)) {
+  if (/deprecated ai snapshot keys/i.test(message) || /includes unsupported keys/i.test(message)) {
     return ERROR_CATEGORY.VALIDATION;
   }
 
@@ -131,16 +131,23 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.VALIDATION:
-      if (/agent persona settings contain deprecated ai snapshot keys/i.test(message)) {
+      if (
+        /agent persona settings contain deprecated ai snapshot keys/i.test(message) ||
+        /agent persona settings payload includes unsupported keys/i.test(message) ||
+        /agent persona payload includes unsupported keys/i.test(message)
+      ) {
         actions.push({
           label: 'Update Persona Settings',
           description:
-            'Open Agent Creator personas and remove legacy model snapshot fields from persona settings.',
+            'Open Agent Creator personas and remove unsupported model snapshot fields from persona settings.',
           actionType: 'CHECK_CONFIG',
         });
         break;
       }
-      if (/image studio settings contain deprecated ai snapshot keys/i.test(message)) {
+      if (
+        /image studio settings contain deprecated ai snapshot keys/i.test(message) ||
+        /image studio settings payload includes unsupported keys/i.test(message)
+      ) {
         actions.push({
           label: 'Update Image Studio Settings',
           description:
@@ -149,11 +156,11 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         });
         break;
       }
-      if (/deprecated ai snapshot keys/i.test(message)) {
+      if (/deprecated ai snapshot keys/i.test(message) || /includes unsupported keys/i.test(message)) {
         actions.push({
           label: 'Check Settings Contract',
           description:
-            'A saved settings payload still includes legacy model snapshot fields. Re-save the relevant settings section.',
+            'A saved settings payload still includes unsupported model snapshot fields. Re-save the relevant settings section.',
           actionType: 'CHECK_CONFIG',
         });
         break;

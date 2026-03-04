@@ -17,7 +17,6 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import {
-  BRAIN_CATALOG_POOL_VALUES,
   catalogToEntries,
   sanitizeCatalogEntries,
 } from '@/shared/lib/ai-brain/catalog-entries';
@@ -357,9 +356,6 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
   ],
 };
 
-const isLegacyProviderCatalogKey = (value: string): value is AiBrainCatalogPool =>
-  BRAIN_CATALOG_POOL_VALUES.includes(value as AiBrainCatalogPool);
-
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
   if (!raw?.trim()) return defaultBrainSettings;
 
@@ -417,18 +413,6 @@ export const parseBrainProviderCatalog = (
   }
 
   const parsedRecord = parsed as Record<string, unknown>;
-  const legacyPoolKeys = Object.keys(parsedRecord).filter(
-    (key: string): boolean => isLegacyProviderCatalogKey(key)
-  );
-  if (legacyPoolKeys.length > 0) {
-    throw validationError('Invalid AI Brain provider catalog payload.', {
-      source: 'ai_brain.provider_catalog',
-      reason: 'legacy_pool_keys_not_supported',
-      keys: legacyPoolKeys,
-      migration:
-        'Legacy pool arrays are no longer supported. Re-save AI Brain provider catalog using canonical entries[].',
-    });
-  }
   const unsupportedKeys = Object.keys(parsedRecord).filter(
     (key: string): boolean => key !== 'entries'
   );

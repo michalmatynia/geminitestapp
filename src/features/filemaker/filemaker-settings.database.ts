@@ -224,7 +224,7 @@ export const normalizeFilemakerDatabase = (
     return createDefaultFilemakerDatabase();
   }
   if (valueRecord['version'] !== 2) {
-    throw validationError('Legacy Filemaker database payloads are no longer supported.', {
+    throw validationError('Filemaker database payload version is unsupported.', {
       version: valueRecord['version'] ?? null,
     });
   }
@@ -247,14 +247,14 @@ export const normalizeFilemakerDatabase = (
     rejectLegacyInlinePayloads &&
     [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasDeprecatedFullAddress)
   ) {
-    throw validationError('Legacy Filemaker fullAddress payloads are no longer supported.');
+    throw validationError('Filemaker payload includes unsupported fullAddress fields.');
   }
 
   if (
     rejectLegacyInlinePayloads &&
     [...rawPersons, ...rawOrganizations, ...rawEvents].some(hasInlineAddressFields)
   ) {
-    throw validationError('Legacy Filemaker inline address payloads are no longer supported.');
+    throw validationError('Filemaker payload includes unsupported inline address fields.');
   }
 
   if (
@@ -262,7 +262,7 @@ export const normalizeFilemakerDatabase = (
     rawPersons.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
   ) {
     throw validationError(
-      'Legacy Filemaker inline person phoneNumbers payloads are no longer supported.'
+      'Filemaker person payload includes unsupported inline phoneNumbers field.'
     );
   }
 
@@ -271,17 +271,17 @@ export const normalizeFilemakerDatabase = (
     rawOrganizations.some((entry) => normalizePhoneNumbers(entry['phoneNumbers']).length > 0)
   ) {
     throw validationError(
-      'Legacy Filemaker inline organization phoneNumbers payloads are no longer supported.'
+      'Filemaker organization payload includes unsupported inline phoneNumbers field.'
     );
   }
 
   if (rejectLegacyInlinePayloads && rawPersons.some(hasInlineEmailFields)) {
-    throw validationError('Legacy Filemaker inline person email payloads are no longer supported.');
+    throw validationError('Filemaker person payload includes unsupported inline email fields.');
   }
 
   if (rejectLegacyInlinePayloads && rawOrganizations.some(hasInlineEmailFields)) {
     throw validationError(
-      'Legacy Filemaker inline organization email payloads are no longer supported.'
+      'Filemaker organization payload includes unsupported inline email fields.'
     );
   }
 

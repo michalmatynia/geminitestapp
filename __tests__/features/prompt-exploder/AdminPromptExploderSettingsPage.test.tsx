@@ -341,7 +341,7 @@ describe('AdminPromptExploderSettingsPage', () => {
     });
   });
 
-  it('surfaces deprecated persisted AI snapshot keys as an explicit error', async () => {
+  it('surfaces non-canonical persisted AI payload keys as an explicit error', async () => {
     mockSettingsQueryRaw(
       JSON.stringify({
         ...defaultPromptExploderSettings,
@@ -359,7 +359,7 @@ describe('AdminPromptExploderSettingsPage', () => {
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith(
-        'Prompt Exploder settings payload contains deprecated AI snapshot keys: fallbackModelId, modelId',
+        'Prompt Exploder settings payload has invalid shape: ai contains unsupported keys: fallbackModelId, modelId',
         { variant: 'error' }
       );
     });

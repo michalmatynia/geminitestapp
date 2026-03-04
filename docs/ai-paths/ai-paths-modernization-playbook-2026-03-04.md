@@ -452,8 +452,8 @@ Progress (2026-03-04):
    3. `src/app/api/v2/integrations/exports/base/routes-parity.test.ts`
    Result: 3 files passed, 13 tests passed.
 3. Ran compatibility smoke coverage for migrated metadata contracts:
-   1. `src/app/api/v2/metadata/handler.compat.test.ts`
-   2. `src/app/api/v2/products/metadata/handler.compat.test.ts`
+   1. `src/app/api/v2/metadata/handler.canonical.test.ts`
+   2. `src/app/api/v2/products/metadata/handler.canonical.test.ts`
    Result: 2 files passed, 6 tests passed.
 4. Ran repository lint gate (`npm run lint`), fixed two `@typescript-eslint/no-unsafe-assignment` violations in:
    1. `src/app/api/v2/products/metadata/handler.ts`
@@ -837,6 +837,226 @@ Progress (2026-03-04):
       3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
       Result: `3` files passed, `13` tests passed.
    5. `npm run ai-paths:check:canonical` -> passed (`4236` files scanned).
+36. Pruned database client legacy db-query/db-update route compatibility in seam 166 and re-validated canonical guards:
+   1. Removed legacy shim-route usage in AI Paths database client query/update helpers:
+      1. `src/shared/lib/ai-paths/api/client/database.ts`
+      2. `databaseQuery` now routes through canonical `/api/ai-paths/db-action` payload mapping (`find`/`findOne`).
+      3. `databaseUpdate` now routes through canonical `/api/ai-paths/db-action` payload mapping (`updateOne`/`updateMany`).
+      4. provider forwarding remains canonical enum-only (`auto`/`mongodb`/`prisma`) with invalid values dropped.
+   2. Added regression coverage:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. verifies canonical query/update payload mapping and invalid provider drop behavior.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of `/api/ai-paths/db-query` and `/api/ai-paths/db-update` usage in runtime database client and requires canonical db-action routing snippets.
+   4. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `4` files passed, `16` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4237` files scanned).
+37. Retired DB-query/DB-update shim routes in seam 167 and re-validated canonical guards:
+   1. Removed legacy shim endpoints that only proxied into DB-action handling:
+      1. deleted `src/app/api/ai-paths/db-query/handler.ts`
+      2. deleted `src/app/api/ai-paths/db-query/route.ts`
+      3. deleted `src/app/api/ai-paths/db-update/handler.ts`
+      4. deleted `src/app/api/ai-paths/db-update/route.ts`
+   2. Updated fallback API coverage to canonical DB-action payloads:
+      1. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      2. update/fallback coverage now runs against canonical `/api/ai-paths/db-action` payload contracts (`action`, `filter`, `update`) rather than shim payload aliases (`query`, `updates`, `single`).
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of DB-query/DB-update shim route files and requires canonical DB-action route files to remain present.
+   4. Re-ran focused regression bundle:
+      1. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      2. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `4` files passed, `16` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4233` files scanned).
+38. Retired DB-command handler module path in seam 168 and re-validated canonical guards:
+   1. Moved DB-action implementation out of legacy DB-command module path:
+      1. moved `src/app/api/ai-paths/db-command/handler.ts`
+      2. to canonical `src/app/api/ai-paths/db-action/handler.ts`
+      3. deleted legacy `src/app/api/ai-paths/db-command/handler.ts`.
+   2. Preserved canonical route handler export:
+      1. `src/app/api/ai-paths/db-action/handler.ts`
+      2. added `POST_handler` delegating to `postAiPathsDbActionHandler` to keep route wiring stable.
+   3. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. provider metadata contract check now validates canonical `db-action/handler.ts`.
+      3. shim retirement guard now blocks reintroduction of `src/app/api/ai-paths/db-command/handler.ts`.
+   4. Re-ran focused regression bundle:
+      1. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      2. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `4` files passed, `16` tests passed.
+   5. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+39. Pruned DB-action request alias compatibility in seam 169 and re-validated canonical guards:
+   1. Removed legacy DB-action request alias acceptance from canonical handler contract:
+      1. `src/app/api/ai-paths/db-action/handler.ts`
+      2. schema now rejects deprecated alias keys: `query`, `updates`.
+      3. runtime now reads canonical keys only:
+         1. `filter` for predicate payloads.
+         2. `update` for write payloads.
+      4. removed alias fallback snippets (`filter || query`, `update || updates`) across Prisma and Mongo branches.
+   2. Updated canonical DB-action client request mapping:
+      1. `src/shared/lib/ai-paths/api/client/database.ts`
+      2. `databaseQuery` now maps `DbQueryPayload.query` into canonical DB-action key `filter`.
+   3. Updated regression coverage:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. `__tests__/features/ai/ai-paths/api/db-query.test.ts`
+      3. db-action route tests now post canonical route URL and canonical request key `filter`.
+   4. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added DB-action request contract prune check blocking `query`/`updates` alias schema/runtime fallback snippets and requiring canonical snippets.
+      3. strengthened database client route guard to block `query: payload.query` emission and require `filter: payload.query`.
+   5. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+      3. `__tests__/features/ai/ai-paths/api/db-query.test.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      5. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      Result: `5` files passed, `20` tests passed.
+   6. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+40. Canonicalized DB client query/update payload field contract in seam 170 and re-validated canonical guards:
+   1. Canonicalized database client payload type surface:
+      1. `src/shared/lib/ai-paths/api/client/database.ts`
+      2. `DbQueryPayload` now uses `filter` (legacy `query` removed).
+      3. `DbUpdatePayload` now uses `filter` + `update` (legacy `query` / `updates` removed).
+      4. `databaseQuery` / `databaseUpdate` now forward canonical keys only.
+   2. Propagated canonical payload shape through runtime helpers and call sites:
+      1. `src/shared/lib/ai-paths/core/runtime/utils.ts`
+      2. `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+      4. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+      5. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-operation.ts`
+      6. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-actions.ts`
+      7. `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsSamples.ts`
+      8. `src/app/api/v2/products/validator-runtime/evaluate/handler.ts`
+   3. Updated regression expectations:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. `__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts`
+   4. Extended canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. database-client route compatibility check now blocks legacy `DbQueryPayload.query` / `DbUpdatePayload.query|updates` snippets and requires canonical `filter` / `update` snippets.
+      3. blocks reintroduction of legacy payload forwarding snippets (`query: payload.query`, `update: payload.updates`).
+   5. Re-ran focused regression bundle:
+      1. `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+      2. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts`
+      3. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts`
+      4. `__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts`
+      5. `__tests__/features/ai/ai-paths/api/db-query.test.ts`
+      Result: `5` files passed, `32` tests passed.
+   6. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+   7. `npm run typecheck` -> passed.
+41. Pruned validator runtime DB payload alias surface in seam 171 and re-validated canonical guards:
+   1. Canonicalized runtime DB payload schema to reject legacy `query` alias:
+      1. `src/features/products/validations/validator-runtime-config.ts`
+      2. `databaseQueryPayloadSchema` now requires canonical `filter` and blocks `query` via `z.never()`.
+   2. Updated runtime UI guidance and prune tests:
+      1. `src/features/products/components/settings/validator-settings/modal/ValidatorPatternModalRuntimeSection.tsx`
+      2. `__tests__/features/products/validations/validator-runtime-config.test.ts`
+      3. `src/features/products/validations/__tests__/runtime-prune.test.ts`
+      4. placeholder now documents canonical `payload.filter` and `replacementPaths`.
+      5. guard suite now blocks runtime schema/evaluator alias fallback snippets for `payload.query`.
+   3. Validation:
+      1. `npx vitest run __tests__/features/products/validations/validator-runtime-config.test.ts src/features/products/validations/__tests__/runtime-prune.test.ts` -> passed.
+      2. `npm run typecheck` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+42. Pruned DB-schema provider `all` alias surface in seam 172 and re-validated canonical guards:
+   1. Removed deprecated provider alias from DB-schema node-config contract:
+      1. `src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx`
+      2. provider contract now allows only `auto | mongodb | prisma`.
+      3. removed UI selector option `All Providers`.
+      4. added canonical provider normalizer that coerces stale non-canonical persisted values to `auto`.
+   2. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added DB-schema provider contract prune check that blocks `all` alias snippets and requires canonical provider normalization snippets.
+   3. Validation:
+      1. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      2. `npm run typecheck` -> passed.
+43. Pruned database-node legacy query-provider normalization branch in seam 173 and re-validated canonical guards:
+   1. Removed legacy normalization helpers from database node config state:
+      1. `src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts`
+      2. deleted:
+         1. `LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE`
+         2. `isLegacyMongoDefaultQuery`
+         3. `normalizeLegacyQueryProvider`
+      3. introduced canonical `normalizeQueryConfig` helper that normalizes `queryTemplate` only.
+   2. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkDatabaseNodeLegacyProviderNormalizationPrune`:
+         1. blocks reintroduction of legacy provider/default-query normalization snippets.
+         2. requires canonical `normalizeQueryConfig` usage snippet.
+   3. Validation:
+      1. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      2. `npm run typecheck` -> passed.
+44. Pruned entity-update legacy simple-parameters alias compatibility in seam 174 and re-validated canonical guards:
+   1. Removed legacy `simpleParameters` inference/merge compatibility branch:
+      1. `src/app/api/ai-paths/update/handler.ts`
+      2. deleted helper/constants:
+         1. `LEGACY_SIMPLE_PARAMETER_PREFIX`
+         2. `normalizeLegacySimpleParameterUpdates`
+         3. `normalizeExistingParameterValues`
+         4. `mergeLegacySimpleParameterInferenceWithExisting`
+      3. product update path now explicitly rejects `updates.simpleParameters` with canonical guidance to use `updates.parameters`.
+   2. Updated API regression:
+      1. `__tests__/features/ai/ai-paths/api/update-handler.test.ts`
+      2. now verifies deprecated alias rejection and no product update write call.
+   3. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkEntityUpdateSimpleParametersAliasPrune`:
+         1. blocks reintroduction of legacy alias merge/inference snippets.
+         2. requires canonical explicit rejection snippet/message.
+   4. Validation:
+      1. `npx vitest run __tests__/features/ai/ai-paths/api/update-handler.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      3. `npm run typecheck` -> passed.
+45. Pruned parameter-inference target-path compatibility in seam 175 and re-validated canonical guards:
+   1. Enforced canonical parameter-inference target path in runtime guard:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts`
+      2. `applyParameterInferenceGuard` now blocks non-canonical `parameterInferenceGuard.targetPath`.
+      3. canonical allowed target path is `parameters`; deprecated target paths now return blocked outcome with canonical error message.
+   2. Updated runtime regressions:
+      1. `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/database-parameter-inference.test.ts`
+      2. added coverage that `targetPath: 'simpleParameters'` is blocked and dropped from updates.
+      3. `__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts`
+      4. migrated remaining simple-parameters fixture to canonical `parameters` target path.
+   3. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkParameterInferenceTargetPathCompatibilityPrune`:
+         1. requires canonical target-path rejection snippets.
+         2. blocks legacy target-path compatibility snippet patterns from reintroduction.
+   4. Validation:
+      1. `npx vitest run src/shared/lib/ai-paths/core/runtime/handlers/__tests__/database-parameter-inference.test.ts __tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      3. `npm run typecheck` -> passed.
+46. Pruned parameter-inference target-path edit/sanitizer compatibility in seam 176 and re-validated canonical guards:
+   1. Enforced canonical target-path at DB node settings edit-time:
+      1. `src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx`
+      2. introduced canonical target-path constant/normalizer (`parameters`).
+      3. enable-flow now persists canonical target path explicitly.
+      4. loaded non-canonical target paths are auto-corrected when guard is enabled.
+      5. target-path field is read-only and pinned to canonical value.
+   2. Enforced canonical target-path rejection during path-config sanitization:
+      1. `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+      2. `src/features/products/hooks/useAiPathSettings.ts`
+      3. both sanitizers now reject non-canonical `parameterInferenceGuard.targetPath` with `deprecated_parameter_inference_target_path`.
+   3. Updated regression coverage:
+      1. `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+      2. `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+      3. both suites now assert rejection of `targetPath: 'simpleParameters'`.
+   4. Extended AI Paths canonical guardrails:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added:
+         1. `checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune`
+         2. `checkParameterInferenceTargetPathSanitizationPrune`
+      3. guardrails now enforce canonical UI edit-time behavior and sanitizer rejection snippets.
+   5. Validation:
+      1. `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed (`4232` files scanned).
+      3. `npm run typecheck` -> passed.
 
 ## Deprecation map
 

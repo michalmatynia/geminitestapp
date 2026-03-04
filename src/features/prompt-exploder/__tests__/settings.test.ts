@@ -26,7 +26,7 @@ describe('parsePromptExploderSettingsResult', () => {
     expect(parsed.settings.ai.operationMode).toBe(defaultPromptExploderSettings.ai.operationMode);
   });
 
-  it('rejects deprecated AI snapshot keys in non-empty payloads', async () => {
+  it('rejects non-canonical AI payload keys in non-empty payloads', async () => {
     const { defaultPromptExploderSettings, parsePromptExploderSettingsResult } =
       await loadSettings();
     const payload = {
@@ -39,8 +39,8 @@ describe('parsePromptExploderSettingsResult', () => {
 
     const parsed = parsePromptExploderSettingsResult(JSON.stringify(payload));
 
-    expect(parsed.error?.code).toBe('deprecated_ai_keys');
-    expect(parsed.error?.deprecatedKeys).toEqual(['provider']);
+    expect(parsed.error?.code).toBe('invalid_shape');
+    expect(parsed.error?.message).toContain('unsupported keys: provider');
     expect(parsed.settings).toEqual(defaultPromptExploderSettings);
   });
 
@@ -114,7 +114,7 @@ describe('parsePromptExploderSettings', () => {
     expect(() => parsePromptExploderSettings('{"broken"')).toThrowError(/not valid json/i);
   });
 
-  it('throws for deprecated AI snapshot keys in non-empty payloads', async () => {
+  it('throws for non-canonical AI payload keys in non-empty payloads', async () => {
     const { defaultPromptExploderSettings, parsePromptExploderSettings } = await loadSettings();
     expect(() =>
       parsePromptExploderSettings(
@@ -126,6 +126,6 @@ describe('parsePromptExploderSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated ai snapshot keys/i);
+    ).toThrowError(/invalid shape/i);
   });
 });

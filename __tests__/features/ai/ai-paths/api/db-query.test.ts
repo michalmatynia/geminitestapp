@@ -6,7 +6,7 @@ import { ObjectId } from 'mongodb';
 import { NextRequest } from 'next/server';
 import { vi } from 'vitest';
 
-import { POST as POST_DB_QUERY } from '@/app/api/ai-paths/db-query/route';
+import { POST as POST_DB_ACTION } from '@/app/api/ai-paths/db-action/route';
 import { isCollectionAllowed, requireAiPathsAccessOrInternal } from '@/features/ai/ai-paths/server';
 import { parseJsonBody } from '@/features/products/server';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
@@ -50,7 +50,7 @@ vi.mock('@/features/products/server', () => ({
   parseJsonBody: vi.fn(),
 }));
 
-describe('AI Paths db-query API', () => {
+describe('AI Paths db-action API', () => {
   const findOne = vi.fn();
   const toArray = vi.fn();
   const limit = vi.fn();
@@ -111,14 +111,14 @@ describe('AI Paths db-query API', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ _id: new ObjectId('507f1f77bcf86cd799439011'), sku: 'SKU-1' });
 
-    const res = await POST_DB_QUERY(
-      new NextRequest('http://localhost/api/ai-paths/db-query', {
+    const res = await POST_DB_ACTION(
+      new NextRequest('http://localhost/api/ai-paths/db-action', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'mongodb',
           collection: 'products',
-          query: { _id: '507f1f77bcf86cd799439011' },
-          single: true,
+          action: 'findOne',
+          filter: { _id: '507f1f77bcf86cd799439011' },
           idType: 'string',
         }),
       })
@@ -129,6 +129,8 @@ describe('AI Paths db-query API', () => {
     expect(payload).toMatchObject({
       item: { sku: 'SKU-1' },
       count: 1,
+      requestedProvider: 'mongodb',
+      resolvedProvider: 'mongodb',
     });
     expect(findOne).toHaveBeenCalledTimes(2);
     const firstFilter = findOne.mock.calls[0]?.[0] as Record<string, unknown>;
@@ -141,15 +143,15 @@ describe('AI Paths db-query API', () => {
     toArray.mockResolvedValue([{ sku: 'A' }, { sku: 'B' }]);
     countDocuments.mockResolvedValue(12);
 
-    const res = await POST_DB_QUERY(
-      new NextRequest('http://localhost/api/ai-paths/db-query', {
+    const res = await POST_DB_ACTION(
+      new NextRequest('http://localhost/api/ai-paths/db-action', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'mongodb',
           collection: 'products',
-          query: { status: 'active' },
+          action: 'find',
+          filter: { status: 'active' },
           limit: 2,
-          single: false,
         }),
       })
     );
@@ -159,25 +161,27 @@ describe('AI Paths db-query API', () => {
     expect(payload).toMatchObject({
       items: [{ sku: 'A' }, { sku: 'B' }],
       count: 12,
+      requestedProvider: 'mongodb',
+      resolvedProvider: 'mongodb',
     });
     expect(countDocuments).toHaveBeenCalledWith({ status: 'active' });
   });
 
-  it('returns Prisma single result with provider metadata', async () => {
+  it('returns Prisma single result with resolved provider metadata', async () => {
     hoistedPrisma.findFirst.mockResolvedValue({
       id: 'p-1',
       sku: 'SKU-P-1',
       name: 'Product Prisma',
     });
 
-    const res = await POST_DB_QUERY(
-      new NextRequest('http://localhost/api/ai-paths/db-query', {
+    const res = await POST_DB_ACTION(
+      new NextRequest('http://localhost/api/ai-paths/db-action', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'prisma',
           collection: 'products',
-          query: { id: 'p-1' },
-          single: true,
+          action: 'findOne',
+          filter: { id: 'p-1' },
         }),
       })
     );
@@ -190,8 +194,10 @@ describe('AI Paths db-query API', () => {
         sku: 'SKU-P-1',
       },
       count: 1,
-      provider: 'prisma',
+      requestedProvider: 'prisma',
+      resolvedProvider: 'prisma',
     });
+    expect(Object.prototype.hasOwnProperty.call(payload, 'provider')).toBe(false);
     expect(hoistedPrisma.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'p-1' },
@@ -206,14 +212,14 @@ describe('AI Paths db-query API', () => {
     toArray.mockResolvedValue([{ id: 'mongo-1', sku: 'SKU-MONGO' }]);
     countDocuments.mockResolvedValue(1);
 
-    const res = await POST_DB_QUERY(
-      new NextRequest('http://localhost/api/ai-paths/db-query', {
+    const res = await POST_DB_ACTION(
+      new NextRequest('http://localhost/api/ai-paths/db-action', {
         method: 'POST',
         body: JSON.stringify({
           provider: 'auto',
           collection: 'products',
-          query: { id: 'mongo-1' },
-          single: false,
+          action: 'find',
+          filter: { id: 'mongo-1' },
           limit: 5,
         }),
       })
@@ -230,7 +236,8 @@ describe('AI Paths db-query API', () => {
     expect(payload).toMatchObject({
       items: [{ id: 'mongo-1', sku: 'SKU-MONGO' }],
       count: 1,
-      provider: 'mongodb',
+      requestedProvider: 'auto',
+      resolvedProvider: 'mongodb',
       fallback: expect.objectContaining({
         used: true,
         requestedProvider: 'auto',
@@ -238,6 +245,7 @@ describe('AI Paths db-query API', () => {
         resolvedProvider: 'mongodb',
       }),
     });
+    expect(Object.prototype.hasOwnProperty.call(payload, 'provider')).toBe(false);
     expect(find).toHaveBeenCalled();
   });
 });

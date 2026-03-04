@@ -24,6 +24,13 @@ const EXPECTED_MAINTENANCE_ACTION_IDS = [
 const SETTINGS_HANDLER_FILE = 'src/app/api/ai-paths/settings/handler.ts';
 const MAINTENANCE_HANDLER_FILE = 'src/app/api/ai-paths/settings/maintenance/handler.ts';
 const DB_COMMAND_HANDLER_FILE = 'src/app/api/ai-paths/db-command/handler.ts';
+const DB_COMMAND_ROUTE_FILE = 'src/app/api/ai-paths/db-command/route.ts';
+const DB_ACTION_HANDLER_FILE = 'src/app/api/ai-paths/db-action/handler.ts';
+const DB_ACTION_ROUTE_FILE = 'src/app/api/ai-paths/db-action/route.ts';
+const DB_QUERY_HANDLER_FILE = 'src/app/api/ai-paths/db-query/handler.ts';
+const DB_QUERY_ROUTE_FILE = 'src/app/api/ai-paths/db-query/route.ts';
+const DB_UPDATE_HANDLER_FILE = 'src/app/api/ai-paths/db-update/handler.ts';
+const DB_UPDATE_ROUTE_FILE = 'src/app/api/ai-paths/db-update/route.ts';
 const MAINTENANCE_CONSTANTS_FILE = 'src/features/ai/ai-paths/server/settings-store.constants.ts';
 const API_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client.ts';
 const API_CLIENT_BASE_FILE = 'src/shared/lib/ai-paths/api/client/base.ts';
@@ -40,6 +47,7 @@ const SETTINGS_PATH_ACTIONS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts';
 const SETTINGS_STORE_CLIENT_FILE = 'src/shared/lib/ai-paths/settings-store-client.ts';
 const ADMIN_VALIDATION_UTILS_FILE = 'src/features/ai/ai-paths/pages/AdminAiPathsValidationUtils.ts';
+const AI_PATHS_SETTINGS_UTILS_FILE = 'src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts';
 const DATABASE_TEMPLATE_CONTEXT_FILE =
   'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts';
 const DATABASE_INPUT_RESOLUTION_FILE =
@@ -50,6 +58,7 @@ const DATABASE_UPDATE_EXECUTION_FILE =
   'src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts';
 const LOCAL_EXECUTION_HELPERS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts';
+const DATABASE_CLIENT_FILE = 'src/shared/lib/ai-paths/api/client/database.ts';
 const JOB_QUEUE_PANEL_UTILS_FILE = 'src/features/ai/ai-paths/components/job-queue-panel-utils.ts';
 const RUNS_ENQUEUE_HANDLER_FILE = 'src/app/api/ai-paths/runs/enqueue/handler.ts';
 const PATH_RUN_SERVICE_FILE = 'src/features/ai/ai-paths/services/path-run-service.ts';
@@ -67,6 +76,15 @@ const PRESETS_CONTEXT_FILE = 'src/features/ai/ai-paths/context/PresetsContext.ts
 const TRIGGER_FETCHER_MIGRATION_FILE =
   'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
 const STARTER_WORKFLOW_REGISTRY_FILE = 'src/shared/lib/ai-paths/core/starter-workflows/registry.ts';
+const DB_SCHEMA_NODE_CONFIG_SECTION_FILE =
+  'src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx';
+const DATABASE_NODE_CONFIG_STATE_FILE = 'src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts';
+const ENTITY_UPDATE_HANDLER_FILE = 'src/app/api/ai-paths/update/handler.ts';
+const DATABASE_PARAMETER_INFERENCE_FILE =
+  'src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts';
+const DATABASE_SETTINGS_TAB_FILE =
+  'src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx';
+const PRODUCTS_AI_PATH_SETTINGS_FILE = 'src/features/products/hooks/useAiPathSettings.ts';
 
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
@@ -354,6 +372,40 @@ const checkLegacyDbQueryProviderMigrationPrune = (sourceFiles) => {
           `legacy db-query provider migration token detected in runtime source: ${token}`
         );
       }
+    }
+  }
+};
+
+const checkDatabaseNodeLegacyProviderNormalizationPrune = () => {
+  const text = readFile(DATABASE_NODE_CONFIG_STATE_FILE);
+  const forbiddenSnippets = [
+    'LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE',
+    'const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>',
+    'const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig =>',
+    "query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma'",
+    'if (isLegacyMongoDefaultQuery(query)) {',
+  ];
+  const requiredSnippets = [
+    'const normalizeQueryConfig = (query: DbQueryConfig): DbQueryConfig => ({',
+    "queryTemplate: normalizeTemplateText(query.queryTemplate ?? ''),",
+    '() => normalizeQueryConfig(databaseConfig.query ?? DEFAULT_QUERY),',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_NODE_CONFIG_STATE_FILE,
+        `legacy database node query-provider normalization snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DATABASE_NODE_CONFIG_STATE_FILE,
+        `missing canonical database node query normalization snippet: ${snippet}`
+      );
     }
   }
 };
@@ -824,6 +876,72 @@ const checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune = () => {
   }
 };
 
+const checkSettingsEdgeAliasCompatibilityPrune = () => {
+  const text = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
+  const forbiddenSnippets = [
+    "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+    "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+  ];
+  const requiredSnippets = [
+    "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+    "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+    'return from;',
+    'return fromPort;',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `legacy ai-paths settings edge alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `missing canonical ai-paths settings edge parsing snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkLoadedPathSettingsEdgeAliasCompatibilityPrune = () => {
+  const text = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
+  const forbiddenSnippets = [
+    "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+    "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+    'return from || source;',
+    'return fromPort || sourceHandle;',
+  ];
+  const requiredSnippets = [
+    "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+    "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+    'return from;',
+    'return fromPort;',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `legacy loaded-config edge alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `missing canonical loaded-config edge parsing snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const checkDatabaseTemplateCatalogAliasCompatibilityPrune = () => {
   const text = readFile(DATABASE_TEMPLATE_CONTEXT_FILE);
   const forbiddenSnippets = [
@@ -1040,8 +1158,8 @@ const checkDatabaseQueryProviderResponseAliasCompatibilityPrune = () => {
   }
 };
 
-const checkDbCommandProviderAliasCompatibilityPrune = () => {
-  const dbCommandText = readFile(DB_COMMAND_HANDLER_FILE);
+const checkDbActionProviderAliasCompatibilityPrune = () => {
+  const dbActionText = readFile(DB_ACTION_HANDLER_FILE);
 
   const forbiddenSnippets = [
     "  provider,\n  requestedProvider: requestedProvider ?? 'auto',\n  resolvedProvider: provider,",
@@ -1052,20 +1170,125 @@ const checkDbCommandProviderAliasCompatibilityPrune = () => {
   ];
 
   for (const snippet of forbiddenSnippets) {
-    if (dbCommandText.includes(snippet)) {
+    if (dbActionText.includes(snippet)) {
       reportViolation(
-        DB_COMMAND_HANDLER_FILE,
-        `legacy db-command provider alias payload snippet detected: ${snippet}`
+        DB_ACTION_HANDLER_FILE,
+        `legacy db-action provider alias payload snippet detected: ${snippet}`
       );
     }
   }
 
   for (const snippet of requiredSnippets) {
-    if (!dbCommandText.includes(snippet)) {
+    if (!dbActionText.includes(snippet)) {
       reportViolation(
-        DB_COMMAND_HANDLER_FILE,
-        `missing canonical db-command provider metadata snippet: ${snippet}`
+        DB_ACTION_HANDLER_FILE,
+        `missing canonical db-action provider metadata snippet: ${snippet}`
       );
+    }
+  }
+};
+
+const checkDbActionRequestAliasCompatibilityPrune = () => {
+  const dbActionText = readFile(DB_ACTION_HANDLER_FILE);
+
+  const forbiddenSnippets = [
+    "query: z.record(z.string(), z['unknown']()).optional(),",
+    "updates: z\n    .union([z.record(z.string(), z['unknown']()), z.array(z.record(z.string(), z['unknown']()))])",
+    'coerceQuery(filter || query)',
+    'extractFlatUpdates(update || updates)',
+    'normalizeReplaceDoc(update || updates)',
+    'normalizeUpdateDoc(update || updates)',
+  ];
+  const requiredSnippets = [
+    'query: z.never().optional(),',
+    'updates: z.never().optional(),',
+    'const where = coerceQuery(filter);',
+    'const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);',
+    'const flatUpdates = extractFlatUpdates(update);',
+    'const replacement = normalizeReplaceDoc(update);',
+    'const updateDoc = normalizeUpdateDoc(update);',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (dbActionText.includes(snippet)) {
+      reportViolation(
+        DB_ACTION_HANDLER_FILE,
+        `legacy db-action request alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!dbActionText.includes(snippet)) {
+      reportViolation(
+        DB_ACTION_HANDLER_FILE,
+        `missing canonical db-action request contract snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseClientLegacyRouteCompatibilityPrune = () => {
+  const databaseClientText = readFile(DATABASE_CLIENT_FILE);
+
+  const forbiddenSnippets = [
+    '/api/ai-paths/db-query',
+    '/api/ai-paths/db-update',
+    'query: unknown;\n  updates: unknown;',
+    'query: payload.query,',
+    'filter: payload.query,',
+    'update: payload.updates,',
+  ];
+  const requiredSnippets = [
+    "return apiPost<T>('/api/ai-paths/db-action', payload);",
+    "return apiPost<T>('/api/ai-paths/db-action', {",
+    'filter: unknown;\n  projection?: unknown;',
+    'filter: unknown;\n  update: unknown;',
+    "action: payload.single ? 'findOne' : 'find',",
+    'filter: payload.filter,',
+    "action: payload.single === false ? 'updateMany' : 'updateOne',",
+    'update: payload.update,',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (databaseClientText.includes(snippet)) {
+      reportViolation(
+        DATABASE_CLIENT_FILE,
+        `legacy database client route compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!databaseClientText.includes(snippet)) {
+      reportViolation(
+        DATABASE_CLIENT_FILE,
+        `missing canonical database client routing snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDbQueryUpdateShimRetirement = () => {
+  const forbiddenShimFiles = [
+    DB_COMMAND_HANDLER_FILE,
+    DB_COMMAND_ROUTE_FILE,
+    DB_QUERY_HANDLER_FILE,
+    DB_QUERY_ROUTE_FILE,
+    DB_UPDATE_HANDLER_FILE,
+    DB_UPDATE_ROUTE_FILE,
+  ];
+  const requiredCanonicalFiles = [DB_ACTION_HANDLER_FILE, DB_ACTION_ROUTE_FILE];
+
+  for (const file of forbiddenShimFiles) {
+    if (fs.existsSync(path.join(ROOT, file))) {
+      reportViolation(file, 'legacy db-command/db-query/db-update shim route must remain removed');
+    }
+  }
+
+  for (const file of requiredCanonicalFiles) {
+    if (!fs.existsSync(path.join(ROOT, file))) {
+      reportViolation(file, 'missing canonical db-action route file');
     }
   }
 };
@@ -1097,6 +1320,172 @@ const checkApiClientCsrfCompatibilityAliasPrune = () => {
       reportViolation(
         API_CLIENT_BASE_FILE,
         `missing canonical api-client csrf helper snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDbSchemaProviderAliasCompatibilityPrune = () => {
+  const text = readFile(DB_SCHEMA_NODE_CONFIG_SECTION_FILE);
+
+  const forbiddenSnippets = [
+    "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
+    "provider: selectedNode.config?.db_schema?.provider ?? 'all',",
+    "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
+    "{ value: 'all', label: 'All Providers' },",
+  ];
+  const requiredSnippets = [
+    "provider: 'auto' | 'mongodb' | 'prisma';",
+    "const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>",
+    "provider: normalizeSchemaProvider(selectedNode.config?.db_schema?.provider),",
+    "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DB_SCHEMA_NODE_CONFIG_SECTION_FILE,
+        `legacy db-schema provider alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DB_SCHEMA_NODE_CONFIG_SECTION_FILE,
+        `missing canonical db-schema provider contract snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkEntityUpdateSimpleParametersAliasPrune = () => {
+  const text = readFile(ENTITY_UPDATE_HANDLER_FILE);
+
+  const forbiddenSnippets = [
+    'LEGACY_SIMPLE_PARAMETER_PREFIX',
+    'normalizeLegacySimpleParameterUpdates',
+    'mergeLegacySimpleParameterInferenceWithExisting',
+    "prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined",
+  ];
+  const requiredSnippets = [
+    "Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')",
+    'AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        ENTITY_UPDATE_HANDLER_FILE,
+        `legacy entity-update simpleParameters compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        ENTITY_UPDATE_HANDLER_FILE,
+        `missing canonical entity-update simpleParameters rejection snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkParameterInferenceTargetPathCompatibilityPrune = () => {
+  const text = readFile(DATABASE_PARAMETER_INFERENCE_FILE);
+
+  const forbiddenSnippets = [
+    "if (targetPath !== 'parameters') {\n    return { updates: args.updates, applied: false };",
+    'mergeLegacySimpleParameterInferenceWithExisting',
+  ];
+  const requiredSnippets = [
+    "if (targetPath !== 'parameters') {",
+    'Parameter inference guard targetPath must use canonical "parameters" path.',
+    "reason: 'unsupported_target_path'",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_PARAMETER_INFERENCE_FILE,
+        `legacy parameter-inference target-path compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DATABASE_PARAMETER_INFERENCE_FILE,
+        `missing canonical parameter-inference target-path snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune = () => {
+  const text = readFile(DATABASE_SETTINGS_TAB_FILE);
+
+  const forbiddenSnippets = ['updateGuard({ targetPath: e.target.value || undefined })'];
+  const requiredSnippets = [
+    "const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';",
+    'const normalizeParameterInferenceTargetPath = (value: unknown): string | undefined => {',
+    'const normalizedGuardTargetPath = normalizeParameterInferenceTargetPath(guard.targetPath);',
+    'targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,',
+    "value={normalizedGuardTargetPath ?? CANONICAL_PARAMETER_INFERENCE_TARGET_PATH}",
+    'readOnly',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        DATABASE_SETTINGS_TAB_FILE,
+        `legacy database-settings target-path edit compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        DATABASE_SETTINGS_TAB_FILE,
+        `missing canonical database-settings target-path edit snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkParameterInferenceTargetPathSanitizationPrune = () => {
+  const aiPathsSettingsUtilsText = readFile(AI_PATHS_SETTINGS_UTILS_FILE);
+  const useAiPathSettingsText = readFile(PRODUCTS_AI_PATH_SETTINGS_FILE);
+
+  const requiredAiPathsSettingsUtilsSnippets = [
+    "targetPath.length > 0 && targetPath !== 'parameters'",
+    'AI Path config contains deprecated parameter inference target path.',
+    "reason: 'deprecated_parameter_inference_target_path'",
+  ];
+  const requiredUseAiPathSettingsSnippets = [
+    "targetPath.length > 0 && targetPath !== 'parameters'",
+    'AI Path config contains deprecated parameter inference target path.',
+    "reason: 'deprecated_parameter_inference_target_path'",
+  ];
+
+  for (const snippet of requiredAiPathsSettingsUtilsSnippets) {
+    if (!aiPathsSettingsUtilsText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SETTINGS_UTILS_FILE,
+        `missing canonical parameter-inference target-path sanitize snippet: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredUseAiPathSettingsSnippets) {
+    if (!useAiPathSettingsText.includes(snippet)) {
+      reportViolation(
+        PRODUCTS_AI_PATH_SETTINGS_FILE,
+        `missing canonical loaded-config parameter-inference target-path sanitize snippet: ${snippet}`
       );
     }
   }
@@ -1157,6 +1546,7 @@ const main = () => {
   checkRuntimeHaltLegacyControlPrune();
   checkTriggerFetcherLegacyMigrationPrune(sourceFiles);
   checkLegacyDbQueryProviderMigrationPrune(sourceFiles);
+  checkDatabaseNodeLegacyProviderNormalizationPrune();
   checkLegacyPortAliasPrune();
   checkPathSaveRawMessageCompatibilityPrune();
   checkRunExecutionMetaCompatibilityPrune();
@@ -1174,14 +1564,24 @@ const main = () => {
   checkValidationPathIndexMetaFallbackCompatibilityPrune();
   checkValidationCollectionMapLegacyDelimiterCompatibilityPrune();
   checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
+  checkSettingsEdgeAliasCompatibilityPrune();
+  checkLoadedPathSettingsEdgeAliasCompatibilityPrune();
   checkDatabaseTemplateCatalogAliasCompatibilityPrune();
   checkDatabaseInputCatalogAliasCompatibilityPrune();
   checkDatabaseProviderFallbackCompatibilityPrune();
   checkDatabaseProviderAliasCompatibilityPrune();
   checkDatabaseUpdateProviderAliasCompatibilityPrune();
   checkDatabaseQueryProviderResponseAliasCompatibilityPrune();
-  checkDbCommandProviderAliasCompatibilityPrune();
+  checkDbActionProviderAliasCompatibilityPrune();
+  checkDbActionRequestAliasCompatibilityPrune();
+  checkDatabaseClientLegacyRouteCompatibilityPrune();
+  checkDbQueryUpdateShimRetirement();
   checkApiClientCsrfCompatibilityAliasPrune();
+  checkDbSchemaProviderAliasCompatibilityPrune();
+  checkEntityUpdateSimpleParametersAliasPrune();
+  checkParameterInferenceTargetPathCompatibilityPrune();
+  checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune();
+  checkParameterInferenceTargetPathSanitizationPrune();
   checkStarterWorkflowEdgeAliasCompatibilityPrune();
 
   if (violations.length > 0) {

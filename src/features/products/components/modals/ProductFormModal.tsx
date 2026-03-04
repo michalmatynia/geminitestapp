@@ -19,13 +19,9 @@ interface ProductFormModalProps extends ModalStateProps {
   validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
 }
 
-function ProductFormModalInner({
-  isOpen,
-  onClose,
-  title,
-  submitButtonText,
-  validationInstanceScopeOverride,
-}: ProductFormModalProps): React.JSX.Element {
+function ProductFormModalInner(props: ProductFormModalProps): React.JSX.Element {
+  const { isOpen, onClose, title, submitButtonText, validationInstanceScopeOverride } = props;
+
   const {
     showFileManager,
     handleMultiFileSelect,

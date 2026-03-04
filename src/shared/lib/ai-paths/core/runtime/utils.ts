@@ -371,7 +371,7 @@ export const buildDbQueryPayload = (
   nodeInputs: RuntimePortValues,
   queryConfig: DbQueryConfig
 ): {
-  query: Record<string, unknown>;
+  filter: Record<string, unknown>;
   projection?: Record<string, unknown>;
   sort?: Record<string, unknown>;
   provider: 'auto' | 'mongodb' | 'prisma';
@@ -431,7 +431,7 @@ export const buildDbQueryPayload = (
   const sort = parseJsonSafe(queryConfig.sort ?? '') as Record<string, unknown> | undefined;
   const collectionMap = getAiPathsCollectionMapFromInputs(nodeInputs);
   return {
-    query,
+    filter: query,
     provider: queryConfig.provider,
     collection: queryConfig.collection,
     ...(collectionMap ? { collectionMap } : {}),
@@ -507,7 +507,7 @@ export const pollDatabaseQuery = async (
     const result: unknown = config.dbQuery.single ? (data.item ?? null) : (data.items ?? []);
     const bundle = {
       count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
-      query: payload.query,
+      query: payload.filter,
       collection: payload.collection,
       attempt: attempt + 1,
     };

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { normalizeAgentPersonas } from '../utils/personas';
 
 describe('normalizeAgentPersonas', () => {
-  it('rejects deprecated capability model snapshot fields', () => {
+  it('rejects unsupported capability model snapshot fields', () => {
     expect(() =>
       normalizeAgentPersonas([
         {
@@ -14,10 +14,10 @@ describe('normalizeAgentPersonas', () => {
           },
         },
       ])
-    ).toThrowError(/deprecated ai snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: executorModel/i);
   });
 
-  it('rejects deprecated top-level persona model snapshot fields', () => {
+  it('rejects unsupported top-level persona model snapshot fields', () => {
     expect(() =>
       normalizeAgentPersonas([
         {
@@ -26,56 +26,10 @@ describe('normalizeAgentPersonas', () => {
           modelId: 'gpt-4.1',
         },
       ])
-    ).toThrowError(/deprecated ai snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: modelId/i);
   });
 
-  it('strips deprecated settings snapshot keys in migration mode', () => {
-    const normalized = normalizeAgentPersonas(
-      [
-        {
-          id: 'persona-legacy-settings',
-          name: 'Legacy Settings Persona',
-          settings: {
-            modelId: 'gpt-4.1',
-            temperature: 0.2,
-            maxTokens: 1200,
-            customInstructions: 'Keep concise',
-          },
-        },
-      ],
-      { stripDeprecatedSnapshotKeys: true }
-    );
-
-    expect(normalized).toHaveLength(1);
-    expect(normalized[0]?.settings).toEqual({
-      customInstructions: 'Keep concise',
-    });
-  });
-
-  it('strips deprecated top-level snapshot keys in migration mode', () => {
-    const normalized = normalizeAgentPersonas(
-      [
-        {
-          id: 'persona-legacy-top-level',
-          name: 'Legacy Top Level Persona',
-          modelId: 'gpt-4.1',
-          temperature: 0.2,
-          maxTokens: 1200,
-          settings: {
-            customInstructions: 'Use factual style',
-          },
-        },
-      ],
-      { stripDeprecatedSnapshotKeys: true }
-    );
-
-    expect(normalized).toHaveLength(1);
-    expect(normalized[0]?.settings).toEqual({
-      customInstructions: 'Use factual style',
-    });
-  });
-
-  it('rejects deprecated persona model snapshot settings', () => {
+  it('rejects unsupported persona model snapshot settings', () => {
     expect(() =>
       normalizeAgentPersonas([
         {
@@ -88,7 +42,7 @@ describe('normalizeAgentPersonas', () => {
           },
         },
       ])
-    ).toThrowError(/deprecated ai snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: modelId, temperature, maxTokens/i);
   });
 
   it('rejects invalid non-array persona payloads', () => {

@@ -1,7 +1,7 @@
 import { JSX, Suspense } from 'react';
 
-import { SlugsPage } from '@/features/cms/public';
-import { LoadingState } from '@/shared/ui';
+import SlugsPage from '@/features/cms/pages/slugs/SlugsPage';
+import { LoadingState } from '@/shared/ui/LoadingState';
 
 export default function Page(): JSX.Element {
   return (

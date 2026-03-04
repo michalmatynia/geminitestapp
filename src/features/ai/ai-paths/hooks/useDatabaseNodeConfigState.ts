@@ -42,8 +42,6 @@ const DEFAULT_QUERY: DbQueryConfig = {
   single: false,
 };
 
-const LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
-
 const normalizeTemplateText = (value: string | undefined | null): string => {
   if (typeof value !== 'string') return '';
   if (!value.includes('\\n') || value.includes('\n')) return value;
@@ -52,37 +50,10 @@ const normalizeTemplateText = (value: string | undefined | null): string => {
   return value.replace(/\\n/g, '\n');
 };
 
-const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>
-  query.provider === 'mongodb' &&
-  query.collection === 'products' &&
-  query.mode === 'preset' &&
-  query.preset === 'by_id' &&
-  query.field === '_id' &&
-  query.idType === 'string' &&
-  query.queryTemplate === LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE &&
-  query.limit === 20 &&
-  query.sort === '' &&
-  query.projection === '' &&
-  query.single === false;
-
-const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
-  const normalizedTemplate = normalizeTemplateText(query.queryTemplate ?? '');
-  if (query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma') {
-    return {
-      ...query,
-      provider: 'auto',
-      queryTemplate: normalizedTemplate,
-    };
-  }
-  if (isLegacyMongoDefaultQuery(query)) {
-    return {
-      ...query,
-      provider: 'auto',
-      queryTemplate: normalizedTemplate,
-    };
-  }
-  return { ...query, queryTemplate: normalizedTemplate };
-};
+const normalizeQueryConfig = (query: DbQueryConfig): DbQueryConfig => ({
+  ...query,
+  queryTemplate: normalizeTemplateText(query.queryTemplate ?? ''),
+});
 
 const mapOperationFromActionCategory = (
   category: DatabaseActionCategory
@@ -141,7 +112,7 @@ export function useDatabaseNodeConfigState() {
     [selectedNode]
   );
   const queryConfig = useMemo(
-    () => normalizeLegacyQueryProvider(databaseConfig.query ?? DEFAULT_QUERY),
+    () => normalizeQueryConfig(databaseConfig.query ?? DEFAULT_QUERY),
     [databaseConfig.query]
   );
 

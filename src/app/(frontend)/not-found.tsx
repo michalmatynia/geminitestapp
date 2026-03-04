@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { JSX } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
 
 export default function FrontendNotFound(): JSX.Element {
   return (

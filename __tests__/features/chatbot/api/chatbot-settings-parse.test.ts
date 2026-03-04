@@ -16,13 +16,13 @@ describe('parseChatbotSettingsPayload', () => {
     expect(parsed.maxSteps).toBe(8);
   });
 
-  it('rejects deprecated agent model snapshot keys', () => {
+  it('rejects unsupported agent model snapshot keys', () => {
     expect(() =>
       parseChatbotSettingsPayload({
         agentModeEnabled: true,
         plannerModel: 'gpt-4o',
       })
-    ).toThrowError(/deprecated agent model snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: plannerModel/i);
   });
 
   it('rejects non-object payloads', () => {

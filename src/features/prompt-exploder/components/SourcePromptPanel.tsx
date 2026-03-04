@@ -14,8 +14,8 @@ export function SourcePromptPanel(): React.JSX.Element {
   const { captureSegmentationRecordOnApply } = useLibraryActions();
   const { runtimeGuardrailIssue, promptExploderSettings } = useSettingsState();
   const { toast } = useToast();
-  const caseResolverCaptureModeLabel =
-    promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_with_heuristics'
+  const caseResolverExtractionModeLabel =
+    promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_with_heuristics'
       ? 'Rules + Heuristics'
       : 'Rules Only';
 
@@ -64,7 +64,7 @@ export function SourcePromptPanel(): React.JSX.Element {
             padding='sm'
             className='border-cyan-500/30 bg-cyan-500/10 text-xs text-cyan-100'
           >
-            Case Resolver capture mode: {caseResolverCaptureModeLabel}
+            Case Resolver extraction mode: {caseResolverExtractionModeLabel}
           </Card>
         ) : null}
         <Textarea

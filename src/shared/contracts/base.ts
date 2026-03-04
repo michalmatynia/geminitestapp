@@ -215,7 +215,7 @@ export interface UpdatePayloadDto<T extends DtoBase> {
 export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
 
 /**
- * Base interface for all entities in the system (legacy support)
+ * Base interface for all entities in the system.
  */
 export interface BaseEntity {
   id: string;
@@ -224,7 +224,7 @@ export interface BaseEntity {
 }
 
 /**
- * Base interface for named entities (legacy support)
+ * Base interface for named entities.
  */
 export interface NamedEntity extends BaseEntity {
   name: string;

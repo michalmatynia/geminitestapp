@@ -41,7 +41,8 @@ const databaseQueryPayloadSchema = z
   .object({
     provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
     collection: z.string().trim().min(1),
-    query: z.record(z.string(), z.unknown()).optional(),
+    filter: z.record(z.string(), z.unknown()).optional(),
+    query: z.never().optional(),
     projection: z.record(z.string(), z.unknown()).optional(),
     sort: z.record(z.string(), z.unknown()).optional(),
     limit: z.number().int().min(1).max(200).optional(),

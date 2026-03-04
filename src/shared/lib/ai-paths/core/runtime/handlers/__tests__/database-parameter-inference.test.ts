@@ -135,6 +135,32 @@ describe('applyParameterInferenceGuard', () => {
     });
   });
 
+  it('blocks deprecated parameter inference target paths outside canonical parameters', () => {
+    const result = applyParameterInferenceGuard({
+      dbConfig: {
+        operation: 'update',
+        parameterInferenceGuard: {
+          enabled: true,
+          targetPath: 'simpleParameters',
+          definitionsPort: 'result',
+          definitionsPath: '',
+          enforceOptionLabels: true,
+          allowUnknownParameterIds: false,
+        },
+      },
+      updates: {
+        simpleParameters: [{ parameterId: 'color', value: 'Blue' }],
+      },
+      templateInputs: {
+        result: [{ id: 'color', selectorType: 'text', optionLabels: [] }],
+      },
+    });
+
+    expect(result.blocked).toBe(true);
+    expect(result.errorMessage).toMatch(/targetPath must use canonical "parameters" path/i);
+    expect(result.updates).toEqual({});
+  });
+
   it('materializes missing definition rows and preserves custom parameters', () => {
     const result = materializeParameterInferenceUpdates({
       targetPath: 'parameters',

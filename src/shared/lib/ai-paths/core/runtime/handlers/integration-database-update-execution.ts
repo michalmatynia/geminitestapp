@@ -44,7 +44,7 @@ const resolveCollectionUpdateContext = ({
   entityType,
 }: ResolveCollectionUpdateContextInput): ResolveCollectionUpdateContextResult => {
   const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
-  const queryFromPayload = isObjectRecord(queryPayload['query']) ? queryPayload['query'] : {};
+  const queryFromPayload = isObjectRecord(queryPayload['filter']) ? queryPayload['filter'] : {};
   const query = queryFromPayload;
   const collection =
     (queryPayload['collection'] as string | undefined)?.trim() ||
@@ -170,7 +170,7 @@ export async function executeDatabaseUpdate({
 
   if (updateStrategy === 'many') {
     const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
-    const queryFromPayload = isObjectRecord(queryPayload['query']) ? queryPayload['query'] : {};
+    const queryFromPayload = isObjectRecord(queryPayload['filter']) ? queryPayload['filter'] : {};
     const query = isCustomPayloadMode && customFilter ? customFilter : queryFromPayload;
     const hasQuery = query && typeof query === 'object' && Object.keys(query).length > 0;
 
@@ -246,8 +246,8 @@ export async function executeDatabaseUpdate({
             provider: queryPayload.provider,
             collection: queryPayload.collection,
             ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            query,
-            updates,
+            filter: query,
+            update: updates,
             single: false,
             ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
           });
@@ -449,8 +449,8 @@ export async function executeDatabaseUpdate({
             provider: queryPayload.provider,
             collection,
             ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            query: resolvedFilter,
-            updates,
+            filter: resolvedFilter,
+            update: updates,
             single: true,
             ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
           });

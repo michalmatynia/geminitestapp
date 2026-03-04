@@ -81,13 +81,16 @@ const matchesCollectionSelection = (
 };
 
 interface SchemaConfig {
-  provider: 'auto' | 'mongodb' | 'prisma' | 'all';
+  provider: 'auto' | 'mongodb' | 'prisma';
   mode: 'all' | 'selected';
   collections: string[];
   includeFields: boolean;
   includeRelations: boolean;
   formatAs: 'json' | 'text';
 }
+
+const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>
+  value === 'mongodb' || value === 'prisma' || value === 'auto' ? value : 'auto';
 
 export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
@@ -104,7 +107,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const browseLimit = 10;
 
   const schemaConfig: SchemaConfig = {
-    provider: selectedNode.config?.db_schema?.provider ?? 'all',
+    provider: normalizeSchemaProvider(selectedNode.config?.db_schema?.provider),
     mode: selectedNode.config?.db_schema?.mode ?? 'all',
     collections: selectedNode.config?.db_schema?.collections ?? [],
     includeFields: selectedNode.config?.db_schema?.includeFields ?? true,
@@ -269,13 +272,12 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 size='sm'
                 value={schemaConfig.provider ?? 'auto'}
                 onValueChange={(value: string) =>
-                  updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })
+                  updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })
                 }
                 options={[
                   { value: 'auto', label: 'Auto (Primary DB)' },
                   { value: 'mongodb', label: 'MongoDB' },
                   { value: 'prisma', label: 'Prisma (PostgreSQL)' },
-                  { value: 'all', label: 'All Providers' },
                 ]}
                 triggerClassName='mt-2 border-border bg-card/70'
               />

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Button } from '@/shared/ui';
+import { Button } from '@/shared/ui/button';
 
 import type { JSX } from 'react';
 

@@ -106,7 +106,7 @@ export function useAiPathsRuntimeState() {
       s === 'skipped' ||
       s === 'timeout'
     ) {
-      return s as AiPathRuntimeNodeStatus;
+      return s;
     }
     return null;
   }, []);

@@ -489,9 +489,9 @@ const evaluateDatabaseRuntime = async ({
   const payload: DbQueryPayload = {
     provider: String(renderedPayload['provider'] ?? 'auto'),
     collection: String(renderedPayload['collection'] ?? ''),
-    query:
-      renderedPayload['query'] && typeof renderedPayload['query'] === 'object'
-        ? renderedPayload['query']
+    filter:
+      renderedPayload['filter'] && typeof renderedPayload['filter'] === 'object'
+        ? renderedPayload['filter']
         : {},
     ...(renderedPayload['projection'] && typeof renderedPayload['projection'] === 'object'
       ? { projection: renderedPayload['projection'] }

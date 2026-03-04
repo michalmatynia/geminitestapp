@@ -25,7 +25,7 @@ describe('validator-runtime-config', () => {
         operation: 'query',
         payload: {
           collection: 'products',
-          query: { sku: 'KEYCHA001' },
+          filter: { sku: 'KEYCHA001' },
           limit: 1,
         },
       }),
@@ -78,6 +78,22 @@ describe('validator-runtime-config', () => {
           operation: 'query',
           collection: 'products',
           query: { sku: 'KEYCHA001' },
+        }),
+      })
+    ).toThrowError(/Invalid database runtimeConfig/i);
+  });
+
+  it('rejects legacy payload.query alias for database runtime config', () => {
+    expect(() =>
+      validateAndNormalizeRuntimeConfig({
+        runtimeEnabled: true,
+        runtimeType: 'database_query',
+        runtimeConfig: JSON.stringify({
+          operation: 'query',
+          payload: {
+            collection: 'products',
+            query: { sku: 'KEYCHA001' },
+          },
         }),
       })
     ).toThrowError(/Invalid database runtimeConfig/i);

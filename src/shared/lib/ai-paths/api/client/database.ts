@@ -24,7 +24,7 @@ export type DbQueryPayload = {
   provider: string;
   collection: string;
   collectionMap?: Record<string, string>;
-  query: unknown;
+  filter: unknown;
   projection?: unknown;
   sort?: unknown;
   limit?: number;
@@ -36,8 +36,8 @@ export type DbUpdatePayload = {
   provider: string;
   collection: string;
   collectionMap?: Record<string, string>;
-  query: unknown;
-  updates: unknown;
+  filter: unknown;
+  update: unknown;
   single?: boolean;
   idType?: string;
 };
@@ -54,11 +54,37 @@ export async function databaseAction<T>(payload: DbActionPayload): Promise<ApiRe
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/ai-paths/db-query', payload);
+  const provider =
+    payload.provider === 'auto' || payload.provider === 'mongodb' || payload.provider === 'prisma'
+      ? payload.provider
+      : undefined;
+  return apiPost<T>('/api/ai-paths/db-action', {
+    ...(provider ? { provider } : {}),
+    collection: payload.collection,
+    ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
+    action: payload.single ? 'findOne' : 'find',
+    filter: payload.filter,
+    ...(payload.projection !== undefined ? { projection: payload.projection } : {}),
+    ...(payload.sort !== undefined ? { sort: payload.sort } : {}),
+    ...(payload.limit !== undefined ? { limit: payload.limit } : {}),
+    ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+  });
 }
 
 export async function databaseUpdate<T>(payload: DbUpdatePayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/ai-paths/db-update', payload);
+  const provider =
+    payload.provider === 'auto' || payload.provider === 'mongodb' || payload.provider === 'prisma'
+      ? payload.provider
+      : undefined;
+  return apiPost<T>('/api/ai-paths/db-action', {
+    ...(provider ? { provider } : {}),
+    collection: payload.collection,
+    ...(payload.collectionMap ? { collectionMap: payload.collectionMap } : {}),
+    action: payload.single === false ? 'updateMany' : 'updateOne',
+    filter: payload.filter,
+    update: payload.update,
+    ...(payload.idType !== undefined ? { idType: payload.idType } : {}),
+  });
 }
 
 export async function entityUpdate<T>(payload: EntityUpdatePayload): Promise<ApiResponse<T>> {

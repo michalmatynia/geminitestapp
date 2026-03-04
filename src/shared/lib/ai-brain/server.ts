@@ -44,6 +44,37 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
+const writePrismaSettingValue = async (key: string, value: string): Promise<boolean> => {
+  if (!canUsePrismaSettings()) return false;
+  await prisma.setting.upsert({
+    where: { key },
+    update: { value },
+    create: { key, value },
+  });
+  return true;
+};
+
+const writeMongoSettingValue = async (key: string, value: string): Promise<boolean> => {
+  if (!process.env['MONGODB_URI']) return false;
+  const mongo = await getMongoDb();
+  await mongo.collection<SettingDoc>('settings').updateOne(
+    {
+      $or: [{ _id: key }, { key }],
+    },
+    {
+      $set: {
+        key,
+        value,
+      },
+      $setOnInsert: {
+        _id: key,
+      },
+    },
+    { upsert: true }
+  );
+  return true;
+};
+
 let cachedBrainSettingsValue: string | null = null;
 let lastBrainSettingsFetchAt = 0;
 const BRAIN_SETTINGS_TTL_MS = 30000; // 30 seconds
@@ -89,6 +120,41 @@ export const readStoredSettingValue = async (key: string): Promise<string | null
   }
 
   return value;
+};
+
+export const upsertStoredSettingValue = async (key: string, value: string): Promise<boolean> => {
+  const provider =
+    typeof getAppDbProvider === 'function'
+      ? await Promise.resolve(getAppDbProvider()).catch(() => null)
+      : null;
+
+  const tryPrisma = async (): Promise<boolean> => {
+    try {
+      return await writePrismaSettingValue(key, value);
+    } catch {
+      return false;
+    }
+  };
+
+  const tryMongo = async (): Promise<boolean> => {
+    try {
+      return await writeMongoSettingValue(key, value);
+    } catch {
+      return false;
+    }
+  };
+
+  const persisted =
+    provider === 'mongodb'
+      ? (await tryMongo()) || (await tryPrisma())
+      : (await tryPrisma()) || (await tryMongo());
+
+  if (persisted && key === AI_BRAIN_SETTINGS_KEY) {
+    cachedBrainSettingsValue = value;
+    lastBrainSettingsFetchAt = Date.now();
+  }
+
+  return persisted;
 };
 
 const readBrainSettingValue = readStoredSettingValue;

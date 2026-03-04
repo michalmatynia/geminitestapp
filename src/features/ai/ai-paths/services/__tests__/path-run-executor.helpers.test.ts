@@ -21,7 +21,7 @@ describe('parseRuntimeState', () => {
           runId: 'legacy-run-id',
         })
       )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+    ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects legacy runtime identity fields nested in runtime events', () => {
@@ -45,7 +45,7 @@ describe('parseRuntimeState', () => {
           outputs: {},
         })
       )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+    ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects legacy runtime identity fields nested in runtime history entries', () => {
@@ -79,7 +79,7 @@ describe('parseRuntimeState', () => {
           },
         })
       )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+    ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('accepts canonical runtime payloads with currentRun identity', () => {

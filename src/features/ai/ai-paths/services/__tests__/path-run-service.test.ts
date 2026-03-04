@@ -6,6 +6,7 @@ const {
   getPathRunRepositoryMock,
   enqueuePathRunJobMock,
   removePathRunQueueEntriesMock,
+  scheduleLocalFallbackRunMock,
   recordRuntimeRunQueuedMock,
   recordRuntimeRunFinishedMock,
   captureExceptionMock,
@@ -14,6 +15,7 @@ const {
   getPathRunRepositoryMock: vi.fn(),
   enqueuePathRunJobMock: vi.fn(),
   removePathRunQueueEntriesMock: vi.fn(),
+  scheduleLocalFallbackRunMock: vi.fn(),
   recordRuntimeRunQueuedMock: vi.fn(),
   recordRuntimeRunFinishedMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -29,6 +31,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
 vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: enqueuePathRunJobMock,
   removePathRunQueueEntries: removePathRunQueueEntriesMock,
+  scheduleLocalFallbackRun: scheduleLocalFallbackRunMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
@@ -54,6 +57,9 @@ describe('path-run-service enqueuePathRun', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    delete process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'];
+    delete process.env['AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK'];
+    delete process.env['AI_PATHS_LOCAL_FALLBACK_GRACE_MS'];
   });
 
   it('rejects legacy node identities instead of repairing them during enqueue', async () => {
@@ -134,6 +140,7 @@ describe('path-run-service enqueuePathRun', () => {
     expect(listRunsMock).not.toHaveBeenCalled();
     expect(createRunNodesMock).toHaveBeenCalledWith('run-1', config.nodes);
     expect(enqueuePathRunJobMock).toHaveBeenCalledWith('run-1', undefined);
+    expect(scheduleLocalFallbackRunMock).toHaveBeenCalledWith('run-1', 1500);
     expect(createRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         graph: {
@@ -192,5 +199,40 @@ describe('path-run-service enqueuePathRun', () => {
       })
     );
     expect(createRunMock).not.toHaveBeenCalled();
+  });
+
+  it('does not schedule local fallback when durable queue is explicitly required', async () => {
+    process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] = 'true';
+    const config = createDefaultPathConfig('path_durable_queue');
+    getPathRunRepositoryMock.mockResolvedValue({
+      listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
+      createRun: vi.fn().mockResolvedValue({
+        id: 'run-durable',
+        pathId: config.id,
+        status: 'queued',
+        startedAt: null,
+        meta: null,
+      }),
+      createRunNodes: vi.fn().mockResolvedValue(undefined),
+      createRunEvent: vi.fn().mockResolvedValue(undefined),
+      updateRunIfStatus: vi.fn().mockResolvedValue(null),
+    });
+    enqueuePathRunJobMock.mockResolvedValue(undefined);
+    recordRuntimeRunQueuedMock.mockResolvedValue(undefined);
+
+    const { enqueuePathRun } = await loadModule();
+    await enqueuePathRun({
+      pathId: config.id,
+      pathName: config.name,
+      nodes: config.nodes,
+      edges: config.edges,
+      meta: {
+        aiPathsValidation: {
+          enabled: false,
+        },
+      },
+    });
+
+    expect(scheduleLocalFallbackRunMock).not.toHaveBeenCalled();
   });
 });

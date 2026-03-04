@@ -44,7 +44,7 @@ describe('mongo product repository mappers', () => {
         catalogId: 'catalog-1',
         published: false,
       } as unknown as WithId<ProductDocument>)
-    ).toThrowError(/Legacy product description document shape is no longer supported/);
+    ).toThrowError(/Product description payload includes unsupported object shape\./);
   });
 
   it('rejects legacy category relation fallback when categoryId is missing', () => {
@@ -58,7 +58,7 @@ describe('mongo product repository mappers', () => {
         catalogId: 'catalog-1',
         published: false,
       } as unknown as WithId<ProductDocument>)
-    ).toThrowError(/Legacy product category document shape is no longer supported/);
+    ).toThrowError(/Product categories payload includes unsupported fields\./);
   });
 
   it('rejects legacy category relation field even when categoryId is present', () => {
@@ -73,7 +73,7 @@ describe('mongo product repository mappers', () => {
         catalogId: 'catalog-1',
         published: false,
       } as unknown as WithId<ProductDocument>)
-    ).toThrowError(/Legacy product category document shape is no longer supported/);
+    ).toThrowError(/Product categories payload includes unsupported fields\./);
   });
 
   it('rejects non-string categoryId payloads', () => {
@@ -122,7 +122,7 @@ describe('mongo product repository mappers', () => {
           },
         ],
       } as unknown as WithId<ProductDocument>)
-    ).toThrowError(/Legacy product producer relation shape is no longer supported/);
+    ).toThrowError(/Product producer relation payload includes unsupported fields\./);
   });
 
   it('rejects legacy tag relation keys instead of reconstructing tag relations', () => {
@@ -142,7 +142,7 @@ describe('mongo product repository mappers', () => {
           },
         ],
       } as unknown as WithId<ProductDocument>)
-    ).toThrowError(/Legacy product tag relation shape is no longer supported/);
+    ).toThrowError(/Product tag relation payload includes unsupported fields\./);
   });
 
   it('rejects producer relations missing canonical required fields', () => {

@@ -81,7 +81,7 @@ export async function handleDatabaseMongoAction({
     };
   }
 
-  const filter = queryPayload['query'] ?? {};
+  const filter = queryPayload['filter'] ?? {};
   const projection = queryPayload['projection'];
   const sort = queryPayload['sort'];
   const limit = queryPayload['limit'];

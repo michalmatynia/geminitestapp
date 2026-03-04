@@ -1,5 +1,7 @@
 'use client';
 
+import { useCallback, useEffect } from 'react';
+
 import type { DatabaseConfig } from '@/shared/lib/ai-paths';
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
@@ -7,6 +9,17 @@ import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';
+
+const normalizeParameterInferenceTargetPath = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed === CANONICAL_PARAMETER_INFERENCE_TARGET_PATH
+    ? trimmed
+    : CANONICAL_PARAMETER_INFERENCE_TARGET_PATH;
+};
 
 export function DatabaseSettingsTab(): React.JSX.Element | null {
   const { availablePorts, bundleKeys, operation } = useDatabaseConstructorContext();
@@ -18,12 +31,29 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   const writeSource = databaseConfig.writeSource ?? 'bundle';
   const onZeroAffectedPolicy = databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail';
   const guard = databaseConfig.parameterInferenceGuard ?? {};
-  const updateGuard = (
-    patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>
-  ): void =>
-    updateSelectedNodeConfig({
-      database: { ...databaseConfig, parameterInferenceGuard: { ...guard, ...patch } },
-    });
+  const updateGuard = useCallback(
+    (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void => {
+      const nextTargetPath = normalizeParameterInferenceTargetPath(patch.targetPath);
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          parameterInferenceGuard: {
+            ...guard,
+            ...patch,
+            ...(patch.targetPath !== undefined ? { targetPath: nextTargetPath } : {}),
+          },
+        },
+      });
+    },
+    [databaseConfig, guard, updateSelectedNodeConfig]
+  );
+  const normalizedGuardTargetPath = normalizeParameterInferenceTargetPath(guard.targetPath);
+
+  useEffect((): void => {
+    if (!guard.enabled) return;
+    if (normalizedGuardTargetPath === CANONICAL_PARAMETER_INFERENCE_TARGET_PATH) return;
+    updateGuard({ targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH });
+  }, [guard.enabled, normalizedGuardTargetPath, updateGuard]);
 
   return (
     <div className='space-y-4'>
@@ -193,7 +223,16 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               type='button'
               variant={guard.enabled ? 'success' : 'default'}
               size='xs'
-              onClick={(): void => updateGuard({ enabled: !guard.enabled })}
+              onClick={(): void =>
+                updateGuard(
+                  guard.enabled
+                    ? { enabled: false }
+                    : {
+                        enabled: true,
+                        targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,
+                      }
+                )
+              }
             >
               {guard.enabled ? 'Enabled' : 'Disabled'}
             </Button>
@@ -208,11 +247,9 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 <Input
                   variant='subtle'
                   size='sm'
-                  value={guard.targetPath ?? ''}
+                  value={normalizedGuardTargetPath ?? CANONICAL_PARAMETER_INFERENCE_TARGET_PATH}
                   placeholder='parameters'
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    updateGuard({ targetPath: e.target.value || undefined })
-                  }
+                  readOnly
                 />
               </FormField>
 

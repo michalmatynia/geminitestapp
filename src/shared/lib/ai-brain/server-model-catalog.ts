@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type {
+  AiBrainProviderCatalog,
   BrainModelDescriptor,
   BrainModelFamily,
   BrainModelModality,
@@ -11,6 +12,8 @@ import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   defaultBrainProviderCatalog,
   parseBrainProviderCatalog,
+  sanitizeBrainProviderCatalog,
+  toPersistedBrainProviderCatalog,
 } from './settings';
 import { catalogToEntries, entriesToCatalogArrays } from './catalog-entries';
 import {
@@ -20,7 +23,7 @@ import {
   supportsBrainStreaming,
 } from './server-runtime-client';
 import { resolveOllamaBaseUrl } from './ollama-config';
-import { readStoredSettingValue } from './server';
+import { readStoredSettingValue, upsertStoredSettingValue } from './server';
 
 const OLLAMA_BASE_URL = resolveOllamaBaseUrl();
 const OLLAMA_MODELS_TIMEOUT_MS = 4_500;
@@ -30,6 +33,8 @@ type ListBrainModelsOptions = {
   modality?: BrainModelModality;
   streaming?: boolean;
 };
+
+type CatalogRepairStatus = 'reset' | null;
 
 const normalizeUnique = (values: string[]): string[] => {
   const seen = new Set<string>();
@@ -113,6 +118,18 @@ const parseDiscoveredModelIds = (payload: unknown): string[] => {
   });
 
   return normalizeUnique([...fromOllamaTags, ...fromOpenAiCompatible]);
+};
+
+const resetProviderCatalog = async (): Promise<{
+  catalog: AiBrainProviderCatalog;
+  status: CatalogRepairStatus;
+}> => {
+  const fallback = sanitizeBrainProviderCatalog(defaultBrainProviderCatalog);
+  await upsertStoredSettingValue(
+    AI_BRAIN_PROVIDER_CATALOG_KEY,
+    JSON.stringify(toPersistedBrainProviderCatalog(fallback))
+  );
+  return { catalog: fallback, status: 'reset' };
 };
 
 const fetchModelsFromUrl = async (url: string): Promise<string[] | null> => {
@@ -205,9 +222,18 @@ export const listBrainModels = async (
   options: ListBrainModelsOptions = {}
 ): Promise<BrainModelsResponse> => {
   const providerCatalogRaw = await readStoredSettingValue(AI_BRAIN_PROVIDER_CATALOG_KEY);
-  const providerCatalog = providerCatalogRaw?.trim().length
-    ? parseBrainProviderCatalog(providerCatalogRaw)
-    : defaultBrainProviderCatalog;
+  let providerCatalog = defaultBrainProviderCatalog;
+  let providerCatalogRepairStatus: CatalogRepairStatus = null;
+
+  if (providerCatalogRaw?.trim().length) {
+    try {
+      providerCatalog = parseBrainProviderCatalog(providerCatalogRaw);
+    } catch {
+      const repaired = await resetProviderCatalog();
+      providerCatalog = repaired.catalog;
+      providerCatalogRepairStatus = repaired.status;
+    }
+  }
   const liveOllamaModels = await fetchLiveOllamaModels();
   const catalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
 
@@ -254,8 +280,21 @@ export const listBrainModels = async (
             'If OLLAMA_BASE_URL includes /v1, set it to the host root (for example http://localhost:11434).',
       }
       : undefined;
-
-  const warning = ollamaWarning;
+  const catalogRepairWarning =
+    providerCatalogRepairStatus === 'reset'
+      ? {
+        code: 'PROVIDER_CATALOG_RESET',
+        message:
+            'AI Brain provider catalog payload was invalid and has been reset to canonical defaults.',
+      }
+      : undefined;
+  const warning =
+    catalogRepairWarning && ollamaWarning
+      ? {
+        code: `${catalogRepairWarning.code}+${ollamaWarning.code}`,
+        message: `${catalogRepairWarning.message} ${ollamaWarning.message}`,
+      }
+      : catalogRepairWarning ?? ollamaWarning;
 
   return {
     models: filteredModels,

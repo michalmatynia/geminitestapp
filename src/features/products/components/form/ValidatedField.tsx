@@ -23,16 +23,12 @@ interface ValidatedFieldProps {
   unit?: string;
 }
 
-export const ValidatedField = memo(function ValidatedField({
-  name,
-  label,
-  placeholder,
-  type = 'input',
-  step,
-  required: isRequired,
-  rows,
-  unit,
-}: ValidatedFieldProps): React.JSX.Element {
+export const ValidatedField = memo(function ValidatedField(
+  props: ValidatedFieldProps
+): React.JSX.Element {
+  const { name, label, placeholder, type = 'input', step, required: isRequired, rows, unit } =
+    props;
+
   const { register, watch } = useFormContext<ProductFormData>();
   const { errors } = useProductFormCore();
   const { validatorEnabled, visibleFieldIssues } = useProductValidationState();

@@ -92,6 +92,23 @@ describe('sanitizePathConfig', () => {
     expect(sanitized.edges[0]).toMatchObject(config.edges[0] as Edge);
   });
 
+  it('rejects alias-only edge fields instead of accepting legacy edge shape', () => {
+    const config = createDefaultPathConfig('path-alias-only-edge-shape');
+    const fromNode = config.nodes[0]!;
+    const toNode = config.nodes[1]!;
+    config.edges = [
+      {
+        id: 'edge-legacy-alias-shape',
+        source: fromNode.id,
+        target: toNode.id,
+        sourceHandle: 'entityJson',
+        targetHandle: 'entityJson',
+      },
+    ] as unknown as Edge[];
+
+    expect(() => sanitizePathConfig(config)).toThrowError(/invalid or non-canonical edges/i);
+  });
+
   it('rejects legacy trigger data ports instead of migrating them', () => {
     const config = {
       ...buildConfig([
@@ -132,11 +149,11 @@ describe('sanitizePathConfig', () => {
     } as PathConfig;
 
     expect(() => sanitizePathConfig(config)).toThrowError(
-      /Legacy AI Paths trigger data (outputs|edges) are no longer supported/i
+      /AI Path config contains unsupported trigger (output ports|data edges)\./i
     );
   });
 
-  it('rejects deprecated database schemaSnapshot in path configs', () => {
+  it('rejects unsupported database schemaSnapshot in path configs', () => {
     const config = createDefaultPathConfig('path-db-schema-snapshot');
     config.nodes = config.nodes.map(
       (node: AiNode): AiNode =>
@@ -157,10 +174,10 @@ describe('sanitizePathConfig', () => {
           : node
     );
 
-    expect(() => sanitizePathConfig(config)).toThrowError(/deprecated database schemaSnapshot/i);
+    expect(() => sanitizePathConfig(config)).toThrowError(/unsupported database schemaSnapshot/i);
   });
 
-  it('rejects deprecated database query provider \"all\" in path configs', () => {
+  it('rejects unsupported database query provider \"all\" in path configs', () => {
     const config = createDefaultPathConfig('path-db-provider-all');
     config.nodes = config.nodes.map(
       (node: AiNode): AiNode =>
@@ -181,7 +198,33 @@ describe('sanitizePathConfig', () => {
     );
 
     expect(() => sanitizePathConfig(config)).toThrowError(
-      /deprecated database query provider \"all\"/i
+      /unsupported database query provider \"all\"/i
+    );
+  });
+
+  it('rejects deprecated parameter inference target path aliases in path configs', () => {
+    const config = createDefaultPathConfig('path-parameter-target-alias');
+    config.nodes = config.nodes.map(
+      (node: AiNode): AiNode =>
+        node.type === 'database'
+          ? {
+              ...node,
+              config: {
+                ...(node.config ?? {}),
+                database: {
+                  operation: 'update',
+                  parameterInferenceGuard: {
+                    enabled: true,
+                    targetPath: 'simpleParameters',
+                  },
+                },
+              },
+            }
+          : node
+    );
+
+    expect(() => sanitizePathConfig(config)).toThrowError(
+      /deprecated parameter inference target path/i
     );
   });
 
@@ -292,7 +335,7 @@ describe('sanitizePathConfig', () => {
           runId: 'legacy-run-id',
         })
       )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+    ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects nested legacy runtime identity fields in runtime state payloads', () => {
@@ -334,7 +377,7 @@ describe('sanitizePathConfig', () => {
           outputs: {},
         })
       )
-    ).toThrowError(/Legacy AI Paths runtime identity fields are no longer supported/i);
+    ).toThrowError(/AI Paths runtime state payload includes unsupported identity fields\./i);
   });
 
   it('rejects legacy runtime identity fields while sanitizing path configs', () => {
@@ -354,7 +397,7 @@ describe('sanitizePathConfig', () => {
     } as PathConfig;
 
     expect(() => sanitizePathConfig(config)).toThrowError(
-      /Legacy AI Paths runtime identity fields are no longer supported/i
+      /AI Paths runtime state payload includes unsupported identity fields\./i
     );
   });
 

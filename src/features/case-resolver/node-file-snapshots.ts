@@ -55,7 +55,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
   );
   if (unexpectedKeys.length > 0) {
     throw validationError(
-      'Legacy Case Resolver node-file snapshot fields are no longer supported.',
+      'Case Resolver node-file snapshot payload includes unsupported fields.',
       {
         source: 'case_resolver.node_file_snapshot',
         unexpectedKeys,

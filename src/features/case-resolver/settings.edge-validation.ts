@@ -13,8 +13,7 @@ const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([
   'createdAt',
   'updatedAt',
 ]);
-const LEGACY_CASE_RESOLVER_EDGE_KEYS = new Set(['from', 'to', 'fromPort', 'toPort']);
-const LEGACY_CASE_RESOLVER_PORTS = new Set(['textfield', 'content']);
+const FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES = new Set(['textfield', 'content']);
 
 const buildInvalidCaseResolverEdgeError = (
   message: string,
@@ -39,15 +38,10 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
     (key: string): boolean => !CANONICAL_CASE_RESOLVER_EDGE_KEYS.has(key)
   );
   if (unsupportedKeys.length > 0) {
-    const legacyKeys = unsupportedKeys.filter((key: string): boolean =>
-      LEGACY_CASE_RESOLVER_EDGE_KEYS.has(key)
-    );
     throw buildInvalidCaseResolverEdgeError(
-      legacyKeys.length > 0
-        ? 'Legacy Case Resolver edge fields are no longer supported.'
-        : 'Case Resolver edge payload includes unsupported fields.',
+      'Case Resolver edge payload includes unsupported fields.',
       context,
-      legacyKeys.length > 0 ? { legacyKeys } : { unsupportedKeys }
+      { unsupportedKeys }
     );
   }
 
@@ -81,11 +75,11 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
   const sourceHandle = normalizeHandle(edge.sourceHandle);
   const targetHandle = normalizeHandle(edge.targetHandle);
   if (
-    (sourceHandle !== null && LEGACY_CASE_RESOLVER_PORTS.has(sourceHandle)) ||
-    (targetHandle !== null && LEGACY_CASE_RESOLVER_PORTS.has(targetHandle))
+    (sourceHandle !== null && FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES.has(sourceHandle)) ||
+    (targetHandle !== null && FORBIDDEN_CASE_RESOLVER_EDGE_HANDLE_NAMES.has(targetHandle))
   ) {
     throw buildInvalidCaseResolverEdgeError(
-      'Legacy Case Resolver edge port names are no longer supported.',
+      'Case Resolver edge payload includes unsupported handle names.',
       context,
       {
         edgeId: edge.id,

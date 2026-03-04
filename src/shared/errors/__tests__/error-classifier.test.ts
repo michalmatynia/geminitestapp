@@ -6,37 +6,43 @@ import { classifyError, getSuggestedActions } from '@/shared/errors/error-classi
 
 describe('error-classifier', () => {
   it('classifies validation AppError before message keyword matching', () => {
-    const error = validationError('Agent persona settings contain deprecated AI snapshot keys.');
+    const error = validationError(
+      'Agent persona settings payload includes unsupported keys: plannerModel.'
+    );
 
     expect(classifyError(error)).toBe(ERROR_CATEGORY.VALIDATION);
   });
 
   it('does not suggest AI prompt fixes for validation AppError containing "AI" text', () => {
-    const error = validationError('Agent persona settings contain deprecated AI snapshot keys.');
+    const error = validationError(
+      'Agent persona settings payload includes unsupported keys: plannerModel.'
+    );
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(actions[0]?.label).toBe('Update Persona Settings');
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
 
-  it('suggests dedicated image studio action for deprecated snapshot settings payloads', () => {
-    const error = validationError('Image Studio settings contain deprecated AI snapshot keys.');
+  it('suggests dedicated image studio action for unsupported-key settings payloads', () => {
+    const error = validationError(
+      'Image Studio settings payload includes unsupported keys: targetAi.openai.model.'
+    );
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(actions[0]?.label).toBe('Update Image Studio Settings');
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
 
-  it('falls back to generic settings-contract guidance for unknown deprecated snapshot sources', () => {
-    const error = validationError('Some module contains deprecated AI snapshot keys.');
+  it('falls back to generic settings-contract guidance for unknown unsupported-key sources', () => {
+    const error = validationError('Some module includes unsupported keys: oldModel.');
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(actions[0]?.label).toBe('Check Settings Contract');
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
 
-  it('treats deprecated snapshot key errors as validation even when thrown as plain Error', () => {
-    const error = new Error('Agent persona settings contain deprecated AI snapshot keys.');
+  it('treats unsupported-key errors as validation even when thrown as plain Error', () => {
+    const error = new Error('Agent persona settings payload includes unsupported keys: plannerModel.');
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(classifyError(error)).toBe(ERROR_CATEGORY.VALIDATION);

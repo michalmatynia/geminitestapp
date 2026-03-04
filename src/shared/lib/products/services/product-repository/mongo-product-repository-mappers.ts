@@ -48,7 +48,7 @@ const assertNoLegacyLocalizedShape = (
   productId: string
 ): void => {
   if (value === undefined || value === null) return;
-  throw validationError(`Legacy product ${field} document shape is no longer supported.`, {
+  throw validationError(`Product ${field} payload includes unsupported object shape.`, {
     productId,
     field,
   });
@@ -83,7 +83,7 @@ const buildCanonicalLocalizedField = (scalar: {
 
 const resolveCanonicalCategoryId = (doc: ProductDocument, productId: string): string | null => {
   if (doc.categories !== undefined && doc.categories !== null) {
-    throw validationError('Legacy product category document shape is no longer supported.', {
+    throw validationError('Product categories payload includes unsupported fields.', {
       productId,
       field: 'categories',
     });
@@ -182,7 +182,7 @@ const normalizeProducerRelations = (
       (key: string): boolean => key in record
     );
     if (legacyKeys.length > 0) {
-      throw validationError('Legacy product producer relation shape is no longer supported.', {
+      throw validationError('Product producer relation payload includes unsupported fields.', {
         productId: rootProductId,
         field: 'producers',
         index,
@@ -253,7 +253,7 @@ const normalizeTagRelations = (
       (key: string): boolean => key in record
     );
     if (legacyKeys.length > 0) {
-      throw validationError('Legacy product tag relation shape is no longer supported.', {
+      throw validationError('Product tag relation payload includes unsupported fields.', {
         productId: rootProductId,
         field: 'tags',
         index,

@@ -152,8 +152,7 @@ describe('validator-pattern routes', () => {
             payload: {
               provider: 'auto',
               collection: 'product_categories',
-              single: true,
-              query: { name: '[nameEnSegment4]' },
+              filter: { name: '[nameEnSegment4]' },
             },
             resultPath: 'item',
             operator: 'truthy',
@@ -259,8 +258,7 @@ describe('validator-pattern routes', () => {
             payload: {
               provider: 'auto',
               collection: 'product_categories',
-              single: true,
-              query: { name: '[nameEnSegment4]' },
+              filter: { name: '[nameEnSegment4]' },
             },
             resultPath: 'item',
             operator: 'truthy',
@@ -300,8 +298,7 @@ describe('validator-pattern routes', () => {
         payload: {
           provider: 'auto',
           collection: 'product_categories',
-          single: true,
-          query: { name: '[nameEnSegment4]' },
+          filter: { name: '[nameEnSegment4]' },
         },
         resultPath: 'item',
         operator: 'truthy',

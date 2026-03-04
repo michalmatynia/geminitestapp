@@ -278,7 +278,7 @@ describe('CaseResolverNodeFileWorkspace', () => {
 
   it('surfaces keyed snapshot validation failures instead of silently loading defaults', async () => {
     fetchCaseResolverNodeFileSnapshotMock.mockRejectedValueOnce(
-      new Error('Legacy Case Resolver node-file snapshot fields are no longer supported.')
+      new Error('Case Resolver node-file snapshot payload includes unsupported fields.')
     );
 
     render(<CaseResolverNodeFileWorkspace />);
@@ -286,7 +286,7 @@ describe('CaseResolverNodeFileWorkspace', () => {
     await waitFor(() => {
       expect(screen.getByText('Invalid node file snapshot')).toBeInTheDocument();
       expect(
-        screen.getByText('Legacy Case Resolver node-file snapshot fields are no longer supported.')
+        screen.getByText('Case Resolver node-file snapshot payload includes unsupported fields.')
       ).toBeInTheDocument();
       expect(screen.queryByTestId('canvas-board')).not.toBeInTheDocument();
     });

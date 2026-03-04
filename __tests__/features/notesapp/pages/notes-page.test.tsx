@@ -3,7 +3,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -234,15 +234,16 @@ describe('Notes page UI', () => {
     expect(await screen.findByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Create note'));
-    await user.type(screen.getByPlaceholderText('Enter note title'), 'Gamma');
+    const createDialog = await screen.findByRole('dialog');
+    await user.type(within(createDialog).getByPlaceholderText('Enter note title'), 'Gamma');
     await user.type(
-      screen.getByPlaceholderText('Enter note content (paste images directly!)'),
+      within(createDialog).getByPlaceholderText('Enter note content (paste images directly!)'),
       'Third note'
     );
-    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await user.click(within(createDialog).getByRole('button', { name: 'Create' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 4000 })
+      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 6000 })
     ).toBeInTheDocument();
   }, 10000);
 

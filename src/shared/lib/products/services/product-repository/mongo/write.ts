@@ -79,7 +79,6 @@ export const mongoProductWriteImpl = {
         updatedAt: now,
       },
     };
-    const legacyUnset: Record<string, ''> = {};
 
     if (data.sku !== undefined) updates.$set.sku = data.sku;
     if (data.baseProductId !== undefined) updates.$set.baseProductId = data.baseProductId;
@@ -91,28 +90,22 @@ export const mongoProductWriteImpl = {
 
     if (data.name_en !== undefined) {
       updates.$set.name_en = data.name_en;
-      legacyUnset['name'] = '';
     }
     if (data.name_pl !== undefined) {
       updates.$set.name_pl = data.name_pl;
-      legacyUnset['name'] = '';
     }
     if (data.name_de !== undefined) {
       updates.$set.name_de = data.name_de;
-      legacyUnset['name'] = '';
     }
 
     if (data.description_en !== undefined) {
       updates.$set.description_en = data.description_en;
-      legacyUnset['description'] = '';
     }
     if (data.description_pl !== undefined) {
       updates.$set.description_pl = data.description_pl;
-      legacyUnset['description'] = '';
     }
     if (data.description_de !== undefined) {
       updates.$set.description_de = data.description_de;
-      legacyUnset['description'] = '';
     }
 
     if (data.supplierName !== undefined) updates.$set.supplierName = data.supplierName;
@@ -126,16 +119,12 @@ export const mongoProductWriteImpl = {
     if (data.length !== undefined) updates.$set.length = data.length;
     if (data.categoryId !== undefined) {
       updates.$set.categoryId = data.categoryId;
-      legacyUnset['categories'] = '';
     }
     if (data.parameters !== undefined)
       updates.$set.parameters = normalizeProductParameterValues(data.parameters);
     if (data.imageLinks !== undefined) updates.$set.imageLinks = data.imageLinks;
     if (data.imageBase64s !== undefined) updates.$set.imageBase64s = data.imageBase64s;
     if (data.noteIds !== undefined) updates.$set.noteIds = data.noteIds;
-    if (Object.keys(legacyUnset).length > 0) {
-      updates.$unset = legacyUnset;
-    }
 
     const result = await collection.findOneAndUpdate(filter, updates, {
       returnDocument: 'after',

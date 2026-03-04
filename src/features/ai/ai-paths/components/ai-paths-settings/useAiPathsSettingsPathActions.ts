@@ -132,8 +132,16 @@ export function useAiPathsSettingsPathActions({
         return sanitizePathConfig(config);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const errorMeta =
+          typeof error === 'object' && error !== null && 'meta' in error
+            ? (error as { meta?: unknown }).meta
+            : null;
+        const errorReason =
+          errorMeta && typeof errorMeta === 'object' && !Array.isArray(errorMeta)
+            ? (errorMeta as Record<string, unknown>)['reason']
+            : null;
         const shouldRetryWithEmptyRuntime =
-          message.includes('Legacy AI Paths runtime identity fields are no longer supported') ||
+          errorReason === 'deprecated_runtime_identity_fields' ||
           message.includes('Invalid AI Paths runtime state payload');
         if (!shouldRetryWithEmptyRuntime) {
           throw error;

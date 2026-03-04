@@ -231,7 +231,7 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `src/features/ai/ai-paths/services/path-run-executor/index.ts`
   - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/segments/useLocalExecutionLoop.ts`
 - Added runtime regression coverage:
-  - `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-compat.test.ts`
+  - `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-canonical.test.ts`
   - verifies canonical `onHalt` invocation and blocks legacy `control.onHalt` behavior.
 - Extended canonical AI-path guardrails:
   - `scripts/ai-paths/check-canonical.mjs` now blocks reintroduction of legacy halt compatibility snippets in `src/shared/lib/ai-paths/core/runtime/engine-core.ts`.
@@ -994,6 +994,828 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
 - Validation:
   - `npx vitest run src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts` passes.
   - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 73 (AI Paths Settings Edge-Shape Alias Compatibility Prune)
+
+- Removed legacy edge-shape alias fallback reads from AI Paths settings sanitization:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `assertNoLegacyTriggerDataGraph` edge-source extraction now reads canonical edge fields only:
+    - `from`
+    - `fromPort`
+  - removed fallback reads of legacy alias fields:
+    - `source`
+    - `sourceHandle`
+- Added regression coverage:
+  - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+  - verifies alias-only edge payloads (`source`/`target`/`sourceHandle`/`targetHandle`) are rejected as non-canonical.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkSettingsEdgeAliasCompatibilityPrune`) now:
+    - blocks reintroduction of settings edge alias fallback snippets.
+    - requires canonical `from` / `fromPort` edge parsing snippets in settings sanitization.
+- Validation:
+  - `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 74 (AI Paths Database Client Legacy Route Compatibility Prune)
+
+- Removed legacy DB query/update route usage from AI Paths API database client:
+  - `src/shared/lib/ai-paths/api/client/database.ts`
+  - `databaseQuery` now maps payloads directly to canonical `/api/ai-paths/db-action` with:
+    - `action: 'find' | 'findOne'`
+  - `databaseUpdate` now maps payloads directly to canonical `/api/ai-paths/db-action` with:
+    - `action: 'updateOne' | 'updateMany'`
+  - retained provider normalization to canonical enum-only payload forwarding (`auto`/`mongodb`/`prisma`).
+- Added regression coverage:
+  - `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+  - verifies:
+    - query mapping to canonical db-action payload shape.
+    - update mapping to canonical db-action payload shape.
+    - invalid provider values are dropped from outgoing payload.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDatabaseClientLegacyRouteCompatibilityPrune`) now:
+    - blocks reintroduction of `/api/ai-paths/db-query` and `/api/ai-paths/db-update` usage in runtime database client.
+    - requires canonical db-action routing snippets for query/update mapping.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 75 (Site-Wide Compatibility Test Filename Prune + Guardrail)
+
+- Completed canonical naming migration for remaining compatibility-named runtime tests:
+  - `src/app/api/v2/metadata/handler.compat.test.ts`
+    -> `src/app/api/v2/metadata/handler.canonical.test.ts`
+  - `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-compat.test.ts`
+    -> `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-canonical.test.ts`
+- Aligned canonical contract wording in renamed tests:
+  - `src/app/api/v2/metadata/handler.canonical.test.ts`
+    - suite title updated to canonical-contract naming.
+    - legacy envelope rejection case wording updated to deprecated-wrapper naming.
+  - `src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-canonical.test.ts`
+    - deprecated callback case wording updated after filename migration.
+- Updated migration docs references to canonical test filenames:
+  - `docs/ai-paths/ai-paths-modernization-playbook-2026-03-04.md`
+  - `docs/canonical-migration-inventory-2026-03-04.md`
+- Extended site-wide canonical guardrail:
+  - `scripts/canonical/check-sitewide.mjs`
+  - new check blocks reintroduction of `*.compat.test.ts(x)` files under `src/**`.
+- Validation:
+  - `npx vitest run src/app/api/v2/metadata/handler.canonical.test.ts src/shared/lib/ai-paths/core/runtime/__tests__/engine-core.on-halt-canonical.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 76 (AI Paths DB Query/Update Shim Route Retirement)
+
+- Removed legacy DB query/update shim endpoints that only proxied into DB action command handling:
+  - deleted `src/app/api/ai-paths/db-query/handler.ts`
+  - deleted `src/app/api/ai-paths/db-query/route.ts`
+  - deleted `src/app/api/ai-paths/db-update/handler.ts`
+  - deleted `src/app/api/ai-paths/db-update/route.ts`
+- Migrated fallback API coverage to canonical DB action handler payloads:
+  - `src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts`
+  - fallback/update-path tests now execute through canonical `/api/ai-paths/db-action` request payloads (`action`, `filter`, `update`) instead of shim payload fields (`query`, `updates`, `single`).
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkDbQueryUpdateShimRetirement`) now:
+    - blocks reintroduction of DB query/update shim route files.
+    - requires canonical DB action route files to remain present.
+- Validation:
+  - `npx vitest run src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 77 (CMS Theme Color-Scheme Alias Compatibility Prune)
+
+- Removed legacy alias payload acceptance from page-builder theme scheme parsing:
+  - `src/features/cms/components/page-builder/theme/theme-utils.ts`
+  - `parseColorSchemePayload` now accepts canonical scheme payload shape only:
+    - `name`
+    - `colors.background`
+    - `colors.surface`
+    - `colors.text`
+    - `colors.accent`
+    - `colors.border`
+  - removed legacy alias support:
+    - top-level aliases: `schemeName`, `title`
+    - container aliases: `palette`, `scheme`
+    - color-key aliases: `bg`, `layer`, `card`, `foreground`, `primary`, `outline`
+- Removed text-fallback alias label parsing in theme AI preview parsing:
+  - `src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx`
+  - `parseSchemeFromText` now reads canonical labels only:
+    - `name`, `background`, `surface`, `text`, `accent`, `border`
+  - removed legacy label aliases:
+    - `scheme`, `title`, `bg`, `card`, `layer`, `foreground`, `primary`, `outline`
+- Added regression coverage:
+  - `src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts`
+  - verifies canonical payload parsing and rejection of legacy alias payload shape.
+- Extended CMS runtime prune guardrails:
+  - `src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts`
+  - blocks reintroduction of theme color-scheme alias parsing snippets in runtime source.
+- Validation:
+  - `npx vitest run src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts` passes.
+  - `npx vitest run src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 78 (Root Test-Suite Compat Filename Prune + Guardrail Expansion)
+
+- Removed remaining compatibility filename from root test suite:
+  - `__tests__/shared/lib/query-factories-compat.test.tsx`
+    -> `__tests__/shared/lib/query-factories-v2-behavior.test.tsx`
+  - suite remains focused on canonical `query-factories-v2` behavior coverage.
+- Expanded site-wide compatibility test filename guard:
+  - `scripts/canonical/check-sitewide.mjs`
+  - guard now scans both:
+    - `src/**`
+    - `__tests__/**`
+  - and blocks reintroduction of `*.compat.test.ts(x)` in either tree.
+- Validation:
+  - `npx vitest run __tests__/shared/lib/query-factories-v2.test.tsx __tests__/shared/lib/query-factories-v2-behavior.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 79 (AI Paths DB-Command Handler Path Retirement)
+
+- Retired legacy DB-command implementation module path in favor of canonical DB-action handler path:
+  - moved implementation from:
+    - `src/app/api/ai-paths/db-command/handler.ts`
+  - to:
+    - `src/app/api/ai-paths/db-action/handler.ts`
+  - deleted legacy module file:
+    - `src/app/api/ai-paths/db-command/handler.ts`
+- Preserved route contract in canonical handler module:
+  - `src/app/api/ai-paths/db-action/handler.ts`
+  - added `POST_handler` export delegating to `postAiPathsDbActionHandler` so route wiring remains stable.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - provider-metadata contract check now targets canonical `db-action/handler.ts`.
+  - shim-retirement guard now also blocks reintroduction of `src/app/api/ai-paths/db-command/handler.ts`.
+- Validation:
+  - `npx vitest run src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 80 (CMS Theme AI Text Fallback Parsing Compatibility Prune)
+
+- Removed runtime regex/text fallback parsing from theme AI output handling:
+  - `src/features/cms/components/page-builder/theme/ThemeColorsContext.tsx`
+  - removed inline `parseSchemeFromText` fallback parser branch.
+  - theme AI preview/apply parsing now uses canonical utility parsing only.
+- Added canonical text-parser utility for theme AI outputs:
+  - `src/features/cms/components/page-builder/theme/theme-utils.ts`
+  - `parseColorSchemeFromText` now:
+    - extracts JSON content with `extractJsonBlock`,
+    - parses JSON payload,
+    - validates payload via canonical `parseColorSchemePayload`.
+  - non-JSON free-text key/value payloads are now rejected (no runtime regex fallback).
+- Extended regression coverage:
+  - `src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts`
+  - now verifies canonical JSON text parsing and rejection of non-JSON text fallback parsing.
+- Extended CMS runtime prune guardrails:
+  - `src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts`
+  - blocks reintroduction of regex text-fallback parser snippets (`pickFromText`, regex-fallback comment marker).
+- Validation:
+  - `npx vitest run src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts` passes.
+  - `npx vitest run src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 81 (Mongo Product Shape Guard Canonical Naming Alignment)
+
+- Renamed remaining legacy-named integration shape guard test:
+  - `__tests__/features/products/services/mongo-product-legacy-shape-guard.test.ts`
+    -> `__tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts`
+- Renamed shape-guard test toggle to canonical naming:
+  - `RUN_MONGO_PRODUCT_LEGACY_SHAPE_GUARD`
+    -> `RUN_MONGO_PRODUCT_CANONICAL_SHAPE_GUARD`
+- Renamed package integration command to canonical naming:
+  - `package.json`
+  - `test:integration:mongo:legacy-shape-guard`
+    -> `test:integration:mongo:canonical-shape-guard`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - guard now also blocks reintroduction of the removed legacy test filename pattern:
+    - `mongo-product-legacy-shape-guard.test.ts(x)`
+- Validation:
+  - `npx vitest run --project integration-mongo __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts` passes (guard test remains env-gated when toggle is unset).
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 82 (AI Paths DB-Action Request Alias Compatibility Prune)
+
+- Removed legacy DB-action request alias acceptance from canonical handler contract:
+  - `src/app/api/ai-paths/db-action/handler.ts`
+  - schema now rejects legacy alias keys:
+    - `query`
+    - `updates`
+  - handler runtime now reads canonical payload fields only:
+    - `filter` for query predicates
+    - `update` for write payloads
+  - removed alias fallbacks (`filter || query`, `update || updates`) across Prisma and MongoDB execution branches.
+- Updated canonical DB-action client mapping:
+  - `src/shared/lib/ai-paths/api/client/database.ts`
+  - `databaseQuery` now maps canonical `DbQueryPayload.query` input to DB-action request key `filter`.
+- Updated regression coverage to canonical request key shape:
+  - `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+  - `__tests__/features/ai/ai-paths/api/db-query.test.ts`
+  - DB-action route tests now post to canonical route URL and canonical request key `filter`.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added DB-action request contract check to:
+    - block reintroduction of alias schema/runtime fallback snippets (`query`/`updates` compatibility).
+    - require canonical `z.never()` alias rejection + canonical `filter`/`update` runtime snippets.
+  - strengthened database-client route guard to:
+    - block reintroduction of `query: payload.query` in outgoing DB-action payloads.
+    - require canonical `filter: payload.query` mapping.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts __tests__/features/ai/ai-paths/api/db-query.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 83 (CMS Theme AI Strict JSON-Only Text Parsing Hard-Cut)
+
+- Removed embedded/fenced JSON extraction compatibility from theme AI text parser:
+  - `src/features/cms/components/page-builder/theme/theme-utils.ts`
+  - removed `extractJsonBlock` helper path from runtime parsing flow.
+  - `parseColorSchemeFromText` now accepts only strict JSON text (`JSON.parse(trimmed)`), then validates with canonical `parseColorSchemePayload`.
+- Updated canonical regression coverage:
+  - `src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts`
+  - canonical text parsing test now uses strict JSON input.
+  - added rejection test for markdown-fenced JSON payload text.
+- Extended CMS runtime prune guardrails:
+  - `src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts`
+  - now blocks reintroduction of embedded/fenced JSON extraction snippets:
+    - fenced regex matcher
+    - brace-slice extraction (`indexOf('{')` / `lastIndexOf('}')`)
+    - `extractJsonBlock(trimmed)`
+- Validation:
+  - `npx vitest run src/features/cms/components/page-builder/theme/__tests__/theme-utils.test.ts` passes.
+  - `npx vitest run src/features/cms/migrations/__tests__/page-builder-runtime-prune.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 84 (Category-Mapper Select Cell Compatibility Prop Prune)
+
+- Removed dead compatibility prop from runtime category-mapper select cell:
+  - `src/features/integrations/components/marketplaces/category-mapper/category-table/CategoryMapperSelectCell.tsx`
+  - deleted unused prop:
+    - `datalistId?: string`
+- Updated regression coverage to canonical prop surface:
+  - `src/features/integrations/components/marketplaces/category-mapper/category-table/__tests__/CategoryMapperSelectCell.test.tsx`
+  - removed deprecated `datalistId` prop usage from render fixtures.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of the removed select-cell compatibility prop token:
+    - `datalistId?: string;`
+- Validation:
+  - `npx vitest run src/features/integrations/components/marketplaces/category-mapper/category-table/__tests__/CategoryMapperSelectCell.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 85 (AI Paths DB Client Query/Update Payload Contract Canonicalization)
+
+- Canonicalized AI Paths database client request payload types:
+  - `src/shared/lib/ai-paths/api/client/database.ts`
+  - `DbQueryPayload` now exposes canonical `filter` (removed legacy `query` field).
+  - `DbUpdatePayload` now exposes canonical `filter` + `update` (removed legacy `query` / `updates` fields).
+  - `databaseQuery` and `databaseUpdate` now forward canonical payload keys only.
+- Propagated canonical payload shape through runtime helpers and API call sites:
+  - `src/shared/lib/ai-paths/core/runtime/utils.ts`
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-operation.ts`
+  - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-actions.ts`
+  - `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsSamples.ts`
+  - `src/app/api/v2/products/validator-runtime/evaluate/handler.ts`
+- Updated regression expectations for canonical query payload forwarding:
+  - `src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts`
+  - `__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts`
+- Extended canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - database-client route compatibility guard now:
+    - blocks reintroduction of legacy `DbQueryPayload.query` / `DbUpdatePayload.query|updates` contract snippets.
+    - requires canonical `DbQueryPayload.filter` and `DbUpdatePayload.filter|update` snippets.
+    - blocks reintroduction of legacy payload forwarding snippets (`query: payload.query`, `update: payload.updates`).
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/api/__tests__/database-client.canonical.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts __tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts __tests__/features/ai/ai-paths/api/db-query.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 86 (AI Brain Provider-Catalog Runtime Migration Fallback Prune)
+
+- Removed runtime provider-catalog migration fallback that accepted legacy pool-array payloads:
+  - `src/shared/lib/ai-brain/server-model-catalog.ts`
+  - deleted runtime extraction/migration branch that rebuilt `entries` from legacy pool keys.
+  - provider-catalog recovery now supports only canonical reset behavior on invalid payloads.
+- Preserved strict canonical runtime handling:
+  - parse path remains canonical-only via `parseBrainProviderCatalog` (`entries` contract).
+  - invalid payload path (including legacy pool-array keys) now resets to canonical defaults only.
+  - removed migrated-warning branch:
+    - `PROVIDER_CATALOG_MIGRATED`
+    - legacy migration message text.
+- Updated regression coverage:
+  - `src/shared/lib/ai-brain/__tests__/server-model-catalog.test.ts`
+  - legacy pool-array payload case now asserts reset warning (`PROVIDER_CATALOG_RESET`) and canonical upsert payload.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of provider-catalog runtime migration warning tokens:
+    - `PROVIDER_CATALOG_MIGRATED`
+    - `contained legacy payload fields and was migrated to canonical entries[]`
+- Validation:
+  - `npx vitest run src/shared/lib/ai-brain/__tests__/server-model-catalog.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 87 (Products Paged Route Handler-Import Canonical Guardrail)
+
+- Added canonical import guardrail for products paged route handler path:
+  - `scripts/canonical/check-sitewide.mjs`
+  - guard now enforces canonical local handler import in:
+    - `src/app/api/v2/products/paged/route.ts`
+  - blocks reintroduction of removed alias import path snippet:
+    - `@/app/api/products/paged/handler`
+  - requires canonical snippet:
+    - `import { GET_handler } from './handler';`
+- Guardrail motivation:
+  - prevents recurrence of module-resolution regressions from stale alias import paths after canonical route cutover.
+- Validation:
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 88 (Shared Base-Contract Legacy Marker Cleanup)
+
+- Removed stale legacy marker text from shared base contracts:
+  - `src/shared/contracts/base.ts`
+  - removed `(legacy support)` marker from:
+    - `BaseEntity` doc comment
+    - `NamedEntity` doc comment
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of the removed legacy marker token:
+    - `(legacy support)`
+- Validation:
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 89 (Prompt Exploder Settings Deprecated-AI-Keys Compatibility Channel Prune)
+
+- Removed legacy-specific Prompt Exploder settings validation error channel:
+  - `src/features/prompt-exploder/settings.ts`
+  - deleted `deprecated_ai_keys` error code and deprecated-key payload field surface (`deprecatedKeys`).
+  - removed `deprecatedAiKeysError` branch and migrated AI payload key validation to canonical invalid-shape semantics.
+- Enforced canonical AI payload-shape rejection under generic contract:
+  - `src/features/prompt-exploder/settings.ts`
+  - non-canonical AI keys now fail with:
+    - `code: 'invalid_shape'`
+    - message detail: `ai contains unsupported keys: ...`
+- Updated regression coverage:
+  - `src/features/prompt-exploder/__tests__/settings.test.ts`
+  - `__tests__/features/prompt-exploder/settings.test.ts`
+  - `__tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx`
+  - updated assertions now verify canonical invalid-shape error behavior and message surface.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - added Prompt Exploder parser guard to:
+    - block reintroduction of deprecated-ai-keys compatibility snippets in `src/features/prompt-exploder/settings.ts`.
+    - require canonical unsupported-AI-keys invalid-shape snippet.
+- Validation:
+  - `npx vitest run src/features/prompt-exploder/__tests__/settings.test.ts __tests__/features/prompt-exploder/settings.test.ts __tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 90 (Mongo Product Write Legacy Cleanup Branch Prune)
+
+- Removed runtime legacy cleanup branch from Mongo product update writes:
+  - `src/shared/lib/products/services/product-repository/mongo/write.ts`
+  - deleted `legacyUnset` branch that unset legacy fields during canonical updates:
+    - `name`
+    - `description`
+    - `categories`
+- Runtime write behavior is now canonical-only:
+  - update pipeline writes canonical scalar/category fields without legacy-shape cleanup side effects.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of Mongo write legacy cleanup snippet:
+    - `legacyUnset['name'] = ''`
+- Validation:
+  - `npx vitest run src/shared/lib/products/services/productService.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 91 (Prompt Exploder Legacy Capture-Mode Contract Surface Prune)
+
+- Removed unused legacy Prompt Exploder capture-mode contract schema/type surface:
+  - `src/shared/contracts/prompt-exploder/settings.ts`
+  - deleted `promptExploderCaseResolverCaptureModeSchema` (`manual|assisted|fully-auto`) and `PromptExploderCaseResolverCaptureMode` type export.
+- Pruned stale re-export/import edges for removed legacy contract type:
+  - `src/shared/contracts/prompt-exploder/case-resolver.ts`
+  - removed `PromptExploderCaseResolverCaptureMode` re-export from settings.
+  - `src/features/prompt-exploder/types.ts`
+  - removed dead import/export of `PromptExploderCaseResolverCaptureMode`.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - added Prompt Exploder settings parser guard to:
+    - block reintroduction of legacy capture-mode schema token:
+      - `promptExploderCaseResolverCaptureModeSchema`
+    - block reintroduction of removed legacy capture-mode enum token:
+      - `'fully-auto'`
+- Validation:
+  - `npx vitest run src/features/prompt-exploder/__tests__/settings.test.ts __tests__/features/prompt-exploder/settings.test.ts __tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 92 (Validator Runtime DB Payload Alias Prune)
+
+- Canonicalized validator runtime DB payload schema to canonical `filter` only:
+  - `src/features/products/validations/validator-runtime-config.ts`
+  - removed legacy alias acceptance surface for `payload.query`.
+  - schema now explicitly rejects the alias key with `query: z.never().optional()`.
+- Updated validator runtime regressions and prune guard:
+  - `__tests__/features/products/validations/validator-runtime-config.test.ts`
+  - `src/features/products/validations/__tests__/runtime-prune.test.ts`
+  - added rejection coverage for legacy `payload.query` and guard snippets blocking evaluator/schema alias fallback reintroduction.
+- Updated runtime placeholder guidance to canonical payload keys:
+  - `src/features/products/components/settings/validator-settings/modal/ValidatorPatternModalRuntimeSection.tsx`
+  - placeholder now documents `payload.filter` and `replacementPaths`.
+- Validation:
+  - `npx vitest run __tests__/features/products/validations/validator-runtime-config.test.ts src/features/products/validations/__tests__/runtime-prune.test.ts` passes.
+  - `npm run typecheck` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
+## Executed Item 93 (AI Paths DB-Schema Provider Alias Prune)
+
+- Removed deprecated DB-schema provider alias (`all`) from AI Paths node-config UI contract:
+  - `src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx`
+  - canonical provider contract now allows only: `auto | mongodb | prisma`.
+  - removed `All Providers` selector option.
+  - added canonical provider normalization helper that coerces stale non-canonical values to `auto`.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added DB-schema provider contract check that:
+    - blocks reintroduction of provider type/selector alias snippets for `all`.
+    - requires canonical enum-only provider contract and normalization snippets.
+- Validation:
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 94 (Case Resolver Edge Legacy-Specific Error Channel Prune)
+
+- Removed legacy-specific edge-validation error channels from Case Resolver canonical edge parsing:
+  - `src/features/case-resolver/settings.edge-validation.ts`
+  - unsupported edge fields now always fail under canonical unsupported-field semantics:
+    - `Case Resolver edge payload includes unsupported fields.`
+  - unsupported legacy handle names now fail under canonical unsupported-handle semantics:
+    - `Case Resolver edge payload includes unsupported handle names.`
+- Updated regression coverage for canonical edge parser error contract:
+  - `src/features/case-resolver/__tests__/nodefile-persistence.test.ts`
+  - `src/features/case-resolver/__tests__/workspace.test.ts`
+  - legacy edge-key cases now assert canonical unsupported-field error message.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific edge error messages:
+    - `Legacy Case Resolver edge fields are no longer supported.`
+    - `Legacy Case Resolver edge port names are no longer supported.`
+- Validation:
+  - `npx vitest run src/features/case-resolver/__tests__/nodefile-persistence.test.ts src/features/case-resolver/__tests__/workspace.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 95 (Prompt Exploder Runtime Key Canonicalization: Extraction-Mode Naming Cutover)
+
+- Canonicalized Prompt Exploder runtime Case Resolver mode key naming:
+  - `src/shared/contracts/prompt-exploder/settings.ts`
+  - renamed runtime settings key:
+    - `caseResolverCaptureMode`
+    -> `caseResolverExtractionMode`
+- Updated Prompt Exploder runtime/UI call sites to canonical key:
+  - `src/features/prompt-exploder/pages/AdminPromptExploderSettingsPage.tsx`
+  - `src/features/prompt-exploder/components/SourcePromptPanel.tsx`
+  - `src/features/prompt-exploder/components/PatternRuntimePanel.tsx`
+  - `src/features/prompt-exploder/context/DocumentContext.tsx`
+  - UI labels updated to canonical extraction-mode wording.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - added Prompt Exploder extraction-mode key canonicalization guard that:
+    - requires canonical key snippet in shared contract settings:
+      - `caseResolverExtractionMode`
+    - blocks reintroduction of legacy key snippet under Prompt Exploder runtime/contract surfaces:
+      - `caseResolverCaptureMode`
+- Validation:
+  - `npx vitest run src/features/prompt-exploder/__tests__/settings.test.ts __tests__/features/prompt-exploder/settings.test.ts __tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 96 (Case Resolver Node-File Snapshot Legacy-Specific Error Channel Prune)
+
+- Removed legacy-specific node-file snapshot parser error channel:
+  - `src/features/case-resolver/node-file-snapshots.ts`
+  - unexpected snapshot fields now fail under canonical unsupported-field semantics:
+    - `Case Resolver node-file snapshot payload includes unsupported fields.`
+- Updated canonical regression assertions across node-file snapshot parser consumers:
+  - `src/features/case-resolver/__tests__/nodefile-persistence.test.ts`
+  - `src/features/case-resolver/__tests__/workspace.test.ts`
+  - `src/features/case-resolver/__tests__/case-resolver-node-file-workspace.test.tsx`
+  - assertions now target canonical unsupported-field message instead of legacy-specific wording.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific snapshot parser message:
+    - `Legacy Case Resolver node-file snapshot fields are no longer supported.`
+- Validation:
+  - `npx vitest run src/features/case-resolver/__tests__/nodefile-persistence.test.ts src/features/case-resolver/__tests__/workspace.test.ts src/features/case-resolver/__tests__/case-resolver-node-file-workspace.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 97 (AI Paths Database Node Query-Provider Normalization Branch Prune)
+
+- Removed legacy query-provider migration normalization branch from database node config state:
+  - `src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts`
+  - deleted legacy helper/constants:
+    - `LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE`
+    - `isLegacyMongoDefaultQuery`
+    - `normalizeLegacyQueryProvider`
+  - query config normalization is now canonical-only:
+    - `normalizeQueryConfig` only normalizes escaped template newlines in `queryTemplate`.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkDatabaseNodeLegacyProviderNormalizationPrune` to:
+    - block reintroduction of removed legacy provider/default-query normalization snippets.
+    - require canonical `normalizeQueryConfig` snippet usage in hook state derivation.
+- Validation:
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 98 (AI Brain Provider-Catalog Legacy Pool-Array Error Channel Prune)
+
+- Removed legacy-specific provider-catalog pool-array error channel from AI Brain settings parser:
+  - `src/shared/lib/ai-brain/settings.ts`
+  - deleted legacy-only branch keyed by:
+    - `reason: 'legacy_pool_keys_not_supported'`
+    - migration message:
+      - `Legacy pool arrays are no longer supported. Re-save AI Brain provider catalog using canonical entries[].`
+- Canonical parser behavior now rejects legacy pool-array payload keys via existing generic unsupported-key path:
+  - `reason: 'unknown_keys'`
+  - no legacy-specific compatibility messaging branch remains in runtime parser.
+- Resolved residual TS6133 typecheck issue from previous execution item:
+  - removed now-unused `BRAIN_CATALOG_POOL_VALUES` import in `src/shared/lib/ai-brain/settings.ts`.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed AI Brain provider-catalog legacy pool-array error-channel snippets.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-brain/__tests__/settings.test.ts src/shared/lib/ai-brain/__tests__/server-model-catalog.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 99 (Case Resolver Inline Node-File Snapshot Legacy Error Channel Prune)
+
+- Removed legacy-specific inline node-file snapshot persistence error channel:
+  - `src/features/case-resolver/workspace-persistence-save.ts`
+  - message now uses canonical unsupported semantics:
+    - `Case Resolver inline node-file snapshots are unsupported.`
+  - reason channel now uses canonical identifier:
+    - `inline_node_file_snapshot_not_supported`
+- Updated regression coverage for persist/compaction error surfaces:
+  - `src/features/case-resolver/__tests__/workspace-persistence.test.ts`
+  - `src/features/case-resolver/__tests__/nodefile-persistence.test.ts`
+  - assertions now target canonical unsupported-message semantics.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific inline snapshot message and reason token:
+    - `Legacy inline Case Resolver node-file snapshots are no longer supported.`
+    - `legacy_inline_node_file_snapshot`
+- Validation:
+  - `npx vitest run src/features/case-resolver/__tests__/workspace-persistence.test.ts src/features/case-resolver/__tests__/nodefile-persistence.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 100 (Chatbot Settings Deprecated-Agent-Keys Error Channel Prune)
+
+- Removed legacy-specific chatbot settings validation error channel:
+  - `src/shared/contracts/chatbot.ts`
+  - deleted `deprecated_agent_model_keys` code path and `deprecatedKeys` field from `ChatbotSettingsValidationError`.
+- Enforced canonical unsupported-key rejection semantics under generic invalid-shape contract:
+  - `src/shared/contracts/chatbot.ts`
+  - unsupported chatbot agent-model snapshot keys now fail with:
+    - `code: 'invalid_shape'`
+    - message detail: `Chatbot settings payload includes unsupported keys: ...`
+- Updated regression coverage:
+  - `__tests__/features/chatbot/api/chatbot-settings-parse.test.ts`
+  - assertions now target canonical unsupported-key invalid-shape messaging.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - added chatbot settings contract guard that:
+    - blocks reintroduction of deprecated-agent-keys compatibility snippets in `src/shared/contracts/chatbot.ts`.
+    - requires canonical unsupported-keys snippet.
+- Validation:
+  - `npx vitest run __tests__/features/chatbot/api/chatbot-settings-parse.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 101 (AI Paths Entity-Update Legacy Simple-Parameters Alias Prune)
+
+- Removed legacy `simpleParameters` compatibility inference branch from AI Paths entity-update API:
+  - `src/app/api/ai-paths/update/handler.ts`
+  - deleted legacy helper/constants and merge path:
+    - `LEGACY_SIMPLE_PARAMETER_PREFIX`
+    - `normalizeLegacySimpleParameterUpdates`
+    - `normalizeExistingParameterValues`
+    - `mergeLegacySimpleParameterInferenceWithExisting`
+  - canonical product-update contract now explicitly rejects legacy alias usage:
+    - `updates.simpleParameters` -> bad-request with canonical guidance to use `updates.parameters`.
+- Updated API regression coverage:
+  - `__tests__/features/ai/ai-paths/api/update-handler.test.ts`
+  - now asserts deprecated `simpleParameters` payload is rejected and no product write is attempted.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkEntityUpdateSimpleParametersAliasPrune` to:
+    - block reintroduction of legacy alias merge/inference snippets in entity-update handler.
+    - require canonical explicit rejection snippet and guidance message.
+- Validation:
+  - `npx vitest run __tests__/features/ai/ai-paths/api/update-handler.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 102 (Product Repository Mapper Legacy Error Channel Prune)
+
+- Removed legacy-specific product mapper error channels from Mongo product repository response normalization:
+  - `src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.ts`
+  - canonical unsupported-shape semantics now surface:
+    - `Product <field> payload includes unsupported object shape.`
+    - `Product categories payload includes unsupported fields.`
+    - `Product producer relation payload includes unsupported fields.`
+    - `Product tag relation payload includes unsupported fields.`
+- Updated mapper regression assertions:
+  - `src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts`
+  - legacy-specific error-message expectations now target canonical unsupported-shape wording.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific product mapper error-message snippets.
+- Validation:
+  - `npx vitest run src/shared/lib/products/services/product-repository/__tests__/mongo-product-repository-mappers.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 103 (AI Paths Parameter-Inference Target-Path Compatibility Prune)
+
+- Enforced canonical parameter-inference target path in runtime update guard logic:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts`
+  - `applyParameterInferenceGuard` now blocks non-canonical `parameterInferenceGuard.targetPath` values.
+  - canonical allowed target path is now explicit:
+    - `parameters`
+  - non-canonical target-path configs are blocked with canonical runtime error channel:
+    - `Parameter inference guard targetPath must use canonical "parameters" path.`
+- Updated runtime regression coverage:
+  - `src/shared/lib/ai-paths/core/runtime/handlers/__tests__/database-parameter-inference.test.ts`
+  - added coverage that deprecated `targetPath: 'simpleParameters'` is blocked and dropped from outgoing updates.
+  - `__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts`
+  - removed deprecated simple-parameters config usage in update-flow test fixture and aligned to canonical `parameters` target path.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkParameterInferenceTargetPathCompatibilityPrune` to:
+    - require canonical target-path rejection snippets in runtime inference guard source.
+    - block legacy target-path compatibility snippet patterns from reintroduction.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/runtime/handlers/__tests__/database-parameter-inference.test.ts __tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 104 (AI Paths Parameter-Inference Target-Path UI/Sanitizer Canonicalization Prune)
+
+- Enforced canonical parameter-inference target path at edit-time in DB node settings UI:
+  - `src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx`
+  - introduced canonical target-path constant and normalizer:
+    - `CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters'`
+  - guard enable flow now writes canonical target path explicitly.
+  - non-canonical loaded guard target paths are auto-corrected to canonical via edit-time effect.
+  - target-path field is now read-only and pinned to canonical `parameters`.
+- Enforced canonical target-path rejection in both path-config sanitizers:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/products/hooks/useAiPathSettings.ts`
+  - both now reject non-canonical `parameterInferenceGuard.targetPath` values with:
+    - `AI Path config contains deprecated parameter inference target path.`
+    - reason: `deprecated_parameter_inference_target_path`
+- Updated regression coverage:
+  - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+  - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+  - added coverage that `targetPath: 'simpleParameters'` is rejected by both sanitizers.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added:
+    - `checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune`
+    - `checkParameterInferenceTargetPathSanitizationPrune`
+  - guardrails now enforce canonical UI edit-time target-path behavior and sanitizer rejection snippets.
+- Validation:
+  - `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 105 (Filemaker Settings Parser Legacy Error Channel Prune)
+
+- Removed legacy-specific Filemaker settings parser error channels:
+  - `src/features/filemaker/filemaker-settings.database.ts`
+  - canonical unsupported-shape semantics now surface for:
+    - unsupported payload version
+    - deprecated `fullAddress` payloads
+    - inline address payloads
+    - inline person/organization phoneNumbers payloads
+    - inline person/organization email payloads
+- Updated Filemaker parser regression assertions to canonical unsupported-shape messages:
+  - `src/features/filemaker/__tests__/settings.test.ts`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific Filemaker parser error-message snippets.
+- Validation:
+  - `npx vitest run src/features/filemaker/__tests__/settings.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` was deferred in this step due unrelated pre-existing worktree drift in:
+    - `scripts/db/migrate-agent-personas-snapshot-keys-v2.ts` (`TS2554: Expected 1 arguments, but got 2`)
+
+## Executed Item 106 (Agent Personas Runtime Snapshot-Key Compatibility Hard-Cut)
+
+- Removed runtime snapshot-key stripping compatibility from Agent Personas parsing:
+  - `src/features/ai/agentcreator/utils/personas.ts`
+  - `normalizeAgentPersonas` now rejects unsupported snapshot keys unconditionally.
+  - `fetchAgentPersonas` now uses strict canonical normalization (no runtime strip migration mode).
+- Kept snapshot-key migration behavior in script-only surface:
+  - `scripts/db/migrate-agent-personas-snapshot-keys-v2.ts`
+  - added script-local payload sanitization that strips unsupported snapshot keys before strict canonical normalization.
+- Updated Agent Personas parser regression coverage to canonical strict behavior:
+  - `src/features/ai/agentcreator/__tests__/personas.test.ts`
+  - removed migration-mode strip assertions.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of `stripDeprecatedSnapshotKeys` in runtime Agent Personas utils and requires strict fetch normalization snippet.
+- Validation:
+  - `npx vitest run src/features/ai/agentcreator/__tests__/personas.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 107 (Image Studio Runtime Snapshot-Key Compatibility Hard-Cut)
+
+- Removed runtime snapshot-key stripping compatibility from Image Studio settings parser:
+  - `src/features/ai/image-studio/utils/studio-settings.ts`
+  - `parseImageStudioSettings` now rejects deprecated snapshot fields via canonical unsupported-keys validation:
+    - `Image Studio settings payload includes unsupported keys: ...`
+  - `parsePersistedImageStudioSettings` now uses strict canonical parsing (no runtime strip mode).
+- Kept snapshot-key migration behavior in script-only surface:
+  - `scripts/db/migrate-image-studio-settings-contract-v2.ts`
+  - added script-local payload sanitization to strip deprecated snapshot fields before strict canonical parsing.
+- Updated Image Studio parser + classifier coverage:
+  - `src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts`
+  - `src/shared/errors/__tests__/error-classifier.test.ts`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of deprecated Image Studio snapshot-key parser snippets and requires strict persisted parser snippet.
+- Validation:
+  - `npx vitest run src/features/ai/image-studio/utils/__tests__/studio-settings.test.ts src/shared/errors/__tests__/error-classifier.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 108 (AI Paths Runtime-Identity + Trigger-Data Legacy Error Channel Prune)
+
+- Removed legacy-specific AI Paths runtime-state identity rejection channel:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/ai/ai-paths/services/path-run-executor.helpers.ts`
+  - canonical runtime-state unsupported semantics now surface:
+    - `AI Paths runtime state payload includes unsupported identity fields.`
+- Removed legacy-specific AI Paths trigger-data rejection channels:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/products/hooks/useAiPathSettings.ts`
+  - canonical config unsupported semantics now surface:
+    - `AI Path config contains unsupported trigger output ports.`
+    - `AI Path config contains unsupported trigger data edges.`
+- Updated AI Paths path-switch runtime fallback detection to canonical reason-based logic:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts`
+  - fallback now detects runtime-identity incompatibility via `meta.reason === 'deprecated_runtime_identity_fields'` instead of legacy-specific message text.
+- Updated regression coverage:
+  - `src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts`
+  - `src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts`
+  - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+  - `src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of removed legacy-specific AI Paths runtime-identity/trigger-data error-message snippets.
+- Validation:
+  - `npx vitest run src/features/ai/ai-paths/services/__tests__/path-run-executor.helpers.test.ts src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts src/features/ai/ai-paths/components/ai-paths-settings/__tests__/useAiPathsSettingsPathActions.switch-path.test.tsx` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 109 (AI Paths Loaded-Config Edge Alias Compatibility Prune)
+
+- Removed loaded-config edge alias fallback in product-path sanitizer:
+  - `src/features/products/hooks/useAiPathSettings.ts`
+  - `resolveEdgeSourceNodeId` now reads canonical `edge.from` only.
+  - `resolveEdgeSourcePort` now reads canonical `edge.fromPort` only.
+- Updated regression coverage:
+  - `src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts`
+  - added alias-only edge shape rejection coverage (`source` / `target` / `sourceHandle` / `targetHandle`) to enforce canonical edge contract.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkLoadedPathSettingsEdgeAliasCompatibilityPrune`:
+    - blocks reintroduction of `source` / `sourceHandle` fallback snippets in `useAiPathSettings.ts`.
+    - requires canonical `from` / `fromPort` parsing snippets.
+- Validation:
+  - `npx vitest run src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
 
 ## Next Item
 

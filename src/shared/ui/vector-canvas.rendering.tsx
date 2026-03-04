@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, type JSX } from 'react';
 import {
   Brush,

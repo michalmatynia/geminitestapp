@@ -19,7 +19,6 @@ describe('CategoryMapperSelectCell', () => {
         onChange={onChange}
         options={OPTIONS}
         disabled={false}
-        datalistId='internal-categories'
       />
     );
 
@@ -36,7 +35,6 @@ describe('CategoryMapperSelectCell', () => {
         onChange={onChange}
         options={OPTIONS}
         disabled={false}
-        datalistId='internal-categories'
       />
     );
 
@@ -56,7 +54,6 @@ describe('CategoryMapperSelectCell', () => {
         onChange={onChange}
         options={OPTIONS}
         disabled={false}
-        datalistId='internal-categories'
       />
     );
 

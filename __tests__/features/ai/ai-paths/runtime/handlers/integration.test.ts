@@ -129,7 +129,7 @@ describe('Integration Handlers', () => {
       const result = await handleDatabase(ctx);
       expect(api.dbApi.query).toHaveBeenCalledWith(
         expect.objectContaining({
-          query: { id: 'p-1' },
+          filter: { id: 'p-1' },
         })
       );
       expect(result['result']).toEqual({ id: 'p-1', name_en: 'Product 1' });
@@ -169,7 +169,7 @@ describe('Integration Handlers', () => {
       const result = await handleDatabase(ctx);
       expect(api.dbApi.query).toHaveBeenCalledWith(
         expect.objectContaining({
-          query: { id: 'p-2' },
+          filter: { id: 'p-2' },
         })
       );
       expect(result['result']).toEqual({ id: 'p-2', name_en: 'Product 2' });
@@ -653,7 +653,7 @@ describe('Integration Handlers', () => {
       );
     });
 
-    it('requires explicit update template for simple parameter inference configs', async () => {
+    it('requires explicit update template for parameter inference configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -670,7 +670,7 @@ describe('Integration Handlers', () => {
               actionCategory: 'update',
               action: 'updateOne',
               entityType: 'product',
-              mappings: [{ targetPath: 'simpleParameters', sourcePort: 'value' }],
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -681,7 +681,7 @@ describe('Integration Handlers', () => {
               updateTemplate: '{"$set":{"updatedAt":"{{Date:Now}}"}}',
               parameterInferenceGuard: {
                 enabled: true,
-                targetPath: 'simpleParameters',
+                targetPath: 'parameters',
                 definitionsPort: 'result',
                 allowUnknownParameterIds: false,
                 enforceOptionLabels: false,

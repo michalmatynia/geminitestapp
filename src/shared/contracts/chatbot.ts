@@ -55,7 +55,7 @@ export type CreateChatbotSettingsDto = z.infer<typeof createChatbotSettingsSchem
 export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
 export type UpdateChatbotSettingsDto = CreateChatbotSettingsDto;
 
-const DEPRECATED_CHATBOT_AGENT_MODEL_KEYS = [
+const UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS = [
   'memoryValidationModel',
   'plannerModel',
   'selfCheckModel',
@@ -69,18 +69,15 @@ const DEPRECATED_CHATBOT_AGENT_MODEL_KEYS = [
 ] as const;
 
 export class ChatbotSettingsValidationError extends Error {
-  code: 'invalid_shape' | 'deprecated_agent_model_keys';
-  deprecatedKeys: string[];
+  code: 'invalid_shape';
 
   constructor(args: {
-    code: 'invalid_shape' | 'deprecated_agent_model_keys';
+    code: 'invalid_shape';
     message: string;
-    deprecatedKeys?: string[];
   }) {
     super(args.message);
     this.name = 'ChatbotSettingsValidationError';
     this.code = args.code;
-    this.deprecatedKeys = args.deprecatedKeys ?? [];
   }
 }
 
@@ -93,14 +90,13 @@ export const parseChatbotSettingsPayload = (input: unknown): ChatbotSettingsPayl
   }
 
   const record = input as Record<string, unknown>;
-  const deprecatedKeys = DEPRECATED_CHATBOT_AGENT_MODEL_KEYS.filter(
+  const unsupportedKeys = UNSUPPORTED_CHATBOT_AGENT_MODEL_KEYS.filter(
     (key: string): boolean => key in record
   );
-  if (deprecatedKeys.length > 0) {
+  if (unsupportedKeys.length > 0) {
     throw new ChatbotSettingsValidationError({
-      code: 'deprecated_agent_model_keys',
-      message: `Chatbot settings contain deprecated agent model snapshot keys: ${deprecatedKeys.join(', ')}.`,
-      deprecatedKeys,
+      code: 'invalid_shape',
+      message: `Chatbot settings payload includes unsupported keys: ${unsupportedKeys.join(', ')}.`,
     });
   }
 

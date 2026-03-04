@@ -233,8 +233,8 @@ export async function handleDatabaseUpdateOperation({
   }
 
   const renderedFilterPayload = buildDbQueryPayload(templateInputs, queryConfig);
-  const customFilter = isObjectRecord(renderedFilterPayload.query)
-    ? renderedFilterPayload.query
+  const customFilter = isObjectRecord(renderedFilterPayload.filter)
+    ? renderedFilterPayload.filter
     : {};
   if (Object.keys(customFilter).length === 0) {
     const error = 'No explicit update filter provided.';

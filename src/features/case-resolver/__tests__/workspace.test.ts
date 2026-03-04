@@ -1623,7 +1623,7 @@ describe('case-resolver workspace', () => {
           ],
         })
       )
-    ).toThrowError(/Legacy Case Resolver node-file snapshot fields are no longer supported/i);
+    ).toThrowError(/Case Resolver node-file snapshot payload includes unsupported fields\./i);
   });
 
   it('rejects legacy node-file edge keys and ports', () => {
@@ -1647,7 +1647,7 @@ describe('case-resolver workspace', () => {
           nodeFileMeta: {},
         })
       )
-    ).toThrowError(/Legacy Case Resolver edge fields are no longer supported/i);
+    ).toThrowError(/Case Resolver edge payload includes unsupported fields\./i);
   });
 
   it('does not coerce inline node-file snapshots when loading the workspace', () => {

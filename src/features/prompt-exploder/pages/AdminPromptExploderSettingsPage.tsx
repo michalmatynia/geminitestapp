@@ -183,8 +183,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         })),
       },
       {
-        key: 'caseResolverCaptureMode',
-        label: 'Case Resolver Capture Mode',
+        key: 'caseResolverExtractionMode',
+        label: 'Case Resolver Extraction Mode',
         type: 'select',
         options: [
           { value: 'rules_only', label: 'Rules Only (UI capture rules)' },

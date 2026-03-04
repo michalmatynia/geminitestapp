@@ -402,7 +402,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
             runtimeSelection.identity.scope
           );
           const isRulesOnlyCaptureMode =
-            promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only';
+            promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_only';
           if (isRulesOnlyCaptureMode && captureRules.length === 0) {
             toast(
               'No Case Resolver capture rules are active for this validation scope. Configure capture rules before applying.',
@@ -412,7 +412,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
           const transferPayload = resolveCaseResolverBridgePayloadForTransfer({
             segments: transferSegments,
             captureRules,
-            mode: promptExploderSettings.runtime.caseResolverCaptureMode,
+            mode: promptExploderSettings.runtime.caseResolverExtractionMode,
           });
           hasCaptureData = transferPayload.hasCaptureData;
           captureParties = transferPayload.payload.parties;
@@ -425,7 +425,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         }
 
         if (!hasCaptureData) {
-          if (promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only') {
+          if (promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_only') {
             toast(
               'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
               { variant: 'warning' }
@@ -478,7 +478,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     documentState,
     incomingCaseResolverContext,
     promptText,
-    promptExploderSettings.runtime.caseResolverCaptureMode,
+    promptExploderSettings.runtime.caseResolverExtractionMode,
     returnTarget,
     returnTo,
     router,

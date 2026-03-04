@@ -187,18 +187,18 @@ export function useAiPathsSettingsSamples({
         id?: string
       ): Promise<{ sample: unknown | null; fetchedId: string }> => {
         const queries: Array<{
-          query: Record<string, unknown>;
+          filter: Record<string, unknown>;
           idType?: 'string' | 'objectId';
         }> = [];
         if (id?.trim()) {
-          queries.push({ query: { id }, idType: 'string' });
+          queries.push({ filter: { id }, idType: 'string' });
           if (isObjectId(id)) {
-            queries.push({ query: { _id: id }, idType: 'objectId' });
+            queries.push({ filter: { _id: id }, idType: 'objectId' });
           } else {
-            queries.push({ query: { _id: id }, idType: 'string' });
+            queries.push({ filter: { _id: id }, idType: 'string' });
           }
         } else {
-          queries.push({ query: {}, idType: 'string' });
+          queries.push({ filter: {}, idType: 'string' });
         }
         for (const candidate of queries) {
           const result = await dbApi.query<{
@@ -207,7 +207,7 @@ export function useAiPathsSettingsSamples({
           }>({
             provider: 'auto',
             collection,
-            query: candidate.query,
+            filter: candidate.filter,
             single: true,
             limit: 1,
             idType: candidate.idType,

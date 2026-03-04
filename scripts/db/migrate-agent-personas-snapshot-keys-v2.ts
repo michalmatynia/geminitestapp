@@ -62,6 +62,23 @@ class PersonaMigrationError extends Error {
 }
 
 const SETTINGS_COLLECTION = 'settings';
+const UNSUPPORTED_AGENT_PERSONA_SETTINGS_KEYS = [
+  'executorModel',
+  'plannerModel',
+  'selfCheckModel',
+  'extractionValidationModel',
+  'toolRouterModel',
+  'memoryValidationModel',
+  'memorySummarizationModel',
+  'loopGuardModel',
+  'approvalGateModel',
+  'selectorInferenceModel',
+  'outputNormalizationModel',
+  'modelId',
+  'temperature',
+  'maxTokens',
+] as const;
+const UNSUPPORTED_AGENT_PERSONA_TOP_LEVEL_KEYS = ['modelId', 'temperature', 'maxTokens'] as const;
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -221,15 +238,42 @@ const parseStoredPersonas = (decodedValue: string): unknown => {
   }
 };
 
+const stripUnsupportedAgentPersonaSnapshotKeys = (payload: unknown[]): unknown[] =>
+  payload.map((item: unknown): unknown => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+    const rawPersona = item as Record<string, unknown>;
+    const nextPersona = { ...rawPersona };
+
+    UNSUPPORTED_AGENT_PERSONA_TOP_LEVEL_KEYS.forEach((key: string) => {
+      if (Object.prototype.hasOwnProperty.call(nextPersona, key)) {
+        delete nextPersona[key];
+      }
+    });
+
+    const settings = nextPersona['settings'];
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      return nextPersona;
+    }
+
+    const rawSettings = settings as Record<string, unknown>;
+    const nextSettings = { ...rawSettings };
+    UNSUPPORTED_AGENT_PERSONA_SETTINGS_KEYS.forEach((key: string) => {
+      if (Object.prototype.hasOwnProperty.call(nextSettings, key)) {
+        delete nextSettings[key];
+      }
+    });
+    nextPersona['settings'] = nextSettings;
+    return nextPersona;
+  });
+
 const migrateDecodedPersonas = (decodedValue: string): string => {
   const parsed = parseStoredPersonas(decodedValue);
   if (!Array.isArray(parsed)) {
     throw new PersonaMigrationError('invalid_payload', 'Agent personas payload is not an array.');
   }
   try {
-    const normalized = normalizeAgentPersonas(parsed, {
-      stripDeprecatedSnapshotKeys: true,
-    });
+    const sanitized = stripUnsupportedAgentPersonaSnapshotKeys(parsed);
+    const normalized = normalizeAgentPersonas(sanitized);
     return JSON.stringify(normalized satisfies AgentPersona[]);
   } catch (error) {
     const message =

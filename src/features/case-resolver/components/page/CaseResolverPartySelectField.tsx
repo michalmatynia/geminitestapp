@@ -16,14 +16,11 @@ interface CaseResolverPartySelectFieldProps {
   placeholder?: string | undefined;
 }
 
-export function CaseResolverPartySelectField({
-  label,
-  value,
-  onValueChange,
-  options,
-  disabled = false,
-  placeholder,
-}: CaseResolverPartySelectFieldProps): React.JSX.Element {
+export function CaseResolverPartySelectField(
+  props: CaseResolverPartySelectFieldProps
+): React.JSX.Element {
+  const { label, value, onValueChange, options, disabled = false, placeholder } = props;
+
   const [filter, setFilter] = React.useState<PartyKindFilter>('all');
 
   const hasValue = value !== '' && value !== 'none';

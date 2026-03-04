@@ -70,7 +70,7 @@ export async function executeDatabaseQuery({
   const queryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({
     provider: queryConfig.provider,
     collection: queryConfig.collection,
-    query,
+    filter: query,
     projection,
     sort,
     limit: queryConfig.limit,

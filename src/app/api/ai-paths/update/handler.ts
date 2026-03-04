@@ -13,7 +13,6 @@ import { productUpdateSchema } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
-import type { ProductParameterValue } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -65,104 +64,6 @@ const applyAppendMode = (
     next[key] = mergeAppendValue(current[key], value);
   });
   return next;
-};
-
-const toTrimmedString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const LEGACY_SIMPLE_PARAMETER_PREFIX = 'sp:';
-
-const normalizeLegacySimpleParameterUpdates = (value: unknown): ProductParameterValue[] => {
-  if (!Array.isArray(value)) return [];
-  const seen = new Set<string>();
-  return value.reduce((acc: ProductParameterValue[], entry: unknown) => {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-      return acc;
-    }
-    const record = entry as Record<string, unknown>;
-    const parameterId = toTrimmedString(record['parameterId']) || toTrimmedString(record['id']);
-    if (!parameterId || seen.has(parameterId)) return acc;
-    const inferredValue = toTrimmedString(record['value']);
-    if (!inferredValue) return acc;
-    seen.add(parameterId);
-    acc.push({
-      parameterId,
-      value: inferredValue,
-    });
-    return acc;
-  }, []);
-};
-
-const decodeLegacySimpleParameterId = (parameterId: string): string => {
-  const normalized = toTrimmedString(parameterId);
-  if (!normalized) return '';
-  if (!normalized.startsWith(LEGACY_SIMPLE_PARAMETER_PREFIX)) {
-    return normalized;
-  }
-  return normalized.slice(LEGACY_SIMPLE_PARAMETER_PREFIX.length).trim();
-};
-
-const normalizeExistingParameterValues = (input: unknown): ProductParameterValue[] => {
-  if (!Array.isArray(input)) return [];
-  return input.reduce((acc: ProductParameterValue[], entry: unknown) => {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-      return acc;
-    }
-    const record = entry as Record<string, unknown>;
-    const parameterId = toTrimmedString(record['parameterId']);
-    if (!parameterId) return acc;
-    const value = typeof record['value'] === 'string' ? record['value'] : '';
-    const valuesByLanguage =
-      record['valuesByLanguage'] &&
-      typeof record['valuesByLanguage'] === 'object' &&
-      !Array.isArray(record['valuesByLanguage'])
-        ? (record['valuesByLanguage'] as Record<string, string>)
-        : undefined;
-    acc.push({
-      parameterId,
-      value,
-      ...(valuesByLanguage ? { valuesByLanguage } : {}),
-    });
-    return acc;
-  }, []);
-};
-
-const mergeLegacySimpleParameterInferenceWithExisting = (args: {
-  existingParameters: ProductParameterValue[];
-  inferredSimpleParameters: ProductParameterValue[];
-}): ProductParameterValue[] => {
-  if (!Array.isArray(args.existingParameters) || args.existingParameters.length === 0) {
-    return [];
-  }
-  if (!Array.isArray(args.inferredSimpleParameters) || args.inferredSimpleParameters.length === 0) {
-    return args.existingParameters;
-  }
-
-  const inferredById = new Map<string, string>();
-  args.inferredSimpleParameters.forEach((entry: ProductParameterValue) => {
-    const decodedId = decodeLegacySimpleParameterId(entry.parameterId);
-    const inferredValue = toTrimmedString(entry.value);
-    if (!decodedId || !inferredValue || inferredById.has(decodedId)) return;
-    inferredById.set(decodedId, inferredValue);
-  });
-  if (inferredById.size === 0) {
-    return args.existingParameters;
-  }
-
-  return args.existingParameters.map((entry: ProductParameterValue) => {
-    const currentValue = toTrimmedString(entry.value);
-    if (currentValue) return entry;
-    const decodedId = decodeLegacySimpleParameterId(entry.parameterId);
-    if (!decodedId) return entry;
-    const inferredValue = inferredById.get(decodedId);
-    if (!inferredValue) return entry;
-    return {
-      ...entry,
-      value: inferredValue,
-    };
-  });
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -217,19 +118,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
         : normalizedUpdates;
     const prepared = { ...preparedRaw } as Record<string, unknown>;
-    if (prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined) {
-      const existingProduct =
-        existing ?? (await productRepository.getProductById(entityId as string));
-      if (!existingProduct) {
-        throw notFoundError('Product not found', { productId: entityId });
-      }
-      const inferredSimpleParameters = normalizeLegacySimpleParameterUpdates(
-        prepared['simpleParameters']
+    if (Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')) {
+      throw badRequestError(
+        'AI Paths product update payload contains deprecated "simpleParameters". Use "parameters".'
       );
-      prepared['parameters'] = mergeLegacySimpleParameterInferenceWithExisting({
-        existingParameters: normalizeExistingParameterValues(existingProduct.parameters),
-        inferredSimpleParameters,
-      });
     }
     const validated = productUpdateSchema.safeParse(prepared);
     if (!validated.success) {

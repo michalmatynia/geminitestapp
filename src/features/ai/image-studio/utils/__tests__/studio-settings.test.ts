@@ -89,7 +89,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: targetAi\.openai\.model/i);
   });
 
   it('rejects deprecated persisted prompt extractor model fields', () => {
@@ -106,7 +106,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: promptExtraction\.gpt\.model/i);
   });
 
   it('rejects deprecated persisted UI extractor model fields', () => {
@@ -120,7 +120,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: uiExtractor\.model/i);
   });
 
   it('rejects deprecated persisted modelPresets fields', () => {
@@ -137,7 +137,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/includes unsupported keys: targetAi\.openai\.modelPresets/i);
   });
 
   it('rejects non-empty payloads with any deprecated snapshot key', () => {
@@ -158,7 +158,7 @@ describe('parseImageStudioSettings', () => {
           },
         })
       )
-    ).toThrowError(/deprecated AI snapshot keys/i);
+    ).toThrowError(/includes unsupported keys/i);
   });
 
   it('still rejects unknown strict fields', () => {
@@ -178,36 +178,33 @@ describe('parseImageStudioSettings', () => {
     ).toThrowError(/Invalid Image Studio settings payload/);
   });
 
-  it('strips deprecated AI snapshot keys in persisted migration mode', () => {
-    const parsed = parsePersistedImageStudioSettings(
-      JSON.stringify({
-        ...defaultImageStudioSettings,
-        promptExtraction: {
-          ...defaultImageStudioSettings.promptExtraction,
-          gpt: {
-            ...defaultImageStudioSettings.promptExtraction.gpt,
-            model: 'gpt-4o-mini',
+  it('rejects deprecated snapshot keys in persisted parser path', () => {
+    expect(() =>
+      parsePersistedImageStudioSettings(
+        JSON.stringify({
+          ...defaultImageStudioSettings,
+          promptExtraction: {
+            ...defaultImageStudioSettings.promptExtraction,
+            gpt: {
+              ...defaultImageStudioSettings.promptExtraction.gpt,
+              model: 'gpt-4o-mini',
+            },
           },
-        },
-        uiExtractor: {
-          ...defaultImageStudioSettings.uiExtractor,
-          model: 'gpt-4.1-mini',
-        },
-        targetAi: {
-          ...defaultImageStudioSettings.targetAi,
-          openai: {
-            ...defaultImageStudioSettings.targetAi.openai,
-            model: 'gpt-image-1',
-            modelPresets: ['gpt-image-1'],
+          uiExtractor: {
+            ...defaultImageStudioSettings.uiExtractor,
+            model: 'gpt-4.1-mini',
           },
-        },
-      })
-    );
-
-    expect(parsed.version).toBe(2);
-    expect(parsed.promptExtraction.gpt.max_output_tokens).toBeNull();
-    expect(parsed.uiExtractor.mode).toBe(defaultImageStudioSettings.uiExtractor.mode);
-    expect(parsed.targetAi.openai.image.format).toBe(defaultImageStudioSettings.targetAi.openai.image.format);
+          targetAi: {
+            ...defaultImageStudioSettings.targetAi,
+            openai: {
+              ...defaultImageStudioSettings.targetAi.openai,
+              model: 'gpt-image-1',
+              modelPresets: ['gpt-image-1'],
+            },
+          },
+        })
+      )
+    ).toThrowError(/includes unsupported keys/i);
   });
 });
 

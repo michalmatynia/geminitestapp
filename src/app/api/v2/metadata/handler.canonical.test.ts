@@ -36,7 +36,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 import { GET_intl_handler, POST_intl_handler } from './handler';
 
-describe('v2 metadata handler compatibility', () => {
+describe('v2 metadata handler canonical contract', () => {
   beforeEach(() => {
     getCurrencyRepositoryMock.mockReset();
     getInternationalizationProviderMock.mockReset();
@@ -124,7 +124,7 @@ describe('v2 metadata handler compatibility', () => {
     );
   });
 
-  it('rejects wrapped legacy payload shape', async () => {
+  it('rejects deprecated wrapped payload envelope', async () => {
     const request = new NextRequest('http://localhost/api/v2/metadata/currencies', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

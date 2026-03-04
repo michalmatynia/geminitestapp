@@ -3,7 +3,7 @@ import 'dotenv/config';
 import {
   IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX,
   IMAGE_STUDIO_SETTINGS_KEY,
-  parsePersistedImageStudioSettings,
+  parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { getAppDbProvider, type AppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoClient, getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -55,6 +55,11 @@ type MongoSettingDocument = {
 };
 
 const SETTINGS_COLLECTION = 'settings';
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const hasOwnKey = (value: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(value, key);
 
 const parseCliOptions = (argv: string[]): CliOptions => {
   const options: CliOptions = {
@@ -231,8 +236,57 @@ const chooseSourceProvider = (
   );
 };
 
-const migrateDecodedValue = (decoded: string): string =>
-  JSON.stringify(parsePersistedImageStudioSettings(decoded));
+const stripDeprecatedImageStudioSnapshotKeys = (value: unknown): unknown => {
+  if (!isPlainObject(value)) return value;
+
+  const nextRoot: Record<string, unknown> = { ...value };
+
+  const promptExtraction = isPlainObject(nextRoot['promptExtraction'])
+    ? { ...nextRoot['promptExtraction'] }
+    : null;
+  if (promptExtraction) {
+    const gpt = isPlainObject(promptExtraction['gpt']) ? { ...promptExtraction['gpt'] } : null;
+    if (gpt && hasOwnKey(gpt, 'model')) {
+      delete gpt['model'];
+    }
+    if (gpt) {
+      promptExtraction['gpt'] = gpt;
+    }
+    nextRoot['promptExtraction'] = promptExtraction;
+  }
+
+  const uiExtractor = isPlainObject(nextRoot['uiExtractor']) ? { ...nextRoot['uiExtractor'] } : null;
+  if (uiExtractor && hasOwnKey(uiExtractor, 'model')) {
+    delete uiExtractor['model'];
+  }
+  if (uiExtractor) {
+    nextRoot['uiExtractor'] = uiExtractor;
+  }
+
+  const targetAi = isPlainObject(nextRoot['targetAi']) ? { ...nextRoot['targetAi'] } : null;
+  const openai = targetAi && isPlainObject(targetAi['openai']) ? { ...targetAi['openai'] } : null;
+  if (openai && hasOwnKey(openai, 'model')) {
+    delete openai['model'];
+  }
+  if (openai && hasOwnKey(openai, 'modelPresets')) {
+    delete openai['modelPresets'];
+  }
+  if (targetAi && openai) {
+    targetAi['openai'] = openai;
+    nextRoot['targetAi'] = targetAi;
+  }
+
+  return nextRoot;
+};
+
+const migrateDecodedValue = (decoded: string): string => {
+  if (!decoded.trim()) {
+    return JSON.stringify(parseImageStudioSettings(decoded));
+  }
+  const parsed = JSON.parse(decoded) as unknown;
+  const sanitized = stripDeprecatedImageStudioSnapshotKeys(parsed);
+  return JSON.stringify(parseImageStudioSettings(JSON.stringify(sanitized)));
+};
 
 const closeResources = async (): Promise<void> => {
   await prisma.$disconnect().catch(() => {});

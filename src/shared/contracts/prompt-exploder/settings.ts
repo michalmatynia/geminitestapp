@@ -58,15 +58,6 @@ export type PromptExploderPatternSnapshot = z.infer<typeof promptExploderPattern
 export const promptExploderOperationModeSchema = z.enum(['rules_only', 'hybrid', 'ai_assisted']);
 export type PromptExploderOperationMode = z.infer<typeof promptExploderOperationModeSchema>;
 
-export const promptExploderCaseResolverCaptureModeSchema = z.enum([
-  'manual',
-  'assisted',
-  'fully-auto',
-]);
-export type PromptExploderCaseResolverCaptureMode = z.infer<
-  typeof promptExploderCaseResolverCaptureModeSchema
->;
-
 export const promptExploderCaseResolverExtractionModeSchema = z.enum([
   'rules_only',
   'rules_with_heuristics',
@@ -94,7 +85,7 @@ export const promptExploderSettingsSchema = z.object({
     .object({
       ruleProfile: promptExploderRuntimeRuleProfileSchema.default('all'),
       validationRuleStack: z.string().trim().min(1).optional(),
-      caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
+      caseResolverExtractionMode: promptExploderCaseResolverExtractionModeSchema.optional(),
       orchestratorEnabled: z.boolean().optional(),
       benchmarkSuite: z.string().optional(),
       benchmarkLowConfidenceThreshold: z.number().optional(),

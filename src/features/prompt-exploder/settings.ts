@@ -54,13 +54,11 @@ export const PROMPT_EXPLODER_STORAGE_KEYS = [
 
 export type PromptExploderSettingsValidationErrorCode =
   | 'invalid_settings_json'
-  | 'invalid_shape'
-  | 'deprecated_ai_keys';
+  | 'invalid_shape';
 
 export type PromptExploderSettingsValidationError = {
   code: PromptExploderSettingsValidationErrorCode;
   message: string;
-  deprecatedKeys?: string[];
 };
 
 type PersistedPayloadParseResult =
@@ -117,14 +115,6 @@ const invalidShapeError = (details?: string): PromptExploderSettingsValidationEr
   message: details
     ? `Prompt Exploder settings payload has invalid shape: ${details}`
     : 'Prompt Exploder settings payload has invalid shape.',
-});
-
-const deprecatedAiKeysError = (
-  deprecatedKeys: string[]
-): PromptExploderSettingsValidationError => ({
-  code: 'deprecated_ai_keys',
-  message: `Prompt Exploder settings payload contains deprecated AI snapshot keys: ${deprecatedKeys.join(', ')}`,
-  deprecatedKeys,
 });
 
 const parsePersistedPayload = (raw: unknown): PersistedPayloadParseResult => {
@@ -194,13 +184,13 @@ export function parsePromptExploderSettingsResult(raw: unknown): {
     };
   }
 
-  const deprecatedKeys = Object.keys(aiPayload)
+  const unsupportedAiKeys = Object.keys(aiPayload)
     .filter((key) => !ALLOWED_AI_KEYS.has(key))
     .sort();
-  if (deprecatedKeys.length > 0) {
+  if (unsupportedAiKeys.length > 0) {
     return {
       settings: defaultPromptExploderSettings,
-      error: deprecatedAiKeysError(deprecatedKeys),
+      error: invalidShapeError(`ai contains unsupported keys: ${unsupportedAiKeys.join(', ')}`),
     };
   }
 

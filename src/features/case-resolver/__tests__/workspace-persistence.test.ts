@@ -283,7 +283,7 @@ describe('case-resolver workspace persistence', () => {
     expect(primaryWorkspaceBody.key).toBe(CASE_RESOLVER_WORKSPACE_KEY);
   });
 
-  it('rejects deprecated inline node-file snapshots before persist', async () => {
+  it('rejects inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -308,7 +308,7 @@ describe('case-resolver workspace persistence', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toMatch(/no longer supported/i);
+      expect(result.error).toBe('Case Resolver inline node-file snapshots are unsupported.');
     }
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });
@@ -1469,7 +1469,7 @@ describe('case-resolver workspace persistence', () => {
     };
 
     expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrowError(
-      /no longer supported/i
+      /Case Resolver inline node-file snapshots are unsupported\./i
     );
   });
 

@@ -89,7 +89,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
       (key: string): boolean => key in record
     );
     if (deprecatedKeys.length === 0) return;
-    throw validationError('Legacy AI Paths runtime identity fields are no longer supported.', {
+    throw validationError('AI Paths runtime state payload includes unsupported identity fields.', {
       reason: 'deprecated_runtime_identity_fields',
       keys: deprecatedKeys,
       location,
@@ -299,16 +299,12 @@ const resolveNodeUpdatedAt = (value: unknown): string | null =>
 
 const resolveEdgeSourceNodeId = (edge: Record<string, unknown>): string => {
   const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
-  if (from) return from;
-  const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';
-  return source;
+  return from;
 };
 
 const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
   const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';
-  if (fromPort) return fromPort;
-  const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';
-  return sourceHandle;
+  return fromPort;
 };
 
 const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
@@ -323,7 +319,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
       LEGACY_TRIGGER_DATA_PORTS.has(port)
     );
     if (legacyPorts.length === 0) return;
-    throw validationError('Legacy AI Paths trigger data outputs are no longer supported.', {
+    throw validationError('AI Path config contains unsupported trigger output ports.', {
       source: 'ai_paths.path_config',
       reason: 'deprecated_trigger_outputs',
       nodeId: node.id,
@@ -340,7 +336,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
     const sourceNode = nodeById.get(sourceNodeId);
     if (sourceNode?.type !== 'trigger') return;
     if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
-    throw validationError('Legacy AI Paths trigger data edges are no longer supported.', {
+    throw validationError('AI Path config contains unsupported trigger data edges.', {
       source: 'ai_paths.path_config',
       reason: 'deprecated_trigger_data_edge',
       edgeIndex: index,
@@ -377,9 +373,9 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
         ? (databaseRecord['query'] as Record<string, unknown>)
         : null;
     if (Object.prototype.hasOwnProperty.call(databaseRecord, 'schemaSnapshot')) {
-      throw validationError('AI Path config contains deprecated database schemaSnapshot.', {
+      throw validationError('AI Path config contains unsupported database schemaSnapshot.', {
         source: 'ai_paths.path_config',
-        reason: 'deprecated_database_schema_snapshot',
+        reason: 'unsupported_database_schema_snapshot',
         nodeId: node.id,
       });
     }
@@ -405,9 +401,9 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     if (queryConfig) {
       const provider = queryConfig['provider'];
       if (provider === 'all') {
-        throw validationError('AI Path config contains deprecated database query provider "all".', {
+        throw validationError('AI Path config contains unsupported database query provider "all".', {
           source: 'ai_paths.path_config',
-          reason: 'deprecated_database_query_provider',
+          reason: 'unsupported_database_query_provider',
           nodeId: node.id,
           provider,
         });
@@ -461,6 +457,26 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
           : {}),
         single: queryConfig['single'] === true,
       };
+    }
+    const parameterInferenceGuard =
+      databaseRecord['parameterInferenceGuard'] &&
+      typeof databaseRecord['parameterInferenceGuard'] === 'object' &&
+      !Array.isArray(databaseRecord['parameterInferenceGuard'])
+        ? (databaseRecord['parameterInferenceGuard'] as Record<string, unknown>)
+        : null;
+    if (parameterInferenceGuard) {
+      const targetPath =
+        typeof parameterInferenceGuard['targetPath'] === 'string'
+          ? parameterInferenceGuard['targetPath'].trim()
+          : '';
+      if (targetPath.length > 0 && targetPath !== 'parameters') {
+        throw validationError('AI Path config contains deprecated parameter inference target path.', {
+          source: 'ai_paths.path_config',
+          reason: 'deprecated_parameter_inference_target_path',
+          nodeId: node.id,
+          targetPath,
+        });
+      }
     }
     return {
       ...node,
@@ -572,7 +588,7 @@ export const buildDbQueryPayload = (
     | undefined;
   const sort = parseJsonSafe(queryConfig.sort ?? '') as Record<string, unknown> | undefined;
   return {
-    query,
+    filter: query,
     projection,
     sort,
     provider: queryConfig.provider,

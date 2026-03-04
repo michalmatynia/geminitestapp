@@ -602,6 +602,26 @@ export const applyParameterInferenceGuard = (args: {
   }
 
   const targetPath = normalizeNonEmptyString(guard.targetPath) ?? 'parameters';
+  if (targetPath !== 'parameters') {
+    const nextUpdates: Record<string, unknown> = { ...args.updates };
+    delete nextUpdates[targetPath];
+    const errorMessage =
+      'Parameter inference guard targetPath must use canonical "parameters" path.';
+    return {
+      updates: nextUpdates,
+      applied: true,
+      blocked: true,
+      errorMessage,
+      meta: {
+        targetPath,
+        blocked: {
+          reason: 'unsupported_target_path',
+          message: errorMessage,
+        },
+      },
+    };
+  }
+
   const rawCandidate = args.updates[targetPath];
   if (rawCandidate === undefined) {
     return { updates: args.updates, applied: false };

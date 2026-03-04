@@ -62,24 +62,7 @@ describe('AI Paths update handler', () => {
     );
   });
 
-  it('merges simple parameter inference into existing product parameters without touching custom fields', async () => {
-    productRepository.getProductById.mockResolvedValue({
-      id: 'product-1',
-      parameters: [
-        {
-          parameterId: 'cf_model_name',
-          value: 'X100',
-          valuesByLanguage: { en: 'X100' },
-        },
-        { parameterId: 'sp:p_color', value: '' },
-        { parameterId: 'sp:p_material', value: 'Steel' },
-        { parameterId: 'sp:p_model_number', value: '' },
-      ],
-    });
-    productRepository.updateProduct.mockResolvedValue({
-      id: 'product-1',
-    });
-
+  it('rejects deprecated simpleParameters alias in product updates', async () => {
     const request = new NextRequest('http://localhost/api/ai-paths/update', {
       method: 'POST',
       body: JSON.stringify({
@@ -95,35 +78,9 @@ describe('AI Paths update handler', () => {
       }),
     });
 
-    const response = await POST_handler(request, {} as never);
-    const payload = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(payload).toMatchObject({
-      ok: true,
-      entityType: 'product',
-      entityId: 'product-1',
-    });
-    expect(productRepository.updateProduct).toHaveBeenCalledWith(
-      'product-1',
-      expect.objectContaining({
-        parameters: [
-          {
-            parameterId: 'cf_model_name',
-            value: 'X100',
-            valuesByLanguage: { en: 'X100' },
-          },
-          { parameterId: 'sp:p_color', value: 'Blue' },
-          { parameterId: 'sp:p_material', value: 'Steel' },
-          { parameterId: 'sp:p_model_number', value: '' },
-        ],
-      })
+    await expect(POST_handler(request, {} as never)).rejects.toThrow(
+      /deprecated "simpleParameters".*Use "parameters"/i
     );
-    expect(productRepository.updateProduct).toHaveBeenCalledWith(
-      'product-1',
-      expect.not.objectContaining({
-        simpleParameters: expect.anything(),
-      })
-    );
+    expect(productRepository.updateProduct).not.toHaveBeenCalled();
   });
 });

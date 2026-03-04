@@ -86,9 +86,9 @@ const assertNoDeprecatedTriggerDatabaseConfig = (node: AiNode): void => {
   if (!databaseConfig) return;
 
   if (Object.prototype.hasOwnProperty.call(databaseConfig, 'schemaSnapshot')) {
-    throw validationError('AI Path trigger payload contains deprecated database schemaSnapshot.', {
+    throw validationError('AI Path trigger payload contains unsupported database schemaSnapshot.', {
       source: 'ai_paths.trigger_payload',
-      reason: 'deprecated_database_schema_snapshot',
+      reason: 'unsupported_database_schema_snapshot',
       nodeId: node.id,
     });
   }
@@ -99,10 +99,10 @@ const assertNoDeprecatedTriggerDatabaseConfig = (node: AiNode): void => {
       : null;
   if (queryConfig?.['provider'] === 'all') {
     throw validationError(
-      'AI Path trigger payload contains deprecated database query provider "all".',
+      'AI Path trigger payload contains unsupported database query provider "all".',
       {
         source: 'ai_paths.trigger_payload',
-        reason: 'deprecated_database_query_provider',
+        reason: 'unsupported_database_query_provider',
         nodeId: node.id,
         provider: queryConfig['provider'],
       }

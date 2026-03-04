@@ -290,10 +290,10 @@ export function PatternRuntimePanel(): React.JSX.Element {
           className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'
         >
           <Hint size='xxs' uppercase className='text-gray-500'>
-            Case Resolver Capture Mode
+            Case Resolver Extraction Mode
           </Hint>
           <div className='mt-1 text-gray-100'>
-            {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
+            {promptExploderSettings.runtime.caseResolverExtractionMode === 'rules_only'
               ? 'rules only (UI-defined capture rules)'
               : 'rules with heuristics enabled'}
           </div>

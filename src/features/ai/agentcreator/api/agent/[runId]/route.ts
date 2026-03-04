@@ -3,7 +3,7 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { logAgentAudit } from '@/features/ai/agent-runtime/server';
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   badRequestError,

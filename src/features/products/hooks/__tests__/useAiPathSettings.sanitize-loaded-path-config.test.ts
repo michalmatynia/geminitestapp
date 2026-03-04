@@ -99,6 +99,32 @@ describe('sanitizeLoadedPathConfig', () => {
     );
   });
 
+  it('rejects deprecated parameter inference target path aliases', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'simpleParameters',
+              },
+            },
+          },
+        }),
+      ],
+      []
+    );
+
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
+      /deprecated parameter inference target path/i
+    );
+  });
+
   it('rejects deprecated collection aliases', () => {
     const config = buildConfig(
       [
@@ -182,7 +208,7 @@ describe('sanitizeLoadedPathConfig', () => {
     );
 
     expect(() => sanitizeLoadedPathConfig(config)).toThrowError(
-      /Legacy AI Paths trigger data edges are no longer supported/i
+      /AI Path config contains unsupported trigger data edges\./i
     );
   });
 
@@ -211,6 +237,37 @@ describe('sanitizeLoadedPathConfig', () => {
           fromPort: 'trigger',
           toPort: 'trigger',
         },
+      ]
+    );
+
+    expect(() => sanitizeLoadedPathConfig(config)).toThrowError(/invalid or non-canonical edges/i);
+  });
+
+  it('rejects alias-only edge fields instead of accepting legacy edge shape', () => {
+    const config = buildConfig(
+      [
+        buildNode({
+          id: 'node-c0ffee001122334455667788',
+          instanceId: 'node-c0ffee001122334455667788',
+          type: 'trigger',
+          outputs: ['trigger'],
+        }),
+        buildNode({
+          id: 'node-deadbeef0011223344556677',
+          instanceId: 'node-deadbeef0011223344556677',
+          type: 'parser',
+          inputs: ['trigger'],
+          outputs: ['value'],
+        }),
+      ],
+      [
+        {
+          id: 'edge-legacy-alias-shape',
+          source: 'node-c0ffee001122334455667788',
+          target: 'node-deadbeef0011223344556677',
+          sourceHandle: 'trigger',
+          targetHandle: 'trigger',
+        } as unknown as Edge,
       ]
     );
 

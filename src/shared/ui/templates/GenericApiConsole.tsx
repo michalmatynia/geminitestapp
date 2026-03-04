@@ -77,16 +77,18 @@ export interface GenericApiConsoleProps {
  *   onRequest={sendRequest}
  * />
  */
-export function GenericApiConsole({
-  config,
-  state,
-  presets,
-  isConnected = true,
-  onSetMethod,
-  onSetPath,
-  onSetBodyOrParams,
-  onRequest,
-}: GenericApiConsoleProps): React.JSX.Element {
+export function GenericApiConsole(props: GenericApiConsoleProps): React.JSX.Element {
+  const {
+    config,
+    state,
+    presets,
+    isConnected = true,
+    onSetMethod,
+    onSetPath,
+    onSetBodyOrParams,
+    onRequest,
+  } = props;
+
   const {
     title,
     description,

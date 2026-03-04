@@ -7,7 +7,6 @@ export type CategoryMapperSelectCellProps = {
   onChange: (value: string | null) => void;
   options: Array<{ value: string; label: string }>;
   disabled: boolean;
-  datalistId?: string; // Kept for API compatibility but unused
 };
 
 export function CategoryMapperSelectCell({

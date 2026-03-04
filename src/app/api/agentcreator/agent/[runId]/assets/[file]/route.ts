@@ -1,4 +1,4 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export { AgentCreatorAgentRunAssetsGET as GET } from '@/features/ai/agentcreator/server';
+export { GET } from '@/features/ai/agentcreator/api/agent/[runId]/assets/[file]/route';

@@ -341,7 +341,7 @@ describe('filemaker settings', () => {
           events: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker database payloads are no longer supported/);
+    ).toThrowError(/Filemaker database payload version is unsupported\./);
   });
 
   it('rejects malformed JSON payloads', () => {
@@ -391,7 +391,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker fullAddress payloads are no longer supported/);
+    ).toThrowError(/Filemaker payload includes unsupported fullAddress fields\./);
   });
 
   it('rejects inline address fields when canonical address links are missing', () => {
@@ -415,7 +415,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
+    ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
   });
 
   it('rejects inline address fields for case resolver consumers', () => {
@@ -444,7 +444,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
+    ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
   });
 
   it('rejects inline address fields even when canonical address links exist', () => {
@@ -486,7 +486,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline address payloads are no longer supported/);
+    ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
   });
 
   it('rejects invalid filemaker payload for case resolver', () => {
@@ -516,7 +516,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
+    ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
   });
 
   it('rejects inline person phoneNumbers even when canonical phone links exist', () => {
@@ -540,7 +540,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline person phoneNumbers payloads are no longer supported/);
+    ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
   });
 
   it('rejects inline person email fields', () => {
@@ -564,7 +564,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline person email payloads are no longer supported/);
+    ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
   });
 
   it('rejects inline organization email fields', () => {
@@ -588,7 +588,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline organization email payloads are no longer supported/);
+    ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
   });
 
   it('rejects non-object phoneNumbers entries', () => {
@@ -632,7 +632,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline person email payloads are no longer supported/);
+    ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
   });
 
   it('rejects inline organization email fields even when canonical email links exist', () => {
@@ -656,7 +656,7 @@ describe('filemaker settings', () => {
           eventOrganizationLinks: [],
         })
       )
-    ).toThrowError(/Legacy Filemaker inline organization email payloads are no longer supported/);
+    ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
   });
 
   it('rejects inline organization phoneNumbers even when canonical phone links exist', () => {
@@ -683,7 +683,7 @@ describe('filemaker settings', () => {
         })
       )
     ).toThrowError(
-      /Legacy Filemaker inline organization phoneNumbers payloads are no longer supported/
+      /Filemaker organization payload includes unsupported inline phoneNumbers field\./
     );
   });
 

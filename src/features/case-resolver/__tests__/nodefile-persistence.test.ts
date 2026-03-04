@@ -129,7 +129,7 @@ describe('case resolver nodefile persistence', () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-legacy', 8_000, 'test')).rejects.toThrow(
-      /Legacy Case Resolver edge fields are no longer supported/i
+      /Case Resolver edge payload includes unsupported fields\./i
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -149,7 +149,7 @@ describe('case resolver nodefile persistence', () => {
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     await expect(fetchCaseResolverNodeFileSnapshot('asset-1', 8_000, 'test')).rejects.toThrow(
-      /Legacy Case Resolver node-file snapshot fields are no longer supported/i
+      /Case Resolver node-file snapshot payload includes unsupported fields\./i
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -217,7 +217,7 @@ describe('case resolver nodefile persistence', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toMatch(/no longer supported/i);
+      expect(result.error).toBe('Case Resolver inline node-file snapshots are unsupported.');
     }
     expect(fetchMock).toHaveBeenCalledTimes(0);
   });

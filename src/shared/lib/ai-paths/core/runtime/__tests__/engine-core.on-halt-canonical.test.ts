@@ -35,7 +35,7 @@ describe('engine-core halt callback contract', () => {
     expect(call?.[0]?.reason).toBe('blocked');
   });
 
-  it('does not invoke legacy control.onHalt compatibility callback', async () => {
+  it('does not invoke deprecated control.onHalt callback', async () => {
     const legacyOnHalt = vi.fn();
 
     await evaluateGraphInternal([buildBlockedNode()], [] satisfies Edge[], {

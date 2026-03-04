@@ -49,7 +49,9 @@ describe('shouldExposePathSaveRawMessage', () => {
   it('keeps generic save errors hidden behind fallback messaging', () => {
     expect(shouldExposePathSaveRawMessage('Failed to update AI Paths settings (500)')).toBe(false);
     expect(
-      shouldExposePathSaveRawMessage('Agent persona settings contain deprecated AI snapshot keys.')
+      shouldExposePathSaveRawMessage(
+        'Agent persona settings payload includes unsupported keys: plannerModel.'
+      )
     ).toBe(false);
     expect(shouldExposePathSaveRawMessage('')).toBe(false);
   });

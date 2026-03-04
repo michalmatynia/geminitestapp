@@ -51,7 +51,7 @@ describe('prompt exploder settings schema', () => {
     expect(parsed.error?.code).toBe('invalid_shape');
   });
 
-  it('rejects deprecated persisted AI snapshot keys', () => {
+  it('rejects non-canonical persisted AI payload keys', () => {
     const result = parsePromptExploderSettingsResult(
       JSON.stringify({
         ...defaultPromptExploderSettings,
@@ -65,7 +65,9 @@ describe('prompt exploder settings schema', () => {
     );
 
     expect(result.settings).toEqual(defaultPromptExploderSettings);
-    expect(result.error?.code).toBe('deprecated_ai_keys');
-    expect(result.error?.deprecatedKeys).toEqual(['fallbackModelId', 'modelId', 'temperature']);
+    expect(result.error?.code).toBe('invalid_shape');
+    expect(result.error?.message).toContain(
+      'unsupported keys: fallbackModelId, modelId, temperature'
+    );
   });
 });

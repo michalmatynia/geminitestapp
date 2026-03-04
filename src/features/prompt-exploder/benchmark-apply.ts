@@ -63,7 +63,7 @@ export const applyBenchmarkSuggestions = (args: {
       suggestedRulePattern: suggestion.suggestedRulePattern ?? '',
       suggestedPriority: suggestion.suggestedPriority ?? 0,
       suggestedConfidenceBoost: suggestion.suggestedConfidenceBoost ?? 0,
-      suggestedTreatAsHeading: suggestion.suggestedRuleTreatAsHeading ?? false,
+      suggestedRuleTreatAsHeading: suggestion.suggestedRuleTreatAsHeading ?? false,
     });
     const existingRule = learnedById.get(ruleId);
     const suggestedRule = mergeRegexLearnedRule({

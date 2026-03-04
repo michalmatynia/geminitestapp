@@ -3,7 +3,6 @@ import {
   promptExploderDocumentSchema,
   type PromptExploderSegment,
   type PromptExploderBinding,
-  type PromptExploderDocument,
 } from './document';
 import {
   type PromptExploderSegmentType,
@@ -212,6 +211,10 @@ export type ParsedPromptHeading = {
   text?: string;
   id?: string;
 };
+
+export type ParseCustomBenchmarkCasesResult =
+  | { ok: true; cases: PromptExploderBenchmarkCase[] }
+  | { ok: false; error: string };
 
 export type ParseCustomBenchmarkCasesResult =
   | { ok: true; cases: PromptExploderBenchmarkCase[] }

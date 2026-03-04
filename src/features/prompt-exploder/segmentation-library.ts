@@ -11,6 +11,7 @@ import {
   type PromptExploderSegmentationOutline,
   type PromptExploderSegmentationSegmentOutline,
   type PromptExploderSegmentationSubsectionOutline,
+  type PromptExploderSegmentationAnalysisRecord,
 } from '@/shared/contracts/prompt-exploder';
 
 import { reassemblePromptSegments } from './parser';
@@ -174,6 +175,8 @@ export const buildPromptExploderSegmentationRecord = (args: {
     capturedAt: args.now,
     createdAt: args.now,
     updatedAt: args.now,
+    prompt: args.promptText,
+    segments: documentSnapshot.segments,
   };
 };
 
@@ -193,12 +196,13 @@ export const buildPromptExploderSegmentationAnalysisContext = (args: {
   now?: string;
 }): PromptExploderSegmentationAnalysisContext => {
   const sorted = sortPromptExploderSegmentationRecordsByCapturedAt(args.records);
-  const records = sorted.map((record) => {
+  const records = sorted.map((record): PromptExploderSegmentationAnalysisRecord => {
     const outline = buildPromptExploderSegmentationOutline(record.documentSnapshot);
     return {
+      id: record.id,
       recordId: record.id,
       capturedAt: record.capturedAt,
-      returnTarget: record.returnTarget,
+      returnTarget: record.returnTarget as PromptExploderSegmentationReturnTarget,
       validationScope: record.validationScope,
       validationRuleStack: record.validationRuleStack,
       sourcePrompt: record.sourcePrompt,
@@ -207,6 +211,11 @@ export const buildPromptExploderSegmentationAnalysisContext = (args: {
       reassembledPromptLength: record.reassembledPromptLength,
       stats: outline.stats,
       segments: outline.segments,
+      segmentCount: outline.stats.segmentCount,
+      averageConfidence: outline.stats.averageConfidence,
+      lowConfidenceCount: outline.segments.filter((s) => s.confidence < 0.8).length,
+      types: outline.stats.typeCounts,
+      matchedRules: Array.from(new Set(outline.segments.flatMap((s) => s.matchedPatternIds))),
     };
   });
   return {

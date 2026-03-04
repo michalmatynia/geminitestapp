@@ -490,7 +490,7 @@ export function runPromptExploderBenchmark(args: {
           suggestedSegmentType: segment.type,
           suggestedPriority: 18,
           suggestedConfidenceBoost: 0.1,
-          suggestedTreatAsHeading: isHeadingLike(segment.title || ''),
+          suggestedRuleTreatAsHeading: isHeadingLike(segment.title || ''),
         };
       });
     const meetsMinSegments = document.segments.length >= benchmarkCase.minSegments;

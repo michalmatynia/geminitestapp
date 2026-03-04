@@ -20,6 +20,7 @@ const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string
   'segment.boundary.studio_relighting': 'Boundary · Studio Relighting',
   'segment.boundary.pipeline': 'Boundary · Pipeline',
   'segment.boundary.final_qa': 'Boundary · Final QA',
+  'segment.boundary.hr_line': 'Boundary · Horizontal Rule',
   'segment.not_heading.rule_line': 'Guard · Rule Continuation (Not Heading)',
   'segment.subsection.alpha_heading': 'Subsection · Alpha Heading',
   'segment.subsection.reference_named': 'Subsection · Named Reference',

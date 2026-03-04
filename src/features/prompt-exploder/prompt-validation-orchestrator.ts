@@ -441,7 +441,7 @@ export const resolvePromptValidationRuntime = (
     });
     const identity: PromptValidationRuntimeIdentity = {
       scope: stackResolution.scope ?? 'global',
-      validatorScope: (stackResolution.validatorScope as ValidatorScope) ?? 'products',
+      validatorScope: (stackResolution.validatorScope) ?? 'products',
       stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,

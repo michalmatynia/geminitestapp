@@ -3,7 +3,6 @@ import { namedDtoSchema } from '../base';
 import {
   type PromptExploderSegmentType,
 } from './base';
-import { type PromptExploderDocument } from './document';
 
 /**
  * Prompt Exploder Benchmark DTOs
@@ -100,3 +99,8 @@ export type PromptExploderBenchmarkCase = {
   expectedTypes: PromptExploderSegmentType[];
   minSegments: number;
 };
+
+export type ParseCustomBenchmarkCasesResult =
+  | { ok: true; cases: PromptExploderBenchmarkCase[] }
+  | { ok: false; error: string };
+

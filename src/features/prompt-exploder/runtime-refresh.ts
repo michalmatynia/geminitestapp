@@ -98,24 +98,26 @@ export const resolveSegmentIdAfterReexplode = (args: {
   document: PromptExploderDocument;
   strategy: SegmentSelectionStrategy;
 }): string | null => {
-  if (args.strategy.kind === 'match_title') {
-    const targetTitle = args.strategy.title;
-    const matched = args.document.segments.find(
-      (segment: PromptExploderSegment) =>
-        normalizeLearningText(segment.title || '') === normalizeLearningText(targetTitle)
-    );
-    return matched?.id ?? args.document.segments[0]?.id ?? null;
-  }
-  if (args.strategy.kind === 'preserve_id') {
-    const { previousId } = args.strategy;
-    if (!previousId) {
-      return args.document.segments[0]?.id ?? null;
+  if (typeof args.strategy === 'object' && args.strategy !== null && 'kind' in args.strategy) {
+    if (args.strategy.kind === 'match_title') {
+      const targetTitle = args.strategy.title;
+      const matched = args.document.segments.find(
+        (segment: PromptExploderSegment) =>
+          normalizeLearningText(segment.title || '') === normalizeLearningText(targetTitle)
+      );
+      return matched?.id ?? args.document.segments[0]?.id ?? null;
     }
-    return args.document.segments.some(
-      (segment: PromptExploderSegment) => segment.id === previousId
-    )
-      ? previousId
-      : (args.document.segments[0]?.id ?? null);
+    if (args.strategy.kind === 'preserve_id') {
+      const { previousId } = args.strategy;
+      if (!previousId) {
+        return args.document.segments[0]?.id ?? null;
+      }
+      return args.document.segments.some(
+        (segment: PromptExploderSegment) => segment.id === previousId
+      )
+        ? previousId
+        : args.document.segments[0]?.id ?? (null as string | null);
+    }
   }
   return args.document.segments[0]?.id ?? null;
 };

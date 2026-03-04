@@ -215,8 +215,18 @@ export function useStateBridgeGraph({
 }: StateBridgeGraphProps): void {
   const actions = useGraphActions();
   const { nodes: contextNodes, edges: contextEdges, graphRevision } = useGraphState();
-  const pendingContextNodesSyncRef = useRef<{ hash: string; revision: number } | null>(null);
-  const pendingContextEdgesSyncRef = useRef<{ hash: string; revision: number } | null>(null);
+  const pendingContextNodesSyncRef = useRef<{
+    hash: string;
+    revision: number;
+    pathId: string | null;
+  } | null>(null);
+  const pendingContextEdgesSyncRef = useRef<{
+    hash: string;
+    revision: number;
+    pathId: string | null;
+  } | null>(null);
+  const lastBlockedNodeSyncRef = useRef<string | null>(null);
+  const lastBlockedEdgeSyncRef = useRef<string | null>(null);
   const lastSourceNodesHashRef = useRef<string>(stableStringify(nodes));
   const lastSourceEdgesHashRef = useRef<string>(stableStringify(edges));
   const lastSourcePathIdRef = useRef<string | null | undefined>(activePathId);
@@ -224,6 +234,7 @@ export function useStateBridgeGraph({
   const sourceEdgesHash = stableStringify(edges);
   const contextNodesHash = stableStringify(contextNodes);
   const contextEdgesHash = stableStringify(contextEdges);
+  const shouldLogBridgeBlock = process.env.NODE_ENV !== 'test';
   const sourceNodesChangedThisRender = lastSourceNodesHashRef.current !== sourceNodesHash;
   const sourceEdgesChangedThisRender = lastSourceEdgesHashRef.current !== sourceEdgesHash;
   const sourcePathChangedThisRender = lastSourcePathIdRef.current !== activePathId;
@@ -236,26 +247,45 @@ export function useStateBridgeGraph({
   }
   if (sourcePathChangedThisRender) {
     lastSourcePathIdRef.current = activePathId;
+    pendingContextNodesSyncRef.current = null;
+    pendingContextEdgesSyncRef.current = null;
+    lastBlockedNodeSyncRef.current = null;
+    lastBlockedEdgeSyncRef.current = null;
   }
 
   useEffect(() => {
     if (onNodesChangeFromContext) {
       const pendingSync = pendingContextNodesSyncRef.current;
       if (pendingSync) {
-        if (sourceNodesHash === pendingSync.hash) {
+        if (pendingSync.pathId !== (activePathId ?? null)) {
+          pendingContextNodesSyncRef.current = null;
+        } else if (sourceNodesHash === pendingSync.hash) {
           pendingContextNodesSyncRef.current = null;
         } else {
+          const blockedKey = `${pendingSync.revision}:${pendingSync.pathId ?? 'none'}:${sourceNodesHash.slice(0, 24)}:${contextNodesHash.slice(0, 24)}`;
+          if (shouldLogBridgeBlock && lastBlockedNodeSyncRef.current !== blockedKey) {
+            lastBlockedNodeSyncRef.current = blockedKey;
+            console.debug('[ai-paths-bridge] blocked stale source->context node sync', {
+              activePathId: activePathId ?? null,
+              pendingPathId: pendingSync.pathId,
+              pendingRevision: pendingSync.revision,
+              sourceHash: sourceNodesHash.slice(0, 48),
+              contextHash: contextNodesHash.slice(0, 48),
+            });
+          }
           return;
         }
       }
     }
     if (sourceNodesHash === contextNodesHash) return;
+    lastBlockedNodeSyncRef.current = null;
     actions.setNodes(nodes, {
       reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.nodes',
       allowNodeCountDecrease: sourcePathChangedThisRender || sourceNodesChangedThisRender,
     });
   }, [
+    activePathId,
     actions,
     contextNodesHash,
     nodes,
@@ -263,25 +293,41 @@ export function useStateBridgeGraph({
     sourceNodesChangedThisRender,
     sourceNodesHash,
     sourcePathChangedThisRender,
+    shouldLogBridgeBlock,
   ]);
 
   useEffect(() => {
     if (onEdgesChangeFromContext) {
       const pendingSync = pendingContextEdgesSyncRef.current;
       if (pendingSync) {
-        if (sourceEdgesHash === pendingSync.hash) {
+        if (pendingSync.pathId !== (activePathId ?? null)) {
+          pendingContextEdgesSyncRef.current = null;
+        } else if (sourceEdgesHash === pendingSync.hash) {
           pendingContextEdgesSyncRef.current = null;
         } else {
+          const blockedKey = `${pendingSync.revision}:${pendingSync.pathId ?? 'none'}:${sourceEdgesHash.slice(0, 24)}:${contextEdgesHash.slice(0, 24)}`;
+          if (shouldLogBridgeBlock && lastBlockedEdgeSyncRef.current !== blockedKey) {
+            lastBlockedEdgeSyncRef.current = blockedKey;
+            console.debug('[ai-paths-bridge] blocked stale source->context edge sync', {
+              activePathId: activePathId ?? null,
+              pendingPathId: pendingSync.pathId,
+              pendingRevision: pendingSync.revision,
+              sourceHash: sourceEdgesHash.slice(0, 48),
+              contextHash: contextEdgesHash.slice(0, 48),
+            });
+          }
           return;
         }
       }
     }
     if (sourceEdgesHash === contextEdgesHash) return;
+    lastBlockedEdgeSyncRef.current = null;
     actions.setEdges(edges, {
       reason: sourcePathChangedThisRender ? 'load_path' : 'bridge_sync',
       source: 'state_bridge.source_to_context.edges',
     });
   }, [
+    activePathId,
     actions,
     contextEdgesHash,
     edges,
@@ -289,41 +335,54 @@ export function useStateBridgeGraph({
     sourceEdgesChangedThisRender,
     sourceEdgesHash,
     sourcePathChangedThisRender,
+    shouldLogBridgeBlock,
   ]);
 
   useLayoutEffect((): void => {
     if (!onNodesChangeFromContext) return;
+    if (sourcePathChangedThisRender) return;
     if (sourceNodesHash === contextNodesHash) return;
     const pendingSync = pendingContextNodesSyncRef.current;
-    if (pendingSync && pendingSync.hash === contextNodesHash) return;
+    if (pendingSync?.hash === contextNodesHash && pendingSync.pathId === (activePathId ?? null)) {
+      return;
+    }
     pendingContextNodesSyncRef.current = {
       hash: contextNodesHash,
       revision: graphRevision,
+      pathId: activePathId ?? null,
     };
     onNodesChangeFromContext(contextNodes);
   }, [
+    activePathId,
     contextNodes,
     contextNodesHash,
     graphRevision,
     onNodesChangeFromContext,
+    sourcePathChangedThisRender,
     sourceNodesHash,
   ]);
 
   useLayoutEffect((): void => {
     if (!onEdgesChangeFromContext) return;
+    if (sourcePathChangedThisRender) return;
     if (sourceEdgesHash === contextEdgesHash) return;
     const pendingSync = pendingContextEdgesSyncRef.current;
-    if (pendingSync && pendingSync.hash === contextEdgesHash) return;
+    if (pendingSync?.hash === contextEdgesHash && pendingSync.pathId === (activePathId ?? null)) {
+      return;
+    }
     pendingContextEdgesSyncRef.current = {
       hash: contextEdgesHash,
       revision: graphRevision,
+      pathId: activePathId ?? null,
     };
     onEdgesChangeFromContext(contextEdges);
   }, [
+    activePathId,
     contextEdges,
     contextEdgesHash,
     graphRevision,
     onEdgesChangeFromContext,
+    sourcePathChangedThisRender,
     sourceEdgesHash,
   ]);
 

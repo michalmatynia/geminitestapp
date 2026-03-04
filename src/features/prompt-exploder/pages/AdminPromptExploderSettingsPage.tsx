@@ -34,14 +34,18 @@ import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsToo
 import {
   defaultPromptExploderSettings,
   parsePromptExploderSettingsResult,
-  PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
+import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
 import {
   buildPromptExploderValidationRuleStackOptions,
   normalizePromptExploderValidationRuleStack,
 } from '../validation-stack';
 
-import type { PromptExploderOperationMode, PromptExploderSettings } from '../types';
+import type { 
+  PromptExploderOperationMode, 
+  PromptExploderSettings,
+  PromptExploderValidationRuleStack
+} from '@/shared/contracts/prompt-exploder';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -105,7 +109,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       runtime: {
         ...parsedSettings.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
-          parsedSettings.runtime.validationRuleStack,
+          parsedSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
           validatorPatternLists
         ),
       },
@@ -117,24 +121,24 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     const error = parsedSettingsResult.error;
     const raw = rawSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::${error.code}::${error.message}`;
+    const signature = `${raw}::error::${error}`;
     if (lastSettingsErrorSignatureRef.current === signature) return;
     lastSettingsErrorSignatureRef.current = signature;
-    logClientError(error, {
+    logClientError(new Error(error), {
       context: {
         source: 'AdminPromptExploderSettingsPage',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error.message, { variant: 'error' });
+    toast(error, { variant: 'error' });
   }, [parsedSettingsResult.error, rawSettings, toast]);
 
   useEffect(() => {
     setDraft((previous) => {
       if (!previous) return previous;
       const normalizedStack = normalizePromptExploderValidationRuleStack(
-        previous.runtime.validationRuleStack,
+        previous.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
         validatorPatternLists
       );
       if (normalizedStack === previous.runtime.validationRuleStack) {
@@ -316,7 +320,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       runtime: {
         ...draft.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
-          draft.runtime.validationRuleStack,
+          draft.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
           validatorPatternLists
         ),
         benchmarkLowConfidenceThreshold: clampNumber(
@@ -369,7 +373,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           title='Prompt Exploder Settings'
           description='Persisted settings are invalid and cannot be loaded.'
         />
-        <Alert variant='error'>{settingsValidationError.message}</Alert>
+        <Alert variant='error'>{settingsValidationError}</Alert>
         <div className='flex flex-wrap items-center gap-2'>
           <Button
             type='button'

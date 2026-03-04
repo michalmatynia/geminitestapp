@@ -1,7 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { createContext, useContext, useMemo, useRef } from 'react';
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import type {
   CaseResolverCategory,
@@ -9,35 +8,20 @@ import type {
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
-  getCaseResolverWorkspaceLegacySanitizationDiagnostics,
-  getCaseResolverWorkspaceSafeParseDiagnostics,
-  hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
   parseCaseResolverTags,
   safeParseCaseResolverWorkspace,
 } from '../settings';
-import {
-  fetchCaseResolverWorkspaceIfStale,
-  fetchCaseResolverWorkspaceMetadata,
-  fetchCaseResolverWorkspaceRecord,
-  fetchCaseResolverWorkspaceRecordDetailed,
-  getCaseResolverWorkspaceRevision,
-  logCaseResolverWorkspaceEvent,
-  primeCaseResolverNavigationWorkspace,
-  readCaseResolverNavigationWorkspace,
-} from '../workspace-persistence';
 
 import {
   type CaseViewMode,
@@ -54,11 +38,6 @@ import {
   type AdminCaseResolverCasesContextValue,
 } from './admin-cases/types';
 
-import {
-  normalizeCaseListViewDefaults,
-  shouldBootstrapCaseResolverCasesFromRecord,
-  shouldAdoptIncomingCaseResolverCasesWorkspace,
-} from './admin-cases/utils';
 import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
 import {
   useAdminCaseResolverCasesActions,
@@ -87,15 +66,9 @@ export function AdminCaseResolverCasesProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const pathname = usePathname();
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
-
-  const caseListViewDefaults = useMemo(
-    () => normalizeCaseListViewDefaults(preferencesQuery.data),
-    [preferencesQuery.data]
-  );
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
@@ -159,6 +132,8 @@ export function AdminCaseResolverCasesProvider({
   const {
     workspace,
     setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
     isCreatingCase,
     setIsCreatingCase,
     createCaseMutationIdRef,
@@ -179,7 +154,6 @@ export function AdminCaseResolverCasesProvider({
     editingCaseCaseIdentifierId,
     setEditingCaseCaseIdentifierId,
     pendingCaseIdentifierIds,
-    setPendingCaseIdentifierIds,
     editingCaseCategoryId,
     setEditingCaseCategoryId,
     collapsedCaseIds,
@@ -219,7 +193,6 @@ export function AdminCaseResolverCasesProvider({
     caseShowNestedContent,
     setCaseShowNestedContent,
     caseFilterPanelDefaultExpanded,
-    setCaseFilterPanelDefaultExpanded,
     didHydrateCaseListViewDefaults,
     setDidHydrateCaseListViewDefaults,
     confirmation,
@@ -230,62 +203,14 @@ export function AdminCaseResolverCasesProvider({
     setCasesLoadMessage,
   } = state;
 
-  const {
-    handleSearchQueryChange,
-    handleSearchScopeChange,
-    handleFileTypeFilterChange,
-    handleTagFilterChange,
-    handleCaseIdentifierFilterChange,
-    handleCategoryFilterChange,
-    handleFolderFilterChange,
-    handleStatusFilterChange,
-    handleLockedFilterChange,
-    handleSentFilterChange,
-    handleHierarchyFilterChange,
-    handleReferencesFilterChange,
-    handleSortChange,
-    handleViewModeChange,
-    handleShowNestedContentChange,
-    handleToggleCaseCollapsed,
-    handleExpandAllCases,
-    handleCollapseAllCases,
-    handleHoldCase,
-    handleReleaseCase,
-    handleEditCase,
-    handleEditCaseNameChange,
-    handleEditCaseParentIdChange,
-    handleEditCaseReferenceCaseIdsChange,
-    handleEditCaseTagIdChange,
-    handleEditCaseCaseIdentifierIdChange,
-    handleEditCaseCategoryIdChange,
-    handleSaveCase,
-    handleCancelEditCase,
-    handleDeleteCase,
-    handleDuplicateCase,
-    handleCreateCase,
-    handleCreateCaseDraftChange,
-    handleOpenCreateCaseModal,
-    handleCloseCreateCaseModal,
-    handleMoveCaseToFolder,
-    handleMoveCaseToParent,
-    handleRemoveCaseFromFolder,
-    handleRemoveCaseFromParent,
-    handleUpdateCaseStatus,
-    handleUpdateCaseLocked,
-    handleUpdateCaseSent,
-    handleUpdateCaseTags,
-    handleUpdateCaseCaseIdentifiers,
-    handleUpdateCaseCategory,
-    handleUpdateCaseParent,
-    handleUpdateCaseName,
-    handleConfirmAction,
-    handleCancelAction,
-    handleRefreshWorkspace,
-    createFolder,
-    deleteFolder,
-  } = useAdminCaseResolverCasesActions({
+  const settingsStoreRefetchRef = useRef(settingsStore.refetch);
+  settingsStoreRefetchRef.current = settingsStore.refetch;
+
+  const actions = useAdminCaseResolverCasesActions({
     workspace,
     setWorkspace,
+    lastPersistedWorkspaceValueRef,
+    lastPersistedWorkspaceRevisionRef,
     isCreatingCase,
     setIsCreatingCase,
     createCaseMutationIdRef,
@@ -299,8 +224,8 @@ export function AdminCaseResolverCasesProvider({
     setEditingCaseTagId,
     setEditingCaseCaseIdentifierId,
     setEditingCaseCategoryId,
-    collapsedCaseIds,
-    setCollapsedCaseIds,
+    collapsedCaseIds: Array.from(collapsedCaseIds),
+    setCollapsedCaseIds: (ids: string[]) => setCollapsedCaseIds(new Set(ids)),
     setHeldCaseId,
     setCaseSearchQuery,
     setCaseSearchScope,
@@ -308,7 +233,7 @@ export function AdminCaseResolverCasesProvider({
     setCaseFilterTagIds,
     setCaseFilterCaseIdentifierIds,
     setCaseFilterCategoryIds,
-    setCaseFilterFolder,
+    setCaseFilterFolder: (folder: string | null) => setCaseFilterFolder(folder || ''),
     setCaseFilterStatus,
     setCaseFilterLocked,
     setCaseFilterSent,
@@ -321,11 +246,12 @@ export function AdminCaseResolverCasesProvider({
     setDidHydrateCaseListViewDefaults,
     setConfirmation,
     setCasesLoadState,
-    setCasesLoadMessage,
-    toast,
-  });
+    setCasesLoadMessage: (msg: string | null) => setCasesLoadMessage(msg || ''),
+    toast: toast as any, 
+    settingsStoreRefetchRef,
+  } as any);
 
-  const identifierOptions = useMemo<Array<{ value: string; label: string }>>(
+  const caseIdentifierOptions = useMemo<Array<{ value: string; label: string }>>(
     () =>
       caseResolverIdentifiers.map((identifierRecord: CaseResolverIdentifier) => {
         const id = identifierRecord.id;
@@ -353,28 +279,38 @@ export function AdminCaseResolverCasesProvider({
       .map((folder) => ({ value: folder, label: folder }));
   }, [workspace.files]);
 
-  const isRouteWorkspaceSyncing = false; // Simplified for now
+  const isRouteWorkspaceSyncing = false; 
   const isLoading =
     settingsStore.isLoading ||
     isRouteWorkspaceSyncing ||
-    casesLoadState === 'loading';
+    casesLoadState === 'loading' ||
+    preferencesQuery.isLoading;
 
   const value = useMemo(
     (): AdminCaseResolverCasesContextValue => ({
       workspace,
+      setWorkspace,
       casesLoadState: casesLoadState as CaseResolverCasesLoadState,
       casesLoadMessage,
       caseDraft,
+      setCaseDraft,
       isCreatingCase,
       isCreateCaseModalOpen,
+      setIsCreateCaseModalOpen,
       editingCaseId,
+      setEditingCaseId,
       editingCaseName,
+      setEditingCaseName,
       editingCaseParentId,
+      setEditingCaseParentId,
       editingCaseReferenceCaseIds,
+      setEditingCaseReferenceCaseIds,
       editingCaseTagId,
+      setEditingCaseTagId,
       editingCaseCaseIdentifierId,
-      editingCaseCategoryId,
+      setEditingCaseCaseIdentifierId,
       pendingCaseIdentifierIds,
+      setPendingCaseIdentifierIds: state.setPendingCaseIdentifierIds,
       collapsedCaseIds,
       heldCaseId,
       caseSearchQuery,
@@ -396,57 +332,8 @@ export function AdminCaseResolverCasesProvider({
       caseFilterPanelDefaultExpanded,
       didHydrateCaseListViewDefaults,
       confirmation,
-      handleSearchQueryChange,
-      handleSearchScopeChange,
-      handleFileTypeFilterChange,
-      handleTagFilterChange,
-      handleCaseIdentifierFilterChange,
-      handleCategoryFilterChange,
-      handleFolderFilterChange,
-      handleStatusFilterChange,
-      handleLockedFilterChange,
-      handleSentFilterChange,
-      handleHierarchyFilterChange,
-      handleReferencesFilterChange,
-      handleSortChange,
-      handleViewModeChange,
-      handleShowNestedContentChange,
-      handleToggleCaseCollapsed,
-      handleExpandAllCases,
-      handleCollapseAllCases,
-      handleHoldCase,
-      handleReleaseCase,
-      handleEditCase,
-      handleEditCaseNameChange,
-      handleEditCaseParentIdChange,
-      handleEditCaseReferenceCaseIdsChange,
-      handleEditCaseTagIdChange,
-      handleEditCaseCaseIdentifierIdChange,
-      handleEditCaseCategoryIdChange,
-      handleSaveCase,
-      handleCancelEditCase,
-      handleDeleteCase,
-      handleDuplicateCase,
-      handleCreateCase,
-      handleCreateCaseDraftChange,
-      handleOpenCreateCaseModal,
-      handleCloseCreateCaseModal,
-      handleMoveCaseToFolder,
-      handleMoveCaseToParent,
-      handleRemoveCaseFromFolder,
-      handleRemoveCaseFromParent,
-      handleUpdateCaseStatus,
-      handleUpdateCaseLocked,
-      handleUpdateCaseSent,
-      handleUpdateCaseTags,
-      handleUpdateCaseCaseIdentifiers,
-      handleUpdateCaseCategory,
-      handleUpdateCaseParent,
-      handleUpdateCaseName,
-      handleConfirmAction,
-      handleCancelAction,
-      handleRefreshWorkspace,
-      identifierOptions,
+      ...actions,
+      caseIdentifierOptions,
       folderOptions,
       caseResolverTags,
       caseResolverIdentifiers,
@@ -454,22 +341,31 @@ export function AdminCaseResolverCasesProvider({
       caseResolverTagOptions,
       caseResolverCategoryOptions,
       isLoading,
-    }),
+    } as any),
     [
       workspace,
+      setWorkspace,
       casesLoadState,
       casesLoadMessage,
       caseDraft,
+      setCaseDraft,
       isCreatingCase,
       isCreateCaseModalOpen,
+      setIsCreateCaseModalOpen,
       editingCaseId,
+      setEditingCaseId,
       editingCaseName,
+      setEditingCaseName,
       editingCaseParentId,
+      setEditingCaseParentId,
       editingCaseReferenceCaseIds,
+      setEditingCaseReferenceCaseIds,
       editingCaseTagId,
+      setEditingCaseTagId,
       editingCaseCaseIdentifierId,
-      editingCaseCategoryId,
+      setEditingCaseCaseIdentifierId,
       pendingCaseIdentifierIds,
+      state.setPendingCaseIdentifierIds,
       collapsedCaseIds,
       heldCaseId,
       caseSearchQuery,
@@ -491,57 +387,8 @@ export function AdminCaseResolverCasesProvider({
       caseFilterPanelDefaultExpanded,
       didHydrateCaseListViewDefaults,
       confirmation,
-      handleSearchQueryChange,
-      handleSearchScopeChange,
-      handleFileTypeFilterChange,
-      handleTagFilterChange,
-      handleCaseIdentifierFilterChange,
-      handleCategoryFilterChange,
-      handleFolderFilterChange,
-      handleStatusFilterChange,
-      handleLockedFilterChange,
-      handleSentFilterChange,
-      handleHierarchyFilterChange,
-      handleReferencesFilterChange,
-      handleSortChange,
-      handleViewModeChange,
-      handleShowNestedContentChange,
-      handleToggleCaseCollapsed,
-      handleExpandAllCases,
-      handleCollapseAllCases,
-      handleHoldCase,
-      handleReleaseCase,
-      handleEditCase,
-      handleEditCaseNameChange,
-      handleEditCaseParentIdChange,
-      handleEditCaseReferenceCaseIdsChange,
-      handleEditCaseTagIdChange,
-      handleEditCaseCaseIdentifierIdChange,
-      handleEditCaseCategoryIdChange,
-      handleSaveCase,
-      handleCancelEditCase,
-      handleDeleteCase,
-      handleDuplicateCase,
-      handleCreateCase,
-      handleCreateCaseDraftChange,
-      handleOpenCreateCaseModal,
-      handleCloseCreateCaseModal,
-      handleMoveCaseToFolder,
-      handleMoveCaseToParent,
-      handleRemoveCaseFromFolder,
-      handleRemoveCaseFromParent,
-      handleUpdateCaseStatus,
-      handleUpdateCaseLocked,
-      handleUpdateCaseSent,
-      handleUpdateCaseTags,
-      handleUpdateCaseCaseIdentifiers,
-      handleUpdateCaseCategory,
-      handleUpdateCaseParent,
-      handleUpdateCaseName,
-      handleConfirmAction,
-      handleCancelAction,
-      handleRefreshWorkspace,
-      identifierOptions,
+      actions,
+      caseIdentifierOptions,
       folderOptions,
       caseResolverTags,
       caseResolverIdentifiers,

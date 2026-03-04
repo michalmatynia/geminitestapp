@@ -50,7 +50,7 @@ import {
   logCaseResolverWorkspaceEvent,
   readCaseResolverNavigationWorkspace,
   getCaseResolverWorkspaceRevision,
-  } from '../workspace-persistence';
+} from '../workspace-persistence';
 import {
   fromCaseResolverCaseContentFileNodeId,
   fromCaseResolverCaseNodeId,

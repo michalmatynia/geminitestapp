@@ -15,7 +15,8 @@ import {
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
 import { PROMPT_ENGINE_SETTINGS_KEY, PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import { PROMPT_EXPLODER_SETTINGS_KEY, parsePromptExploderSettingsResult } from '../../settings';
+import { PROMPT_EXPLODER_SETTINGS_KEY } from '@/shared/contracts/prompt-exploder';
+import { parsePromptExploderSettingsResult } from '../../settings';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,
   parseValidatorPatternLists,
@@ -34,6 +35,7 @@ import {
   PromptExploderLearnedTemplate,
   PromptExploderPatternSnapshot,
   PromptExploderRuntimeValidationScope,
+  PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { LearningDraft } from './SettingsDraftsContext';
@@ -110,17 +112,17 @@ export function useSettingsDataImpl(args: {
     const error = promptExploderSettingsResult.error;
     const raw = rawExploderSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::${error.code}::${error.message}`;
+    const signature = `${raw}::error::${error}`;
     if (settingsParseErrorRef.current === signature) return;
     settingsParseErrorRef.current = signature;
-    logClientError(error, {
+    logClientError(new Error(error), {
       context: {
         source: 'PromptExploderSettingsContext',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error.message, { variant: 'error' });
+    toast(error, { variant: 'error' });
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
 
   const validatorPatternListsHydrationSignature = useMemo(
@@ -174,7 +176,7 @@ export function useSettingsDataImpl(args: {
     if (learningDraftHydratedFrom === hydrationSignature) return;
 
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      promptExploderSettings.runtime.validationRuleStack,
+      promptExploderSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack

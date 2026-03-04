@@ -25,11 +25,12 @@ import { handleMoveCaseImpl, handleReorderCaseImpl } from './actions/case-orderi
 
 export type ToastFn = (message: string, options?: { variant?: string }) => void;
 
-type UseAdminCaseResolverCasesActionsArgs = {
+export type UseAdminCaseResolverCasesActionsArgs = {
   workspace: CaseResolverWorkspace;
   setWorkspace: Dispatch<SetStateAction<CaseResolverWorkspace>>;
   lastPersistedWorkspaceValueRef: MutableRefObject<string>;
   lastPersistedWorkspaceRevisionRef: MutableRefObject<number>;
+  isCreatingCase: boolean;
   setIsCreatingCase: Dispatch<SetStateAction<boolean>>;
   createCaseMutationIdRef: MutableRefObject<string | null>;
   caseDraft: Partial<CaseResolverFile>;
@@ -38,12 +39,40 @@ type UseAdminCaseResolverCasesActionsArgs = {
   editingCaseId: string | null;
   setEditingCaseId: (id: string | null) => void;
   editingCaseName: string;
+  setEditingCaseName: (name: string) => void;
   editingCaseParentId: string | null;
+  setEditingCaseParentId: (id: string | null) => void;
   editingCaseReferenceCaseIds: string[];
+  setEditingCaseReferenceCaseIds: (ids: string[]) => void;
   editingCaseTagId: string | null;
+  setEditingCaseTagId: (id: string | null) => void;
   editingCaseCaseIdentifierId: string | null;
+  setEditingCaseCaseIdentifierId: (id: string | null) => void;
   editingCaseCategoryId: string | null;
+  setEditingCaseCategoryId: (id: string | null) => void;
+  collapsedCaseIds: string[];
+  setCollapsedCaseIds: (ids: string[]) => void;
+  setHeldCaseId: (id: string | null) => void;
+  setCaseSearchQuery: (query: string) => void;
+  setCaseSearchScope: (scope: any) => void;
+  setCaseFileTypeFilter: (filter: any) => void;
+  setCaseFilterTagIds: (ids: string[]) => void;
+  setCaseFilterCaseIdentifierIds: (ids: string[]) => void;
+  setCaseFilterCategoryIds: (ids: string[]) => void;
+  setCaseFilterFolder: (folder: string | null) => void;
+  setCaseFilterStatus: (status: any) => void;
+  setCaseFilterLocked: (locked: any) => void;
+  setCaseFilterSent: (sent: any) => void;
+  setCaseFilterHierarchy: (hierarchy: any) => void;
+  setCaseFilterReferences: (references: any) => void;
+  setCaseSortBy: (key: any) => void;
+  setCaseSortOrder: (order: any) => void;
+  setCaseViewMode: (mode: any) => void;
+  setCaseShowNestedContent: (show: boolean) => void;
+  setDidHydrateCaseListViewDefaults: (hydrated: boolean) => void;
   setConfirmation: Dispatch<SetStateAction<CaseResolverCaseListConfirmationState>>;
+  setCasesLoadState: (state: any) => void;
+  setCasesLoadMessage: (message: string | null) => void;
   toast: ToastFn;
   settingsStoreRefetchRef: MutableRefObject<() => void>;
 };

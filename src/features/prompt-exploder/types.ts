@@ -12,8 +12,9 @@ import type {
   PromptExploderLogicalOperator,
   PromptExploderOperationMode,
   PromptExploderParamUiControl,
-  PromptExploderPatternRuleMap,
-  PromptExploderPatternSnapshot,
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderParserTuningRuleId,
+  PromptExploderRuntimeValidationScope,
   PromptExploderSegment,
   PromptExploderSegmentType,
   PromptExploderSettings,
@@ -21,6 +22,7 @@ import type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderBenchmarkSuite,
   PromptExploderValidationRuleStack,
+  PromptExploderPatternSnapshot,
 } from '@/shared/contracts/prompt-exploder';
 
 export type {
@@ -37,8 +39,9 @@ export type {
   PromptExploderLogicalOperator,
   PromptExploderOperationMode,
   PromptExploderParamUiControl,
-  PromptExploderPatternRuleMap,
-  PromptExploderPatternSnapshot,
+  PromptExploderParserTuningRuleDraft,
+  PromptExploderParserTuningRuleId,
+  PromptExploderRuntimeValidationScope,
   PromptExploderSegment,
   PromptExploderSegmentType,
   PromptExploderSettings,
@@ -46,4 +49,11 @@ export type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderBenchmarkSuite,
   PromptExploderValidationRuleStack,
+  PromptExploderPatternSnapshot,
+};
+
+export type PromptExploderState = {
+  activeScope: PromptExploderRuntimeValidationScope;
+  activeStack: PromptExploderValidationRuleStack | null;
+  isLoading: boolean;
 };

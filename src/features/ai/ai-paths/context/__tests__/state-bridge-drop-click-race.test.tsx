@@ -118,6 +118,59 @@ function GraphMutationGuardHarness(): React.JSX.Element {
   );
 }
 
+function BridgePathSwitchHarness(): React.JSX.Element {
+  const [sourceActivePathId, setSourceActivePathId] = React.useState<string | null>('path-a');
+  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>([buildNode('path-a-node-1', 80, 96)]);
+  const [sourceEdges, setSourceEdges] = React.useState<Edge[]>([]);
+  const pendingNodesRef = React.useRef<AiNode[] | null>(null);
+  const pendingEdgesRef = React.useRef<Edge[] | null>(null);
+  const { nodes: contextNodes } = useGraphState();
+  const { setNodes } = useGraphActions();
+
+  useStateBridgeGraph({
+    nodes: sourceNodes,
+    edges: sourceEdges,
+    activePathId: sourceActivePathId,
+    onNodesChangeFromContext: (nextNodes) => {
+      pendingNodesRef.current = nextNodes;
+    },
+    onEdgesChangeFromContext: (nextEdges) => {
+      pendingEdgesRef.current = nextEdges;
+    },
+  });
+
+  return (
+    <div>
+      <output data-testid='switch-source-path'>{sourceActivePathId ?? 'none'}</output>
+      <output data-testid='switch-source-nodes'>{serializeNodes(sourceNodes)}</output>
+      <output data-testid='switch-context-nodes'>{serializeNodes(contextNodes)}</output>
+      <button
+        type='button'
+        onClick={() =>
+          setNodes((prev: AiNode[]) => [...prev, buildNode('path-a-node-2', 240, 220)], {
+            reason: 'drop',
+            source: 'test.path-switch.context-drop',
+          })
+        }
+      >
+        context-add-path-a-node
+      </button>
+      <button
+        type='button'
+        onClick={() => {
+          setSourceActivePathId('path-b');
+          setSourceNodes([buildNode('path-b-node-1', 640, 420)]);
+          setSourceEdges([]);
+          pendingNodesRef.current = null;
+          pendingEdgesRef.current = null;
+        }}
+      >
+        source-switch-to-path-b
+      </button>
+    </div>
+  );
+}
+
 describe('AI Paths state bridge drop/click race protections', () => {
   it('prevents stale source->context sync from dropping a freshly added node', async () => {
     const { getByRole, getByTestId } = render(
@@ -172,5 +225,36 @@ describe('AI Paths state bridge drop/click race protections', () => {
     });
 
     warnSpy.mockRestore();
+  });
+
+  it('applies path switch source graph immediately even with unresolved pending sync from previous path', async () => {
+    const { getByRole, getByTestId } = render(
+      <AiPathsProvider initialNodes={[buildNode('path-a-node-1', 80, 96)]} initialEdges={[]}>
+        <BridgePathSwitchHarness />
+      </AiPathsProvider>
+    );
+
+    await waitFor(() => {
+      expect(getByTestId('switch-source-path')).toHaveTextContent('path-a');
+      expect(getByTestId('switch-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+      expect(getByTestId('switch-context-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'context-add-path-a-node' }));
+
+    await waitFor(() => {
+      expect(getByTestId('switch-context-nodes')).toHaveTextContent(
+        'path-a-node-1:80,96|path-a-node-2:240,220'
+      );
+      expect(getByTestId('switch-source-nodes')).toHaveTextContent('path-a-node-1:80,96');
+    });
+
+    fireEvent.click(getByRole('button', { name: 'source-switch-to-path-b' }));
+
+    await waitFor(() => {
+      expect(getByTestId('switch-source-path')).toHaveTextContent('path-b');
+      expect(getByTestId('switch-source-nodes')).toHaveTextContent('path-b-node-1:640,420');
+      expect(getByTestId('switch-context-nodes')).toHaveTextContent('path-b-node-1:640,420');
+    });
   });
 });

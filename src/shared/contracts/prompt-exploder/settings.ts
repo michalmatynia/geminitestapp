@@ -12,6 +12,8 @@ import {
   type PromptExploderSegmentType,
 } from './base';
 
+export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
+
 /**
  * Prompt Exploder Pattern & Template DTOs
  */
@@ -101,6 +103,7 @@ export const promptExploderSettingsSchema = z.object({
     })
     .default({
       ruleProfile: 'all',
+      customBenchmarkCases: [],
     }),
   learning: z
     .object({

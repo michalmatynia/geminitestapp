@@ -35,7 +35,10 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import { type PromptExploderParserTuningRuleDraft } from '@/shared/contracts/prompt-exploder';
+import { 
+  type PromptExploderParserTuningRuleDraft, 
+  type PromptExploderValidationRuleStack 
+} from '@/shared/contracts/prompt-exploder';
 import {
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,
@@ -56,6 +59,7 @@ import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource,
+  resolvePromptExploderValidationStack,
 } from '../validation-stack';
 
 import type {
@@ -185,17 +189,17 @@ export function usePromptExploderState() {
     const error = promptExploderSettingsResult.error;
     const raw = rawExploderSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::${error.code}::${error.message}`;
+    const signature = `${raw}::error::${error}`;
     if (settingsParseErrorRef.current === signature) return;
     settingsParseErrorRef.current = signature;
-    logClientError(error, {
+    logClientError(new Error(error), {
       context: {
         source: 'usePromptExploderState',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error.message, { variant: 'error' });
+    toast(error, { variant: 'error' });
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
   const promptLibraryItems = useMemo(
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
@@ -303,7 +307,7 @@ export function usePromptExploderState() {
       return;
     }
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      promptExploderSettings.runtime.validationRuleStack,
+      promptExploderSettings.runtime.validationRuleStack as unknown as PromptExploderValidationRuleStack,
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack
@@ -331,7 +335,7 @@ export function usePromptExploderState() {
 
   const handleExplode = useCallback((): void => {
     if (promptExploderSettingsValidationError) {
-      toast(promptExploderSettingsValidationError.message, { variant: 'error' });
+      toast(promptExploderSettingsValidationError, { variant: 'error' });
       return;
     }
     const trimmed = promptText.trim();

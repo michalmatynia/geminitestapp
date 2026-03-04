@@ -11,7 +11,6 @@ import type {
   SectionInstance,
 } from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
-import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
 import { CmsPageProvider } from './CmsPageContext';
 import { CssAnimationWrapper } from './CssAnimationWrapper';
@@ -164,50 +163,16 @@ interface SectionRendererProps {
   blocks: BlockInstance[];
 }
 
-type SectionRendererRuntimeValue = {
-  type: string;
-  sectionId: string;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-};
-
-const {
-  Context: SectionRendererRuntimeContext,
-  useStrictContext: useSectionRendererRuntime,
-} = createStrictContext<SectionRendererRuntimeValue>({
-  hookName: 'useSectionRendererRuntime',
-  providerName: 'SectionRendererRuntimeProvider',
-  displayName: 'SectionRendererRuntimeContext',
-});
-
-function SectionRendererContent(): React.ReactNode {
-  const runtime = useSectionRendererRuntime();
-  return (
-    <SectionBlockProvider
-      sectionId={runtime.sectionId}
-      settings={runtime.settings}
-      blocks={runtime.blocks}
-    >
-      <SectionRendererInner type={runtime.type} />
-    </SectionBlockProvider>
-  );
-}
-
 export function SectionRenderer({
   type,
   sectionId,
   settings,
   blocks,
 }: SectionRendererProps): React.ReactNode {
-  const runtimeValue = React.useMemo<SectionRendererRuntimeValue>(
-    () => ({ type, sectionId, settings, blocks }),
-    [type, sectionId, settings, blocks]
-  );
-
   return (
-    <SectionRendererRuntimeContext.Provider value={runtimeValue}>
-      <SectionRendererContent />
-    </SectionRendererRuntimeContext.Provider>
+    <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
+      <SectionRendererInner type={type} />
+    </SectionBlockProvider>
   );
 }
 

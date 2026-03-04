@@ -29,12 +29,11 @@ export interface CustomTriggerButtonsSectionProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function CustomTriggerButtonsSection({
-  projectId,
-  pathMetas,
-  triggerAnalysisForPath,
-  isRunning,
-}: CustomTriggerButtonsSectionProps): React.JSX.Element {
+export function CustomTriggerButtonsSection(
+  props: CustomTriggerButtonsSectionProps
+): React.JSX.Element {
+  const { projectId, pathMetas, triggerAnalysisForPath, isRunning } = props;
+
   const [buttons, setButtons] = useState<ImageStudioCustomTriggerButton[]>(() =>
     loadCustomTriggerButtons(projectId)
   );
@@ -225,15 +224,9 @@ interface EditRowProps {
   onCancel: () => void;
 }
 
-function EditRow({
-  label,
-  pathId,
-  pathOptions,
-  onLabelChange,
-  onPathChange,
-  onSave,
-  onCancel,
-}: EditRowProps): React.JSX.Element {
+function EditRow(props: EditRowProps): React.JSX.Element {
+  const { label, pathId, pathOptions, onLabelChange, onPathChange, onSave, onCancel } = props;
+
   const canSave = label.trim().length > 0 && pathId.trim().length > 0 && pathId !== '__empty__';
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {

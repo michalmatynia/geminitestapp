@@ -81,14 +81,18 @@ export interface SettingsFieldsRendererProps<T extends object> {
 /**
  * Renders a list of settings fields based on configuration.
  */
-export function SettingsFieldsRenderer<T extends object>({
-  fields,
-  values,
-  errors = {},
-  onChange,
-  disabled = false,
-  className,
-}: SettingsFieldsRendererProps<T>) {
+export function SettingsFieldsRenderer<T extends object>(props: SettingsFieldsRendererProps<T>) {
+  const {
+    fields,
+    values,
+    errors,
+    onChange,
+    disabled = false,
+    className,
+  } = props;
+  const resolvedErrors: Partial<Record<keyof T, string>> =
+    errors ?? ({} as Partial<Record<keyof T, string>>);
+
   const handleFieldChange = (key: keyof T, value: unknown) => {
     onChange({ [key]: value } as Partial<T>);
   };
@@ -98,6 +102,7 @@ export function SettingsFieldsRenderer<T extends object>({
       {fields.map((field, index) => {
         const fieldKey = `${String(field.key)}-${index}`;
         const fieldId = `settings-field-${fieldKey}`;
+        const fieldError = resolvedErrors[field.key];
         return (
           <div key={fieldKey}>
             {field.render ? (
@@ -105,13 +110,13 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
               >
                 {field.render({
                   value: values[field.key],
                   onChange: (value: unknown) => handleFieldChange(field.key, value),
                   disabled: field.disabled || disabled,
-                  ...(errors[field.key] !== undefined ? { error: errors[field.key] } : {}),
+                  ...(fieldError !== undefined ? { error: fieldError } : {}),
                 })}
               </FormField>
             ) : field.type === 'textarea' ? (
@@ -119,7 +124,7 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
               >
                 <Textarea
                   value={(values[field.key] as string) || ''}
@@ -134,7 +139,7 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
               >
                 <SelectSimple
                   value={String(values[field.key] || '')}
@@ -162,8 +167,8 @@ export function SettingsFieldsRenderer<T extends object>({
                 {field.helperText && (
                   <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>
                 )}
-                {errors[field.key] && (
-                  <p className='text-xs text-red-500 ml-6'>{errors[field.key]}</p>
+                {fieldError && (
+                  <p className='text-xs text-red-500 ml-6'>{fieldError}</p>
                 )}
               </div>
             ) : field.type === 'switch' ? (
@@ -186,8 +191,8 @@ export function SettingsFieldsRenderer<T extends object>({
                   onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                 />
-                {errors[field.key] && (
-                  <p className='text-xs text-red-500 mt-1'>{errors[field.key]}</p>
+                {fieldError && (
+                  <p className='text-xs text-red-500 mt-1'>{fieldError}</p>
                 )}
               </div>
             ) : field.type === 'color' ? (
@@ -195,7 +200,7 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
               >
                 <div className='flex items-center gap-2'>
                   <div
@@ -224,7 +229,7 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
                 actions={
                   <span className='text-xs font-mono text-muted-foreground'>
                     {(values[field.key] as number) ?? 0}
@@ -248,7 +253,7 @@ export function SettingsFieldsRenderer<T extends object>({
                 label={field.label}
                 required={field.required}
                 description={field.helperText}
-                error={errors[field.key]}
+                error={fieldError}
               >
                 <div className='flex items-center gap-2'>
                   <Input
@@ -361,23 +366,25 @@ function SettingsPanelBuilderRuntimePanel(): React.JSX.Element {
  * Generic settings panel builder modal.
  * Consolidates Theme, Component, Menu, Viewer3D settings patterns.
  */
-export function SettingsPanelBuilder<T extends object>({
-  open,
-  onClose,
-  title,
-  subtitle,
-  fields,
-  values,
-  errors = {},
-  onChange,
-  onSave,
-  isSaving = false,
-  size = 'md',
-  saveText,
-  cancelText,
-  showSaveButton = true,
-  showCancelButton = true,
-}: SettingsPanelBuilderProps<T>) {
+export function SettingsPanelBuilder<T extends object>(props: SettingsPanelBuilderProps<T>) {
+  const {
+    open,
+    onClose,
+    title,
+    subtitle,
+    fields,
+    values,
+    errors = {},
+    onChange,
+    onSave,
+    isSaving = false,
+    size = 'md',
+    saveText,
+    cancelText,
+    showSaveButton = true,
+    showCancelButton = true,
+  } = props;
+
   const handleSave = () => {
     void onSave();
   };

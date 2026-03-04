@@ -31,21 +31,23 @@ interface CollapsibleSectionProps {
  * CollapsibleSection - A higher-level component that combines a SectionHeader
  * with a collapsible content area.
  */
-function CollapsibleSection({
-  title,
-  description,
-  actions,
-  children,
-  open,
-  onOpenChange,
-  className,
-  triggerClassName,
-  headerClassName,
-  titleClassName,
-  contentClassName,
-  iconClassName,
-  variant = 'default',
-}: CollapsibleSectionProps): React.JSX.Element {
+function CollapsibleSection(props: CollapsibleSectionProps): React.JSX.Element {
+  const {
+    title,
+    description,
+    actions,
+    children,
+    open,
+    onOpenChange,
+    className,
+    triggerClassName,
+    headerClassName,
+    titleClassName,
+    contentClassName,
+    iconClassName,
+    variant = 'default',
+  } = props;
+
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isOpen = open ?? internalOpen;
   const handleOpenChange = onOpenChange ?? setInternalOpen;

@@ -14,13 +14,9 @@ type CaseListHeldDockProps = {
   onClearHeldCase: () => void;
 };
 
-export function CaseListHeldDock({
-  heldCaseFile,
-  isHierarchyLocked,
-  onPrefetchCase,
-  onOpenCase,
-  onClearHeldCase,
-}: CaseListHeldDockProps): React.JSX.Element | null {
+export function CaseListHeldDock(props: CaseListHeldDockProps): React.JSX.Element | null {
+  const { heldCaseFile, isHierarchyLocked, onPrefetchCase, onOpenCase, onClearHeldCase } = props;
+
   if (!heldCaseFile) return null;
 
   return (

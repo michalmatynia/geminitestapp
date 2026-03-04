@@ -31,17 +31,19 @@ interface DocumentationListProps {
  * DocumentationList - A unified list component for documentation, AI insights, and metadata.
  * Supports multiple visual variants, ordered/unordered lists, custom item rendering, and searching.
  */
-export function DocumentationList({
-  title,
-  items,
-  className,
-  listClassName,
-  ordered = false,
-  variant = 'default',
-  size = 'md',
-  searchable = false,
-  searchPlaceholder = 'Search items...',
-}: DocumentationListProps): React.JSX.Element | null {
+export function DocumentationList(props: DocumentationListProps): React.JSX.Element | null {
+  const {
+    title,
+    items,
+    className,
+    listClassName,
+    ordered = false,
+    variant = 'default',
+    size = 'md',
+    searchable = false,
+    searchPlaceholder = 'Search items...',
+  } = props;
+
   const [query, setQuery] = useState('');
 
   const filteredItems = useMemo(() => {

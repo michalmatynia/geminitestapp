@@ -84,27 +84,29 @@ function JSONImportModalShell(): React.JSX.Element {
 /**
  * A standard modal for importing data via JSON paste.
  */
-export function JSONImportModal({
-  isOpen,
-  onClose,
-  onImport,
-  onPreview,
-  previewText = 'Preview',
-  title,
-  subtitle,
-  label = 'JSON Data',
-  placeholder = 'Paste JSON here...',
-  confirmText = 'Import',
-  cancelText = 'Cancel',
-  isLoading = false,
-  defaultValue = '',
-  sampleValue,
-  onLoadSample,
-  actions,
-  children,
-  value: externalValue,
-  onChange: onExternalChange,
-}: JSONImportModalProps): React.JSX.Element {
+export function JSONImportModal(props: JSONImportModalProps): React.JSX.Element {
+  const {
+    isOpen,
+    onClose,
+    onImport,
+    onPreview,
+    previewText = 'Preview',
+    title,
+    subtitle,
+    label = 'JSON Data',
+    placeholder = 'Paste JSON here...',
+    confirmText = 'Import',
+    cancelText = 'Cancel',
+    isLoading = false,
+    defaultValue = '',
+    sampleValue,
+    onLoadSample,
+    actions,
+    children,
+    value: externalValue,
+    onChange: onExternalChange,
+  } = props;
+
   const [internalValue, setInternalValue] = React.useState(defaultValue);
   const value = externalValue !== undefined ? externalValue : internalValue;
 

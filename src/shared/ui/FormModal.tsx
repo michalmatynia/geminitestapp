@@ -68,10 +68,11 @@ type FormModalHeaderRuntimeProviderProps = {
   children: ReactNode;
 };
 
-function FormModalHeaderRuntimeProvider({
-  value,
-  children,
-}: FormModalHeaderRuntimeProviderProps): React.JSX.Element {
+function FormModalHeaderRuntimeProvider(
+  props: FormModalHeaderRuntimeProviderProps
+): React.JSX.Element {
+  const { value, children } = props;
+
   return (
     <FormModalHeaderRuntimeContext.Provider value={value}>
       {children}
@@ -116,31 +117,33 @@ function FormModalHeaderContent(): React.JSX.Element {
   );
 }
 
-export function FormModal({
-  open,
-  isOpen,
-  onClose,
-  title,
-  subtitle,
-  children,
-  onSave,
-  isSaving = false,
-  disableCloseWhileSaving = false,
-  isSaveDisabled = false,
-  hasUnsavedChanges,
-  saveText = 'Save',
-  cancelText = 'Cancel',
-  saveVariant,
-  saveIcon,
-  showSaveButton = true,
-  showCancelButton = true,
-  formRef,
-  size = 'md',
-  variant = 'default',
-  padding = 'default',
-  actions,
-  className,
-}: FormModalProps): React.JSX.Element | null {
+export function FormModal(props: FormModalProps): React.JSX.Element | null {
+  const {
+    open,
+    isOpen,
+    onClose,
+    title,
+    subtitle,
+    children,
+    onSave,
+    isSaving = false,
+    disableCloseWhileSaving = false,
+    isSaveDisabled = false,
+    hasUnsavedChanges,
+    saveText = 'Save',
+    cancelText = 'Cancel',
+    saveVariant,
+    saveIcon,
+    showSaveButton = true,
+    showCancelButton = true,
+    formRef,
+    size = 'md',
+    variant = 'default',
+    padding = 'default',
+    actions,
+    className,
+  } = props;
+
   const isCurrentlyOpen = isOpen ?? open;
   if (!isCurrentlyOpen) return null;
   const isCloseLocked = disableCloseWhileSaving && isSaving;

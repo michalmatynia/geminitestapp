@@ -35,19 +35,21 @@ interface MultiSelectProps {
   single?: boolean | undefined;
 }
 
-export function MultiSelect({
-  options,
-  selected,
-  onChange,
-  placeholder = 'Select options...',
-  searchPlaceholder = 'Search...',
-  label,
-  disabled = false,
-  className,
-  loading = false,
-  emptyMessage = 'No options found.',
-  single = false,
-}: MultiSelectProps) {
+export function MultiSelect(props: MultiSelectProps) {
+  const {
+    options,
+    selected,
+    onChange,
+    placeholder = 'Select options...',
+    searchPlaceholder = 'Search...',
+    label,
+    disabled = false,
+    className,
+    loading = false,
+    emptyMessage = 'No options found.',
+    single = false,
+  } = props;
+
   const [query, setQuery] = React.useState('');
 
   const filteredOptions = React.useMemo(() => {

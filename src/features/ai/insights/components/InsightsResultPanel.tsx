@@ -28,13 +28,9 @@ interface InsightsResultPanelProps {
   runMutation: RunMutationLike;
 }
 
-export function InsightsResultPanel({
-  title,
-  description,
-  emptyDescription,
-  query,
-  runMutation,
-}: InsightsResultPanelProps): React.JSX.Element {
+export function InsightsResultPanel(props: InsightsResultPanelProps): React.JSX.Element {
+  const { title, description, emptyDescription, query, runMutation } = props;
+
   return (
     <FormSection
       title={title}

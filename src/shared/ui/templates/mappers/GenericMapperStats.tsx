@@ -8,12 +8,9 @@ export type GenericMapperStatsProps = {
   itemLabel?: string;
 };
 
-export function GenericMapperStats({
-  total,
-  mapped,
-  pending,
-  itemLabel = 'Items',
-}: GenericMapperStatsProps): React.JSX.Element {
+export function GenericMapperStats(props: GenericMapperStatsProps): React.JSX.Element {
+  const { total, mapped, pending, itemLabel = 'Items' } = props;
+
   return (
     <div className='flex gap-4 mb-4'>
       <MetadataItem label={`Total ${itemLabel}`} value={total} variant='minimal' />

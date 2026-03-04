@@ -8,12 +8,11 @@ export type GenericMapperExternalCellProps = {
   disabled: boolean;
 };
 
-export function GenericMapperExternalCell({
-  value,
-  onChange,
-  options,
-  disabled,
-}: GenericMapperExternalCellProps): React.JSX.Element {
+export function GenericMapperExternalCell(
+  props: GenericMapperExternalCellProps
+): React.JSX.Element {
+  const { value, onChange, options, disabled } = props;
+
   return (
     <SelectSimple
       value={value ?? '__unmapped__'}

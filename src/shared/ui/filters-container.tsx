@@ -17,14 +17,16 @@ interface FiltersContainerProps {
   gridClassName?: string;
 }
 
-export function FiltersContainer({
-  title = 'Filters',
-  onReset,
-  hasActiveFilters = false,
-  children,
-  className,
-  gridClassName,
-}: FiltersContainerProps) {
+export function FiltersContainer(props: FiltersContainerProps) {
+  const {
+    title = 'Filters',
+    onReset,
+    hasActiveFilters = false,
+    children,
+    className,
+    gridClassName,
+  } = props;
+
   return (
     <div
       className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}

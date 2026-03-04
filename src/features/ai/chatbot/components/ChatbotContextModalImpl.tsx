@@ -46,10 +46,11 @@ interface ChatbotContextModalProviderProps {
   children: React.ReactNode;
 }
 
-export function ChatbotContextModalProvider({
-  value,
-  children,
-}: ChatbotContextModalProviderProps): React.JSX.Element {
+export function ChatbotContextModalProvider(
+  props: ChatbotContextModalProviderProps
+): React.JSX.Element {
+  const { value, children } = props;
+
   return (
     <ChatbotContextModalRuntimeContext.Provider value={value}>
       {children}
@@ -76,17 +77,19 @@ export function ChatbotContextModalPanel(): React.JSX.Element {
   );
 }
 
-export function ChatbotContextModal({
-  isOpen,
-  onClose,
-  item: editingItem,
-  modalDraft,
-  setModalDraft,
-  tagDraft,
-  setTagDraft,
-  isSaving,
-  onSave,
-}: ChatbotContextModalProps): React.JSX.Element | null {
+export function ChatbotContextModal(props: ChatbotContextModalProps): React.JSX.Element | null {
+  const {
+    isOpen,
+    onClose,
+    item: editingItem,
+    modalDraft,
+    setModalDraft,
+    tagDraft,
+    setTagDraft,
+    isSaving,
+    onSave,
+  } = props;
+
   const effectiveDraft = useMemo<ContextDraft>(() => {
     if (modalDraft) return modalDraft;
     return {

@@ -27,22 +27,24 @@ export interface SearchableListProps<T> {
   extraActions?: React.ReactNode;
 }
 
-export function SearchableList<T>({
-  items,
-  selectedIds,
-  onToggle,
-  renderItem,
-  getId,
-  getLabel,
-  searchPlaceholder = 'Filter items...',
-  emptyMessage = 'No items found matching your criteria.',
-  maxHeight = 'max-h-64',
-  className,
-  listClassName,
-  showCount = true,
-  countLabel = 'selected',
-  extraActions,
-}: SearchableListProps<T>): React.JSX.Element {
+export function SearchableList<T>(props: SearchableListProps<T>): React.JSX.Element {
+  const {
+    items,
+    selectedIds,
+    onToggle,
+    renderItem,
+    getId,
+    getLabel,
+    searchPlaceholder = 'Filter items...',
+    emptyMessage = 'No items found matching your criteria.',
+    maxHeight = 'max-h-64',
+    className,
+    listClassName,
+    showCount = true,
+    countLabel = 'selected',
+    extraActions,
+  } = props;
+
   const [search, setSearch] = useState('');
 
   const filteredItems = useMemo(() => {

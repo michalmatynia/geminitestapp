@@ -20,16 +20,18 @@ export interface ChipProps {
  * Chip - An interactive, clickable badge-like component.
  * Refactored to leverage the shared Badge component for consistent styling.
  */
-export function Chip({
-  label,
-  active = false,
-  onClick,
-  icon: Icon,
-  className,
-  activeClassName,
-  size = 'sm',
-  variant = 'cyan',
-}: ChipProps): React.JSX.Element {
+export function Chip(props: ChipProps): React.JSX.Element {
+  const {
+    label,
+    active = false,
+    onClick,
+    icon: Icon,
+    className,
+    activeClassName,
+    size = 'sm',
+    variant = 'cyan',
+  } = props;
+
   const sizeStyles = {
     xs: 'px-1.5 py-0.5 text-[10px]',
     sm: 'px-2 py-0.5 text-xs',

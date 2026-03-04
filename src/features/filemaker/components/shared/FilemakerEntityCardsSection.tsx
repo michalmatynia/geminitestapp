@@ -19,19 +19,23 @@ export interface FilemakerEntityCardsSectionProps<TItem extends { id: string }> 
   isPending: boolean;
 }
 
-export function FilemakerEntityCardsSection<TItem extends { id: string }>({
-  title,
-  addLabel,
-  emptyTitle,
-  emptyDescription,
-  items,
-  renderMain,
-  renderMeta,
-  onAdd,
-  onEdit,
-  onDelete,
-  isPending,
-}: FilemakerEntityCardsSectionProps<TItem>): React.JSX.Element {
+export function FilemakerEntityCardsSection<TItem extends { id: string }>(
+  props: FilemakerEntityCardsSectionProps<TItem>
+): React.JSX.Element {
+  const {
+    title,
+    addLabel,
+    emptyTitle,
+    emptyDescription,
+    items,
+    renderMain,
+    renderMeta,
+    onAdd,
+    onEdit,
+    onDelete,
+    isPending,
+  } = props;
+
   return (
     <FormSection
       title={title}

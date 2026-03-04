@@ -19,19 +19,21 @@ export type SearchSimulatorProps = {
   error: string | null;
 };
 
-export function SearchSimulator({
-  query,
-  setQuery,
-  topK,
-  setTopK,
-  minScore,
-  setMinScore,
-  onSearch,
-  isSearching,
-  collectionId,
-  results,
-  error,
-}: SearchSimulatorProps): React.JSX.Element {
+export function SearchSimulator(props: SearchSimulatorProps): React.JSX.Element {
+  const {
+    query,
+    setQuery,
+    topK,
+    setTopK,
+    minScore,
+    setMinScore,
+    onSearch,
+    isSearching,
+    collectionId,
+    results,
+    error,
+  } = props;
+
   return (
     <FormSection
       title='Semantic Search Simulator'

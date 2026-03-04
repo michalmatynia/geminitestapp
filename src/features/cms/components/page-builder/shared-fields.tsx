@@ -362,18 +362,14 @@ export function RangeField({
   );
 }
 
-export function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  className,
-  disabled,
-  placeholder,
-}: FieldProps<string> & {
+export function SelectField(
+  props: FieldProps<string> & {
   options: { label: string; value: string }[];
   placeholder?: string;
-}): React.JSX.Element {
+  }
+): React.JSX.Element {
+  const { label, value, onChange, options, className, disabled, placeholder } = props;
+
   return (
     <FormField label={label} className={className}>
       <SelectSimple

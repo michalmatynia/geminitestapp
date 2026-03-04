@@ -20,20 +20,22 @@ export type DocumentSearchPageProps = {
   contentClassName?: string;
 };
 
-export function DocumentSearchPage({
-  title,
-  startAdornment,
-  titleAdornment,
-  endAdornment,
-  filters,
-  breadcrumb,
-  loading,
-  hasResults,
-  emptyState,
-  children,
-  className,
-  contentClassName,
-}: DocumentSearchPageProps): React.JSX.Element {
+export function DocumentSearchPage(props: DocumentSearchPageProps): React.JSX.Element {
+  const {
+    title,
+    startAdornment,
+    titleAdornment,
+    endAdornment,
+    filters,
+    breadcrumb,
+    loading,
+    hasResults,
+    emptyState,
+    children,
+    className,
+    contentClassName,
+  } = props;
+
   return (
     <ListPanel
       variant='flat'

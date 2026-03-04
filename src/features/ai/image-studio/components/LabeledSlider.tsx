@@ -17,17 +17,19 @@ interface LabeledSliderProps {
   className?: string | undefined;
 }
 
-export function LabeledSlider({
-  label,
-  value,
-  onChange,
-  min = 0,
-  max = 100,
-  step = 1,
-  disabled,
-  fallbackValue = 0,
-  className,
-}: LabeledSliderProps): React.JSX.Element {
+export function LabeledSlider(props: LabeledSliderProps): React.JSX.Element {
+  const {
+    label,
+    value,
+    onChange,
+    min = 0,
+    max = 100,
+    step = 1,
+    disabled,
+    fallbackValue = 0,
+    className,
+  } = props;
+
   return (
     <div className={cn('contents', className)}>
       <Label className='text-[11px] text-gray-300'>{label}</Label>

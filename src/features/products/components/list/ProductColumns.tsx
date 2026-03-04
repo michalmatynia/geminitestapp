@@ -36,16 +36,7 @@ import { TraderaStatusButton } from './columns/buttons/TraderaStatusButton';
 
 export type Product = ProductWithImages;
 
-const CircleIconButton = ({
-  onClick,
-  onMouseEnter,
-  onFocus,
-  disabled,
-  ariaLabel,
-  title,
-  className,
-  children,
-}: {
+const CircleIconButton = (props: {
   onClick?: () => void;
   onMouseEnter?: () => void;
   onFocus?: () => void;
@@ -54,26 +45,31 @@ const CircleIconButton = ({
   title?: string;
   className?: string;
   children: React.ReactNode;
-}): React.JSX.Element => (
-  <Button
-    type='button'
-    disabled={disabled}
-    onClick={onClick}
-    onMouseEnter={onMouseEnter}
-    onFocus={onFocus}
-    variant='ghost'
-    size='icon'
-    aria-label={ariaLabel}
-    title={title}
-    className={cn(
-      'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-      disabled && 'cursor-not-allowed opacity-60',
-      className
-    )}
-  >
-    {children}
-  </Button>
-);
+}): React.JSX.Element => {
+  const { onClick, onMouseEnter, onFocus, disabled, ariaLabel, title, className, children } =
+    props;
+
+  return (
+    <Button
+      type='button'
+      disabled={disabled}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+      variant='ghost'
+      size='icon'
+      aria-label={ariaLabel}
+      title={title}
+      className={cn(
+        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+        disabled && 'cursor-not-allowed opacity-60',
+        className
+      )}
+    >
+      {children}
+    </Button>
+  );
+};
 
 interface ColumnActionsProps {
   row: Row<ProductWithImages>;

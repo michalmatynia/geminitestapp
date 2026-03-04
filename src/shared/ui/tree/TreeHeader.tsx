@@ -12,15 +12,9 @@ export type TreeHeaderProps = {
   children?: ReactNode;
 };
 
-export function TreeHeader({
-  title,
-  subtitle,
-  actions,
-  className,
-  titleClassName,
-  actionsClassName,
-  children,
-}: TreeHeaderProps): React.JSX.Element {
+export function TreeHeader(props: TreeHeaderProps): React.JSX.Element {
+  const { title, subtitle, actions, className, titleClassName, actionsClassName, children } = props;
+
   return (
     <SectionHeader
       title={title ?? ''}

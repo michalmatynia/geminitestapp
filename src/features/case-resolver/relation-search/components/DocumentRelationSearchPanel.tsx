@@ -111,17 +111,21 @@ export type DocumentRelationSearchPanelProps = {
   showFileTypeFilter?: boolean | undefined;
 };
 
-export function DocumentRelationSearchPanel({
-  draftFileId,
-  isLocked,
-  onLinkFile,
-  relationTreeInstance = 'case_resolver_document_relations',
-  defaultScope = 'case_scope',
-  defaultSort = 'name_asc',
-  defaultFileType = 'all',
-  showSortControl = true,
-  showFileTypeFilter = true,
-}: DocumentRelationSearchPanelProps): React.JSX.Element {
+export function DocumentRelationSearchPanel(
+  props: DocumentRelationSearchPanelProps
+): React.JSX.Element {
+  const {
+    draftFileId,
+    isLocked,
+    onLinkFile,
+    relationTreeInstance = 'case_resolver_document_relations',
+    defaultScope = 'case_scope',
+    defaultSort = 'name_asc',
+    defaultFileType = 'all',
+    showSortControl = true,
+    showFileTypeFilter = true,
+  } = props;
+
   const uiContextValue = React.useMemo(
     (): DocumentRelationSearchUiContextValue => ({
       showSortControl,

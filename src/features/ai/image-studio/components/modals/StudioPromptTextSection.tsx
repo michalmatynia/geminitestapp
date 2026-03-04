@@ -16,16 +16,18 @@ interface StudioPromptTextSectionProps {
   textareaSize?: 'default' | 'sm' | 'xs';
 }
 
-export function StudioPromptTextSection({
-  label,
-  value,
-  onValueChange,
-  placeholder,
-  containerClassName,
-  labelClassName,
-  textareaClassName,
-  textareaSize = 'default',
-}: StudioPromptTextSectionProps): React.JSX.Element {
+export function StudioPromptTextSection(props: StudioPromptTextSectionProps): React.JSX.Element {
+  const {
+    label,
+    value,
+    onValueChange,
+    placeholder,
+    containerClassName,
+    labelClassName,
+    textareaClassName,
+    textareaSize = 'default',
+  } = props;
+
   return (
     <div className={cn('space-y-2', containerClassName)}>
       <Label className={cn('text-xs text-gray-400', labelClassName)}>{label}</Label>

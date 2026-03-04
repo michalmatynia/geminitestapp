@@ -416,14 +416,11 @@ export function CheckboxField({
   );
 }
 
-export function TextField({
-  label,
-  value,
-  onChange,
-  className,
-  disabled,
-  placeholder,
-}: FieldProps<string> & { placeholder?: string }): React.JSX.Element {
+export function TextField(
+  props: FieldProps<string> & { placeholder?: string }
+): React.JSX.Element {
+  const { label, value, onChange, className, disabled, placeholder } = props;
+
   return (
     <FormField label={label} className={className}>
       <Input

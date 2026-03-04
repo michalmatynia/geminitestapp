@@ -25,14 +25,7 @@ import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderN
 
 // ─── Group Settings Panel ─────────────────────────────────────────────────────
 
-function GroupSettingsPanel({
-  groupId,
-  draft,
-  setGroupDrafts,
-  onSave,
-  onUngroup,
-  isPending,
-}: {
+function GroupSettingsPanel(props: {
   groupId: string;
   draft: SequenceGroupDraft;
   setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
@@ -40,6 +33,8 @@ function GroupSettingsPanel({
   onUngroup: () => void;
   isPending: boolean;
 }): React.JSX.Element {
+  const { groupId, draft, setGroupDrafts, onSave, onUngroup, isPending } = props;
+
   return (
     <div className='mt-2 flex flex-wrap items-end gap-3 rounded-md border border-cyan-500/25 bg-cyan-500/5 px-3 py-2'>
       <FormField label='Group Label' className='min-w-[160px] flex-1'>

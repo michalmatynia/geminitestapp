@@ -43,16 +43,11 @@ const sourceBadgeClassName: Record<BrainRoutingCapabilityNodeItemProps['sourceLa
   'Global defaults': 'border-gray-500/40 text-gray-400',
 };
 
-export function BrainRoutingCapabilityNodeItem({
-  node,
-  capability,
-  depth,
-  isSelected,
-  isDragging,
-  select,
-  enabled,
-  sourceLabel,
-}: BrainRoutingCapabilityNodeItemProps): React.JSX.Element {
+export function BrainRoutingCapabilityNodeItem(
+  props: BrainRoutingCapabilityNodeItemProps
+): React.JSX.Element {
+  const { node, capability, depth, isSelected, isDragging, select, enabled, sourceLabel } = props;
+
   const { onToggleEnabled, onEdit, isPending } = useBrainRoutingCapabilityNodeItemRuntime();
 
   return (

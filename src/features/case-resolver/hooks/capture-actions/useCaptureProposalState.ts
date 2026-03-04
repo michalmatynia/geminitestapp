@@ -1,13 +1,9 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type {
   CaseResolverCaptureProposalState,
+  CaseResolverCaptureProposal,
   CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture/proposals';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
@@ -110,7 +106,7 @@ export function useCaptureProposalState(args: {
     (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction): void => {
       setPromptExploderProposalDraft((current) => {
         if (!current) return current;
-        const roleProposal = (current as any)[role];
+        const roleProposal: CaseResolverCaptureProposal | null = current[role];
         if (!roleProposal) return current;
         return {
           ...current,
@@ -128,7 +124,7 @@ export function useCaptureProposalState(args: {
     (role: 'addresser' | 'addressee', encodedReference: string): void => {
       setPromptExploderProposalDraft((current) => {
         if (!current) return current;
-        const roleProposal = (current as any)[role];
+        const roleProposal: CaseResolverCaptureProposal | null = current[role];
         if (!roleProposal) return current;
         return {
           ...current,

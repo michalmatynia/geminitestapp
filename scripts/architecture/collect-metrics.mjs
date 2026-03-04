@@ -77,18 +77,19 @@ const run = async () => {
   const latestJsonPath = path.join(outDir, 'baseline-latest.json');
   const latestMdPath = path.join(outDir, 'baseline-latest.md');
   const historicalJsonPath = path.join(outDir, `baseline-${stamp}.json`);
+  const shouldWriteHistory = !args.has('--ci') && !args.has('--no-history');
 
   await writeJson(latestJsonPath, metrics);
   await fs.writeFile(latestMdPath, generateMarkdown(metrics), 'utf8');
 
-  if (!args.has('--ci')) {
+  if (shouldWriteHistory) {
     await writeJson(historicalJsonPath, metrics);
   }
 
   console.log(formatCompactSummary(metrics));
   console.log(`Wrote ${path.relative(root, latestJsonPath)}`);
   console.log(`Wrote ${path.relative(root, latestMdPath)}`);
-  if (!args.has('--ci')) {
+  if (shouldWriteHistory) {
     console.log(`Wrote ${path.relative(root, historicalJsonPath)}`);
   }
 

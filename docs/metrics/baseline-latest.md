@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-03-04T02:36:06.951Z
+Generated at: 2026-03-04T04:02:02.608Z
 
 ## Snapshot
 
-- Source files: 4188
-- Source lines: 649815
-- use client files: 1279
-- Files >= 1000 LOC: 5
+- Source files: 4194
+- Source lines: 649018
+- use client files: 1284
+- Files >= 1000 LOC: 6
 - Files >= 1500 LOC: 1
 - Largest file: `src/features/case-resolver/__tests__/workspace.test.ts` (1806 LOC)
 - API routes: 318
@@ -63,12 +63,12 @@ Generated at: 2026-03-04T02:36:06.951Z
 | File | LOC |
 | --- | ---: |
 | `src/features/case-resolver/__tests__/workspace.test.ts` | 1806 |
-| `src/shared/contracts/prompt-exploder.ts` | 1163 |
+| `src/shared/contracts/image-studio.ts` | 1198 |
 | `src/shared/contracts/ai-paths-core/nodes.ts` | 1161 |
 | `src/shared/lib/ai-paths/core/utils/__tests__/graph-compile.test.ts` | 1159 |
+| `src/features/ai/ai-paths/context/hooks/useStateBridge.ts` | 1054 |
 | `src/shared/contracts/cms.ts` | 1012 |
 | `src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts` | 986 |
-| `src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx` | 960 |
 | `src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts` | 931 |
 | `src/app/api/image-studio/slots/[slotId]/crop/handler.ts` | 929 |
 | `src/features/ai/ai-paths/services/runtime-analytics-service.ts` | 919 |
@@ -77,8 +77,8 @@ Generated at: 2026-03-04T02:36:06.951Z
 | `src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts` | 899 |
 | `src/shared/lib/ai-brain/context/BrainContext.tsx` | 892 |
 | `src/features/notesapp/context/NoteFormContext.tsx` | 890 |
-| `src/features/ai/ai-paths/context/hooks/useStateBridge.ts` | 889 |
 | `src/features/ai/ai-paths/services/path-run-service.ts` | 888 |
 | `src/features/products/hooks/useProductFormValidator.ts` | 886 |
 | `src/shared/lib/observability/system-log-repository.ts` | 883 |
 | `src/features/integrations/services/imports/base-import-item-processor.ts` | 877 |
+| `src/app/api/products/validator-runtime/evaluate/handler.ts` | 868 |

@@ -18,6 +18,8 @@ let selectionStateMock: SelectionStateMock = {
 
 const selectEdgeMock = vi.fn();
 const selectNodeMock = vi.fn();
+const setGraphNodesMock = vi.fn();
+const setGraphEdgesMock = vi.fn();
 
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasRefs: () => ({
@@ -31,6 +33,13 @@ vi.mock('@/features/ai/ai-paths/context/SelectionContext', () => ({
   useSelectionActions: () => ({
     selectEdge: selectEdgeMock,
     selectNode: selectNodeMock,
+  }),
+}));
+
+vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
+  useGraphActions: () => ({
+    setNodes: setGraphNodesMock,
+    setEdges: setGraphEdgesMock,
   }),
 }));
 
@@ -49,6 +58,8 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     };
     selectEdgeMock.mockReset();
     selectNodeMock.mockReset();
+    setGraphNodesMock.mockReset();
+    setGraphEdgesMock.mockReset();
   });
 
   it('opens remove confirmation on Delete for selected node and removes node on confirm', () => {
@@ -129,8 +140,22 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
       config.onConfirm();
     });
 
-    expect(nodesState.map((node: AiNode) => node.id)).toEqual(['node-b']);
-    expect(edgesState).toEqual([]);
+    expect(setGraphNodesMock).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ id: 'node-b' }),
+      ],
+      expect.objectContaining({
+        reason: 'delete',
+        source: 'settings.canvas.delete.node',
+      })
+    );
+    expect(setGraphEdgesMock).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        reason: 'delete',
+        source: 'settings.canvas.delete.node',
+      })
+    );
     expect(clearRuntimeInputsForEdgesMock).toHaveBeenCalledTimes(1);
   });
 
@@ -189,8 +214,13 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     });
 
     expect(confirmMock).not.toHaveBeenCalled();
-    expect(setEdgesMock).toHaveBeenCalled();
-    expect(edgesState).toEqual([]);
+    expect(setGraphEdgesMock).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        reason: 'delete',
+        source: 'settings.canvas.delete.edge',
+      })
+    );
   });
 
   it('ignores delete shortcut while typing in an input field', () => {

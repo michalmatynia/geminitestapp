@@ -1039,7 +1039,7 @@ export type ImageStudioSequenceRunRequest = {
   prompt: string;
   paramsState: Record<string, unknown> | null;
   referenceSlotIds: string[];
-  steps: any[]; // Avoid circular dependency with studio-settings for now or move steps to contract
+  steps: unknown[]; // Avoid circular dependency with studio-settings for now or move steps to contract
   mask: ImageStudioSequenceMaskContext;
   studioSettings: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;

@@ -1,14 +1,11 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useCaptureProposalState } from './capture-actions/useCaptureProposalState';
 import { useApplyCaptureProposal } from './capture-actions/useApplyCaptureProposal';
-import { type CaseResolverFileEditDraft } from '../types';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 
 export function useAdminCaseResolverCaptureActions({
   workspace,
@@ -37,7 +34,7 @@ export function useAdminCaseResolverCaptureActions({
   setIsApplyingPromptExploderPartyProposal: (val: boolean) => void;
   editingDocumentDraft: CaseResolverFileEditDraft | null;
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
-  updateWorkspace: any;
+  updateWorkspace: CaseResolverStateValue['updateWorkspace'];
   refetchSettingsStore: () => void;
   setEditorContentRevisionSeed: React.Dispatch<React.SetStateAction<number>>;
 }) {

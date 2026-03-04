@@ -15,6 +15,7 @@ import {
   type CaseViewMode,
   type CaseSortKey,
   type CaseSortOrder,
+  type CaseResolverCasesLoadState,
 } from './types';
 import { DEFAULT_CASE_LIST_VIEW_DEFAULTS, getCaseResolverWorkspaceRevision } from './utils';
 
@@ -72,8 +73,8 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
   const [confirmation, setConfirmation] = useState<CaseResolverCaseListConfirmationState>(null);
-  const [casesLoadState, setCasesLoadState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [casesLoadMessage, setCasesLoadMessage] = useState('');
+  const [casesLoadState, setCasesLoadState] = useState<CaseResolverCasesLoadState>('ready');
+  const [casesLoadMessage, setCasesLoadMessage] = useState<string | null>(null);
 
   const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {
     const rawCaseIdentifierId = searchParams.get('caseIdentifierId');

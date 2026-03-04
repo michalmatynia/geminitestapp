@@ -33,6 +33,8 @@ import type { HistoryNodeOption } from '../run-history-utils';
 
 export interface UseAiPathsSettingsStateReturn {
   loading: boolean;
+  isPathSwitching: boolean;
+  setIsPathSwitching: React.Dispatch<React.SetStateAction<boolean>>;
   docsOverviewSnippet: string;
   docsWiringSnippet: string;
   docsDescriptionSnippet: string;

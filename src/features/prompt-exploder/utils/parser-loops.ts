@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import {
   matchesBoundaryHeading,
@@ -28,13 +24,15 @@ import {
 } from '../parser-type-inference';
 import { trimTrailingBlankLines } from './parser-utils';
 import { createPromptExploderSegment } from '../parser-segment-factory';
-import { PromptExploderSegment } from '../types';
+import { PromptExploderListItem, PromptExploderSegment } from '../types';
+
+type PromptExploderSegmentInput = Parameters<typeof createPromptExploderSegment>[0];
 
 export type LoopParserArgs = {
   runtime: PatternRuntime;
   segmentId: () => string;
   subsectionId: () => string;
-  parseListLinesWithRuntimeIds: (lines: string[]) => any[];
+  parseListLinesWithRuntimeIds: (lines: string[]) => PromptExploderListItem[];
   BRACKET_SECTION_HEADING_RE: RegExp;
   STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE: RegExp;
   REQUIREMENTS_BOUNDARY_FALLBACK_RE: RegExp;
@@ -70,7 +68,7 @@ export function createRuleDrivenSegment(args: {
   headingRule: RuntimeRegexRule | null;
   segmentId: () => string;
   subsectionId: () => string;
-  parseListLinesWithRuntimeIds: (lines: string[]) => any[];
+  parseListLinesWithRuntimeIds: (lines: string[]) => PromptExploderListItem[];
   FINAL_QA_BOUNDARY_FALLBACK_RE: RegExp;
 }): PromptExploderSegment {
   const {
@@ -101,7 +99,7 @@ export function createRuleDrivenSegment(args: {
   const contentRaw = trimTrailingBlankLines(contentLines.join('\n'));
   const hasBodyContent = contentRaw.trim().length > 0;
 
-  const createSegment = (opts: any): PromptExploderSegment =>
+  const createSegment = (opts: PromptExploderSegmentInput): PromptExploderSegment =>
     createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
 
   if (type === 'metadata') {
@@ -317,7 +315,7 @@ export function parseSegmentsLoop(
     FINAL_QA_BOUNDARY_FALLBACK_RE
   );
 
-  const createSegment = (opts: any): PromptExploderSegment =>
+  const createSegment = (opts: PromptExploderSegmentInput): PromptExploderSegment =>
     createPromptExploderSegment({ ...opts, createSegmentId: segmentId });
 
   while (cursor.index < lines.length) {

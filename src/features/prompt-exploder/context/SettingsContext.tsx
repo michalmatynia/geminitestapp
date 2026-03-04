@@ -1,7 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import React, { createContext, useMemo, useContext } from 'react';
 
 import {

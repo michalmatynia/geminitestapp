@@ -123,6 +123,8 @@ export function useAiPathsSettingsState({
   const {
     loading,
     setLoading,
+    isPathSwitching,
+    setIsPathSwitching,
     selectedNodeId,
     setSelectedNodeId,
     configOpen,
@@ -228,6 +230,7 @@ export function useAiPathsSettingsState({
     setEdges,
     selectedNodeId,
     setSelectedNodeId,
+    isPathSwitching,
     confirmNodeSwitch: (nextNodeId) => confirmNodeSwitch(nextNodeId),
     confirm,
     clearRuntimeInputsForEdges: runtimeMgmt.pruneRuntimeInputs,
@@ -528,6 +531,7 @@ export function useAiPathsSettingsState({
     setSelectedNodeId,
     setLastRunAt,
     setRuntimeState,
+    setIsPathSwitching,
     setParserSamples,
     setUpdaterSamples,
     setExecutionMode,
@@ -673,6 +677,8 @@ export function useAiPathsSettingsState({
     historyRetentionOptionsMax,
     // Loading / Saving
     loading,
+    isPathSwitching,
+    setIsPathSwitching,
     saving: persistence.saving,
     // Samples
     parserSamples,

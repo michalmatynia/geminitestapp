@@ -52,7 +52,6 @@ export {
   type ParsedPromptHeading,
   type PromptExploderBenchmarkCase,
   type PromptExploderBenchmarkReport,
-  type PromptExploderPatternPackResult,
 } from './ui';
 
 export {

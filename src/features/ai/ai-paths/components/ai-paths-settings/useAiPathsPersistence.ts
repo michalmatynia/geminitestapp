@@ -46,6 +46,10 @@ import { usePreferencePersistence } from './hooks/persistence/usePreferencePersi
 import { usePathPersistence } from './hooks/persistence/usePathPersistence';
 import { usePresetPersistence } from './hooks/persistence/usePresetPersistence';
 
+const PATH_CONFIG_PREFETCH_BATCH_SIZE = 3;
+const PATH_CONFIG_PREFETCH_IDLE_DELAY_MS = 250;
+const PATH_CONFIG_PREFETCH_TIMEOUT_MS = 6_000;
+
 export function useAiPathsPersistence(
   args: UseAiPathsPersistenceArgs
 ): UseAiPathsPersistenceResult {
@@ -86,11 +90,13 @@ export function useAiPathsPersistence(
     toast,
     isPathLocked,
     isPathActive,
+    paths,
   } = args;
 
   const [uiStateLoaded, setUiStateLoaded] = useState(false);
   const loadInFlightRef = useRef(false);
   const settingsWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const prefetchedPathIdsRef = useRef<Set<string>>(new Set());
 
   const stringifyForStorage = useCallback((value: unknown, label: string): string => {
     try {
@@ -108,6 +114,45 @@ export function useAiPathsPersistence(
     settingsWriteQueueRef.current = promise.then(() => {}).catch(() => {});
     return promise;
   }, []);
+
+  const sanitizePrefetchedPathConfig = useCallback(
+    (config: PathConfig, pathId: string): PathConfig | null => {
+      try {
+        return sanitizePathConfig(config);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const canRetryWithEmptyRuntime =
+          message.includes('Legacy AI Paths runtime identity fields are no longer supported') ||
+          message.includes('Invalid AI Paths runtime state payload');
+        if (canRetryWithEmptyRuntime) {
+          try {
+            return sanitizePathConfig({
+              ...config,
+              runtimeState: '',
+            });
+          } catch (retryError) {
+            logClientError(retryError, {
+              context: {
+                source: 'useAiPathsPersistence',
+                action: 'sanitizePrefetchedPathConfigRetry',
+                pathId,
+              },
+            });
+            return null;
+          }
+        }
+        logClientError(error, {
+          context: {
+            source: 'useAiPathsPersistence',
+            action: 'sanitizePrefetchedPathConfig',
+            pathId,
+          },
+        });
+        return null;
+      }
+    },
+    []
+  );
 
   const persistLastError = useCallback(
     async (error: unknown): Promise<void> => {
@@ -386,6 +431,138 @@ export function useAiPathsPersistence(
     },
     [isPathActive, isPathLocked, path, toast]
   );
+
+  useEffect((): void => {
+    prefetchedPathIdsRef.current = new Set();
+  }, [loadNonce]);
+
+  useEffect((): void | (() => void) => {
+    if (loading) return;
+    if (!activePathId) return;
+    if (paths.length <= 1) return;
+
+    const pendingPathIds = paths
+      .map((path) => path.id)
+      .filter(
+        (pathId): pathId is string =>
+          typeof pathId === 'string' &&
+          pathId.trim().length > 0 &&
+          pathId !== activePathId &&
+          !pathConfigs[pathId] &&
+          !prefetchedPathIdsRef.current.has(pathId)
+      );
+    if (pendingPathIds.length === 0) return;
+
+    let cancelled = false;
+    let idleHandle: number | null = null;
+    let fallbackTimerId: number | null = null;
+
+    const runPrefetch = async (): Promise<void> => {
+      const startedAt = Date.now();
+      for (let index = 0; index < pendingPathIds.length; index += PATH_CONFIG_PREFETCH_BATCH_SIZE) {
+        if (cancelled) return;
+        const batch = pendingPathIds.slice(index, index + PATH_CONFIG_PREFETCH_BATCH_SIZE);
+        if (batch.length === 0) continue;
+        batch.forEach((pathId) => {
+          prefetchedPathIdsRef.current.add(pathId);
+        });
+        const keys = batch.map((pathId) => `${PATH_CONFIG_PREFIX}${pathId}`);
+        try {
+          const settings = await fetchAiPathsSettingsByKeysCached(keys, {
+            timeoutMs: PATH_CONFIG_PREFETCH_TIMEOUT_MS,
+          });
+          if (cancelled) return;
+          const settingByKey = new Map(settings.map((item) => [item.key, item]));
+          const hydratedConfigs: Record<string, PathConfig> = {};
+          batch.forEach((pathId) => {
+            const item = settingByKey.get(`${PATH_CONFIG_PREFIX}${pathId}`);
+            if (!item?.value) return;
+            try {
+              const parsed = JSON.parse(item.value) as PathConfig;
+              const sanitized = sanitizePrefetchedPathConfig(parsed, pathId);
+              if (!sanitized) return;
+              hydratedConfigs[pathId] = sanitized;
+            } catch (error) {
+              logClientError(error, {
+                context: {
+                  source: 'useAiPathsPersistence',
+                  action: 'prefetchParsePathConfig',
+                  pathId,
+                },
+              });
+            }
+          });
+          const hydratedPathIds = Object.keys(hydratedConfigs);
+          if (hydratedPathIds.length > 0) {
+            setPathConfigs((prev) => {
+              const next = { ...prev };
+              hydratedPathIds.forEach((pathId) => {
+                if (!next[pathId]) {
+                  next[pathId] = hydratedConfigs[pathId] as PathConfig;
+                }
+              });
+              return next;
+            });
+          }
+        } catch (error) {
+          logClientError(error, {
+            context: {
+              source: 'useAiPathsPersistence',
+              action: 'prefetchPathConfigBatch',
+              batchSize: batch.length,
+              level: 'warn',
+            },
+          });
+        }
+      }
+      const durationMs = Date.now() - startedAt;
+      if (durationMs >= 200) {
+        console.info('[ai-paths-load] prefetched non-active path configs', {
+          durationMs,
+          pathCount: pendingPathIds.length,
+        });
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      const idleWindow = window as Window & {
+        requestIdleCallback?: (
+          callback: (deadline: IdleDeadline) => void,
+          options?: IdleRequestOptions
+        ) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      };
+      if (typeof idleWindow.requestIdleCallback === 'function') {
+        idleHandle = idleWindow.requestIdleCallback(
+          () => {
+            void runPrefetch();
+          },
+          { timeout: 1_500 }
+        );
+      } else {
+        fallbackTimerId = window.setTimeout(() => {
+          void runPrefetch();
+        }, PATH_CONFIG_PREFETCH_IDLE_DELAY_MS);
+      }
+    } else {
+      void runPrefetch();
+    }
+
+    return (): void => {
+      cancelled = true;
+      if (typeof window !== 'undefined') {
+        const idleWindow = window as Window & {
+          cancelIdleCallback?: (handle: number) => void;
+        };
+        if (idleHandle !== null && typeof idleWindow.cancelIdleCallback === 'function') {
+          idleWindow.cancelIdleCallback(idleHandle);
+        }
+        if (fallbackTimerId !== null) {
+          window.clearTimeout(fallbackTimerId);
+        }
+      }
+    };
+  }, [activePathId, loading, pathConfigs, paths, sanitizePrefetchedPathConfig, setPathConfigs]);
 
   useEffect((): void => {
     if (loading || !activePathId) return;

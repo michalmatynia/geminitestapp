@@ -1,23 +1,19 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
-import { useCallback } from 'react';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
-import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
+import { PROMPT_ENGINE_SETTINGS_KEY, type PromptEngineSettings, type PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../../settings';
 import {
+  PromptExploderPatternSnapshot,
   PromptExploderParserTuningRuleDraft,
   PromptExploderLearnedTemplate,
+  PromptExploderRuntimeValidationScope,
   PromptExploderSettings,
 } from '@/shared/contracts/prompt-exploder';
+import type { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ensurePromptExploderPatternPack } from '../../pattern-pack';
 import {
   validatePromptExploderParserTuningDrafts,
@@ -32,29 +28,31 @@ import {
 } from '../../pattern-snapshots';
 import { LearningDraft } from './SettingsDraftsContext';
 
-export function useSettingsActionsImpl(args: {
+type UseSettingsActionsImplArgs = {
   settingsMap: Map<string, string>;
-  updateSetting: any;
-  promptSettings: any;
-  promptExploderSettings: any;
-  activeValidationScope: any;
+  updateSetting: ReturnType<typeof useUpdateSetting>;
+  promptSettings: PromptEngineSettings;
+  promptExploderSettings: PromptExploderSettings;
+  activeValidationScope: PromptExploderRuntimeValidationScope;
   learningDraft: LearningDraft;
-  setHasUnsavedLearningDraft: (val: boolean) => void;
+  setHasUnsavedLearningDraft: Dispatch<SetStateAction<boolean>>;
   parserTuningDrafts: PromptExploderParserTuningRuleDraft[];
-  setParserTuningDrafts: (val: any) => void;
-  setParserTuningDraftsState: (val: any) => void;
-  setHasUnsavedParserTuningDrafts: (val: boolean) => void;
-  effectiveRules: any;
-  scopedRules: any;
+  setParserTuningDrafts: Dispatch<SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
+  setParserTuningDraftsState: Dispatch<SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
+  setHasUnsavedParserTuningDrafts: Dispatch<SetStateAction<boolean>>;
+  effectiveRules: PromptValidationRule[];
+  scopedRules: PromptValidationRule[];
   snapshotDraftName: string;
-  setSnapshotDraftName: (val: string) => void;
-  selectedSnapshot: any;
-  setSelectedSnapshotId: (val: string) => void;
-  setSessionLearnedTemplates: (val: any) => void;
+  setSnapshotDraftName: Dispatch<SetStateAction<string>>;
+  selectedSnapshot: PromptExploderPatternSnapshot | null;
+  setSelectedSnapshotId: Dispatch<SetStateAction<string>>;
+  setSessionLearnedTemplates: Dispatch<SetStateAction<PromptExploderLearnedTemplate[]>>;
   resolvedOnSaved?: () => void;
-  settingsQuery: any;
-  setSaveError: (err: string | null) => void;
-}) {
+  settingsQuery: ReturnType<typeof useSettingsMap>;
+  setSaveError: Dispatch<SetStateAction<string | null>>;
+};
+
+export function useSettingsActionsImpl(args: UseSettingsActionsImplArgs) {
   const { toast } = useToast();
 
   const persistSettingIfChanged = useCallback(
@@ -70,7 +68,7 @@ export function useSettingsActionsImpl(args: {
 
   const patchParserTuningDraft = useCallback(
     (ruleId: string, patch: Partial<PromptExploderParserTuningRuleDraft>) => {
-      args.setParserTuningDrafts((previous: any[]) =>
+      args.setParserTuningDrafts((previous: PromptExploderParserTuningRuleDraft[]) =>
         previous.map((draft) => (draft.id === ruleId ? { ...draft, ...patch } : draft))
       );
     },
@@ -193,7 +191,7 @@ export function useSettingsActionsImpl(args: {
         value: serializeSetting(nextSettings),
       });
       args.setSnapshotDraftName('');
-      toast('Captured snapshot "${snapshot.name}".', { variant: 'success' });
+      toast(`Captured snapshot "${snapshot.name ?? 'Unnamed snapshot'}".`, { variant: 'success' });
     } catch (error) {
       logClientError(error, {
         context: {
@@ -224,7 +222,7 @@ export function useSettingsActionsImpl(args: {
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      toast('Restored rules from snapshot "${args.selectedSnapshot.name}".', {
+      toast(`Restored rules from snapshot "${args.selectedSnapshot.name ?? 'Unnamed snapshot'}".`, {
         variant: 'success',
       });
     } catch (error) {
@@ -254,7 +252,9 @@ export function useSettingsActionsImpl(args: {
         value: serializeSetting(nextSettings),
       });
       args.setSelectedSnapshotId('');
-      toast('Deleted snapshot "${args.selectedSnapshot.name}".', { variant: 'success' });
+      toast(`Deleted snapshot "${args.selectedSnapshot.name ?? 'Unnamed snapshot'}".`, {
+        variant: 'success',
+      });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to delete snapshot.', {
         variant: 'error',
@@ -265,10 +265,9 @@ export function useSettingsActionsImpl(args: {
   const handleTemplateStateChange = useCallback(
     async (templateId: string, nextState: PromptExploderLearnedTemplate['state']) => {
       try {
-        const nextTemplates = args.promptExploderSettings.learning.templates.map((template: any) =>
-          template.id === templateId
-            ? { ...template, state: nextState, updatedAt: new Date().toISOString() }
-            : template
+        const now = new Date().toISOString();
+        const nextTemplates = args.promptExploderSettings.learning.templates.map((template) =>
+          template.id === templateId ? { ...template, state: nextState, updatedAt: now } : template
         );
         const nextSettings: PromptExploderSettings = {
           ...args.promptExploderSettings,
@@ -282,10 +281,10 @@ export function useSettingsActionsImpl(args: {
           toast('Template state is already up to date.', { variant: 'info' });
           return;
         }
-        args.setSessionLearnedTemplates((previous: any[]) =>
+        args.setSessionLearnedTemplates((previous: PromptExploderLearnedTemplate[]) =>
           previous.map((template) =>
             template.id === templateId
-              ? { ...template, state: nextState, updatedAt: new Date().toISOString() }
+              ? { ...template, state: nextState, updatedAt: now }
               : template
           )
         );
@@ -303,7 +302,7 @@ export function useSettingsActionsImpl(args: {
     async (templateId: string) => {
       try {
         const nextTemplates = args.promptExploderSettings.learning.templates.filter(
-          (template: any) => template.id !== templateId
+          (template) => template.id !== templateId
         );
         const nextSettings: PromptExploderSettings = {
           ...args.promptExploderSettings,
@@ -317,7 +316,7 @@ export function useSettingsActionsImpl(args: {
           toast('Template was already removed.', { variant: 'info' });
           return;
         }
-        args.setSessionLearnedTemplates((previous: any[]) =>
+        args.setSessionLearnedTemplates((previous: PromptExploderLearnedTemplate[]) =>
           previous.filter((template) => template.id !== templateId)
         );
         toast('Template removed.', { variant: 'success' });

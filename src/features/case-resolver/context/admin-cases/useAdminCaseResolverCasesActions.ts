@@ -1,11 +1,21 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { CaseResolverCaseListConfirmationState } from './types';
+import type {
+  CaseResolverCaseListConfirmationState,
+  CaseResolverCasesLoadState,
+  CaseSearchScope,
+  CaseFileTypeFilter,
+  CaseStatusFilter,
+  CaseLockedFilter,
+  CaseSentFilter,
+  CaseHierarchyFilter,
+  CaseReferencesFilter,
+  CaseSortKey,
+  CaseSortOrder,
+  CaseViewMode,
+} from './types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   createCaseResolverWorkspaceMutationId,
@@ -24,6 +34,7 @@ import {
 import { handleMoveCaseImpl, handleReorderCaseImpl } from './actions/case-ordering';
 
 export type ToastFn = (message: string, options?: { variant?: string }) => void;
+type WaitForCaseAvailabilityOptions = Parameters<typeof waitForCaseAvailability>[1]['options'];
 
 export type UseAdminCaseResolverCasesActionsArgs = {
   workspace: CaseResolverWorkspace;
@@ -54,25 +65,25 @@ export type UseAdminCaseResolverCasesActionsArgs = {
   setCollapsedCaseIds: (ids: string[]) => void;
   setHeldCaseId: (id: string | null) => void;
   setCaseSearchQuery: (query: string) => void;
-  setCaseSearchScope: (scope: any) => void;
-  setCaseFileTypeFilter: (filter: any) => void;
+  setCaseSearchScope: (scope: CaseSearchScope) => void;
+  setCaseFileTypeFilter: (filter: CaseFileTypeFilter) => void;
   setCaseFilterTagIds: (ids: string[]) => void;
   setCaseFilterCaseIdentifierIds: (ids: string[]) => void;
   setCaseFilterCategoryIds: (ids: string[]) => void;
   setCaseFilterFolder: (folder: string | null) => void;
-  setCaseFilterStatus: (status: any) => void;
-  setCaseFilterLocked: (locked: any) => void;
-  setCaseFilterSent: (sent: any) => void;
-  setCaseFilterHierarchy: (hierarchy: any) => void;
-  setCaseFilterReferences: (references: any) => void;
-  setCaseSortBy: (key: any) => void;
-  setCaseSortOrder: (order: any) => void;
-  setCaseViewMode: (mode: any) => void;
+  setCaseFilterStatus: (status: CaseStatusFilter) => void;
+  setCaseFilterLocked: (locked: CaseLockedFilter) => void;
+  setCaseFilterSent: (sent: CaseSentFilter) => void;
+  setCaseFilterHierarchy: (hierarchy: CaseHierarchyFilter) => void;
+  setCaseFilterReferences: (references: CaseReferencesFilter) => void;
+  setCaseSortBy: (key: CaseSortKey) => void;
+  setCaseSortOrder: (order: CaseSortOrder) => void;
+  setCaseViewMode: (mode: CaseViewMode) => void;
   setCaseShowNestedContent: (show: boolean) => void;
   setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
   setDidHydrateCaseListViewDefaults: (hydrated: boolean) => void;
   setConfirmation: Dispatch<SetStateAction<CaseResolverCaseListConfirmationState>>;
-  setCasesLoadState: (state: any) => void;
+  setCasesLoadState: (state: CaseResolverCasesLoadState) => void;
   setCasesLoadMessage: (message: string | null) => void;
   toast: ToastFn;
   settingsStoreRefetchRef: MutableRefObject<() => void>;
@@ -82,7 +93,8 @@ export function useAdminCaseResolverCasesActions(args: UseAdminCaseResolverCases
   const { toast, setConfirmation } = args;
 
   const handleWaitForCaseAvailability = useCallback(
-    async (caseId: string, options?: any) => waitForCaseAvailability(caseId, { ...args, options }),
+    async (caseId: string, options?: WaitForCaseAvailabilityOptions) =>
+      waitForCaseAvailability(caseId, { ...args, options }),
     [args]
   );
 

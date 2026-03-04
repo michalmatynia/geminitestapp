@@ -49,6 +49,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
     pathName,
     pathSwitchOptions,
     handleSwitchPath,
+    isPathSwitching,
     lastError,
     setLastError,
     persistLastError,
@@ -97,7 +98,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
   const validationFailedRules = validationPreflightReport?.failedRules ?? 0;
   const selectedCount = selectedNodeIdsCtx.length;
   const removeSelection = handleDeleteSelectedNode ?? (() => undefined);
-  const canDeleteSelection = selectedCount > 0 || Boolean(selectedEdgeIdCtx);
+  const canDeleteSelection = !isPathSwitching && (selectedCount > 0 || Boolean(selectedEdgeIdCtx));
   const scopeMode = selectionScopeMode === 'wiring' ? 'wiring' : 'portion';
   const setScopeMode = setSelectionScopeMode ?? (() => undefined);
   const docsTooltipsOn = Boolean(docsTooltipsEnabled);
@@ -311,6 +312,14 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     className='font-medium'
                     title='Selected nodes count'
                   />
+                  {isPathSwitching ? (
+                    <StatusBadge
+                      status='Switching path...'
+                      variant='processing'
+                      size='sm'
+                      className='font-medium'
+                    />
+                  ) : null}
                   <Button
                     data-doc-id='canvas_remove_selected'
                     type='button'
@@ -319,12 +328,14 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     onClick={removeSelection}
                     disabled={!canDeleteSelection}
                     title={
-                      canDeleteSelection
-                        ? 'Delete selected nodes or selected edge'
-                        : 'Select at least one node or edge to delete'
+                      isPathSwitching
+                        ? 'Delete is temporarily disabled while switching paths'
+                        : canDeleteSelection
+                          ? 'Delete selected nodes or selected edge'
+                          : 'Select at least one node or edge to delete'
                     }
                   >
-                      Remove Selected
+                    Remove Selected
                   </Button>
                   {selectionToolMode === 'select' ? (
                     <div className='text-[11px] text-gray-400'>
@@ -342,7 +353,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     type='button'
                     disabled={!activePath}
                   >
-                      Clear Connector Data
+                    Clear Connector Data
                   </Button>
                   <Button
                     data-doc-id='canvas_toggle_path_active'

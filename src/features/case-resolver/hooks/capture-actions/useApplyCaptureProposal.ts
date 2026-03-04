@@ -1,8 +1,5 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { useState, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import type {
@@ -31,7 +28,7 @@ import {
 } from '@/features/case-resolver/utils/caseResolverUtils';
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import { resolveCaptureMappingApplyGuardReason } from '../../capture-mapping-apply-guard';
-import { type CaseResolverFileEditDraft } from '../../types';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../../types';
 
 const readCaptureApplyNowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -54,7 +51,7 @@ export function useApplyCaptureProposal(args: {
   setIsApplyingPromptExploderPartyProposal: (val: boolean) => void;
   editingDocumentDraft: CaseResolverFileEditDraft | null;
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
-  updateWorkspace: any;
+  updateWorkspace: CaseResolverStateValue['updateWorkspace'];
   refetchSettingsStore: () => void;
   setEditorContentRevisionSeed: React.Dispatch<React.SetStateAction<number>>;
   promptExploderProposalDraft: CaseResolverCaptureProposalState | null;

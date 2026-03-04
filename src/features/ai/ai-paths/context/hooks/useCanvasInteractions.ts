@@ -92,7 +92,7 @@ export function useCanvasInteractions(args?: {
 
   // Context: Graph
   const { nodes, edges, activePathId, isPathLocked } = useGraphState();
-  const { setNodes, setEdges, removeNode } = useGraphActions();
+  const { setNodes, setEdges } = useGraphActions();
 
   // Context: Runtime
   const { setRuntimeState } = useRuntimeActions();
@@ -163,7 +163,6 @@ export function useCanvasInteractions(args?: {
     selectedNodeId,
     selectedNodeIds,
     setNodes,
-    removeNode,
     setNodeSelection,
     toggleNodeSelection,
     selectNode,

@@ -4,6 +4,7 @@ import { initialNodes } from '@/shared/lib/ai-paths';
 export function useUiSettingsState() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialNodes[0]?.id ?? null);
   const [loading, setLoading] = useState(true);
+  const [isPathSwitching, setIsPathSwitching] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirty] = useState(false);
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<string | null>(null);
@@ -20,6 +21,8 @@ export function useUiSettingsState() {
     setSelectedNodeId,
     loading,
     setLoading,
+    isPathSwitching,
+    setIsPathSwitching,
     configOpen,
     setConfigOpen,
     nodeConfigDirty,

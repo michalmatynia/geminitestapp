@@ -11,6 +11,7 @@
     "build": "prisma generate && next build",
     "start": "NODE_ENV=production node --max-old-space-size=4096 server.cjs",
     "lint": "eslint src",
+    "typecheck": "tsc --noEmit --incremental false",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
     "backfill:ai-paths-input-contracts": "tsx scripts/db/backfill-ai-paths-input-contracts.ts",

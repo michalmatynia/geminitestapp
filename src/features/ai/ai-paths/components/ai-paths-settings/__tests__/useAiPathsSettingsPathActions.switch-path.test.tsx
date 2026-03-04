@@ -51,6 +51,7 @@ const buildInput = (): {
   input: PathActionsInput;
   mocks: {
     setActivePathId: ReturnType<typeof createDispatchMock<string | null>>['mock'];
+    setIsPathSwitching: ReturnType<typeof createDispatchMock<boolean>>['mock'];
     setPathConfigs: ReturnType<typeof createDispatchMock<Record<string, PathConfig>>>['mock'];
     setPaths: ReturnType<typeof createDispatchMock<PathMeta[]>>['mock'];
     toast: ReturnType<typeof vi.fn>;
@@ -67,6 +68,7 @@ const buildInput = (): {
   };
 
   const setActivePathId = createDispatchMock<string | null>();
+  const setIsPathSwitching = createDispatchMock<boolean>();
   const setPathConfigs = createDispatchMock<Record<string, PathConfig>>();
   const setPaths = createDispatchMock<PathMeta[]>();
   const setNodes = createDispatchMock(oldConfig.nodes);
@@ -122,6 +124,7 @@ const buildInput = (): {
     setIsPathLocked: setIsPathLocked.dispatch,
     setIsPathActive: setIsPathActive.dispatch,
     setSelectedNodeId: setSelectedNodeId.dispatch,
+    setIsPathSwitching: setIsPathSwitching.dispatch,
     setConfigOpen: setConfigOpen.dispatch,
     normalizeTriggerLabel: (value) => value ?? 'Product Modal - Context Filter',
     updateActivePathMeta: vi.fn(),
@@ -137,6 +140,7 @@ const buildInput = (): {
     input,
     mocks: {
       setActivePathId: setActivePathId.mock,
+      setIsPathSwitching: setIsPathSwitching.mock,
       setPathConfigs: setPathConfigs.mock,
       setPaths: setPaths.mock,
       toast,
@@ -171,6 +175,8 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     await waitFor(() => {
       expect(mocks.setActivePathId).toHaveBeenCalledWith(nextPathId);
     });
+    expect(mocks.setIsPathSwitching).toHaveBeenCalledWith(true);
+    expect(mocks.setIsPathSwitching).toHaveBeenCalledWith(false);
     expect(mocks.persistActivePathPreference).toHaveBeenCalledWith(nextPathId);
     expect(mocks.setPathConfigs).toHaveBeenCalledTimes(1);
   });
@@ -191,6 +197,8 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     await waitFor(() => {
       expect(mocks.setActivePathId).toHaveBeenCalledWith(oldPathId);
     });
+    expect(mocks.setIsPathSwitching).toHaveBeenCalledWith(true);
+    expect(mocks.setIsPathSwitching).toHaveBeenCalledWith(false);
     expect(mocks.setPathConfigs).not.toHaveBeenCalled();
     expect(mocks.toast).toHaveBeenCalledWith(
       'Failed to load selected path. Try again in a moment.',

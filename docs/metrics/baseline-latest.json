@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-03-04T02:36:06.951Z",
+  "generatedAt": "2026-03-04T04:02:02.608Z",
   "source": {
-    "totalFiles": 4188,
-    "totalLines": 649815,
-    "useClientFiles": 1279,
-    "filesOver800": 53,
-    "filesOver1000": 5,
+    "totalFiles": 4194,
+    "totalLines": 649018,
+    "useClientFiles": 1284,
+    "filesOver800": 52,
+    "filesOver1000": 6,
     "filesOver1500": 1,
     "largestFile": {
       "path": "src/features/case-resolver/__tests__/workspace.test.ts",
@@ -221,12 +221,12 @@
       {
         "feature": "ai",
         "files": 827,
-        "lines": 166658
+        "lines": 167064
       },
       {
         "feature": "case-resolver",
         "files": 262,
-        "lines": 57960
+        "lines": 57634
       },
       {
         "feature": "cms",
@@ -246,7 +246,7 @@
       {
         "feature": "prompt-exploder",
         "files": 145,
-        "lines": 26967
+        "lines": 27178
       },
       {
         "feature": "notesapp",
@@ -255,8 +255,8 @@
       },
       {
         "feature": "filemaker",
-        "files": 44,
-        "lines": 8581
+        "files": 53,
+        "lines": 8681
       },
       {
         "feature": "foldertree",
@@ -370,8 +370,8 @@
         "lines": 1806
       },
       {
-        "path": "src/shared/contracts/prompt-exploder.ts",
-        "lines": 1163
+        "path": "src/shared/contracts/image-studio.ts",
+        "lines": 1198
       },
       {
         "path": "src/shared/contracts/ai-paths-core/nodes.ts",
@@ -382,16 +382,16 @@
         "lines": 1159
       },
       {
+        "path": "src/features/ai/ai-paths/context/hooks/useStateBridge.ts",
+        "lines": 1054
+      },
+      {
         "path": "src/shared/contracts/cms.ts",
         "lines": 1012
       },
       {
         "path": "src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts",
         "lines": 986
-      },
-      {
-        "path": "src/features/case-resolver/context/AdminCaseResolverCasesContext.tsx",
-        "lines": 960
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/autoscale/handler.test.ts",
@@ -424,10 +424,6 @@
       {
         "path": "src/features/notesapp/context/NoteFormContext.tsx",
         "lines": 890
-      },
-      {
-        "path": "src/features/ai/ai-paths/context/hooks/useStateBridge.ts",
-        "lines": 889
       },
       {
         "path": "src/features/ai/ai-paths/services/path-run-service.ts",
@@ -484,6 +480,10 @@
       {
         "path": "src/features/ai/ai-paths/hooks/useAdminAiPathsValidationState.ts",
         "lines": 844
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/center/handler.test.ts",
+        "lines": 842
       }
     ],
     "topPagesByLines": [

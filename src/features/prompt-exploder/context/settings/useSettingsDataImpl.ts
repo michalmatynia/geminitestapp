@@ -1,15 +1,9 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/shared/ui';
+import type { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
@@ -28,7 +22,10 @@ import {
 } from '../../validation-stack';
 import { readPromptExploderDraftPayload, PROMPT_EXPLODER_DRAFT_PROMPT_KEY } from '../../bridge';
 import { isPromptValidationStrictStackMode } from '../../feature-flags';
-import { resolvePromptValidationRuntime } from '../../prompt-validation-orchestrator';
+import {
+  resolvePromptValidationRuntime,
+  type PromptValidationOrchestrationResult,
+} from '../../prompt-validation-orchestrator';
 import { getPromptExploderRuntimeGuardrailIssue } from '../../runtime-guardrails';
 import {
   PromptExploderParserTuningRuleDraft,
@@ -41,10 +38,41 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { LearningDraft } from './SettingsDraftsContext';
 import { buildPromptExploderParserTuningDrafts } from '../../parser-tuning';
 
-export function useSettingsDataImpl(args: {
-  settingsQuery: any;
+type UseSettingsDataImplArgs = {
+  settingsQuery: ReturnType<typeof useSettingsMap>;
   settingsMap: Map<string, string>;
-}) {
+};
+
+const parseStoredValidationRuleStack = (
+  value: unknown
+): PromptExploderValidationRuleStack | null => {
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
+  if (!id) return null;
+  const name =
+    typeof record['name'] === 'string' && record['name'].trim().length > 0
+      ? record['name'].trim()
+      : undefined;
+  const ruleIds = Array.isArray(record['ruleIds'])
+    ? record['ruleIds'].filter(
+      (ruleId): ruleId is string => typeof ruleId === 'string' && ruleId.trim().length > 0
+    )
+    : undefined;
+  const isCustom = typeof record['isCustom'] === 'boolean' ? record['isCustom'] : undefined;
+  return {
+    id,
+    ...(name ? { name } : {}),
+    ...(ruleIds ? { ruleIds } : {}),
+    ...(typeof isCustom === 'boolean' ? { isCustom } : {}),
+  };
+};
+
+export function useSettingsDataImpl(args: UseSettingsDataImplArgs) {
   const { settingsQuery, settingsMap } = args;
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -114,17 +142,17 @@ export function useSettingsDataImpl(args: {
     const error = promptExploderSettingsResult.error;
     const raw = rawExploderSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::error::${error}`;
+    const signature = `${raw}::${error.code}::${error.message}`;
     if (settingsParseErrorRef.current === signature) return;
     settingsParseErrorRef.current = signature;
-    logClientError(new Error(error), {
+    logClientError(new Error(error.message), {
       context: {
         source: 'PromptExploderSettingsContext',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error, { variant: 'error' });
+    toast(error.message, { variant: 'error' });
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
 
   const validatorPatternListsHydrationSignature = useMemo(
@@ -178,7 +206,7 @@ export function useSettingsDataImpl(args: {
     if (learningDraftHydratedFrom === hydrationSignature) return;
 
     const persistedStack = normalizePromptExploderValidationRuleStack(
-      promptExploderSettings.runtime.validationRuleStack as PromptExploderValidationRuleStack | null | undefined,
+      parseStoredValidationRuleStack(promptExploderSettings.runtime.validationRuleStack),
       validatorPatternLists
     );
     const preferredStack = shouldPreferCaseResolverValidationStack
@@ -213,7 +241,7 @@ export function useSettingsDataImpl(args: {
   ]);
 
   const runtimeResolution = useMemo((): {
-    selection: any;
+    selection: PromptValidationOrchestrationResult;
     warning: Error | null;
     guardrailIssue: string | null;
   } => {
@@ -313,25 +341,26 @@ export function useSettingsDataImpl(args: {
   );
 
   const availableSnapshots = useMemo((): PromptExploderPatternSnapshot[] => {
-    return (promptExploderSettings.patternSnapshots ?? []).map((snapshot: any) => {
+    return (promptExploderSettings.patternSnapshots ?? []).map((snapshot) => {
       let rules: PromptValidationRule[] = [];
-      try {
-        if (snapshot.rulesJson) {
-          rules = JSON.parse(snapshot.rulesJson) as PromptValidationRule[];
+      if (snapshot.rulesJson?.trim()) {
+        const parsedRules = parsePromptValidationRules(snapshot.rulesJson);
+        if (parsedRules.ok) {
+          rules = parsedRules.rules;
+        } else {
+          logClientError(new Error(parsedRules.error), {
+            context: {
+              source: 'PromptExploderSettingsContext',
+              action: 'parseSnapshotRules',
+              snapshotId: snapshot.id,
+            },
+          });
         }
-      } catch (e) {
-        logClientError(e, {
-          context: {
-            source: 'PromptExploderSettingsContext',
-            action: 'parseSnapshotRules',
-            snapshotId: snapshot.id,
-          },
-        });
       }
       return {
         ...snapshot,
         rules,
-      } as PromptExploderPatternSnapshot;
+      };
     });
   }, [promptExploderSettings.patternSnapshots]);
 

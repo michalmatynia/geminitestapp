@@ -188,17 +188,17 @@ export function usePromptExploderState() {
     const error = promptExploderSettingsResult.error;
     const raw = rawExploderSettings?.trim() ?? '';
     if (!error || !raw) return;
-    const signature = `${raw}::error::${error}`;
+    const signature = `${raw}::error::${error.code}::${error.message}`;
     if (settingsParseErrorRef.current === signature) return;
     settingsParseErrorRef.current = signature;
-    logClientError(new Error(error), {
+    logClientError(new Error(error.message), {
       context: {
         source: 'usePromptExploderState',
         action: 'parsePromptExploderSettings',
         settingKey: PROMPT_EXPLODER_SETTINGS_KEY,
       },
     });
-    toast(error, { variant: 'error' });
+    toast(error.message, { variant: 'error' });
   }, [promptExploderSettingsResult.error, rawExploderSettings, toast]);
   const promptLibraryItems = useMemo(
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
@@ -334,7 +334,7 @@ export function usePromptExploderState() {
 
   const handleExplode = useCallback((): void => {
     if (promptExploderSettingsValidationError) {
-      toast(promptExploderSettingsValidationError, { variant: 'error' });
+      toast(promptExploderSettingsValidationError.message, { variant: 'error' });
       return;
     }
     const trimmed = promptText.trim();

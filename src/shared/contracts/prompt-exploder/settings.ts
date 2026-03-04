@@ -85,7 +85,7 @@ export type PromptExploderRuntimeRuleProfile = z.infer<
 >;
 
 export const promptExploderSettingsSchema = z.object({
-  version: z.number().default(1),
+  version: z.literal(1).default(1),
   mode: promptExploderOperationModeSchema.default('hybrid'),
   validatorScope: validatorScopeSchema.optional(),
   patternLists: z.array(validatorPatternListSchema).default([]),
@@ -138,7 +138,15 @@ export const promptExploderSettingsSchema = z.object({
     .default({
       operationMode: 'hybrid',
     }),
-  promptValidation: z.any().optional(),
+  promptValidation: z.object({
+    enabled: z.boolean().default(true),
+    rules: z.array(z.any()).default([]),
+    learnedRules: z.array(z.any()).default([]),
+  }).default({
+    enabled: true,
+    rules: [],
+    learnedRules: [],
+  }),
   patternSnapshots: z.array(promptExploderPatternSnapshotSchema).default([]),
 });
 

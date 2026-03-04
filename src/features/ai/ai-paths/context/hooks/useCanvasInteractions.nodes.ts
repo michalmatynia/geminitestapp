@@ -19,6 +19,7 @@ import {
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 import type { Toast } from '@/shared/contracts/ui';
 import type { GraphMutationMeta } from '../GraphContext';
+import { computeNodeSelectionDeleteResult } from './canvas/delete-selection-command';
 
 export interface UseCanvasInteractionsNodesValue {
   handlePointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => Promise<void>;
@@ -88,7 +89,6 @@ export function useCanvasInteractionsNodes({
   selectedNodeId,
   selectedNodeIds,
   setNodes,
-  removeNode,
   setNodeSelection,
   toggleNodeSelection,
   selectNode,
@@ -122,7 +122,6 @@ export function useCanvasInteractionsNodes({
     nodes: AiNode[] | ((prev: AiNode[]) => AiNode[]),
     mutationMeta?: GraphMutationMeta
   ) => void;
-  removeNode: (id: string) => void;
   setNodeSelection: (nodeIds: string[]) => void;
   toggleNodeSelection: (nodeId: string) => void;
   selectNode: (nodeId: string | null) => void;
@@ -559,12 +558,13 @@ export function useCanvasInteractionsNodes({
       notifyLocked();
       return;
     }
-    const nodeIdSet = new Set(nodeIdsToDelete);
-    const isSingleNode = nodeIdsToDelete.length === 1;
-    const targetNode = isSingleNode ? nodes.find((n) => n.id === nodeIdsToDelete[0]) : null;
+    const deleteResult = computeNodeSelectionDeleteResult(nodes, edges, nodeIdsToDelete);
+    if (deleteResult.nodeIds.length === 0) return;
+    const isSingleNode = deleteResult.nodeIds.length === 1;
+    const targetNode = isSingleNode ? nodes.find((n) => n.id === deleteResult.nodeIds[0]) : null;
     const label = isSingleNode
       ? targetNode?.title || 'this node'
-      : `${nodeIdsToDelete.length} nodes`;
+      : `${deleteResult.nodeIds.length} nodes`;
 
     confirm({
       title: 'Remove Node?',
@@ -572,26 +572,14 @@ export function useCanvasInteractionsNodes({
       confirmText: 'Remove',
       isDangerous: true,
       onConfirm: () => {
-        if (isSingleNode && nodeIdsToDelete[0]) {
-          removeNode(nodeIdsToDelete[0]);
-        } else {
-          setNodes(
-            (prev: AiNode[]): AiNode[] =>
-              prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id)),
-            { reason: 'delete', source: 'canvas.delete.multi', allowNodeCountDecrease: true }
-          );
-        }
-
-        const removedEdges = edges.filter((e) =>
-          Boolean((e.from && nodeIdSet.has(e.from)) || (e.to && nodeIdSet.has(e.to)))
-        );
-        const remainingEdges = edges.filter(
-          (e) => !((e.from && nodeIdSet.has(e.from)) || (e.to && nodeIdSet.has(e.to)))
-        );
-
-        setEdges(remainingEdges, { reason: 'delete', source: 'canvas.delete.multi' });
+        setNodes(deleteResult.remainingNodes, {
+          reason: 'delete',
+          source: 'canvas.delete.multi',
+          allowNodeCountDecrease: true,
+        });
+        setEdges(deleteResult.remainingEdges, { reason: 'delete', source: 'canvas.delete.multi' });
         setRuntimeState((prev: RuntimeState) =>
-          pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
+          pruneRuntimeInputsInternal(prev, deleteResult.removedEdges, deleteResult.remainingEdges)
         );
 
         selectNode(null);
@@ -607,7 +595,6 @@ export function useCanvasInteractionsNodes({
     edges,
     notifyLocked,
     pruneRuntimeInputsInternal,
-    removeNode,
     selectEdge,
     selectNode,
     setEdges,

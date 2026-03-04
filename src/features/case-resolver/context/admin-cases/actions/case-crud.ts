@@ -1,10 +1,4 @@
 import type * as React from 'react';
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
@@ -17,6 +11,9 @@ import { createCaseResolverFile } from '../../../settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { isDescendantCaseId } from '../utils';
 import { waitForCaseAvailability } from './case-availability';
+import type { CaseResolverCaseListConfirmationState } from '../types';
+
+type ToastFn = (message: string, options?: { variant?: string }) => void;
 
 export const handleCreateCaseImpl = async (args: {
   caseDraft: Partial<CaseResolverFile>;
@@ -29,7 +26,7 @@ export const handleCreateCaseImpl = async (args: {
   setIsCreateCaseModalOpen: (val: boolean) => void;
   setCaseDraft: (val: Partial<CaseResolverFile>) => void;
   setEditingCaseId: (id: string | null) => void;
-  toast: any;
+  toast: ToastFn;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
   const {
@@ -148,7 +145,7 @@ export const handleSaveCaseDraftImpl = async (args: {
   setIsCreateCaseModalOpen: (val: boolean) => void;
   setCaseDraft: (val: Partial<CaseResolverFile>) => void;
   setEditingCaseId: (id: string | null) => void;
-  toast: any;
+  toast: ToastFn;
   settingsStoreRefetchRef: React.MutableRefObject<() => void>;
 }): Promise<void> => {
   const {
@@ -235,7 +232,7 @@ export const handleSaveCaseDraftImpl = async (args: {
   const resolvedCaseStatus =
     caseDraft.caseStatus === 'completed' || caseDraft.caseStatus === 'pending'
       ? caseDraft.caseStatus
-      : (existingCase as any).caseStatus === 'completed'
+      : existingCase.caseStatus === 'completed'
         ? 'completed'
         : 'pending';
   const resolvedFolder =
@@ -281,11 +278,11 @@ export const handleSaveCaseDraftImpl = async (args: {
   const resolvedIsLocked =
     caseDraft.isLocked !== undefined
       ? caseDraft.isLocked === true
-      : (existingCase as any).isLocked === true;
+      : existingCase.isLocked === true;
   const resolvedIsSent =
     caseDraft.isSent !== undefined
       ? caseDraft.isSent === true
-      : (existingCase as any).isSent === true;
+      : existingCase.isSent === true;
 
   setIsCreatingCase(true);
   try {
@@ -363,7 +360,7 @@ export const handleUpdateCaseImpl = async (args: {
   lastPersistedWorkspaceValueRef: React.MutableRefObject<string>;
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
   setEditingCaseId: (id: string | null) => void;
-  toast: any;
+  toast: ToastFn;
 }): Promise<void> => {
   const {
     editingCaseId,
@@ -439,8 +436,8 @@ export const handleDeleteCaseImpl = async (args: {
   lastPersistedWorkspaceRevisionRef: React.MutableRefObject<number>;
   editingCaseId: string | null;
   setEditingCaseId: (id: string | null) => void;
-  toast: any;
-  setConfirmation: (val: any) => void;
+  toast: ToastFn;
+  setConfirmation: React.Dispatch<React.SetStateAction<CaseResolverCaseListConfirmationState>>;
 }): Promise<void> => {
   const {
     caseId,

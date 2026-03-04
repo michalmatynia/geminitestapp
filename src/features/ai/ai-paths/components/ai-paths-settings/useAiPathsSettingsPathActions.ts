@@ -86,6 +86,7 @@ type UseAiPathsSettingsPathActionsInput = {
   setIsPathLocked: React.Dispatch<React.SetStateAction<boolean>>;
   setIsPathActive: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
+  setIsPathSwitching: React.Dispatch<React.SetStateAction<boolean>>;
   setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   normalizeTriggerLabel: (value?: string | null) => string;
   updateActivePathMeta: (name: string) => void;
@@ -143,6 +144,7 @@ export function useAiPathsSettingsPathActions({
   setIsPathLocked,
   setIsPathActive,
   setSelectedNodeId,
+  setIsPathSwitching,
   setConfigOpen,
   normalizeTriggerLabel,
   updateActivePathMeta,
@@ -563,17 +565,31 @@ export function useAiPathsSettingsPathActions({
       const previousConfig = previousActivePathId ? pathConfigs[previousActivePathId] : null;
       const nextRequestSeq = switchRequestSeqRef.current + 1;
       switchRequestSeqRef.current = nextRequestSeq;
+      setIsPathSwitching(true);
+      const switchStartedAt = Date.now();
 
-      const applyIfLatest = (config: PathConfig): void => {
+      const applyIfLatest = (
+        config: PathConfig,
+        phase: 'cache_hit' | 'selective_fetch' | 'fallback_fetch'
+      ): void => {
         if (switchRequestSeqRef.current !== nextRequestSeq) return;
         setActivePathId(value);
         applyPathConfigState(config);
+        setIsPathSwitching(false);
+        const durationMs = Date.now() - switchStartedAt;
+        if (durationMs >= 150) {
+          console.info('[ai-paths-switch] applied path config', {
+            pathId: value,
+            phase,
+            durationMs,
+          });
+        }
         void persistActivePathPreference(value);
       };
 
       const cachedConfig = pathConfigs[value];
       if (cachedConfig) {
-        applyIfLatest(cachedConfig);
+        applyIfLatest(cachedConfig, 'cache_hit');
         return;
       }
 
@@ -607,7 +623,7 @@ export function useAiPathsSettingsPathActions({
               [value]: config,
             })
           );
-          applyIfLatest(config);
+          applyIfLatest(config, 'selective_fetch');
         } catch (error) {
           try {
             const allSettings = await fetchAiPathsSettingsCached();
@@ -633,7 +649,7 @@ export function useAiPathsSettingsPathActions({
                   [value]: recoveredConfig,
                 })
               );
-              applyIfLatest(recoveredConfig);
+              applyIfLatest(recoveredConfig, 'fallback_fetch');
               return;
             }
           } catch (fallbackError) {
@@ -657,6 +673,7 @@ export function useAiPathsSettingsPathActions({
           } else {
             setActivePathId(null);
           }
+          setIsPathSwitching(false);
           toast('Failed to load selected path. Try again in a moment.', { variant: 'error' });
         }
       })();
@@ -669,6 +686,7 @@ export function useAiPathsSettingsPathActions({
       reportAiPathsError,
       sanitizePathConfigWithRuntimeFallback,
       setActivePathId,
+      setIsPathSwitching,
       setPathConfigs,
       toast,
     ]

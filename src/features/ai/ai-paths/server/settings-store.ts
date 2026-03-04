@@ -47,10 +47,36 @@ const SERVER_SETTINGS_CACHE_TTL_MS = (() => {
 })();
 let serverSettingsCache: { records: AiPathsSettingRecord[]; cachedAt: number } | null = null;
 let serverSettingsFetchInflight: Promise<AiPathsSettingRecord[]> | null = null;
+const serverSettingsByKeysCache = new Map<
+  string,
+  { records: AiPathsSettingRecord[]; cachedAt: number }
+>();
+const serverSettingsByKeysInflight = new Map<string, Promise<AiPathsSettingRecord[]>>();
+const SERVER_SETTINGS_BY_KEYS_CACHE_MAX = 200;
+
+const normalizeServerSettingsKeys = (keys: string[]): string[] =>
+  Array.from(new Set(keys.filter(isAiPathsKey))).sort();
+
+const getServerSettingsByKeysCacheKey = (keys: string[]): string => keys.join('\u0001');
+
+const pruneServerSettingsByKeysCache = (): void => {
+  if (serverSettingsByKeysCache.size <= SERVER_SETTINGS_BY_KEYS_CACHE_MAX) return;
+  const entries = Array.from(serverSettingsByKeysCache.entries()).sort(
+    (a, b) => a[1].cachedAt - b[1].cachedAt
+  );
+  const overflow = entries.length - SERVER_SETTINGS_BY_KEYS_CACHE_MAX;
+  for (let index = 0; index < overflow; index += 1) {
+    const key = entries[index]?.[0];
+    if (!key) continue;
+    serverSettingsByKeysCache.delete(key);
+  }
+};
 
 const invalidateServerSettingsCache = (): void => {
   serverSettingsCache = null;
   serverSettingsFetchInflight = null;
+  serverSettingsByKeysCache.clear();
+  serverSettingsByKeysInflight.clear();
 };
 
 export async function getAiPathsSettings(
@@ -102,13 +128,38 @@ export async function getAiPathsSettings(
     return await promise;
   }
 
-  const normalizedKeys = keys.filter(isAiPathsKey);
+  const normalizedKeys = normalizeServerSettingsKeys(keys);
   if (normalizedKeys.length === 0) return [];
 
-  assertMongoConfigured();
+  if (!options?.bypassCache) {
+    const keysetCacheKey = getServerSettingsByKeysCacheKey(normalizedKeys);
+    const cached = serverSettingsByKeysCache.get(keysetCacheKey);
+    if (cached && Date.now() - cached.cachedAt < SERVER_SETTINGS_CACHE_TTL_MS) {
+      return cached.records;
+    }
+    const inflight = serverSettingsByKeysInflight.get(keysetCacheKey);
+    if (inflight) {
+      return await inflight;
+    }
 
-  const records = await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
-  return records;
+    const fetchByKeys = fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS)
+      .then((records) => {
+        serverSettingsByKeysCache.set(keysetCacheKey, {
+          records,
+          cachedAt: Date.now(),
+        });
+        pruneServerSettingsByKeysCache();
+        return records;
+      })
+      .finally(() => {
+        serverSettingsByKeysInflight.delete(keysetCacheKey);
+      });
+    serverSettingsByKeysInflight.set(keysetCacheKey, fetchByKeys);
+    return await fetchByKeys;
+  }
+
+  assertMongoConfigured();
+  return await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
 }
 
 export async function getAiPathsSetting(key: string): Promise<string | null> {

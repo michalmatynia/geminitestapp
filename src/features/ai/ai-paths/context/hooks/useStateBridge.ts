@@ -279,8 +279,7 @@ export function useStateBridgeGraph({
 
   const activeTransition = activePathTransitionRef.current;
   if (
-    activeTransition &&
-    activeTransition.pathId === normalizedActivePathId &&
+    activeTransition?.pathId === normalizedActivePathId &&
     (activeTransition.sourceNodesHash !== sourceNodesHash ||
       activeTransition.sourceEdgesHash !== sourceEdgesHash)
   ) {

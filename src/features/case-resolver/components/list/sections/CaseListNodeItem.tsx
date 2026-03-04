@@ -29,21 +29,25 @@ export interface CaseListNodeItemProps {
   nestHeldDisabledReason?: string | null;
 }
 
-export const CaseListNodeItem = React.memo(function CaseListNodeItem({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isRenaming,
-  isDragging,
-  isDropTarget,
-  dropPosition,
-  toggleExpand,
-  heldCaseId,
-  canNestHeldHere,
-  canShowNestHeldAction,
-  nestHeldDisabledReason,
-}: CaseListNodeItemProps): React.JSX.Element {
+export const CaseListNodeItem = React.memo(function CaseListNodeItem(
+  props: CaseListNodeItemProps
+): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isRenaming,
+    isDragging,
+    isDropTarget,
+    dropPosition,
+    toggleExpand,
+    heldCaseId,
+    canNestHeldHere,
+    canShowNestHeldAction,
+    nestHeldDisabledReason,
+  } = props;
+
   const {
     filesById,
     caseTagPathById,

@@ -28,21 +28,23 @@ interface PaginationProps {
  * Pagination - A unified component for navigating paginated data.
  * Merges functionality from basic Pagination and PanelPagination.
  */
-export function Pagination({
-  page,
-  totalPages: propTotalPages,
-  totalCount,
-  pageSize,
-  onPageChange,
-  onPageSizeChange,
-  pageSizeOptions = [10, 25, 50, 100],
-  showPageSize = false,
-  showInfo = false,
-  isLoading = false,
-  className,
-  showLabels = true,
-  variant = 'default',
-}: PaginationProps): React.JSX.Element | null {
+export function Pagination(props: PaginationProps): React.JSX.Element | null {
+  const {
+    page,
+    totalPages: propTotalPages,
+    totalCount,
+    pageSize,
+    onPageChange,
+    onPageSizeChange,
+    pageSizeOptions = [10, 25, 50, 100],
+    showPageSize = false,
+    showInfo = false,
+    isLoading = false,
+    className,
+    showLabels = true,
+    variant = 'default',
+  } = props;
+
   const calculatedTotalPages = totalCount && pageSize ? Math.ceil(totalCount / pageSize) : 0;
   const totalPages = propTotalPages ?? calculatedTotalPages;
 

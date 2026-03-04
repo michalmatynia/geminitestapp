@@ -16,15 +16,17 @@ export interface ValidatorFormatterToggleProps {
   className?: string;
 }
 
-export function ValidatorFormatterToggle({
-  validatorEnabled,
-  formatterEnabled,
-  onValidatorChange,
-  onFormatterChange,
-  validatorLabel = 'Validator',
-  formatterLabel = 'Formatter',
-  className,
-}: ValidatorFormatterToggleProps): React.JSX.Element {
+export function ValidatorFormatterToggle(props: ValidatorFormatterToggleProps): React.JSX.Element {
+  const {
+    validatorEnabled,
+    formatterEnabled,
+    onValidatorChange,
+    onFormatterChange,
+    validatorLabel = 'Validator',
+    formatterLabel = 'Formatter',
+    className,
+  } = props;
+
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <StatusToggle

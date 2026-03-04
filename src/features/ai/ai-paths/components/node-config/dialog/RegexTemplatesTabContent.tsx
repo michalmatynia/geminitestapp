@@ -15,17 +15,19 @@ type RegexTemplatesTabContentProps = {
   settingsLoading: boolean;
 };
 
-export function RegexTemplatesTabContent({
-  globalTemplates,
-  onApplyGlobalTemplate,
-  onApplyNodeTemplate,
-  onRemoveGlobalTemplate,
-  onRemoveNodeTemplate,
-  onUpdateGlobalTemplate,
-  onUpdateNodeTemplate,
-  regexTemplates,
-  settingsLoading,
-}: RegexTemplatesTabContentProps): React.JSX.Element {
+export function RegexTemplatesTabContent(props: RegexTemplatesTabContentProps): React.JSX.Element {
+  const {
+    globalTemplates,
+    onApplyGlobalTemplate,
+    onApplyNodeTemplate,
+    onRemoveGlobalTemplate,
+    onRemoveNodeTemplate,
+    onUpdateGlobalTemplate,
+    onUpdateNodeTemplate,
+    regexTemplates,
+    settingsLoading,
+  } = props;
+
   return (
     <div className='space-y-6'>
       <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>

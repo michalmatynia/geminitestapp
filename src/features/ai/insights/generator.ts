@@ -33,7 +33,6 @@ import {
   readInsightSettingValue,
   parseBooleanSetting,
   parseNumberSetting,
-  readSettingWithFallback,
 } from './generator/settings-service';
 import {
   getClient,
@@ -53,16 +52,6 @@ const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
   Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750)
 );
 
-const LEGACY_INSIGHT_SCHEDULE_KEYS = {
-  analyticsScheduleEnabled: 'ai_analytics_schedule_enabled',
-  analyticsScheduleMinutes: 'ai_analytics_schedule_minutes',
-  runtimeAnalyticsScheduleEnabled: 'ai_runtime_analytics_schedule_enabled',
-  runtimeAnalyticsScheduleMinutes: 'ai_runtime_analytics_schedule_minutes',
-  logsScheduleEnabled: 'ai_logs_schedule_enabled',
-  logsScheduleMinutes: 'ai_logs_schedule_minutes',
-  logsAutoOnError: 'ai_logs_auto_on_error',
-} as const;
-
 const sleep = async (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -78,55 +67,34 @@ export type InsightScheduleSettings = {
 
 export async function getScheduleSettings(): Promise<InsightScheduleSettings> {
   const analyticsEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
     true
   );
   const analyticsMinutes = parseNumberSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleMinutes,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes),
     30,
     5
   );
   const runtimeAnalyticsEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
     true
   );
   const runtimeAnalyticsMinutes = parseNumberSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleMinutes,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
     30,
     5
   );
   const logsEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
     true
   );
   const logsMinutes = parseNumberSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleMinutes,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes),
     15,
     5
   );
   const logsAutoOnError = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.logsAutoOnError,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError),
     true
   );
 
@@ -384,10 +352,7 @@ ${JSON.stringify(options.log, null, 2)}`;
 
 export async function runInsightsAutoGeneration(): Promise<void> {
   const analyticsEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
     false
   );
   if (analyticsEnabled) {
@@ -397,10 +362,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   }
 
   const logsEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
     false
   );
   if (logsEnabled) {
@@ -410,10 +372,7 @@ export async function runInsightsAutoGeneration(): Promise<void> {
   }
 
   const runtimeEnabled = parseBooleanSetting(
-    await readSettingWithFallback([
-      AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
-      LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleEnabled,
-    ]),
+    await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
     false
   );
   if (runtimeEnabled) {

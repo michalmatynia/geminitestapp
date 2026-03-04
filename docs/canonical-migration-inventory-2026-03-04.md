@@ -2404,3 +2404,49 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npm run ai-paths:check:canonical` passes (`4237` files scanned).
   - `npm run typecheck` fails due pre-existing unrelated runtime typing drift:
     - `src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`
+
+## Executed Item 133 (Case Resolver Edge-Contract Decoupling + AI Paths Simulation Edge-Alias Hard-Cut)
+
+- Decoupled Case Resolver edge contract from AI Paths core edge schema:
+  - `src/shared/contracts/case-resolver/graph.ts`
+  - introduced/standardized Case Resolver-owned edge schema:
+    - `caseResolverEdgeSchema`
+    - `type Edge` (Case Resolver domain edge type)
+  - `caseResolverGraphSchema` and `caseResolverNodeFileSnapshotSchema` now use `caseResolverEdgeSchema`.
+- Decoupled Case Resolver relation graph edge schema from AI Paths edge schema:
+  - `src/shared/contracts/case-resolver/relations.ts`
+  - `caseResolverRelationGraphSchema.edges` now uses `caseResolverEdgeSchema`.
+- Removed Case Resolver barrel re-export coupling for `Edge` from AI Paths core:
+  - `src/shared/contracts/case-resolver/index.ts`
+  - now re-exports only:
+    - `AiNode`
+    - `NodeDefinition`
+  - Case Resolver `Edge` now comes from Case Resolver contract exports.
+- Repointed Case Resolver edge canonical parser to Case Resolver-owned edge schema:
+  - `src/features/case-resolver/settings.edge-validation.ts`
+  - `parseCanonicalCaseResolverEdge` now validates against `caseResolverEdgeSchema`.
+- Preserved explicit edge-level canonical error channel in node-file snapshot parsing:
+  - `src/features/case-resolver/node-file-snapshots.ts`
+  - envelope validation now accepts unknown edge entries first, then canonical edge parsing runs per-edge via `parseCanonicalCaseResolverEdge`, so unsupported edge keys/ports still surface explicit edge errors.
+- Removed remaining AI Paths simulation edge alias fallback:
+  - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts`
+  - connected-trigger resolution now uses canonical endpoints only:
+    - `e.from`
+    - `e.to`
+  - removed legacy fallback reads:
+    - `e.source`
+    - `e.target`
+- Extended guardrails to block re-coupling and alias fallback reintroduction:
+  - `scripts/canonical/check-sitewide.mjs`
+    - blocks Case Resolver contract/parser imports that recouple to AI Paths edge schema.
+  - `scripts/ai-paths/check-canonical.mjs`
+    - `checkEdgeAliasCleanupCompatibilityPrune` now executes in main run.
+    - added `checkSimulationEdgeAliasCompatibilityPrune` to block `useAiPathsSimulation` edge alias fallback snippets and require canonical endpoint snippets.
+- Compile-stability hardening for runtime status typing:
+  - `src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`
+  - narrowed declared node-status resolution to canonical runtime status union (`AiPathRuntimeNodeStatus`), mapping legacy spellings and dropping unsupported status strings.
+- Validation:
+  - `npx vitest run src/features/case-resolver/__tests__/workspace.test.ts src/features/case-resolver/__tests__/composer.test.ts src/shared/lib/ai-paths/core/normalization/__tests__/node-identity-repair.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.

@@ -2008,15 +2008,11 @@ const main = () => {
   checkValidationCollectionMapLegacyDelimiterCompatibilityPrune();
   checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
   checkDbQueryUpdateShimRetirement();
-  checkParameterInferenceTargetPathCompatibilityPrune();
-  checkDatabaseSchemaSnapshotProviderErrorChannelPrune();
-  checkTriggerDataAndCollectionAliasErrorChannelPrune();
-  checkRuntimeAndNodeIdentityReasonChannelPrune();
-  checkEdgeAliasCleanupCompatibilityPrune();
-  checkSimulationEdgeAliasCompatibilityPrune();
   // Manifest-driven rules cover catalog alias, database provider-fallback/alias,
   // db-action/db-client, CSRF helper, db-schema provider alias, simpleParameters alias,
-  // target-path sanitization/editing, and starter-workflow/core edge alias cleanup surfaces.
+  // runtime/sanitize target-path channels, database schema/provider channels,
+  // trigger-data/collection-alias channels, runtime/node-identity reason channels,
+  // simulation edge aliases, and starter-workflow/core edge alias cleanup surfaces.
   checkManifestLegacyPruneRules();
 
   if (violations.length > 0) {

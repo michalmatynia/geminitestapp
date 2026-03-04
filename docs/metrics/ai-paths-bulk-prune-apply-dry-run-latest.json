@@ -1,12 +1,12 @@
 {
   "summary": {
-    "generatedAt": "2026-03-04T23:42:55.288Z",
+    "generatedAt": "2026-03-04T23:47:50.658Z",
     "mode": "apply",
     "dryRun": true,
     "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
     "manifestVersion": "phase2-2026-03-05",
-    "ruleCount": 16,
-    "targetCount": 23,
+    "ruleCount": 21,
+    "targetCount": 35,
     "changedFileCount": 0,
     "replacedSnippetCount": 0,
     "findingCount": 0,
@@ -526,6 +526,309 @@
           {
             "from": "target: _legacyTarget",
             "to": "to: _legacyTarget",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "parameter_inference_target_path_runtime",
+        "file": "src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_schema_snapshot_provider_error_channel",
+        "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "contains deprecated database schemaSnapshot",
+            "to": "contains unsupported database schemaSnapshot",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "contains deprecated database query provider \"all\"",
+            "to": "contains unsupported database query provider \"all\"",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_schema_snapshot'",
+            "to": "reason: 'unsupported_database_schema_snapshot'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_query_provider'",
+            "to": "reason: 'unsupported_database_query_provider'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_schema_snapshot_provider_error_channel",
+        "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "contains deprecated database schemaSnapshot",
+            "to": "contains unsupported database schemaSnapshot",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "contains deprecated database query provider \"all\"",
+            "to": "contains unsupported database query provider \"all\"",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_schema_snapshot'",
+            "to": "reason: 'unsupported_database_schema_snapshot'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_query_provider'",
+            "to": "reason: 'unsupported_database_query_provider'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_schema_snapshot_provider_error_channel",
+        "file": "src/features/products/hooks/useAiPathSettings.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "contains deprecated database schemaSnapshot",
+            "to": "contains unsupported database schemaSnapshot",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "contains deprecated database query provider \"all\"",
+            "to": "contains unsupported database query provider \"all\"",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_schema_snapshot'",
+            "to": "reason: 'unsupported_database_schema_snapshot'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_database_query_provider'",
+            "to": "reason: 'unsupported_database_query_provider'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "trigger_data_collection_alias_error_channel",
+        "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_trigger_outputs'",
+            "to": "reason: 'unsupported_trigger_outputs'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_trigger_data_edge'",
+            "to": "reason: 'unsupported_trigger_data_edge'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_collection_aliases'",
+            "to": "reason: 'unsupported_collection_aliases'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "AI Path config contains deprecated collection aliases.",
+            "to": "AI Path config contains unsupported collection aliases.",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "trigger_data_collection_alias_error_channel",
+        "file": "src/features/products/hooks/useAiPathSettings.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_trigger_outputs'",
+            "to": "reason: 'unsupported_trigger_outputs'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_trigger_data_edge'",
+            "to": "reason: 'unsupported_trigger_data_edge'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_collection_aliases'",
+            "to": "reason: 'unsupported_collection_aliases'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "AI Path config contains deprecated collection aliases.",
+            "to": "AI Path config contains unsupported collection aliases.",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "runtime_node_identity_reason_channel",
+        "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_runtime_identity_fields'",
+            "to": "reason: 'unsupported_runtime_identity_fields'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_node_identities'",
+            "to": "reason: 'unsupported_node_identities'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "runtime_node_identity_reason_channel",
+        "file": "src/features/ai/ai-paths/services/path-run-executor.helpers.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_runtime_identity_fields'",
+            "to": "reason: 'unsupported_runtime_identity_fields'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "runtime_node_identity_reason_channel",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "errorReason === 'deprecated_runtime_identity_fields'",
+            "to": "errorReason === 'unsupported_runtime_identity_fields'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "runtime_node_identity_reason_channel",
+        "file": "src/features/products/hooks/useAiPathSettings.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_node_identities'",
+            "to": "reason: 'unsupported_node_identities'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "runtime_node_identity_reason_channel",
+        "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "reason: 'deprecated_node_identities'",
+            "to": "reason: 'unsupported_node_identities'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "simulation_edge_alias",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "e.source === n.id",
+            "to": "e.from === n.id",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "e.target === simulationNode.id",
+            "to": "e.to === simulationNode.id",
             "replaceAll": true,
             "occurrences": 0,
             "appliedCount": 0

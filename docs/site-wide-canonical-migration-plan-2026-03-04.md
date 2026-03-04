@@ -720,6 +720,29 @@ Wave 2 hard-cut execution started:
        - `LEGACY_PARAMETER_SOURCE_PREFIX`
        - `LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX`
        - `hasLegacyExportParameterSourceMapping`
+57. Case Resolver edge-contract decoupling + AI Paths simulation edge-alias hard-cut:
+   - decoupled Case Resolver edge contracts from AI Paths core edge schema:
+     - `src/shared/contracts/case-resolver/graph.ts`
+     - `src/shared/contracts/case-resolver/relations.ts`
+     - Case Resolver graph/relation schemas now use Case Resolver-owned `caseResolverEdgeSchema`.
+   - removed Case Resolver barrel `Edge` re-export coupling to AI Paths core:
+     - `src/shared/contracts/case-resolver/index.ts`
+   - repointed Case Resolver edge canonical parser to Case Resolver-owned edge schema:
+     - `src/features/case-resolver/settings.edge-validation.ts`
+   - preserved explicit edge-level canonical error channel for node-file snapshot edge validation:
+     - `src/features/case-resolver/node-file-snapshots.ts`
+   - removed AI Paths simulation edge alias fallback reads:
+     - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts`
+     - removed `e.source` / `e.target` fallback in connected-trigger resolution.
+   - extended guardrails:
+     - `scripts/canonical/check-sitewide.mjs`
+       - blocks Case Resolver graph/relation/parser imports that recouple to AI Paths edge schema.
+     - `scripts/ai-paths/check-canonical.mjs`
+       - `checkEdgeAliasCleanupCompatibilityPrune` now executes in main run.
+       - added `checkSimulationEdgeAliasCompatibilityPrune`.
+   - runtime compile-stability hardening:
+     - `src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`
+     - declared node-status parsing now narrows to canonical runtime status union.
 
 ## Baseline (Current State)
 

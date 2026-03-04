@@ -627,6 +627,315 @@
           ]
         }
       ]
+    },
+    {
+      "id": "parameter_inference_target_path_runtime",
+      "description": "Parameter inference runtime guard must enforce canonical targetPath=parameters semantics.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts",
+          "forbiddenSnippets": [
+            "if (targetPath !== 'parameters') {\n    return { updates: args.updates, applied: false };",
+            "mergeLegacySimpleParameterInferenceWithExisting"
+          ],
+          "requiredSnippets": [
+            "if (targetPath !== 'parameters') {",
+            "Parameter inference guard targetPath must use canonical \"parameters\" path.",
+            "reason: 'unsupported_target_path'"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_schema_snapshot_provider_error_channel",
+      "description": "Database schemaSnapshot/provider='all' must remain on canonical unsupported error channels.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
+          "forbiddenSnippets": [
+            "contains deprecated database schemaSnapshot",
+            "contains deprecated database query provider \"all\"",
+            "reason: 'deprecated_database_schema_snapshot'",
+            "reason: 'deprecated_database_query_provider'"
+          ],
+          "requiredSnippets": [
+            "AI Path trigger payload contains unsupported database schemaSnapshot.",
+            "AI Path trigger payload contains unsupported database query provider \"all\".",
+            "reason: 'unsupported_database_schema_snapshot'",
+            "reason: 'unsupported_database_query_provider'"
+          ],
+          "replacements": [
+            {
+              "from": "contains deprecated database schemaSnapshot",
+              "to": "contains unsupported database schemaSnapshot"
+            },
+            {
+              "from": "contains deprecated database query provider \"all\"",
+              "to": "contains unsupported database query provider \"all\""
+            },
+            {
+              "from": "reason: 'deprecated_database_schema_snapshot'",
+              "to": "reason: 'unsupported_database_schema_snapshot'"
+            },
+            {
+              "from": "reason: 'deprecated_database_query_provider'",
+              "to": "reason: 'unsupported_database_query_provider'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "forbiddenSnippets": [
+            "contains deprecated database schemaSnapshot",
+            "contains deprecated database query provider \"all\"",
+            "reason: 'deprecated_database_schema_snapshot'",
+            "reason: 'deprecated_database_query_provider'"
+          ],
+          "requiredSnippets": [
+            "AI Path config contains unsupported database schemaSnapshot.",
+            "AI Path config contains unsupported database query provider \"all\".",
+            "reason: 'unsupported_database_schema_snapshot'",
+            "reason: 'unsupported_database_query_provider'"
+          ],
+          "replacements": [
+            {
+              "from": "contains deprecated database schemaSnapshot",
+              "to": "contains unsupported database schemaSnapshot"
+            },
+            {
+              "from": "contains deprecated database query provider \"all\"",
+              "to": "contains unsupported database query provider \"all\""
+            },
+            {
+              "from": "reason: 'deprecated_database_schema_snapshot'",
+              "to": "reason: 'unsupported_database_schema_snapshot'"
+            },
+            {
+              "from": "reason: 'deprecated_database_query_provider'",
+              "to": "reason: 'unsupported_database_query_provider'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "forbiddenSnippets": [
+            "contains deprecated database schemaSnapshot",
+            "contains deprecated database query provider \"all\"",
+            "reason: 'deprecated_database_schema_snapshot'",
+            "reason: 'deprecated_database_query_provider'"
+          ],
+          "requiredSnippets": [
+            "AI Path config contains unsupported database schemaSnapshot.",
+            "AI Path config contains unsupported database query provider \"all\".",
+            "reason: 'unsupported_database_schema_snapshot'",
+            "reason: 'unsupported_database_query_provider'"
+          ],
+          "replacements": [
+            {
+              "from": "contains deprecated database schemaSnapshot",
+              "to": "contains unsupported database schemaSnapshot"
+            },
+            {
+              "from": "contains deprecated database query provider \"all\"",
+              "to": "contains unsupported database query provider \"all\""
+            },
+            {
+              "from": "reason: 'deprecated_database_schema_snapshot'",
+              "to": "reason: 'unsupported_database_schema_snapshot'"
+            },
+            {
+              "from": "reason: 'deprecated_database_query_provider'",
+              "to": "reason: 'unsupported_database_query_provider'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trigger_data_collection_alias_error_channel",
+      "description": "Trigger-data and collection-alias channels must remain canonical unsupported reason/message values.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_trigger_outputs'",
+            "reason: 'deprecated_trigger_data_edge'",
+            "reason: 'deprecated_collection_aliases'",
+            "AI Path config contains deprecated collection aliases."
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_trigger_outputs'",
+            "reason: 'unsupported_trigger_data_edge'",
+            "reason: 'unsupported_collection_aliases'",
+            "AI Path config contains unsupported collection aliases."
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_trigger_outputs'",
+              "to": "reason: 'unsupported_trigger_outputs'"
+            },
+            {
+              "from": "reason: 'deprecated_trigger_data_edge'",
+              "to": "reason: 'unsupported_trigger_data_edge'"
+            },
+            {
+              "from": "reason: 'deprecated_collection_aliases'",
+              "to": "reason: 'unsupported_collection_aliases'"
+            },
+            {
+              "from": "AI Path config contains deprecated collection aliases.",
+              "to": "AI Path config contains unsupported collection aliases."
+            }
+          ]
+        },
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_trigger_outputs'",
+            "reason: 'deprecated_trigger_data_edge'",
+            "reason: 'deprecated_collection_aliases'",
+            "AI Path config contains deprecated collection aliases."
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_trigger_outputs'",
+            "reason: 'unsupported_trigger_data_edge'",
+            "reason: 'unsupported_collection_aliases'",
+            "AI Path config contains unsupported collection aliases."
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_trigger_outputs'",
+              "to": "reason: 'unsupported_trigger_outputs'"
+            },
+            {
+              "from": "reason: 'deprecated_trigger_data_edge'",
+              "to": "reason: 'unsupported_trigger_data_edge'"
+            },
+            {
+              "from": "reason: 'deprecated_collection_aliases'",
+              "to": "reason: 'unsupported_collection_aliases'"
+            },
+            {
+              "from": "AI Path config contains deprecated collection aliases.",
+              "to": "AI Path config contains unsupported collection aliases."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "runtime_node_identity_reason_channel",
+      "description": "Runtime identity and node-identity channels must remain canonical unsupported reason values.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_runtime_identity_fields'",
+            "reason: 'deprecated_node_identities'"
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_runtime_identity_fields'",
+            "reason: 'unsupported_node_identities'"
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_runtime_identity_fields'",
+              "to": "reason: 'unsupported_runtime_identity_fields'"
+            },
+            {
+              "from": "reason: 'deprecated_node_identities'",
+              "to": "reason: 'unsupported_node_identities'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-executor.helpers.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_runtime_identity_fields'"
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_runtime_identity_fields'"
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_runtime_identity_fields'",
+              "to": "reason: 'unsupported_runtime_identity_fields'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsPathActions.ts",
+          "forbiddenSnippets": [
+            "errorReason === 'deprecated_runtime_identity_fields'"
+          ],
+          "requiredSnippets": [
+            "errorReason === 'unsupported_runtime_identity_fields'"
+          ],
+          "replacements": [
+            {
+              "from": "errorReason === 'deprecated_runtime_identity_fields'",
+              "to": "errorReason === 'unsupported_runtime_identity_fields'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_node_identities'"
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_node_identities'"
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_node_identities'",
+              "to": "reason: 'unsupported_node_identities'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/services/path-run-service.ts",
+          "forbiddenSnippets": [
+            "reason: 'deprecated_node_identities'"
+          ],
+          "requiredSnippets": [
+            "reason: 'unsupported_node_identities'"
+          ],
+          "replacements": [
+            {
+              "from": "reason: 'deprecated_node_identities'",
+              "to": "reason: 'unsupported_node_identities'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "simulation_edge_alias",
+      "description": "Simulation runtime must resolve graph edges via canonical from/to endpoints only.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts",
+          "forbiddenSnippets": [
+            "e.source === n.id",
+            "e.target === simulationNode.id"
+          ],
+          "requiredSnippets": [
+            "e.from === n.id",
+            "e.to === simulationNode.id"
+          ],
+          "replacements": [
+            {
+              "from": "e.source === n.id",
+              "to": "e.from === n.id"
+            },
+            {
+              "from": "e.target === simulationNode.id",
+              "to": "e.to === simulationNode.id"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

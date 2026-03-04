@@ -1006,6 +1006,38 @@ const checkDatabaseUpdateProviderAliasCompatibilityPrune = () => {
   }
 };
 
+const checkDatabaseQueryProviderResponseAliasCompatibilityPrune = () => {
+  const queryExecutionText = readFile(DATABASE_QUERY_EXECUTION_FILE);
+
+  const forbiddenSnippets = [
+    "provider?: 'mongodb' | 'prisma';",
+    "const responseProvider = queryResultData['provider'];",
+    "responseProvider === 'mongodb' || responseProvider === 'prisma'",
+  ];
+  const requiredSnippets = [
+    "queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma'",
+    "...(querySource ? { querySource } : {}),",
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (queryExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_QUERY_EXECUTION_FILE,
+        `legacy database query provider-response alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!queryExecutionText.includes(snippet)) {
+      reportViolation(
+        DATABASE_QUERY_EXECUTION_FILE,
+        `missing canonical database query provider metadata snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const checkApiClientCsrfCompatibilityAliasPrune = () => {
   const apiClientText = readFile(API_CLIENT_FILE);
   const apiClientBaseText = readFile(API_CLIENT_BASE_FILE);
@@ -1076,6 +1108,7 @@ const main = () => {
   checkDatabaseProviderFallbackCompatibilityPrune();
   checkDatabaseProviderAliasCompatibilityPrune();
   checkDatabaseUpdateProviderAliasCompatibilityPrune();
+  checkDatabaseQueryProviderResponseAliasCompatibilityPrune();
   checkApiClientCsrfCompatibilityAliasPrune();
 
   if (violations.length > 0) {

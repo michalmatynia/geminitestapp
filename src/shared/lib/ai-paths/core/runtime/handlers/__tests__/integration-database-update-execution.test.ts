@@ -118,9 +118,13 @@ describe('executeDatabaseUpdate custom payload mode', () => {
         collection: 'products',
       })
     );
-    expect(result.executionMeta['resolvedProvider']).toBeUndefined();
-    expect(result.executionMeta['provider']).toBeUndefined();
-    expect(result.executionMeta['providerFallback']).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(result.executionMeta, 'resolvedProvider')).toBe(
+      false
+    );
+    expect(Object.prototype.hasOwnProperty.call(result.executionMeta, 'provider')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(result.executionMeta, 'providerFallback')).toBe(
+      false
+    );
     expect(result.writeOutcome).toEqual(
       expect.objectContaining({
         status: 'success',

@@ -54,6 +54,8 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       data: {
         items: [{ id: 'abc' }],
         count: 1,
+        requestedProvider: 'auto',
+        resolvedProvider: 'mongodb',
         provider: 'mongodb',
         fallback: { provider: 'prisma' },
       },
@@ -91,6 +93,44 @@ describe('executeDatabaseQuery guardrail metadata', () => {
     const bundle = result['bundle'] as Record<string, unknown>;
     expect(Object.prototype.hasOwnProperty.call(bundle, 'provider')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(bundle, 'providerFallback')).toBe(false);
+  });
+
+  it('does not derive resolvedProvider from legacy provider alias in query response metadata', async () => {
+    dbQueryMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        items: [{ id: 'xyz' }],
+        count: 1,
+        provider: 'mongodb',
+      },
+    });
+
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: '_id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{value}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { id: 'xyz' },
+      querySource: 'input',
+      dryRun: false,
+      aiPrompt: 'test',
+    });
+
+    const bundle = result['bundle'] as Record<string, unknown>;
+    expect(bundle['requestedProvider']).toBe('auto');
+    expect(bundle['resolvedProvider']).toBeNull();
+    expect(Object.prototype.hasOwnProperty.call(bundle, 'provider')).toBe(false);
   });
 
   it('does not perform parameter-id fallback query', async () => {

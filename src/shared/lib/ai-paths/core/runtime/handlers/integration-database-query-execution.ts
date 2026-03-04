@@ -11,7 +11,8 @@ interface DbQueryResult {
   items?: unknown[];
   item?: unknown;
   count?: number;
-  provider?: 'mongodb' | 'prisma';
+  requestedProvider?: 'auto' | 'mongodb' | 'prisma';
+  resolvedProvider?: 'mongodb' | 'prisma';
 }
 
 export type ExecuteDatabaseQueryInput = {
@@ -105,11 +106,16 @@ export async function executeDatabaseQuery({
     ? queryResult.data
     : ({} as Record<string, unknown>);
   const requestedProvider =
-    typeof queryConfig.provider === 'string' ? queryConfig.provider : 'auto';
-  const responseProvider = queryResultData['provider'];
+    queryResultData['requestedProvider'] === 'auto' ||
+    queryResultData['requestedProvider'] === 'mongodb' ||
+    queryResultData['requestedProvider'] === 'prisma'
+      ? queryResultData['requestedProvider']
+      : typeof queryConfig.provider === 'string'
+        ? queryConfig.provider
+        : 'auto';
   const resolvedProvider =
-    responseProvider === 'mongodb' || responseProvider === 'prisma'
-      ? responseProvider
+    queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma'
+      ? queryResultData['resolvedProvider']
       : requestedProvider === 'auto'
         ? null
         : requestedProvider;

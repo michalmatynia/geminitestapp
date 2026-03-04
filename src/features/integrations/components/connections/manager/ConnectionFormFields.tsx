@@ -19,14 +19,16 @@ type ConnectionFormFieldsProps = {
   idPrefix?: string;
 };
 
-export function ConnectionFormFields({
-  integrationSlug,
-  form,
-  setForm,
-  mode,
-  selectedConnection = null,
-  idPrefix = 'connection-form',
-}: ConnectionFormFieldsProps): React.JSX.Element {
+export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JSX.Element {
+  const {
+    integrationSlug,
+    form,
+    setForm,
+    mode,
+    selectedConnection = null,
+    idPrefix = 'connection-form',
+  } = props;
+
   const isCreateMode = mode === 'create';
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);

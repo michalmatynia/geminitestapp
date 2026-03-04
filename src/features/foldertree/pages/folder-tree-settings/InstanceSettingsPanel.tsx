@@ -54,11 +54,9 @@ interface InstanceSettingsPanelProps {
   ) => void;
 }
 
-export function InstanceSettingsPanel({
-  meta,
-  profile,
-  updateProfile,
-}: InstanceSettingsPanelProps): React.JSX.Element {
+export function InstanceSettingsPanel(props: InstanceSettingsPanelProps): React.JSX.Element {
+  const { meta, profile, updateProfile } = props;
+
   const allowFolderToFolder = getRuleAllow(profile, 'folder_to_folder');
   const allowFileToFolder = getRuleAllow(profile, 'file_to_folder');
   const allowFolderToRoot = getRuleAllow(profile, 'folder_to_root');

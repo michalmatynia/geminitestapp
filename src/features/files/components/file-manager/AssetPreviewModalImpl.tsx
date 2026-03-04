@@ -10,11 +10,9 @@ import { formatDateTime, formatFileSize } from '@/shared/utils';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
-export function AssetPreviewModal({
-  isOpen,
-  onClose,
-  item: previewAsset,
-}: AssetPreviewModalProps): React.JSX.Element | null {
+export function AssetPreviewModal(props: AssetPreviewModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, item: previewAsset } = props;
+
   if (!previewAsset) return null;
 
   return (

@@ -23,18 +23,20 @@ type JobQueueOverviewProps = {
   onClearHistory: () => void;
 };
 
-export function JobQueueOverview({
-  queueStatus,
-  queueStatusError,
-  queueStatusFetching,
-  queueHistory,
-  lagThresholdMs,
-  autoRefreshEnabled,
-  autoRefreshInterval,
-  showMetricsPanel,
-  onToggleMetricsPanel,
-  onClearHistory,
-}: JobQueueOverviewProps): React.JSX.Element {
+export function JobQueueOverview(props: JobQueueOverviewProps): React.JSX.Element {
+  const {
+    queueStatus,
+    queueStatusError,
+    queueStatusFetching,
+    queueHistory,
+    lagThresholdMs,
+    autoRefreshEnabled,
+    autoRefreshInterval,
+    showMetricsPanel,
+    onToggleMetricsPanel,
+    onClearHistory,
+  } = props;
+
   const runtimeAnalyticsEnabled = queueStatus?.runtimeAnalytics.enabled ?? false;
 
   return (

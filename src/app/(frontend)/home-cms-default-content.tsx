@@ -4,19 +4,15 @@ import {
   getMediaStyleVars,
 } from '@/features/cms/components/frontend/theme-styles';
 
-export function HomeCmsDefaultContent({
-  themeSettings,
-  colorSchemes,
-  hasCmsContent,
-  defaultSlug,
-  rendererComponents,
-}: {
+export function HomeCmsDefaultContent(props: {
   themeSettings: Parameters<typeof getMediaStyleVars>[0];
   colorSchemes: React.ComponentProps<typeof CmsPageRenderer>['colorSchemes'];
   hasCmsContent: boolean;
   defaultSlug: string;
   rendererComponents: React.ComponentProps<typeof CmsPageRenderer>['components'];
 }): React.JSX.Element {
+  const { themeSettings, colorSchemes, hasCmsContent, defaultSlug, rendererComponents } = props;
+
   return hasCmsContent ? (
     <CmsPageRenderer
       components={rendererComponents}

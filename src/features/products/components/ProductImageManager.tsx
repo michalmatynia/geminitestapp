@@ -41,12 +41,14 @@ function ProductImageManagerGrid() {
 }
 
 export default function ProductImageManager(props: ProductImageManagerProps) {
+  const { controller, minimalUi, showDragHandle, minimalSingleSlotAlign } = props;
+
   return (
     <ProductImageManagerUIProvider
-      explicitController={props.controller}
-      minimalUi={props.minimalUi}
-      showDragHandle={props.showDragHandle}
-      minimalSingleSlotAlign={props.minimalSingleSlotAlign}
+      explicitController={controller}
+      minimalUi={minimalUi}
+      showDragHandle={showDragHandle}
+      minimalSingleSlotAlign={minimalSingleSlotAlign}
     >
       <ProductImageManagerGrid />
     </ProductImageManagerUIProvider>

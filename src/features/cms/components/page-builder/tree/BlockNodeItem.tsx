@@ -23,11 +23,9 @@ import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-b
 
 import type { BlockNodeItemProps } from './tree-types';
 
-export function BlockNodeItem({
-  block,
-  index,
-  disableDrag = false,
-}: BlockNodeItemProps): React.ReactNode {
+export function BlockNodeItem(props: BlockNodeItemProps): React.ReactNode {
+  const { block, index, disableDrag = false } = props;
+
   const sectionId = useTreeSectionId();
   const columnId = useOptionalTreeColumnId();
   const resolvedParentBlockId = useOptionalTreeParentBlockId();

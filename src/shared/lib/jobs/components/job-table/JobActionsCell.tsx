@@ -23,15 +23,17 @@ export const JobActionsCellRuntimeContext = React.createContext<JobActionsCellRu
   null
 );
 
-export function JobActionsCell({
-  jobId,
-  status,
-  onViewDetails,
-  onCancel,
-  onDelete,
-  isCancelling = false,
-  isDeleting,
-}: JobActionsCellProps): React.JSX.Element {
+export function JobActionsCell(props: JobActionsCellProps): React.JSX.Element {
+  const {
+    jobId,
+    status,
+    onViewDetails,
+    onCancel,
+    onDelete,
+    isCancelling = false,
+    isDeleting,
+  } = props;
+
   const runtime = React.useContext(JobActionsCellRuntimeContext);
   const resolvedOnDelete = onDelete ?? runtime?.onDelete;
   const resolvedIsDeleting = isDeleting ?? runtime?.isDeleting?.(jobId) ?? false;

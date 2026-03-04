@@ -51,21 +51,23 @@ const resolveNodeTypeFromMetadata = (
   return 'folder';
 };
 
-export function RelationTreeBrowser({
-  instance,
-  mode,
-  nodes,
-  lookup,
-  isLocked = false,
-  selectedFileIds,
-  onToggleFileSelection,
-  onLinkFile,
-  onAddFile,
-  onPreviewFile,
-  searchQuery,
-  className,
-  emptyLabel = 'No files found',
-}: RelationTreeBrowserProps): React.JSX.Element {
+export function RelationTreeBrowser(props: RelationTreeBrowserProps): React.JSX.Element {
+  const {
+    instance,
+    mode,
+    nodes,
+    lookup,
+    isLocked = false,
+    selectedFileIds,
+    onToggleFileSelection,
+    onLinkFile,
+    onAddFile,
+    onPreviewFile,
+    searchQuery,
+    className,
+    emptyLabel = 'No files found',
+  } = props;
+
   const profile = useMemo(() => defaultFolderTreeProfilesV2[instance], [instance]);
   const searchConfig = useMemo(() => resolveFolderTreeSearchConfig(profile), [profile]);
   const multiSelectConfig = useMemo(() => resolveFolderTreeMultiSelectConfig(profile), [profile]);

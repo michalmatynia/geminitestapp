@@ -115,15 +115,13 @@ function Loader(): React.JSX.Element {
   );
 }
 
-function AutoRotateGroup({
-  children,
-  autoRotate,
-  autoRotateSpeed,
-}: {
+function AutoRotateGroup(props: {
   children: React.ReactNode;
   autoRotate: boolean;
   autoRotateSpeed: number;
 }): React.JSX.Element {
+  const { children, autoRotate, autoRotateSpeed } = props;
+
   const ref = useRef<THREE.Group>(null);
   useFrame((_state: RootState, delta: number) => {
     if (!autoRotate || !ref.current) return;
@@ -132,15 +130,7 @@ function AutoRotateGroup({
   return <group ref={ref}>{children}</group>;
 }
 
-function Model3D({
-  url,
-  onLoad,
-  onError,
-  position,
-  rotation,
-  scale,
-  enableShadows,
-}: {
+function Model3D(props: {
   url: string;
   onLoad?: () => void;
   onError?: (error: Error) => void;
@@ -149,6 +139,8 @@ function Model3D({
   scale?: number | [number, number, number];
   enableShadows: boolean;
 }): React.JSX.Element | null {
+  const { url, onLoad, onError, position, rotation, scale, enableShadows } = props;
+
   const replacedTextureRef = useRef(false);
   const { scene } = useGLTF(url, true, true, (loader: { manager: THREE.LoadingManager }) => {
     loader.manager.setURLModifier((resourceUrl: string) => {
@@ -223,7 +215,9 @@ function Model3D({
 }
 
 // Ground plane with realistic shadows
-function Ground({ showGround }: { showGround: boolean }): React.JSX.Element | null {
+function Ground(props: { showGround: boolean }): React.JSX.Element | null {
+  const { showGround } = props;
+
   if (!showGround) return null;
 
   return (
@@ -235,13 +229,12 @@ function Ground({ showGround }: { showGround: boolean }): React.JSX.Element | nu
 }
 
 // Scene lighting setup
-function SceneLighting({
-  preset,
-  intensity,
-}: {
+function SceneLighting(props: {
   preset: LightingPreset;
   intensity: number;
 }): React.JSX.Element {
+  const { preset, intensity } = props;
+
   const lightConfigs = {
     studio: {
       ambient: 0.4,
@@ -323,11 +316,11 @@ export interface Viewer3DProps {
   captureRef?: React.MutableRefObject<(() => string | null) | null>;
 }
 
-function ScreenshotCapture({
-  captureRef,
-}: {
+function ScreenshotCapture(props: {
   captureRef: React.MutableRefObject<(() => string | null) | null>;
 }): React.JSX.Element | null {
+  const { captureRef } = props;
+
   const { gl } = useThree();
   useEffect(() => {
     captureRef.current = (): string | null => {
@@ -344,17 +337,19 @@ function ScreenshotCapture({
   return null;
 }
 
-export function Viewer3D({
-  modelUrl,
-  settings: propSettings,
-  className,
-  onLoad,
-  onError,
-  autoFit = true,
-  presentationMode = false,
-  allowUserControls = true,
-  captureRef,
-}: Viewer3DProps): React.JSX.Element {
+export function Viewer3D(props: Viewer3DProps): React.JSX.Element {
+  const {
+    modelUrl,
+    settings: propSettings,
+    className,
+    onLoad,
+    onError,
+    autoFit = true,
+    presentationMode = false,
+    allowUserControls = true,
+    captureRef,
+  } = props;
+
   const context = useOptionalViewer3D();
 
   const getSetting = <K extends keyof Viewer3DSettings>(

@@ -18,13 +18,11 @@ import {
 
 export type ComponentTreeNodeRendererProps = FolderTreeViewportRenderNodeInput;
 
-export function ComponentTreeNodeRenderer({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  toggleExpand,
-}: ComponentTreeNodeRendererProps): React.JSX.Element | null {
+export function ComponentTreeNodeRenderer(
+  props: ComponentTreeNodeRendererProps
+): React.JSX.Element | null {
+  const { node, depth, hasChildren, isExpanded, toggleExpand } = props;
+
   const { rootSectionsByZone, sectionById, sectionIndexById } =
     useComponentTreeNodeRuntimeContext();
 

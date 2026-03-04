@@ -114,11 +114,9 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
   );
 }
 
-export function Asset3DPreviewModal({
-  isOpen,
-  onClose,
-  item: asset,
-}: Asset3DPreviewModalProps): React.JSX.Element | null {
+export function Asset3DPreviewModal(props: Asset3DPreviewModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, item: asset } = props;
+
   if (!asset) return null;
 
   return (

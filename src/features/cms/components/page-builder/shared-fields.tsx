@@ -34,12 +34,9 @@ interface FieldProps<T> {
   disabled?: boolean;
 }
 
-export function ImagePickerField({
-  label,
-  value,
-  onChange,
-  disabled,
-}: FieldProps<string>): React.JSX.Element {
+export function ImagePickerField(props: FieldProps<string>): React.JSX.Element {
+  const { label, value, onChange, disabled } = props;
+
   const [open, setOpen] = useState(false);
   const uploadMutation = useUploadCmsMedia();
   const { toast } = useToast();
@@ -141,12 +138,9 @@ export function ImagePickerField({
   );
 }
 
-export function Asset3DPickerField({
-  label,
-  value,
-  onChange,
-  disabled,
-}: FieldProps<string>): React.JSX.Element {
+export function Asset3DPickerField(props: FieldProps<string>): React.JSX.Element {
+  const { label, value, onChange, disabled } = props;
+
   const [open, setOpen] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
 
@@ -314,22 +308,16 @@ export function NumberField(
   );
 }
 
-export function RangeField({
-  label,
-  value,
-  onChange,
-  className,
-  disabled,
-  min,
-  max,
-  step,
-  suffix,
-}: FieldProps<number> & {
+export function RangeField(
+  props: FieldProps<number> & {
   min: number;
   max: number;
   step?: number;
   suffix?: string;
-}): React.JSX.Element {
+  }
+): React.JSX.Element {
+  const { label, value, onChange, className, disabled, min, max, step, suffix } = props;
+
   const safeValue = Number.isFinite(value) ? value : min;
   return (
     <FormField
@@ -381,19 +369,15 @@ export function SelectField(
   );
 }
 
-export function CheckboxField({
-  label,
-  checked,
-  onChange,
-  className,
-  disabled,
-}: {
+export function CheckboxField(props: {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   className?: string;
   disabled?: boolean;
 }): React.JSX.Element {
+  const { label, checked, onChange, className, disabled } = props;
+
   return (
     <label
       className={cn(

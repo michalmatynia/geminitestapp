@@ -23,19 +23,21 @@ interface ResourceCardProps {
  * It provides a standardized layout with a top media area, header actions, and a footer.
  * Leverages the base Card component for consistent theme application.
  */
-export function ResourceCard({
-  title,
-  description,
-  media,
-  mediaClassName,
-  badges,
-  actions,
-  footer,
-  children,
-  onClick,
-  className,
-  variant = 'default',
-}: ResourceCardProps): React.JSX.Element {
+export function ResourceCard(props: ResourceCardProps): React.JSX.Element {
+  const {
+    title,
+    description,
+    media,
+    mediaClassName,
+    badges,
+    actions,
+    footer,
+    children,
+    onClick,
+    className,
+    variant = 'default',
+  } = props;
+
   return (
     <Card
       variant={variant}

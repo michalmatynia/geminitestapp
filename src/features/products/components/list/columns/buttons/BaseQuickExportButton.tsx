@@ -40,19 +40,15 @@ type ExistingSkuDecisionState = QuickExportContext & {
   existingProductId: string | null;
 };
 
-export function BaseQuickExportButton({
-  product,
-  status,
-  prefetchListings,
-  showMarketplaceBadge,
-  onOpenIntegrations,
-}: {
+export function BaseQuickExportButton(props: {
   product: ProductWithImages;
   status: string;
   prefetchListings: () => void;
   showMarketplaceBadge: boolean;
   onOpenIntegrations?: (() => void) | undefined;
 }): React.JSX.Element {
+  const { product, status, prefetchListings, showMarketplaceBadge, onOpenIntegrations } = props;
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const quickExportMutation = useGenericExportToBaseMutation();

@@ -186,15 +186,13 @@ function HumanizeSection(): ReactElement {
   );
 }
 
-function DelayInputs({
-  label,
-  minKey,
-  maxKey,
-}: {
+function DelayInputs(props: {
   label: string;
   minKey: keyof PlaywrightSettings;
   maxKey: keyof PlaywrightSettings;
 }): ReactElement {
+  const { label, minKey, maxKey } = props;
+
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <div className='grid gap-4 md:grid-cols-2'>
@@ -350,15 +348,9 @@ export function PlaywrightSettingsFormContent(): ReactElement {
   );
 }
 
-export function PlaywrightSettingsForm({
-  settings,
-  setSettings,
-  onSave,
-  saveLabel,
-  showSave,
-  title,
-  description,
-}: PlaywrightSettingsFormProps): ReactElement {
+export function PlaywrightSettingsForm(props: PlaywrightSettingsFormProps): ReactElement {
+  const { settings, setSettings, onSave, saveLabel, showSave, title, description } = props;
+
   const viewContextValue = useMemo(
     () => ({
       ...(onSave !== undefined && { onSave }),

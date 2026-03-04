@@ -11,14 +11,11 @@ import { useCategoryTreeNodeRuntimeContext } from './CategoryTreeNodeRuntimeCont
 
 export type CategoryTreeNodeRendererProps = FolderTreeViewportRenderNodeInput;
 
-export function CategoryTreeNodeRenderer({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  dropPosition,
-  toggleExpand,
-}: CategoryTreeNodeRendererProps): React.JSX.Element | null {
+export function CategoryTreeNodeRenderer(
+  props: CategoryTreeNodeRendererProps
+): React.JSX.Element | null {
+  const { node, depth, hasChildren, isExpanded, dropPosition, toggleExpand } = props;
+
   const {
     categoryById,
     placeholderClasses,

@@ -5,15 +5,13 @@ import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { getMarketplaceButtonClass } from '../product-column-utils';
 
-export function TraderaStatusButton({
-  status,
-  prefetchListings,
-  onOpenListings,
-}: {
+export function TraderaStatusButton(props: {
   status: string;
   prefetchListings: () => void;
   onOpenListings: () => void;
 }): React.JSX.Element {
+  const { status, prefetchListings, onOpenListings } = props;
+
   const label = `Manage Tradera listing (${status}).`;
 
   return (

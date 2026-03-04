@@ -28,15 +28,9 @@ interface AdvancedFilterModalProps {
     | undefined;
 }
 
-export function AdvancedFilterModal({
-  open,
-  value,
-  onClose,
-  onApply,
-  onClear,
-  onSavePreset,
-  fieldValueOptions,
-}: AdvancedFilterModalProps): React.JSX.Element {
+export function AdvancedFilterModal(props: AdvancedFilterModalProps): React.JSX.Element {
+  const { open, value, onClose, onApply, onClear, onSavePreset, fieldValueOptions } = props;
+
   const { toast } = useToast();
   const [group, setGroup] = useState<ProductAdvancedFilterGroup>(createEmptyGroup());
   const [presetName, setPresetName] = useState('');

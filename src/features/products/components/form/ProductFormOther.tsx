@@ -53,12 +53,11 @@ type CategoryIssueHintRowProps = {
   selectedCategoryId: string | null;
 };
 
-const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
-  issue,
-  currentCategoryLabel,
-  proposedCategoryLabel,
-  selectedCategoryId,
-}: CategoryIssueHintRowProps): React.JSX.Element {
+const CategoryIssueHintRow = memo(function CategoryIssueHintRow(
+  props: CategoryIssueHintRowProps
+): React.JSX.Element {
+  const { issue, currentCategoryLabel, proposedCategoryLabel, selectedCategoryId } = props;
+
   const { setCategoryId } = useProductFormMetadata();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 

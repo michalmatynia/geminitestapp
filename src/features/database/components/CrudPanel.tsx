@@ -60,14 +60,7 @@ function parseInputValue(value: string, type: string): unknown {
   return value;
 }
 
-function RowFormModal({
-  columns,
-  initialData,
-  mode,
-  onSubmit,
-  onClose,
-  isPending,
-}: {
+function RowFormModal(props: {
   columns: DatabaseColumnInfo[];
   initialData?: Record<string, unknown>;
   mode: 'add' | 'edit';
@@ -75,6 +68,8 @@ function RowFormModal({
   onClose: () => void;
   isPending: boolean;
 }): React.JSX.Element {
+  const { columns, initialData, mode, onSubmit, onClose, isPending } = props;
+
   const [formData, setFormData] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     for (const col of columns) {

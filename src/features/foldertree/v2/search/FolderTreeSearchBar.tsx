@@ -9,11 +9,9 @@ export type FolderTreeSearchBarProps = {
   placeholder?: string | undefined;
 };
 
-export function FolderTreeSearchBar({
-  value,
-  onChange,
-  placeholder = 'Search…',
-}: FolderTreeSearchBarProps): React.JSX.Element {
+export function FolderTreeSearchBar(props: FolderTreeSearchBarProps): React.JSX.Element {
+  const { value, onChange, placeholder = 'Search…' } = props;
+
   return (
     <SearchInput
       value={value}

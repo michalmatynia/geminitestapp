@@ -24,7 +24,6 @@ export * from './settings.snapshots';
 
 export {
   sanitizeCaseResolverGraphNodeFileRelations,
-  sanitizeCaseResolverNodeFileAssetSnapshots,
 } from '@/features/case-resolver/nodefile-relations';
 export {
   buildCaseResolverFolderRecords,

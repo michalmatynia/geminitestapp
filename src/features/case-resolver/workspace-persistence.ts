@@ -20,7 +20,6 @@ import {
 
 import {
   buildCaseResolverNodeFileSnapshotKey,
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchCaseResolverNodeFileSnapshotText,
   fetchCaseResolverNodeFileSnapshot,
   persistCaseResolverNodeFileSnapshot,
@@ -42,7 +41,6 @@ export {
   readCaseResolverNavigationWorkspace,
   computeCaseResolverConflictRetryDelayMs,
   buildCaseResolverNodeFileSnapshotKey,
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchCaseResolverNodeFileSnapshotText,
   fetchCaseResolverNodeFileSnapshot,
   persistCaseResolverNodeFileSnapshot,

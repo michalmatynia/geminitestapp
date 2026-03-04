@@ -1,5 +1,4 @@
 import type * as React from 'react';
-import type { UseQueryResult } from '@tanstack/react-query';
 import type {
   AiNode,
   Edge,
@@ -16,20 +15,14 @@ import type {
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
-  AiPathRunRecord,
-  AiPathRunNodeRecord,
-  AiPathRunEventRecord,
   AiPathRuntimeEvent,
   AiPathRuntimeNodeStatusMap,
-  RuntimeHistoryEntry,
   DbQueryPreset,
   DbNodePreset,
   ClusterPreset,
 } from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
-import type { RunHistoryFilter } from '../run-history-panel';
-import type { HistoryNodeOption } from '../run-history-utils';
 
 export interface UseAiPathsSettingsStateReturn {
   loading: boolean;
@@ -204,18 +197,6 @@ export interface UseAiPathsSettingsStateReturn {
   handleDeletePreset: (presetId: string) => Promise<void>;
   handleExportPresets: () => void;
   lastGraphModelPayload: unknown;
-  runList: AiPathRunRecord[];
-  runsQuery: UseQueryResult<{ ok: boolean; data: { runs: AiPathRunRecord[] } }>;
-  runFilter: RunHistoryFilter;
-  setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
-  expandedRunHistory: Record<string, boolean>;
-  setExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  runHistorySelection: Record<string, string>;
-  setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  handleOpenRunDetail: (runId: string) => Promise<void>;
-  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
-  handleCancelRun: (runId: string) => Promise<void>;
-  handleRequeueDeadLetter: (runId: string) => Promise<void>;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   configOpen: boolean;
@@ -255,36 +236,6 @@ export interface UseAiPathsSettingsStateReturn {
   dbNodePresets: DbNodePreset[];
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  runDetailOpen: boolean;
-  setRunDetailOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  runDetailLoading: boolean;
-  runDetail: {
-    run: AiPathRunRecord;
-    nodes: AiPathRunNodeRecord[];
-    events: AiPathRunEventRecord[];
-  } | null;
-  setRunDetail: React.Dispatch<
-    React.SetStateAction<{
-      run: AiPathRunRecord;
-      nodes: AiPathRunNodeRecord[];
-      events: AiPathRunEventRecord[];
-    } | null>
-  >;
-  runStreamStatus: 'connecting' | 'live' | 'stopped' | 'paused';
-  runStreamPaused: boolean;
-  setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  runNodeSummary: {
-    counts: Record<string, number>;
-    total: number;
-    completed: number;
-    progress: number;
-  } | null;
-  runEventsOverflow: boolean;
-  runEventsBatchLimit: number | null;
-  runDetailHistoryOptions: HistoryNodeOption[];
-  runDetailSelectedHistoryNodeId: string | null;
-  setRunHistoryNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  runDetailSelectedHistoryEntries: RuntimeHistoryEntry[];
   presetsModalOpen: boolean;
   setPresetsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   presetsJson: string;

@@ -324,7 +324,7 @@ export const createImportExportRuntimeActions = ({
       toast('No import run selected.', { variant: 'error' });
       return;
     }
-    const url = `/api/integrations/imports/base/runs/${encodeURIComponent(
+    const url = `/api/v2/integrations/imports/base/runs/${encodeURIComponent(
       activeImportRunId
     )}/report?format=csv`;
     window.open(url, '_blank', 'noopener,noreferrer');

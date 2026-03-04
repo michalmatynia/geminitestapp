@@ -1,5 +1,5 @@
 'use client';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type {
   Edge,
@@ -158,14 +158,10 @@ export function useAiPathsSettingsState({
     toast,
   });
 
-  const { selectedNode, pathFlagsById, autoSaveLabel, autoSaveClasses } =
-    useAiPathsSettingsDerivedState({
-      nodes,
-      selectedNodeId,
-      paths,
-      pathConfigs,
-      autoSaveStatus: persistence.autoSaveStatus,
-    });
+  const selectedNodeForPresets = useMemo(
+    () => nodes.find((node) => node.id === selectedNodeId) ?? null,
+    [nodes, selectedNodeId]
+  );
 
   const {
     viewportRef,
@@ -247,7 +243,7 @@ export function useAiPathsSettingsState({
   } = useAiPathsPresets({
     nodes,
     edges,
-    selectedNode,
+    selectedNode: selectedNodeForPresets,
     isPathLocked,
     setNodes,
     setEdges,
@@ -272,7 +268,17 @@ export function useAiPathsSettingsState({
     toast,
   });
 
-  const persistence = useAiPathsPersistence({
+  const {
+    autoSaveStatus,
+    autoSaveAt,
+    saving,
+    handleSave,
+    persistActivePathPreference,
+    persistPathSettings,
+    persistRuntimePathState,
+    persistSettingsBulk,
+    savePathIndex,
+  } = useAiPathsPersistence({
     activePathId,
     activeTrigger,
     edges,
@@ -338,14 +344,23 @@ export function useAiPathsSettingsState({
     toast,
   });
 
+  const { selectedNode, pathFlagsById, autoSaveLabel, autoSaveClasses } =
+    useAiPathsSettingsDerivedState({
+      nodes,
+      selectedNodeId,
+      paths,
+      pathConfigs,
+      autoSaveStatus,
+    });
+
   const persistPathSettingsVoid = useCallback(
     async (nextPaths: PathMeta[], configId: string, config: PathConfig): Promise<void> => {
-      await persistence.persistPathSettings(nextPaths, configId, config);
+      await persistPathSettings(nextPaths, configId, config);
     },
-    [persistence.persistPathSettings]
+    [persistPathSettings]
   );
 
-  const runHistory = useAiPathsRunHistory({
+  useAiPathsRunHistory({
     activePathId,
     toast,
   });
@@ -447,8 +462,8 @@ export function useAiPathsSettingsState({
     normalizeTriggerLabel,
     updateActivePathMeta: (name: string) => setPathName(name),
     persistPathSettings: persistPathSettingsVoid,
-    persistSettingsBulk: persistence.persistSettingsBulk,
-    persistActivePathPreference: persistence.persistActivePathPreference,
+    persistSettingsBulk,
+    persistActivePathPreference,
     reportAiPathsError,
     toast,
     confirm,
@@ -488,7 +503,7 @@ export function useAiPathsSettingsState({
     setPaths,
     setPathConfigs,
     persistPathSettings: persistPathSettingsVoid,
-    persistSettingsBulk: persistence.persistSettingsBulk,
+    persistSettingsBulk,
     reportAiPathsError,
     toast,
   });
@@ -509,8 +524,8 @@ export function useAiPathsSettingsState({
     // AutoSave
     autoSaveLabel,
     autoSaveClasses,
-    autoSaveStatus: persistence.autoSaveStatus,
-    autoSaveAt: persistence.autoSaveAt,
+    autoSaveStatus,
+    autoSaveAt,
     // Canvas
     viewportRef,
     canvasRef,
@@ -551,7 +566,7 @@ export function useAiPathsSettingsState({
     loading,
     isPathSwitching,
     setIsPathSwitching,
-    saving: persistence.saving,
+    saving,
     // Samples
     parserSamples,
     setParserSamples,
@@ -614,34 +629,6 @@ export function useAiPathsSettingsState({
     ...nodeConfig,
     // Runtime management
     ...runtimeMgmt,
-    // Run history
-    runsQuery: runHistory.runsQuery,
-    runList: runHistory.runList,
-    runFilter: runHistory.runFilter,
-    setRunFilter: runHistory.setRunFilter,
-    expandedRunHistory: runHistory.expandedRunHistory,
-    setExpandedRunHistory: runHistory.setExpandedRunHistory,
-    runHistorySelection: runHistory.runHistorySelection,
-    setRunHistorySelection: runHistory.setRunHistorySelection,
-    handleOpenRunDetail: runHistory.handleOpenRunDetail,
-    handleResumeRun: runHistory.handleResumeRun,
-    handleCancelRun: runHistory.handleCancelRun,
-    handleRequeueDeadLetter: runHistory.handleRequeueDeadLetter,
-    runDetailOpen: runHistory.runDetailOpen,
-    setRunDetailOpen: runHistory.setRunDetailOpen,
-    runDetailLoading: runHistory.runDetailLoading,
-    runDetail: runHistory.runDetail,
-    setRunDetail: runHistory.setRunDetail,
-    runStreamStatus: runHistory.runStreamStatus,
-    runStreamPaused: runHistory.runStreamPaused,
-    setRunStreamPaused: runHistory.setRunStreamPaused,
-    runNodeSummary: runHistory.runNodeSummary,
-    runEventsOverflow: runHistory.runEventsOverflow,
-    runEventsBatchLimit: runHistory.runEventsBatchLimit,
-    runDetailHistoryOptions: runHistory.runDetailHistoryOptions,
-    runDetailSelectedHistoryNodeId: runHistory.runDetailSelectedHistoryNodeId,
-    setRunHistoryNodeId: runHistory.setRunHistoryNodeId,
-    runDetailSelectedHistoryEntries: runHistory.runDetailSelectedHistoryEntries,
     // Cleanup
     ...cleanup,
     // Path actions
@@ -649,15 +636,15 @@ export function useAiPathsSettingsState({
     // Mode actions (handleTogglePathLock, handleTogglePathActive, handleExecutionModeChange, etc.)
     ...modeActions,
     // Persistence
-    handleSave: persistence.handleSave,
-    persistActivePathPreference: persistence.persistActivePathPreference,
+    handleSave,
+    persistActivePathPreference,
     persistPathSettings: persistPathSettingsVoid,
-    persistRuntimePathState: persistence.persistRuntimePathState as unknown as (
+    persistRuntimePathState: persistRuntimePathState as unknown as (
       pathId: string,
       runtimeState: RuntimeState
     ) => Promise<void>,
-    persistSettingsBulk: persistence.persistSettingsBulk,
-    savePathIndex: persistence.savePathIndex,
+    persistSettingsBulk,
+    savePathIndex,
     // Samples fetch
     handleFetchParserSample,
     handleFetchUpdaterSample,

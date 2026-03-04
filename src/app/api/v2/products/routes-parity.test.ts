@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -33,6 +33,9 @@ const collectRouteFiles = (baseDir: string): string[] => {
   return walk(baseDir).sort();
 };
 
+const readRouteSource = (baseDir: string, relativeRoute: string): string =>
+  readFileSync(path.join(baseDir, relativeRoute), 'utf8');
+
 describe('v2 products route migration', () => {
   it('removes legacy /api/products route.ts files', () => {
     const legacyRoutes = collectRouteFiles(legacyRoot);
@@ -42,6 +45,15 @@ describe('v2 products route migration', () => {
   it('keeps /api/v2/products route.ts files available', () => {
     const v2Routes = collectRouteFiles(v2Root);
     expect(v2Routes.length).toBeGreaterThan(0);
+  });
+
+  it('does not import v2 routes from removed legacy products namespace', () => {
+    const v2Routes = collectRouteFiles(v2Root);
+    const offenders = v2Routes.filter((relativeRoute) =>
+      readRouteSource(v2Root, relativeRoute).includes("@/app/api/products/")
+    );
+
+    expect(offenders).toEqual([]);
   });
 
   it('provides a /api/v2/products route.ts counterpart for every historical legacy route', () => {

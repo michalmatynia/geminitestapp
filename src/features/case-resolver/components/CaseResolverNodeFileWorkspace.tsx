@@ -9,7 +9,6 @@ import {
   type AiNode,
   CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  type CaseResolverAssetFile,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
 import { Button, EmptyState, Card, Chip, Tooltip, useToast, Badge } from '@/shared/ui';
@@ -27,7 +26,6 @@ import { NodeFilePanel } from './NodeFilePanel';
 import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
 import { getCaseResolverDocTooltipWithFallback } from '../relation-search/utils/docs';
 import {
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   fetchCaseResolverNodeFileSnapshot,
   persistCaseResolverNodeFileSnapshot,
 } from '../workspace-persistence';
@@ -422,14 +420,9 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       if (!didPersistSnapshot) {
         return false;
       }
-      const nextMetadata: CaseResolverAssetFile['metadata'] = {
-        ...(selectedAsset.metadata ?? {}),
-        [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
-      };
       onUpdateSelectedAsset(
         {
           textContent: '',
-          metadata: nextMetadata,
         },
         options
       );

@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import { existsSync, readdirSync, readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(currentDir, '../../../../../../..');
+
+const legacyRoot = path.join(projectRoot, 'src/app/api/integrations/imports/base');
+const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations/imports/base');
+const featuresRoot = path.join(projectRoot, 'src/features');
+const legacyEndpointToken = '/api/integrations/imports/base';
+const legacyApiImportToken = "@/app/api/integrations/imports/base/";
+
+const collectRouteFiles = (baseDir: string): string[] => {
+  if (!existsSync(baseDir)) return [];
+
+  const walk = (dir: string): string[] => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    const files: string[] = [];
+
+    entries.forEach((entry) => {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...walk(absolute));
+        return;
+      }
+      if (entry.isFile() && entry.name === 'route.ts') {
+        files.push(path.relative(baseDir, absolute));
+      }
+    });
+
+    return files;
+  };
+
+  return walk(baseDir).sort();
+};
+
+const collectSourceFiles = (baseDir: string): string[] => {
+  if (!existsSync(baseDir)) return [];
+
+  const supported = new Set(['.ts', '.tsx', '.js', '.jsx']);
+
+  const walk = (dir: string): string[] => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    const files: string[] = [];
+
+    entries.forEach((entry) => {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...walk(absolute));
+        return;
+      }
+      if (entry.isFile() && supported.has(path.extname(entry.name))) {
+        files.push(absolute);
+      }
+    });
+
+    return files;
+  };
+
+  return walk(baseDir).sort();
+};
+
+describe('v2 integrations imports/base route migration', () => {
+  it('keeps /api/v2/integrations/imports/base route.ts counterparts for legacy routes', () => {
+    const legacyRoutes = collectRouteFiles(legacyRoot);
+    const v2Routes = new Set(collectRouteFiles(v2Root));
+
+    const missing = legacyRoutes.filter((relativeRoute) => !v2Routes.has(relativeRoute));
+    expect(missing).toEqual([]);
+  });
+
+  it('keeps v2 route.ts files independent from legacy api namespace imports', () => {
+    const v2Routes = collectRouteFiles(v2Root);
+    const offenders = v2Routes.filter((relativeRoute) =>
+      readFileSync(path.join(v2Root, relativeRoute), 'utf8').includes(legacyApiImportToken)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids legacy imports/base endpoint literals in feature runtime code', () => {
+    const featureFiles = collectSourceFiles(featuresRoot);
+    const offenders = featureFiles
+      .filter((absolute) => readFileSync(absolute, 'utf8').includes(legacyEndpointToken))
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+});

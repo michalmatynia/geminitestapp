@@ -7,7 +7,7 @@
 
 ## Issue Analysis Summary
 
-### 1. Products API Tests (`__tests__/api/products/products.test.ts`)
+### 1. Products API Tests (`__tests__/api/v2/products/products.test.ts`)
 
 - **Problem**: Missing Prisma mock, causing "The column `(not available)` does not exist" errors
 - **Root cause**: Tests use real prisma client without proper mocking

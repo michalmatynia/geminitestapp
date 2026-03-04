@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCaseResolverNodeFileRelationIndexFromAssets,
   buildCaseResolverNodeFileRelationIndex,
-  sanitizeCaseResolverNodeFileAssetSnapshots,
   sanitizeCaseResolverGraphNodeFileRelations,
 } from '@/features/case-resolver/nodefile-relations';
 import {
@@ -251,7 +250,7 @@ describe('case-resolver nodefile relations', () => {
     });
   });
 
-  it('strips inline snapshot payloads in relation/sanitizer pipelines', () => {
+  it('drops node-file graph mappings that reference inline snapshot assets', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -286,10 +285,8 @@ describe('case-resolver nodefile relations', () => {
       documentFileIdsByNodeFileAssetId: {},
       nodeIdsByNodeFileAssetId: {},
     });
-    expect(sanitizedGraph).toBe(graph);
-    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
-    expect(sanitizedAssets).toHaveLength(1);
-    expect(sanitizedAssets[0]?.textContent ?? '').toBe('');
-    expect(sanitizedAssets[0]?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
+    expect(sanitizedGraph).not.toBe(graph);
+    expect(sanitizedGraph.documentSourceFileIdByNode).toEqual({ n1: 'doc-1' });
+    expect(sanitizedGraph.nodeFileAssetIdByNode).toEqual({});
   });
 });

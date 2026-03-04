@@ -19,6 +19,7 @@
     "backfill:ai-path-run-runtime-ports": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/backfill-ai-path-run-runtime-ports.ts",
     "backfill:image-studio-center-links": "tsx scripts/db/backfill-image-studio-center-links.ts",
     "backfill:image-studio-upscale-links": "tsx scripts/db/backfill-image-studio-upscale-links.ts",
+    "products:normalize:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/normalize-products-v2.ts",
     "restore:base-listing-statuses": "tsx scripts/db/restore-base-listing-statuses.ts",
     "cleanup:db-providers": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/cleanup-db-provider-settings.ts",
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",

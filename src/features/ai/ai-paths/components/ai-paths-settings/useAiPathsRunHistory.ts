@@ -1,6 +1,6 @@
 'use client';
 
-import { type Query, type UseQueryResult } from '@tanstack/react-query';
+import { type Query } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import {
@@ -19,11 +19,8 @@ import {
   useRunHistoryActions,
   useRunHistoryState,
 } from '@/features/ai/ai-paths/context/RunHistoryContext';
-import type { RunHistoryFilter as RunHistoryContextFilter } from '@/features/ai/ai-paths/context/RunHistoryContext';
 
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
-
-import type { RunHistoryFilter } from '../run-history-panel';
 
 type ToastFn = (
   message: string,
@@ -33,51 +30,6 @@ type ToastFn = (
 type UseAiPathsRunHistoryArgs = {
   activePathId: string | null;
   toast: ToastFn;
-};
-
-type UseAiPathsRunHistoryResult = {
-  runsQuery: UseQueryResult<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>;
-  runList: AiPathRunRecord[];
-  runFilter: RunHistoryFilter;
-  setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
-  expandedRunHistory: Record<string, boolean>;
-  setExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  runHistorySelection: Record<string, string>;
-  setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  runDetailOpen: boolean;
-  setRunDetailOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  runDetailLoading: boolean;
-  runDetail: {
-    run: AiPathRunRecord;
-    nodes: AiPathRunNodeRecord[];
-    events: AiPathRunEventRecord[];
-  } | null;
-  setRunDetail: React.Dispatch<
-    React.SetStateAction<{
-      run: AiPathRunRecord;
-      nodes: AiPathRunNodeRecord[];
-      events: AiPathRunEventRecord[];
-    } | null>
-  >;
-  runStreamStatus: 'connecting' | 'live' | 'stopped' | 'paused';
-  runStreamPaused: boolean;
-  setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  runNodeSummary: {
-    counts: Record<string, number>;
-    total: number;
-    completed: number;
-    progress: number;
-  } | null;
-  runEventsOverflow: boolean;
-  runEventsBatchLimit: number | null;
-  runDetailHistoryOptions: HistoryNodeOption[];
-  runDetailSelectedHistoryNodeId: string | null;
-  runDetailSelectedHistoryEntries: RuntimeHistoryEntry[];
-  setRunHistoryNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  handleOpenRunDetail: (runId: string) => Promise<void>;
-  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
-  handleCancelRun: (runId: string) => Promise<void>;
-  handleRequeueDeadLetter: (runId: string) => Promise<void>;
 };
 
 function isSameRunList(prev: AiPathRunRecord[], next: AiPathRunRecord[]): boolean {
@@ -97,114 +49,14 @@ function isSameRunList(prev: AiPathRunRecord[], next: AiPathRunRecord[]): boolea
   return true;
 }
 
-export function useAiPathsRunHistory({
-  activePathId,
-  toast,
-}: UseAiPathsRunHistoryArgs): UseAiPathsRunHistoryResult {
+export function useAiPathsRunHistory({ activePathId, toast }: UseAiPathsRunHistoryArgs): void {
   const runHistoryState = useRunHistoryState();
   const runHistoryActions = useRunHistoryActions();
 
   const runDetailOpen = runHistoryState.runDetailOpen;
-  const runDetailLoading = runHistoryState.runDetailLoading;
   const runDetail = runHistoryState.runDetail;
   const runHistoryNodeId = runHistoryState.runHistoryNodeId;
-  const expandedRunHistory = runHistoryState.expandedRunHistory;
-  const runHistorySelection = runHistoryState.runHistorySelection;
-  const runStreamStatus = runHistoryState.runStreamStatus;
   const runStreamPaused = runHistoryState.runStreamPaused;
-  const runEventsOverflow = runHistoryState.runEventsOverflow;
-  const runEventsBatchLimit = runHistoryState.runEventsBatchLimit;
-
-  const normalizeRunFilter = useCallback(
-    (value: RunHistoryContextFilter): RunHistoryFilter => {
-      if (value === 'active' || value === 'running' || value === 'queued') return 'active';
-      if (value === 'failed') return 'failed';
-      if (value === 'dead') return 'dead';
-      return 'all';
-    },
-    []
-  );
-
-  const runFilter = useMemo<RunHistoryFilter>(
-    () => normalizeRunFilter(runHistoryState.runFilter),
-    [normalizeRunFilter, runHistoryState.runFilter]
-  );
-
-  const setRunFilter = useCallback<React.Dispatch<React.SetStateAction<RunHistoryFilter>>>(
-    (next): void => {
-      const resolved =
-        typeof next === 'function' ? next(normalizeRunFilter(runHistoryState.runFilter)) : next;
-      runHistoryActions.setRunFilter(resolved);
-    },
-    [normalizeRunFilter, runHistoryActions, runHistoryState.runFilter]
-  );
-
-  const setExpandedRunHistory = useCallback<
-    React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-  >(
-    (next): void => {
-      runHistoryActions.setExpandedRunHistory(next);
-    },
-    [runHistoryActions]
-  );
-
-  const setRunHistorySelection = useCallback<
-    React.Dispatch<React.SetStateAction<Record<string, string>>>
-  >(
-    (next): void => {
-      runHistoryActions.setRunHistorySelection(next);
-    },
-    [runHistoryActions]
-  );
-
-  const setRunDetailOpen = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(runHistoryState.runDetailOpen) : next;
-      runHistoryActions.setRunDetailOpen(resolved);
-    },
-    [runHistoryActions, runHistoryState.runDetailOpen]
-  );
-
-  const setRunDetailLoading = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(runHistoryState.runDetailLoading) : next;
-      runHistoryActions.setRunDetailLoading(resolved);
-    },
-    [runHistoryActions, runHistoryState.runDetailLoading]
-  );
-
-  const setRunDetail = useCallback<
-    React.Dispatch<
-      React.SetStateAction<{
-        run: AiPathRunRecord;
-        nodes: AiPathRunNodeRecord[];
-        events: AiPathRunEventRecord[];
-      } | null>
-    >
-  >(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(runHistoryState.runDetail) : next;
-      runHistoryActions.setRunDetail(resolved);
-    },
-    [runHistoryActions, runHistoryState.runDetail]
-  );
-
-  const setRunStreamPaused = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
-    (next): void => {
-      const resolved = typeof next === 'function' ? next(runHistoryState.runStreamPaused) : next;
-      runHistoryActions.setRunStreamPaused(resolved);
-    },
-    [runHistoryActions, runHistoryState.runStreamPaused]
-  );
-
-  const setRunHistoryNodeId = useCallback<React.Dispatch<React.SetStateAction<string | null>>>(
-    (next): void => {
-      const resolved =
-        typeof next === 'function' ? next(runHistoryState.runHistoryNodeId) : (next ?? null);
-      runHistoryActions.setRunHistoryNodeId(resolved);
-    },
-    [runHistoryActions, runHistoryState.runHistoryNodeId]
-  );
 
   useEffect(() => {
     if (!runDetailOpen || !runDetail?.run?.id) {
@@ -245,7 +97,7 @@ export function useAiPathsRunHistory({
     source.addEventListener('run', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setRunDetail(
+        runHistoryActions.setRunDetail(
           (
             prev: {
               run: AiPathRunRecord;
@@ -261,7 +113,7 @@ export function useAiPathsRunHistory({
     source.addEventListener('nodes', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setRunDetail(
+        runHistoryActions.setRunDetail(
           (
             prev: {
               run: AiPathRunRecord;
@@ -311,25 +163,12 @@ export function useAiPathsRunHistory({
       source.close();
       runHistoryActions.setRunStreamStatus('stopped');
     };
-  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events, runHistoryActions, setRunDetail]);
+  }, [runDetailOpen, runDetail?.run?.id, runStreamPaused, runDetail?.events, runHistoryActions]);
 
   useEffect(() => {
     runHistoryActions.setRunEventsOverflow(false);
     runHistoryActions.setRunEventsBatchLimit(null);
   }, [runDetail?.run?.id, runHistoryActions]);
-
-  const runNodeSummary = useMemo(() => {
-    if (!runDetail) return null;
-    const counts: Record<string, number> = {};
-    runDetail.nodes.forEach((node: AiPathRunNodeRecord) => {
-      const status = node.status ?? 'unknown';
-      counts[status] = (counts[status] ?? 0) + 1;
-    });
-    const total = runDetail.nodes.length;
-    const completed = (counts['completed'] ?? 0) + (counts['cached'] ?? 0);
-    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { counts, total, completed, progress };
-  }, [runDetail]);
 
   const runDetailHistory = (
     runDetail?.run?.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
@@ -346,12 +185,12 @@ export function useAiPathsRunHistory({
 
   useEffect(() => {
     if (!runDetail?.run?.id) {
-      setRunHistoryNodeId(null);
+      runHistoryActions.setRunHistoryNodeId(null);
       return;
     }
     const firstHistoryOption = runDetailHistoryOptions.at(0);
     if (!firstHistoryOption) {
-      setRunHistoryNodeId(null);
+      runHistoryActions.setRunHistoryNodeId(null);
       return;
     }
     if (
@@ -360,15 +199,8 @@ export function useAiPathsRunHistory({
     ) {
       return;
     }
-    setRunHistoryNodeId(firstHistoryOption.id);
-  }, [runDetail?.run?.id, runDetailHistoryOptions, runHistoryNodeId]);
-
-  const runDetailSelectedHistoryNodeId =
-    runHistoryNodeId ?? runDetailHistoryOptions.at(0)?.id ?? null;
-  const runDetailSelectedHistoryEntries =
-    runDetailSelectedHistoryNodeId && runDetailHistory
-      ? (runDetailHistory[runDetailSelectedHistoryNodeId] ?? [])
-      : [];
+    runHistoryActions.setRunHistoryNodeId(firstHistoryOption.id);
+  }, [runDetail?.run?.id, runDetailHistoryOptions, runHistoryActions, runHistoryNodeId]);
 
   const runsQuery = createListQueryV2<
     { ok: boolean; data: { runs: AiPathRunRecord[] } },
@@ -432,8 +264,8 @@ export function useAiPathsRunHistory({
 
   const handleOpenRunDetail = useCallback(
     async (runId: string): Promise<void> => {
-      setRunDetailOpen(true);
-      setRunDetailLoading(true);
+      runHistoryActions.setRunDetailOpen(true);
+      runHistoryActions.setRunDetailLoading(true);
       try {
         const response = await getAiPathRun(runId);
         if (!response.ok) {
@@ -444,17 +276,17 @@ export function useAiPathsRunHistory({
           nodes: AiPathRunNodeRecord[];
           events: AiPathRunEventRecord[];
         };
-        setRunDetail(data);
+        runHistoryActions.setRunDetail(data);
       } catch (error) {
         toast(error instanceof Error ? error.message : 'Failed to load run details.', {
           variant: 'error',
         });
-        setRunDetail(null);
+        runHistoryActions.setRunDetail(null);
       } finally {
-        setRunDetailLoading(false);
+        runHistoryActions.setRunDetailLoading(false);
       }
     },
-    [setRunDetail, setRunDetailLoading, setRunDetailOpen, toast]
+    [runHistoryActions, toast]
   );
 
   const handleResumeRun = useCallback(
@@ -527,34 +359,4 @@ export function useAiPathsRunHistory({
       runHistoryActions.setRunOperationHandlers(null);
     };
   }, [handleCancelRun, handleRequeueDeadLetter, handleResumeRun, refetchRuns, runHistoryActions]);
-
-  return {
-    runsQuery,
-    runList,
-    runFilter,
-    setRunFilter,
-    expandedRunHistory,
-    setExpandedRunHistory,
-    runHistorySelection,
-    setRunHistorySelection,
-    runDetailOpen,
-    setRunDetailOpen,
-    runDetailLoading,
-    runDetail,
-    setRunDetail,
-    runStreamStatus,
-    runStreamPaused,
-    setRunStreamPaused,
-    runNodeSummary,
-    runEventsOverflow,
-    runEventsBatchLimit,
-    runDetailHistoryOptions,
-    runDetailSelectedHistoryNodeId,
-    runDetailSelectedHistoryEntries,
-    setRunHistoryNodeId,
-    handleOpenRunDetail,
-    handleResumeRun,
-    handleCancelRun,
-    handleRequeueDeadLetter,
-  };
 }

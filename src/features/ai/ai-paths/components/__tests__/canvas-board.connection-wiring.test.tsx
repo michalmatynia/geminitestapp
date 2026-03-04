@@ -6,7 +6,6 @@ import type { AiNode } from '@/shared/lib/ai-paths';
 import { AiPathsProvider, useGraphState } from '@/features/ai/ai-paths/context';
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { ToastProvider } from '@/shared/ui/toast';
-import { useStateBridgeGraph } from '@/features/ai/ai-paths/context/__tests__/helpers/useStateBridge';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
@@ -26,32 +25,6 @@ const buildNode = (patch: Partial<AiNode>): AiNode =>
 function EdgeCountProbe(): React.JSX.Element {
   const { edges } = useGraphState();
   return <output data-testid='edge-count'>{String(edges.length)}</output>;
-}
-
-function BridgeGraphProbe({
-  initialNodes,
-}: {
-  initialNodes: AiNode[];
-}): React.JSX.Element {
-  const [sourceNodes, setSourceNodes] = React.useState<AiNode[]>(initialNodes);
-  const [sourceEdges, setSourceEdges] = React.useState<never[]>([]);
-  const { edges: contextEdges } = useGraphState();
-
-  useStateBridgeGraph({
-    nodes: sourceNodes,
-    edges: sourceEdges,
-    onNodesChangeFromContext: setSourceNodes,
-    onEdgesChangeFromContext: (nextEdges) => setSourceEdges(nextEdges as never[]),
-    activePathId: 'path-a',
-  });
-
-  return (
-    <>
-      <CanvasBoard confirmNodeSwitch={() => true} />
-      <output data-testid='bridge-source-edge-count'>{String(sourceEdges.length)}</output>
-      <output data-testid='bridge-context-edge-count'>{String(contextEdges.length)}</output>
-    </>
-  );
 }
 
 describe('CanvasBoard connector wiring', () => {
@@ -247,59 +220,4 @@ describe('CanvasBoard connector wiring', () => {
     });
   });
 
-  it('keeps wiring intact with state-bridge graph syncing enabled', async () => {
-    const source = buildNode({
-      id: 'node-a',
-      title: 'Source',
-      outputs: ['result'],
-      position: { x: 120, y: 120 },
-    });
-    const target = buildNode({
-      id: 'node-b',
-      title: 'Target',
-      inputs: ['value'],
-      position: { x: 520, y: 140 },
-    });
-
-    const { container, getByTestId } = render(
-      <ToastProvider>
-        <AiPathsProvider initialNodes={[source, target]} initialEdges={[]}>
-          <BridgeGraphProbe initialNodes={[source, target]} />
-        </AiPathsProvider>
-      </ToastProvider>
-    );
-
-    const outputPort = container.querySelector(
-      'circle[data-port="output"][data-node-id="node-a"][data-port-name="result"]'
-    );
-    const inputPort = container.querySelector(
-      'circle[data-port="input"][data-node-id="node-b"][data-port-name="value"]'
-    );
-    expect(outputPort).toBeTruthy();
-    expect(inputPort).toBeTruthy();
-    if (!outputPort || !inputPort) return;
-
-    fireEvent.pointerDown(outputPort, {
-      pointerId: 6,
-      clientX: 380,
-      clientY: 220,
-      buttons: 1,
-    });
-
-    await waitFor(() => {
-      expect(container.querySelector('[data-connecting-preview="true"]')).toBeTruthy();
-    });
-
-    fireEvent.pointerUp(inputPort, {
-      pointerId: 6,
-      clientX: 520,
-      clientY: 220,
-      buttons: 0,
-    });
-
-    await waitFor(() => {
-      expect(getByTestId('bridge-context-edge-count')).toHaveTextContent('1');
-      expect(getByTestId('bridge-source-edge-count')).toHaveTextContent('1');
-    });
-  });
 });

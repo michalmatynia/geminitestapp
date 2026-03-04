@@ -186,6 +186,11 @@ Progress (2026-03-04):
 8. Migrated run-history consumers (`run-history-panel.tsx`, `run-detail-dialog.tsx`, `node-config/dialog/NodeHistoryTab.tsx`) to `RunHistoryContext` actions/state instead of direct orchestrator run-history fields.
 9. Updated runtime trace drill-down in `panels/AiPathsRuntimeAnalysis.tsx` to use `RunHistoryContext` actions (`setRunHistoryNodeId`, `setRunFilter`, `openRunDetail`) instead of orchestrator run-history methods.
 10. Updated settings page trace inspection helper in `useAiPathsSettingsPageValue.ts` to call `RunHistoryContext` actions for run-history selection/filter/detail opening.
+11. Removed run-history fields from `UseAiPathsSettingsStateReturn` and `useAiPathsSettingsState` return payload, shrinking orchestrator surface area to non-run-history responsibilities.
+12. Updated bridge test helper wiring (`context/__tests__/helpers/AiPathsStateBridger.tsx`) and state-bridge fixture typing to align with the orchestrator contract cleanup.
+13. Simplified `useAiPathsRunHistory` into a context-side-effect hook (no return contract), keeping run list/query sync, streaming updates, and run-operation handler registration entirely within `RunHistoryContext` ownership.
+14. Removed obsolete run-history sync props/hooks from the test bridge helper (`context/__tests__/helpers/useStateBridge.ts`) and pruned remaining run-history legacy fixture fields from bridge ownership tests.
+15. Deleted remaining bridge-only test harness/tests (`context/__tests__/helpers/useStateBridge.ts`, `context/__tests__/helpers/AiPathsStateBridger.tsx`, `state-bridge-*.test.tsx`) and removed the bridge-specific wiring case from `canvas-board.connection-wiring.test.tsx`.
 
 ## Session 6: Legacy prune + compatibility cleanup
 
@@ -214,6 +219,30 @@ Progress (2026-03-04):
    1. Disabled-mode reads now reject explicit legacy key requests and strip legacy key from full settings responses.
    2. Disabled-mode writes reject `ai_paths_index_v1` upserts.
    3. Trigger settings loader now falls back to `ai_paths_index_v1` only when the compatibility flag is enabled.
+4. Added canonical root import route `POST /api/v2/integrations/imports/base` and migrated internal root callers from `/api/integrations/imports/base` to the new `v2` endpoint while keeping legacy route compatibility in place.
+5. Added canonical `v2` import subroutes for `parameters`, `sample-product`, `runs`, run actions (`[runId]`, `resume`, `cancel`, `report`), and scoped settings (`[setting]` for `active-template`, `last-template`, `export-warehouse`), then migrated internal data-import/export runtime callers to `/api/v2/integrations/imports/base/*`.
+6. Extended legacy-compat guard/counter instrumentation to legacy import subroutes (`/api/integrations/imports/base/[setting]`, `/parameters`, `/sample-product`, `/runs`, `/runs/[runId]`, `/runs/[runId]/resume`, `/runs/[runId]/cancel`, `/runs/[runId]/report`) so shutdown flag behavior applies uniformly across the full legacy import surface.
+7. Added v2 imports/base parity test coverage to enforce route-surface parity and block feature-runtime regressions to legacy `/api/integrations/imports/base*` endpoint literals.
+8. Decoupled `v2` imports/base `route.ts` files from direct legacy namespace imports by introducing local `handler.ts` modules per route, and extended parity tests to fail on any future `v2 route.ts` import from `@/app/api/integrations/imports/base/*`.
+
+Session 6 explicit deletion checklist (prepared):
+
+1. Completed on 2026-03-04: deleted temporary test bridge harness and bridge-specific tests:
+   1. `src/features/ai/ai-paths/context/__tests__/helpers/AiPathsStateBridger.tsx`
+   2. `src/features/ai/ai-paths/context/__tests__/helpers/useStateBridge.ts`
+   3. `src/features/ai/ai-paths/context/__tests__/state-bridge-canvas-ownership.test.tsx`
+   4. `src/features/ai/ai-paths/context/__tests__/state-bridge-drop-click-race.test.tsx`
+   5. `src/features/ai/ai-paths/context/__tests__/state-bridge-graph-ownership.test.tsx`
+2. Delete legacy alias route files after compatibility flags default to `false` and counter telemetry remains quiet:
+   1. `src/app/api/countries/route.ts`, `src/app/api/countries/[id]/route.ts`
+   2. `src/app/api/languages/route.ts`, `src/app/api/languages/[id]/route.ts`
+   3. `src/app/api/currencies/route.ts`, `src/app/api/currencies/[id]/route.ts`
+   4. `src/app/api/price-groups/route.ts`, `src/app/api/price-groups/[id]/route.ts`
+   5. `src/app/api/integrations/imports/base/**/*` legacy alias surface
+3. Delete legacy compatibility counters endpoint after alias route deletion:
+   1. `src/app/api/ai-paths/legacy-compat/counters/handler.ts`
+   2. `src/app/api/ai-paths/legacy-compat/counters/route.ts`
+   3. `src/app/api/ai-paths/legacy-compat/counters/handler.test.ts`
 
 ## Session 7: Release hardening
 
@@ -230,8 +259,8 @@ Acceptance:
 
 ## Deprecation map
 
-1. `AiPathsStateBridger.tsx` -> remove after Sessions 2-3 stabilize.
-2. `useStateBridge.ts` -> remove when no production consumer remains.
+1. `AiPathsStateBridger.tsx` -> completed on 2026-03-04 (deleted).
+2. `useStateBridge.ts` -> completed on 2026-03-04 (deleted).
 3. `useAiPathsCanvasInteractions.ts` and `hooks/useCanvas*` (settings version) -> replace with context hooks and delete.
 4. Monolith state mirror setters (`setNodes`, `setEdges`, `setSelectedNodeId`, etc.) -> replace with domain actions from context.
 
@@ -243,7 +272,7 @@ Run at least:
 npx vitest run src/features/ai/ai-paths/context/__tests__/useCanvasInteractions.connections.race.test.tsx \
   src/features/ai/ai-paths/components/__tests__/canvas-board.connection-wiring.test.tsx \
   src/features/ai/ai-paths/context/__tests__/useCanvasInteractions.nodes.drag-threshold.test.tsx \
-  src/features/ai/ai-paths/context/__tests__/state-bridge-drop-click-race.test.tsx
+  src/features/ai/ai-paths/components/ai-paths-settings/__tests__/AiPathsCanvasView.switching-delete-guard.test.tsx
 ```
 
 And for renderer behavior:

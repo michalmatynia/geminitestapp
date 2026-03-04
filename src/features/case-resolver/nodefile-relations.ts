@@ -10,6 +10,9 @@ const hasInlineNodeFileSnapshotText = (asset: CaseResolverAssetFile): boolean =>
   typeof asset.textContent === 'string' &&
   asset.textContent.trim().length > 0;
 
+const isCanonicalNodeFileAsset = (asset: CaseResolverAssetFile): boolean =>
+  asset.kind === 'node_file' && !hasInlineNodeFileSnapshotText(asset);
+
 const addUnique = (target: Record<string, string[]>, key: string, value: string): void => {
   const normalizedKey = key.trim();
   const normalizedValue = value.trim();
@@ -73,10 +76,7 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   );
   const validNodeFileAssetIds = new Set<string>(
     assets
-      .filter(
-        (asset: CaseResolverAssetFile): boolean =>
-          asset.kind === 'node_file' && !hasInlineNodeFileSnapshotText(asset)
-      )
+      .filter((asset: CaseResolverAssetFile): boolean => isCanonicalNodeFileAsset(asset))
       .map((asset: CaseResolverAssetFile): string => asset.id.trim())
       .filter(Boolean)
   );
@@ -174,30 +174,6 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
   };
 };
 
-export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
-  assets,
-  files: _files,
-}: {
-  assets: CaseResolverAssetFile[];
-  files: CaseResolverFile[];
-}): CaseResolverAssetFile[] => {
-  return assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile => {
-    if (!hasInlineNodeFileSnapshotText(asset)) {
-      return asset;
-    }
-    const metadata =
-      asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
-        ? { ...asset.metadata }
-        : {};
-    metadata['nodeFileSnapshotStorage'] = 'keyed';
-    return {
-      ...asset,
-      textContent: '',
-      metadata,
-    };
-  });
-};
-
 export const sanitizeCaseResolverGraphNodeFileRelations = ({
   graph,
   assets,
@@ -214,7 +190,7 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
   );
   const validNodeFileAssetIds = new Set<string>(
     assets
-      .filter((asset: CaseResolverAssetFile): boolean => asset.kind === 'node_file')
+      .filter((asset: CaseResolverAssetFile): boolean => isCanonicalNodeFileAsset(asset))
       .map((asset: CaseResolverAssetFile): string => asset.id.trim())
       .filter(Boolean)
   );

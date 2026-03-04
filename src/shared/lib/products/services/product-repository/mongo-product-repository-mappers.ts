@@ -192,7 +192,6 @@ const normalizeProducerRelations = (
 
     const producerId = toTrimmedString(record['producerId']);
     if (!producerId || seen.has(producerId)) continue;
-    seen.add(producerId);
 
     const relationProductId = toTrimmedString(record['productId']);
     const rawAssignedAt = record['assignedAt'];
@@ -206,6 +205,7 @@ const normalizeProducerRelations = (
         reason: 'missing_required_fields',
       });
     }
+    seen.add(producerId);
 
     const relation: NonNullable<ProductWithImages['producers']>[number] = {
       productId: relationProductId,
@@ -263,7 +263,6 @@ const normalizeTagRelations = (
 
     const tagId = toTrimmedString(record['tagId']);
     if (!tagId || seen.has(tagId)) continue;
-    seen.add(tagId);
 
     const relationProductId = toTrimmedString(record['productId']);
     const rawAssignedAt = record['assignedAt'];
@@ -277,6 +276,7 @@ const normalizeTagRelations = (
         reason: 'missing_required_fields',
       });
     }
+    seen.add(tagId);
 
     const relation: NonNullable<ProductRecord['tags']>[number] = {
       productId: relationProductId,

@@ -41,7 +41,6 @@ vi.mock('@/features/case-resolver/settings', () => ({
 }));
 
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY: 'nodeFileSnapshotStorage',
   fetchCaseResolverNodeFileSnapshot: (...args: unknown[]) =>
     fetchCaseResolverNodeFileSnapshotMock(...args),
   persistCaseResolverNodeFileSnapshot: (...args: unknown[]) =>

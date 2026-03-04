@@ -168,7 +168,7 @@ describe('case resolver nodefile persistence', () => {
     });
   });
 
-  it('strips inline nodefile snapshots during workspace persist', async () => {
+  it('rejects inline nodefile snapshots during workspace persist', async () => {
     const inlineSnapshot = JSON.stringify({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
@@ -215,7 +215,10 @@ describe('case resolver nodefile persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/no longer supported/i);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 });

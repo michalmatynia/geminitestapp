@@ -259,7 +259,7 @@ export function useParameters(
     queryKey,
     queryFn: () =>
       api.post<{ parameters?: Array<{ id: string; name: string }> }>(
-        '/api/integrations/imports/base/parameters',
+        '/api/v2/integrations/imports/base/parameters',
         {
           inventoryId,
           productId,
@@ -285,7 +285,7 @@ export function useImportParameterCache(
     id: 'parameter-cache',
     queryKey,
     queryFn: () =>
-      api.get<ImportParameterCacheResponse>('/api/integrations/imports/base/parameters', {
+      api.get<ImportParameterCacheResponse>('/api/v2/integrations/imports/base/parameters', {
         cache: 'no-store',
       }),
     enabled,
@@ -321,7 +321,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
 
       const normalizedConnectionId = connectionId?.trim();
       return api.post<{ keys?: string[]; values?: Record<string, string> }>(
-        '/api/integrations/imports/base/parameters',
+        '/api/v2/integrations/imports/base/parameters',
         {
           inventoryId: normalizedInventoryId,
           sampleSize: 8,
@@ -430,7 +430,7 @@ export function useImportMutation(): MutationResult<
   > {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
-    mutationFn: (params) => api.post<ImportResponse>('/api/integrations/imports/base/runs', params),
+    mutationFn: (params) => api.post<ImportResponse>('/api/v2/integrations/imports/base/runs', params),
     mutationKey,
     meta: {
       source: 'importExport.hooks.useImportMutation',
@@ -449,7 +449,7 @@ export function useImportRuns(limit: number = 25): ListQuery<BaseImportRunRecord
     queryKey,
     queryFn: async (): Promise<BaseImportRunRecord[]> => {
       const data = await api.get<{ runs: BaseImportRunRecord[] }>(
-        `/api/integrations/imports/base/runs?limit=${encodeURIComponent(String(limit))}`,
+        `/api/v2/integrations/imports/base/runs?limit=${encodeURIComponent(String(limit))}`,
         { cache: 'no-store' }
       );
       return data.runs ?? [];
@@ -502,7 +502,7 @@ export function useImportRun(
         search.set('includeItems', String(options.includeItems));
       }
       const query = search.toString();
-      const endpoint = `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
+      const endpoint = `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
       return api.get<BaseImportRunDetailResponse>(endpoint, { cache: 'no-store' });
     },
     enabled: (options?.enabled ?? true) && !!runId,
@@ -528,7 +528,7 @@ export function useResumeImportRunMutation(
   return createMutationV2({
     mutationFn: (params) =>
       api.post<BaseImportStartResponse>(
-        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}/resume`,
+        `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}/resume`,
         params
       ),
     mutationKey,
@@ -550,7 +550,7 @@ export function useCancelImportRunMutation(
   return createMutationV2({
     mutationFn: () =>
       api.post<BaseImportStartResponse>(
-        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}/cancel`,
+        `/api/v2/integrations/imports/base/runs/${encodeURIComponent(runId)}/cancel`,
         {}
       ),
     mutationKey,
@@ -611,7 +611,7 @@ export function useSaveExportSettingsMutation(): MutationResult<
         }),
         ...(normalizedInventoryId
           ? [
-            api.post('/api/integrations/imports/base/export-warehouse', {
+            api.post('/api/v2/integrations/imports/base/export-warehouse', {
               warehouseId: normalizedWarehouseId,
               inventoryId: normalizedInventoryId,
             }),
@@ -677,11 +677,11 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
   return createDeleteMutationV2({
     mutationFn: async () => {
       await Promise.all([
-        api.post('/api/integrations/imports/base/sample-product', {
+        api.post('/api/v2/integrations/imports/base/sample-product', {
           inventoryId: '',
           saveOnly: true,
         }),
-        api.post('/api/integrations/imports/base/parameters', {
+        api.post('/api/v2/integrations/imports/base/parameters', {
           inventoryId: '',
           productId: '',
           clearOnly: true,

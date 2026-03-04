@@ -16,10 +16,7 @@ import {
   sanitizeOptionalId,
 } from './settings.helpers';
 import { createCaseResolverFile, normalizeCaseResolverRelatedFileLinks } from './settings.files';
-import {
-  sanitizeCaseResolverGraphNodeFileRelations,
-  sanitizeCaseResolverNodeFileAssetSnapshots,
-} from './nodefile-relations';
+import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
 import {
   buildCaseResolverFolderRecords,
   parseCaseResolverFolderRecords,
@@ -243,30 +240,11 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       Boolean(asset)
     );
 
-  const filesWithSanitizedGraph = normalizedFiles.map(
-    (file: CaseResolverFile): CaseResolverFile => {
-      const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
-        graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-        assets,
-        files: normalizedFiles,
-      });
-      if (sanitizedGraph === file.graph) return file;
-      return {
-        ...file,
-        graph: sanitizedGraph,
-      };
-    }
-  );
-  const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
-    assets,
-    files: filesWithSanitizedGraph,
-  });
-
-  const sanitizedFiles = filesWithSanitizedGraph.map((file: CaseResolverFile): CaseResolverFile => {
+  const sanitizedFiles = normalizedFiles.map((file: CaseResolverFile): CaseResolverFile => {
     const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
       graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-      assets: sanitizedAssets,
-      files: filesWithSanitizedGraph,
+      assets,
+      files: normalizedFiles,
     });
     if (sanitizedGraph === file.graph) return file;
     return {
@@ -288,19 +266,19 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
     files: normalizedFilesWithRelatedLinks,
-    assets: sanitizedAssets,
+    assets,
     validCaseIds,
   });
   const folders = normalizeFolderPaths([
     ...folderRecords.map((record: CaseResolverFolderRecord): string => record.path),
     ...normalizedFilesWithRelatedLinks.map((file: CaseResolverFile): string => file.folder),
-    ...sanitizedAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+    ...assets.map((asset: CaseResolverAssetFile): string => asset.folder),
   ]);
   const folderTimestamps = normalizeCaseResolverFolderTimestamps({
     source: workspaceRecord['folderTimestamps'],
     folders,
     files: normalizedFilesWithRelatedLinks,
-    assets: sanitizedAssets,
+    assets,
     fallbackTimestamp: now,
   });
   let relationGraph: ReturnType<typeof caseResolverRelationGraph.buildCaseResolverRelationGraph>;
@@ -309,14 +287,14 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       source: workspaceRecord['relationGraph'],
       folders,
       files: normalizedFilesWithRelatedLinks,
-      assets: sanitizedAssets,
+      assets,
     });
   } catch {
     relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
       source: null,
       folders,
       files: normalizedFilesWithRelatedLinks,
-      assets: sanitizedAssets,
+      assets,
     });
   }
 
@@ -352,7 +330,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
     folderRecords,
     folderTimestamps,
     files: normalizedFilesWithRelatedLinks,
-    assets: sanitizedAssets,
+    assets,
     relationGraph,
     activeFileId,
     createdAt: normalizeTimestamp(workspaceRecord['createdAt'], now),

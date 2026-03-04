@@ -11,7 +11,6 @@ import {
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
-import { CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY } from '../node-file-persistence';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 
 export function useAdminCaseResolverRelationActions({
@@ -103,9 +102,6 @@ export function useAdminCaseResolverRelationActions({
             kind: 'node_file',
             sourceFileId,
             textContent: '',
-            metadata: {
-              [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
-            },
             description: 'Auto-created from canvas document drop.',
           });
           nextAssets = [...nextAssets, createdAsset];

@@ -12,7 +12,6 @@ import {
   CASE_RESOLVER_WORKSPACE_HISTORY_KEY,
 } from '@/features/case-resolver/utils/workspace-settings-persistence-helpers';
 import {
-  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
   compactCaseResolverWorkspaceForPersist,
   computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceMetadata,
@@ -26,6 +25,8 @@ import {
   persistCaseResolverWorkspaceSnapshot,
   stampCaseResolverWorkspaceMutation,
 } from '@/features/case-resolver/workspace-persistence';
+
+const NODE_FILE_SNAPSHOT_STORAGE_KEY = 'nodeFileSnapshotStorage';
 
 const toJsonResponse = (status: number, body: unknown): Response =>
   new Response(JSON.stringify(body), {
@@ -278,7 +279,7 @@ describe('case-resolver workspace persistence', () => {
     expect(primaryWorkspaceBody.key).toBe(CASE_RESOLVER_WORKSPACE_KEY);
   });
 
-  it('strips deprecated inline node-file snapshots before persist', async () => {
+  it('rejects deprecated inline node-file snapshots before persist', async () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -301,8 +302,11 @@ describe('case-resolver workspace persistence', () => {
       source: 'test',
     });
 
-    expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toMatch(/no longer supported/i);
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -1228,7 +1232,7 @@ describe('case-resolver workspace persistence', () => {
       kind: 'node_file',
       textContent: '',
       metadata: {
-        [CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]: 'keyed',
+        [NODE_FILE_SNAPSHOT_STORAGE_KEY]: 'keyed',
       },
     });
     const workspace = {
@@ -1271,9 +1275,7 @@ describe('case-resolver workspace persistence', () => {
     expect(docHistory?.['documentContentHtml']).toBe('<p>History</p>');
 
     expect(compactedMigratedNodeAsset && 'textContent' in compactedMigratedNodeAsset).toBe(false);
-    expect(
-      compactedMigratedNodeAsset?.metadata?.[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]
-    ).toBe('keyed');
+    expect(compactedMigratedNodeAsset?.metadata?.[NODE_FILE_SNAPSHOT_STORAGE_KEY]).toBe('keyed');
   });
 
   it('caps persisted document history and strips verbose history metadata fields', () => {
@@ -1323,7 +1325,7 @@ describe('case-resolver workspace persistence', () => {
     expect(firstHistoryEntry && 'timestamp' in firstHistoryEntry).toBe(false);
   });
 
-  it('strips inline node-file snapshot text during workspace compaction', () => {
+  it('rejects inline node-file snapshot text during workspace compaction', () => {
     const workspace = {
       ...createDefaultCaseResolverWorkspace(),
       assets: [
@@ -1338,11 +1340,27 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
 
+    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrowError(
+      /no longer supported/i
+    );
+  });
+
+  it('drops empty node-file snapshot text field during workspace compaction', () => {
+    const workspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      assets: [
+        createCaseResolverAssetFile({
+          id: 'node-asset-empty',
+          name: 'Node File',
+          folder: '',
+          kind: 'node_file',
+          textContent: '',
+        }),
+      ],
+    };
+
     const compacted = compactCaseResolverWorkspaceForPersist(workspace);
     expect(compacted.assets[0] && 'textContent' in compacted.assets[0]).toBe(false);
-    expect(
-      compacted.assets[0]?.metadata?.[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY]
-    ).toBe('keyed');
   });
 
   it('rehydrates compacted scanfile payload as markdown-authoritative content', () => {

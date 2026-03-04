@@ -1650,7 +1650,7 @@ describe('case-resolver workspace', () => {
     ).toThrowError(/Legacy Case Resolver edge fields are no longer supported/i);
   });
 
-  it('strips inline node-file snapshots when loading the workspace', () => {
+  it('does not coerce inline node-file snapshots when loading the workspace', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1678,10 +1678,16 @@ describe('case-resolver workspace', () => {
             folder: '',
             parentCaseId: 'case-a',
             graph: {
-              nodes: [],
+              nodes: [createPromptNode('legacy-node')],
               edges: [],
               nodeMeta: {},
               edgeMeta: {},
+              documentSourceFileIdByNode: {
+                'legacy-node': 'doc-legacy',
+              },
+              nodeFileAssetIdByNode: {
+                'legacy-node': 'node-file-legacy',
+              },
             },
           },
         ],
@@ -1705,8 +1711,10 @@ describe('case-resolver workspace', () => {
         activeFileId: 'doc-legacy',
       })
     );
-    expect(workspace.assets[0]?.textContent ?? '').toBe('');
-    expect(workspace.assets[0]?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
+    expect(workspace.assets[0]?.textContent).toContain('case_resolver_node_file_snapshot_v1');
+    expect(workspace.assets[0]?.metadata?.nodeFileSnapshotStorage).toBeUndefined();
+    const legacyDocumentGraph = workspace.files.find((file) => file.id === 'doc-legacy')?.graph;
+    expect(legacyDocumentGraph?.nodeFileAssetIdByNode ?? {}).toEqual({});
   });
 
   it('drops legacy graph edges during workspace normalization', () => {

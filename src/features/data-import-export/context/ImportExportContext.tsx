@@ -196,18 +196,18 @@ export function ImportExportProvider({
   // Preferences
   const { data: lastImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
     'last-template',
-    '/api/integrations/imports/base/last-template'
+    '/api/v2/integrations/imports/base/last-template'
   );
   const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } =
     useImportPreference<{ templateId?: string | null }>(
       `active-template:${importTemplateScopeKey || 'none'}`,
       importTemplateScopeReady
         ? buildScopedTemplatePreferenceEndpoint(
-          '/api/integrations/imports/base/active-template',
+          '/api/v2/integrations/imports/base/active-template',
           normalizedSelectedBaseConnectionId,
           normalizedImportInventoryId
         )
-        : '/api/integrations/imports/base/active-template',
+        : '/api/v2/integrations/imports/base/active-template',
       { enabled: importTemplateScopeReady }
     );
   const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } =
@@ -242,7 +242,7 @@ export function ImportExportProvider({
   const { data: sampleProductPref } = useImportPreference<{
     productId?: string | null;
     inventoryId?: string | null;
-  }>('sample-product', '/api/integrations/imports/base/sample-product');
+  }>('sample-product', '/api/v2/integrations/imports/base/sample-product');
 
   useImportExportPreferences({
     lastImportTemplatePref,
@@ -408,7 +408,7 @@ export function ImportExportProvider({
     if (lastSavedImportTemplateId.current === normalized) return;
     lastSavedImportTemplateId.current = normalized;
     savePreferenceMutation.mutate({
-      endpoint: '/api/integrations/imports/base/last-template',
+      endpoint: '/api/v2/integrations/imports/base/last-template',
       data: normalized ? { templateId: normalized } : {},
     });
   }, [importTemplateId, lastImportTemplatePref?.templateId, savePreferenceMutation]);
@@ -428,7 +428,7 @@ export function ImportExportProvider({
     if (lastSavedImportActiveTemplateId.current === saveSignature) return;
     lastSavedImportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
-      endpoint: '/api/integrations/imports/base/active-template',
+      endpoint: '/api/v2/integrations/imports/base/active-template',
       data: {
         templateId: normalized,
         connectionId: normalizedSelectedBaseConnectionId,

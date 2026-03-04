@@ -5,6 +5,8 @@ Migrated:
 -Ai-Paths
 -Products
 -Runtime
+-validation patterns
+-prompt exploder
 
 
 *I cannot save cases

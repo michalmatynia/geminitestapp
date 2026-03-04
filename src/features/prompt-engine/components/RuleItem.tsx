@@ -26,14 +26,18 @@ type RuleItemProps = {
 };
 
 export function RuleItem(props: RuleItemProps): React.JSX.Element {
+  const { draft, collapsed, onCollapsedChange } = props;
+
   return (
-    <RuleItemProvider draft={props.draft}>
-      <RuleItemInner {...props} />
+    <RuleItemProvider draft={draft}>
+      <RuleItemInner draft={draft} collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
     </RuleItemProvider>
   );
 }
 
-function RuleItemInner({ collapsed, onCollapsedChange }: RuleItemProps): React.JSX.Element {
+function RuleItemInner(props: RuleItemProps): React.JSX.Element {
+  const { collapsed, onCollapsedChange } = props;
+
   const { draft, rule } = useRuleItemContext();
   const { isDragging, isDragTarget } = useRuleItemDragState(draft.uid);
   const { handleRuleTextChange } = usePromptEngine();

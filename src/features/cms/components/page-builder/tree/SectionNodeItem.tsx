@@ -23,13 +23,15 @@ import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { TreeSectionPicker } from './TreeSectionPicker';
 import type { SectionNodeItemProps } from './tree-types';
 
-export function SectionNodeItem({
-  section,
-  sectionIndex,
-  hasTreeChildren = false,
-  isTreeExpanded = false,
-  toggleTreeExpand,
-}: SectionNodeItemProps): React.JSX.Element {
+export function SectionNodeItem(props: SectionNodeItemProps): React.JSX.Element {
+  const {
+    section,
+    sectionIndex,
+    hasTreeChildren = false,
+    isTreeExpanded = false,
+    toggleTreeExpand,
+  } = props;
+
   const {
     startSectionMasterDrag,
     endSectionMasterDrag,

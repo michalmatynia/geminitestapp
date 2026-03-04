@@ -34,15 +34,13 @@ import { BackgroundField } from './settings/fields/composite/BackgroundField';
 import { TypographyField } from './settings/fields/composite/TypographyField';
 import { LinkField } from './settings/fields/LinkField';
 
-function CompositeFieldProvider({
-  value,
-  onChange,
-  children,
-}: {
+function CompositeFieldProvider(props: {
   value: unknown;
   onChange: (value: unknown) => void;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const { value, onChange, children } = props;
+
   const contextValue = useMemo(
     (): CompositeFieldContextValue => ({ value, onChange }),
     [onChange, value]
@@ -53,15 +51,13 @@ function CompositeFieldProvider({
   );
 }
 
-export function SettingsFieldRenderer({
-  field,
-  value: propValue,
-  onChange: propOnChange,
-}: {
+export function SettingsFieldRenderer(props: {
   field: SettingsField;
   value?: unknown;
   onChange?: (key: string, value: unknown) => void;
 }): React.ReactNode {
+  const { field, value: propValue, onChange: propOnChange } = props;
+
   const context = useOptionalSettingsForm();
 
   const value = propValue !== undefined ? propValue : context?.values[field.key];

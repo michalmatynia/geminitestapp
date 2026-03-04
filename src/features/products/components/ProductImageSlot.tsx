@@ -22,7 +22,9 @@ interface ProductImageSlotProps {
   index: number;
 }
 
-export function ProductImageSlot({ index }: ProductImageSlotProps) {
+export function ProductImageSlot(props: ProductImageSlotProps) {
+  const { index } = props;
+
   const {
     slotViewModes,
     base64LoadingSlots,

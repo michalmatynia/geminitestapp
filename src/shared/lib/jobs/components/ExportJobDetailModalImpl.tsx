@@ -14,11 +14,11 @@ export interface ExportJobDetailItem {
 
 export interface ExportJobDetailModalProps extends EntityModalProps<ExportJobDetailItem, never> {}
 
-export function ExportJobDetailModal({
-  isOpen,
-  onClose,
-  item: selectedListing,
-}: ExportJobDetailModalProps): React.JSX.Element | null {
+export function ExportJobDetailModal(
+  props: ExportJobDetailModalProps
+): React.JSX.Element | null {
+  const { isOpen, onClose, item: selectedListing } = props;
+
   if (!isOpen || !selectedListing) return null;
 
   const listing = selectedListing.listing;

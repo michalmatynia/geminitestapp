@@ -14,12 +14,24 @@ type CatalogMultiSelectFieldProps = {
 };
 
 export function CatalogMultiSelectField(props: CatalogMultiSelectFieldProps): React.JSX.Element {
+  const {
+    catalogs,
+    selectedCatalogIds,
+    onChange,
+    loading,
+    disabled,
+    emptyMessage,
+  } = props;
+
   return (
     <ProductMetadataMultiSelectField
-      {...props}
       label='Catalogs'
-      items={props.catalogs}
-      selectedIds={props.selectedCatalogIds}
+      items={catalogs}
+      selectedIds={selectedCatalogIds}
+      onChange={onChange}
+      loading={loading}
+      disabled={disabled}
+      emptyMessage={emptyMessage}
       contextItemsKey='catalogs'
       contextSelectedKey='selectedCatalogIds'
       contextLoadingKey='catalogsLoading'

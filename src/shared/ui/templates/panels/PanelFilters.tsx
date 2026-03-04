@@ -87,20 +87,22 @@ export const PanelFiltersSearchPlaceholderRuntimeContext = React.createContext<
  * PanelFilters - Renders dynamic filter controls based on FilterField configuration
  * Supports: text input, select dropdown, date input, checkbox, number input
  */
-export const PanelFilters: React.FC<PanelFiltersProps> = ({
-  filters,
-  values,
-  search: externalSearch = '',
-  searchPlaceholder,
-  onFilterChange,
-  onSearchChange,
-  onReset,
-  compact = false,
-  collapsible = false,
-  defaultExpanded,
-  actions,
-  className,
-}) => {
+export const PanelFilters: React.FC<PanelFiltersProps> = (props: PanelFiltersProps) => {
+  const {
+    filters,
+    values,
+    search: externalSearch = '',
+    searchPlaceholder,
+    onFilterChange,
+    onSearchChange,
+    onReset,
+    compact = false,
+    collapsible = false,
+    defaultExpanded,
+    actions,
+    className,
+  } = props;
+
   const runtimeSearchPlaceholder = React.useContext(PanelFiltersSearchPlaceholderRuntimeContext);
   const effectiveSearchPlaceholder = runtimeSearchPlaceholder ?? searchPlaceholder ?? 'Search...';
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
@@ -231,7 +233,11 @@ interface PanelFilterControlProps {
 /**
  * PanelFilterControl - Renders individual filter input based on field type
  */
-const PanelFilterControl: React.FC<PanelFilterControlProps> = ({ field }) => {
+const PanelFilterControl: React.FC<PanelFilterControlProps> = (
+  props: PanelFilterControlProps
+) => {
+  const { field } = props;
+
   const runtime = usePanelFiltersRuntime();
   const value = runtime.values[field.key];
   const onChange = useCallback(

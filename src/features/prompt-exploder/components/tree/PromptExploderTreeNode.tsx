@@ -36,18 +36,20 @@ const resolveNodeIcon = (kind: PromptExploderTreeNodeKind | null) => {
   }
 };
 
-export function PromptExploderTreeNode({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isMultiSelected,
-  isDragging,
-  dropPosition,
-  select,
-  toggleExpand,
-}: PromptExploderTreeNodeProps): React.JSX.Element {
+export function PromptExploderTreeNode(props: PromptExploderTreeNodeProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isMultiSelected,
+    isDragging,
+    dropPosition,
+    select,
+    toggleExpand,
+  } = props;
+
   const { armDragHandle, releaseDragHandle } = usePromptExploderTreeNodeRuntimeContext();
   const metadata = readPromptExploderTreeMetadata(node);
   const Icon = resolveNodeIcon(metadata?.kind ?? null);

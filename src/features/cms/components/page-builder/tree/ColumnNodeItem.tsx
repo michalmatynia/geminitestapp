@@ -28,11 +28,9 @@ import { useTreeSectionId } from './TreeSectionContext';
 import type { ColumnNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function ColumnNodeItem({
-  column,
-  columnIndex,
-  rowColumnCount,
-}: ColumnNodeItemProps): React.ReactNode {
+export function ColumnNodeItem(props: ColumnNodeItemProps): React.ReactNode {
+  const { column, columnIndex, rowColumnCount } = props;
+
   const sectionId = useTreeSectionId();
   const rowId = useOptionalTreeRowId();
   const { state: pbState } = usePageBuilder();

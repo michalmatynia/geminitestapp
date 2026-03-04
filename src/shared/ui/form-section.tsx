@@ -21,18 +21,20 @@ interface FormSectionProps {
   id?: string | undefined;
 }
 
-export function FormSection({
-  title,
-  subtitle,
-  titleIcon,
-  description,
-  actions,
-  children,
-  className,
-  gridClassName,
-  variant = 'subtle',
-  id,
-}: FormSectionProps): React.JSX.Element {
+export function FormSection(props: FormSectionProps): React.JSX.Element {
+  const {
+    title,
+    subtitle,
+    titleIcon,
+    description,
+    actions,
+    children,
+    className,
+    gridClassName,
+    variant = 'subtle',
+    id,
+  } = props;
+
   const cardVariant =
     variant === 'glass' ? 'glass' : variant?.startsWith('subtle') ? 'subtle' : 'default';
   const cardPadding = variant?.endsWith('compact') ? 'sm' : 'default';
@@ -82,16 +84,9 @@ interface FormFieldProps {
   id?: string | undefined;
 }
 
-export function FormField({
-  label,
-  description,
-  actions,
-  children,
-  error,
-  required,
-  className,
-  id,
-}: FormFieldProps): React.JSX.Element {
+export function FormField(props: FormFieldProps): React.JSX.Element {
+  const { label, description, actions, children, error, required, className, id } = props;
+
   const generatedId = useId().replace(/:/g, '');
   const fieldId = id ?? (label ? `form-field-${generatedId}` : undefined);
 

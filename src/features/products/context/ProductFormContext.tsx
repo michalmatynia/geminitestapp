@@ -224,7 +224,9 @@ export const useProductFormContext = (): ProductFormContextType => {
   );
 };
 
-function ProductFormSubmitController({ children }: { children: React.ReactNode }) {
+function ProductFormSubmitController(props: { children: React.ReactNode }) {
+  const { children } = props;
+
   const { onSuccess, onEditSave, nonFormDirtyTrackingLockedRef, requireHydratedEditProduct } =
     useProductFormProviderConfigContext();
   const {
@@ -357,13 +359,12 @@ function ProductFormSubmitController({ children }: { children: React.ReactNode }
 // Internal provider to pass markNonFormInteraction to sub-providers
 const ProductFormInteractionContext = createContext<(() => void) | null>(null);
 
-function ProductFormInteractionProvider({
-  onInteraction,
-  children,
-}: {
+function ProductFormInteractionProvider(props: {
   onInteraction: () => void;
   children: React.ReactNode;
 }) {
+  const { onInteraction, children } = props;
+
   return (
     <ProductFormInteractionContext.Provider value={onInteraction}>
       {children}
@@ -375,17 +376,7 @@ function useProductFormInteraction() {
   return useContext(ProductFormInteractionContext);
 }
 
-export function ProductFormProvider({
-  children,
-  product,
-  draft,
-  onSuccess,
-  onEditSave,
-  requireSku = true,
-  requireHydratedEditProduct = false,
-  initialSku,
-  initialCatalogId,
-}: {
+export function ProductFormProvider(props: {
   children: React.ReactNode;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
@@ -396,6 +387,18 @@ export function ProductFormProvider({
   initialSku?: string;
   initialCatalogId?: string;
 }): React.ReactNode {
+  const {
+    children,
+    product,
+    draft,
+    onSuccess,
+    onEditSave,
+    requireSku = true,
+    requireHydratedEditProduct = false,
+    initialSku,
+    initialCatalogId,
+  } = props;
+
   const runtime = useContext(ProductFormProviderRuntimeContext);
   const resolvedProduct = product ?? runtime?.product;
   const resolvedDraft = draft ?? runtime?.draft;
@@ -434,7 +437,9 @@ export function ProductFormProvider({
   );
 }
 
-function ProductFormSubProviders({ children }: { children: React.ReactNode }) {
+function ProductFormSubProviders(props: { children: React.ReactNode }) {
+  const { children } = props;
+
   const { product, requireHydratedEditProduct, nonFormDirtyTrackingLockedRef } =
     useProductFormProviderConfigContext();
   const markNonFormInteraction = (): void => {
@@ -461,7 +466,9 @@ function ProductFormSubProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProductFormSubProvidersInner({ children }: { children: React.ReactNode }) {
+function ProductFormSubProvidersInner(props: { children: React.ReactNode }) {
+  const { children } = props;
+
   const { product, draft, initialCatalogId } = useProductFormProviderConfigContext();
   const onInteraction = useProductFormInteraction() || (() => {});
   const { uploading, uploadError, uploadSuccess } = useProductFormCore();
@@ -491,13 +498,12 @@ function ProductFormSubProvidersInner({ children }: { children: React.ReactNode 
   );
 }
 
-function ProductFormParameterProviderWrapper({
-  children,
-  onInteraction,
-}: {
+function ProductFormParameterProviderWrapper(props: {
   children: React.ReactNode;
   onInteraction: () => void;
 }) {
+  const { children, onInteraction } = props;
+
   const { product, draft } = useProductFormProviderConfigContext();
   const { selectedCatalogIds } = useProductFormMetadata();
   return (

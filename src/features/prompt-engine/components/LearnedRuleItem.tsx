@@ -32,7 +32,9 @@ type LearnedRuleItemProps = {
   draft: RuleDraft;
 };
 
-export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Element {
+export function LearnedRuleItem(props: LearnedRuleItemProps): React.JSX.Element {
+  const { draft } = props;
+
   const { handleLearnedRuleTextChange, handleRemoveLearnedRule } = usePromptEngine();
   const rule = draft.parsed;
 

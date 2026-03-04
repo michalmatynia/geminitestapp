@@ -17,15 +17,17 @@ type DocumentationTooltipProps = {
   wrapperClassName?: string;
 };
 
-export function DocumentationTooltip({
-  children,
-  docId,
-  enabled,
-  moduleId,
-  maxWidth = '400px',
-  side = 'top',
-  wrapperClassName = 'inline-flex',
-}: DocumentationTooltipProps): React.JSX.Element {
+export function DocumentationTooltip(props: DocumentationTooltipProps): React.JSX.Element {
+  const {
+    children,
+    docId,
+    enabled,
+    moduleId,
+    maxWidth = '400px',
+    side = 'top',
+    wrapperClassName = 'inline-flex',
+  } = props;
+
   if (!enabled) {
     return <>{children}</>;
   }

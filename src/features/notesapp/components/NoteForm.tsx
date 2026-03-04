@@ -125,13 +125,13 @@ function NoteFormInner(): React.JSX.Element {
   );
 }
 
-export function NoteForm({
-  note,
-  onSuccess,
-  formRef,
-}: NoteFormProps & {
-  formRef?: React.RefObject<HTMLFormElement | null> | undefined;
-}): React.JSX.Element {
+export function NoteForm(
+  props: NoteFormProps & {
+    formRef?: React.RefObject<HTMLFormElement | null> | undefined;
+  }
+): React.JSX.Element {
+  const { note, onSuccess, formRef } = props;
+
   const viewContextValue = React.useMemo(
     () => ({
       formRef: formRef ?? undefined,

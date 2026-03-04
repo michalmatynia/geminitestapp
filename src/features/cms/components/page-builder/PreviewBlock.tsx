@@ -113,7 +113,9 @@ interface PreviewSectionProps {
   section: SectionInstance;
 }
 
-export function PreviewSection({ section }: PreviewSectionProps): React.ReactNode {
+export function PreviewSection(props: PreviewSectionProps): React.ReactNode {
+  const { section } = props;
+
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
   const {
@@ -472,7 +474,9 @@ export function PreviewSection({ section }: PreviewSectionProps): React.ReactNod
 // Block preview item
 // ---------------------------------------------------------------------------
 
-function PreviewBlockItem({ block }: PreviewBlockItemProps): React.ReactNode {
+function PreviewBlockItem(props: PreviewBlockItemProps): React.ReactNode {
+  const { block } = props;
+
   const {
     selectedNodeId,
     isInspecting = false,

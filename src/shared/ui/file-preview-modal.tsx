@@ -23,7 +23,9 @@ interface FilePreviewModalProps {
   children?: React.ReactNode;
 }
 
-export default function FilePreviewModal({ file, onClose, children }: FilePreviewModalProps) {
+export default function FilePreviewModal(props: FilePreviewModalProps) {
+  const { file, onClose, children } = props;
+
   return (
     <AppModal open={true} onClose={onClose} title={file.filename} size='lg'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>

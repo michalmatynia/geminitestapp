@@ -7,11 +7,9 @@ import { FormModal } from '@/shared/ui';
 
 import { NoteForm } from './NoteForm';
 
-export function CreateNoteModal({
-  isOpen,
-  onClose,
-  onSuccess,
-}: EntityModalProps<NoteRecord>): React.JSX.Element | null {
+export function CreateNoteModal(props: EntityModalProps<NoteRecord>): React.JSX.Element | null {
+  const { isOpen, onClose, onSuccess } = props;
+
   const formRef = useRef<HTMLFormElement>(null);
 
   if (!isOpen) return null;

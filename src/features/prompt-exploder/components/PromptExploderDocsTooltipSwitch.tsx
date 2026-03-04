@@ -21,13 +21,12 @@ const {
 
 export { PromptExploderDocsTooltipSwitchRuntimeContext };
 
-export function PromptExploderDocsTooltipSwitch({
-  docsTooltipsEnabled,
-  onDocsTooltipsChange,
-}: {
+export function PromptExploderDocsTooltipSwitch(props: {
   docsTooltipsEnabled: boolean;
   onDocsTooltipsChange: (enabled: boolean) => void;
 }): React.JSX.Element {
+  const { docsTooltipsEnabled, onDocsTooltipsChange } = props;
+
   return (
     <ToggleRow
       id='prompt-exploder-docs-tooltips-toggle'

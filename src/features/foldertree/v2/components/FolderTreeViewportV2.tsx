@@ -111,27 +111,29 @@ export type FolderTreeViewportV2Props = {
 const defaultRootDropIdleClassName = 'border-border/45 bg-card/25 text-gray-400';
 const defaultRootDropActiveClassName = 'border-sky-200/55 bg-sky-500/12 text-sky-100';
 
-export function FolderTreeViewportV2({
-  controller,
-  enableDnd = true,
-  className,
-  emptyLabel = 'No items',
-  renderToolbar,
-  renderNode,
-  resolveDraggedNodeId,
-  canDrop,
-  onNodeDrop,
-  resolveDropPosition,
-  onNodeDragStart,
-  canStartDrag,
-  rootDropUi,
-  contextMenuItems,
-  estimateRowHeight,
-  autoExpandOnHoverMs = 600,
-  multiSelectConfig,
-  searchState,
-  scrollToNodeRef,
-}: FolderTreeViewportV2Props): React.JSX.Element {
+export function FolderTreeViewportV2(props: FolderTreeViewportV2Props): React.JSX.Element {
+  const {
+    controller,
+    enableDnd = true,
+    className,
+    emptyLabel = 'No items',
+    renderToolbar,
+    renderNode,
+    resolveDraggedNodeId,
+    canDrop,
+    onNodeDrop,
+    resolveDropPosition,
+    onNodeDragStart,
+    canStartDrag,
+    rootDropUi,
+    contextMenuItems,
+    estimateRowHeight,
+    autoExpandOnHoverMs = 600,
+    multiSelectConfig,
+    searchState,
+    scrollToNodeRef,
+  } = props;
+
   const runtime = useMasterFolderTreeRuntime();
   const resolvedMultiSelectConfig = useMemo<ResolvedFolderTreeMultiSelectConfig>(
     () => ({

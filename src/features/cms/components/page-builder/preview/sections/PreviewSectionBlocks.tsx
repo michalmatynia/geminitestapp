@@ -19,13 +19,15 @@ interface PreviewSectionBlocksProps {
   className?: string;
 }
 
-export function PreviewSectionBlocks({
-  blocks,
-  PreviewBlockItem,
-  showEmptyState = true,
-  emptyState,
-  className,
-}: PreviewSectionBlocksProps): React.JSX.Element {
+export function PreviewSectionBlocks(props: PreviewSectionBlocksProps): React.JSX.Element {
+  const {
+    blocks,
+    PreviewBlockItem,
+    showEmptyState = true,
+    emptyState,
+    className,
+  } = props;
+
   return (
     <div className={cn('space-y-4', className)}>
       {blocks.length > 0 ? (

@@ -5,13 +5,12 @@ import React from 'react';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { DocumentationTooltipEnhancer } from '@/features/tooltip-engine';
 
-export function DocsTooltipEnhancer({
-  rootId,
-  enabled,
-}: {
+export function DocsTooltipEnhancer(props: {
   rootId: string;
   enabled: boolean;
 }): React.JSX.Element {
+  const { rootId, enabled } = props;
+
   return (
     <DocumentationTooltipEnhancer
       rootId={rootId}

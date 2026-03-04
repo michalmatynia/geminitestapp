@@ -27,7 +27,9 @@ import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/pag
 import type { RowNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function RowNodeItem({ row, rowIndex, rowCount }: RowNodeItemProps): React.ReactNode {
+export function RowNodeItem(props: RowNodeItemProps): React.ReactNode {
+  const { row, rowIndex, rowCount } = props;
+
   const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
   const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions, gridActions } =

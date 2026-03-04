@@ -30,19 +30,21 @@ interface JobTableProps {
   footer?: React.ReactNode;
 }
 
-export function JobTable({
-  data,
-  isLoading,
-  onViewDetails: onViewDetailsProp,
-  onCancel: onCancelProp,
-  onDelete,
-  isCancelling: isCancellingProp,
-  isDeleting,
-  header,
-  alerts,
-  filters,
-  footer,
-}: JobTableProps): React.JSX.Element {
+export function JobTable(props: JobTableProps): React.JSX.Element {
+  const {
+    data,
+    isLoading,
+    onViewDetails: onViewDetailsProp,
+    onCancel: onCancelProp,
+    onDelete,
+    isCancelling: isCancellingProp,
+    isDeleting,
+    header,
+    alerts,
+    filters,
+    footer,
+  } = props;
+
   const { setSelectedListing, listingJobs, confirmCancelListing, isCancellingListing } =
     useJobsContext();
 

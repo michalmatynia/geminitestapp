@@ -16,29 +16,29 @@ type CategorySingleSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function CategorySingleSelectField({
-  onChange,
-  ...props
-}: CategorySingleSelectFieldProps): React.JSX.Element {
+export function CategorySingleSelectField(props: CategorySingleSelectFieldProps): React.JSX.Element {
+  const { categories, selectedCategoryId, onChange, loading, disabled, placeholder } = props;
+
   const selectedIds =
-    props.selectedCategoryId === undefined
+    selectedCategoryId === undefined
       ? undefined
-      : props.selectedCategoryId
-        ? [props.selectedCategoryId]
+      : selectedCategoryId
+        ? [selectedCategoryId]
         : [];
 
   return (
     <ProductMetadataMultiSelectField
-      {...props}
       label='Categories'
-      items={props.categories}
+      items={categories}
       selectedIds={selectedIds}
       onChange={onChange ? (ids) => onChange(ids[0] || null) : undefined}
       contextItemsKey='categories'
       contextSelectedKey='selectedCategoryId'
       contextLoadingKey='categoriesLoading'
       contextOnChangeKey='onCategoryChange'
-      placeholder={props.placeholder || 'Select category'}
+      loading={loading}
+      disabled={disabled}
+      placeholder={placeholder || 'Select category'}
       searchPlaceholder='Search categories...'
       single
     />

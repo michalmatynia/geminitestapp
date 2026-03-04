@@ -3,7 +3,9 @@ import React from 'react';
 import type { AiInsightRecord } from '@/shared/contracts';
 import { StatusBadge, ResourceCard, DocumentationList } from '@/shared/ui';
 
-export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
+export function InsightCard(props: { insight: AiInsightRecord }): React.JSX.Element {
+  const { insight } = props;
+
   const warnings = insight.warnings ?? [];
   const recommendations = insight.recommendations ?? [];
 

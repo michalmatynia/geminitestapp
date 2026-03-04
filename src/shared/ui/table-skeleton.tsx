@@ -9,12 +9,9 @@ interface TableSkeletonProps {
   rowClassName?: string;
 }
 
-export function TableSkeleton({
-  rows = 5,
-  columns,
-  cellClassName,
-  rowClassName,
-}: TableSkeletonProps): React.JSX.Element {
+export function TableSkeleton(props: TableSkeletonProps): React.JSX.Element {
+  const { rows = 5, columns, cellClassName, rowClassName } = props;
+
   return (
     <>
       {Array.from({ length: rows }).map((_, rowIndex) => (

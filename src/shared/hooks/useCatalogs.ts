@@ -14,7 +14,7 @@ interface CatalogOption {
 export function useCatalogs(): ListQuery<CatalogOption, CatalogOption[]> {
   return createListQueryV2<CatalogOption, CatalogOption[]>({
     queryKey: QUERY_KEYS.products.metadata.catalogs(),
-    queryFn: async () => await api.get<CatalogOption[]>('/api/catalogs'),
+    queryFn: async () => await api.get<CatalogOption[]>('/api/v2/products/entities/catalogs'),
     staleTime: 0,
     meta: {
       source: 'shared.hooks.useCatalogs',

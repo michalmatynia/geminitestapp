@@ -198,8 +198,6 @@ export function useAiPathsSettingsState({
     fitToNodes,
     resetView,
   } = useAiPathsCanvasInteractions({
-    selectedNodeId,
-    setSelectedNodeId,
     isPathSwitching,
     confirmNodeSwitch: (nextNodeId) => confirmNodeSwitch(nextNodeId),
     confirm,
@@ -247,7 +245,6 @@ export function useAiPathsSettingsState({
     isPathLocked,
     setNodes,
     setEdges,
-    setSelectedNodeId,
     ensureNodeVisible,
     getCanvasCenterPosition,
     toast,

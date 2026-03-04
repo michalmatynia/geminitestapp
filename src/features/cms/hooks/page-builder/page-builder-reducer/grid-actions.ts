@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   createColumnBlock,
   createRowBlock,
@@ -24,10 +18,10 @@ export function reduceGridActions(
   switch (action.type) {
     case 'SET_GRID_COLUMNS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId || s.type !== 'Grid') return s;
+        if (s.id !== action.sectionId || s.type !== 'Grid') return s;
         const normalized = ensureGridRows(s);
         const { rows, extras } = splitGridBlocks(normalized.blocks);
-        const targetCols = Math.max(1, (action as any).columnCount);
+        const targetCols = Math.max(1, action.columnCount);
         const nextRows = rows.map((row: BlockInstance) => {
           const cols = (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column');
           if (cols.length < targetCols) {
@@ -49,7 +43,7 @@ export function reduceGridActions(
 
     case 'SET_GRID_ROWS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId || s.type !== 'Grid') return s;
+        if (s.id !== action.sectionId || s.type !== 'Grid') return s;
         const normalized = ensureGridRows(s);
         const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =
@@ -58,7 +52,7 @@ export function reduceGridActions(
             1,
             (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
           );
-        const targetRows = Math.max(1, (action as any).rowCount);
+        const targetRows = Math.max(1, action.rowCount);
         if (rows.length < targetRows) {
           const newRows = Array.from({ length: targetRows - rows.length }, () =>
             createRowBlock(columnsPerRow)
@@ -81,7 +75,7 @@ export function reduceGridActions(
 
     case 'ADD_GRID_ROW': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId || s.type !== 'Grid') return s;
+        if (s.id !== action.sectionId || s.type !== 'Grid') return s;
         const normalized = ensureGridRows(s);
         const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =

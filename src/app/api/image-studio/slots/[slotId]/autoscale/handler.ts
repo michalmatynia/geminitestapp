@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
   imageStudioAutoScalerRequestSchema,
+  normalizeImageStudioAutoScalerMode,
   type ImageStudioAutoScalerRequest,
 } from '@/features/ai/image-studio/contracts/autoscaler';
 import {
@@ -133,7 +134,12 @@ export async function postAutoScaleSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: (existingAutoScale.effectiveMode as unknown) ?? payload.mode,
+            effectiveMode:
+              normalizeImageStudioAutoScalerMode(
+                typeof existingAutoScale.effectiveMode === 'string'
+                  ? existingAutoScale.effectiveMode
+                  : null
+              ) ?? payload.mode,
             sourceObjectBounds: existingAutoScale.sourceObjectBounds,
             targetObjectBounds: existingAutoScale.targetObjectBounds,
             layout: existingAutoScale.layout,
@@ -179,7 +185,12 @@ export async function postAutoScaleSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: (existingAutoScale.effectiveMode as unknown) ?? payload.mode,
+            effectiveMode:
+              normalizeImageStudioAutoScalerMode(
+                typeof existingAutoScale.effectiveMode === 'string'
+                  ? existingAutoScale.effectiveMode
+                  : null
+              ) ?? payload.mode,
             sourceObjectBounds: existingAutoScale.sourceObjectBounds,
             targetObjectBounds: existingAutoScale.targetObjectBounds,
             layout: existingAutoScale.layout,

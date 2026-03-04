@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
-import type { PageComponent } from '@/shared/contracts/cms';
+import type { PageComponentInput } from '@/shared/contracts/cms';
 
 vi.mock('@/features/cms/components/shared/EventEffectsWrapper', () => ({
   EventEffectsWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -25,12 +25,8 @@ vi.mock('@/features/cms/components/frontend/sections/FrontendTextElementSection'
   FrontendTextElementSection: () => <div data-testid='section-text'>Text</div>,
 }));
 
-const createComponent = (overrides: Partial<PageComponent>): PageComponent =>
+const createComponent = (overrides: Partial<PageComponentInput>): PageComponentInput =>
   ({
-    id: `component-${overrides.order ?? 0}`,
-    createdAt: '',
-    updatedAt: '',
-    pageId: 'page-1',
     type: 'Hero',
     order: 0,
     content: {
@@ -41,11 +37,11 @@ const createComponent = (overrides: Partial<PageComponent>): PageComponent =>
       parentSectionId: null,
     },
     ...overrides,
-  }) as PageComponent;
+  }) as PageComponentInput;
 
 describe('CmsPageRenderer nested sections', () => {
   it('renders nested child sections inside a subtle wrapper', () => {
-    const components: PageComponent[] = [
+    const components: PageComponentInput[] = [
       createComponent({
         type: 'Hero',
         order: 0,
@@ -81,7 +77,7 @@ describe('CmsPageRenderer nested sections', () => {
   });
 
   it('suppresses an entire subtree when the parent section is hidden', () => {
-    const components: PageComponent[] = [
+    const components: PageComponentInput[] = [
       createComponent({
         type: 'Hero',
         order: 0,

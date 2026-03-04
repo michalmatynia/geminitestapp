@@ -163,20 +163,25 @@ vi.mock('@/features/cms/components/page-builder/tree/SectionPicker', () => ({
 type DataTransferStub = {
   store: Map<string, string>;
   effectAllowed?: DataTransfer['effectAllowed'];
+  types: readonly string[];
   setData: (key: string, value: string) => void;
   getData: (key: string) => string;
 };
 
-const createDataTransferStub = (): DataTransferStub => {
+const createDataTransferStub = (): DataTransfer => {
   const store = new Map<string, string>();
-  return {
+  const stub: DataTransferStub = {
     store,
     effectAllowed: 'none',
+    get types() {
+      return Array.from(store.keys());
+    },
     setData: (key: string, value: string): void => {
       store.set(key, value);
     },
     getData: (key: string): string => store.get(key) ?? '',
   };
+  return stub as DataTransfer;
 };
 
 const createSection = (overrides: Partial<SectionInstance> = {}): SectionInstance =>
@@ -244,7 +249,7 @@ describe('SectionNodeItem tree behavior', () => {
     render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
 
     const dataTransfer = createDataTransferStub();
-    setSectionDragData(dataTransfer as unknown as DataTransfer, {
+    setSectionDragData(dataTransfer, {
       id: 'source-section',
       type: 'Hero',
       zone: 'template',
@@ -280,7 +285,7 @@ describe('SectionNodeItem tree behavior', () => {
     const { container } = render(<SectionNodeItem section={targetSection} sectionIndex={0} />);
 
     const dataTransfer = createDataTransferStub();
-    setSectionDragData(dataTransfer as unknown as DataTransfer, {
+    setSectionDragData(dataTransfer, {
       id: 'source-section',
       type: 'Hero',
       zone: 'template',

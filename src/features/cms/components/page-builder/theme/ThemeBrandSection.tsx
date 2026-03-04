@@ -8,16 +8,47 @@ import { MiniRichTextEditor } from './MiniRichTextEditor';
 import { ImagePickerField } from '../shared-fields';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 
+type BrandIdentitySettings = Pick<
+  ThemeSettings,
+  'brandName' | 'brandTagline' | 'brandEmail' | 'brandPhone' | 'brandAddress'
+>;
+
+type BrandImageSettings = Pick<ThemeSettings, 'brandFooterImageWidth'>;
+
 export function ThemeBrandSection(): React.JSX.Element {
   const { theme, update } = useThemeSettings();
 
-  const updateSetting = (key: keyof ThemeSettings) => (value: unknown) => {
-    update(key, value as ThemeSettings[keyof ThemeSettings]);
+  const applyThemePatch = <K extends keyof ThemeSettings>(
+    values: Partial<Pick<ThemeSettings, K>>
+  ): void => {
+    (Object.entries(values) as Array<[K, ThemeSettings[K] | undefined]>).forEach(
+      ([key, value]) => {
+        if (value !== undefined) {
+          update(key, value);
+        }
+      }
+    );
+  };
+
+  const updateStringSetting =
+    <
+      K extends {
+        [P in keyof ThemeSettings]-?: ThemeSettings[P] extends string ? P : never;
+      }[keyof ThemeSettings],
+    >(
+      key: K
+    ) =>
+    (value: string): void => {
+      update(key, value);
+    };
+
+  const handleBrandImageWidthChange = (values: Partial<BrandImageSettings>): void => {
+    applyThemePatch(values);
   };
 
   return (
     <div className='space-y-4'>
-      <SettingsFieldsRenderer
+      <SettingsFieldsRenderer<BrandIdentitySettings>
         fields={[
           {
             key: 'brandName',
@@ -51,14 +82,7 @@ export function ThemeBrandSection(): React.JSX.Element {
           },
         ]}
         values={theme}
-        onChange={(values) => {
-          Object.entries(values).forEach(([key, value]) => {
-            update(
-              key as keyof ThemeSettings,
-              value as unknown as ThemeSettings[keyof ThemeSettings]
-            );
-          });
-        }}
+        onChange={applyThemePatch}
       />
       <div className='border-t border-border/30 pt-2'>
         <Hint size='xxs' uppercase className='mb-2 block text-gray-500'>
@@ -68,23 +92,23 @@ export function ThemeBrandSection(): React.JSX.Element {
           <MiniRichTextEditor
             label='Headline'
             value={theme.brandFooterHeadline}
-            onChange={updateSetting('brandFooterHeadline')}
+            onChange={updateStringSetting('brandFooterHeadline')}
             minHeight='70px'
           />
           <MiniRichTextEditor
             label='Description'
             value={theme.brandFooterDescription}
-            onChange={updateSetting('brandFooterDescription')}
+            onChange={updateStringSetting('brandFooterDescription')}
             minHeight='140px'
             showFormatSelect
             enableLists
-          />{' '}
+          />
           <ImagePickerField
             label='Image'
             value={theme.brandFooterImage}
-            onChange={updateSetting('brandFooterImage')}
+            onChange={updateStringSetting('brandFooterImage')}
           />
-          <SettingsFieldsRenderer
+          <SettingsFieldsRenderer<BrandImageSettings>
             fields={[
               {
                 key: 'brandFooterImageWidth',
@@ -96,9 +120,7 @@ export function ThemeBrandSection(): React.JSX.Element {
               },
             ]}
             values={theme}
-            onChange={(values) =>
-              update('brandFooterImageWidth', values.brandFooterImageWidth as number)
-            }
+            onChange={handleBrandImageWidthChange}
           />
         </div>
       </div>

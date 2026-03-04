@@ -258,8 +258,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     renderHook(() =>
       useAiPathsCanvasInteractions({
         isPathLocked: false,
-        selectedNodeId: 'node-a',
-        setSelectedNodeId: vi.fn(),
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: clearRuntimeInputsForEdgesMock,
@@ -333,8 +331,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     renderHook(() =>
       useAiPathsCanvasInteractions({
         isPathLocked: false,
-        selectedNodeId: null,
-        setSelectedNodeId: vi.fn(),
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: vi.fn(),
@@ -382,8 +378,6 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     renderHook(() =>
       useAiPathsCanvasInteractions({
         isPathLocked: false,
-        selectedNodeId: 'node-a',
-        setSelectedNodeId: vi.fn(),
         confirmNodeSwitch: undefined,
         confirm: confirmMock,
         clearRuntimeInputsForEdges: vi.fn(),

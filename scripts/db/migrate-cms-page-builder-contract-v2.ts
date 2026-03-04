@@ -112,16 +112,16 @@ const run = async (): Promise<MigrationSummary> => {
   const reports: PageReport[] = [];
 
   for (const page of scopedPages) {
-    const sourceComponents = (page.components ?? []).map(
+    const sourceComponents = page.components.map(
       (component, index): PageComponent =>
         ({
-          id: component.id ?? `legacy-component-${page.id}-${index}`,
+          id: `legacy-component-${page.id}-${index}`,
           type: component.type,
-          order: component.order ?? index,
-          content: component.content ?? {},
-          pageId: component.pageId ?? page.id,
-          createdAt: component.createdAt ?? page.createdAt,
-          updatedAt: component.updatedAt ?? page.updatedAt ?? page.createdAt,
+          order: component.order,
+          content: component.content,
+          pageId: page.id,
+          createdAt: page.createdAt,
+          updatedAt: page.updatedAt ?? page.createdAt,
         }) as PageComponent
     );
 

@@ -24,10 +24,11 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
 const LANGUAGES_ENDPOINT = '/api/v2/metadata/languages';
 const CURRENCIES_ENDPOINT = '/api/v2/metadata/currencies';
+const CATALOGS_ENDPOINT = '/api/v2/products/entities/catalogs';
 
 // API fetch functions
 async function fetchCatalogs(signal?: AbortSignal): Promise<Catalog[]> {
-  return api.get<Catalog[]>('/api/catalogs', { signal });
+  return api.get<Catalog[]>(CATALOGS_ENDPOINT, { signal });
 }
 
 async function fetchPriceGroups(signal?: AbortSignal): Promise<PriceGroupWithDetails[]> {

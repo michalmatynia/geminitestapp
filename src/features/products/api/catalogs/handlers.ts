@@ -2,15 +2,14 @@ import { type AnyBulkWriteOperation } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { getCatalogRepository } from '@/features/products/server';
-import { getProductDataProvider } from '@/features/products/server';
-import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
+import { getCatalogRepository, getProductDataProvider } from '@/features/products/server';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { normalizeCatalogLanguageSelection } from '@/shared/lib/products/services/catalog-language-normalization';
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -22,11 +21,7 @@ const catalogSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-/**
- * GET /api/catalogs
- * Fetches all catalogs.
- */
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function getCatalogsHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
   let catalogs = await (await getCatalogRepository(provider)).listCatalogs();
 
@@ -41,18 +36,6 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
       mongoLanguages.forEach((language: { id: string; code: string }) => {
         if (language.id) languageCodeById.set(language.id, language.code);
         if (language.code) languageCodeById.set(language.code, language.code);
-      });
-
-      const missingIds = new Set<string>();
-      catalogs.forEach((catalog: CatalogRecord) => {
-        (catalog.languageIds ?? []).forEach((languageId: string) => {
-          if (!languageCodeById.has(languageId)) {
-            missingIds.add(languageId);
-          }
-        });
-        if (catalog.defaultLanguageId && !languageCodeById.has(catalog.defaultLanguageId)) {
-          missingIds.add(catalog.defaultLanguageId);
-        }
       });
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
@@ -114,11 +97,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   return NextResponse.json(catalogs);
 }
 
-/**
- * POST /api/catalogs
- * Creates a catalog.
- */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postCatalogsHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, catalogSchema, {
     logPrefix: 'catalogs.POST',
   });

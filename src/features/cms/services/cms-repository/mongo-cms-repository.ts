@@ -82,7 +82,25 @@ interface DomainDocument {
 // Mappers
 // ---------------------------------------------------------------------------
 
+function mapPageComponentInput(component: PageComponentInput): PageComponentInput {
+  return {
+    type: component.type,
+    order: component.order,
+    content: {
+      zone: component.content.zone,
+      settings: component.content.settings,
+      blocks: component.content.blocks,
+      sectionId: component.content.sectionId,
+      parentSectionId: component.content.parentSectionId,
+    },
+  };
+}
+
 function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
+  const components = doc.components
+    .map((component: PageComponentInput): PageComponentInput => mapPageComponentInput(component))
+    .sort((left: PageComponentInput, right: PageComponentInput): number => left.order - right.order);
+
   return {
     id: doc.id,
     name: doc.name,
@@ -95,7 +113,7 @@ function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
     robotsMeta: doc.robotsMeta ?? undefined,
     themeId: doc.themeId ?? null,
     showMenu: doc.showMenu ?? true,
-    components: doc.components,
+    components,
     slugs: slugs.map(mapSlugDocumentToSlug),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),

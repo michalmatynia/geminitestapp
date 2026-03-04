@@ -1,6 +1,16 @@
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
-import { importTemplateParameterImportSchema } from '../data-import-export';
+
+export const importTemplateParameterImportSchema = z.object({
+  enabled: z.boolean().optional(),
+  mode: z.enum(['all', 'mapped']).optional(),
+  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
+  createMissingParameters: z.boolean().optional(),
+  overwriteExistingValues: z.boolean().optional(),
+  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
+});
+
+export type ImportTemplateParameterImport = z.infer<typeof importTemplateParameterImportSchema>;
 
 export const integrationTemplateMappingSchema = z.object({
   sourceKey: z.string(),

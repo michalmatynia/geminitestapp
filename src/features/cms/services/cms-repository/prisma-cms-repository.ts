@@ -3,7 +3,6 @@ import 'server-only';
 import type {
   Page,
   Slug,
-  PageComponent,
   PageComponentInput,
   CmsTheme,
   CreateCmsThemeDto as CmsThemeCreateInput,
@@ -71,15 +70,11 @@ function mapPrismaTheme(t: PrismaCmsTheme): CmsTheme {
   };
 }
 
-function mapPrismaPageComponent(c: PrismaPageComponent): PageComponent {
+function mapPrismaPageComponent(c: PrismaPageComponent): PageComponentInput {
   return {
-    id: c.id,
     type: c.type,
     order: c.order,
-    content: c.content as unknown as Record<string, unknown>,
-    pageId: c.pageId,
-    createdAt: c.createdAt.toISOString(),
-    updatedAt: c.updatedAt?.toISOString() ?? null,
+    content: c.content as unknown as PageComponentInput['content'],
   };
 }
 

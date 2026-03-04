@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   uid,
   normalizeTextAtomText,
@@ -32,14 +26,14 @@ export function reduceSectionActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'SELECT_NODE':
-      return { ...state, selectedNodeId: (action as any).nodeId };
+      return { ...state, selectedNodeId: action.nodeId };
 
     case 'ADD_SECTION': {
-      const sectionType = (action as any).sectionType;
+      const sectionType = action.sectionType;
       const def = getSectionDefinition(sectionType);
       if (!def) return state;
 
-      const settings = buildSectionSettings(sectionType, (action as any).initialSettings ?? {});
+      const settings = buildSectionSettings(sectionType, action.initialSettings ?? {});
       let initialBlocks: BlockInstance[] = [];
       if (sectionType === 'Grid') {
         const rows = (settings['rows'] as number) ?? 1;
@@ -67,7 +61,7 @@ export function reduceSectionActions(
       const newSection: SectionInstance = {
         id: uid(),
         type: sectionType,
-        zone: (action as any).zone,
+        zone: action.zone,
         parentSectionId: null,
         settings,
         blocks: initialBlocks,
@@ -80,19 +74,18 @@ export function reduceSectionActions(
     }
 
     case 'REMOVE_SECTION': {
-      const filtered = removeSectionSubtree(state.sections, (action as any).sectionId);
+      const filtered = removeSectionSubtree(state.sections, action.sectionId);
       return {
         ...state,
         sections: filtered,
-        selectedNodeId:
-          state.selectedNodeId === (action as any).sectionId ? null : state.selectedNodeId,
+        selectedNodeId: state.selectedNodeId === action.sectionId ? null : state.selectedNodeId,
       };
     }
 
     case 'UPDATE_SECTION_SETTINGS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId) return s;
-        const nextSettings = { ...s.settings, ...(action as any).settings };
+        if (s.id !== action.sectionId) return s;
+        const nextSettings = { ...s.settings, ...action.settings };
         if (s.type === TEXT_ATOM_BLOCK_TYPE) {
           const updatedBlock = applyTextAtomSettings(
             {
@@ -111,17 +104,17 @@ export function reduceSectionActions(
     }
 
     case 'REORDER_SECTIONS': {
-      const zone = (action as any).zone as PageZone;
+      const zone: PageZone = action.zone;
       const rootSectionsInZone = state.sections.filter(
         (section: SectionInstance) => section.zone === zone && !section.parentSectionId
       );
-      const moved = rootSectionsInZone[(action as any).fromIndex] ?? null;
+      const moved = rootSectionsInZone[action.fromIndex] ?? null;
       if (!moved) return state;
       const result = moveSectionSubtree(state.sections, {
         sectionId: moved.id,
         toZone: zone,
         toParentSectionId: null,
-        toIndex: (action as any).toIndex,
+        toIndex: action.toIndex,
       });
       if (!result.ok) return state;
       return { ...state, sections: result.sections };

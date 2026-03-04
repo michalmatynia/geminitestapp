@@ -74,6 +74,35 @@ describe('runObservabilityCheck logger enforcement', () => {
     });
   });
 
+  it('fails when forbidden legacy compatibility file still exists', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/features/observability/public.ts',
+      "export const legacyObservabilityPublic = 'do-not-use';\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.legacyCompatibility.totalViolations).toBeGreaterThan(0);
+    expect(report.legacyCompatibility.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          file: 'src/features/observability/public.ts',
+          message:
+            'forbidden legacy compatibility file detected: src/features/observability/public.ts',
+        }),
+      ])
+    );
+  });
+
   it('passes when logger call includes canonical service prefix', () => {
     const root = createTempRoot();
     writeSource(

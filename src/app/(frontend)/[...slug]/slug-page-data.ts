@@ -38,13 +38,11 @@ const normalizeRendererComponent = (
   component: Page['components'][number],
   index: number
 ): PageComponent => ({
-  id: component.id ?? `${pageId}:component:${index}`,
+  id: `${pageId}:component:${index}`,
   type: component.type,
   order: component.order,
   content: component.content,
-  pageId: component.pageId ?? pageId,
-  ...(component.createdAt ? { createdAt: component.createdAt } : {}),
-  ...(component.updatedAt !== undefined ? { updatedAt: component.updatedAt } : {}),
+  pageId,
 });
 
 const isAdminSession = (session: Session | null): boolean => {

@@ -4,9 +4,38 @@ import {
   getProductDataProvider,
   type CatalogUpdateInput,
 } from '@/features/products/server';
+import { getCatalogsHandler, postCatalogsHandler } from '@/features/products/api/catalogs/handlers';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
+
+export async function GET_products_entities_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { type: string }
+): Promise<Response> {
+  const { type } = params;
+
+  if (type === 'catalogs') {
+    return getCatalogsHandler(req, ctx);
+  }
+
+  throw badRequestError(`Invalid products entity type for GET: ${type}`);
+}
+
+export async function POST_products_entities_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { type: string }
+): Promise<Response> {
+  const { type } = params;
+
+  if (type === 'catalogs') {
+    return postCatalogsHandler(req, ctx);
+  }
+
+  throw badRequestError(`Invalid products entity type for POST: ${type}`);
+}
 
 export async function GET_products_entity_handler(
   _req: NextRequest,

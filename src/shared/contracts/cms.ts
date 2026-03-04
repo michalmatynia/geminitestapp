@@ -114,6 +114,15 @@ export const createCmsPageComponentSchema = cmsPageComponentSchema.omit({
 export type CreateCmsPageComponentDto = z.infer<typeof createCmsPageComponentSchema>;
 export type UpdateCmsPageComponentDto = Partial<CreateCmsPageComponentDto>;
 
+export const cmsPageComponentInputSchema = z.object({
+  type: z.string(),
+  order: z.number(),
+  content: cmsPageBuilderComponentContentSchema,
+}).strict();
+
+export type CmsPageComponentInputDto = z.infer<typeof cmsPageComponentInputSchema>;
+export type PageComponentInput = CmsPageComponentInputDto;
+
 /**
  * CMS Slug Contract
  */
@@ -616,13 +625,7 @@ export const cmsPageSchema = dtoBaseSchema
     publishedAt: z.string().optional(),
     themeId: z.string().nullable(),
     showMenu: z.boolean(),
-    components: z.array(
-      cmsPageComponentSchema.partial().extend({
-        type: z.string(),
-        order: z.number(),
-        content: cmsPageBuilderComponentContentSchema,
-      })
-    ),
+    components: z.array(cmsPageComponentInputSchema),
     slugs: z.array(cmsSlugSchema),
   })
   .merge(cmsPageSeoSchema);
@@ -974,8 +977,6 @@ export type BlockDefinition = BlockDefinitionDto;
 /**
  * CMS Repository Interfaces
  */
-
-export type PageComponentInput = Pick<PageComponent, 'type' | 'order' | 'content'>;
 
 export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'updatedAt'>> & {
   components?: PageComponentInput[];

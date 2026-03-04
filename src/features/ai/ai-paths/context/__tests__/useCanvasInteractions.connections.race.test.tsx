@@ -112,4 +112,83 @@ describe('useCanvasInteractionsConnections race handling', () => {
       toPort: 'value',
     });
   });
+
+  it('blocks a second write on a single-cardinality input before edges prop re-renders', async () => {
+    const sourceNodeA = buildNode({
+      id: 'node-source-a',
+      outputs: ['result'],
+      position: { x: 120, y: 120 },
+    });
+    const sourceNodeB = buildNode({
+      id: 'node-source-b',
+      outputs: ['result'],
+      position: { x: 120, y: 300 },
+    });
+    const targetNode = buildNode({
+      id: 'node-target',
+      type: 'fetcher',
+      title: 'Fetcher: Trigger Context',
+      inputs: ['trigger'],
+      position: { x: 460, y: 180 },
+    });
+
+    const props: Parameters<typeof useCanvasInteractionsConnections>[0] = {
+      nodes: [sourceNodeA, sourceNodeB, targetNode],
+      edges: [],
+      isPathLocked: false,
+      notifyLocked: vi.fn(),
+      confirmNodeSwitch: undefined,
+      setEdges: vi.fn(),
+      setRuntimeState: vi.fn(),
+      pruneRuntimeInputsInternal: (
+        state: RuntimeState,
+        _removedEdges: Edge[],
+        _remainingEdges: Edge[]
+      ) => state,
+      selectedEdgeId: null,
+      selectEdge: vi.fn(),
+      startConnection: vi.fn(),
+      endConnection: vi.fn(),
+      connecting: null,
+      setConnectingPos: vi.fn(),
+      view: { x: 0, y: 0, scale: 1 },
+      viewportRef: { current: document.createElement('div') },
+      toast: vi.fn(),
+    };
+
+    const sourceTargetA = document.createElement('div');
+    const sourceTargetB = document.createElement('div');
+    const target = document.createElement('div');
+    const { result } = renderHook(() => useCanvasInteractionsConnections(props));
+
+    await act(async () => {
+      await result.current.handleStartConnection(createPointerEvent(sourceTargetA), sourceNodeA, 'result');
+    });
+    act(() => {
+      result.current.handleCompleteConnection(createPointerEvent(target), targetNode, 'trigger');
+    });
+
+    await act(async () => {
+      await result.current.handleStartConnection(createPointerEvent(sourceTargetB), sourceNodeB, 'result');
+    });
+    act(() => {
+      result.current.handleCompleteConnection(createPointerEvent(target), targetNode, 'trigger');
+    });
+
+    const setEdgesCalls = (props.setEdges as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    expect(setEdgesCalls.length).toBe(1);
+    const [nextEdges] = setEdgesCalls[0] as [Edge[] | ((prev: Edge[]) => Edge[]), unknown];
+    const resolvedEdges = typeof nextEdges === 'function' ? nextEdges([]) : nextEdges;
+    expect(resolvedEdges).toHaveLength(1);
+    expect(resolvedEdges[0]).toMatchObject({
+      from: 'node-source-a',
+      to: 'node-target',
+      fromPort: 'result',
+      toPort: 'trigger',
+    });
+    expect(props.toast).toHaveBeenCalledWith(
+      expect.stringContaining('accepts one connection'),
+      expect.objectContaining({ variant: 'error' })
+    );
+  });
 });

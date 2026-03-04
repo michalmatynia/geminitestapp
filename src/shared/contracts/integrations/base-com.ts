@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import type { ImportExportTemplateMapping } from '../data-import-export';
+import type { IntegrationTemplateMapping } from './templates';
 
 /**
  * Base.com Metadata DTOs
  */
 
-export type BaseFieldMapping = ImportExportTemplateMapping;
+export type BaseFieldMapping = IntegrationTemplateMapping;
 
 export type BaseExportProductLike = {
   id: string;

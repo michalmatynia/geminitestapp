@@ -418,6 +418,39 @@ const collectLegacyCompatibilityViolations = (root, srcDir) => {
     });
   }
 
+  const forbiddenLegacyFiles = [
+    'src/features/observability/public.ts',
+    'src/features/observability/server.ts',
+    'src/features/observability/index.ts',
+    'src/features/observability/constants.ts',
+    'src/features/observability/constants/client-logging.ts',
+    'src/features/observability/utils/client-error-logger.ts',
+    'src/features/observability/utils/error-classifier.ts',
+    'src/features/observability/services/error-system.ts',
+    'src/features/observability/services/activityService.ts',
+    'src/features/observability/services/activity-repository/index.ts',
+    'src/features/observability/services/activity-repository/mongo-activity-repository.ts',
+    'src/features/observability/services/activity-repository/prisma-activity-repository.ts',
+    'src/features/observability/lib/ai-paths-slo-notifier.ts',
+    'src/features/observability/lib/critical-error-notifier.ts',
+    'src/features/observability/lib/log-redaction.ts',
+    'src/features/observability/lib/system-log-repository.ts',
+    'src/features/observability/lib/system-logger.ts',
+    'src/features/observability/lib/transient-recovery/constants.ts',
+    'src/features/observability/lib/transient-recovery/settings.ts',
+    'src/features/observability/lib/transient-recovery/with-recovery.ts',
+  ];
+
+  for (const relativeFile of forbiddenLegacyFiles) {
+    const absolute = path.join(root, relativeFile);
+    if (!fs.existsSync(absolute)) continue;
+    violations.push({
+      file: relativeFile,
+      line: 1,
+      message: `forbidden legacy compatibility file detected: ${relativeFile}`,
+    });
+  }
+
   return violations;
 };
 

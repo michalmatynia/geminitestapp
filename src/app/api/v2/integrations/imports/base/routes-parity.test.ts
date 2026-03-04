@@ -9,8 +9,10 @@ const projectRoot = path.resolve(currentDir, '../../../../../../..');
 const legacyRoot = path.join(projectRoot, 'src/app/api/integrations/imports/base');
 const v2Root = path.join(projectRoot, 'src/app/api/v2/integrations/imports/base');
 const featuresRoot = path.join(projectRoot, 'src/features');
+const importExportFeatureRoot = path.join(featuresRoot, 'data-import-export');
 const legacyEndpointToken = '/api/integrations/imports/base';
 const legacyCsvImportEndpointToken = '/api/import';
+const legacyCatalogsEndpointToken = '/api/catalogs';
 const legacyContractsImportToken = '@/shared/contracts/data-import-export';
 const legacyApiImportToken = "@/app/api/integrations/imports/base/";
 const expectedV2RoutePaths = [
@@ -109,6 +111,15 @@ describe('v2 integrations imports/base route migration', () => {
     const featureFiles = collectSourceFiles(featuresRoot);
     const offenders = featureFiles
       .filter((absolute) => readFileSync(absolute, 'utf8').includes(legacyCsvImportEndpointToken))
+      .map((absolute) => path.relative(projectRoot, absolute));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('avoids legacy catalogs endpoint literals in feature runtime code', () => {
+    const featureFiles = collectSourceFiles(importExportFeatureRoot);
+    const offenders = featureFiles
+      .filter((absolute) => readFileSync(absolute, 'utf8').includes(legacyCatalogsEndpointToken))
       .map((absolute) => path.relative(projectRoot, absolute));
 
     expect(offenders).toEqual([]);

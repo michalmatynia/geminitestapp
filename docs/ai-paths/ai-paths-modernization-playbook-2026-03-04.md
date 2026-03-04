@@ -253,6 +253,8 @@ Progress (2026-03-04):
 27. Removed remaining `legacy_key_read` observability plumbing from `/api/ai-paths/settings`, narrowed legacy compatibility counters to metadata payload tracking only (`legacy_payload_received`), and added canonical cleanup script `scripts/db/cleanup-ai-paths-legacy-index-key.ts` plus npm shortcut `cleanup:ai-paths-legacy-index-key` to backfill/delete stale `ai_paths_index_v1` records.
 28. Removed the final legacy compatibility counters runtime (`src/shared/lib/observability/legacy-compat-counters.ts`) by decoupling metadata handlers from counter recording while preserving wrapped-payload request compatibility, leaving no active `recordLegacyCompatCounter` usage in runtime code.
 29. Completed canvas interaction seam cutover by adapting `useAiPathsCanvasInteractions` to canonical `useCanvasInteractions`, updating hook-level delete shortcut tests to mock canonical interactions, and pruning dead settings-only canvas hook files (`useCanvasConnection`, `useCanvasNodeDrag`, `useCanvasView`) plus their duplicate race test.
+30. Reduced selection mirror-setter seam in canvas interactions by removing `selectedNodeId`/`setSelectedNodeId` arguments from `useAiPathsCanvasInteractions`, making node/edge selection updates context-native via `SelectionContext` only, and updating settings/tests to match the new API.
+31. Reduced preset application mirror-setter seam by removing `setSelectedNodeId` from `useAiPathsPresets` API and switching preset-apply selection updates to canonical `SelectionContext` actions (`selectNode` + `selectEdge(null)`), then updating `useAiPathsSettingsState` wiring accordingly.
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -353,7 +355,7 @@ Progress (2026-03-04):
 
 1. `AiPathsStateBridger.tsx` -> completed on 2026-03-04 (deleted).
 2. `useStateBridge.ts` -> completed on 2026-03-04 (deleted).
-3. `useAiPathsCanvasInteractions.ts` and `hooks/useCanvas*` (settings version) -> replace with context hooks and delete.
+3. `useAiPathsCanvasInteractions.ts` and `hooks/useCanvas*` (settings version) -> completed on 2026-03-04 (rewired to canonical context interactions; settings `useCanvasConnection`/`useCanvasNodeDrag`/`useCanvasView` deleted).
 4. Monolith state mirror setters (`setNodes`, `setEdges`, `setSelectedNodeId`, etc.) -> replace with domain actions from context.
 
 ## Quality gates per session

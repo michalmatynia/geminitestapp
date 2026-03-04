@@ -33,15 +33,12 @@ describe('imageStudioAnalysisRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('normalizes legacy analysis mode aliases', () => {
+  it('rejects legacy analysis mode aliases', () => {
     const parsed = imageStudioAnalysisRequestSchema.safeParse({
       mode: 'server_analysis_v1',
       requestId: 'analysis_server_alias_1234',
     });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      expect(parsed.data.mode).toBe('server_analysis');
-    }
+    expect(parsed.success).toBe(false);
   });
 });
 
@@ -69,15 +66,12 @@ describe('imageStudioAutoScalerRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('normalizes legacy auto scaler mode aliases', () => {
+  it('rejects legacy auto scaler mode aliases', () => {
     const parsed = imageStudioAutoScalerRequestSchema.safeParse({
       mode: 'server_auto_scaler_v1',
       requestId: 'autoscale_server_alias_1234',
     });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      expect(parsed.data.mode).toBe('server_auto_scaler');
-    }
+    expect(parsed.success).toBe(false);
   });
 
   it('rejects unknown auto scaler mode', () => {

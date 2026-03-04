@@ -26,7 +26,7 @@ describe('DraftCreator Component', () => {
     vi.clearAllMocks();
     // Mock global fetch for metadata
     global.fetch = vi.fn().mockImplementation((url) => {
-      if (url.includes('/api/catalogs')) {
+      if (url.includes('/api/v2/products/entities/catalogs')) {
         return Promise.resolve({
           ok: true,
           json: async () => await Promise.resolve([{ id: 'cat-1', name: 'Default Catalog' }]),
@@ -46,7 +46,10 @@ describe('DraftCreator Component', () => {
     await waitFor(() => {
       const fetchCalls = (global.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
       expect(
-        fetchCalls.some(([url]) => typeof url === 'string' && url.includes('/api/catalogs'))
+        fetchCalls.some(
+          ([url]) =>
+            typeof url === 'string' && url.includes('/api/v2/products/entities/catalogs')
+        )
       ).toBe(true);
     });
   });

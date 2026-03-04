@@ -7,6 +7,7 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(currentDir, '../../../../..');
 
 const legacyRoot = path.join(projectRoot, 'src/app/api/products');
+const legacyCatalogsRoot = path.join(projectRoot, 'src/app/api/catalogs');
 const v2Root = path.join(projectRoot, 'src/app/api/v2/products');
 const legacyImportAliasRoute = path.join(projectRoot, 'src/app/api/import/route.ts');
 
@@ -43,6 +44,11 @@ describe('v2 products route migration', () => {
     expect(legacyRoutes).toEqual([]);
   });
 
+  it('removes legacy /api/catalogs route.ts files', () => {
+    const legacyCatalogRoutes = collectRouteFiles(legacyCatalogsRoot);
+    expect(legacyCatalogRoutes).toEqual([]);
+  });
+
   it('keeps /api/v2/products route.ts files available', () => {
     const v2Routes = collectRouteFiles(v2Root);
     expect(v2Routes.length).toBeGreaterThan(0);
@@ -51,6 +57,16 @@ describe('v2 products route migration', () => {
   it('keeps canonical /api/v2/products/import/csv route.ts file present', () => {
     const v2Routes = new Set(collectRouteFiles(v2Root));
     expect(v2Routes.has('import/csv/route.ts')).toBe(true);
+  });
+
+  it('keeps canonical /api/v2/products/entities/[type] route.ts file present', () => {
+    const v2Routes = new Set(collectRouteFiles(v2Root));
+    expect(v2Routes.has('entities/[type]/route.ts')).toBe(true);
+  });
+
+  it('keeps canonical /api/v2/products/entities/catalogs/assign route.ts file present', () => {
+    const v2Routes = new Set(collectRouteFiles(v2Root));
+    expect(v2Routes.has('entities/catalogs/assign/route.ts')).toBe(true);
   });
 
   it('removes legacy /api/import alias route.ts file', () => {

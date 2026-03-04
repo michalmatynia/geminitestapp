@@ -3,11 +3,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, Hint, Button, FileUploadTrigger, FileUploadButton } from '@/shared/ui';
-import {
-  SettingsFieldsRenderer,
-  type SettingsField,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { useThemeSettings } from '../ThemeSettingsContext';
+
+type LogoWidthSettings = {
+  logoWidth: number;
+};
+
 export function ThemeLogoSection(): React.JSX.Element {
   useThemeSettings();
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -60,7 +62,7 @@ export function ThemeLogoSection(): React.JSX.Element {
           )}
         </div>
       </Card>
-      <SettingsFieldsRenderer
+      <SettingsFieldsRenderer<LogoWidthSettings>
         fields={[
           {
             key: 'logoWidth',
@@ -69,10 +71,15 @@ export function ThemeLogoSection(): React.JSX.Element {
             min: 50,
             max: 300,
             suffix: 'px',
-          } as SettingsField<{ logoWidth: number }>,
+          },
         ]}
         values={{ logoWidth }}
-        onChange={(vals) => setLogoWidth((vals as unknown as { logoWidth: number }).logoWidth)}
+        onChange={(vals: Partial<LogoWidthSettings>) => {
+          const nextWidth = vals.logoWidth;
+          if (typeof nextWidth === 'number') {
+            setLogoWidth(nextWidth);
+          }
+        }}
       />
       <div className='space-y-2'>
         <FileUploadTrigger

@@ -57,6 +57,10 @@ export function classifyError(error: unknown): ErrorCategory {
 
   const message = error instanceof Error ? error.message : String(error);
 
+  if (/deprecated ai snapshot keys/i.test(message)) {
+    return ERROR_CATEGORY.VALIDATION;
+  }
+
   // Check common library error indicators
   if (message.includes('PrismaClient') || message.includes('MongoDB')) {
     return ERROR_CATEGORY.DATABASE;
@@ -82,6 +86,7 @@ const isApiErrorLike = (error: unknown): error is ApiErrorLike =>
 export function getSuggestedActions(category: ErrorCategory, error?: unknown): SuggestedAction[] {
   const actions: SuggestedAction[] = [];
   const message = error instanceof Error ? error.message : String(error);
+  const normalizedMessage = message.toLowerCase();
 
   switch (category) {
     case ERROR_CATEGORY.NETWORK:
@@ -94,7 +99,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.AUTH:
-      if (message.toLowerCase().includes('auth') || message.toLowerCase().includes('session')) {
+      if (normalizedMessage.includes('auth') || normalizedMessage.includes('session')) {
         actions.push({
           label: 'Login Again',
           description: 'Your session might have expired. Please log in again to continue.',
@@ -111,7 +116,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.DATABASE:
-      if (message.toLowerCase().includes('migration') || message.toLowerCase().includes('schema')) {
+      if (normalizedMessage.includes('migration') || normalizedMessage.includes('schema')) {
         actions.push({
           label: 'Run Migrations',
           description: 'The database schema might be out of date. Please run pending migrations.',
@@ -168,7 +173,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
           'The AI model might be having trouble with the current input. Try rephrasing or simplifying your request.',
         actionType: 'CHECK_CONFIG',
       });
-      if (message.toLowerCase().includes('token')) {
+      if (normalizedMessage.includes('token')) {
         actions.push({
           label: 'Reduce Content',
           description:

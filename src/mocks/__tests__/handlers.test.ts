@@ -91,7 +91,7 @@ describe('MSW Handlers', () => {
 
   describe('Catalogs API', () => {
     it('should fetch all catalogs', async () => {
-      const response = await fetch('/api/catalogs');
+      const response = await fetch('/api/v2/products/entities/catalogs');
       const data = (await response.json()) as unknown[];
 
       expect(response.status).toBe(200);
@@ -100,7 +100,7 @@ describe('MSW Handlers', () => {
     });
 
     it('should fetch a single catalog', async () => {
-      const response = await fetch('/api/catalogs/1');
+      const response = await fetch('/api/v2/products/entities/catalogs/1');
       const data = (await response.json()) as Record<string, unknown>;
 
       expect(response.status).toBe(200);

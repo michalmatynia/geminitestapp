@@ -56,7 +56,7 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
   return createListQueryV2({
     queryKey,
-    queryFn: () => api.get<CatalogRecord[]>('/api/catalogs'),
+    queryFn: () => api.get<CatalogRecord[]>('/api/v2/products/entities/catalogs'),
     meta: {
       source: 'importExport.hooks.useCatalogs',
       operation: 'list',

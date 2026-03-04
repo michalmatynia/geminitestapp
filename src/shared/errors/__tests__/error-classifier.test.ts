@@ -34,4 +34,13 @@ describe('error-classifier', () => {
     expect(actions[0]?.label).toBe('Check Settings Contract');
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
+
+  it('treats deprecated snapshot key errors as validation even when thrown as plain Error', () => {
+    const error = new Error('Agent persona settings contain deprecated AI snapshot keys.');
+    const actions = getSuggestedActions(classifyError(error), error);
+
+    expect(classifyError(error)).toBe(ERROR_CATEGORY.VALIDATION);
+    expect(actions[0]?.label).toBe('Update Persona Settings');
+    expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
+  });
 });

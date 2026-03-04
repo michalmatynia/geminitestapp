@@ -63,7 +63,7 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
       productKeys.categoriesAll(),
       async (): Promise<ProductCategory[]> => {
         type Catalog = { id: string };
-        const catalogs = await api.get<Catalog[]>('/api/catalogs');
+        const catalogs = await api.get<Catalog[]>('/api/v2/products/entities/catalogs');
         const catalogId =
           Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];

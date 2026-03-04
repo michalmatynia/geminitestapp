@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { reducePageBuilderStateCore } from '@/features/cms/hooks/page-builder/page-builder-reducer-core';
 import { initialState } from '@/features/cms/hooks/usePageBuilderContext';
-import type { PageBuilderState, SectionInstance } from '@/shared/contracts/cms';
+import type { Page, PageBuilderState, SectionInstance } from '@/shared/contracts/cms';
 
 const createSection = (overrides: Partial<SectionInstance> = {}): SectionInstance =>
   ({
@@ -18,6 +18,20 @@ const createSection = (overrides: Partial<SectionInstance> = {}): SectionInstanc
 const createState = (sections: SectionInstance[]): PageBuilderState => ({
   ...initialState,
   sections,
+});
+
+const createPage = (components: Page['components'], overrides: Partial<Page> = {}): Page => ({
+  id: 'page-1',
+  name: 'Test page',
+  status: 'draft',
+  publishedAt: undefined,
+  themeId: null,
+  showMenu: false,
+  components,
+  slugs: [{ id: 'slug-1', slug: 'test-page', pageId: 'page-1', isDefault: true }],
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
 });
 
 describe('reducePageBuilderStateCore section hierarchy actions', () => {
@@ -123,5 +137,57 @@ describe('reducePageBuilderStateCore section hierarchy actions', () => {
     });
 
     expect(next).toBe(state);
+  });
+
+  it('hydrates sections from canonical page components without legacy parent normalization', () => {
+    const page = createPage([
+      {
+        type: 'Hero',
+        order: 0,
+        content: {
+          sectionId: 'section-root',
+          zone: 'template',
+          parentSectionId: null,
+          settings: { title: 'Root' },
+          blocks: [],
+        },
+      },
+      {
+        type: 'TextElement',
+        order: 1,
+        content: {
+          sectionId: 'section-child',
+          zone: 'template',
+          parentSectionId: 'missing-parent',
+          settings: { text: 'Child' },
+          blocks: [],
+        },
+      },
+    ]);
+
+    const next = reducePageBuilderStateCore(createState([]), {
+      type: 'SET_CURRENT_PAGE',
+      page,
+    });
+
+    expect(next.currentPage).toBe(page);
+    expect(next.sections).toEqual([
+      {
+        id: 'section-root',
+        type: 'Hero',
+        zone: 'template',
+        parentSectionId: null,
+        settings: { title: 'Root' },
+        blocks: [],
+      },
+      {
+        id: 'section-child',
+        type: 'TextElement',
+        zone: 'template',
+        parentSectionId: 'missing-parent',
+        settings: { text: 'Child' },
+        blocks: [],
+      },
+    ]);
   });
 });

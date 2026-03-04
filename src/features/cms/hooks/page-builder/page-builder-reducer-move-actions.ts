@@ -49,29 +49,30 @@ export function reducePageBuilderMoveActions(
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks
-              .map((b: BlockInstance) => {
-                if (b.id === action.blockId) {
-                  moved = b;
-                  return null as unknown as BlockInstance;
+            return blocks.reduce<BlockInstance[]>((next: BlockInstance[], b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return next;
+              }
+              if (b.type === 'Row' && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  next.push({
+                    ...b,
+                    blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                  });
+                  return next;
                 }
-                if (b.type === 'Row' && b.blocks) {
-                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                  if (idx !== -1) {
-                    const foundBlock = b.blocks[idx];
-                    if (foundBlock) moved = foundBlock;
-                    return {
-                      ...b,
-                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
-                    };
-                  }
-                }
-                if (b.blocks) {
-                  return { ...b, blocks: removeFromBlocks(b.blocks) };
-                }
-                return b;
-              })
-              .filter(Boolean);
+              }
+              if (b.blocks) {
+                next.push({ ...b, blocks: removeFromBlocks(b.blocks) });
+                return next;
+              }
+              next.push(b);
+              return next;
+            }, []);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
@@ -136,29 +137,30 @@ export function reducePageBuilderMoveActions(
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks
-              .map((b: BlockInstance) => {
-                if (b.id === action.blockId) {
-                  moved = b;
-                  return null as unknown as BlockInstance;
+            return blocks.reduce<BlockInstance[]>((next: BlockInstance[], b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return next;
+              }
+              if (b.type === 'Row' && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  next.push({
+                    ...b,
+                    blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                  });
+                  return next;
                 }
-                if (b.type === 'Row' && b.blocks) {
-                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                  if (idx !== -1) {
-                    const foundBlock = b.blocks[idx];
-                    if (foundBlock) moved = foundBlock;
-                    return {
-                      ...b,
-                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
-                    };
-                  }
-                }
-                if (b.blocks) {
-                  return { ...b, blocks: removeFromBlocks(b.blocks) };
-                }
-                return b;
-              })
-              .filter(Boolean);
+              }
+              if (b.blocks) {
+                next.push({ ...b, blocks: removeFromBlocks(b.blocks) });
+                return next;
+              }
+              next.push(b);
+              return next;
+            }, []);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
@@ -226,29 +228,30 @@ export function reducePageBuilderMoveActions(
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks
-              .map((b: BlockInstance) => {
-                if (b.id === action.blockId) {
-                  moved = b;
-                  return null as unknown as BlockInstance;
+            return blocks.reduce<BlockInstance[]>((next: BlockInstance[], b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return next;
+              }
+              if (b.type === 'Row' && b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  next.push({
+                    ...b,
+                    blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                  });
+                  return next;
                 }
-                if (b.type === 'Row' && b.blocks) {
-                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                  if (idx !== -1) {
-                    const foundBlock = b.blocks[idx];
-                    if (foundBlock) moved = foundBlock;
-                    return {
-                      ...b,
-                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
-                    };
-                  }
-                }
-                if (b.blocks) {
-                  return { ...b, blocks: removeFromBlocks(b.blocks) };
-                }
-                return b;
-              })
-              .filter(Boolean);
+              }
+              if (b.blocks) {
+                next.push({ ...b, blocks: removeFromBlocks(b.blocks) });
+                return next;
+              }
+              next.push(b);
+              return next;
+            }, []);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
@@ -304,27 +307,28 @@ export function reducePageBuilderMoveActions(
           }
           // Remove from section's direct blocks (including from SlideshowFrames)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks
-              .map((b: BlockInstance) => {
-                if (b.id === action.blockId) {
-                  moved = b;
-                  return null as unknown as BlockInstance;
+            return blocks.reduce<BlockInstance[]>((next: BlockInstance[], b: BlockInstance) => {
+              if (b.id === action.blockId) {
+                moved = b;
+                return next;
+              }
+              if (b.blocks) {
+                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                if (idx !== -1) {
+                  const foundBlock = b.blocks[idx];
+                  if (foundBlock) moved = foundBlock;
+                  next.push({
+                    ...b,
+                    blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                  });
+                  return next;
                 }
-                if (b.blocks) {
-                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                  if (idx !== -1) {
-                    const foundBlock = b.blocks[idx];
-                    if (foundBlock) moved = foundBlock;
-                    return {
-                      ...b,
-                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
-                    };
-                  }
-                  return { ...b, blocks: removeFromBlocks(b.blocks) };
-                }
-                return b;
-              })
-              .filter(Boolean);
+                next.push({ ...b, blocks: removeFromBlocks(b.blocks) });
+                return next;
+              }
+              next.push(b);
+              return next;
+            }, []);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });

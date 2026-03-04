@@ -7,6 +7,22 @@ Owner: Folder Tree maintainers + feature owners
 
 Move Master Folder Tree to a single canonical runtime form across all instances, then delete compatibility shims and dead legacy pathways.
 
+## Execution Status (2026-03-04)
+
+Completed in codebase:
+
+1. Added dedicated `admin_menu_layout` instance and moved Admin Menu settings to that instance.
+2. Removed legacy compatibility shims (`src/features/foldertree/master/internal-drop.ts`, `src/features/foldertree/master/external-drop.ts`).
+3. Removed legacy aggregate profile APIs and settings key usage (`parseFolderTreeProfilesV2`, `coerceProfileV2`, `FOLDER_TREE_PROFILES_V2_SETTING_KEY`).
+4. Added instance parity guard test for profile defaults + settings metadata + persistence feedback.
+5. Added DB migration script `scripts/db/migrate-master-folder-tree-profiles-v2.ts` with `--dry-run`/`--apply`, provider selection, optional `--report-json`, and optional `--delete-legacy-key`.
+
+Operational follow-up required:
+
+1. Run migration in dry-run mode in each target environment.
+2. Review generated report.
+3. Run in apply mode and optionally delete the legacy aggregate key.
+
 ## Canonical Target (Newest Form)
 
 - Runtime/UI: `useMasterFolderTreeShell` + `FolderTreeViewportV2` for all interactive instances.

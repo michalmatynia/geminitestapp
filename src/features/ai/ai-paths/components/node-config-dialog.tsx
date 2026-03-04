@@ -183,10 +183,20 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
       });
       if (savedWithFallback) {
         setDraftNode(null);
+        toast('Node settings saved.', { variant: 'success' });
+        return;
       }
-      toast(savedWithFallback ? 'Node settings saved.' : 'Failed to save node settings.', {
-        variant: savedWithFallback ? 'success' : 'error',
+      // Run one verbose retry to surface the underlying validation/error toast.
+      const savedWithDiagnostics = await savePathConfig({
+        includeNodeConfig: true,
+        force: true,
+        nodeOverride: nextDraftNode,
       });
+      if (savedWithDiagnostics) {
+        setDraftNode(null);
+        return;
+      }
+      toast('Failed to save node settings.', { variant: 'error' });
     })();
   }, [cloneNode, draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 

@@ -282,7 +282,7 @@ describe('Admin Products List UI', () => {
       http.get('/api/v2/products/count', () => {
         return HttpResponse.json({ count: mockProducts.length });
       }),
-      http.get('/api/catalogs', () => {
+      http.get('/api/v2/products/entities/catalogs', () => {
         return HttpResponse.json([]);
       }),
       http.get('/api/v2/products/validator-config', () => HttpResponse.json([])),

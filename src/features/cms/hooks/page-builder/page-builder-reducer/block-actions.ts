@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   applyTextAtomSettings,
   createBlockInstance,
@@ -24,9 +18,9 @@ export function reduceBlockActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'ADD_BLOCK': {
-      if ((action as any).blockType === 'Row') {
+      if (action.blockType === 'Row') {
         const updatedSections = state.sections.map((s: SectionInstance) => {
-          if (s.id !== (action as any).sectionId) return s;
+          if (s.id !== action.sectionId) return s;
           if (s.type !== 'Grid') return s;
           const normalized = ensureGridRows(s);
           const { rows, extras } = splitGridBlocks(normalized.blocks);
@@ -45,10 +39,10 @@ export function reduceBlockActions(
         });
         return { ...state, sections: updatedSections };
       }
-      const newBlock = createBlockInstance((action as any).blockType);
+      const newBlock = createBlockInstance(action.blockType);
       if (!newBlock) return state;
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: [...s.blocks, newBlock] } : s
+        s.id === action.sectionId ? { ...s, blocks: [...s.blocks, newBlock] } : s
       );
       return {
         ...state,
@@ -59,32 +53,31 @@ export function reduceBlockActions(
 
     case 'REMOVE_BLOCK': {
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId
+        s.id === action.sectionId
           ? {
-            ...s,
-            blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId),
-          }
+              ...s,
+              blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
+            }
           : s
       );
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId:
-          state.selectedNodeId === (action as any).blockId ? null : state.selectedNodeId,
+        selectedNodeId: state.selectedNodeId === action.blockId ? null : state.selectedNodeId,
       };
     }
 
     case 'UPDATE_BLOCK_SETTINGS': {
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId
+        s.id === action.sectionId
           ? {
-            ...s,
-            blocks: s.blocks.map((b: BlockInstance) =>
-              b.id === (action as any).blockId
-                ? applyTextAtomSettings(b, { ...b.settings, ...(action as any).settings })
-                : b
-            ),
-          }
+              ...s,
+              blocks: s.blocks.map((b: BlockInstance) =>
+                b.id === action.blockId
+                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                  : b
+              ),
+            }
           : s
       );
       return { ...state, sections: updatedSections };
@@ -93,12 +86,12 @@ export function reduceBlockActions(
     case 'MOVE_BLOCK': {
       let movedBlock: BlockInstance | null = null;
       const sectionsAfterRemove = state.sections.map((s: SectionInstance) => {
-        if (s.id === (action as any).fromSectionId) {
-          const block = s.blocks.find((b: BlockInstance) => b.id === (action as any).blockId);
+        if (s.id === action.fromSectionId) {
+          const block = s.blocks.find((b: BlockInstance) => b.id === action.blockId);
           if (block) movedBlock = block;
           return {
             ...s,
-            blocks: s.blocks.filter((b: BlockInstance) => b.id !== (action as any).blockId),
+            blocks: s.blocks.filter((b: BlockInstance) => b.id !== action.blockId),
           };
         }
         return s;
@@ -106,9 +99,9 @@ export function reduceBlockActions(
       if (!movedBlock) return state;
       const movedBlockValue = movedBlock;
       const sectionsAfterInsert = sectionsAfterRemove.map((s: SectionInstance) => {
-        if (s.id === (action as any).toSectionId) {
+        if (s.id === action.toSectionId) {
           const newBlocks = [...s.blocks];
-          newBlocks.splice((action as any).toIndex, 0, movedBlockValue);
+          newBlocks.splice(action.toIndex, 0, movedBlockValue);
           return { ...s, blocks: newBlocks };
         }
         return s;
@@ -118,11 +111,11 @@ export function reduceBlockActions(
 
     case 'REORDER_BLOCKS': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId) return s;
+        if (s.id !== action.sectionId) return s;
         const newBlocks = [...s.blocks];
-        const [moved] = newBlocks.splice((action as any).fromIndex, 1);
+        const [moved] = newBlocks.splice(action.fromIndex, 1);
         if (!moved) return s;
-        newBlocks.splice((action as any).toIndex, 0, moved);
+        newBlocks.splice(action.toIndex, 0, moved);
         return { ...s, blocks: newBlocks };
       });
       return { ...state, sections: updatedSections };

@@ -37,6 +37,7 @@ import {
   fetchAiPathsSettingsCached,
   fetchAiPathsSettingsByKeysCached,
 } from '@/shared/lib/ai-paths/settings-store-client';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 
 import {
   normalizeParserSamples,
@@ -85,7 +86,6 @@ type UseAiPathsSettingsPathActionsInput = {
   setLastRunAt: React.Dispatch<React.SetStateAction<string | null>>;
   setIsPathLocked: React.Dispatch<React.SetStateAction<boolean>>;
   setIsPathActive: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setIsPathSwitching: React.Dispatch<React.SetStateAction<boolean>>;
   setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   normalizeTriggerLabel: (value?: string | null) => string;
@@ -143,7 +143,6 @@ export function useAiPathsSettingsPathActions({
   setLastRunAt,
   setIsPathLocked,
   setIsPathActive,
-  setSelectedNodeId,
   setIsPathSwitching,
   setConfigOpen,
   normalizeTriggerLabel,
@@ -155,6 +154,7 @@ export function useAiPathsSettingsPathActions({
   confirm,
   toast,
 }: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
+  const { selectNode } = useSelectionActions();
   const switchRequestSeqRef = React.useRef(0);
 
   const sanitizePathConfigWithRuntimeFallback = useCallback(
@@ -258,7 +258,7 @@ export function useAiPathsSettingsPathActions({
         preferredNodeId && normalized.some((node: AiNode): boolean => node.id === preferredNodeId)
           ? preferredNodeId
           : (normalized[0]?.id ?? null);
-      setSelectedNodeId(resolvedNodeId);
+      selectNode(resolvedNodeId);
       setConfigOpen(false);
     },
     [
@@ -280,7 +280,7 @@ export function useAiPathsSettingsPathActions({
       setBlockedRunPolicy,
       setAiPathsValidation,
       setRuntimeState,
-      setSelectedNodeId,
+      selectNode,
       setUpdaterSamples,
     ]
   );

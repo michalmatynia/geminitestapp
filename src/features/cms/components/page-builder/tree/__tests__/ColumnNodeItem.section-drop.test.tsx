@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ColumnNodeItem } from '@/features/cms/components/page-builder/tree/ColumnNodeItem';
 import { TreeSectionProvider } from '@/features/cms/components/page-builder/tree/TreeSectionContext';
 import { setSectionDragData } from '@/features/cms/utils/page-builder-dnd';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
 const { endSectionDragMock, dropToColumnMock } = vi.hoisted(() => ({
   endSectionDragMock: vi.fn(),
@@ -92,20 +93,25 @@ vi.mock('@/features/cms/components/page-builder/ColumnBlockPicker', () => ({
 type DataTransferStub = {
   store: Map<string, string>;
   effectAllowed?: DataTransfer['effectAllowed'];
+  types: readonly string[];
   setData: (key: string, value: string) => void;
   getData: (key: string) => string;
 };
 
-const createDataTransferStub = (): DataTransferStub => {
+const createDataTransferStub = (): DataTransfer => {
   const store = new Map<string, string>();
-  return {
+  const stub: DataTransferStub = {
     store,
     effectAllowed: 'none',
+    get types() {
+      return Array.from(store.keys());
+    },
     setData: (key: string, value: string): void => {
       store.set(key, value);
     },
     getData: (key: string): string => store.get(key) ?? '',
   };
+  return stub as DataTransfer;
 };
 
 describe('ColumnNodeItem section payload drop', () => {
@@ -114,7 +120,7 @@ describe('ColumnNodeItem section payload drop', () => {
   });
 
   it('accepts section drag payload from dataTransfer and routes to sectionActions.dropToColumn', () => {
-    const column = {
+    const column: BlockInstance = {
       id: 'column-1',
       type: 'Column',
       settings: {},
@@ -123,12 +129,12 @@ describe('ColumnNodeItem section payload drop', () => {
 
     render(
       <TreeSectionProvider sectionId='target-section'>
-        <ColumnNodeItem column={column as any} columnIndex={0} rowColumnCount={1} />
+        <ColumnNodeItem column={column} columnIndex={0} rowColumnCount={1} />
       </TreeSectionProvider>
     );
 
     const dataTransfer = createDataTransferStub();
-    setSectionDragData(dataTransfer as unknown as DataTransfer, {
+    setSectionDragData(dataTransfer, {
       id: 'source-section',
       type: 'TextElement',
       zone: 'template',

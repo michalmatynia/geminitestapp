@@ -20,6 +20,7 @@ import {
 import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import { usePresetsActions, usePresetsState } from '@/features/ai/ai-paths/context/PresetsContext';
+import { useSelectionActions } from '@/features/ai/ai-paths/context/SelectionContext';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 
@@ -35,7 +36,6 @@ type UseAiPathsPresetsArgs = {
   isPathLocked: boolean;
   setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  setSelectedNodeId: (value: string | null) => void;
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
   toast: ToastFn;
@@ -88,7 +88,6 @@ export function useAiPathsPresets({
   isPathLocked,
   setNodes,
   setEdges,
-  setSelectedNodeId,
   ensureNodeVisible,
   getCanvasCenterPosition,
   toast,
@@ -97,6 +96,7 @@ export function useAiPathsPresets({
 }: UseAiPathsPresetsArgs): AiPathsPresets {
   const presetsState = usePresetsState();
   const presetsActions = usePresetsActions();
+  const { selectNode, selectEdge } = useSelectionActions();
 
   const clusterPresets = presetsState.clusterPresets;
   const dbQueryPresets = presetsState.dbQueryPresets;
@@ -349,7 +349,8 @@ export function useAiPathsPresets({
     };
     setNodes((prev: AiNode[]): AiNode[] => [...prev, bundleNode, templateNode]);
     setEdges((prev: Edge[]): Edge[] => [...prev, edge]);
-    setSelectedNodeId(templateNode.id);
+    selectEdge(null);
+    selectNode(templateNode.id);
     ensureNodeVisible(templateNode);
     toast(`Preset applied: ${preset.name}`, { variant: 'success' });
   };

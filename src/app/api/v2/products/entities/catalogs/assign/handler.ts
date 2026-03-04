@@ -13,13 +13,12 @@ const assignSchema = z.object({
   mode: z.enum(['add', 'replace', 'remove']).optional(),
 });
 
-/**
- * POST /api/catalogs/assign
- * Bulk assigns catalogs to products.
- */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function postProductsCatalogAssignHandler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const parsed = await parseJsonBody(req, assignSchema, {
-    logPrefix: 'catalogs.ASSIGN',
+    logPrefix: 'products.entities.catalogs.assign.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

@@ -205,11 +205,11 @@ export const handlers = [
   }),
 
   // Catalogs endpoints
-  http.get('/api/catalogs', () => {
+  http.get('/api/v2/products/entities/catalogs', () => {
     return HttpResponse.json(mockCatalogs);
   }),
 
-  http.get('/api/catalogs/:id', ({ params }: ParamsContext) => {
+  http.get('/api/v2/products/entities/catalogs/:id', ({ params }: ParamsContext) => {
     const catalog = mockCatalogs.find((c: (typeof mockCatalogs)[number]) => c.id === params['id']);
     if (!catalog) {
       return HttpResponse.json({ error: 'Catalog not found' }, { status: 404 });

@@ -26,8 +26,6 @@ import { isEditableElement } from './utils/canvas-interaction-utils';
 type UseAiPathsCanvasInteractionsArgs = {
   isPathLocked: boolean;
   isPathSwitching?: boolean;
-  selectedNodeId: string | null;
-  setSelectedNodeId: (value: string | null) => void;
   confirmNodeSwitch?: (nextNodeId: string) => boolean | Promise<boolean>;
   confirm: (config: ConfirmConfig) => void;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
@@ -112,8 +110,6 @@ export function useAiPathsCanvasInteractions(
   const {
     isPathLocked,
     isPathSwitching = false,
-    selectedNodeId,
-    setSelectedNodeId,
     confirmNodeSwitch,
     confirm,
     clearRuntimeInputsForEdges,
@@ -254,12 +250,12 @@ export function useAiPathsCanvasInteractions(
 
   const handleDeleteSelectedNode = useCallback((): void => {
     if (isPathSwitching) return;
-    const nodeIdsToDelete =
-      selectedNodeIdsCtx.length > 0
-        ? selectedNodeIdsCtx
-        : ((selectedNodeIdCtx ?? selectedNodeId)?.trim() ?? '')
-          ? [((selectedNodeIdCtx ?? selectedNodeId) as string).trim()]
-          : [];
+    const trimmedSelectedNodeId = selectedNodeIdCtx?.trim() ?? '';
+    const nodeIdsToDelete = selectedNodeIdsCtx.length > 0
+      ? selectedNodeIdsCtx
+      : trimmedSelectedNodeId
+        ? [trimmedSelectedNodeId]
+        : [];
     if (nodeIdsToDelete.length === 0) {
       if (selectedEdgeId) {
         const edgeDeleteResult = computeEdgeSelectionDeleteResult(graphEdges, [selectedEdgeId]);
@@ -304,7 +300,6 @@ export function useAiPathsCanvasInteractions(
         });
         clearRuntimeInputsForEdges(deleteResult.removedEdges, deleteResult.remainingEdges);
         selectNode(null);
-        setSelectedNodeId(null);
         if (selectedEdgeId) {
           const shouldClearSelectedEdge = deleteResult.removedEdges.some(
             (edge: Edge): boolean => edge.id === selectedEdgeId
@@ -319,7 +314,6 @@ export function useAiPathsCanvasInteractions(
     selectedNodeIdsCtx,
     isPathSwitching,
     selectedNodeIdCtx,
-    selectedNodeId,
     selectedEdgeId,
     isPathLocked,
     graphNodes,
@@ -330,7 +324,6 @@ export function useAiPathsCanvasInteractions(
     setGraphNodes,
     clearRuntimeInputsForEdges,
     selectNode,
-    setSelectedNodeId,
     selectEdge,
   ]);
 
@@ -339,8 +332,7 @@ export function useAiPathsCanvasInteractions(
       if (event.defaultPrevented || event.repeat) return;
       if (event.key !== 'Delete' && event.key !== 'Backspace') return;
       if (isEditableElement(event.target)) return;
-      const hasNodeSelection =
-        selectedNodeIdsCtx.length > 0 || Boolean((selectedNodeIdCtx ?? selectedNodeId)?.trim());
+      const hasNodeSelection = selectedNodeIdsCtx.length > 0 || Boolean(selectedNodeIdCtx?.trim());
       const hasEdgeSelection = Boolean(selectedEdgeId);
       if (!hasNodeSelection && !hasEdgeSelection) return;
       event.preventDefault();
@@ -352,7 +344,6 @@ export function useAiPathsCanvasInteractions(
   }, [
     handleDeleteSelectedNode,
     selectedEdgeId,
-    selectedNodeId,
     selectedNodeIdCtx,
     selectedNodeIdsCtx,
   ]);
@@ -368,17 +359,15 @@ export function useAiPathsCanvasInteractions(
     selectEdge(edgeId);
     if (edgeId) {
       selectNode(null);
-      setSelectedNodeId(null);
     }
   };
 
   const handleSelectNode = (nodeId: string): void => {
-    if (nodeId === (selectedNodeIdCtx ?? selectedNodeId)) return;
+    if (nodeId === selectedNodeIdCtx) return;
 
     const proceed = (): void => {
       selectEdge(null);
       selectNode(nodeId);
-      setSelectedNodeId(nodeId);
     };
 
     if (confirmNodeSwitch) {

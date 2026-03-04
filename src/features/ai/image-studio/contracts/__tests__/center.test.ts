@@ -43,15 +43,12 @@ describe('imageStudioCenterRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('normalizes legacy object layout mode aliases', () => {
+  it('rejects legacy object layout mode aliases', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
       mode: 'server_object_layout_v1',
       requestId: 'center_request_layout_alias_1234',
     });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      expect(parsed.data.mode).toBe('server_object_layout');
-    }
+    expect(parsed.success).toBe(false);
   });
 
   it('rejects unknown centering mode', () => {

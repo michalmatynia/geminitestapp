@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   uid,
   findSection,
@@ -30,9 +24,7 @@ export function reduceComplexActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'DUPLICATE_SECTION': {
-      const section = state.sections.find(
-        (s: SectionInstance) => s.id === (action as any).sectionId
-      );
+      const section = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!section) return state;
       const duplicates = cloneSectionSubtree(state.sections, section.id, uid);
       if (duplicates.length === 0) return state;
@@ -66,12 +58,8 @@ export function reduceComplexActions(
 
     case 'REMOVE_COLUMN_FROM_ROW': {
       const updatedSections = state.sections.map((s: SectionInstance) => {
-        if (s.id !== (action as any).sectionId || s.type !== 'Grid') return s;
-        const result = removeColumnFromRows(
-          s.blocks,
-          (action as any).columnId,
-          (action as any).rowId
-        );
+        if (s.id !== action.sectionId || s.type !== 'Grid') return s;
+        const result = removeColumnFromRows(s.blocks, action.columnId, action.rowId);
         if (!result.removed) return s;
         const rows = result.blocks.filter((block: BlockInstance) => block.type === 'Row');
         const nextColumnCount = Math.max(
@@ -91,114 +79,108 @@ export function reduceComplexActions(
     }
 
     case 'UPDATE_NESTED_BLOCK_SETTINGS': {
-      const section = findSection(state.sections, (action as any).sectionId);
+      const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
-      const located = findBlock([section], (action as any).blockId);
+      const located = findBlock([section], action.blockId);
       if (!located) return state;
 
       const nextBlocks = updateSectionNestedBlocks(
         section.blocks,
-        (action as any).blockId,
+        action.blockId,
         (current: BlockInstance) => ({
           ...current,
-          settings: { ...located.block.settings, ...(action as any).settings },
+          settings: { ...located.block.settings, ...action.settings },
         })
       );
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: nextBlocks } : s
+        s.id === action.sectionId ? { ...s, blocks: nextBlocks } : s
       );
       return { ...state, sections: updatedSections };
     }
 
     case 'ADD_ELEMENT_TO_NESTED_BLOCK': {
-      const section = findSection(state.sections, (action as any).sectionId);
+      const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
-      if (!findBlock([section], (action as any).parentBlockId)) return state;
-      const newBlock = createBlockInstance((action as any).elementType);
+      if (!findBlock([section], action.parentBlockId)) return state;
+      const newBlock = createBlockInstance(action.elementType);
       if (!newBlock) return state;
 
       const nextBlocks = updateSectionNestedBlocks(
         section.blocks,
-        (action as any).parentBlockId,
+        action.parentBlockId,
         (block: BlockInstance) => ({
           ...block,
           blocks: [...(block.blocks ?? []), newBlock],
         })
       );
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: nextBlocks } : s
+        s.id === action.sectionId ? { ...s, blocks: nextBlocks } : s
       );
       return { ...state, sections: updatedSections, selectedNodeId: newBlock.id };
     }
 
     case 'REMOVE_ELEMENT_FROM_NESTED_BLOCK': {
-      const section = findSection(state.sections, (action as any).sectionId);
+      const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
 
       const nextBlocks = updateSectionNestedBlocks(
         section.blocks,
-        (action as any).parentBlockId,
+        action.parentBlockId,
         (parent: BlockInstance) => ({
           ...parent,
-          blocks: (parent.blocks ?? []).filter(
-            (b: BlockInstance) => b.id !== (action as any).elementId
-          ),
+          blocks: (parent.blocks ?? []).filter((b: BlockInstance) => b.id !== action.elementId),
         })
       );
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: nextBlocks } : s
+        s.id === action.sectionId ? { ...s, blocks: nextBlocks } : s
       );
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId:
-          state.selectedNodeId === (action as any).elementId ? null : state.selectedNodeId,
+        selectedNodeId: state.selectedNodeId === action.elementId ? null : state.selectedNodeId,
       };
     }
 
     case 'ADD_ELEMENT_TO_SECTION_BLOCK': {
-      const section = findSection(state.sections, (action as any).sectionId);
+      const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
-      if (!findBlock([section], (action as any).parentBlockId)) return state;
-      const newBlock = createBlockInstance((action as any).elementType);
+      if (!findBlock([section], action.parentBlockId)) return state;
+      const newBlock = createBlockInstance(action.elementType);
       if (!newBlock) return state;
 
       const nextBlocks = updateSectionNestedBlocks(
         section.blocks,
-        (action as any).parentBlockId,
+        action.parentBlockId,
         (block: BlockInstance) => ({
           ...block,
           blocks: [...(block.blocks ?? []), newBlock],
         })
       );
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: nextBlocks } : s
+        s.id === action.sectionId ? { ...s, blocks: nextBlocks } : s
       );
       return { ...state, sections: updatedSections, selectedNodeId: newBlock.id };
     }
 
     case 'REMOVE_ELEMENT_FROM_SECTION_BLOCK': {
-      const section = findSection(state.sections, (action as any).sectionId);
+      const section = findSection(state.sections, action.sectionId);
       if (!section) return state;
 
       const nextBlocks = updateSectionNestedBlocks(
         section.blocks,
-        (action as any).parentBlockId,
+        action.parentBlockId,
         (parent: BlockInstance) => ({
           ...parent,
-          blocks: (parent.blocks ?? []).filter(
-            (b: BlockInstance) => b.id !== (action as any).elementId
-          ),
+          blocks: (parent.blocks ?? []).filter((b: BlockInstance) => b.id !== action.elementId),
         })
       );
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === (action as any).sectionId ? { ...s, blocks: nextBlocks } : s
+        s.id === action.sectionId ? { ...s, blocks: nextBlocks } : s
       );
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId:
-          state.selectedNodeId === (action as any).elementId ? null : state.selectedNodeId,
+        selectedNodeId: state.selectedNodeId === action.elementId ? null : state.selectedNodeId,
       };
     }
 

@@ -79,10 +79,15 @@ export function useCanvasInteractionsConnections({
   toast: Toast;
 }): UseCanvasInteractionsConnectionsValue {
   const connectingRef = useRef(connecting);
+  const edgesRef = useRef(edges);
 
   useEffect(() => {
     connectingRef.current = connecting;
   }, [connecting]);
+
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
 
   const getPortPosition = useCallback(
     (
@@ -106,16 +111,18 @@ export function useCanvasInteractionsConnections({
         notifyLocked();
         return;
       }
-      const target = edges.find((edge) => edge.id === edgeId) ?? null;
+      const currentEdges = edgesRef.current;
+      const target = currentEdges.find((edge) => edge.id === edgeId) ?? null;
       if (!target) return;
+      const remaining = currentEdges.filter((edge) => edge.id !== edgeId);
 
-      setEdges((prev: Edge[]) => prev.filter((e) => e.id !== edgeId), {
+      setEdges(remaining, {
         reason: 'delete',
         source: 'canvas.connection.remove-edge',
       });
+      edgesRef.current = remaining;
 
       // Cleanup runtime inputs for removed edge
-      const remaining = edges.filter((e) => e.id !== edgeId);
       setRuntimeState((prev: RuntimeState) =>
         pruneRuntimeInputsInternal(prev, [target], remaining)
       );
@@ -125,7 +132,6 @@ export function useCanvasInteractionsConnections({
       }
     },
     [
-      edges,
       isPathLocked,
       notifyLocked,
       setEdges,
@@ -142,26 +148,27 @@ export function useCanvasInteractionsConnections({
         notifyLocked();
         return;
       }
+      const currentEdges = edgesRef.current;
       const shouldRemove = (edge: Edge): boolean =>
         direction === 'input'
           ? edge.to === nodeId && edge.toPort === port
           : edge.from === nodeId && edge.fromPort === port;
 
-      const removed = edges.filter(shouldRemove);
-      const remaining = edges.filter((e) => !shouldRemove(e));
+      const removed = currentEdges.filter(shouldRemove);
+      const remaining = currentEdges.filter((e) => !shouldRemove(e));
 
       setEdges(remaining, { reason: 'delete', source: 'canvas.connection.disconnect-port' });
+      edgesRef.current = remaining;
       setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removed, remaining));
 
       if (selectedEdgeId) {
-        const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+        const selectedEdge = currentEdges.find((edge) => edge.id === selectedEdgeId);
         if (selectedEdge && shouldRemove(selectedEdge)) {
           selectEdge(null);
         }
       }
     },
     [
-      edges,
       isPathLocked,
       notifyLocked,
       setEdges,
@@ -218,9 +225,24 @@ export function useCanvasInteractionsConnections({
         return;
       }
 
+      const currentEdges = edgesRef.current;
+      const hasExactConnection = currentEdges.some(
+        (edge) =>
+          edge.from === activeConnection.fromNodeId &&
+          edge.fromPort === activeConnection.fromPort &&
+          edge.to === node.id &&
+          edge.toPort === port
+      );
+      if (hasExactConnection) {
+        connectingRef.current = null;
+        endConnection();
+        return;
+      }
       const targetCardinality = getNodeInputPortCardinality(node, port);
       if (targetCardinality === 'one') {
-        const existingIncoming = edges.find((edge) => edge.to === node.id && edge.toPort === port);
+        const existingIncoming = currentEdges.find(
+          (edge) => edge.to === node.id && edge.toPort === port
+        );
         if (existingIncoming) {
           const isDuplicateConnection =
             existingIncoming.from === activeConnection.fromNodeId &&
@@ -255,15 +277,17 @@ export function useCanvasInteractionsConnections({
         toPort: port,
       };
 
-      setEdges((prev: Edge[]) => [...prev, newEdge], {
+      const nextEdges = [...currentEdges, newEdge];
+      setEdges(nextEdges, {
         reason: 'update',
         source: 'canvas.connection.complete',
       });
+      edgesRef.current = nextEdges;
       toast('Connection created.', { variant: 'success' });
       connectingRef.current = null;
       endConnection();
     },
-    [connecting, nodes, edges, isPathLocked, endConnection, setEdges, toast, notifyLocked]
+    [connecting, nodes, isPathLocked, endConnection, setEdges, toast, notifyLocked]
   );
 
   const handleReconnectInput = useCallback(
@@ -274,7 +298,8 @@ export function useCanvasInteractionsConnections({
       }
       if (connectingRef.current) return;
 
-      const edgeToMove = edges.find((e) => e.to === nodeId && e.toPort === port);
+      const currentEdges = edgesRef.current;
+      const edgeToMove = currentEdges.find((e) => e.to === nodeId && e.toPort === port);
       if (!edgeToMove?.from || !edgeToMove.fromPort) return;
 
       const fromNode = nodes.find((n) => n.id === edgeToMove.from);
@@ -295,8 +320,9 @@ export function useCanvasInteractionsConnections({
         }
         : start;
 
-      const remaining = edges.filter((e) => e.id !== edgeToMove.id);
+      const remaining = currentEdges.filter((e) => e.id !== edgeToMove.id);
       setEdges(remaining, { reason: 'delete', source: 'canvas.connection.reconnect-input' });
+      edgesRef.current = remaining;
       setRuntimeState((prev: RuntimeState) =>
         pruneRuntimeInputsInternal(prev, [edgeToMove], remaining)
       );
@@ -313,7 +339,6 @@ export function useCanvasInteractionsConnections({
       setConnectingPos(nextPos);
     },
     [
-      edges,
       nodes,
       view,
       viewportRef,

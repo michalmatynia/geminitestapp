@@ -110,6 +110,21 @@ function ThemeSettingsPanelContent({
     ];
   }, [savedThemes]);
 
+  const applyThemePatch = useCallback(
+    (values: Partial<ThemeSettings>): void => {
+      (
+        Object.entries(values) as Array<
+          [keyof ThemeSettings, ThemeSettings[keyof ThemeSettings] | undefined]
+        >
+      ).forEach(([key, value]) => {
+        if (value !== undefined) {
+          update(key, value);
+        }
+      });
+    },
+    [update]
+  );
+
   const renderSectionBody = useCallback<(section: string) => React.ReactNode>(
     (section: string): React.ReactNode => {
       switch (section) {
@@ -153,14 +168,7 @@ function ThemeSettingsPanelContent({
               <SettingsFieldsRenderer
                 fields={fields}
                 values={theme}
-                onChange={(values) => {
-                  Object.entries(values).forEach(([key, value]) => {
-                    update(
-                      key as keyof ThemeSettings,
-                      value as unknown as ThemeSettings[keyof ThemeSettings]
-                    );
-                  });
-                }}
+                onChange={applyThemePatch}
               />
             );
           }
@@ -168,7 +176,7 @@ function ThemeSettingsPanelContent({
         }
       }
     },
-  [theme, themePresetOptions, update]
+  [applyThemePatch, theme, themePresetOptions]
   );
 
   return (

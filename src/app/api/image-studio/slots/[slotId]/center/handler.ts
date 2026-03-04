@@ -7,8 +7,8 @@ import { z } from 'zod';
 import {
   IMAGE_STUDIO_CENTER_ERROR_CODES,
   imageStudioCenterRequestSchema,
+  normalizeImageStudioCenterMode,
   type ImageStudioCenterRequest,
-  type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterLayoutMetadata,
   type ImageStudioObjectDetectionUsed,
@@ -145,7 +145,11 @@ export async function postCenterSlotHandler(
             slot: existingSlot,
             mode: payload.mode,
             effectiveMode:
-              (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
+              normalizeImageStudioCenterMode(
+                typeof existingCenter.effectiveMode === 'string'
+                  ? existingCenter.effectiveMode
+                  : null
+              ) ?? payload.mode,
             sourceObjectBounds: existingCenter.sourceObjectBounds as ImageStudioCenterObjectBounds,
             targetObjectBounds: existingCenter.targetObjectBounds as ImageStudioCenterObjectBounds,
             layout: existingCenter.layout as ImageStudioCenterLayoutMetadata,
@@ -187,7 +191,11 @@ export async function postCenterSlotHandler(
             slot: existingSlot,
             mode: payload.mode,
             effectiveMode:
-              (existingCenter.effectiveMode as unknown as ImageStudioCenterMode) ?? payload.mode,
+              normalizeImageStudioCenterMode(
+                typeof existingCenter.effectiveMode === 'string'
+                  ? existingCenter.effectiveMode
+                  : null
+              ) ?? payload.mode,
             sourceObjectBounds: existingCenter.sourceObjectBounds as ImageStudioCenterObjectBounds,
             targetObjectBounds: existingCenter.targetObjectBounds as ImageStudioCenterObjectBounds,
             layout: existingCenter.layout as ImageStudioCenterLayoutMetadata,

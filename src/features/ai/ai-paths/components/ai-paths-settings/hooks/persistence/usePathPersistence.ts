@@ -367,13 +367,22 @@ export function usePathPersistence(
         }
         return true;
       } catch (error) {
+        const rawMessage = error instanceof Error ? error.message.trim() : '';
+        const shouldExposeRawMessage =
+          rawMessage.length > 0 &&
+          (/deprecated ai snapshot keys/i.test(rawMessage) ||
+            /legacy ai paths/i.test(rawMessage) ||
+            /ai path config contains/i.test(rawMessage));
         args.reportAiPathsError(
           error,
           { action: silent ? 'savePathSilent' : 'savePath', pathId: args.activePathId },
           'Failed to save AI Paths settings:'
         );
         if (!silent) {
-          args.toast('Failed to save AI Paths settings.', { variant: 'error' });
+          args.toast(
+            shouldExposeRawMessage ? rawMessage : 'Failed to save AI Paths settings.',
+            { variant: 'error' }
+          );
         }
         return false;
       } finally {

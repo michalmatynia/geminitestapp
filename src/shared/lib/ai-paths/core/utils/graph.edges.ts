@@ -9,6 +9,8 @@ const coerceEdgeList = (edges: unknown): Edge[] => {
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const edgeList = coerceEdgeList(edges);
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
+  const seenConnections = new Set<string>();
+  const canonicalEdges: Edge[] = [];
   const resolveNodeId = (value: string | undefined): string | null => {
     const first = typeof value === 'string' ? value.trim() : '';
     return first.length > 0 ? first : null;
@@ -30,24 +32,29 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     ...(fromPort ? { fromPort } : {}),
     ...(toPort ? { toPort } : {}),
   });
-  return edgeList.flatMap((edge: Edge) => {
+  edgeList.forEach((edge: Edge): void => {
     const fromNodeId = resolveNodeId(edge.from);
     const toNodeId = resolveNodeId(edge.to);
-    if (!fromNodeId || !toNodeId) return [];
+    if (!fromNodeId || !toNodeId) return;
     const from = nodeMap.get(fromNodeId);
     const to = nodeMap.get(toNodeId);
-    if (!from || !to) return [];
+    if (!from || !to) return;
     const fromPort = resolvePort(edge.fromPort) ?? undefined;
     const toPort = resolvePort(edge.toPort) ?? undefined;
 
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {
-        return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, toPort)];
+        const dedupeKey = `${fromNodeId}:${fromPort}->${toNodeId}:${toPort}`;
+        if (seenConnections.has(dedupeKey)) {
+          return;
+        }
+        seenConnections.add(dedupeKey);
+        canonicalEdges.push(toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, toPort));
       }
-      return [];
+      return;
     }
-    return [];
   });
+  return canonicalEdges;
 };
 
 export const validateConnection = (

@@ -5,11 +5,34 @@ import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuild
 import { useThemeSettings } from '../ThemeSettingsContext';
 import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 
+type SocialSettings = Pick<
+  ThemeSettings,
+  | 'socialFacebook'
+  | 'socialInstagram'
+  | 'socialYoutube'
+  | 'socialTiktok'
+  | 'socialTwitter'
+  | 'socialSnapchat'
+  | 'socialPinterest'
+  | 'socialTumblr'
+  | 'socialVimeo'
+  | 'socialLinkedin'
+>;
+
 export function ThemeSocialSection(): React.JSX.Element {
   const { theme, update } = useThemeSettings();
+  const applyThemePatch = (values: Partial<SocialSettings>): void => {
+    (Object.entries(values) as Array<[keyof SocialSettings, string | undefined]>).forEach(
+      ([key, value]) => {
+        if (value !== undefined) {
+          update(key, value);
+        }
+      }
+    );
+  };
 
   return (
-    <SettingsFieldsRenderer
+    <SettingsFieldsRenderer<SocialSettings>
       fields={[
         {
           key: 'socialFacebook',
@@ -73,14 +96,7 @@ export function ThemeSocialSection(): React.JSX.Element {
         },
       ]}
       values={theme}
-      onChange={(values) => {
-        Object.entries(values).forEach(([key, value]) => {
-          update(
-            key as keyof ThemeSettings,
-            value as unknown as ThemeSettings[keyof ThemeSettings]
-          );
-        });
-      }}
+      onChange={applyThemePatch}
     />
   );
 }

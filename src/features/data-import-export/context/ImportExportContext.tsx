@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 
 import {
+  useCatalogs,
   useImportPreference,
   useTemplates,
   useSavePreferenceMutation,
@@ -25,7 +26,6 @@ import {
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
-import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   ImportResponse,
   Template,

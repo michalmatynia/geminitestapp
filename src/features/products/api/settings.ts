@@ -40,6 +40,7 @@ import { type ProductParameter } from '@/shared/contracts/products/parameters';
 import { api } from '@/shared/lib/api-client';
 
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
+const CATALOGS_ENDPOINT = '/api/v2/products/entities/catalogs';
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {
@@ -71,19 +72,19 @@ export async function savePriceGroup(
 }
 
 export async function getCatalogs(): Promise<CatalogRecord[]> {
-  return api.get<CatalogRecord[]>('/api/catalogs');
+  return api.get<CatalogRecord[]>(CATALOGS_ENDPOINT);
 }
 
 export async function deleteCatalog(id: string): Promise<void> {
-  return api.delete(`/api/catalogs/${id}`);
+  return api.delete(`${CATALOGS_ENDPOINT}/${id}`);
 }
 
 export async function createCatalog(data: Partial<Catalog>): Promise<Catalog> {
-  return api.post<Catalog>('/api/catalogs', data);
+  return api.post<Catalog>(CATALOGS_ENDPOINT, data);
 }
 
 export async function updateCatalog(id: string, data: Partial<Catalog>): Promise<Catalog> {
-  return api.put<Catalog>(`/api/catalogs/${id}`, data);
+  return api.put<Catalog>(`${CATALOGS_ENDPOINT}/${id}`, data);
 }
 
 export async function getCategories(

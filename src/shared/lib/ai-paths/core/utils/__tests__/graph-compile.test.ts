@@ -17,6 +17,46 @@ const buildNode = (patch: Partial<AiNode>): AiNode =>
   }) as AiNode;
 
 describe('compileGraph', () => {
+  it('deduplicates exact duplicate edges during sanitization', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'source',
+        type: 'mapper',
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'target',
+        type: 'compare',
+        inputs: ['value'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-a',
+        from: 'source',
+        to: 'target',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-b',
+        from: 'source',
+        to: 'target',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(1);
+    expect(sanitized[0]).toMatchObject({
+      from: 'source',
+      to: 'target',
+      fromPort: 'value',
+      toPort: 'value',
+    });
+  });
+
   it('blocks fan-in on single-cardinality ports', () => {
     const nodes: AiNode[] = [
       buildNode({

@@ -64,7 +64,7 @@ describe('EditProductForm', () => {
         ])
       ),
       http.get('/api/v2/products/metadata/price-groups', () => HttpResponse.json([])),
-      http.get('/api/catalogs', () =>
+      http.get('/api/v2/products/entities/catalogs', () =>
         HttpResponse.json([
           { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] },
         ])

@@ -54,7 +54,7 @@ export const cmsPageComponentSchema = z.object({
   type: nonEmptyStringSchema,
   order: z.number(),
   content: cmsPageBuilderComponentContentSchema,
-});
+}).strict();
 
 export const cmsPageUpdateSchema = z.object({
   name: nonEmptyStringSchema,

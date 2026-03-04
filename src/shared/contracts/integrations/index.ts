@@ -8,6 +8,8 @@ export {
   type IntegrationTemplateMapping,
   integrationTemplateSchema,
   type IntegrationTemplate,
+  importTemplateParameterImportSchema,
+  type ImportTemplateParameterImport,
   createIntegrationTemplateSchema,
   type CreateIntegrationTemplate,
   type UpdateIntegrationTemplate,
@@ -15,7 +17,7 @@ export {
 export * from './base-com';
 export {
   importExportTemplateSchema,
-} from '../data-import-export';
+} from './import-export';
 export type {
   CatalogOption,
   DebugWarehouses,
@@ -27,12 +29,11 @@ export type {
   ImportListStats,
   ImportResponse,
   ImportRunDetail,
-  ImportTemplateParameterImport,
   InventoryOption,
   Template,
   TemplateMapping,
   WarehouseOption,
-} from '../data-import-export';
+} from './import-export';
 
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';
@@ -96,7 +97,7 @@ export type {
   SaveConnectionOptions,
 };
 
-import type { ImportTemplateParameterImport } from '../data-import-export';
+import type { ImportTemplateParameterImport } from './templates';
 
 /**
  * Session DTOs

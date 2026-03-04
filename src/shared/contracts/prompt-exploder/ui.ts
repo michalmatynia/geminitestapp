@@ -57,8 +57,8 @@ export const promptExploderSegmentationRecordSchema = z.object({
 export type PromptExploderSegmentationRecord = z.infer<
   typeof promptExploderSegmentationRecordSchema
 > & {
-  prompt: string;
-  segments: PromptExploderSegment[];
+  prompt?: string;
+  segments?: PromptExploderSegment[];
 };
 
 export type PromptExploderSegmentationLibraryState = {
@@ -208,7 +208,14 @@ export type PromptExploderTreeMetadata = z.infer<typeof promptExploderTreeMetada
 export type ParsedPromptHeading = {
   code: string | null;
   title: string;
+  level?: number;
+  text?: string;
+  id?: string;
 };
+
+export type ParseCustomBenchmarkCasesResult =
+  | { ok: true; cases: PromptExploderBenchmarkCase[] }
+  | { ok: false; error: string };
 
 export type ApplyBenchmarkSuggestionsResult = {
   nextLearnedRules: PromptValidationRule[];

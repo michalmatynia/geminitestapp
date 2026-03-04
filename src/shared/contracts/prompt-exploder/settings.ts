@@ -97,7 +97,7 @@ export const promptExploderSettingsSchema = z.object({
       benchmarkSuite: z.string().optional(),
       benchmarkLowConfidenceThreshold: z.number().optional(),
       benchmarkSuggestionLimit: z.number().optional(),
-      customBenchmarkCases: z.string().optional(),
+      customBenchmarkCases: z.union([z.string(), z.array(z.unknown())]).default([]),
     })
     .default({
       ruleProfile: 'all',

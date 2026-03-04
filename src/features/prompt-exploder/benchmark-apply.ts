@@ -9,6 +9,7 @@ import type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderLearnedTemplate,
   ApplyBenchmarkSuggestionsResult,
+  PromptExploderSegmentType,
 } from '@/shared/contracts/prompt-exploder';
 
 const toSlug = (value: string): string =>
@@ -56,13 +57,13 @@ export const applyBenchmarkSuggestions = (args: {
       id: ruleId,
       caseId: suggestion.caseId,
       segmentTitle: suggestion.segmentTitle ?? '',
-      segmentType: suggestion.suggestedSegmentType ?? 'static',
+      segmentType: (suggestion.suggestedSegmentType as PromptExploderSegmentType) ?? 'static',
       sequence: nextSequence,
       suggestedRuleTitle: suggestion.suggestedRuleTitle ?? '',
       suggestedRulePattern: suggestion.suggestedRulePattern ?? '',
       suggestedPriority: suggestion.suggestedPriority ?? 0,
       suggestedConfidenceBoost: suggestion.suggestedConfidenceBoost ?? 0,
-      suggestedTreatAsHeading: suggestion.suggestedTreatAsHeading ?? false,
+      suggestedTreatAsHeading: suggestion.suggestedRuleTreatAsHeading ?? false,
     });
     const existingRule = learnedById.get(ruleId);
     const suggestedRule = mergeRegexLearnedRule({
@@ -77,7 +78,7 @@ export const applyBenchmarkSuggestions = (args: {
       const now = args.nowFactory?.() ?? new Date().toISOString();
       const templateUpsert = upsertLearnedTemplate({
         templates: [...templateById.values()],
-        segmentType: suggestion.suggestedSegmentType ?? 'static',
+        segmentType: (suggestion.suggestedSegmentType as PromptExploderSegmentType) ?? 'static',
         title: suggestion.segmentTitle ?? '',
         sourceText,
         sampleText: suggestion.sampleText ?? '',

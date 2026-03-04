@@ -1,6 +1,6 @@
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
-import type { PromptExploderSegmentType } from './types';
+import type { PromptExploderSegmentType } from '@/shared/contracts/prompt-exploder';
 
 type PromptValidationRegexRule = Extract<PromptValidationRule, { kind: 'regex' }>;
 
@@ -91,7 +91,7 @@ export const buildBenchmarkLearnedRegexRuleDraft = (args: {
   suggestedRulePattern: string;
   suggestedPriority: number;
   suggestedConfidenceBoost: number;
-  suggestedTreatAsHeading: boolean;
+  suggestedRuleTreatAsHeading: boolean;
 }): PromptValidationRegexRule => {
   return buildExploderRegexRuleDraft({
     id: args.id,
@@ -106,6 +106,6 @@ export const buildBenchmarkLearnedRegexRuleDraft = (args: {
     segmentType: args.segmentType,
     priority: args.suggestedPriority,
     confidenceBoost: args.suggestedConfidenceBoost,
-    treatAsHeading: args.suggestedTreatAsHeading,
+    treatAsHeading: args.suggestedRuleTreatAsHeading,
   });
 };

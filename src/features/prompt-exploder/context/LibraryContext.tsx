@@ -122,8 +122,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       records: segmentationRecords,
       lastCapturedAt: segmentationRecords[0]?.capturedAt ?? null,
       totalCaptured: parsedSegmentationLibraryState.records.length,
+      version: parsedSegmentationLibraryState.version ?? 1,
     }),
-    [parsedSegmentationLibraryState.records.length, segmentationRecords]
+    [parsedSegmentationLibraryState.records.length, parsedSegmentationLibraryState.version, segmentationRecords]
   );
   const selectedSegmentationRecord = useMemo(() => {
     if (!selectedSegmentationRecordId) return null;

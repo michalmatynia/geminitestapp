@@ -206,14 +206,19 @@ export function PromptExploderLibraryTab(): React.JSX.Element {
                 Scope: {selectedSegmentationRecord.validationScope}
               </div>
               <div className='text-xs text-gray-300'>
-                Stack: {selectedSegmentationRecord.validationRuleStack}
+                Stack:{' '}
+                {typeof selectedSegmentationRecord.validationRuleStack === 'string'
+                  ? selectedSegmentationRecord.validationRuleStack
+                  : (selectedSegmentationRecord.validationRuleStack as any)?.name ||
+                    (selectedSegmentationRecord.validationRuleStack as any)?.id ||
+                    '—'}
               </div>
               <div className='text-xs text-gray-300'>
                 Target: {selectedSegmentationRecord.returnTarget}
               </div>
               <div className='text-xs text-gray-300'>
                 Avg confidence:{' '}
-                {selectedOutline
+                {selectedOutline?.stats
                   ? formatConfidencePercent(selectedOutline.stats.averageConfidence)
                   : '0%'}
               </div>

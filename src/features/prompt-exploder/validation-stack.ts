@@ -34,12 +34,16 @@ export const DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK: PromptExploderValida
 
 const FALLBACK_VALIDATION_STACK_OPTIONS: PromptExploderValidationRuleStackOption[] = [
   {
+    id: 'prompt-exploder',
+    name: VALIDATOR_SCOPE_LABELS['prompt-exploder'],
     value: 'prompt-exploder',
     label: VALIDATOR_SCOPE_LABELS['prompt-exploder'],
     description: VALIDATOR_SCOPE_DESCRIPTIONS['prompt-exploder'],
     scope: 'prompt-exploder',
   },
   {
+    id: 'case-resolver-prompt-exploder',
+    name: VALIDATOR_SCOPE_LABELS['case-resolver-prompt-exploder'],
     value: 'case-resolver-prompt-exploder',
     label: VALIDATOR_SCOPE_LABELS['case-resolver-prompt-exploder'],
     description: VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-prompt-exploder'],
@@ -215,6 +219,8 @@ export const buildPromptExploderValidationRuleStackOptions = (
 ): PromptExploderValidationRuleStackOption[] => {
   if (!patternLists.length) return FALLBACK_VALIDATION_STACK_OPTIONS;
   return patternLists.map((list: ValidatorPatternList) => ({
+    id: list.id,
+    name: list.name,
     value: list.id,
     label: list.name,
     description: list.description.trim() || VALIDATOR_SCOPE_DESCRIPTIONS[list.scope],

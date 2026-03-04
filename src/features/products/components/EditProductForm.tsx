@@ -74,12 +74,12 @@ function EditProductForm(): React.JSX.Element {
 }
 
 export default function EditProductPage({
-  product,
+  product: initialProduct,
 }: {
   product: ProductWithImages;
 }): React.JSX.Element {
   return (
-    <ProductFormProvider product={product}>
+    <ProductFormProvider product={initialProduct}>
       <EditProductForm />
     </ProductFormProvider>
   );

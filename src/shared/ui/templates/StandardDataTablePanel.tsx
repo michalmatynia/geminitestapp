@@ -87,11 +87,11 @@ export const StandardDataTablePanelRuntimeContext =
  * and a DataTable. This reduces boilerplate in admin-style views.
  */
 export function StandardDataTablePanel<TData>({
-  title,
-  description,
-  headerActions,
+  title: panelTitle,
+  description: panelDescription,
+  headerActions: panelHeaderActions,
   header,
-  refresh,
+  refresh: panelRefresh,
   alerts,
   filters,
   actions,
@@ -132,11 +132,11 @@ export function StandardDataTablePanel<TData>({
 
   return (
     <ListPanel
-      {...(title !== undefined ? { title } : {})}
-      {...(description !== undefined ? { description } : {})}
-      {...(headerActions !== undefined ? { headerActions } : {})}
+      {...(panelTitle !== undefined ? { title: panelTitle } : {})}
+      {...(panelDescription !== undefined ? { description: panelDescription } : {})}
+      {...(panelHeaderActions !== undefined ? { headerActions: panelHeaderActions } : {})}
       {...(resolvedHeader !== undefined ? { header: resolvedHeader } : {})}
-      {...(refresh !== undefined ? { refresh } : {})}
+      {...(panelRefresh !== undefined ? { refresh: panelRefresh } : {})}
       {...(resolvedAlerts !== undefined ? { alerts: resolvedAlerts } : {})}
       {...(resolvedFilters !== undefined ? { filters: resolvedFilters } : {})}
       {...(actions !== undefined ? { actions } : {})}

@@ -41,7 +41,7 @@ export function SelectModal<T>({
   loading = false,
   searchable = true,
   multiple = false,
-  size = 'md',
+  size: modalSize = 'md',
 }: SelectModalProps<T>) {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
@@ -87,7 +87,7 @@ export function SelectModal<T>({
       onClose={onClose}
       title={title}
       subtitle={subtitle}
-      size={size}
+      size={modalSize}
       onSave={handleConfirm}
       showSaveButton={multiple}
       saveText={`Select (${selectedIds.size})`}

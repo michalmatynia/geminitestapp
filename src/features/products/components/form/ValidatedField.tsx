@@ -29,7 +29,7 @@ export const ValidatedField = memo(function ValidatedField({
   placeholder,
   type = 'input',
   step,
-  required,
+  required: isRequired,
   rows,
   unit,
 }: ValidatedFieldProps): React.JSX.Element {
@@ -58,7 +58,7 @@ export const ValidatedField = memo(function ValidatedField({
   );
 
   return (
-    <FormField label={label} error={error} id={fieldNameKey} required={required}>
+    <FormField label={label} error={error} id={fieldNameKey} required={isRequired}>
       <div className='relative'>
         {type === 'textarea' ? (
           <Textarea

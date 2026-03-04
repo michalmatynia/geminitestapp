@@ -152,6 +152,35 @@ describe('starter workflow registry', () => {
     );
   });
 
+  it('does not resolve starter graphs with legacy edge alias fields', () => {
+    const entry = getStarterWorkflowTemplateById('starter_parameter_inference');
+    if (!entry) throw new Error('Missing starter_parameter_inference entry');
+
+    const canonical = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_alias_only_edges',
+    });
+    const aliasOnlyEdges = (canonical.edges ?? []).map((edge) => ({
+      id: edge.id,
+      source: edge.from,
+      target: edge.to,
+      sourceHandle: edge.fromPort ?? null,
+      targetHandle: edge.toPort ?? null,
+      createdAt: edge.createdAt ?? null,
+      updatedAt: edge.updatedAt ?? null,
+      data: edge.data ?? {},
+    }));
+    const configWithLegacyAliasEdges = {
+      ...canonical,
+      extensions: {},
+      edges: aliasOnlyEdges,
+    } as unknown as PathConfig;
+
+    const upgraded = upgradeStarterWorkflowPathConfig(configWithLegacyAliasEdges);
+
+    expect(upgraded.resolution).toBeNull();
+    expect(upgraded.changed).toBe(false);
+  });
+
   it('does not upgrade renamed legacy translation variants', () => {
     const upgraded = upgradeStarterWorkflowPathConfig(buildLegacyTranslationPathConfig());
 

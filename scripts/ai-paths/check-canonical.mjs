@@ -66,6 +66,7 @@ const FEATURE_RUN_SOURCES_FILE = 'src/features/ai/ai-paths/lib/run-sources.ts';
 const PRESETS_CONTEXT_FILE = 'src/features/ai/ai-paths/context/PresetsContext.tsx';
 const TRIGGER_FETCHER_MIGRATION_FILE =
   'src/shared/lib/ai-paths/core/normalization/normalization.edges.ts';
+const STARTER_WORKFLOW_REGISTRY_FILE = 'src/shared/lib/ai-paths/core/starter-workflows/registry.ts';
 
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
@@ -1101,6 +1102,45 @@ const checkApiClientCsrfCompatibilityAliasPrune = () => {
   }
 };
 
+const checkStarterWorkflowEdgeAliasCompatibilityPrune = () => {
+  const text = readFile(STARTER_WORKFLOW_REGISTRY_FILE);
+
+  const forbiddenSnippets = [
+    "record['from'] ?? record['source']",
+    "record['to'] ?? record['target']",
+    "record['fromPort'] ?? record['sourceHandle']",
+    "record['toPort'] ?? record['targetHandle']",
+    'edge.to ?? edge.target',
+    'edge.toPort ?? edge.targetHandle',
+  ];
+  const requiredSnippets = [
+    "from: normalizeText(record['from'])",
+    "to: normalizeText(record['to'])",
+    "fromPort: normalizeText(record['fromPort'])",
+    "toPort: normalizeText(record['toPort'])",
+    'const toNodeId = normalizeText(edge.to);',
+    'const port = normalizeText(edge.toPort);',
+  ];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        STARTER_WORKFLOW_REGISTRY_FILE,
+        `legacy starter-workflow edge alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        STARTER_WORKFLOW_REGISTRY_FILE,
+        `missing canonical starter-workflow edge parsing snippet: ${snippet}`
+      );
+    }
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -1142,6 +1182,7 @@ const main = () => {
   checkDatabaseQueryProviderResponseAliasCompatibilityPrune();
   checkDbCommandProviderAliasCompatibilityPrune();
   checkApiClientCsrfCompatibilityAliasPrune();
+  checkStarterWorkflowEdgeAliasCompatibilityPrune();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

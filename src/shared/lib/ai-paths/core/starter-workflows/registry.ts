@@ -139,10 +139,10 @@ const buildCanonicalNodeShape = (node: unknown): CanonicalNodeShape => {
 const buildCanonicalEdgeShape = (edge: unknown): CanonicalEdgeShape => {
   const record = toRecord(edge) ?? {};
   return {
-    from: normalizeText(record['from'] ?? record['source']),
-    to: normalizeText(record['to'] ?? record['target']),
-    fromPort: normalizeText(record['fromPort'] ?? record['sourceHandle']),
-    toPort: normalizeText(record['toPort'] ?? record['targetHandle']),
+    from: normalizeText(record['from']),
+    to: normalizeText(record['to']),
+    fromPort: normalizeText(record['fromPort']),
+    toPort: normalizeText(record['toPort']),
   };
 };
 
@@ -449,9 +449,9 @@ export const materializeStarterWorkflowPathConfig = (
 const edgeSignature = (edge: unknown): string => {
   const record = toRecord(edge) ?? {};
   return [
-    normalizeText(record['from'] ?? record['source']),
-    normalizeText(record['to'] ?? record['target']),
-    normalizeText(record['fromPort'] ?? record['sourceHandle']),
+    normalizeText(record['from']),
+    normalizeText(record['to']),
+    normalizeText(record['fromPort']),
   ].join('|');
 };
 
@@ -487,10 +487,10 @@ const deriveCustomUpdateTemplateFromMappings = (value: unknown): string | null =
 const buildIncomingPortMap = (config: PathConfig): Map<string, Set<string>> => {
   const map = new Map<string, Set<string>>();
   (config.edges ?? []).forEach((edge) => {
-    const toNodeId = normalizeText(edge.to ?? edge.target);
+    const toNodeId = normalizeText(edge.to);
     if (!toNodeId) return;
     const ports = map.get(toNodeId) ?? new Set<string>();
-    const port = normalizeText(edge.toPort ?? edge.targetHandle);
+    const port = normalizeText(edge.toPort);
     if (port) ports.add(port);
     map.set(toNodeId, ports);
   });
@@ -514,8 +514,8 @@ const buildStarterAssetOverlay = (current: PathConfig, latest: PathConfig): Path
       latestEdgesById.get(edge.id) ??
       latestEdgesBySignature.get(edgeSignature(edge));
     if (!latestEdge) return;
-    const toNodeId = normalizeText(latestEdge.to ?? latestEdge.target);
-    const toPort = normalizeText(latestEdge.toPort ?? latestEdge.targetHandle);
+    const toNodeId = normalizeText(latestEdge.to);
+    const toPort = normalizeText(latestEdge.toPort);
     if (!toNodeId || !toPort) return;
     const ports = promotedIncomingPorts.get(toNodeId) ?? new Set<string>();
     ports.add(toPort);

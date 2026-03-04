@@ -55,7 +55,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   filters,
   values,
   search = '',
-  searchPlaceholder = 'Search...',
+  searchPlaceholder: filterSearchPlaceholder = 'Search...',
   onFilterChange,
   onSearchChange,
   onReset,
@@ -107,7 +107,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         filters={filters}
         values={values}
         search={search}
-        searchPlaceholder={searchPlaceholder}
+        searchPlaceholder={filterSearchPlaceholder}
         onFilterChange={onFilterChange}
         {...(onSearchChange !== undefined ? { onSearchChange } : {})}
         {...(onReset !== undefined ? { onReset } : {})}

@@ -970,6 +970,31 @@ Goal: migrate feature surfaces to their canonical latest contracts and remove ru
   - `npx vitest run src/app/api/ai-paths/__tests__/db-provider-fallback.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-query-execution.guardrails.test.ts src/shared/lib/ai-paths/core/runtime/handlers/__tests__/integration-database-update-execution.test.ts` passes.
   - `npm run ai-paths:check:canonical` passes.
 
+## Executed Item 72 (AI Paths Starter-Workflow Edge Alias Compatibility Prune)
+
+- Removed legacy edge alias compatibility from starter-workflow canonical graph parsing:
+  - `src/shared/lib/ai-paths/core/starter-workflows/registry.ts`
+  - edge parsing/signature and incoming-port resolution now consume canonical edge fields only:
+    - `from`
+    - `to`
+    - `fromPort`
+    - `toPort`
+  - removed fallback reads of legacy alias fields:
+    - `source`
+    - `target`
+    - `sourceHandle`
+    - `targetHandle`
+- Added regression coverage:
+  - `src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts`
+  - verifies configs carrying alias-only edge fields are not resolved as canonical starter graphs.
+- Extended canonical AI-path guardrails:
+  - `scripts/ai-paths/check-canonical.mjs` (`checkStarterWorkflowEdgeAliasCompatibilityPrune`) now:
+    - blocks reintroduction of starter edge alias fallback snippets.
+    - requires canonical edge parsing snippets in starter workflow registry logic.
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/starter-workflows/__tests__/registry.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+
 ## Next Item
 
 Continue opportunistic canonicalization in remaining non-critical surfaces outside the current wave plan.

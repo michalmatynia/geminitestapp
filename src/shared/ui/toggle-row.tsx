@@ -62,10 +62,11 @@ type ToggleRowControlRuntimeProviderProps = {
   children: ReactNode;
 };
 
-function ToggleRowControlRuntimeProvider({
-  value,
-  children,
-}: ToggleRowControlRuntimeProviderProps): React.JSX.Element {
+function ToggleRowControlRuntimeProvider(
+  props: ToggleRowControlRuntimeProviderProps
+): React.JSX.Element {
+  const { value, children } = props;
+
   return (
     <ToggleRowControlRuntimeContext.Provider value={value}>
       {children}
@@ -112,24 +113,26 @@ function ToggleRowControl(): React.JSX.Element {
   return <>{runtime.controlWrapper ? runtime.controlWrapper(control) : control}</>;
 }
 
-export function ToggleRow({
-  label,
-  description,
-  icon,
-  checked,
-  onCheckedChange,
-  type = 'checkbox',
-  disabled = false,
-  className,
-  labelClassName,
-  id,
-  children,
-  enabledLabel,
-  disabledLabel,
-  enabledVariant,
-  disabledVariant,
-  controlWrapper,
-}: ToggleRowProps): React.JSX.Element {
+export function ToggleRow(props: ToggleRowProps): React.JSX.Element {
+  const {
+    label,
+    description,
+    icon,
+    checked,
+    onCheckedChange,
+    type = 'checkbox',
+    disabled = false,
+    className,
+    labelClassName,
+    id,
+    children,
+    enabledLabel,
+    disabledLabel,
+    enabledVariant,
+    disabledVariant,
+    controlWrapper,
+  } = props;
+
   const generatedId = id || React.useId();
   const controlRuntimeValue = React.useMemo<ToggleRowControlRuntimeValue>(
     () => ({

@@ -9,13 +9,9 @@ interface CanvasHudProps {
   onFit: () => void;
 }
 
-export function CanvasHud({
-  show,
-  scale,
-  onZoomIn,
-  onZoomOut,
-  onFit,
-}: CanvasHudProps): React.JSX.Element | null {
+export function CanvasHud(props: CanvasHudProps): React.JSX.Element | null {
+  const { show, scale, onZoomIn, onZoomOut, onFit } = props;
+
   if (!show) return null;
 
   return (

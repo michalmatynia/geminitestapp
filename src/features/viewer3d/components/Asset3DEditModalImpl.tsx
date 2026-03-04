@@ -24,11 +24,9 @@ type AssetFormState = {
   isPublic: boolean;
 };
 
-export function Asset3DEditModal({
-  isOpen,
-  onClose,
-  item: asset,
-}: Asset3DEditModalProps): React.JSX.Element | null {
+export function Asset3DEditModal(props: Asset3DEditModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, item: asset } = props;
+
   if (!asset) return null;
 
   const {

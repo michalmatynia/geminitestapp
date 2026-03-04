@@ -37,22 +37,26 @@ interface SimpleSettingsListProps<T extends SimpleSettingsListItem> {
  * SimpleSettingsList - A unified component for rendering simple lists in settings panels.
  * Optimized for lists of currencies, countries, languages, etc.
  */
-export function SimpleSettingsList<T extends SimpleSettingsListItem>({
-  items,
-  isLoading,
-  selectedId,
-  onSelect,
-  onEdit,
-  onDelete,
-  emptyMessage = 'No items found.',
-  renderActions,
-  renderExtraActions,
-  renderCustomContent,
-  className,
-  itemClassName,
-  columns = 1,
-  padding = 'md',
-}: SimpleSettingsListProps<T>): React.JSX.Element {
+export function SimpleSettingsList<T extends SimpleSettingsListItem>(
+  props: SimpleSettingsListProps<T>
+): React.JSX.Element {
+  const {
+    items,
+    isLoading,
+    selectedId,
+    onSelect,
+    onEdit,
+    onDelete,
+    emptyMessage = 'No items found.',
+    renderActions,
+    renderExtraActions,
+    renderCustomContent,
+    className,
+    itemClassName,
+    columns = 1,
+    padding = 'md',
+  } = props;
+
   if (isLoading) {
     return <LoadingState className='py-8' />;
   }

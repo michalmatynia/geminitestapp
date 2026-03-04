@@ -18,13 +18,15 @@ interface ImageRetryDropdownProps {
   buttonClassName?: string;
 }
 
-export function ImageRetryDropdown({
-  presets,
-  onRetry,
-  disabled = false,
-  className,
-  buttonClassName = 'bg-red-500/20 text-red-100 hover:bg-red-500/30',
-}: ImageRetryDropdownProps) {
+export function ImageRetryDropdown(props: ImageRetryDropdownProps) {
+  const {
+    presets,
+    onRetry,
+    disabled = false,
+    className,
+    buttonClassName = 'bg-red-500/20 text-red-100 hover:bg-red-500/30',
+  } = props;
+
   return (
     <div className={className}>
       <DropdownMenu>

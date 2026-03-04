@@ -62,17 +62,19 @@ const composeEventHandler =
       }
     };
 
-export function FileUploadButton({
-  accept,
-  multiple = true,
-  enableDrop = true,
-  enablePaste = true,
-  showProgress = true,
-  onFilesSelected,
-  onError,
-  children,
-  ...buttonProps
-}: FileUploadButtonProps): React.JSX.Element {
+export function FileUploadButton(props: FileUploadButtonProps): React.JSX.Element {
+  const {
+    accept,
+    multiple = true,
+    enableDrop = true,
+    enablePaste = true,
+    showProgress = true,
+    onFilesSelected,
+    onError,
+    children,
+    ...buttonProps
+  } = props;
+
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
@@ -198,19 +200,21 @@ export type FileUploadTriggerProps = {
   children: React.ReactNode;
 };
 
-export function FileUploadTrigger({
-  accept,
-  multiple = true,
-  disabled,
-  asChild,
-  className,
-  enableDrop = true,
-  enablePaste = true,
-  showProgress = true,
-  onFilesSelected,
-  onError,
-  children,
-}: FileUploadTriggerProps): React.JSX.Element {
+export function FileUploadTrigger(props: FileUploadTriggerProps): React.JSX.Element {
+  const {
+    accept,
+    multiple = true,
+    disabled,
+    asChild,
+    className,
+    enableDrop = true,
+    enablePaste = true,
+    showProgress = true,
+    onFilesSelected,
+    onError,
+    children,
+  } = props;
+
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const Comp = asChild ? Slot : 'span';
   const [isUploading, setIsUploading] = React.useState(false);

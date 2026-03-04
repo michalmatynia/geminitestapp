@@ -23,11 +23,9 @@ export interface BrainRoutingEditModalProps {
   onClose: () => void;
 }
 
-export function BrainRoutingEditModal({
-  open,
-  capability,
-  onClose,
-}: BrainRoutingEditModalProps): React.JSX.Element | null {
+export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.JSX.Element | null {
+  const { open, capability, onClose } = props;
+
   const {
     settings,
     effectiveCapabilityAssignments,

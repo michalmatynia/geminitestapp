@@ -14,18 +14,22 @@ type TagMultiSelectFieldProps = {
 };
 
 export function TagMultiSelectField(props: TagMultiSelectFieldProps): React.JSX.Element {
+  const { tags, selectedTagIds, onChange, loading, disabled, placeholder } = props;
+
   return (
     <ProductMetadataMultiSelectField
-      {...props}
       label='Tags'
-      items={props.tags}
-      selectedIds={props.selectedTagIds}
+      items={tags}
+      selectedIds={selectedTagIds}
+      onChange={onChange}
+      loading={loading}
+      disabled={disabled}
       contextItemsKey='tags'
       contextSelectedKey='selectedTagIds'
       contextLoadingKey='tagsLoading'
       contextOnChangeKey='onTagsChange'
       formContextToggleName='toggleTag'
-      placeholder={props.placeholder || 'Select tags'}
+      placeholder={placeholder || 'Select tags'}
       searchPlaceholder='Search tags...'
     />
   );

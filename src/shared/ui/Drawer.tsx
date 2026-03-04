@@ -26,20 +26,22 @@ interface DrawerProps {
 /**
  * Standardized Drawer component for floating side panels with backdrop.
  */
-export function Drawer({
-  children,
-  open,
-  onClose,
-  title,
-  description,
-  actions,
-  width = 448, // Default to max-w-md (448px)
-  className,
-  headerClassName,
-  contentClassName,
-  position = 'right',
-  showClose = true,
-}: DrawerProps): React.JSX.Element | null {
+export function Drawer(props: DrawerProps): React.JSX.Element | null {
+  const {
+    children,
+    open,
+    onClose,
+    title,
+    description,
+    actions,
+    width = 448, // Default to max-w-md (448px)
+    className,
+    headerClassName,
+    contentClassName,
+    position = 'right',
+    showClose = true,
+  } = props;
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';

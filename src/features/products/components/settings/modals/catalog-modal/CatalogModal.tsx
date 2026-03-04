@@ -21,15 +21,17 @@ interface CatalogModalProps extends EntityModalProps<Catalog, PriceGroup> {
   defaultId?: string;
 }
 
-export function CatalogModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: catalog,
-  items: priceGroups = [],
-  loading: loadingGroups = false,
-  defaultId: defaultGroupId = '',
-}: CatalogModalProps): React.JSX.Element {
+export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
+  const {
+    isOpen,
+    onClose,
+    onSuccess,
+    item: catalog,
+    items: priceGroups = [],
+    loading: loadingGroups = false,
+    defaultId: defaultGroupId = '',
+  } = props;
+
   const { languages, languagesLoading, languagesError } = useInternationalizationContext();
 
   const {

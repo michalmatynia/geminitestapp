@@ -14,18 +14,22 @@ type ProducerMultiSelectFieldProps = {
 };
 
 export function ProducerMultiSelectField(props: ProducerMultiSelectFieldProps): React.JSX.Element {
+  const { producers, selectedProducerIds, onChange, loading, disabled, placeholder } = props;
+
   return (
     <ProductMetadataMultiSelectField
-      {...props}
       label='Producers'
-      items={props.producers}
-      selectedIds={props.selectedProducerIds}
+      items={producers}
+      selectedIds={selectedProducerIds}
+      onChange={onChange}
+      loading={loading}
+      disabled={disabled}
       contextItemsKey='producers'
       contextSelectedKey='selectedProducerIds'
       contextLoadingKey='producersLoading'
       contextOnChangeKey='onProducersChange'
       formContextToggleName='toggleProducer'
-      placeholder={props.placeholder || 'Select producers'}
+      placeholder={placeholder || 'Select producers'}
       searchPlaceholder='Search producers...'
     />
   );

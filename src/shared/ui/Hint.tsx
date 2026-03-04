@@ -16,14 +16,16 @@ interface HintProps {
  * Hint - A small, informational text component for metadata or secondary context.
  * Leverages the shared Label component for consistent base styling.
  */
-export function Hint({
-  children,
-  className,
-  size = 'xs',
-  variant = 'muted',
-  italic = false,
-  uppercase = false,
-}: HintProps): React.JSX.Element {
+export function Hint(props: HintProps): React.JSX.Element {
+  const {
+    children,
+    className,
+    size = 'xs',
+    variant = 'muted',
+    italic = false,
+    uppercase = false,
+  } = props;
+
   const sizeClasses = {
     xs: 'text-xs',
     xxs: 'text-[10px]',

@@ -20,12 +20,9 @@ type PriceGroupFormState = {
   isDefault: boolean;
 };
 
-export function PriceGroupModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: priceGroup,
-}: PriceGroupModalProps): React.JSX.Element {
+export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element {
+  const { isOpen, onClose, onSuccess, item: priceGroup } = props;
+
   const { currencies: currencyOptions, loadingCurrencies } = useInternationalizationContext();
 
   const {

@@ -18,19 +18,15 @@ const normalizeListFromTextarea = (value: string): string[] => {
 
 const serializeListForTextarea = (value: string[]): string => value.join('\n');
 
-export function CatalogEditorField({
-  label,
-  description,
-  value,
-  onChange,
-  placeholder,
-}: {
+export function CatalogEditorField(props: {
   label: string;
   description: string;
   value: string[];
   onChange: (next: string[]) => void;
   placeholder: string;
 }): React.JSX.Element {
+  const { label, description, value, onChange, placeholder } = props;
+
   return (
     <div className='space-y-1'>
       <Label className='text-xs text-gray-300'>{label}</Label>

@@ -14,18 +14,20 @@ export interface FolderTreePanelProps extends React.HTMLAttributes<HTMLDivElemen
   onOpenMasterSettings?: (instance: FolderTreeInstance) => void;
 }
 
-export function FolderTreePanel({
-  header,
-  bodyClassName,
-  className,
-  masterInstance,
-  masterSettingsHref,
-  onOpenMasterSettings,
-  children,
-  ...props
-}: FolderTreePanelProps): React.JSX.Element {
+export function FolderTreePanel(props: FolderTreePanelProps): React.JSX.Element {
+  const {
+    header,
+    bodyClassName,
+    className,
+    masterInstance,
+    masterSettingsHref,
+    onOpenMasterSettings,
+    children,
+    ...restProps
+  } = props;
+
   return (
-    <div className={cn('relative flex h-full flex-col', className)} {...props}>
+    <div className={cn('relative flex h-full flex-col', className)} {...restProps}>
       {header}
       <div className={cn('flex-1 min-h-0', bodyClassName)}>{children}</div>
       {masterInstance ? (

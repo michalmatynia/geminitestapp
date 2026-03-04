@@ -1,4 +1,4 @@
-import React from 'react';
+import { useMemo, type JSX } from 'react';
 import {
   Brush,
   Check,
@@ -12,6 +12,7 @@ import {
   Unlink,
 } from 'lucide-react';
 import { type VectorPoint, type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
+import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { Tooltip } from './tooltip';
@@ -31,27 +32,34 @@ export interface VectorToolbarProps {
   className?: string;
 }
 
-export function VectorToolbar({
-  tool,
-  onSelectTool,
-  onUndo,
-  onClose,
-  onDetach,
-  onClear,
-  disableUndo,
-  disableClose,
-  disableDetach,
-  disableClear,
-  className,
-}: VectorToolbarProps): React.JSX.Element {
-  const hasActions = Boolean(onUndo || onClose || onDetach || onClear);
+type VectorToolbarRuntimeValue = {
+  tool: VectorToolMode;
+  onSelectTool: (tool: VectorToolMode) => void;
+  onUndo?: () => void;
+  onClose?: () => void;
+  onDetach?: () => void;
+  onClear?: () => void;
+  disableUndo?: boolean;
+  disableClose?: boolean;
+  disableDetach?: boolean;
+  disableClear?: boolean;
+  className?: string;
+  hasActions: boolean;
+};
+
+const {
+  Context: VectorToolbarRuntimeContext,
+  useStrictContext: useVectorToolbarRuntime,
+} = createStrictContext<VectorToolbarRuntimeValue>({
+  hookName: 'useVectorToolbarRuntime',
+  providerName: 'VectorToolbarRuntimeProvider',
+  displayName: 'VectorToolbarRuntimeContext',
+});
+
+function VectorToolbarToolButtons(): JSX.Element {
+  const { onSelectTool, tool } = useVectorToolbarRuntime();
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 shadow-lg',
-        className
-      )}
-    >
+    <>
       <Tooltip content='Select'>
         <Button
           type='button'
@@ -112,7 +120,15 @@ export function VectorToolbar({
           <Brush className='size-4' />
         </Button>
       </Tooltip>
-      {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
+    </>
+  );
+}
+
+function VectorToolbarActionButtons(): JSX.Element {
+  const { disableClear, disableClose, disableDetach, disableUndo, onClear, onClose, onDetach, onUndo } =
+    useVectorToolbarRuntime();
+  return (
+    <>
       {onUndo ? (
         <Tooltip content='Undo last point'>
           <Button
@@ -165,7 +181,73 @@ export function VectorToolbar({
           </Button>
         </Tooltip>
       ) : null}
+    </>
+  );
+}
+
+function VectorToolbarRuntime(): JSX.Element {
+  const { className, hasActions } = useVectorToolbarRuntime();
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 shadow-lg',
+        className
+      )}
+    >
+      <VectorToolbarToolButtons />
+      {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
+      <VectorToolbarActionButtons />
     </div>
+  );
+}
+
+export function VectorToolbar({
+  tool,
+  onSelectTool,
+  onUndo,
+  onClose,
+  onDetach,
+  onClear,
+  disableUndo,
+  disableClose,
+  disableDetach,
+  disableClear,
+  className,
+}: VectorToolbarProps): JSX.Element {
+  const runtimeValue = useMemo<VectorToolbarRuntimeValue>(
+    () => ({
+      tool,
+      onSelectTool,
+      onUndo,
+      onClose,
+      onDetach,
+      onClear,
+      disableUndo,
+      disableClose,
+      disableDetach,
+      disableClear,
+      className,
+      hasActions: Boolean(onUndo || onClose || onDetach || onClear),
+    }),
+    [
+      tool,
+      onSelectTool,
+      onUndo,
+      onClose,
+      onDetach,
+      onClear,
+      disableUndo,
+      disableClose,
+      disableDetach,
+      disableClear,
+      className,
+    ]
+  );
+
+  return (
+    <VectorToolbarRuntimeContext.Provider value={runtimeValue}>
+      <VectorToolbarRuntime />
+    </VectorToolbarRuntimeContext.Provider>
   );
 }
 

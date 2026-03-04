@@ -132,6 +132,14 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
     reason: 'filemaker inline-organization-email legacy-specific error channel reintroduced',
   },
   {
+    token: 'parseFilemakerDatabaseForCaseResolver',
+    reason: 'filemaker case-resolver parser compatibility surface reintroduced',
+  },
+  {
+    token: 'deprecated ai snapshot keys',
+    reason: 'shared error-classifier deprecated snapshot-key compatibility channel reintroduced',
+  },
+  {
     token: 'Legacy AI Paths runtime identity fields are no longer supported.',
     reason: 'ai-paths runtime identity legacy-specific error channel reintroduced',
   },
@@ -182,6 +190,66 @@ const FORBIDDEN_RUNTIME_GUARD_TOKENS = [
   {
     token: '...(requestedModel ? { requestedModel } : {}),',
     reason: 'chatbot jobs legacy requested-model payload compatibility channel reintroduced',
+  },
+  {
+    token: 'unknown_legacy',
+    reason: 'database sync legacy unknown-type compatibility token reintroduced',
+  },
+  {
+    token: 'without legacy model snapshot fields.',
+    reason: 'error-classifier legacy snapshot wording reintroduced',
+  },
+  {
+    token: 'legacyMappingCount:',
+    reason: 'integrations legacy parameter-source count metadata key reintroduced',
+  },
+  {
+    token: 'legacyKeys,',
+    reason: 'product relation legacy-key metadata channel reintroduced',
+  },
+  {
+    token: 'LEGACY_TRIGGER_DATA_PORTS',
+    reason: 'ai-paths legacy trigger-port compatibility naming channel reintroduced',
+  },
+  {
+    token: 'assertNoLegacyTriggerDataGraph',
+    reason: 'ai-paths legacy trigger-data guard naming channel reintroduced',
+  },
+  {
+    token: 'assertNoLegacyParameterSourceMappings',
+    reason: 'integrations legacy parameter-source guard naming channel reintroduced',
+  },
+  {
+    token: 'const legacyMappings =',
+    reason: 'integrations legacy parameter-source local compatibility naming reintroduced',
+  },
+  {
+    token: 'const legacyPorts =',
+    reason: 'ai-paths legacy trigger-port local compatibility naming reintroduced',
+  },
+  {
+    token: 'LEGACY_PARAMETER_SOURCE_PREFIX',
+    reason: 'integrations legacy parameter-source prefix naming channel reintroduced',
+  },
+  {
+    token: 'LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX',
+    reason: 'data-import-export legacy parameter-source prefix naming channel reintroduced',
+  },
+  {
+    token: 'hasLegacyExportParameterSourceMapping',
+    reason: 'data-import-export legacy parameter-source guard naming channel reintroduced',
+  },
+  {
+    token: "import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from '../ai-paths-core';",
+    reason: 'case-resolver graph edge contract recoupled to ai-paths edge schema',
+  },
+  {
+    token: "import { aiNodeSchema, edgeSchema } from '../ai-paths';",
+    reason: 'case-resolver relation graph edge contract recoupled to ai-paths edge schema',
+  },
+  {
+    token: "import { edgeSchema, type Edge } from '@/shared/contracts/ai-paths-core/nodes';",
+    reason: 'case-resolver edge validation recoupled to ai-paths edge schema',
   },
 ];
 const PRODUCTS_METADATA_HANDLER_FILES = [

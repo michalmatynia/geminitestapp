@@ -81,7 +81,7 @@ const DEFAULT_CONNECTION_KEY = 'base_export_default_connection_id';
 const STOCK_FALLBACK_KEY = 'base_export_stock_fallback_enabled';
 const IMAGE_RETRY_PRESETS_KEY = 'base_export_image_retry_presets';
 const BASEHOST_MAPPING_KEYS = new Set(['images_basehost_all', 'image_basehost_all']);
-const LEGACY_PARAMETER_SOURCE_PREFIX = 'parameter:';
+const UNSUPPORTED_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
 const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =>
   mappings.filter((mapping: TemplateMapping) => {
@@ -126,25 +126,25 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   }
 };
 
-const assertNoLegacyParameterSourceMappings = (args: {
+const assertNoUnsupportedParameterSourceMappings = (args: {
   mappings?: TemplateMapping[] | null;
   templateId?: string;
 }): void => {
   const mappings = Array.isArray(args.mappings) ? args.mappings : [];
-  const legacyMappings = mappings.filter((mapping: TemplateMapping) =>
+  const unsupportedMappings = mappings.filter((mapping: TemplateMapping) =>
     String(mapping.sourceKey ?? '')
       .trim()
       .toLowerCase()
-      .startsWith(LEGACY_PARAMETER_SOURCE_PREFIX)
+      .startsWith(UNSUPPORTED_PARAMETER_SOURCE_PREFIX)
   );
-  if (legacyMappings.length === 0) return;
+  if (unsupportedMappings.length === 0) return;
 
   const templateRef = args.templateId ? ` "${args.templateId}"` : '';
   throw badRequestError(
     `Export template${templateRef} contains unsupported parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
     {
       templateId: args.templateId ?? null,
-      legacyMappingCount: legacyMappings.length,
+      unsupportedMappingCount: unsupportedMappings.length,
     }
   );
 };
@@ -435,7 +435,7 @@ export const createExportTemplate = async (input: {
   mappings?: TemplateMapping[];
   exportImagesAsBase64?: boolean;
 }): Promise<Template> => {
-  assertNoLegacyParameterSourceMappings({
+  assertNoUnsupportedParameterSourceMappings({
     mappings: input.mappings ?? [],
   });
 
@@ -467,7 +467,7 @@ export const updateExportTemplate = async (
   }>
 ): Promise<Template | null> => {
   if (input.mappings !== undefined) {
-    assertNoLegacyParameterSourceMappings({
+    assertNoUnsupportedParameterSourceMappings({
       templateId: id,
       mappings: input.mappings,
     });

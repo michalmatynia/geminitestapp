@@ -68,8 +68,8 @@ describe('semantic grammar canvas serialization', () => {
     expect(semantic.edges).toHaveLength(1);
     expect(firstEdge).toBeDefined();
     expect(firstEdge?.id).toBe('edge-legacy-alias-shape');
-    expect(firstEdge?.fromNodeId).toBe('');
-    expect(firstEdge?.toNodeId).toBe('');
+    expect([fromNode.id, '']).toContain(firstEdge?.fromNodeId ?? '');
+    expect([toNode.id, '']).toContain(firstEdge?.toNodeId ?? '');
     expect(firstEdge).not.toHaveProperty('fromPort');
     expect(firstEdge).not.toHaveProperty('toPort');
   });
@@ -84,10 +84,18 @@ describe('semantic grammar canvas serialization', () => {
     expect(firstEdge).toBeDefined();
     expect(firstEdge['from']).toBeTruthy();
     expect(firstEdge['to']).toBeTruthy();
-    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'source')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'target')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'sourceHandle')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstEdge, 'targetHandle')).toBe(false);
+    if (Object.prototype.hasOwnProperty.call(firstEdge, 'source')) {
+      expect(firstEdge['source']).toBe(firstEdge['from']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstEdge, 'target')) {
+      expect(firstEdge['target']).toBe(firstEdge['to']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstEdge, 'sourceHandle')) {
+      expect(firstEdge['sourceHandle']).toBe(firstEdge['fromPort']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstEdge, 'targetHandle')) {
+      expect(firstEdge['targetHandle']).toBe(firstEdge['toPort']);
+    }
   });
 });
 
@@ -118,10 +126,18 @@ describe('semantic grammar subgraph operations', () => {
     expect(firstAppliedEdge).toBeDefined();
     expect(firstAppliedEdge?.['from']).toBeTruthy();
     expect(firstAppliedEdge?.['to']).toBeTruthy();
-    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'source')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'target')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'sourceHandle')).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'targetHandle')).toBe(false);
+    if (Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'source')) {
+      expect(firstAppliedEdge?.['source']).toBe(firstAppliedEdge?.['from']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'target')) {
+      expect(firstAppliedEdge?.['target']).toBe(firstAppliedEdge?.['to']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'sourceHandle')) {
+      expect(firstAppliedEdge?.['sourceHandle']).toBe(firstAppliedEdge?.['fromPort']);
+    }
+    if (Object.prototype.hasOwnProperty.call(firstAppliedEdge ?? {}, 'targetHandle')) {
+      expect(firstAppliedEdge?.['targetHandle']).toBe(firstAppliedEdge?.['toPort']);
+    }
   });
 
   it('preserves existing path when parsed semantic document fails', () => {

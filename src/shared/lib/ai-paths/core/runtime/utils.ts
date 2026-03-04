@@ -34,6 +34,22 @@ const createAbortError = (): Error => {
   return error;
 };
 
+const AI_JOB_NOT_FOUND_ERROR_NAME = 'AiJobNotFoundError';
+
+const isAiJobNotFoundErrorMessage = (message: string): boolean => {
+  const normalized = message.trim().toLowerCase();
+  if (!normalized) return false;
+  if (normalized.includes('job not found')) return true;
+  if (normalized.includes('request failed with status 404')) return true;
+  return normalized.includes('not found') && normalized.includes('job');
+};
+
+const createAiJobNotFoundError = (jobId: string, message: string): Error => {
+  const error = new Error(`AI job "${jobId}" not found while polling: ${message}`);
+  (error as { name?: string }).name = AI_JOB_NOT_FOUND_ERROR_NAME;
+  return error;
+};
+
 const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
   new Promise((resolve, reject) => {
     if (!signal) {
@@ -320,6 +336,8 @@ export const pollGraphJob = async (
   const maxAttempts = options?.maxAttempts ?? 60;
   const intervalMs = options?.intervalMs ?? 2000;
   const signal = options?.signal;
+  const maxNotFoundGraceAttempts = Math.max(1, Math.min(maxAttempts, 3));
+  let consecutiveNotFoundAttempts = 0;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     if (signal?.aborted) {
       throw createAbortError();
@@ -330,10 +348,26 @@ export const pollGraphJob = async (
         if (signal?.aborted) {
           throw createAbortError();
         }
-        throw new Error(`Connection error: ${pollResult.error}`);
+        const pollErrorMessage = pollResult.error || 'Unknown poll error.';
+        if (isAiJobNotFoundErrorMessage(pollErrorMessage)) {
+          consecutiveNotFoundAttempts += 1;
+          if (consecutiveNotFoundAttempts <= maxNotFoundGraceAttempts && attempt < maxAttempts - 1) {
+            await sleep(Math.max(0, intervalMs), signal);
+            continue;
+          }
+          throw createAiJobNotFoundError(jobId, pollErrorMessage);
+        }
+        consecutiveNotFoundAttempts = 0;
+        throw new Error(`Connection error while polling AI job "${jobId}": ${pollErrorMessage}`);
       }
+      consecutiveNotFoundAttempts = 0;
       const { status, result: jobResult, error: jobError } = pollResult.data;
-      if (!status) continue;
+      if (!status) {
+        if (attempt < maxAttempts - 1) {
+          await sleep(Math.max(0, intervalMs), signal);
+        }
+        continue;
+      }
       if (status === 'completed') {
         const result = jobResult as { result?: string } | string | null | undefined;
         if (result && typeof result === 'object' && 'result' in result) {
@@ -354,9 +388,12 @@ export const pollGraphJob = async (
       if (signal?.aborted) {
         throw createAbortError();
       }
+      if (error instanceof Error && error.name === AI_JOB_NOT_FOUND_ERROR_NAME) {
+        throw error;
+      }
       if (attempt === maxAttempts - 1) {
         throw new Error(
-          `Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`,
+          `Connection error after ${maxAttempts} attempts while polling AI job "${jobId}": ${error instanceof Error ? error.message : String(error)}`,
           { cause: error }
         );
       }
@@ -364,7 +401,7 @@ export const pollGraphJob = async (
       await sleep(Math.max(0, intervalMs), signal);
     }
   }
-  throw new Error('AI job timed out.');
+  throw new Error(`AI job "${jobId}" timed out.`);
 };
 
 export const buildDbQueryPayload = (

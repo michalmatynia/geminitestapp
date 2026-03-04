@@ -21,7 +21,6 @@ import {
   linkFilemakerPhoneNumberToParty,
   parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
-  parseFilemakerDatabaseForCaseResolver,
   parseAndUpsertFilemakerEmailsForParty,
   removeFilemakerEmail,
   removeFilemakerEvent,

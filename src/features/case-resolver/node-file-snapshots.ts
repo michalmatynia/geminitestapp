@@ -3,8 +3,13 @@ import {
   caseResolverNodeFileSnapshotSchema,
 } from '@/shared/contracts/case-resolver';
 import { validationError } from '@/shared/errors/app-error';
+import { z } from 'zod';
 
 import { parseCanonicalCaseResolverEdge } from './settings.edge-validation';
+
+const caseResolverNodeFileSnapshotEnvelopeSchema = caseResolverNodeFileSnapshotSchema.extend({
+  edges: z.array(z.unknown()),
+});
 
 export const createEmptyNodeFileSnapshot = (): CaseResolverNodeFileSnapshot => ({
   kind: 'case_resolver_node_file_snapshot_v2',
@@ -64,7 +69,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
   }
 
   const { source: _source, ...snapshotRecord } = record;
-  const validation = caseResolverNodeFileSnapshotSchema.safeParse(snapshotRecord);
+  const validation = caseResolverNodeFileSnapshotEnvelopeSchema.safeParse(snapshotRecord);
   if (!validation.success) {
     throw validationError('Invalid Case Resolver node-file snapshot payload.', {
       source: 'case_resolver.node_file_snapshot',

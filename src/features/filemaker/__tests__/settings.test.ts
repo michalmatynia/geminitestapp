@@ -21,7 +21,6 @@ import {
   linkFilemakerPhoneNumberToParty,
   parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
-  parseFilemakerDatabaseForCaseResolver,
   parseAndUpsertFilemakerEmailsForParty,
   removeFilemakerEmail,
   removeFilemakerEvent,
@@ -418,9 +417,9 @@ describe('filemaker settings', () => {
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
   });
 
-  it('rejects inline address fields for case resolver consumers', () => {
+  it('rejects inline address fields when full inline address payload is present', () => {
     expect(() =>
-      parseFilemakerDatabaseForCaseResolver(
+      parseFilemakerDatabase(
         JSON.stringify({
           version: 2,
           persons: [
@@ -489,8 +488,8 @@ describe('filemaker settings', () => {
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
   });
 
-  it('rejects invalid filemaker payload for case resolver', () => {
-    expect(() => parseFilemakerDatabaseForCaseResolver('{"version":2')).toThrowError(
+  it('rejects invalid filemaker payload', () => {
+    expect(() => parseFilemakerDatabase('{"version":2')).toThrowError(
       /Invalid Filemaker database JSON payload/
     );
   });

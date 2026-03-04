@@ -9,7 +9,7 @@ vi.mock('@/shared/lib/ai-paths/api/client/base', () => ({
   apiPost: apiPostMock,
 }));
 
-import { databaseQuery, databaseUpdate } from '@/shared/lib/ai-paths/api/client/database';
+import { databaseAction, databaseQuery, databaseUpdate } from '@/shared/lib/ai-paths/api/client/database';
 
 describe('database client canonical db-action routing', () => {
   beforeEach(() => {
@@ -76,5 +76,30 @@ describe('database client canonical db-action routing', () => {
       action: 'findOne',
       filter: { id: 'p-2' },
     });
+  });
+
+  it('allows overriding db-action timeout for long-running runtime operations', async () => {
+    await databaseAction(
+      {
+        provider: 'auto',
+        action: 'updateOne',
+        collection: 'products',
+        filter: { id: 'p-1' },
+        update: { $set: { description_en: 'updated' } },
+      },
+      { timeoutMs: 45_000 }
+    );
+
+    expect(apiPostMock).toHaveBeenCalledWith(
+      '/api/ai-paths/db-action',
+      {
+        provider: 'auto',
+        action: 'updateOne',
+        collection: 'products',
+        filter: { id: 'p-1' },
+        update: { $set: { description_en: 'updated' } },
+      },
+      { timeoutMs: 45_000 }
+    );
   });
 });

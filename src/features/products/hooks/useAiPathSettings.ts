@@ -39,7 +39,7 @@ const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
   value === 'action' ||
   value === 'distinct';
 
-const LEGACY_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);
+const UNSUPPORTED_TRIGGER_DATA_PORTS = new Set(['context', 'meta', 'entityId', 'entityType']);
 
 const resolvePreferredActivePathId = (
   data: { aiPathsActivePathId?: unknown } | null | undefined
@@ -192,7 +192,7 @@ const resolveEdgeSourcePort = (edge: Record<string, unknown>): string => {
   return fromPort;
 };
 
-const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
+const assertNoUnsupportedTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void => {
   const nodeById = new Map<string, AiNode>(
     nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
   );
@@ -200,15 +200,15 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
   nodes.forEach((node: AiNode): void => {
     if (node.type !== 'trigger') return;
     const outputs = Array.isArray(node.outputs) ? node.outputs : [];
-    const legacyPorts = outputs.filter((port: string): boolean =>
-      LEGACY_TRIGGER_DATA_PORTS.has(port)
+    const unsupportedPorts = outputs.filter((port: string): boolean =>
+      UNSUPPORTED_TRIGGER_DATA_PORTS.has(port)
     );
-    if (legacyPorts.length === 0) return;
+    if (unsupportedPorts.length === 0) return;
     throw validationError('AI Path config contains unsupported trigger output ports.', {
       source: 'ai_paths.path_settings',
       reason: 'unsupported_trigger_outputs',
       nodeId: node.id,
-      outputs: legacyPorts,
+      outputs: unsupportedPorts,
     });
   });
 
@@ -220,7 +220,7 @@ const assertNoLegacyTriggerDataGraph = (nodes: AiNode[], edges: unknown[]): void
     if (!sourceNodeId || !sourcePort) return;
     const sourceNode = nodeById.get(sourceNodeId);
     if (sourceNode?.type !== 'trigger') return;
-    if (!LEGACY_TRIGGER_DATA_PORTS.has(sourcePort)) return;
+    if (!UNSUPPORTED_TRIGGER_DATA_PORTS.has(sourcePort)) return;
     throw validationError('AI Path config contains unsupported trigger data edges.', {
       source: 'ai_paths.path_settings',
       reason: 'unsupported_trigger_data_edge',
@@ -265,7 +265,7 @@ export const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
   const rawEdges = Array.isArray(contractBackfilledConfig.edges)
     ? contractBackfilledConfig.edges
     : [];
-  assertNoLegacyTriggerDataGraph(normalized, rawEdges);
+  assertNoUnsupportedTriggerDataGraph(normalized, rawEdges);
   const graphNodes = normalizeNodes(normalized);
   const graphEdges = sanitizeEdges(graphNodes, rawEdges);
   if (stableStringify(graphEdges) !== stableStringify(rawEdges)) {

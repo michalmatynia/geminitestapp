@@ -56,4 +56,27 @@ describe('engine-core onNodeError lifecycle', () => {
     const call = onNodeError.mock.calls[0] as [{ node: AiNode; error: Error }];
     expect(call?.[0]?.node?.id).toBe(node.id);
   });
+
+  it('stores failed output status in runtime snapshot when a handler throws', async () => {
+    const node = buildFailingNode('snapshot_failure');
+
+    await expect(
+      evaluateGraphInternal([node], [] satisfies Edge[], {
+        resolveHandler: () => {
+          return () => {
+            throw new Error('snapshot boom');
+          };
+        },
+        reportAiPathsError: (): void => {},
+      })
+    ).rejects.toMatchObject({
+      state: {
+        nodeOutputs: {
+          [node.id]: {
+            status: 'failed',
+          },
+        },
+      },
+    });
+  });
 });

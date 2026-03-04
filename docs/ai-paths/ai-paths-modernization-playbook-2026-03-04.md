@@ -1129,6 +1129,93 @@ Progress (2026-03-04):
       1. `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` -> passed.
       2. `npm run ai-paths:check:canonical` -> passed (`4234` files scanned).
       3. `npm run typecheck` -> passed.
+51. Started bulk-prune Phase 1 foundation in seam 181:
+   1. Added central AI Paths legacy-prune manifest:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. seed rule families cover edge-shape canonicalization and target-path reason-channel canonicalization.
+   2. Added shared manifest utilities:
+      1. `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+      2. includes manifest load/validation and reusable rule evaluation engine.
+   3. Added bulk-prune scanner scaffold:
+      1. `scripts/ai-paths/bulk-prune.mjs`
+      2. supports Phase 1 scan mode + optional JSON report output.
+      3. added npm scripts:
+         1. `ai-paths:bulk-prune:scan`
+         2. `ai-paths:bulk-prune:report`
+   4. Wired canonical guardrail to manifest-driven checks:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. added `checkManifestLegacyPruneRules` so guardrails consume manifest rules in addition to bespoke checks.
+   5. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed.
+      2. `npm run ai-paths:check:canonical` -> passed.
+      3. `npm run typecheck` -> passed.
+52. Started bulk-prune Phase 2 codemod execution in seam 182:
+   1. Extended manifest target schema with optional deterministic replacements:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added `replacements[]` mappings for canonical edge-shape and target-path message/reason channels.
+      3. manifest version bumped to `phase2-2026-03-05`.
+   2. Extended shared manifest utilities with apply engine:
+      1. `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+      2. validates replacement schema (`from`, `to`, optional `replaceAll`).
+      3. added `applyLegacyPruneManifest(...)` with dry-run support and per-target replacement report output.
+   3. Implemented bulk-prune apply mode:
+      1. `scripts/ai-paths/bulk-prune.mjs`
+      2. `--mode apply` now executes manifest replacements (or dry-run with `--dry-run`) and emits post-apply findings.
+      3. apply report includes changed file count, replaced snippet count, and detailed target replacement telemetry.
+   4. Added npm entrypoints for apply workflow:
+      1. `package.json`
+      2. `ai-paths:bulk-prune:apply:dry-run`
+      3. `ai-paths:bulk-prune:apply`
+   5. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed.
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:bulk-prune:apply` -> passed.
+      4. `npm run ai-paths:check:canonical` -> passed (`4237` files scanned).
+      5. `npm run typecheck` -> fails due pre-existing unrelated compile errors in currently-migrating edge-shape call sites (`source` / `target` usage in Case Resolver and AI Paths simulation surfaces).
+53. Expanded bulk-prune manifest coverage (Phase 2) and started guardrail consolidation (Phase 3) in seam 183:
+   1. Expanded manifest rule coverage from seed set to broader AI Paths legacy-compat surfaces:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. rule count increased to `15` rules across `20` targets.
+      3. added rule families for:
+         1. database template/input catalog alias prune.
+         2. db-action provider/request alias prune.
+         3. database client legacy-route/payload alias prune.
+         4. API client CSRF helper alias prune.
+         5. DB schema provider `all` alias prune.
+         6. entity-update simpleParameters alias prune.
+         7. database-settings target-path edit canonicalization.
+         8. starter-workflow edge alias prune.
+         9. core factory/node-identity edge alias cleanup prune.
+   2. Started Phase 3 manifest-first guardrail consolidation:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct execution of migrated bespoke checks from `main` and left those surfaces to `checkManifestLegacyPruneRules`.
+      3. retained bespoke checks only for non-manifested logic (cross-file scans, file existence checks, and dynamic checks not yet manifest-ready).
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`15` rules, `20` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4237` files scanned).
+      4. `npm run typecheck` -> fails due pre-existing Case Resolver edge-shape contract drift (e.g. `src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts`, `src/features/case-resolver/node-file-snapshots.ts`, `src/features/case-resolver/settings-graph.ts`).
+54. Continued Phase 3 manifest-first consolidation for database provider fallback/alias in seam 184:
+   1. Expanded bulk-prune manifest coverage for database provider fallback/alias metadata channels:
+      1. `scripts/ai-paths/legacy-prune-manifest.json`
+      2. added rule `database_provider_fallback_alias_metadata` across:
+         1. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+         2. `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+         3. `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+      3. rule enforces canonical requested/resolved provider metadata and blocks fallback/provider alias snippet reintroduction.
+   2. Consolidated canonical guardrail execution path:
+      1. `scripts/ai-paths/check-canonical.mjs`
+      2. removed direct `main` execution of:
+         1. `checkDatabaseProviderFallbackCompatibilityPrune`
+         2. `checkDatabaseProviderAliasCompatibilityPrune`
+         3. `checkDatabaseUpdateProviderAliasCompatibilityPrune`
+         4. `checkDatabaseQueryProviderResponseAliasCompatibilityPrune`
+      3. these surfaces are now enforced through `checkManifestLegacyPruneRules`.
+   3. Validation:
+      1. `npm run ai-paths:bulk-prune:scan` -> passed (`16` rules across `23` targets).
+      2. `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` -> passed.
+      3. `npm run ai-paths:check:canonical` -> passed (`4237` files scanned).
+      4. `npm run typecheck` -> fails due pre-existing unrelated compile error in runtime module typing (`src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`).
 
 ## Deprecation map
 

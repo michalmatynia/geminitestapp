@@ -57,7 +57,7 @@ export function classifyError(error: unknown): ErrorCategory {
 
   const message = error instanceof Error ? error.message : String(error);
 
-  if (/deprecated ai snapshot keys/i.test(message) || /includes unsupported keys/i.test(message)) {
+  if (/includes unsupported keys/i.test(message)) {
     return ERROR_CATEGORY.VALIDATION;
   }
 
@@ -132,7 +132,6 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
 
     case ERROR_CATEGORY.VALIDATION:
       if (
-        /agent persona settings contain deprecated ai snapshot keys/i.test(message) ||
         /agent persona settings payload includes unsupported keys/i.test(message) ||
         /agent persona payload includes unsupported keys/i.test(message)
       ) {
@@ -145,18 +144,17 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
         break;
       }
       if (
-        /image studio settings contain deprecated ai snapshot keys/i.test(message) ||
         /image studio settings payload includes unsupported keys/i.test(message)
       ) {
         actions.push({
           label: 'Update Image Studio Settings',
           description:
-            'Open Image Studio settings and save once to persist the latest settings contract without legacy model snapshot fields.',
+            'Open Image Studio settings and save once to persist the latest settings contract without unsupported model snapshot fields.',
           actionType: 'CHECK_CONFIG',
         });
         break;
       }
-      if (/deprecated ai snapshot keys/i.test(message) || /includes unsupported keys/i.test(message)) {
+      if (/includes unsupported keys/i.test(message)) {
         actions.push({
           label: 'Check Settings Contract',
           description:

@@ -1,0 +1,632 @@
+{
+  "version": "phase2-2026-03-05",
+  "description": "Seed manifest for bulk AI-Paths legacy compatibility pruning; used by check-canonical and bulk-prune scanner.",
+  "rules": [
+    {
+      "id": "ai_paths_settings_edge_alias_shape",
+      "description": "AI Paths settings sanitizer must parse edges using canonical from/fromPort only.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "forbiddenSnippets": [
+            "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+            "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+            "return from || source;",
+            "return fromPort || sourceHandle;"
+          ],
+          "requiredSnippets": [
+            "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+            "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+            "return from;",
+            "return fromPort;"
+          ],
+          "replacements": [
+            {
+              "from": "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+              "to": "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';"
+            },
+            {
+              "from": "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+              "to": "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';"
+            },
+            {
+              "from": "return from || source;",
+              "to": "return from;"
+            },
+            {
+              "from": "return fromPort || sourceHandle;",
+              "to": "return fromPort;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loaded_path_settings_edge_alias_shape",
+      "description": "Loaded-path sanitizer must parse edges using canonical from/fromPort only.",
+      "targets": [
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "forbiddenSnippets": [
+            "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+            "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+            "return from || source;",
+            "return fromPort || sourceHandle;"
+          ],
+          "requiredSnippets": [
+            "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+            "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+            "return from;",
+            "return fromPort;"
+          ],
+          "replacements": [
+            {
+              "from": "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+              "to": "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';"
+            },
+            {
+              "from": "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+              "to": "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';"
+            },
+            {
+              "from": "return from || source;",
+              "to": "return from;"
+            },
+            {
+              "from": "return fromPort || sourceHandle;",
+              "to": "return fromPort;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "semantic_grammar_edge_alias_shape",
+      "description": "Semantic grammar conversion must remain canonical-only for edge shape.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts",
+          "forbiddenSnippets": [
+            ": typeof edge.source === 'string' && edge.source.trim().length > 0",
+            ": typeof edge.target === 'string' && edge.target.trim().length > 0",
+            ": typeof edge.sourceHandle === 'string'",
+            ": typeof edge.targetHandle === 'string'"
+          ],
+          "requiredSnippets": [
+            "const toEdgeFromNodeId = (edge: Edge): string =>",
+            "typeof edge.from === 'string' ? edge.from.trim() : '';",
+            "const toEdgeToNodeId = (edge: Edge): string => (typeof edge.to === 'string' ? edge.to.trim() : '');",
+            "typeof edge.fromPort === 'string' ? edge.fromPort : null;",
+            "typeof edge.toPort === 'string' ? edge.toPort : null;"
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts",
+          "forbiddenSnippets": [
+            "source: semanticEdge.fromNodeId,",
+            "target: semanticEdge.toNodeId,",
+            "sourceHandle: semanticEdge.fromPort,",
+            "targetHandle: semanticEdge.toPort,"
+          ],
+          "requiredSnippets": [
+            "from: semanticEdge.fromNodeId,",
+            "to: semanticEdge.toNodeId,",
+            "fromPort: semanticEdge.fromPort,",
+            "toPort: semanticEdge.toPort,"
+          ],
+          "replacements": [
+            {
+              "from": "source: semanticEdge.fromNodeId,",
+              "to": "from: semanticEdge.fromNodeId,"
+            },
+            {
+              "from": "target: semanticEdge.toNodeId,",
+              "to": "to: semanticEdge.toNodeId,"
+            },
+            {
+              "from": "sourceHandle: semanticEdge.fromPort,",
+              "to": "fromPort: semanticEdge.fromPort,"
+            },
+            {
+              "from": "targetHandle: semanticEdge.toPort,",
+              "to": "toPort: semanticEdge.toPort,"
+            }
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts",
+          "forbiddenSnippets": [
+            ": typeof edge.source === 'string' && edge.source.trim().length > 0",
+            ": typeof edge.target === 'string' && edge.target.trim().length > 0",
+            "source: fromNodeId,",
+            "target: toNodeId,",
+            "sourceHandle: edge.fromPort,",
+            "targetHandle: edge.toPort,"
+          ],
+          "requiredSnippets": [
+            "const resolveEdgeFromNodeId = (edge: Edge): string =>",
+            "typeof edge.from === 'string' ? edge.from.trim() : '';",
+            "const resolveEdgeToNodeId = (edge: Edge): string =>",
+            "typeof edge.to === 'string' ? edge.to.trim() : '';",
+            "from: fromNodeId,",
+            "to: toNodeId,",
+            "fromPort: edge.fromPort,",
+            "toPort: edge.toPort,"
+          ],
+          "replacements": [
+            {
+              "from": "source: fromNodeId,",
+              "to": "from: fromNodeId,"
+            },
+            {
+              "from": "target: toNodeId,",
+              "to": "to: toNodeId,"
+            },
+            {
+              "from": "sourceHandle: edge.fromPort,",
+              "to": "fromPort: edge.fromPort,"
+            },
+            {
+              "from": "targetHandle: edge.toPort,",
+              "to": "toPort: edge.toPort,"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "parameter_inference_target_path_channel",
+      "description": "Parameter inference target-path sanitizers must use canonical unsupported channel.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+          "forbiddenSnippets": [
+            "AI Path config contains deprecated parameter inference target path.",
+            "reason: 'deprecated_parameter_inference_target_path'"
+          ],
+          "requiredSnippets": [
+            "targetPath.length > 0 && targetPath !== 'parameters'",
+            "AI Path config contains unsupported parameter inference target path.",
+            "reason: 'unsupported_parameter_inference_target_path'"
+          ],
+          "replacements": [
+            {
+              "from": "AI Path config contains deprecated parameter inference target path.",
+              "to": "AI Path config contains unsupported parameter inference target path."
+            },
+            {
+              "from": "reason: 'deprecated_parameter_inference_target_path'",
+              "to": "reason: 'unsupported_parameter_inference_target_path'"
+            }
+          ]
+        },
+        {
+          "file": "src/features/products/hooks/useAiPathSettings.ts",
+          "forbiddenSnippets": [
+            "AI Path config contains deprecated parameter inference target path.",
+            "reason: 'deprecated_parameter_inference_target_path'"
+          ],
+          "requiredSnippets": [
+            "targetPath.length > 0 && targetPath !== 'parameters'",
+            "AI Path config contains unsupported parameter inference target path.",
+            "reason: 'unsupported_parameter_inference_target_path'"
+          ],
+          "replacements": [
+            {
+              "from": "AI Path config contains deprecated parameter inference target path.",
+              "to": "AI Path config contains unsupported parameter inference target path."
+            },
+            {
+              "from": "reason: 'deprecated_parameter_inference_target_path'",
+              "to": "reason: 'unsupported_parameter_inference_target_path'"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_template_catalog_alias",
+      "description": "Database template context must not reintroduce catalogId alias compatibility helpers.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts",
+          "forbiddenSnippets": [
+            "resolveCatalogIdFromTemplateInputs",
+            "applyCatalogIdAliases",
+            "syncCatalogId();",
+            "templateContext['catalogId'] = catalogId;"
+          ],
+          "requiredSnippets": [
+            "const templateContext: Record<string, unknown> = {",
+            "...templateInputs,"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_input_catalog_alias",
+      "description": "Database input resolution must read canonical catalogId only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts",
+          "forbiddenSnippets": [
+            "pickCatalogIdFromCatalogs",
+            "pickCatalogId(record['entity'] as Record<string, unknown>)",
+            "pickCatalogId(record['entityJson'] as Record<string, unknown>)",
+            "pickCatalogId(record['product'] as Record<string, unknown>)",
+            "pickCatalogId(record['bundle'] as Record<string, unknown>)"
+          ],
+          "requiredSnippets": [
+            "return pickString(record['catalogId']);"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_provider_fallback_alias_metadata",
+      "description": "Database runtime provider metadata must use requestedProvider/resolvedProvider only (no fallback/provider aliases).",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts",
+          "forbiddenSnippets": [
+            "fallback?: Record<string, unknown>;",
+            "queryResultData['fallback']",
+            "providerFallback",
+            "...(resolvedProvider ? { provider: resolvedProvider } : {}),",
+            "provider?: 'mongodb' | 'prisma';",
+            "const responseProvider = queryResultData['provider'];",
+            "responseProvider === 'mongodb' || responseProvider === 'prisma'"
+          ],
+          "requiredSnippets": [
+            "queryResultData['resolvedProvider'] === 'mongodb' || queryResultData['resolvedProvider'] === 'prisma'",
+            "...(querySource ? { querySource } : {}),"
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts",
+          "forbiddenSnippets": [
+            "fallback?: Record<string, unknown>;",
+            "responseData['fallback']",
+            "providerFallback",
+            "provider?: 'mongodb' | 'prisma';",
+            "responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'"
+          ],
+          "requiredSnippets": [
+            "responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'",
+            "...(resolvedProvider ? { resolvedProvider } : {}),"
+          ]
+        },
+        {
+          "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts",
+          "forbiddenSnippets": [
+            "bundle['providerFallback']",
+            "databaseMeta['providerFallback']",
+            "typeof bundle['provider'] === 'string'"
+          ],
+          "requiredSnippets": [
+            "databaseMeta['requestedProvider'] = requestedProvider;",
+            "databaseMeta['resolvedProvider'] = resolvedProvider;"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "db_action_provider_alias",
+      "description": "DB action payload metadata must not include legacy provider alias key.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/db-action/handler.ts",
+          "forbiddenSnippets": [],
+          "requiredSnippets": [
+            "  requestedProvider: requestedProvider ?? 'auto',",
+            "  resolvedProvider: provider,"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "db_action_request_alias",
+      "description": "DB action request contract must reject query/updates aliases and use canonical filter/update flow.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/db-action/handler.ts",
+          "forbiddenSnippets": [
+            "query: z.record(z.string(), z['unknown']()).optional(),",
+            "coerceQuery(filter || query)",
+            "extractFlatUpdates(update || updates)",
+            "normalizeReplaceDoc(update || updates)",
+            "normalizeUpdateDoc(update || updates)"
+          ],
+          "requiredSnippets": [
+            "query: z.never().optional(),",
+            "updates: z.never().optional(),",
+            "const where = coerceQuery(filter);",
+            "const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);",
+            "const flatUpdates = extractFlatUpdates(update);",
+            "const replacement = normalizeReplaceDoc(update);",
+            "const updateDoc = normalizeUpdateDoc(update);"
+          ],
+          "replacements": [
+            {
+              "from": "coerceQuery(filter || query)",
+              "to": "coerceQuery(filter)"
+            },
+            {
+              "from": "extractFlatUpdates(update || updates)",
+              "to": "extractFlatUpdates(update)"
+            },
+            {
+              "from": "normalizeReplaceDoc(update || updates)",
+              "to": "normalizeReplaceDoc(update)"
+            },
+            {
+              "from": "normalizeUpdateDoc(update || updates)",
+              "to": "normalizeUpdateDoc(update)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_client_legacy_route",
+      "description": "Database client must route through canonical db-action endpoint and canonical payload keys.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/api/client/database.ts",
+          "forbiddenSnippets": [
+            "/api/ai-paths/db-query",
+            "/api/ai-paths/db-update",
+            "query: payload.query,",
+            "filter: payload.query,",
+            "update: payload.updates,"
+          ],
+          "requiredSnippets": [
+            "return apiPost<T>('/api/ai-paths/db-action', payload,",
+            "return apiPost<T>('/api/ai-paths/db-action', {",
+            "filter: unknown;",
+            "projection?: unknown;",
+            "update: unknown;",
+            "action: payload.single ? 'findOne' : 'find',",
+            "filter: payload.filter,",
+            "action: payload.single === false ? 'updateMany' : 'updateOne',",
+            "update: payload.update,"
+          ],
+          "replacements": [
+            {
+              "from": "/api/ai-paths/db-query",
+              "to": "/api/ai-paths/db-action"
+            },
+            {
+              "from": "/api/ai-paths/db-update",
+              "to": "/api/ai-paths/db-action"
+            },
+            {
+              "from": "query: payload.query,",
+              "to": "filter: payload.filter,"
+            },
+            {
+              "from": "filter: payload.query,",
+              "to": "filter: payload.filter,"
+            },
+            {
+              "from": "update: payload.updates,",
+              "to": "update: payload.update,"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api_client_csrf_alias",
+      "description": "API client must use canonical CSRF helper naming only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/api/client.ts",
+          "forbiddenSnippets": [
+            "withCsrfHeadersCompat"
+          ],
+          "requiredSnippets": [],
+          "replacements": [
+            {
+              "from": "withCsrfHeadersCompat",
+              "to": "withApiCsrfHeaders"
+            }
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/api/client/base.ts",
+          "forbiddenSnippets": [
+            "withCsrfHeadersCompat"
+          ],
+          "requiredSnippets": [
+            "withApiCsrfHeaders"
+          ],
+          "replacements": [
+            {
+              "from": "withCsrfHeadersCompat",
+              "to": "withApiCsrfHeaders"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "db_schema_provider_alias",
+      "description": "DB schema node config must reject deprecated provider 'all' alias.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx",
+          "forbiddenSnippets": [
+            "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
+            "provider: selectedNode.config?.db_schema?.provider ?? 'all',",
+            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
+            "{ value: 'all', label: 'All Providers' },"
+          ],
+          "requiredSnippets": [
+            "provider: 'auto' | 'mongodb' | 'prisma';",
+            "const normalizeSchemaProvider = (value: unknown): SchemaConfig['provider'] =>",
+            "provider: normalizeSchemaProvider(selectedNode.config?.db_schema?.provider),",
+            "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })"
+          ],
+          "replacements": [
+            {
+              "from": "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
+              "to": "provider: 'auto' | 'mongodb' | 'prisma';"
+            },
+            {
+              "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
+              "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entity_update_simple_parameters_alias",
+      "description": "Entity update handler must reject simpleParameters alias under canonical unsupported semantics.",
+      "targets": [
+        {
+          "file": "src/app/api/ai-paths/update/handler.ts",
+          "forbiddenSnippets": [
+            "LEGACY_SIMPLE_PARAMETER_PREFIX",
+            "normalizeLegacySimpleParameterUpdates",
+            "mergeLegacySimpleParameterInferenceWithExisting",
+            "prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined",
+            "AI Paths product update payload contains deprecated \"simpleParameters\". Use \"parameters\"."
+          ],
+          "requiredSnippets": [
+            "Object.prototype.hasOwnProperty.call(prepared, 'simpleParameters')",
+            "AI Paths product update payload contains unsupported \"simpleParameters\" alias. Use \"parameters\"."
+          ],
+          "replacements": [
+            {
+              "from": "AI Paths product update payload contains deprecated \"simpleParameters\". Use \"parameters\".",
+              "to": "AI Paths product update payload contains unsupported \"simpleParameters\" alias. Use \"parameters\"."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database_settings_target_path_edit",
+      "description": "Database settings edit flow must pin parameter-inference targetPath to canonical parameters path.",
+      "targets": [
+        {
+          "file": "src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx",
+          "forbiddenSnippets": [
+            "updateGuard({ targetPath: e.target.value || undefined })"
+          ],
+          "requiredSnippets": [
+            "const CANONICAL_PARAMETER_INFERENCE_TARGET_PATH = 'parameters';",
+            "const normalizeParameterInferenceTargetPath = (value: unknown): string | undefined => {",
+            "const normalizedGuardTargetPath = normalizeParameterInferenceTargetPath(guard.targetPath);",
+            "targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH,",
+            "value={normalizedGuardTargetPath ?? CANONICAL_PARAMETER_INFERENCE_TARGET_PATH}",
+            "readOnly"
+          ],
+          "replacements": [
+            {
+              "from": "updateGuard({ targetPath: e.target.value || undefined })",
+              "to": "updateGuard({ targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH })"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "starter_workflow_edge_alias",
+      "description": "Starter workflow registry must parse edges from canonical edge keys only.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
+          "forbiddenSnippets": [
+            "record['from'] ?? record['source']",
+            "record['to'] ?? record['target']",
+            "record['fromPort'] ?? record['sourceHandle']",
+            "record['toPort'] ?? record['targetHandle']",
+            "edge.to ?? edge.target",
+            "edge.toPort ?? edge.targetHandle"
+          ],
+          "requiredSnippets": [
+            "from: normalizeText(record['from'])",
+            "to: normalizeText(record['to'])",
+            "fromPort: normalizeText(record['fromPort'])",
+            "toPort: normalizeText(record['toPort'])",
+            "const toNodeId = normalizeText(edge.to);",
+            "const port = normalizeText(edge.toPort);"
+          ],
+          "replacements": [
+            {
+              "from": "record['from'] ?? record['source']",
+              "to": "record['from']"
+            },
+            {
+              "from": "record['to'] ?? record['target']",
+              "to": "record['to']"
+            },
+            {
+              "from": "record['fromPort'] ?? record['sourceHandle']",
+              "to": "record['fromPort']"
+            },
+            {
+              "from": "record['toPort'] ?? record['targetHandle']",
+              "to": "record['toPort']"
+            },
+            {
+              "from": "edge.to ?? edge.target",
+              "to": "edge.to"
+            },
+            {
+              "from": "edge.toPort ?? edge.targetHandle",
+              "to": "edge.toPort"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "edge_alias_cleanup",
+      "description": "Core edge-shape helpers must not reintroduce source/target alias cleanup paths.",
+      "targets": [
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/factory.ts",
+          "forbiddenSnippets": [
+            "source: _legacySource",
+            "target: _legacyTarget"
+          ],
+          "requiredSnippets": [],
+          "replacements": [
+            {
+              "from": "source: _legacySource",
+              "to": "from: _legacySource"
+            },
+            {
+              "from": "target: _legacyTarget",
+              "to": "to: _legacyTarget"
+            }
+          ]
+        },
+        {
+          "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
+          "forbiddenSnippets": [
+            "source: _legacySource",
+            "target: _legacyTarget",
+            "Object.prototype.hasOwnProperty.call(edge, 'source')",
+            "Object.prototype.hasOwnProperty.call(edge, 'target')"
+          ],
+          "requiredSnippets": [],
+          "replacements": [
+            {
+              "from": "source: _legacySource",
+              "to": "from: _legacySource"
+            },
+            {
+              "from": "target: _legacyTarget",
+              "to": "to: _legacyTarget"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

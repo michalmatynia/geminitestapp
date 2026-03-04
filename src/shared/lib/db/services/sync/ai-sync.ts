@@ -19,7 +19,7 @@ export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeI
         id,
         productId,
         status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
-        type: typeof rawType === 'string' && rawType.trim().length > 0 ? rawType : 'unknown_legacy',
+        type: typeof rawType === 'string' && rawType.trim().length > 0 ? rawType : 'unknown',
         payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
         result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
         errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,

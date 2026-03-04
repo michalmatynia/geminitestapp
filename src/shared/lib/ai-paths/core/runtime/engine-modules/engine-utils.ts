@@ -23,6 +23,7 @@ type NodeInputReadiness = {
 
 const TRANSIENT_UPSTREAM_WAIT_STATUSES = new Set<string>([
   'pending',
+  'queued',
   'running',
   'processing',
   'polling',

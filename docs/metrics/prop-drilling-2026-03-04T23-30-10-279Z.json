@@ -1,0 +1,32 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-04T23:30:10.279Z",
+    "scannedSourceFiles": 3895,
+    "scannedJsxFiles": 1388,
+    "componentCount": 2081,
+    "componentsWithForwarding": 1,
+    "resolvedTransitionCount": 85,
+    "candidateChainCount": 0,
+    "highPriorityChainCount": 0,
+    "unknownSpreadForwardingCount": 0,
+    "topFeatureScopes": [
+      {
+        "scope": "feature:case-resolver",
+        "count": 1
+      }
+    ]
+  },
+  "backlog": [],
+  "componentBacklog": [
+    {
+      "componentId": "src/features/case-resolver/components/CaseListPanel.tsx#CaseListNodeItemWrapper",
+      "name": "CaseListNodeItemWrapper",
+      "relativePath": "src/features/case-resolver/components/CaseListPanel.tsx",
+      "feature": "feature:case-resolver",
+      "forwardedPropCount": 10,
+      "outgoingTransitionCount": 10,
+      "hasUnknownSpreadForwarding": false
+    }
+  ],
+  "chains": []
+}

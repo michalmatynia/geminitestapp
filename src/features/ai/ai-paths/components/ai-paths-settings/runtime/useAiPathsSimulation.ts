@@ -284,8 +284,8 @@ export function useAiPathsSimulation(args: SimulationArgs) {
               : (triggerCandidates.find((n: AiNode) =>
                 args.sanitizedEdges.some(
                   (e: Edge) =>
-                    (e.from === n.id || e.source === n.id) &&
-                      (e.to === simulationNode.id || e.target === simulationNode.id)
+                    e.from === n.id &&
+                      e.to === simulationNode.id
                 )
               ) ?? triggerCandidates[0]);
           if (!triggerNode) {

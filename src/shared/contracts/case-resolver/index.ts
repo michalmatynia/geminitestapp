@@ -8,4 +8,4 @@ export * from './workspace';
 export * from './capture';
 export * from './constants';
 
-export type { AiNode, Edge, NodeDefinition } from '../ai-paths-core';
+export type { AiNode, NodeDefinition } from '../ai-paths-core';

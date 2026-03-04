@@ -114,6 +114,23 @@ describe('handlePoll', () => {
     );
   });
 
+  it('classifies job-not-found polling as non-retryable failure', async () => {
+    vi.mocked(pollGraphJob).mockRejectedValueOnce(
+      new Error('AI job "job-missing" not found while polling: Job not found')
+    );
+
+    const result = await handlePoll(buildContext(buildNode(), { jobId: 'job-missing' }));
+
+    expect(result['status']).toBe('failed');
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        reason: 'poll_job_not_found',
+        retryable: false,
+      })
+    );
+  });
+
   it('classifies job timeout as timeout status', async () => {
     vi.mocked(pollGraphJob).mockRejectedValueOnce(new Error('AI job timed out.'));
 

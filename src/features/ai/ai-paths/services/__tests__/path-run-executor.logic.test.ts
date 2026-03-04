@@ -49,6 +49,30 @@ describe('mergeNodeOutputsForStatus', () => {
     expect(merged['message']).toBeUndefined();
   });
 
+  it('preserves waiting diagnostics for waiting_callback status', () => {
+    const merged = mergeNodeOutputsForStatus({
+      previous: {
+        status: 'waiting_callback',
+        blockedReason: 'missing_inputs',
+        waitingOnPorts: ['value'],
+        requiredPorts: ['value'],
+        skipReason: 'missing_inputs',
+        message: 'Waiting on model output',
+      },
+      next: {
+        status: 'waiting_callback',
+        waitingOnPorts: ['value'],
+      },
+      status: 'waiting_callback',
+    });
+
+    expect(merged['status']).toBe('waiting_callback');
+    expect(merged['blockedReason']).toBe('missing_inputs');
+    expect(merged['waitingOnPorts']).toEqual(['value']);
+    expect(merged['requiredPorts']).toEqual(['value']);
+    expect(merged['skipReason']).toBe('missing_inputs');
+  });
+
   it('clears stale error when status is no longer failed', () => {
     const merged = mergeNodeOutputsForStatus({
       previous: {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { aiNodeSchema, edgeSchema, type AiNode, type Edge } from '../ai-paths-core';
+import { aiNodeSchema, type AiNode } from '../ai-paths-core';
 import {
   caseResolverNodeRoleSchema,
   caseResolverQuoteModeSchema,
@@ -50,9 +50,24 @@ export interface CaseResolverEdgeMeta {
   joinMode?: CaseResolverJoinMode;
 }
 
+export const caseResolverEdgeSchema = z.object({
+  id: z.string(),
+  source: z.string().optional(),
+  target: z.string().optional(),
+  sourceHandle: z.string().nullable().optional(),
+  targetHandle: z.string().nullable().optional(),
+  label: z.string().nullable().optional(),
+  type: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
+});
+
+export type Edge = z.infer<typeof caseResolverEdgeSchema>;
+
 export const caseResolverGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
-  edges: z.array(edgeSchema),
+  edges: z.array(caseResolverEdgeSchema),
   nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
   edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
   pdfExtractionPresetId: caseResolverPdfExtractionPresetIdSchema.optional(),
@@ -114,7 +129,7 @@ export interface CaseResolverSnapshotNodeMeta {
 export const caseResolverNodeFileSnapshotSchema = z.object({
   kind: z.literal('case_resolver_node_file_snapshot_v2'),
   nodes: z.array(aiNodeSchema),
-  edges: z.array(edgeSchema),
+  edges: z.array(caseResolverEdgeSchema),
   nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
   edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
   nodeFileMeta: z.record(

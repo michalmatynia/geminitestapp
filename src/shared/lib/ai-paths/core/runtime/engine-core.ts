@@ -124,6 +124,62 @@ const resolveRecoverableNodeWaitState = (
   return null;
 };
 
+const resolveBlockedNodeStatus = (outputs: RuntimePortValues | undefined): 'blocked' | 'waiting_callback' => {
+  const rawStatus =
+    typeof outputs?.['status'] === 'string' ? String(outputs['status']).trim().toLowerCase() : '';
+  return rawStatus === 'waiting_callback' || rawStatus === 'advance_pending'
+    ? 'waiting_callback'
+    : 'blocked';
+};
+
+const resolveDeclaredNodeStatus = (outputs: RuntimePortValues | undefined): string | null => {
+  const rawStatus =
+    typeof outputs?.['status'] === 'string' ? String(outputs['status']).trim().toLowerCase() : '';
+  if (!rawStatus) return null;
+  if (rawStatus === 'cancelled') return 'canceled';
+  if (rawStatus === 'advance_pending') return 'waiting_callback';
+  if (rawStatus === 'error') return 'failed';
+  return rawStatus;
+};
+
+const applyCachedNodeRuntimeStatus = (
+  state: EngineStateManager,
+  nodeId: string,
+  outputs: RuntimePortValues
+): void => {
+  const rawStatus =
+    typeof outputs['status'] === 'string' ? String(outputs['status']).trim().toLowerCase() : '';
+
+  if (rawStatus === 'failed' || rawStatus === 'timeout' || rawStatus === 'error') {
+    state.errorNodes.add(nodeId);
+    if (rawStatus === 'timeout') {
+      state.timeoutNodes.add(nodeId);
+    } else {
+      state.timeoutNodes.delete(nodeId);
+    }
+    state.finishedNodes.delete(nodeId);
+    state.blockedNodes.delete(nodeId);
+    return;
+  }
+
+  if (
+    rawStatus === 'blocked' ||
+    rawStatus === 'waiting_callback' ||
+    rawStatus === 'advance_pending'
+  ) {
+    state.blockedNodes.add(nodeId);
+    state.finishedNodes.delete(nodeId);
+    state.errorNodes.delete(nodeId);
+    state.timeoutNodes.delete(nodeId);
+    return;
+  }
+
+  state.finishedNodes.add(nodeId);
+  state.blockedNodes.delete(nodeId);
+  state.errorNodes.delete(nodeId);
+  state.timeoutNodes.delete(nodeId);
+};
+
 export async function evaluateGraphInternal(
   nodes: AiNode[],
   edges: Edge[],
@@ -335,16 +391,21 @@ export async function evaluateGraphInternal(
         nodeInputs,
         incomingEdgesByNode.get(node.id) ?? [],
         nodeById,
-        (id) =>
-          state.finishedNodes.has(id)
-            ? 'completed'
-            : state.errorNodes.has(id)
-              ? 'failed'
-              : state.activeNodes.has(id)
-                ? 'running'
-                : state.blockedNodes.has(id)
-                  ? 'blocked'
-                  : 'pending',
+        (id) => {
+          if (state.errorNodes.has(id)) {
+            return 'failed';
+          }
+          if (state.finishedNodes.has(id)) {
+            return resolveDeclaredNodeStatus(state.outputs[id]) ?? 'completed';
+          }
+          if (state.activeNodes.has(id)) {
+            return 'running';
+          }
+          if (state.blockedNodes.has(id)) {
+            return resolveBlockedNodeStatus(state.outputs[id]);
+          }
+          return 'pending';
+        },
         (id) => state.outputs[id] ?? {}
       );
 
@@ -355,30 +416,50 @@ export async function evaluateGraphInternal(
               waitingOnDetails: readiness.waitingOnDetails,
             })
             : 'blocked';
+        let message =
+          readiness.waitingOnPorts.length > 0
+            ? `Upstream waiting diagnostics: Waiting on ports: ${readiness.waitingOnPorts.join(', ')}`
+            : 'Upstream waiting diagnostics: Blocked by upstream nodes';
+
+        if (readiness.waitingOnDetails && readiness.waitingOnDetails.length > 0) {
+          const detailsMsg = readiness.waitingOnDetails
+            .map((d) => {
+              const upstreamNodes = d.upstream
+                .map((u) => `${u.nodeTitle || u.nodeId} (${u.status})`)
+                .join(', ');
+              return `Upstream status for ${d.port}: ${upstreamNodes}`;
+            })
+            .join('; ');
+          message = `Upstream waiting diagnostics: ${detailsMsg}`;
+        }
+
         const previousStatus =
           typeof state.outputs[node.id]?.['status'] === 'string'
             ? String(state.outputs[node.id]?.['status']).trim().toLowerCase()
             : null;
+        const previousMessage =
+          typeof state.outputs[node.id]?.['message'] === 'string'
+            ? String(state.outputs[node.id]?.['message'])
+            : null;
+        const previousWaitingPorts = Array.isArray(state.outputs[node.id]?.['waitingOnPorts'])
+          ? (state.outputs[node.id]?.['waitingOnPorts'] as unknown[])
+          : [];
+        const previousWaitingDetails = Array.isArray(state.outputs[node.id]?.['waitingOnDetails'])
+          ? (state.outputs[node.id]?.['waitingOnDetails'] as unknown[])
+          : [];
+        const waitingPortsChanged =
+          JSON.stringify(previousWaitingPorts) !== JSON.stringify(readiness.waitingOnPorts);
+        const waitingDetailsChanged =
+          JSON.stringify(previousWaitingDetails) !== JSON.stringify(readiness.waitingOnDetails);
 
-        if (!state.blockedNodes.has(node.id) || previousStatus !== blockedStatus) {
+        if (
+          !state.blockedNodes.has(node.id) ||
+          previousStatus !== blockedStatus ||
+          previousMessage !== message ||
+          waitingPortsChanged ||
+          waitingDetailsChanged
+        ) {
           state.blockedNodes.add(node.id);
-          let message =
-            readiness.waitingOnPorts.length > 0
-              ? `Upstream waiting diagnostics: Waiting on ports: ${readiness.waitingOnPorts.join(', ')}`
-              : 'Upstream waiting diagnostics: Blocked by upstream nodes';
-
-          if (readiness.waitingOnDetails && readiness.waitingOnDetails.length > 0) {
-            const detailsMsg = readiness.waitingOnDetails
-              .map((d) => {
-                const upstreamNodes = d.upstream
-                  .map((u) => `${u.nodeTitle || u.nodeId} (${u.status})`)
-                  .join(', ');
-                return `Upstream status for ${d.port}: ${upstreamNodes}`;
-              })
-              .join('; ');
-            message = `Upstream waiting diagnostics: ${detailsMsg}`;
-          }
-
           state.outputs[node.id] = {
             status: blockedStatus,
             skipReason: 'missing_inputs',
@@ -502,11 +583,7 @@ export async function evaluateGraphInternal(
             const out = cacheSource;
             state.outputs[node.id] = cloneValue(out);
 
-            if (out['status'] === 'blocked') {
-              state.blockedNodes.add(node.id);
-            } else {
-              state.finishedNodes.add(node.id);
-            }
+            applyCachedNodeRuntimeStatus(state, node.id, out);
 
             if (options['recordHistory']) {
               const entries = state.history.get(node.id) ?? [];
@@ -574,8 +651,16 @@ export async function evaluateGraphInternal(
           const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
           if (!handler) {
             state.errorNodes.add(node.id);
+            state.finishedNodes.delete(node.id);
+            state.blockedNodes.delete(node.id);
+            state.timeoutNodes.delete(node.id);
+            const handlerMissingMessage = `No handler found for node type: ${node.type}`;
+            state.outputs[node.id] = {
+              status: 'failed',
+              error: handlerMissingMessage,
+            };
             const handlerMissingError = new GraphExecutionError(
-              `No handler found for node type: ${node.type}`,
+              handlerMissingMessage,
               state.buildRuntimeStateSnapshot(state.inputs),
               node.id
             );
@@ -812,6 +897,9 @@ export async function evaluateGraphInternal(
             const recoverableWaitState = resolveRecoverableNodeWaitState(node, error);
             if (recoverableWaitState) {
               state.blockedNodes.add(node.id);
+              state.errorNodes.delete(node.id);
+              state.timeoutNodes.delete(node.id);
+              state.finishedNodes.delete(node.id);
               state.outputs[node.id] = {
                 status: 'waiting_callback',
                 skipReason: 'missing_inputs',
@@ -873,13 +961,20 @@ export async function evaluateGraphInternal(
             }
 
             state.errorNodes.add(node.id);
+            state.finishedNodes.delete(node.id);
+            state.blockedNodes.delete(node.id);
             if (error instanceof Error && error.message.includes('timed out')) {
               state.timeoutNodes.add(node.id);
             }
 
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            state.outputs[node.id] = {
+              status: 'failed',
+              error: errorMessage,
+            };
             const errorSnapshot = state.buildRuntimeStateSnapshot(state.inputs);
             const graphError = new GraphExecutionError(
-              error instanceof Error ? error.message : String(error),
+              errorMessage,
               errorSnapshot,
               node.id,
               error instanceof Error ? error : undefined

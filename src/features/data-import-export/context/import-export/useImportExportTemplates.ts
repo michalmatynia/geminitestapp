@@ -11,11 +11,11 @@ import {
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import type { useToast } from '@/shared/ui';
 
-const LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX = 'parameter:';
+const UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
-const hasLegacyExportParameterSourceMapping = (mappings: TemplateMapping[]): boolean =>
+const hasUnsupportedExportParameterSourceMapping = (mappings: TemplateMapping[]): boolean =>
   mappings.some((mapping: TemplateMapping) =>
-    mapping.sourceKey.trim().toLowerCase().startsWith(LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX)
+    mapping.sourceKey.trim().toLowerCase().startsWith(UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX)
   );
 
 export function useImportExportTemplates({
@@ -110,7 +110,7 @@ export function useImportExportTemplates({
       }))
       .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
-    if (!isImport && hasLegacyExportParameterSourceMapping(cleanMappings)) {
+    if (!isImport && hasUnsupportedExportParameterSourceMapping(cleanMappings)) {
       toast(
         'Export template contains unsupported parameter source mappings. Use canonical text_fields.features.<name> mappings before duplicating.',
         { variant: 'error' }
@@ -168,7 +168,7 @@ export function useImportExportTemplates({
       }))
       .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
-    if (hasLegacyExportParameterSourceMapping(cleanMappings)) {
+    if (hasUnsupportedExportParameterSourceMapping(cleanMappings)) {
       toast(
         'Import template includes unsupported parameter source mappings for export copy. Update mappings to canonical fields first.',
         { variant: 'error' }
@@ -223,7 +223,7 @@ export function useImportExportTemplates({
       }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
-    if (!isImport && hasLegacyExportParameterSourceMapping(cleanedMappings)) {
+    if (!isImport && hasUnsupportedExportParameterSourceMapping(cleanedMappings)) {
       toast(
         'Export template mappings include unsupported "parameter:<id>" source keys. Use canonical text_fields.features.<name> source fields.',
         { variant: 'error' }

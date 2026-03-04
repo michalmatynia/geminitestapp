@@ -1,0 +1,538 @@
+{
+  "summary": {
+    "generatedAt": "2026-03-04T23:42:55.288Z",
+    "mode": "apply",
+    "dryRun": true,
+    "manifestPath": "scripts/ai-paths/legacy-prune-manifest.json",
+    "manifestVersion": "phase2-2026-03-05",
+    "ruleCount": 16,
+    "targetCount": 23,
+    "changedFileCount": 0,
+    "replacedSnippetCount": 0,
+    "findingCount": 0,
+    "findingsByRule": []
+  },
+  "apply": {
+    "dryRun": true,
+    "changedFileCount": 0,
+    "replacedSnippetCount": 0,
+    "targetReports": [
+      {
+        "ruleId": "ai_paths_settings_edge_alias_shape",
+        "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+            "to": "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+            "to": "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "return from || source;",
+            "to": "return from;",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "return fromPort || sourceHandle;",
+            "to": "return fromPort;",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "loaded_path_settings_edge_alias_shape",
+        "file": "src/features/products/hooks/useAiPathSettings.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "const source = typeof edge['source'] === 'string' ? edge['source'].trim() : '';",
+            "to": "const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "const sourceHandle = typeof edge['sourceHandle'] === 'string' ? edge['sourceHandle'].trim() : '';",
+            "to": "const fromPort = typeof edge['fromPort'] === 'string' ? edge['fromPort'].trim() : '';",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "return from || source;",
+            "to": "return from;",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "return fromPort || sourceHandle;",
+            "to": "return fromPort;",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "semantic_grammar_edge_alias_shape",
+        "file": "src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "semantic_grammar_edge_alias_shape",
+        "file": "src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "source: semanticEdge.fromNodeId,",
+            "to": "from: semanticEdge.fromNodeId,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "target: semanticEdge.toNodeId,",
+            "to": "to: semanticEdge.toNodeId,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "sourceHandle: semanticEdge.fromPort,",
+            "to": "fromPort: semanticEdge.fromPort,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "targetHandle: semanticEdge.toPort,",
+            "to": "toPort: semanticEdge.toPort,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "semantic_grammar_edge_alias_shape",
+        "file": "src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "source: fromNodeId,",
+            "to": "from: fromNodeId,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "target: toNodeId,",
+            "to": "to: toNodeId,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "sourceHandle: edge.fromPort,",
+            "to": "fromPort: edge.fromPort,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "targetHandle: edge.toPort,",
+            "to": "toPort: edge.toPort,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "parameter_inference_target_path_channel",
+        "file": "src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "AI Path config contains deprecated parameter inference target path.",
+            "to": "AI Path config contains unsupported parameter inference target path.",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_parameter_inference_target_path'",
+            "to": "reason: 'unsupported_parameter_inference_target_path'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "parameter_inference_target_path_channel",
+        "file": "src/features/products/hooks/useAiPathSettings.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "AI Path config contains deprecated parameter inference target path.",
+            "to": "AI Path config contains unsupported parameter inference target path.",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "reason: 'deprecated_parameter_inference_target_path'",
+            "to": "reason: 'unsupported_parameter_inference_target_path'",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_template_catalog_alias",
+        "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_input_catalog_alias",
+        "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_provider_fallback_alias_metadata",
+        "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_provider_fallback_alias_metadata",
+        "file": "src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "database_provider_fallback_alias_metadata",
+        "file": "src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_action_provider_alias",
+        "file": "src/app/api/ai-paths/db-action/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": []
+      },
+      {
+        "ruleId": "db_action_request_alias",
+        "file": "src/app/api/ai-paths/db-action/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "coerceQuery(filter || query)",
+            "to": "coerceQuery(filter)",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "extractFlatUpdates(update || updates)",
+            "to": "extractFlatUpdates(update)",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "normalizeReplaceDoc(update || updates)",
+            "to": "normalizeReplaceDoc(update)",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "normalizeUpdateDoc(update || updates)",
+            "to": "normalizeUpdateDoc(update)",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_client_legacy_route",
+        "file": "src/shared/lib/ai-paths/api/client/database.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "/api/ai-paths/db-query",
+            "to": "/api/ai-paths/db-action",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "/api/ai-paths/db-update",
+            "to": "/api/ai-paths/db-action",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "query: payload.query,",
+            "to": "filter: payload.filter,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "filter: payload.query,",
+            "to": "filter: payload.filter,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "update: payload.updates,",
+            "to": "update: payload.update,",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "api_client_csrf_alias",
+        "file": "src/shared/lib/ai-paths/api/client.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "withCsrfHeadersCompat",
+            "to": "withApiCsrfHeaders",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "api_client_csrf_alias",
+        "file": "src/shared/lib/ai-paths/api/client/base.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "withCsrfHeadersCompat",
+            "to": "withApiCsrfHeaders",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "db_schema_provider_alias",
+        "file": "src/features/ai/ai-paths/components/node-config/DbSchemaNodeConfigSection.tsx",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "provider: 'auto' | 'mongodb' | 'prisma' | 'all';",
+            "to": "provider: 'auto' | 'mongodb' | 'prisma';",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })",
+            "to": "updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' })",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "entity_update_simple_parameters_alias",
+        "file": "src/app/api/ai-paths/update/handler.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "AI Paths product update payload contains deprecated \"simpleParameters\". Use \"parameters\".",
+            "to": "AI Paths product update payload contains unsupported \"simpleParameters\" alias. Use \"parameters\".",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "database_settings_target_path_edit",
+        "file": "src/features/ai/ai-paths/components/node-config/database/DatabaseSettingsTab.tsx",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "updateGuard({ targetPath: e.target.value || undefined })",
+            "to": "updateGuard({ targetPath: CANONICAL_PARAMETER_INFERENCE_TARGET_PATH })",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "starter_workflow_edge_alias",
+        "file": "src/shared/lib/ai-paths/core/starter-workflows/registry.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "record['from'] ?? record['source']",
+            "to": "record['from']",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "record['to'] ?? record['target']",
+            "to": "record['to']",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "record['fromPort'] ?? record['sourceHandle']",
+            "to": "record['fromPort']",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "record['toPort'] ?? record['targetHandle']",
+            "to": "record['toPort']",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "edge.to ?? edge.target",
+            "to": "edge.to",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "edge.toPort ?? edge.targetHandle",
+            "to": "edge.toPort",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "edge_alias_cleanup",
+        "file": "src/shared/lib/ai-paths/core/utils/factory.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "source: _legacySource",
+            "to": "from: _legacySource",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "target: _legacyTarget",
+            "to": "to: _legacyTarget",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      },
+      {
+        "ruleId": "edge_alias_cleanup",
+        "file": "src/shared/lib/ai-paths/core/utils/node-identity.ts",
+        "missingTargetFile": false,
+        "changed": false,
+        "replacementCount": 0,
+        "replacements": [
+          {
+            "from": "source: _legacySource",
+            "to": "from: _legacySource",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          },
+          {
+            "from": "target: _legacyTarget",
+            "to": "to: _legacyTarget",
+            "replaceAll": true,
+            "occurrences": 0,
+            "appliedCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "findings": []
+}

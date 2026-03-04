@@ -178,15 +178,15 @@ const normalizeProducerRelations = (
       });
     }
     const record = entry as Record<string, unknown>;
-    const legacyKeys = ['producer_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
+    const unsupportedKeys = ['producer_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
       (key: string): boolean => key in record
     );
-    if (legacyKeys.length > 0) {
+    if (unsupportedKeys.length > 0) {
       throw validationError('Product producer relation payload includes unsupported fields.', {
         productId: rootProductId,
         field: 'producers',
         index,
-        legacyKeys,
+        unsupportedKeys,
       });
     }
 
@@ -249,15 +249,15 @@ const normalizeTagRelations = (
       });
     }
     const record = entry as Record<string, unknown>;
-    const legacyKeys = ['tag_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
+    const unsupportedKeys = ['tag_id', 'product_id', 'assigned_at', 'id', 'value'].filter(
       (key: string): boolean => key in record
     );
-    if (legacyKeys.length > 0) {
+    if (unsupportedKeys.length > 0) {
       throw validationError('Product tag relation payload includes unsupported fields.', {
         productId: rootProductId,
         field: 'tags',
         index,
-        legacyKeys,
+        unsupportedKeys,
       });
     }
 

@@ -10,6 +10,7 @@ type PollFailureClassification = {
   reason:
     | 'poll_timeout'
     | 'poll_job_canceled'
+    | 'poll_job_not_found'
     | 'poll_connection_error'
     | 'poll_query_failed'
     | 'poll_unknown';
@@ -33,6 +34,14 @@ const classifyPollError = (error: unknown, mode: 'job' | 'database'): PollFailur
     return {
       status: 'canceled',
       reason: 'poll_job_canceled',
+      retryable: false,
+      error: message,
+    };
+  }
+  if (normalized.includes('job not found')) {
+    return {
+      status: 'failed',
+      reason: 'poll_job_not_found',
       retryable: false,
       error: message,
     };

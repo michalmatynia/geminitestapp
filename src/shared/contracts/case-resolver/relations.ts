@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { type DtoBase } from '../base';
-import { aiNodeSchema, edgeSchema } from '../ai-paths';
+import { aiNodeSchema } from '../ai-paths';
+import { caseResolverEdgeSchema } from './graph';
 
 /**
  * Case Resolver Party References
@@ -141,7 +142,7 @@ export type CaseResolverRelationEdgeMeta = z.infer<typeof caseResolverRelationEd
 
 export const caseResolverRelationGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
-  edges: z.array(edgeSchema),
+  edges: z.array(caseResolverEdgeSchema),
   nodeMeta: z.record(z.string(), caseResolverRelationNodeMetaSchema).optional(),
   edgeMeta: z.record(z.string(), caseResolverRelationEdgeMetaSchema).optional(),
 });

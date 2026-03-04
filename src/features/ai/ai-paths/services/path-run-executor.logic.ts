@@ -117,8 +117,8 @@ export const mergeNodeOutputsForStatus = (input: {
 
   const hasOwn = (key: string): boolean => Object.prototype.hasOwnProperty.call(input.next, key);
 
-  // Drop stale blocking diagnostics when the node moved out of blocked state.
-  if (input.status !== 'blocked') {
+  // Drop stale blocking diagnostics when the node moved out of blocked/waiting state.
+  if (input.status !== 'blocked' && input.status !== 'waiting_callback') {
     delete merged['blockedReason'];
     delete merged['requiredPorts'];
     delete merged['waitingOnPorts'];

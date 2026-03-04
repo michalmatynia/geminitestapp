@@ -28,7 +28,11 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
 
 import { enforceAiPathsRunRateLimit } from '../access';
 
-const buildRun = (id: string, status: AiPathRunStatus): AiPathRunRecord =>
+const buildRun = (
+  id: string,
+  status: AiPathRunStatus,
+  overrides: Partial<AiPathRunRecord> = {}
+): AiPathRunRecord =>
   ({
     id,
     userId: 'user-1',
@@ -52,6 +56,7 @@ const buildRun = (id: string, status: AiPathRunStatus): AiPathRunRecord =>
     updatedAt: null,
     startedAt: null,
     finishedAt: null,
+    ...overrides,
   }) as AiPathRunRecord;
 
 describe('enforceAiPathsRunRateLimit', () => {
@@ -158,5 +163,52 @@ describe('enforceAiPathsRunRateLimit', () => {
     ).resolves.toBeUndefined();
 
     expect(listRunsMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('ignores stale running runs when all active candidates are older than stale max age', async () => {
+    const staleTimestamp = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    listRunsMock.mockImplementation(async (options: { statuses?: AiPathRunStatus[] }) => {
+      if (Array.isArray(options.statuses) && options.statuses.includes('running')) {
+        return {
+          runs: [
+            buildRun('run-r1', 'running', {
+              createdAt: staleTimestamp,
+              updatedAt: staleTimestamp,
+              startedAt: staleTimestamp,
+            }),
+            buildRun('run-r2', 'running', {
+              createdAt: staleTimestamp,
+              updatedAt: staleTimestamp,
+              startedAt: staleTimestamp,
+            }),
+            buildRun('run-r3', 'running', {
+              createdAt: staleTimestamp,
+              updatedAt: staleTimestamp,
+              startedAt: staleTimestamp,
+            }),
+            buildRun('run-r4', 'running', {
+              createdAt: staleTimestamp,
+              updatedAt: staleTimestamp,
+              startedAt: staleTimestamp,
+            }),
+            buildRun('run-r5', 'running', {
+              createdAt: staleTimestamp,
+              updatedAt: staleTimestamp,
+              startedAt: staleTimestamp,
+            }),
+          ],
+          total: 5,
+        };
+      }
+      return { runs: [], total: 0 };
+    });
+
+    await expect(
+      enforceAiPathsRunRateLimit({
+        userId: 'user-1',
+        permissions: [],
+        isElevated: false,
+      })
+    ).resolves.toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
 import { AiNode, NodeCacheScope } from '@/shared/contracts/ai-paths';
 import {
+  AiPathRuntimeNodeStatus,
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
@@ -8,6 +9,43 @@ import { cloneValue } from '../utils';
 import { RuntimeProfileNodeStats, EvaluateGraphOptions } from './engine-types';
 
 const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';
+
+const ALLOWED_DECLARED_NODE_STATUSES = new Set<AiPathRuntimeNodeStatus>([
+  'idle',
+  'queued',
+  'running',
+  'completed',
+  'cached',
+  'failed',
+  'canceled',
+  'skipped',
+  'blocked',
+  'pending',
+  'processing',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+  'timeout',
+]);
+
+const resolveDeclaredNodeStatus = (
+  outputs: RuntimePortValues | undefined
+): AiPathRuntimeNodeStatus | null => {
+  const rawStatus =
+    typeof outputs?.['status'] === 'string' ? String(outputs['status']).trim().toLowerCase() : '';
+  if (!rawStatus) return null;
+  const normalized =
+    rawStatus === 'cancelled'
+      ? 'canceled'
+      : rawStatus === 'advance_pending'
+        ? 'waiting_callback'
+        : rawStatus === 'error'
+          ? 'failed'
+          : rawStatus;
+  return ALLOWED_DECLARED_NODE_STATUSES.has(normalized as AiPathRuntimeNodeStatus)
+    ? (normalized as AiPathRuntimeNodeStatus)
+    : null;
+};
 
 export const resolveNodeCacheScope = (node: AiNode): NodeCacheScope => {
   const scope = node.config?.runtime?.cache?.scope;
@@ -81,7 +119,7 @@ export class EngineStateManager {
         } else if (this.skippedNodes.has(node.id)) {
           acc[node.id] = 'skipped';
         } else if (this.finishedNodes.has(node.id)) {
-          acc[node.id] = 'completed';
+          acc[node.id] = resolveDeclaredNodeStatus(this.outputs[node.id]) ?? 'completed';
         } else if (this.blockedNodes.has(node.id)) {
           const blockedStatus =
             typeof this.outputs[node.id]?.['status'] === 'string'

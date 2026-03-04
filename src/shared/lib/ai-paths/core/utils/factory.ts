@@ -136,10 +136,9 @@ const canonicalizePathNodes = ({
     const nextFrom = nodeIdMap.get(sourceId);
     const nextTo = nodeIdMap.get(targetId);
     if (!nextFrom || !nextTo) return [];
-    const { source: _legacySource, target: _legacyTarget, ...edgeWithoutLegacyEndpoints } = edge;
     return [
       {
-        ...edgeWithoutLegacyEndpoints,
+        ...edge,
         from: nextFrom,
         to: nextTo,
       },

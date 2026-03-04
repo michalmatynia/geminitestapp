@@ -2106,3 +2106,301 @@ Continue opportunistic canonicalization in remaining non-critical surfaces outsi
   - `npx vitest run src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts` passes.
   - `npm run ai-paths:check:canonical` passes.
   - `npm run typecheck` passes.
+
+## Executed Item 121 (Chatbot Jobs Legacy Requested-Model Compatibility Hard-Cut)
+
+- Removed legacy requested-model compatibility from chatbot jobs enqueue handler:
+  - `src/app/api/chatbot/jobs/handler.ts`
+  - `/api/chatbot/jobs` now rejects payloads that include `model` with:
+    - `Chatbot job payload contains unsupported model override.`
+- Removed requested-model compatibility propagation from chatbot job payload options:
+  - `src/app/api/chatbot/jobs/handler.ts`
+  - `src/features/ai/chatbot/workers/chatbot-job-processor.ts`
+  - canonical job payload options now persist Brain-applied metadata only.
+- Removed enqueue contract alias field:
+  - `src/shared/contracts/chatbot.ts`
+  - `enqueueChatbotJobRequestSchema` no longer defines `model`.
+- Updated API regression coverage:
+  - `src/app/api/chatbot/jobs/handler.test.ts`
+  - canonical enqueue path remains green.
+  - legacy `model` override payload now rejects with unsupported model-override error.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of chatbot-jobs requested-model compatibility snippets in runtime sources.
+- Validation:
+  - `npx vitest run src/app/api/chatbot/jobs/handler.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 122 (AI Paths Bulk-Prune Phase 1 Foundation)
+
+- Added centralized AI Paths legacy-prune manifest:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - seed manifest rules now cover canonical edge-shape and parameter-inference target-path channel invariants.
+- Added shared manifest load/evaluation utility for scanner+guardrail reuse:
+  - `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+  - validates manifest schema and evaluates rule targets (`requiredSnippets` / `forbiddenSnippets`).
+- Added bulk-prune scanner scaffold:
+  - `scripts/ai-paths/bulk-prune.mjs`
+  - Phase 1 supports:
+    - `--mode scan` (evaluate manifest rules)
+    - `--write-report <path>` (persist JSON report)
+    - explicit `--mode apply` placeholder (not implemented in Phase 1)
+- Added npm entrypoints for bulk workflow:
+  - `package.json`
+  - `ai-paths:bulk-prune:scan`
+  - `ai-paths:bulk-prune:report`
+- Wired canonical guardrail to consume manifest checks:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkManifestLegacyPruneRules` that loads/evaluates manifest and reports violations.
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 123 (Filemaker Case-Resolver Parser Compatibility Surface Prune)
+
+- Removed compatibility parser export dedicated to case-resolver consumers:
+  - `src/features/filemaker/settings/database-getters.ts`
+  - removed `parseFilemakerDatabaseForCaseResolver(...)`.
+  - canonical parser path remains:
+    - `parseFilemakerDatabase(...)`
+- Updated Filemaker regression coverage imports/calls to canonical parser path:
+  - `src/features/filemaker/__tests__/settings.test.ts`
+  - `src/features/filemaker/__tests__/relations.test.ts`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `parseFilemakerDatabaseForCaseResolver`
+- Validation:
+  - `npx vitest run src/features/filemaker/__tests__/settings.test.ts src/features/filemaker/__tests__/relations.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 124 (Shared Error Classifier Deprecated Snapshot-Key Compatibility Prune)
+
+- Removed legacy deprecated-snapshot-key message compatibility matching from shared error classification:
+  - `src/shared/errors/error-classifier.ts`
+  - `classifyError` now treats unsupported settings payloads via canonical pattern only:
+    - `includes unsupported keys`
+  - removed deprecated compatibility pattern matching:
+    - `deprecated ai snapshot keys`
+- Removed deprecated-snapshot-key compatibility branches from validation suggested-action routing:
+  - `src/shared/errors/error-classifier.ts`
+  - persona/image-studio settings suggestions now key off canonical unsupported-key message channels only.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `deprecated ai snapshot keys`
+- Validation:
+  - `npx vitest run src/shared/errors/__tests__/error-classifier.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 125 (DB Sync Unknown-Type + Error-Guidance Legacy Wording Canonicalization)
+
+- Replaced legacy-labelled product AI job type fallback in DB sync with canonical token:
+  - `src/shared/lib/db/services/sync/ai-sync.ts`
+  - `unknown_legacy` -> `unknown`
+- Added DB sync regression coverage:
+  - `src/shared/lib/db/services/sync/__tests__/ai-sync.test.ts`
+  - verifies canonical unknown-type fallback is used when Mongo source `type` is missing/blank.
+- Replaced legacy-specific snapshot wording in shared validation guidance:
+  - `src/shared/errors/error-classifier.ts`
+  - `without legacy model snapshot fields` -> `without unsupported model snapshot fields`
+- Updated error-classifier regression coverage:
+  - `src/shared/errors/__tests__/error-classifier.test.ts`
+  - now asserts canonical unsupported snapshot wording and blocks legacy phrasing.
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `unknown_legacy`
+    - `without legacy model snapshot fields.`
+- Validation:
+  - `npx vitest run src/shared/lib/db/services/sync/__tests__/ai-sync.test.ts src/shared/errors/__tests__/error-classifier.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 126 (Product/Integrations Legacy Metadata-Channel Key Canonicalization)
+
+- Replaced legacy metadata key in export-template unsupported-mapping rejection channels:
+  - `src/features/integrations/services/export-template-repository.ts`
+  - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+  - `legacyMappingCount` -> `unsupportedMappingCount`
+- Replaced legacy metadata key in product relation unsupported-field rejection channels:
+  - `src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.ts`
+  - `legacyKeys` -> `unsupportedKeys`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `legacyMappingCount:`
+    - `legacyKeys,`
+- Validation:
+  - `npx vitest run __tests__/features/integrations/services/export-template-repository.test.ts __tests__/app/api/integrations/products/export-to-base/helpers.test.ts __tests__/features/products/services/mongo-product-canonical-shape-guard.test.ts` passes (product guard suite remains skipped in this environment).
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` passes.
+
+## Executed Item 127 (AI Paths Bulk-Prune Phase 2 Apply Engine + Manifest Replacements)
+
+- Extended AI Paths bulk-prune manifest schema with deterministic replacement directives:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added `replacements[]` mappings for:
+    - AI Paths settings edge alias snippets.
+    - loaded-path edge alias snippets.
+    - semantic-grammar deserialize/subgraph alias-write snippets.
+    - parameter-inference deprecated reason/message snippets.
+  - manifest version bumped to `phase2-2026-03-05`.
+- Extended shared manifest utility module:
+  - `scripts/ai-paths/legacy-prune-manifest-utils.mjs`
+  - added replacement schema validation (`from`, `to`, `replaceAll`).
+  - added `applyLegacyPruneManifest(...)` with:
+    - write mode + dry-run mode.
+    - per-target replacement telemetry.
+    - changed-file + replaced-snippet summary counters.
+- Implemented bulk-prune apply workflow:
+  - `scripts/ai-paths/bulk-prune.mjs`
+  - `--mode apply` now executes manifest replacements and re-runs manifest findings check post-apply.
+  - added `--dry-run` flag.
+  - report output now includes:
+    - apply summary (`changedFileCount`, `replacedSnippetCount`).
+    - per-target replacement execution details.
+- Added npm entrypoints for apply workflow:
+  - `package.json`
+  - `ai-paths:bulk-prune:apply:dry-run`
+  - `ai-paths:bulk-prune:apply`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes.
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:bulk-prune:apply` passes.
+  - `npm run ai-paths:check:canonical` passes (`4237` files scanned).
+  - `npm run typecheck` fails due pre-existing unrelated edge-shape migration compile errors (`source` / `target` property usage across Case Resolver and AI Paths simulation modules).
+
+## Executed Item 128 (AI Paths Factory/Node-Identity Edge Alias Cleanup Prune)
+
+- Removed legacy edge-alias cleanup branches from AI Paths factory canonicalization:
+  - `src/shared/lib/ai-paths/core/utils/factory.ts`
+  - `canonicalizePathNodes` no longer strips edge `source`/`target` alias keys as part of remap flow.
+- Removed legacy edge-alias cleanup branches from AI Paths node-identity repair:
+  - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+  - `repairPathNodeIdentities` no longer treats `source`/`target` key presence as a compatibility-mutation trigger.
+- Extended AI Paths canonical guardrails:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - added `checkEdgeAliasCleanupCompatibilityPrune` guard to block reintroduction of legacy edge-alias cleanup snippets in:
+    - `src/shared/lib/ai-paths/core/utils/factory.ts`
+    - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+- Validation:
+  - `npx vitest run src/shared/lib/ai-paths/core/normalization/__tests__/node-identity-repair.test.ts src/shared/lib/ai-paths/core/semantic-grammar/__tests__/semantic-grammar.test.ts src/shared/lib/ai-paths/core/normalization/__tests__/validation-pattern-defaults.test.ts` passes.
+  - `npm run ai-paths:check:canonical` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npx tsc -p tsconfig.json --noEmit --incremental false --pretty false` passes.
+
+## Executed Item 129 (AI Paths/Integrations Legacy Guard Naming-Channel Canonicalization)
+
+- Renamed AI Paths trigger-data guard naming to canonical unsupported semantics:
+  - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+  - `src/features/products/hooks/useAiPathSettings.ts`
+  - `LEGACY_TRIGGER_DATA_PORTS` -> `UNSUPPORTED_TRIGGER_DATA_PORTS`
+  - `assertNoLegacyTriggerDataGraph` -> `assertNoUnsupportedTriggerDataGraph`
+  - `legacyPorts` -> `unsupportedPorts`
+- Renamed integrations export-template guard naming to canonical unsupported semantics:
+  - `src/features/integrations/services/export-template-repository.ts`
+  - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+  - `assertNoLegacyParameterSourceMappings` -> `assertNoUnsupportedParameterSourceMappings`
+  - `legacyMappings` -> `unsupportedMappings`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of legacy guard/channel naming snippets:
+    - `LEGACY_TRIGGER_DATA_PORTS`
+    - `assertNoLegacyTriggerDataGraph`
+    - `assertNoLegacyParameterSourceMappings`
+    - `const legacyMappings =`
+    - `const legacyPorts =`
+- Validation:
+  - `npx vitest run src/features/ai/ai-paths/components/__tests__/AiPathsSettingsUtils.sanitize-path-config.test.ts src/features/products/hooks/__tests__/useAiPathSettings.sanitize-loaded-path-config.test.ts __tests__/features/integrations/services/export-template-repository.test.ts __tests__/app/api/integrations/products/export-to-base/helpers.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` currently fails due unrelated pre-existing Case Resolver edge-shape drift (outside this slice), e.g.:
+    - `src/features/case-resolver/composer.ts`
+    - `src/features/case-resolver/settings.edge-validation.ts`
+    - `src/features/case-resolver/settings-relation-graph.ts`
+
+## Executed Item 130 (Integrations Parameter-Source Prefix Naming-Channel Canonicalization)
+
+- Renamed integrations runtime parameter-source prefix constants to canonical unsupported naming:
+  - `src/features/integrations/services/export-template-repository.ts`
+  - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+  - `LEGACY_PARAMETER_SOURCE_PREFIX` -> `UNSUPPORTED_PARAMETER_SOURCE_PREFIX`
+- Renamed import/export template editor parameter-source guard naming to canonical unsupported semantics:
+  - `src/features/data-import-export/context/import-export/useImportExportTemplates.ts`
+  - `LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX` -> `UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX`
+  - `hasLegacyExportParameterSourceMapping` -> `hasUnsupportedExportParameterSourceMapping`
+- Extended site-wide canonical guardrails:
+  - `scripts/canonical/check-sitewide.mjs`
+  - now blocks reintroduction of:
+    - `LEGACY_PARAMETER_SOURCE_PREFIX`
+    - `LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX`
+    - `hasLegacyExportParameterSourceMapping`
+- Validation:
+  - `npx vitest run __tests__/features/integrations/services/export-template-repository.test.ts __tests__/app/api/integrations/products/export-to-base/helpers.test.ts` passes.
+  - `npm run canonical:check:sitewide` passes.
+  - `npm run typecheck` currently fails due unrelated pre-existing Case Resolver edge-shape drift (outside this slice), e.g.:
+    - `src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx`
+    - `src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts`
+
+## Executed Item 131 (AI Paths Bulk-Prune Phase 2 Coverage Expansion + Phase 3 Manifest-First Consolidation Start)
+
+- Expanded AI Paths bulk-prune manifest coverage beyond seed rules:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - rule/target scope now:
+    - `15` rules
+    - `20` targets
+  - added new rule families for:
+    - database template/input catalog alias compatibility prune.
+    - db-action provider/request alias prune.
+    - database client legacy-route/payload alias prune.
+    - API client CSRF helper alias prune.
+    - db-schema provider `all` alias prune.
+    - entity-update `simpleParameters` alias prune.
+    - database-settings target-path edit-time canonicalization.
+    - starter-workflow edge alias prune.
+    - core edge-alias cleanup prune (`factory` / `node-identity`).
+- Started Phase 3 guardrail consolidation (manifest-first):
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct execution of migrated bespoke checks from `main` so those surfaces are now enforced by:
+    - `checkManifestLegacyPruneRules`
+  - retained bespoke checks for non-manifested logic only (cross-file scans, file presence checks, and dynamic validations).
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`15` rules across `20` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:check:canonical` passes (`4237` files scanned).
+  - `npm run typecheck` fails due pre-existing unrelated Case Resolver edge-shape contract drift:
+    - `src/features/case-resolver/hooks/useNodeFileWorkspaceState.ts`
+    - `src/features/case-resolver/node-file-snapshots.ts`
+    - `src/features/case-resolver/settings-graph.ts`
+
+## Executed Item 132 (AI Paths Phase 3 Provider-Fallback/Alias Manifest Consolidation)
+
+- Expanded manifest coverage for database provider fallback/alias compatibility surfaces:
+  - `scripts/ai-paths/legacy-prune-manifest.json`
+  - added rule:
+    - `database_provider_fallback_alias_metadata`
+  - new targets:
+    - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts`
+    - `src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts`
+    - `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers.ts`
+  - rule enforces canonical metadata channels (`requestedProvider` / `resolvedProvider`) and blocks fallback/provider alias snippet reintroduction.
+- Consolidated check-canonical execution path for provider fallback/alias checks:
+  - `scripts/ai-paths/check-canonical.mjs`
+  - removed direct `main` execution of:
+    - `checkDatabaseProviderFallbackCompatibilityPrune`
+    - `checkDatabaseProviderAliasCompatibilityPrune`
+    - `checkDatabaseUpdateProviderAliasCompatibilityPrune`
+    - `checkDatabaseQueryProviderResponseAliasCompatibilityPrune`
+  - these surfaces are now enforced via:
+    - `checkManifestLegacyPruneRules`
+- Validation:
+  - `npm run ai-paths:bulk-prune:scan` passes (`16` rules across `23` targets).
+  - `npm run ai-paths:bulk-prune:apply:dry-run -- --write-report docs/metrics/ai-paths-bulk-prune-apply-dry-run-latest.json` passes.
+  - `npm run ai-paths:bulk-prune:apply` passes.
+  - `npm run ai-paths:check:canonical` passes (`4237` files scanned).
+  - `npm run typecheck` fails due pre-existing unrelated runtime typing drift:
+    - `src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts`

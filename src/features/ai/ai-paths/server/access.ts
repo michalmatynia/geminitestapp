@@ -95,6 +95,24 @@ const withSoftTimeout = async <T>(
   }
 };
 
+const parseTimestampMs = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const countFreshActiveRuns = (runs: AiPathRunRecord[], nowMs: number): number => {
+  if (RUN_ACTIVE_STALE_MAX_AGE_MS <= 0) return runs.length;
+  return runs.filter((run) => {
+    const lastActivityMs =
+      parseTimestampMs(run.updatedAt) ??
+      parseTimestampMs(run.startedAt) ??
+      parseTimestampMs(run.createdAt);
+    if (lastActivityMs === null) return true;
+    return nowMs - lastActivityMs < RUN_ACTIVE_STALE_MAX_AGE_MS;
+  }).length;
+};
+
 export const requireAiPathsAccess = async (): Promise<AiPathsAccessContext> => {
   const session = await auth();
   if (!session?.user?.id) {
@@ -276,6 +294,7 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
     throw rateLimitedError('Too many runs queued. Please wait before trying again.', windowMs);
   }
   let activeRunCount = active?.runs.length ?? 0;
+  let freshActiveRunCount = countFreshActiveRuns(active?.runs ?? [], now);
   if (activeRunCount >= RUN_ACTIVE_MAX) {
     await maybeRecoverStaleRunningRunsForRateLimit(access);
     const refreshedActiveProbe =
@@ -305,18 +324,34 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
     }
     if (refreshedActiveProbe?.value) {
       activeRunCount = refreshedActiveProbe.value.runs.length;
+      freshActiveRunCount = countFreshActiveRuns(refreshedActiveProbe.value.runs, now);
     }
   }
-  if (activeRunCount >= RUN_ACTIVE_MAX) {
+  if (freshActiveRunCount >= RUN_ACTIVE_MAX) {
     throw rateLimitedError(
       'Too many active runs. Wait for one to finish before starting another.',
       windowMs,
       {
         activeCount: activeRunCount,
+        activeFreshCount: freshActiveRunCount,
         activeLimit: RUN_ACTIVE_MAX,
         activeStatuses,
       }
     );
+  }
+  if (activeRunCount >= RUN_ACTIVE_MAX && freshActiveRunCount < RUN_ACTIVE_MAX) {
+    void logSystemEvent({
+      level: 'warn',
+      message: '[ai-paths.rate-limit] ignored stale active runs during admission',
+      source: 'ai-paths-access',
+      context: {
+        userId: access.userId,
+        activeCount: activeRunCount,
+        activeFreshCount: freshActiveRunCount,
+        activeLimit: RUN_ACTIVE_MAX,
+        staleMaxAgeMs: RUN_ACTIVE_STALE_MAX_AGE_MS,
+      },
+    });
   }
   if (queueStats && queueStats.queuedCount >= RUN_GLOBAL_QUEUED_MAX) {
     throw rateLimitedError(

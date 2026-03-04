@@ -603,6 +603,123 @@ Wave 2 hard-cut execution started:
      - `scripts/canonical/check-sitewide.mjs`
      - blocks reintroduction of legacy model-override ignore channel:
        - `[chatbot][chat] Ignored legacy requested model in favor of Brain`
+49. Chatbot jobs legacy requested-model compatibility hard-cut:
+   - removed legacy requested-model compatibility from chatbot jobs enqueue surface:
+     - `src/app/api/chatbot/jobs/handler.ts`
+     - `/api/chatbot/jobs` now rejects payloads that include `model` with:
+       - `Chatbot job payload contains unsupported model override.`
+   - removed legacy requested-model propagation from enqueue/worker payload options:
+     - `src/app/api/chatbot/jobs/handler.ts`
+     - `src/features/ai/chatbot/workers/chatbot-job-processor.ts`
+     - canonical payload options now persist Brain-applied metadata only.
+   - removed enqueue contract alias field:
+     - `src/shared/contracts/chatbot.ts`
+     - `enqueueChatbotJobRequestSchema` no longer defines `model`.
+   - updated API regression coverage:
+     - `src/app/api/chatbot/jobs/handler.test.ts`
+     - canonical enqueue path remains green and legacy `model` override now rejects.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of chatbot-jobs requested-model compatibility snippets in runtime sources.
+50. Filemaker case-resolver parser compatibility surface prune:
+   - removed case-resolver-specific parser export from runtime Filemaker settings getters:
+     - `src/features/filemaker/settings/database-getters.ts`
+     - removed `parseFilemakerDatabaseForCaseResolver(...)` in favor of canonical parser-only surface.
+   - updated Filemaker regression tests to use canonical parser calls:
+     - `src/features/filemaker/__tests__/settings.test.ts`
+     - `src/features/filemaker/__tests__/relations.test.ts`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `parseFilemakerDatabaseForCaseResolver`
+51. Shared error-classifier deprecated snapshot-key compatibility prune:
+   - removed legacy deprecated-snapshot-key message matching from shared classifier:
+     - `src/shared/errors/error-classifier.ts`
+     - removed `deprecated ai snapshot keys` compatibility patterns from validation classification and action routing.
+   - canonical settings-contract matching remains:
+     - `includes unsupported keys`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `deprecated ai snapshot keys`
+52. DB-sync unknown-type + error-guidance legacy wording canonicalization:
+   - replaced legacy-labelled DB sync fallback type with canonical token:
+     - `src/shared/lib/db/services/sync/ai-sync.ts`
+     - `unknown_legacy` -> `unknown`
+   - added DB-sync regression coverage:
+     - `src/shared/lib/db/services/sync/__tests__/ai-sync.test.ts`
+     - verifies canonical unknown-type fallback for missing source `type`.
+   - replaced legacy-specific snapshot wording in validation guidance:
+     - `src/shared/errors/error-classifier.ts`
+     - `without legacy model snapshot fields` -> `without unsupported model snapshot fields`
+   - updated error-classifier regression assertions:
+     - `src/shared/errors/__tests__/error-classifier.test.ts`
+     - locks canonical unsupported snapshot wording and blocks legacy phrasing.
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `unknown_legacy`
+       - `without legacy model snapshot fields.`
+53. Product/integrations legacy metadata-channel key canonicalization:
+   - replaced legacy metadata key in export-template unsupported-mapping rejection channels:
+     - `src/features/integrations/services/export-template-repository.ts`
+     - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+     - `legacyMappingCount` -> `unsupportedMappingCount`
+   - replaced legacy metadata key in product relation unsupported-field rejection channels:
+     - `src/shared/lib/products/services/product-repository/mongo-product-repository-mappers.ts`
+     - `legacyKeys` -> `unsupportedKeys`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `legacyMappingCount:`
+       - `legacyKeys,`
+54. AI-Paths/Integrations legacy guard naming-channel canonicalization:
+   - renamed AI Paths trigger-data guard naming to canonical unsupported semantics:
+     - `src/features/ai/ai-paths/components/AiPathsSettingsUtils.ts`
+     - `src/features/products/hooks/useAiPathSettings.ts`
+     - `LEGACY_TRIGGER_DATA_PORTS` -> `UNSUPPORTED_TRIGGER_DATA_PORTS`
+     - `assertNoLegacyTriggerDataGraph` -> `assertNoUnsupportedTriggerDataGraph`
+     - `legacyPorts` -> `unsupportedPorts`
+   - renamed integrations export-template guard naming to canonical unsupported semantics:
+     - `src/features/integrations/services/export-template-repository.ts`
+     - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+     - `assertNoLegacyParameterSourceMappings` -> `assertNoUnsupportedParameterSourceMappings`
+     - `legacyMappings` -> `unsupportedMappings`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of legacy guard/channel naming snippets:
+       - `LEGACY_TRIGGER_DATA_PORTS`
+       - `assertNoLegacyTriggerDataGraph`
+       - `assertNoLegacyParameterSourceMappings`
+       - `const legacyMappings =`
+       - `const legacyPorts =`
+55. AI Paths factory/node-identity edge-alias cleanup compatibility prune:
+   - removed legacy edge-alias cleanup branches from AI Paths factory remap flow:
+     - `src/shared/lib/ai-paths/core/utils/factory.ts`
+     - `canonicalizePathNodes` no longer strips `source`/`target` alias keys during edge remap.
+   - removed legacy edge-alias cleanup branches from AI Paths node-identity repair flow:
+     - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+     - `repairPathNodeIdentities` no longer treats alias-key presence as a compatibility-mutation trigger.
+   - extended AI Paths canonical guardrail:
+     - `scripts/ai-paths/check-canonical.mjs`
+     - added `checkEdgeAliasCleanupCompatibilityPrune` to block reintroduction of legacy edge-alias cleanup snippets in:
+       - `src/shared/lib/ai-paths/core/utils/factory.ts`
+       - `src/shared/lib/ai-paths/core/utils/node-identity.ts`
+56. Integrations parameter-source prefix naming-channel canonicalization:
+   - renamed integrations runtime parameter-source prefix constants to canonical unsupported naming:
+     - `src/features/integrations/services/export-template-repository.ts`
+     - `src/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation.ts`
+     - `LEGACY_PARAMETER_SOURCE_PREFIX` -> `UNSUPPORTED_PARAMETER_SOURCE_PREFIX`
+   - renamed import/export template editor guard naming to canonical unsupported semantics:
+     - `src/features/data-import-export/context/import-export/useImportExportTemplates.ts`
+     - `LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX` -> `UNSUPPORTED_EXPORT_PARAMETER_SOURCE_PREFIX`
+     - `hasLegacyExportParameterSourceMapping` -> `hasUnsupportedExportParameterSourceMapping`
+   - extended site-wide canonical guardrail:
+     - `scripts/canonical/check-sitewide.mjs`
+     - blocks reintroduction of:
+       - `LEGACY_PARAMETER_SOURCE_PREFIX`
+       - `LEGACY_EXPORT_PARAMETER_SOURCE_PREFIX`
+       - `hasLegacyExportParameterSourceMapping`
 
 ## Baseline (Current State)
 

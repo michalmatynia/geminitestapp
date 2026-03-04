@@ -500,8 +500,13 @@ export const handleModel: NodeHandler = async ({
     const isHardFailure =
       isOllamaConnectionError ||
       normalizedErrorMessage.includes('ai job timed out') ||
-      normalizedErrorMessage.includes('connection error after');
-    reportAiPathsError(error, { action: 'graphModel', nodeId: node.id }, 'AI model job failed:');
+      normalizedErrorMessage.includes('connection error after') ||
+      normalizedErrorMessage.includes('job not found');
+    reportAiPathsError(
+      error,
+      { action: 'graphModel', nodeId: node.id, ...(enqueuedJobId ? { jobId: enqueuedJobId } : {}) },
+      'AI model job failed:'
+    );
     toast(isOllamaConnectionError ? errorMessage : 'AI model job failed.', { variant: 'error' });
     executed.ai.add(node.id);
     if (isHardFailure) {
@@ -511,6 +516,8 @@ export const handleModel: NodeHandler = async ({
       result: '',
       jobId: enqueuedJobId,
       status: 'failed',
+      error: errorMessage,
+      message: errorMessage,
       debugPayload: payload,
       cacheKey,
       payloadHash,

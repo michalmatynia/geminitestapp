@@ -46,28 +46,7 @@ const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
       item !== null && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
   );
 };
-const LEGACY_PARAMETER_SOURCE_PREFIX = 'parameter:';
-
-const assertNoLegacyParameterSourceMappings = (args: {
-  templateId: string;
-  mappings: BaseFieldMapping[];
-}): void => {
-  const legacyMappings = args.mappings.filter((mapping) =>
-    String(mapping.sourceKey ?? '')
-      .trim()
-      .toLowerCase()
-      .startsWith(LEGACY_PARAMETER_SOURCE_PREFIX)
-  );
-  if (legacyMappings.length === 0) return;
-
-  throw badRequestError(
-    `Export template "${args.templateId}" contains unsupported parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
-    {
-      templateId: args.templateId,
-      legacyMappingCount: legacyMappings.length,
-    }
-  );
-};
+const UNSUPPORTED_PARAMETER_SOURCE_PREFIX = 'parameter:';
 
 export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseExportProductLike>({
   data,
@@ -148,10 +127,21 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           exportImagesAsBase64?: unknown;
         };
         mappings = toBaseFieldMappings(templateRecord.mappings);
-        assertNoLegacyParameterSourceMappings({
-          templateId: template.id,
-          mappings,
-        });
+        const unsupportedParameterSourceMappings = mappings.filter((mapping) =>
+          String(mapping.sourceKey ?? '')
+            .trim()
+            .toLowerCase()
+            .startsWith(UNSUPPORTED_PARAMETER_SOURCE_PREFIX)
+        );
+        if (unsupportedParameterSourceMappings.length > 0) {
+          throw badRequestError(
+            `Export template "${template.id}" contains unsupported parameter source mappings. Run "npm run migrate:base-export-template-parameter-sources:v2 -- --write" and retry.`,
+            {
+              templateId: template.id,
+              unsupportedMappingCount: unsupportedParameterSourceMappings.length,
+            }
+          );
+        }
         resolvedTemplateId = template.id;
         const templateExportImagesAsBase64 =
           typeof templateRecord.exportImagesAsBase64 === 'boolean'

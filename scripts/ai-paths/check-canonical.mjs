@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import {
+  DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH,
+  evaluateLegacyPruneManifest,
+  loadLegacyPruneManifest,
+} from './legacy-prune-manifest-utils.mjs';
 
 const ROOT = process.cwd();
 const SRC_DIR = path.join(ROOT, 'src');
@@ -67,6 +72,8 @@ const PATH_RUN_EXECUTOR_HELPERS_FILE =
   'src/features/ai/ai-paths/services/path-run-executor.helpers.ts';
 const SETTINGS_RUNTIME_UTILS_FILE =
   'src/features/ai/ai-paths/components/ai-paths-settings/runtime/utils.ts';
+const AI_PATHS_SIMULATION_FILE =
+  'src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation.ts';
 const PRISMA_RUN_REPOSITORY_FILE =
   'src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts';
 const MONGO_RUN_REPOSITORY_FILE =
@@ -93,6 +100,8 @@ const SEMANTIC_GRAMMAR_SERIALIZE_FILE = 'src/shared/lib/ai-paths/core/semantic-g
 const SEMANTIC_GRAMMAR_DESERIALIZE_FILE =
   'src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts';
 const SEMANTIC_GRAMMAR_SUBGRAPH_FILE = 'src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts';
+const AI_PATHS_FACTORY_FILE = 'src/shared/lib/ai-paths/core/utils/factory.ts';
+const AI_PATHS_NODE_IDENTITY_FILE = 'src/shared/lib/ai-paths/core/utils/node-identity.ts';
 
 const toRelative = (absolutePath) => path.relative(ROOT, absolutePath).split(path.sep).join('/');
 
@@ -1351,7 +1360,7 @@ const checkDatabaseClientLegacyRouteCompatibilityPrune = () => {
     'update: payload.updates,',
   ];
   const requiredSnippets = [
-    "return apiPost<T>('/api/ai-paths/db-action', payload);",
+    "return apiPost<T>('/api/ai-paths/db-action', payload,",
     "return apiPost<T>('/api/ai-paths/db-action', {",
     'filter: unknown;\n  projection?: unknown;',
     'filter: unknown;\n  update: unknown;',
@@ -1892,6 +1901,78 @@ const checkStarterWorkflowEdgeAliasCompatibilityPrune = () => {
   }
 };
 
+const checkEdgeAliasCleanupCompatibilityPrune = () => {
+  const factoryText = readFile(AI_PATHS_FACTORY_FILE);
+  const nodeIdentityText = readFile(AI_PATHS_NODE_IDENTITY_FILE);
+
+  const forbiddenFactorySnippets = ['source: _legacySource', 'target: _legacyTarget'];
+  const forbiddenNodeIdentitySnippets = [
+    'source: _legacySource',
+    'target: _legacyTarget',
+    "Object.prototype.hasOwnProperty.call(edge, 'source')",
+    "Object.prototype.hasOwnProperty.call(edge, 'target')",
+  ];
+  for (const snippet of forbiddenFactorySnippets) {
+    if (factoryText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_FACTORY_FILE,
+        `legacy edge alias cleanup snippet detected: ${snippet}`
+      );
+    }
+  }
+  for (const snippet of forbiddenNodeIdentitySnippets) {
+    if (nodeIdentityText.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_NODE_IDENTITY_FILE,
+        `legacy edge alias repair snippet detected: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkSimulationEdgeAliasCompatibilityPrune = () => {
+  const text = readFile(AI_PATHS_SIMULATION_FILE);
+  const forbiddenSnippets = ['e.source === n.id', 'e.target === simulationNode.id'];
+  const requiredSnippets = ['e.from === n.id', 'e.to === simulationNode.id'];
+
+  for (const snippet of forbiddenSnippets) {
+    if (text.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SIMULATION_FILE,
+        `legacy simulation edge alias compatibility snippet detected: ${snippet}`
+      );
+    }
+  }
+  for (const snippet of requiredSnippets) {
+    if (!text.includes(snippet)) {
+      reportViolation(
+        AI_PATHS_SIMULATION_FILE,
+        `missing canonical simulation edge endpoint snippet: ${snippet}`
+      );
+    }
+  }
+};
+
+const checkManifestLegacyPruneRules = () => {
+  let manifest;
+  try {
+    manifest = loadLegacyPruneManifest(ROOT, DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'failed to load legacy prune manifest';
+    reportViolation(DEFAULT_LEGACY_PRUNE_MANIFEST_RELATIVE_PATH, message);
+    return;
+  }
+
+  const findings = evaluateLegacyPruneManifest(manifest, {
+    root: ROOT,
+    includeTargetFileMissingFindings: true,
+  });
+
+  for (const finding of findings) {
+    reportViolation(finding.file, `manifest rule "${finding.ruleId}" ${finding.message}`);
+  }
+};
+
 const main = () => {
   const sourceFiles = collectSourceFiles(SRC_DIR);
 
@@ -1926,29 +2007,17 @@ const main = () => {
   checkValidationPathIndexMetaFallbackCompatibilityPrune();
   checkValidationCollectionMapLegacyDelimiterCompatibilityPrune();
   checkValidationDocsSourcesLegacyDelimiterCompatibilityPrune();
-  checkSettingsEdgeAliasCompatibilityPrune();
-  checkLoadedPathSettingsEdgeAliasCompatibilityPrune();
-  checkSemanticGrammarEdgeAliasCompatibilityPrune();
-  checkDatabaseTemplateCatalogAliasCompatibilityPrune();
-  checkDatabaseInputCatalogAliasCompatibilityPrune();
-  checkDatabaseProviderFallbackCompatibilityPrune();
-  checkDatabaseProviderAliasCompatibilityPrune();
-  checkDatabaseUpdateProviderAliasCompatibilityPrune();
-  checkDatabaseQueryProviderResponseAliasCompatibilityPrune();
-  checkDbActionProviderAliasCompatibilityPrune();
-  checkDbActionRequestAliasCompatibilityPrune();
-  checkDatabaseClientLegacyRouteCompatibilityPrune();
   checkDbQueryUpdateShimRetirement();
-  checkApiClientCsrfCompatibilityAliasPrune();
-  checkDbSchemaProviderAliasCompatibilityPrune();
-  checkEntityUpdateSimpleParametersAliasPrune();
   checkParameterInferenceTargetPathCompatibilityPrune();
-  checkDatabaseSettingsTargetPathEditTimeCanonicalizationPrune();
-  checkParameterInferenceTargetPathSanitizationPrune();
   checkDatabaseSchemaSnapshotProviderErrorChannelPrune();
   checkTriggerDataAndCollectionAliasErrorChannelPrune();
   checkRuntimeAndNodeIdentityReasonChannelPrune();
-  checkStarterWorkflowEdgeAliasCompatibilityPrune();
+  checkEdgeAliasCleanupCompatibilityPrune();
+  checkSimulationEdgeAliasCompatibilityPrune();
+  // Manifest-driven rules cover catalog alias, database provider-fallback/alias,
+  // db-action/db-client, CSRF helper, db-schema provider alias, simpleParameters alias,
+  // target-path sanitization/editing, and starter-workflow/core edge alias cleanup surfaces.
+  checkManifestLegacyPruneRules();
 
   if (violations.length > 0) {
     console.error('[ai-paths:check:canonical] failed with violations:');

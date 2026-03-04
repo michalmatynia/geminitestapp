@@ -30,6 +30,8 @@ describe('error-classifier', () => {
     const actions = getSuggestedActions(classifyError(error), error);
 
     expect(actions[0]?.label).toBe('Update Image Studio Settings');
+    expect(actions[0]?.description).toMatch(/unsupported model snapshot fields/i);
+    expect(actions[0]?.description).not.toMatch(/legacy model snapshot fields/i);
     expect(actions.some((action) => action.label === 'Adjust Prompt')).toBe(false);
   });
 

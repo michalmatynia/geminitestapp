@@ -1,4 +1,4 @@
-import { edgeSchema, type Edge } from '@/shared/contracts/ai-paths-core/nodes';
+import { caseResolverEdgeSchema, type Edge } from '@/shared/contracts/case-resolver/graph';
 import { validationError } from '@/shared/errors/app-error';
 
 const CANONICAL_CASE_RESOLVER_EDGE_KEYS = new Set([
@@ -45,7 +45,7 @@ export const parseCanonicalCaseResolverEdge = (input: unknown, context: string):
     );
   }
 
-  const validation = edgeSchema.safeParse(record);
+  const validation = caseResolverEdgeSchema.safeParse(record);
   if (!validation.success) {
     throw buildInvalidCaseResolverEdgeError('Invalid Case Resolver edge payload.', context, {
       issues: validation.error.flatten(),

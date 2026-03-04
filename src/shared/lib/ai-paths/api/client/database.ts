@@ -49,8 +49,41 @@ export type EntityUpdatePayload = {
   mode?: 'replace' | 'append';
 };
 
-export async function databaseAction<T>(payload: DbActionPayload): Promise<ApiResponse<T>> {
-  return apiPost<T>('/api/ai-paths/db-action', payload);
+type DbRequestOptions = {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+};
+
+const parsePositiveInt = (raw: string | undefined): number | null => {
+  const parsed = Number.parseInt(raw ?? '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+};
+
+const DEFAULT_API_TIMEOUT_MS = 15_000;
+const DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS = 30_000;
+const SERVER_DB_ACTION_TIMEOUT_MS =
+  parsePositiveInt(process.env['AI_PATHS_DB_ACTION_TIMEOUT_MS']) ??
+  DEFAULT_SERVER_DB_ACTION_TIMEOUT_MS;
+
+const resolveDbActionTimeoutMs = (timeoutMs?: number): number => {
+  if (typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0) {
+    return Math.max(1_000, Math.floor(timeoutMs));
+  }
+  if (typeof window === 'undefined') {
+    return Math.max(DEFAULT_API_TIMEOUT_MS, SERVER_DB_ACTION_TIMEOUT_MS);
+  }
+  return DEFAULT_API_TIMEOUT_MS;
+};
+
+export async function databaseAction<T>(
+  payload: DbActionPayload,
+  options?: DbRequestOptions
+): Promise<ApiResponse<T>> {
+  return apiPost<T>('/api/ai-paths/db-action', payload, {
+    timeoutMs: resolveDbActionTimeoutMs(options?.timeoutMs),
+    ...(options?.signal ? { signal: options.signal } : {}),
+  });
 }
 
 export async function databaseQuery<T>(payload: DbQueryPayload): Promise<ApiResponse<T>> {

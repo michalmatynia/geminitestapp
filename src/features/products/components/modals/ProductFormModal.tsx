@@ -76,7 +76,7 @@ function ProductFormModalInner(props: ProductFormModalProps): React.JSX.Element 
         <ProductForm
           key={formInstanceKey}
           submitButtonText={submitButtonText}
-          {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
+          validationInstanceScopeOverride={validationInstanceScopeOverride}
         />
       )}
     </FormModal>
@@ -84,6 +84,16 @@ function ProductFormModalInner(props: ProductFormModalProps): React.JSX.Element 
 }
 
 export function ProductFormModal(props: ProductFormModalProps): React.JSX.Element | null {
-  if (!props.isOpen) return null;
-  return <ProductFormModalInner {...props} />;
+  const { isOpen, onClose, title, submitButtonText, validationInstanceScopeOverride } = props;
+
+  if (!isOpen) return null;
+  return (
+    <ProductFormModalInner
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      submitButtonText={submitButtonText}
+      validationInstanceScopeOverride={validationInstanceScopeOverride}
+    />
+  );
 }

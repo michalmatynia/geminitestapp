@@ -98,10 +98,9 @@ interface CaseResolverCategoryModalProps extends EntityModalProps<CaseResolverCa
   onSave: () => void;
 }
 
-export function CaseResolverCategoryModal({
-  parentOptions,
-  ...props
-}: CaseResolverCategoryModalProps): React.JSX.Element {
+export function CaseResolverCategoryModal(props: CaseResolverCategoryModalProps): React.JSX.Element {
+  const { parentOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } = props;
+
   const fields: SettingsField<CategoryFormData>[] = useMemo(
     () => [
       {
@@ -136,7 +135,13 @@ export function CaseResolverCategoryModal({
 
   return (
     <CaseResolverConfiguredEntityModal
-      {...props}
+      isOpen={isOpen}
+      onClose={onClose}
+      item={item}
+      formData={formData}
+      setFormData={setFormData}
+      isSaving={isSaving}
+      onSave={onSave}
       fields={fields}
       createTitle='Create Category'
       editTitle='Edit Category'
@@ -153,10 +158,20 @@ interface CaseResolverIdentifierModalProps extends EntityModalProps<CaseResolver
   onSave: () => void;
 }
 
-export function CaseResolverIdentifierModal({
-  parentIdentifierOptions,
-  ...props
-}: CaseResolverIdentifierModalProps): React.JSX.Element {
+export function CaseResolverIdentifierModal(
+  props: CaseResolverIdentifierModalProps
+): React.JSX.Element {
+  const {
+    parentIdentifierOptions,
+    isOpen,
+    onClose,
+    item,
+    formData,
+    setFormData,
+    isSaving,
+    onSave,
+  } = props;
+
   const fields: SettingsField<CaseIdentifierFormData>[] = useMemo(
     () => [
       {
@@ -185,7 +200,13 @@ export function CaseResolverIdentifierModal({
 
   return (
     <CaseResolverConfiguredEntityModal
-      {...props}
+      isOpen={isOpen}
+      onClose={onClose}
+      item={item}
+      formData={formData}
+      setFormData={setFormData}
+      isSaving={isSaving}
+      onSave={onSave}
       fields={fields}
       createTitle='Create Case Identifier'
       editTitle='Edit Case Identifier'
@@ -202,10 +223,10 @@ interface CaseResolverTagModalProps extends EntityModalProps<CaseResolverTag> {
   onSave: () => void;
 }
 
-export function CaseResolverTagModal({
-  parentTagOptions,
-  ...props
-}: CaseResolverTagModalProps): React.JSX.Element {
+export function CaseResolverTagModal(props: CaseResolverTagModalProps): React.JSX.Element {
+  const { parentTagOptions, isOpen, onClose, item, formData, setFormData, isSaving, onSave } =
+    props;
+
   const fields: SettingsField<TagFormData>[] = useMemo(
     () => [
       {
@@ -234,7 +255,13 @@ export function CaseResolverTagModal({
 
   return (
     <CaseResolverConfiguredEntityModal
-      {...props}
+      isOpen={isOpen}
+      onClose={onClose}
+      item={item}
+      formData={formData}
+      setFormData={setFormData}
+      isSaving={isSaving}
+      onSave={onSave}
       fields={fields}
       createTitle='Create Tag'
       editTitle='Edit Tag'

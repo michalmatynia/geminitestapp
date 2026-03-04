@@ -20,10 +20,18 @@ export type AiPathsSettingsProps = {
 };
 
 export function AiPathsSettings(props: AiPathsSettingsProps): React.JSX.Element {
+  const { activeTab, renderActions, onTabChange, isFocusMode, onFocusModeChange } = props;
+
   return (
     <AppErrorBoundary source='AiPathsSettings'>
       <AiPathsProvider>
-        <AiPathsSettingsInnerOrchestrator {...props} />
+        <AiPathsSettingsInnerOrchestrator
+          activeTab={activeTab}
+          renderActions={renderActions}
+          onTabChange={onTabChange}
+          isFocusMode={isFocusMode}
+          onFocusModeChange={onFocusModeChange}
+        />
       </AiPathsProvider>
     </AppErrorBoundary>
   );

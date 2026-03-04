@@ -30,7 +30,6 @@ import {
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
@@ -53,45 +52,6 @@ import {
   CaseListNodeRuntimeProvider,
   type CaseListNodeRuntimeContextValue,
 } from './list/sections/CaseListNodeRuntimeContext';
-
-/** Thin wrapper that computes per-node derived values so CaseListNodeItem can be memo'd. */
-type CaseListNodeItemWrapperProps = FolderTreeViewportRenderNodeInput & {
-  heldCaseId: string | null;
-  heldCaseFile: CaseResolverFile | null;
-  isHierarchyLocked: boolean;
-  isHeldCaseAncestorOf: (candidateCaseId: string) => boolean;
-};
-
-const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(
-  props: CaseListNodeItemWrapperProps
-) {
-  const targetCaseId = fromCaseResolverCaseNodeId(props.node.id) ?? '';
-  const canShowNestHeldAction =
-    Boolean(props.heldCaseId) && targetCaseId.length > 0 && props.heldCaseId !== targetCaseId;
-  const canNestHeldHere =
-    canShowNestHeldAction &&
-    !props.isHierarchyLocked &&
-    Boolean(props.heldCaseFile) &&
-    props.heldCaseFile?.isLocked !== true &&
-    !props.isHeldCaseAncestorOf(targetCaseId);
-  const nestHeldDisabledReason = (() => {
-    if (!canShowNestHeldAction) return null;
-    if (props.isHierarchyLocked) return 'Unlock hierarchy to move held case.';
-    if (!props.heldCaseFile) return 'Held case is no longer available.';
-    if (props.heldCaseFile.isLocked === true) return 'Held case is locked.';
-    if (props.isHeldCaseAncestorOf(targetCaseId))
-      return 'Cannot nest held case under its descendant.';
-    return null;
-  })();
-  return (
-    <CaseListNodeItem
-      {...props}
-      canShowNestHeldAction={canShowNestHeldAction}
-      canNestHeldHere={canNestHeldHere}
-      nestHeldDisabledReason={nestHeldDisabledReason}
-    />
-  );
-});
 
 const CASE_LIST_LOADING_SKELETON_ROWS = 8;
 
@@ -572,15 +532,44 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   );
 
   const handleRenderNode = useCallback(
-    (props: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
-      <CaseListNodeItemWrapper
-        {...props}
-        heldCaseId={heldCaseId}
-        heldCaseFile={heldCaseFile}
-        isHierarchyLocked={isHierarchyLocked}
-        isHeldCaseAncestorOf={isHeldCaseAncestorOf}
-      />
-    ),
+    (input: FolderTreeViewportRenderNodeInput): React.JSX.Element => {
+      const targetCaseId = fromCaseResolverCaseNodeId(input.node.id) ?? '';
+      const canShowNestHeldAction =
+        Boolean(heldCaseId) && targetCaseId.length > 0 && heldCaseId !== targetCaseId;
+      const canNestHeldHere =
+        canShowNestHeldAction &&
+        !isHierarchyLocked &&
+        Boolean(heldCaseFile) &&
+        heldCaseFile?.isLocked !== true &&
+        !isHeldCaseAncestorOf(targetCaseId);
+      const nestHeldDisabledReason = (() => {
+        if (!canShowNestHeldAction) return null;
+        if (isHierarchyLocked) return 'Unlock hierarchy to move held case.';
+        if (!heldCaseFile) return 'Held case is no longer available.';
+        if (heldCaseFile.isLocked === true) return 'Held case is locked.';
+        if (isHeldCaseAncestorOf(targetCaseId))
+          return 'Cannot nest held case under its descendant.';
+        return null;
+      })();
+
+      return (
+        <CaseListNodeItem
+          node={input.node}
+          depth={input.depth}
+          hasChildren={input.hasChildren}
+          isExpanded={input.isExpanded}
+          isRenaming={input.isRenaming}
+          isDragging={input.isDragging}
+          isDropTarget={input.isDropTarget}
+          dropPosition={input.dropPosition}
+          toggleExpand={input.toggleExpand}
+          heldCaseId={heldCaseId}
+          canShowNestHeldAction={canShowNestHeldAction}
+          canNestHeldHere={canNestHeldHere}
+          nestHeldDisabledReason={nestHeldDisabledReason}
+        />
+      );
+    },
     [heldCaseId, heldCaseFile, isHierarchyLocked, isHeldCaseAncestorOf]
   );
 

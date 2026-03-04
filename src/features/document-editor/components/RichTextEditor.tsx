@@ -11,7 +11,51 @@ const RichTextEditorImpl = dynamic(() => import('./RichTextEditorImpl'), {
 });
 
 export function RichTextEditor(props: RichTextEditorProps): React.JSX.Element {
-  return <RichTextEditorImpl {...props} />;
+  const {
+    value,
+    onChange,
+    disabled,
+    placeholder,
+    variant,
+    headingLevels,
+    allowImage,
+    allowTable,
+    allowTaskList,
+    allowFontFamily,
+    allowTextAlign,
+    enableAdvancedTools,
+    fontFamilyOptions,
+    loadingLabel,
+    containerClassName,
+    toolbarClassName,
+    surfaceClassName,
+    editorContentClassName,
+    surfaceStyle,
+  } = props;
+
+  return (
+    <RichTextEditorImpl
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      variant={variant}
+      headingLevels={headingLevels}
+      allowImage={allowImage}
+      allowTable={allowTable}
+      allowTaskList={allowTaskList}
+      allowFontFamily={allowFontFamily}
+      allowTextAlign={allowTextAlign}
+      enableAdvancedTools={enableAdvancedTools}
+      fontFamilyOptions={fontFamilyOptions}
+      loadingLabel={loadingLabel}
+      containerClassName={containerClassName}
+      toolbarClassName={toolbarClassName}
+      surfaceClassName={surfaceClassName}
+      editorContentClassName={editorContentClassName}
+      surfaceStyle={surfaceStyle}
+    />
+  );
 }
 
 export type { RichTextEditorProps };

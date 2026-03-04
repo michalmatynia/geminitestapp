@@ -97,8 +97,16 @@ export function JobQueuePanel(props: {
   visibility?: AiPathRunVisibility;
   isActive?: boolean;
 }): React.JSX.Element {
+  const { activePathId, sourceFilter, sourceMode, visibility, isActive } = props;
+
   return (
-    <JobQueueProvider {...props}>
+    <JobQueueProvider
+      activePathId={activePathId}
+      sourceFilter={sourceFilter}
+      sourceMode={sourceMode}
+      visibility={visibility}
+      isActive={isActive}
+    >
       <JobQueuePanelInner />
     </JobQueueProvider>
   );

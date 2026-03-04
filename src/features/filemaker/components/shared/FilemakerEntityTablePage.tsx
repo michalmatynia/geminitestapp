@@ -68,21 +68,25 @@ function FilemakerEntityTableEmptyState(): React.JSX.Element {
   return <EmptyState title={runtime.emptyTitle} description={runtime.emptyDescription} />;
 }
 
-export function FilemakerEntityTablePage<TData>({
-  title,
-  description,
-  icon,
-  actions,
-  badges,
-  query,
-  onQueryChange,
-  queryPlaceholder,
-  columns,
-  data,
-  isLoading,
-  emptyTitle,
-  emptyDescription,
-}: FilemakerEntityTablePageProps<TData>): React.JSX.Element {
+export function FilemakerEntityTablePage<TData>(
+  props: FilemakerEntityTablePageProps<TData>
+): React.JSX.Element {
+  const {
+    title,
+    description,
+    icon,
+    actions,
+    badges,
+    query,
+    onQueryChange,
+    queryPlaceholder,
+    columns,
+    data,
+    isLoading,
+    emptyTitle,
+    emptyDescription,
+  } = props;
+
   const runtimeValue = React.useMemo<FilemakerEntityTableRuntimeValue>(
     () => ({
       badges,

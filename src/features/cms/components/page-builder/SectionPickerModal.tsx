@@ -120,16 +120,18 @@ const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNod
   );
 };
 
-export function SectionPickerModal({
-  isOpen,
-  onClose,
-  primitives,
-  elements,
-  templates,
-  groupedTemplates,
-  onSelect,
-  onDeleteTemplate,
-}: SectionPickerModalProps): React.JSX.Element | null {
+export function SectionPickerModal(props: SectionPickerModalProps): React.JSX.Element | null {
+  const {
+    isOpen,
+    onClose,
+    primitives,
+    elements,
+    templates,
+    groupedTemplates,
+    onSelect,
+    onDeleteTemplate,
+  } = props;
+
   return (
     <DetailModal isOpen={isOpen} onClose={onClose} title='Add a section' size='lg' footer={null}>
       <SectionPickerSelectionContext.Provider value={{ onSelect }}>

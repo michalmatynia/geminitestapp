@@ -16,16 +16,18 @@ interface IntegrationSelectorProps {
   className?: string;
 }
 
-export function IntegrationSelector({
-  integrations,
-  selectedIntegrationId,
-  onIntegrationChange,
-  selectedConnectionId,
-  onConnectionChange,
-  disabled = false,
-  loading = false,
-  className = 'space-y-4',
-}: IntegrationSelectorProps) {
+export function IntegrationSelector(props: IntegrationSelectorProps) {
+  const {
+    integrations,
+    selectedIntegrationId,
+    onIntegrationChange,
+    selectedConnectionId,
+    onConnectionChange,
+    disabled = false,
+    loading = false,
+    className = 'space-y-4',
+  } = props;
+
   const selectedIntegration = integrations.find((i) => i.id === selectedIntegrationId);
 
   return (

@@ -42,28 +42,30 @@ export interface CenterPreviewCanvasProps {
   handleRevealInTreeFromCanvas: () => void;
 }
 
-export function CenterPreviewCanvas({
-  vectorContextValue,
-  projectCanvasSize,
-  activeCanvasImageSrc,
-  liveMaskShapes,
-  splitVariantView,
-  canCompareSelectedVariants,
-  compareVariantImageA,
-  compareVariantImageB,
-  canCompareWithSource,
-  sourceSlotImageSrc,
-  workingSlotImageSrc,
-  isCompositeSlot,
-  canNavigateToSource,
-  canRevealLoadedCardInTree,
-  handlePreviewCanvasCropRectChange,
-  handlePreviewCanvasImageFrameChange,
-  handleGoToSourceSlot,
-  handleToggleSourceVariantView,
-  handleToggleSplitVariantView,
-  handleRevealInTreeFromCanvas,
-}: CenterPreviewCanvasProps): React.JSX.Element {
+export function CenterPreviewCanvas(props: CenterPreviewCanvasProps): React.JSX.Element {
+  const {
+    vectorContextValue,
+    projectCanvasSize,
+    activeCanvasImageSrc,
+    liveMaskShapes,
+    splitVariantView,
+    canCompareSelectedVariants,
+    compareVariantImageA,
+    compareVariantImageB,
+    canCompareWithSource,
+    sourceSlotImageSrc,
+    workingSlotImageSrc,
+    isCompositeSlot,
+    canNavigateToSource,
+    canRevealLoadedCardInTree,
+    handlePreviewCanvasCropRectChange,
+    handlePreviewCanvasImageFrameChange,
+    handleGoToSourceSlot,
+    handleToggleSourceVariantView,
+    handleToggleSplitVariantView,
+    handleRevealInTreeFromCanvas,
+  } = props;
+
   const {
     maskPreviewEnabled,
     centerGuidesEnabled,

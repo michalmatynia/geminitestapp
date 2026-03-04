@@ -23,20 +23,22 @@ export interface DocumentWysiwygEditorProps {
   editorContentClassName?: string | undefined;
 }
 
-export function DocumentWysiwygEditor({
-  value,
-  onChange,
-  disabled = false,
-  placeholder,
-  appearance = 'default',
-  allowFontFamily = false,
-  allowTextAlign = false,
-  enableAdvancedTools = false,
-  loadingLabel = 'Loading editor...',
-  toolbarClassName,
-  surfaceClassName,
-  editorContentClassName,
-}: DocumentWysiwygEditorProps): React.JSX.Element {
+export function DocumentWysiwygEditor(props: DocumentWysiwygEditorProps): React.JSX.Element {
+  const {
+    value,
+    onChange,
+    disabled = false,
+    placeholder,
+    appearance = 'default',
+    allowFontFamily = false,
+    allowTextAlign = false,
+    enableAdvancedTools = false,
+    loadingLabel = 'Loading editor...',
+    toolbarClassName,
+    surfaceClassName,
+    editorContentClassName,
+  } = props;
+
   const isDocumentPreview = appearance === 'document-preview';
 
   return (

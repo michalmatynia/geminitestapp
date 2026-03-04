@@ -9,19 +9,15 @@ import React, { useEffect, useState } from 'react';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { Button, SelectSimple, Card, Hint } from '@/shared/ui';
 
-function RichTextToolbarButton({
-  title,
-  onClick,
-  active,
-  disabled,
-  children,
-}: {
+function RichTextToolbarButton(props: {
   title: string;
   onClick: () => void;
   active?: boolean;
   disabled?: boolean;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const { title, onClick, active, disabled, children } = props;
+
   return (
     <Button
       type='button'
@@ -37,14 +33,7 @@ function RichTextToolbarButton({
   );
 }
 
-export function MiniRichTextEditor({
-  value,
-  onChange,
-  label,
-  minHeight = '120px',
-  showFormatSelect = true,
-  enableLists = true,
-}: {
+export function MiniRichTextEditor(props: {
   value: string;
   onChange: (value: string) => void;
   label: string;
@@ -52,6 +41,15 @@ export function MiniRichTextEditor({
   showFormatSelect?: boolean;
   enableLists?: boolean;
 }): React.JSX.Element {
+  const {
+    value,
+    onChange,
+    label,
+    minHeight = '120px',
+    showFormatSelect = true,
+    enableLists = true,
+  } = props;
+
   const { prompt, PromptInputModal } = usePrompt();
 
   const editor = useEditor({

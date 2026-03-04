@@ -26,14 +26,9 @@ export interface SlugFormProps {
   domains: CmsDomain[];
 }
 
-export function SlugForm({
-  initialData,
-  onSubmit,
-  isSaving,
-  onCancel,
-  submitText,
-  domains,
-}: SlugFormProps): React.JSX.Element {
+export function SlugForm(props: SlugFormProps): React.JSX.Element {
+  const { initialData, onSubmit, isSaving, onCancel, submitText, domains } = props;
+
   const [slug, setSlug] = useState(initialData?.slug ?? '');
   const [isDefault, setIsDefault] = useState(initialData?.isDefault ?? false);
   const [domainIds, setDomainIds] = useState<string[]>(initialData?.domainIds ?? []);

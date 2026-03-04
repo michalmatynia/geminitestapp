@@ -19,12 +19,11 @@ type NodeFileDocumentSearchPanelProps = {
   onNodeInspectorClick: () => void;
 };
 
-export function NodeFileDocumentSearchPanel({
-  newNodeType,
-  setNewNodeType,
-  onExplanatoryClick,
-  onNodeInspectorClick,
-}: NodeFileDocumentSearchPanelProps): React.JSX.Element {
+export function NodeFileDocumentSearchPanel(
+  props: NodeFileDocumentSearchPanelProps
+): React.JSX.Element {
+  const { newNodeType, setNewNodeType, onExplanatoryClick, onNodeInspectorClick } = props;
+
   const {
     documentSearchScope,
     setDocumentSearchScope,

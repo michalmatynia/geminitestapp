@@ -9,12 +9,11 @@ export type CategoryMapperSelectCellProps = {
   disabled: boolean;
 };
 
-export function CategoryMapperSelectCell({
-  value,
-  onChange,
-  options,
-  disabled,
-}: CategoryMapperSelectCellProps): React.JSX.Element {
+export function CategoryMapperSelectCell(
+  props: CategoryMapperSelectCellProps
+): React.JSX.Element {
+  const { value, onChange, options, disabled } = props;
+
   return (
     <SearchableSelect
       value={value}

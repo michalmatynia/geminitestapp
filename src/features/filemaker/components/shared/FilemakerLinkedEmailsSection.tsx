@@ -15,13 +15,12 @@ export interface FilemakerLinkedEmailsSectionProps {
   isSaving: boolean;
 }
 
-export function FilemakerLinkedEmailsSection({
-  emails,
-  emailExtractionText,
-  onEmailExtractionTextChange,
-  onExtractEmails,
-  isSaving,
-}: FilemakerLinkedEmailsSectionProps): React.JSX.Element {
+export function FilemakerLinkedEmailsSection(
+  props: FilemakerLinkedEmailsSectionProps
+): React.JSX.Element {
+  const { emails, emailExtractionText, onEmailExtractionTextChange, onExtractEmails, isSaving } =
+    props;
+
   return (
     <div className='space-y-6'>
       <FormSection title='Linked Emails' className='space-y-2 p-4'>

@@ -15,14 +15,11 @@ interface PreviewSectionMediaButtonProps {
   className?: string;
 }
 
-export function PreviewSectionMediaButton({
-  show,
-  onOpenMedia,
-  sectionId,
-  mediaKey,
-  label = 'Replace image',
-  className,
-}: PreviewSectionMediaButtonProps): React.JSX.Element | null {
+export function PreviewSectionMediaButton(
+  props: PreviewSectionMediaButtonProps
+): React.JSX.Element | null {
+  const { show, onOpenMedia, sectionId, mediaKey, label = 'Replace image', className } = props;
+
   if (!show || !onOpenMedia) return null;
 
   return (

@@ -19,15 +19,17 @@ type RestoreFormState = {
   truncate: boolean;
 };
 
-export const RestoreModal = ({
-  isOpen,
-  onClose,
-  onSuccess,
-  backupName,
-  onConfirm,
-  title = 'Restore Database',
-  size = 'sm',
-}: RestoreModalProps): React.JSX.Element | null => {
+export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null => {
+  const {
+    isOpen,
+    onClose,
+    onSuccess,
+    backupName,
+    onConfirm,
+    title = 'Restore Database',
+    size = 'sm',
+  } = props;
+
   const [values, setValues] = useState<RestoreFormState>({ truncate: true });
 
   const fields: SettingsField<RestoreFormState>[] = useMemo(

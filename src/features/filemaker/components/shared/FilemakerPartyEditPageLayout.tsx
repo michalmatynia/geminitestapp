@@ -13,14 +13,11 @@ export interface FilemakerPartyEditPageLayoutProps {
   children: React.ReactNode;
 }
 
-export function FilemakerPartyEditPageLayout({
-  itemName,
-  notFoundMessage,
-  onSave,
-  onCancel,
-  isSaving,
-  children,
-}: FilemakerPartyEditPageLayoutProps): React.JSX.Element {
+export function FilemakerPartyEditPageLayout(
+  props: FilemakerPartyEditPageLayoutProps
+): React.JSX.Element {
+  const { itemName, notFoundMessage, onSave, onCancel, isSaving, children } = props;
+
   if (!itemName) {
     return <div className='container mx-auto py-8 text-center text-gray-500'>{notFoundMessage}</div>;
   }

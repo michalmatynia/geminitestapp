@@ -14,12 +14,10 @@ type SplitViewControlsProps = {
   onToggleSplitVariantView: () => void;
 };
 
-export function SplitViewControls({
-  canCompare,
-  onGoToSourceSlot,
-  onToggleSourceVariantView,
-  onToggleSplitVariantView,
-}: SplitViewControlsProps): React.JSX.Element {
+export function SplitViewControls(props: SplitViewControlsProps): React.JSX.Element {
+  const { canCompare, onGoToSourceSlot, onToggleSourceVariantView, onToggleSplitVariantView } =
+    props;
+
   const { singleVariantView, splitVariantView } = useCenterPreviewContext();
 
   return (

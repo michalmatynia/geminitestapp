@@ -11,12 +11,9 @@ interface SlotCreateModalProps extends ModalStateProps {
   disabled?: boolean;
 }
 
-export function SlotCreateModal({
-  isOpen,
-  onClose,
-  onSelectMode,
-  disabled = false,
-}: SlotCreateModalProps): React.JSX.Element | null {
+export function SlotCreateModal(props: SlotCreateModalProps): React.JSX.Element | null {
+  const { isOpen, onClose, onSelectMode, disabled = false } = props;
+
   return (
     <DetailModal isOpen={isOpen} onClose={onClose} title='New Card' size='sm' footer={null}>
       <div className='grid gap-3'>

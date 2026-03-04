@@ -55,15 +55,10 @@ interface CmsPageRendererProps {
   mediaStyles?: React.CSSProperties | null | undefined;
 }
 
-export function CmsPageRenderer({
-  components,
-  colorSchemes,
-  layout,
-  hoverEffect,
-  hoverScale,
-  mediaVars,
-  mediaStyles,
-}: CmsPageRendererProps): React.ReactNode {
+export function CmsPageRenderer(props: CmsPageRendererProps): React.ReactNode {
+  const { components, colorSchemes, layout, hoverEffect, hoverScale, mediaVars, mediaStyles } =
+    props;
+
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   const resolvedMediaStyles = React.useMemo(() => mediaStyles ?? null, [mediaStyles]);
   const resolvedColorSchemes = React.useMemo(() => colorSchemes ?? {}, [colorSchemes]);
@@ -163,12 +158,9 @@ interface SectionRendererProps {
   blocks: BlockInstance[];
 }
 
-export function SectionRenderer({
-  type,
-  sectionId,
-  settings,
-  blocks,
-}: SectionRendererProps): React.ReactNode {
+export function SectionRenderer(props: SectionRendererProps): React.ReactNode {
+  const { type, sectionId, settings, blocks } = props;
+
   return (
     <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
       <SectionRendererInner type={type} />
@@ -180,7 +172,9 @@ interface SectionRendererInnerProps {
   type: string;
 }
 
-function SectionRendererInner({ type }: SectionRendererInnerProps): React.ReactNode {
+function SectionRendererInner(props: SectionRendererInnerProps): React.ReactNode {
+  const { type } = props;
+
   switch (type) {
     case 'AnnouncementBar':
       return <FrontendAnnouncementBarSection />;

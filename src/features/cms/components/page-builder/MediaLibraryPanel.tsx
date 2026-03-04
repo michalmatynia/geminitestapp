@@ -23,14 +23,16 @@ interface MediaLibraryPanelProps {
   onFilesSelected?: (files: File[], helpers?: FileUploadHelpers) => void | Promise<void>;
 }
 
-export function MediaLibraryPanel({
-  open,
-  onOpenChange,
-  onSelect,
-  selectionMode = 'single',
-  autoConfirmSelection,
-  onFilesSelected,
-}: MediaLibraryPanelProps): React.JSX.Element {
+export function MediaLibraryPanel(props: MediaLibraryPanelProps): React.JSX.Element {
+  const {
+    open,
+    onOpenChange,
+    onSelect,
+    selectionMode = 'single',
+    autoConfirmSelection,
+    onFilesSelected,
+  } = props;
+
   const { toast } = useToast();
   const shouldAutoConfirm = autoConfirmSelection ?? selectionMode === 'single';
 

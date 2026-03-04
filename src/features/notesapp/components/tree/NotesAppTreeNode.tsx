@@ -25,17 +25,19 @@ type NotesAppTreeNodeOperations = NotesMasterTreeOperations & {
   handleDeleteNoteFromTree: (noteId: string) => Promise<void>;
 };
 
-export function NotesAppTreeNode({
-  node,
-  depth,
-  hasChildren,
-  isExpanded,
-  isSelected,
-  isRenaming,
-  select,
-  toggleExpand,
-  startRename,
-}: NotesAppTreeNodeProps): React.JSX.Element {
+export function NotesAppTreeNode(props: NotesAppTreeNodeProps): React.JSX.Element {
+  const {
+    node,
+    depth,
+    hasChildren,
+    isExpanded,
+    isSelected,
+    isRenaming,
+    select,
+    toggleExpand,
+    startRename,
+  } = props;
+
   const { controller, FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } =
     useNotesAppTreeNodeRuntimeContext();
   const notesAppContext = useNotesAppContext();

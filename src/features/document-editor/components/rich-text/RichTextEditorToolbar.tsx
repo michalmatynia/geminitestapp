@@ -14,14 +14,9 @@ export interface ToolbarButtonProps {
   children: React.ReactNode;
 }
 
-export function ToolbarButton({
-  title,
-  onClick,
-  isActive = false,
-  disabled = false,
-  variant,
-  children,
-}: ToolbarButtonProps): React.JSX.Element {
+export function ToolbarButton(props: ToolbarButtonProps): React.JSX.Element {
+  const { title, onClick, isActive = false, disabled = false, variant, children } = props;
+
   if (variant === 'full') {
     return (
       <Button

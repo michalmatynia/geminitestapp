@@ -1,6 +1,6 @@
 import { type CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
-import { parseCaseResolverWorkspace } from './settings';
+import { safeParseCaseResolverWorkspace } from './settings';
 
 import { readPositiveIntegerEnv } from './utils/workspace-persistence-utils';
 
@@ -30,7 +30,7 @@ export const readWorkspaceFromSettingRecord = (
 ): CaseResolverWorkspace => {
   const rawValue = typeof record?.value === 'string' ? record.value : fallback;
   if (!rawValue.trim()) {
-    return parseCaseResolverWorkspace(fallback);
+    return safeParseCaseResolverWorkspace(fallback);
   }
-  return parseCaseResolverWorkspace(rawValue);
+  return safeParseCaseResolverWorkspace(rawValue);
 };

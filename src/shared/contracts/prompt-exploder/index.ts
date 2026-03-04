@@ -3,3 +3,7 @@ export * from './document';
 export * from './settings';
 export * from './benchmark';
 export * from './params';
+export * from './bridge';
+export * from './case-resolver';
+export * from './patterns';
+export * from './ui';

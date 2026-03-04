@@ -141,12 +141,7 @@ describe('case-resolver workspace persistence', () => {
         }),
       ],
     };
-    const fetchMock = vi.fn().mockResolvedValue(
-      toJsonResponse(200, {
-        key: CASE_RESOLVER_WORKSPACE_KEY,
-        value: JSON.stringify(workspace),
-      })
-    );
+    const fetchMock = vi.fn().mockResolvedValue(toJsonResponse(200, { ok: true }));
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
     const result = await persistCaseResolverWorkspaceSnapshot({
@@ -158,11 +153,9 @@ describe('case-resolver workspace persistence', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toContain(
-        'Inline Case Resolver node-file snapshots are no longer supported.'
-      );
+      expect(result.error).toMatch(/Inline Case Resolver node-file snapshots are no longer supported/i);
     }
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   it('requests fresh settings snapshots for workspace recovery reads', async () => {
@@ -722,8 +715,8 @@ describe('case-resolver workspace persistence', () => {
       ],
     };
 
-    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrow(
-      'Inline Case Resolver node-file snapshots are no longer supported.'
+    expect(() => compactCaseResolverWorkspaceForPersist(workspace)).toThrowError(
+      /Inline Case Resolver node-file snapshots are no longer supported/i
     );
   });
 

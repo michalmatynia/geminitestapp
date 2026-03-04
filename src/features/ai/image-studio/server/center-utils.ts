@@ -8,7 +8,6 @@ import {
   type ImageStudioDetectionDetails,
 } from '@/features/ai/image-studio/analysis/shared';
 import {
-  IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD,
   IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX,
@@ -18,6 +17,7 @@ import {
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
+import { IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD } from '@/shared/contracts/image-studio-shared';
 
 type CenterSourceLimitValidation = {
   ok: boolean;

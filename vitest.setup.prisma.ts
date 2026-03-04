@@ -3,12 +3,21 @@ import 'dotenv/config';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { server } from './src/mocks/server';
+import { invalidateAppDbProviderCache } from './src/shared/lib/db/app-db-provider';
+import { invalidateCollectionProviderMapCache } from './src/shared/lib/db/collection-provider-map';
+import { invalidateDatabaseEnginePolicyCache } from './src/shared/lib/db/database-engine-policy';
 
 process.env['APP_DB_PROVIDER'] = 'prisma';
 process.env['PRODUCT_DB_PROVIDER'] = 'prisma';
 process.env['NOTE_DB_PROVIDER'] = 'prisma';
 process.env['INTEGRATION_DB_PROVIDER'] = 'prisma';
 process.env['AUTH_DB_PROVIDER'] = 'prisma';
+
+const resetDbRoutingCaches = (): void => {
+  invalidateAppDbProviderCache();
+  invalidateCollectionProviderMapCache();
+  invalidateDatabaseEnginePolicyCache();
+};
 
 const PG_QUERY_QUEUE_DEPRECATION =
   'Calling client.query() when the client is already executing a query is deprecated';
@@ -111,16 +120,19 @@ process.emitWarning = ((warning: string | Error, ...args: unknown[]) => {
 }) as typeof process.emitWarning;
 
 beforeAll(() => {
+  resetDbRoutingCaches();
   server.listen({
     onUnhandledRequest: 'bypass',
   });
 });
 
 afterEach(() => {
+  resetDbRoutingCaches();
   server.resetHandlers();
 });
 
 afterAll(() => {
+  resetDbRoutingCaches();
   process.emitWarning = originalEmitWarning;
   console.log = originalConsoleLog;
   console.info = originalConsoleInfo;

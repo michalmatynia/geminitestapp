@@ -251,7 +251,7 @@ describe('case-resolver nodefile relations', () => {
     });
   });
 
-  it('rejects inline snapshot payloads in relation/sanitizer pipelines', () => {
+  it('strips inline snapshot payloads in relation/sanitizer pipelines', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
       createCaseResolverFile({
@@ -287,8 +287,9 @@ describe('case-resolver nodefile relations', () => {
       nodeIdsByNodeFileAssetId: {},
     });
     expect(sanitizedGraph).toBe(graph);
-    expect(() => sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files })).toThrowError(
-      /Inline Case Resolver node-file snapshots are no longer supported/i
-    );
+    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
+    expect(sanitizedAssets).toHaveLength(1);
+    expect(sanitizedAssets[0]?.textContent ?? '').toBe('');
+    expect(sanitizedAssets[0]?.metadata?.nodeFileSnapshotStorage).toBe('keyed');
   });
 });

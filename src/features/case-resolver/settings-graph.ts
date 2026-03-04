@@ -214,15 +214,15 @@ const validateTextNodeEdgePorts = (
   explanatoryNodeIds: Set<string>
 ): Edge[] => {
   if (edges.length === 0 || textNodeIds.size === 0) return edges;
-  return edges.map((edge: Edge): Edge => {
+  return edges.filter((edge: Edge): boolean => {
     const sourceNodeId = edge.source?.trim() ?? '';
     const targetNodeId = edge.target?.trim() ?? '';
     const validatePort = (
       port: string | null | undefined,
       nodeId: string,
       direction: 'sourceHandle' | 'targetHandle'
-    ): void => {
-      if (!textNodeIds.has(nodeId)) return;
+    ): boolean => {
+      if (!textNodeIds.has(nodeId)) return true;
       const allowedPorts: readonly string[] = explanatoryNodeIds.has(nodeId)
         ? direction === 'sourceHandle'
           ? CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS
@@ -230,21 +230,13 @@ const validateTextNodeEdgePorts = (
         : direction === 'sourceHandle'
           ? CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS
           : CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS;
-      if (typeof port !== 'string' || !allowedPorts.includes(port)) {
-        throw validationError('Invalid Case Resolver text-node edge port.', {
-          source: 'case_resolver.graph',
-          edgeId: edge.id,
-          nodeId,
-          direction,
-          port: port ?? null,
-          allowedPorts,
-        });
-      }
+      return typeof port === 'string' && allowedPorts.includes(port);
     };
 
-    validatePort(edge.sourceHandle, sourceNodeId, 'sourceHandle');
-    validatePort(edge.targetHandle, targetNodeId, 'targetHandle');
-    return edge;
+    return (
+      validatePort(edge.sourceHandle, sourceNodeId, 'sourceHandle') &&
+      validatePort(edge.targetHandle, targetNodeId, 'targetHandle')
+    );
   });
 };
 
@@ -255,9 +247,14 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const validNodeIds = new Set<string>(
     rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
-  const parsedEdges: Edge[] = rawEdges.map((edge: unknown, index: number): Edge =>
-    parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`)
-  );
+  const parsedEdges: Edge[] = [];
+  rawEdges.forEach((edge: unknown, index: number): void => {
+    try {
+      parsedEdges.push(parseCanonicalCaseResolverEdge(edge, `case_resolver.graph.edges[${index}]`));
+    } catch {
+      // Drop malformed or legacy edges during workspace sanitation.
+    }
+  });
   const edgesByNodeId = parsedEdges.filter(
     (edge: Edge): boolean =>
       validNodeIds.has(edge.source?.trim() ?? '') && validNodeIds.has(edge.target?.trim() ?? '')

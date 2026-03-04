@@ -151,6 +151,102 @@ export const parseCaseResolverWorkspace = (
   return normalizeCaseResolverWorkspace(parsed as CaseResolverWorkspace);
 };
 
+export type CaseResolverWorkspaceSafeParseDiagnostics = {
+  parseFallbackApplied: boolean;
+  parseFallbackReason: string | null;
+};
+
+const CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceSafeParseDiagnostics =
+  {
+    parseFallbackApplied: false,
+    parseFallbackReason: null,
+  };
+
+const caseResolverWorkspaceSafeParseDiagnosticsByWorkspace = new WeakMap<
+  CaseResolverWorkspace,
+  CaseResolverWorkspaceSafeParseDiagnostics
+>();
+
+const attachCaseResolverWorkspaceSafeParseDiagnostics = (
+  workspace: CaseResolverWorkspace,
+  diagnostics: CaseResolverWorkspaceSafeParseDiagnostics
+): CaseResolverWorkspace => {
+  caseResolverWorkspaceSafeParseDiagnosticsByWorkspace.set(workspace, diagnostics);
+  return workspace;
+};
+
+export const getCaseResolverWorkspaceSafeParseDiagnostics = (
+  workspace: CaseResolverWorkspace | null | undefined
+): CaseResolverWorkspaceSafeParseDiagnostics =>
+  workspace
+    ? (caseResolverWorkspaceSafeParseDiagnosticsByWorkspace.get(workspace) ??
+      CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY)
+    : CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY;
+
+const stripWorkspaceGraphPayload = (
+  raw: string | null | undefined
+): string | null => {
+  if (typeof raw !== 'string' || raw.trim().length === 0) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const record = parsed as Record<string, unknown>;
+  const nextRecord: Record<string, unknown> = {
+    ...record,
+    relationGraph: null,
+  };
+  const rawFiles = Array.isArray(record['files']) ? record['files'] : null;
+  if (rawFiles) {
+    nextRecord['files'] = rawFiles.map((entry: unknown): unknown => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry;
+      const fileRecord = entry as Record<string, unknown>;
+      return {
+        ...fileRecord,
+        graph: null,
+      };
+    });
+  }
+  return JSON.stringify(nextRecord);
+};
+
+export const safeParseCaseResolverWorkspace = (
+  raw: string | null | undefined
+): CaseResolverWorkspace => {
+  try {
+    const workspace = parseCaseResolverWorkspace(raw);
+    return attachCaseResolverWorkspaceSafeParseDiagnostics(
+      workspace,
+      CASE_RESOLVER_WORKSPACE_SAFE_PARSE_DIAGNOSTICS_EMPTY
+    );
+  } catch (firstError: unknown) {
+    const fallbackRaw = stripWorkspaceGraphPayload(raw);
+    if (fallbackRaw) {
+      try {
+        const fallbackWorkspace = parseCaseResolverWorkspace(fallbackRaw);
+        return attachCaseResolverWorkspaceSafeParseDiagnostics(fallbackWorkspace, {
+          parseFallbackApplied: true,
+          parseFallbackReason:
+            firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
+        });
+      } catch {
+        // Use default workspace fallback below.
+      }
+    }
+    const emptyWorkspace = createDefaultCaseResolverWorkspace();
+    return attachCaseResolverWorkspaceSafeParseDiagnostics(
+      emptyWorkspace,
+      {
+        parseFallbackApplied: true,
+        parseFallbackReason: firstError instanceof Error ? firstError.message : 'workspace_parse_failed',
+      }
+    );
+  }
+};
+
 const parseDateTokenToIso = (token: string): string | null => {
   const trimmed = token.trim();
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);

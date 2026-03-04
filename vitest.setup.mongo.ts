@@ -3,6 +3,9 @@ import 'dotenv/config';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import { server } from './src/mocks/server';
+import { invalidateAppDbProviderCache } from './src/shared/lib/db/app-db-provider';
+import { invalidateCollectionProviderMapCache } from './src/shared/lib/db/collection-provider-map';
+import { invalidateDatabaseEnginePolicyCache } from './src/shared/lib/db/database-engine-policy';
 
 process.env['APP_DB_PROVIDER'] = 'mongodb';
 process.env['PRODUCT_DB_PROVIDER'] = 'mongodb';
@@ -11,6 +14,12 @@ process.env['INTEGRATION_DB_PROVIDER'] = 'mongodb';
 process.env['AUTH_DB_PROVIDER'] = 'mongodb';
 process.env['MONGODB_URI'] = process.env['MONGODB_URI'] ?? 'mongodb://localhost:27017/test';
 process.env['MONGODB_DB'] = process.env['MONGODB_DB'] ?? 'test';
+
+const resetDbRoutingCaches = (): void => {
+  invalidateAppDbProviderCache();
+  invalidateCollectionProviderMapCache();
+  invalidateDatabaseEnginePolicyCache();
+};
 
 const QUIET_TEST_LOG_PATTERNS = [
   'Activity:',
@@ -83,16 +92,19 @@ console.error = (...args: unknown[]): void => {
 };
 
 beforeAll(() => {
+  resetDbRoutingCaches();
   server.listen({
     onUnhandledRequest: 'bypass',
   });
 });
 
 afterEach(() => {
+  resetDbRoutingCaches();
   server.resetHandlers();
 });
 
 afterAll(() => {
+  resetDbRoutingCaches();
   console.log = originalConsoleLog;
   console.info = originalConsoleInfo;
   console.warn = originalConsoleWarn;

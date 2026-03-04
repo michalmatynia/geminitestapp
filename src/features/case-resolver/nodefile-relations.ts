@@ -4,7 +4,6 @@ import type {
   CaseResolverGraph,
   CaseResolverNodeFileRelationIndex,
 } from '@/shared/contracts/case-resolver';
-import { validationError } from '@/shared/errors/app-error';
 
 const hasInlineNodeFileSnapshotText = (asset: CaseResolverAssetFile): boolean =>
   asset.kind === 'node_file' &&
@@ -182,17 +181,21 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
   assets: CaseResolverAssetFile[];
   files: CaseResolverFile[];
 }): CaseResolverAssetFile[] => {
-  const inlineSnapshotAsset = assets.find((asset: CaseResolverAssetFile): boolean =>
-    hasInlineNodeFileSnapshotText(asset)
-  );
-  if (inlineSnapshotAsset) {
-    throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-      source: 'case_resolver.node_file_asset_sanitize',
-      assetId: inlineSnapshotAsset.id,
-    });
-  }
-
-  return assets;
+  return assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile => {
+    if (!hasInlineNodeFileSnapshotText(asset)) {
+      return asset;
+    }
+    const metadata =
+      asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
+        ? { ...asset.metadata }
+        : {};
+    metadata['nodeFileSnapshotStorage'] = 'keyed';
+    return {
+      ...asset,
+      textContent: '',
+      metadata,
+    };
+  });
 };
 
 export const sanitizeCaseResolverGraphNodeFileRelations = ({

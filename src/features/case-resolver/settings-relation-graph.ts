@@ -1,5 +1,4 @@
 import { typeStyles } from '@/shared/lib/ai-paths/core/constants';
-import { validationError } from '@/shared/errors/app-error';
 import {
   CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
@@ -91,15 +90,7 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
         : `Relation ${index + 1}`;
     const description = typeof record['description'] === 'string' ? record['description'] : '';
     const rawType = typeof record['type'] === 'string' ? record['type'].trim() : '';
-    if (!rawType || !hasKnownRelationNodeType(rawType)) {
-      throw validationError('Invalid Case Resolver relation graph node type.', {
-        source: 'case_resolver.relation_graph',
-        reason: 'invalid_node_type',
-        index,
-        nodeId: rawId,
-        nodeType: rawType || null,
-      });
-    }
+    if (!rawType || !hasKnownRelationNodeType(rawType)) return;
     const positionRecord =
       record['position'] && typeof record['position'] === 'object'
         ? (record['position'] as Record<string, unknown>)
@@ -157,25 +148,17 @@ const sanitizeRelationEdges = (value: unknown, validNodeIds: Set<string>): Edge[
   const seen = new Set<string>();
   const edges: Edge[] = [];
   value.forEach((entry: unknown, index: number): void => {
-    const edge = parseCanonicalCaseResolverEdge(entry, `case_resolver.relation_graph.edges[${index}]`);
+    let edge: Edge;
+    try {
+      edge = parseCanonicalCaseResolverEdge(entry, `case_resolver.relation_graph.edges[${index}]`);
+    } catch {
+      return;
+    }
     const id = edge.id.trim();
     const source = edge.source?.trim() ?? '';
     const target = edge.target?.trim() ?? '';
-    if (!id || !source || !target) {
-      throw validationError('Invalid Case Resolver relation graph edge payload.', {
-        source: 'case_resolver.relation_graph',
-        reason: 'invalid_edge_identity',
-        index,
-        edgeId: id || null,
-      });
-    }
-    if (seen.has(id)) {
-      throw validationError('Duplicate Case Resolver relation graph edge ids are not supported.', {
-        source: 'case_resolver.relation_graph',
-        reason: 'duplicate_edge_id',
-        edgeId: id,
-      });
-    }
+    if (!id || !source || !target) return;
+    if (seen.has(id)) return;
     if (!validNodeIds.has(source) || !validNodeIds.has(target)) return;
     seen.add(id);
     edges.push({

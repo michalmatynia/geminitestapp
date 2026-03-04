@@ -307,9 +307,8 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       diagnostics: CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY,
     };
   }
-  const sanitizedLegacyPayload = sanitizeLegacyCaseResolverWorkspacePayload(
-    workspace as unknown as Record<string, unknown>
-  );
+  const rawWorkspaceRecord = workspace as unknown as Record<string, unknown>;
+  const sanitizedLegacyPayload = sanitizeLegacyCaseResolverWorkspacePayload(rawWorkspaceRecord);
   const workspaceRecord = sanitizedLegacyPayload.workspaceRecord;
   const legacySanitizationDiagnostics = sanitizedLegacyPayload.diagnostics;
   const now = new Date().toISOString();
@@ -319,7 +318,9 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   let droppedDuplicateCount = 0;
   let ownershipRepairedCount = 0;
 
-  const rawFiles = Array.isArray(workspace.files) ? workspace.files : [];
+  const rawFiles = Array.isArray(workspaceRecord['files'])
+    ? (workspaceRecord['files'] as CaseResolverFile[])
+    : [];
   const rawChildParentIds = new Set<string>();
   rawFiles.forEach((entry: unknown): void => {
     if (!entry || typeof entry !== 'object') return;
@@ -501,16 +502,28 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
     assets: sanitizedAssets,
     fallbackTimestamp: now,
   });
-  const relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
-    source: workspaceRecord['relationGraph'],
-    folders,
-    files: normalizedFilesWithRelatedLinks,
-    assets: sanitizedAssets,
-  });
+  let relationGraph: ReturnType<typeof caseResolverRelationGraph.buildCaseResolverRelationGraph>;
+  try {
+    relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
+      source: workspaceRecord['relationGraph'],
+      folders,
+      files: normalizedFilesWithRelatedLinks,
+      assets: sanitizedAssets,
+    });
+  } catch {
+    legacySanitizationDiagnostics.relationGraphFallbackDropped = true;
+    relationGraph = caseResolverRelationGraph.buildCaseResolverRelationGraph({
+      source: null,
+      folders,
+      files: normalizedFilesWithRelatedLinks,
+      assets: sanitizedAssets,
+    });
+  }
 
   const activeCandidate =
-    typeof workspace.activeFileId === 'string' && workspace.activeFileId.trim().length > 0
-      ? workspace.activeFileId
+    typeof workspaceRecord['activeFileId'] === 'string' &&
+    workspaceRecord['activeFileId'].trim().length > 0
+      ? workspaceRecord['activeFileId'].trim()
       : null;
   const activeFileId =
     activeCandidate &&
@@ -545,11 +558,16 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
     createdAt: normalizeTimestamp(workspaceRecord['createdAt'], now),
     updatedAt: normalizeOptionalTimestamp(workspaceRecord['updatedAt']),
   };
+  const workspaceWithDiagnostics = attachCaseResolverWorkspaceNormalizationDiagnostics(
+    normalizedWorkspace,
+    diagnostics
+  );
+  attachCaseResolverWorkspaceLegacySanitizationDiagnostics(
+    workspaceWithDiagnostics,
+    legacySanitizationDiagnostics
+  );
   return {
-    workspace: attachCaseResolverWorkspaceNormalizationDiagnostics(
-      normalizedWorkspace,
-      diagnostics
-    ),
+    workspace: workspaceWithDiagnostics,
     diagnostics,
   };
 };

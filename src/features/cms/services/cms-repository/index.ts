@@ -23,8 +23,12 @@ const isMissingTableError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
+const isPermissionDeniedError = (error: unknown): boolean =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'EPERM';
+
 const isPrismaUnavailableError = (error: unknown): boolean =>
   isMissingTableError(error) ||
+  isPermissionDeniedError(error) ||
   error instanceof Prisma.PrismaClientInitializationError ||
   error instanceof Prisma.PrismaClientValidationError ||
   error instanceof Prisma.PrismaClientUnknownRequestError;

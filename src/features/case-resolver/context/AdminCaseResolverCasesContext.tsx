@@ -20,11 +20,13 @@ import {
   CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  getCaseResolverWorkspaceLegacySanitizationDiagnostics,
+  getCaseResolverWorkspaceSafeParseDiagnostics,
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
   parseCaseResolverTags,
-  parseCaseResolverWorkspace,
+  safeParseCaseResolverWorkspace,
 } from '../settings';
 import {
   fetchCaseResolverWorkspaceIfStale,
@@ -103,8 +105,16 @@ export function AdminCaseResolverCasesProvider({
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
 
   const parsedWorkspace = useMemo(
-    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
+    (): CaseResolverWorkspace => safeParseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
+  );
+  const workspaceSafeParseDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceSafeParseDiagnostics(parsedWorkspace),
+    [parsedWorkspace]
+  );
+  const workspaceLegacySanitizationDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceLegacySanitizationDiagnostics(parsedWorkspace),
+    [parsedWorkspace]
   );
   const canHydrateWorkspaceFromStore = useMemo(
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
@@ -159,6 +169,8 @@ export function AdminCaseResolverCasesProvider({
 
   const settingsStoreRefetchRef = useRef(settingsStore.refetch);
   settingsStoreRefetchRef.current = settingsStore.refetch;
+  const lastWorkspaceParseFallbackSignatureRef = useRef<string>('');
+  const lastWorkspaceRecoveryPersistSignatureRef = useRef<string>('');
   const [isRouteWorkspaceSyncing, setIsRouteWorkspaceSyncing] = React.useState(false);
 
   const state = useAdminCaseResolverCasesState(parsedWorkspace);
@@ -335,6 +347,101 @@ export function AdminCaseResolverCasesProvider({
     });
     toast('Workspace refreshed.', { variant: 'success' });
   }, [setWorkspace, toast, workspace]);
+
+  useEffect(() => {
+    const fallbackApplied = workspaceSafeParseDiagnostics.parseFallbackApplied;
+    const strippedCount = workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount;
+    const convertedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount;
+    const droppedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount;
+    if (!fallbackApplied && strippedCount === 0 && convertedCount === 0 && droppedCount === 0) {
+      return;
+    }
+    const signature = [
+      rawWorkspace ?? '<null>',
+      fallbackApplied ? 'fallback:1' : 'fallback:0',
+      strippedCount,
+      convertedCount,
+      droppedCount,
+    ].join('|');
+    if (lastWorkspaceParseFallbackSignatureRef.current === signature) return;
+    lastWorkspaceParseFallbackSignatureRef.current = signature;
+    logCaseResolverWorkspaceEvent({
+      source: 'cases_page',
+      action: 'workspace_parse_fallback_applied',
+      workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+      message: [
+        `fallback=${fallbackApplied ? 'true' : 'false'}`,
+        `legacy_edges_converted=${convertedCount}`,
+        `legacy_edges_dropped=${droppedCount}`,
+        `inline_node_snapshots_stripped=${strippedCount}`,
+        `reason=${workspaceSafeParseDiagnostics.parseFallbackReason ?? 'none'}`,
+      ].join(' '),
+    });
+  }, [
+    parsedWorkspace,
+    rawWorkspace,
+    workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount,
+    workspaceSafeParseDiagnostics.parseFallbackApplied,
+    workspaceSafeParseDiagnostics.parseFallbackReason,
+  ]);
+
+  useEffect(() => {
+    const strippedCount = workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount;
+    const convertedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount;
+    const droppedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount;
+    const fallbackDroppedGraph = workspaceLegacySanitizationDiagnostics.relationGraphFallbackDropped;
+    const fileGraphFallbackCount = workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount;
+    const shouldPersistRecovery =
+      strippedCount > 0 ||
+      convertedCount > 0 ||
+      droppedCount > 0 ||
+      fallbackDroppedGraph ||
+      fileGraphFallbackCount > 0;
+    if (!shouldPersistRecovery) return;
+    const signature = [
+      getCaseResolverWorkspaceRevision(parsedWorkspace),
+      strippedCount,
+      convertedCount,
+      droppedCount,
+      fallbackDroppedGraph ? 'relation_fallback:1' : 'relation_fallback:0',
+      fileGraphFallbackCount,
+    ].join('|');
+    if (lastWorkspaceRecoveryPersistSignatureRef.current === signature) return;
+    lastWorkspaceRecoveryPersistSignatureRef.current = signature;
+    void (async (): Promise<void> => {
+      try {
+        await updateSetting.mutateAsync([
+          {
+            key: CASE_RESOLVER_WORKSPACE_KEY,
+            value: JSON.stringify(parsedWorkspace),
+          },
+        ]);
+        logCaseResolverWorkspaceEvent({
+          source: 'cases_page',
+          action: 'workspace_recovery_persist_applied',
+          workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+          message: `signature=${signature}`,
+        });
+      } catch (error: unknown) {
+        logCaseResolverWorkspaceEvent({
+          source: 'cases_page',
+          action: 'workspace_recovery_persist_failed',
+          workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+          message: error instanceof Error ? error.message : 'unknown_error',
+        });
+      }
+    })();
+  }, [
+    parsedWorkspace,
+    updateSetting,
+    workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount,
+    workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount,
+    workspaceLegacySanitizationDiagnostics.relationGraphFallbackDropped,
+  ]);
 
   useEffect(() => {
     if (!isCasesRoute) return;

@@ -2,7 +2,6 @@ import {
   type CaseResolverWorkspace,
   type PersistCaseResolverWorkspaceResult,
 } from '@/shared/contracts/case-resolver';
-import { validationError } from '@/shared/errors/app-error';
 
 import {
   getCaseResolverWorkspaceNormalizationDiagnostics,
@@ -22,7 +21,10 @@ import {
   type SettingsRecordLike,
 } from './utils/workspace-settings-persistence-helpers';
 
-import { readCaseResolverNodeFileSnapshotStorageMode } from './node-file-persistence';
+import {
+  CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY,
+  readCaseResolverNodeFileSnapshotStorageMode,
+} from './node-file-persistence';
 
 import {
   getCaseResolverWorkspaceMaxPayloadBytes,
@@ -84,30 +86,28 @@ const summarizeWorkspacePersistPayload = (
   };
 };
 
-const assertCanonicalNodeFileSnapshotPayload = (
+const normalizeNodeFileAssetForPersist = (
   asset: CaseResolverWorkspace['assets'][number]
-): void => {
-  if (asset.kind !== 'node_file') return;
-  const inlineText = typeof asset.textContent === 'string' ? asset.textContent.trim() : '';
-  if (inlineText.length > 0) {
-    throw validationError('Inline Case Resolver node-file snapshots are no longer supported.', {
-      source: 'case_resolver.workspace_persist',
-      assetId: asset.id,
-    });
-  }
+): CaseResolverWorkspace['assets'][number] => {
+  if (asset.kind !== 'node_file') return asset;
   const storageMode = readCaseResolverNodeFileSnapshotStorageMode(asset);
+  const metadata =
+    asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
+      ? { ...asset.metadata }
+      : {};
   if (
     typeof storageMode === 'string' &&
     storageMode.trim().length > 0 &&
     storageMode !== CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED
   ) {
-    throw validationError('Legacy Case Resolver node-file snapshot storage mode is invalid.', {
-      source: 'case_resolver.workspace_persist',
-      assetId: asset.id,
-      storageMode,
-    });
+    metadata[CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_METADATA_KEY] =
+      CASE_RESOLVER_NODE_FILE_SNAPSHOT_STORAGE_KEYED;
   }
-  return;
+  return {
+    ...asset,
+    textContent: '',
+    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+  };
 };
 
 export const compactCaseResolverWorkspaceForPersist = (
@@ -177,8 +177,8 @@ export const compactCaseResolverWorkspaceForPersist = (
   const compactedAssets = Array.isArray(workspace.assets)
     ? workspace.assets.map((asset): CaseResolverWorkspace['assets'][number] => {
       if (asset.kind !== 'node_file') return asset;
-      assertCanonicalNodeFileSnapshotPayload(asset);
-      const { textContent: _textContent, ...assetRest } = asset;
+      const normalizedAsset = normalizeNodeFileAssetForPersist(asset);
+      const { textContent: _textContent, ...assetRest } = normalizedAsset;
       return {
         ...assetRest,
       } as CaseResolverWorkspace['assets'][number];

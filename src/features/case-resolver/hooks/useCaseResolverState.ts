@@ -36,18 +36,21 @@ import {
   CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  getCaseResolverWorkspaceLegacySanitizationDiagnostics,
+  getCaseResolverWorkspaceSafeParseDiagnostics,
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverCategories,
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
   parseCaseResolverTags,
-  parseCaseResolverWorkspace,
+  safeParseCaseResolverWorkspace,
 } from '../settings';
 import {
   logCaseResolverWorkspaceEvent,
-  readCaseResolverNavigationWorkspace,
-} from '../workspace-persistence';
+  primeCaseResolverNavigationWorkspace,
+  getCaseResolverWorkspaceRevision,
+  } from '../workspace-persistence';
 import {
   fromCaseResolverCaseContentFileNodeId,
   fromCaseResolverCaseNodeId,
@@ -150,8 +153,16 @@ export function useCaseResolverState(): CaseResolverStateValue {
     [rawWorkspaceFromStore]
   );
   const parsedWorkspaceFromStore = useMemo(
-    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
+    (): CaseResolverWorkspace => safeParseCaseResolverWorkspace(rawWorkspaceFromStore),
     [rawWorkspaceFromStore]
+  );
+  const workspaceSafeParseDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceSafeParseDiagnostics(parsedWorkspaceFromStore),
+    [parsedWorkspaceFromStore]
+  );
+  const workspaceLegacySanitizationDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceLegacySanitizationDiagnostics(parsedWorkspaceFromStore),
+    [parsedWorkspaceFromStore]
   );
   const storeWorkspaceHasRequestedFile = useMemo((): boolean => {
     const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
@@ -263,6 +274,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const requestedStoreRefreshFileIdRef = useRef<string | null>(null);
   const requestedUnavailableAutoRetryFileIdRef = useRef<string | null>(null);
   const hasPurgedFilemakerPayloadRef = useRef(false);
+  const hasAttemptedWorkspaceRecoveryPersistRef = useRef(false);
+  const lastWorkspaceParseFallbackSignatureRef = useRef<string>('');
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
     initialWorkspaceState,
@@ -425,6 +438,112 @@ export function useCaseResolverState(): CaseResolverStateValue {
         // Best-effort cleanup only.
       });
   }, [settingsStore]);
+
+  useEffect(() => {
+    const fallbackApplied = workspaceSafeParseDiagnostics.parseFallbackApplied;
+    const strippedCount = workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount;
+    const convertedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount;
+    const droppedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount;
+    if (!fallbackApplied && strippedCount === 0 && convertedCount === 0 && droppedCount === 0) {
+      return;
+    }
+    const signature = [
+      rawWorkspaceFromStore ?? '<null>',
+      fallbackApplied ? 'fallback:1' : 'fallback:0',
+      strippedCount,
+      convertedCount,
+      droppedCount,
+      workspaceSafeParseDiagnostics.parseFallbackReason ?? 'none',
+    ].join('|');
+    if (lastWorkspaceParseFallbackSignatureRef.current === signature) return;
+    lastWorkspaceParseFallbackSignatureRef.current = signature;
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'workspace_parse_fallback_applied',
+      workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspaceFromStore),
+      message: [
+        `fallback=${fallbackApplied ? 'true' : 'false'}`,
+        `legacy_edges_converted=${convertedCount}`,
+        `legacy_edges_dropped=${droppedCount}`,
+        `inline_node_snapshots_stripped=${strippedCount}`,
+        `reason=${workspaceSafeParseDiagnostics.parseFallbackReason ?? 'none'}`,
+      ].join(' '),
+    });
+  }, [
+    parsedWorkspaceFromStore,
+    rawWorkspaceFromStore,
+    workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount,
+    workspaceSafeParseDiagnostics.parseFallbackApplied,
+    workspaceSafeParseDiagnostics.parseFallbackReason,
+  ]);
+
+  useEffect(() => {
+    if (hasAttemptedWorkspaceRecoveryPersistRef.current) return;
+    const strippedCount = workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount;
+    const convertedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount;
+    const droppedCount = workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount;
+    const fallbackDroppedGraph = workspaceLegacySanitizationDiagnostics.relationGraphFallbackDropped;
+    const fileGraphFallbackCount = workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount;
+    const shouldPersistRecovery =
+      strippedCount > 0 ||
+      convertedCount > 0 ||
+      droppedCount > 0 ||
+      fallbackDroppedGraph ||
+      fileGraphFallbackCount > 0;
+    if (!shouldPersistRecovery) return;
+    hasAttemptedWorkspaceRecoveryPersistRef.current = true;
+    void fetch('/api/settings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(parsedWorkspaceFromStore),
+      }),
+    })
+      .then((response): void => {
+        if (!response.ok) {
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view',
+            action: 'workspace_recovery_persist_failed',
+            workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspaceFromStore),
+            message: `status=${response.status}`,
+          });
+          return;
+        }
+        settingsStoreRef.current.refetch();
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'workspace_recovery_persist_applied',
+          workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspaceFromStore),
+          message: [
+            `legacy_edges_converted=${convertedCount}`,
+            `legacy_edges_dropped=${droppedCount}`,
+            `inline_node_snapshots_stripped=${strippedCount}`,
+            `relation_graph_fallback=${fallbackDroppedGraph ? 'true' : 'false'}`,
+            `file_graph_fallback_count=${fileGraphFallbackCount}`,
+          ].join(' '),
+        });
+      })
+      .catch((): void => {
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'workspace_recovery_persist_failed',
+          workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspaceFromStore),
+          message: 'request_failed',
+        });
+      });
+  }, [
+    parsedWorkspaceFromStore,
+    workspaceLegacySanitizationDiagnostics.fileGraphFallbackDropCount,
+    workspaceLegacySanitizationDiagnostics.inlineNodeFileSnapshotStrippedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeConvertedCount,
+    workspaceLegacySanitizationDiagnostics.legacyEdgeDroppedCount,
+    workspaceLegacySanitizationDiagnostics.relationGraphFallbackDropped,
+  ]);
 
   useEffect(() => {
     workspaceRef.current = workspace;

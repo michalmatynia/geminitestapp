@@ -1,10 +1,6 @@
 import { type ParamSpec, type ParamSpecKind } from '../prompt-engine';
 import { type PromptExploderParamUiControl } from './document';
 
-/**
- * Prompt Exploder Runtime Param DTOs
- */
-
 export type PromptExploderParamUiRecommendation = {
   baseKind: ParamSpecKind;
   recommended: Exclude<PromptExploderParamUiControl, 'auto'>;

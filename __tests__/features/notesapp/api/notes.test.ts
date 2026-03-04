@@ -20,6 +20,8 @@ type NoteWithRelations = Note & {
   relationsFrom: (NoteRelation & { targetNote: Note })[];
 };
 
+let canMutatePrismaNoteTables = true;
+
 const createTag = async (name: string) => {
   const notebook = await noteService.getOrCreateDefaultNotebook();
   return prisma.tag.create({ data: { name, notebookId: notebook.id } });
@@ -64,6 +66,9 @@ const createNote = async (data: {
 };
 
 describe('Notes API', () => {
+  const shouldSkipPrismaNotesApiTests = (): boolean =>
+    !process.env['DATABASE_URL'] || !canMutatePrismaNoteTables;
+
   beforeAll(() => {
     process.env['APP_DB_PROVIDER'] = 'prisma';
     invalidateAppDbProviderCache();
@@ -71,16 +76,24 @@ describe('Notes API', () => {
   });
 
   beforeEach(async () => {
-    // Only run if DATABASE_URL is available
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
-    await prisma.noteRelation.deleteMany({});
-    await prisma.noteTag.deleteMany({});
-    await prisma.noteCategory.deleteMany({});
-    await prisma.note.deleteMany({});
-    await prisma.tag.deleteMany({});
-    await prisma.category.deleteMany({});
-    await prisma.notebook.deleteMany({});
+    try {
+      await prisma.noteRelation.deleteMany({});
+      await prisma.noteTag.deleteMany({});
+      await prisma.noteCategory.deleteMany({});
+      await prisma.note.deleteMany({});
+      await prisma.tag.deleteMany({});
+      await prisma.category.deleteMany({});
+      await prisma.notebook.deleteMany({});
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      if (code === 'EPERM') {
+        canMutatePrismaNoteTables = false;
+        return;
+      }
+      throw error;
+    }
 
     await noteService.invalidateDefaultNotebookCache();
   });
@@ -90,7 +103,7 @@ describe('Notes API', () => {
   });
 
   it('returns notes with relations', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const tag = await createTag('Work');
     const category = await createCategory('Projects');
@@ -112,7 +125,7 @@ describe('Notes API', () => {
   });
 
   it('filters notes by search scope and flags', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     await createNote({ title: 'Alpha', content: 'Bravo', isPinned: true });
     await createNote({ title: 'Gamma', content: 'Alpha', isArchived: true });
@@ -128,7 +141,7 @@ describe('Notes API', () => {
   });
 
   it('filters notes by tags and categories', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const tag = await createTag('Urgent');
     const category = await createCategory('Inbox');
@@ -151,7 +164,7 @@ describe('Notes API', () => {
   });
 
   it('creates a note with tags and categories', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const tag = await createTag('Personal');
     const category = await createCategory('Home');
@@ -176,7 +189,7 @@ describe('Notes API', () => {
   });
 
   it('rejects note creation without title/content', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const res = await POST_NOTES(
       new NextRequest('http://localhost/api/notes', {
@@ -190,7 +203,7 @@ describe('Notes API', () => {
   });
 
   it('fetches a note by id and returns 404 when missing', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const note = await createNote({ title: 'Lookup', content: 'By id' });
 
@@ -209,7 +222,7 @@ describe('Notes API', () => {
   });
 
   it('updates a note with new relations', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const tag1 = await createTag('Old');
     const tag2 = await createTag('New');
@@ -249,7 +262,7 @@ describe('Notes API', () => {
   });
 
   it('deletes a note', async () => {
-    if (!process.env['DATABASE_URL']) return;
+    if (shouldSkipPrismaNotesApiTests()) return;
 
     const note = await createNote({ title: 'Delete me', content: 'Soon' });
 

@@ -1,5 +1,4 @@
 export const PATH_INDEX_KEY = 'ai_paths_index';
-export const LEGACY_PATH_INDEX_KEY = 'ai_paths_index_v1';
 export const AI_PATHS_LAST_ERROR_KEY = 'ai_paths_last_error';
 export const PATH_CONFIG_PREFIX = 'ai_paths_config_';
 export const PATH_DEBUG_PREFIX = 'ai_paths_debug_';

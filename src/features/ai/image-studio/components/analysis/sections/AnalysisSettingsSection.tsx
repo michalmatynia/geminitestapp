@@ -100,8 +100,8 @@ export function AnalysisSettingsSection({
   sanitizeThresholdInput,
 }: AnalysisSettingsSectionProps): React.JSX.Element {
   const modeOptions = [
-    { value: 'server_analysis_v1', label: 'Analysis Server: Sharp' },
-    { value: 'client_analysis_v1', label: 'Analysis Client: Canvas' },
+    { value: 'server_analysis', label: 'Analysis Server: Sharp' },
+    { value: 'client_analysis', label: 'Analysis Client: Canvas' },
   ];
   const shadowPolicyOptions = [
     { value: 'auto', label: 'Shadow: Auto' },

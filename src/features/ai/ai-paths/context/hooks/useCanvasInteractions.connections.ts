@@ -226,9 +226,12 @@ export function useCanvasInteractionsConnections({
             existingIncoming.from === activeConnection.fromNodeId &&
             existingIncoming.fromPort === activeConnection.fromPort;
           if (!isDuplicateConnection) {
-            toast('This input accepts one connection. Insert a merge/select node for fan-in.', {
-              variant: 'error',
-            });
+            toast(
+              `Port "${port}" on "${node.title || node.id}" accepts one connection. Disconnect or reconnect that input first.`,
+              {
+                variant: 'error',
+              }
+            );
           }
           connectingRef.current = null;
           endConnection();

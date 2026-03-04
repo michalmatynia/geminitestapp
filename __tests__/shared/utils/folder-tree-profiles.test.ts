@@ -25,6 +25,7 @@ describe('folder-tree-profiles-v2', () => {
       'validator_pattern_tree',
       'prompt_exploder_segments',
       'prompt_exploder_hierarchy',
+      'admin_menu_layout',
       'brain_catalog_tree',
       'brain_routing_tree',
     ]);

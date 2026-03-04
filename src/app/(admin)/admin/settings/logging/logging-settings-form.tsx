@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useState, type ChangeEvent } from 'react';
 
-import { CLIENT_LOGGING_KEYS } from '@/features/observability/public';
+import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Button, useToast, Textarea, FormSection, FormField, PageLayout } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';

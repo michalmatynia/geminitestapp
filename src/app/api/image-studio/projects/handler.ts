@@ -7,7 +7,7 @@ import { z } from 'zod';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -112,7 +112,7 @@ const ensureProjectScopedSettingsInitialized = async (projectId: string): Promis
   }
 
   const globalSettingsRaw = await readSettingValue(IMAGE_STUDIO_SETTINGS_KEY, provider);
-  const seedSettings = parseImageStudioSettings(globalSettingsRaw);
+  const seedSettings = parsePersistedImageStudioSettings(globalSettingsRaw);
   await upsertSettingValue(projectSettingsKey, serializeSetting(seedSettings), provider);
   clearSettingsCache();
   return projectSettingsKey;

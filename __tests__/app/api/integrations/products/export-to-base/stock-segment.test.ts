@@ -25,7 +25,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   },
 }));
 
-import { resolveWarehouseAndStockMappings } from '@/app/api/integrations/products/[id]/export-to-base/segments/stock';
+import { resolveWarehouseAndStockMappings } from '@/app/api/v2/integrations/products/[id]/export-to-base/segments/stock';
 
 describe('resolveWarehouseAndStockMappings', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_handler } from '@/app/api/integrations/exports/base/default-connection/handler';
+import { GET_handler } from '@/app/api/v2/integrations/exports/base/default-connection/handler';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const getExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());

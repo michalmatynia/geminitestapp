@@ -15,7 +15,7 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-vi.mock('@/features/observability', () => ({
+vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
 }));
 

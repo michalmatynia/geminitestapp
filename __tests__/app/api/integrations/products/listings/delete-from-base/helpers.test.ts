@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveDeleteInventoryId } from '@/app/api/integrations/products/[id]/listings/[listingId]/delete-from-base/helpers';
+import { resolveDeleteInventoryId } from '@/app/api/v2/integrations/products/[id]/listings/[listingId]/delete-from-base/helpers';
 
 describe('resolveDeleteInventoryId', () => {
   it('prefers explicit inventory id from request body', () => {

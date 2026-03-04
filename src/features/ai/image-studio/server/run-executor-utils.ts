@@ -8,7 +8,7 @@ import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
 import { badRequestError } from '@/shared/errors/app-error';
-import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { imageStudioRunRequestSchema, type ImageFileRecord } from '@/shared/contracts/image-studio';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 
@@ -36,7 +36,7 @@ export const resolveExpectedOutputCount = (rawRequest: unknown): number => {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);
   if (!parsed.success) return 1;
   if (parsed.data.operation === 'center_object') return 1;
-  const settings = parseImageStudioSettings(
+  const settings = parsePersistedImageStudioSettings(
     parsed.data.studioSettings ? JSON.stringify(parsed.data.studioSettings) : null
   );
   const requested = settings.targetAi.openai.image.n;

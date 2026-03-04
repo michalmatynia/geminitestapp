@@ -104,6 +104,12 @@ Progress (2026-03-04):
 5. Removed redundant legacy graph arguments from `useAiPathsCanvasInteractions` API and updated callsites/tests.
 6. Moved settings selection dialog flags (`selectedNodeId`, `configOpen`, `nodeConfigDirty`, `simulationOpenNodeId`) to `SelectionContext` ownership with dispatch-compatible adapters in `useAiPathsSettingsState`.
 7. Moved settings runtime payload fields (`runtimeState`, parser/updater samples, path debug snapshots, `lastRunAt`, `lastError`) to `RuntimeContext` ownership with dispatch-compatible adapters.
+8. Rewired `useAiPathsCanvasInteractions` to compose canonical `context/hooks/useCanvasInteractions` handlers (pointer/drag/pan/connection/edge/view) while preserving settings-specific delete/selection orchestration.
+9. Deleted obsolete settings-only canvas hooks and duplicate race test:
+   1. `src/features/ai/ai-paths/components/ai-paths-settings/hooks/useCanvasConnection.ts`
+   2. `src/features/ai/ai-paths/components/ai-paths-settings/hooks/useCanvasNodeDrag.ts`
+   3. `src/features/ai/ai-paths/components/ai-paths-settings/hooks/useCanvasView.ts`
+   4. `src/features/ai/ai-paths/components/ai-paths-settings/hooks/__tests__/useCanvasConnection.race.test.tsx`
 
 ## Session 3: Selection/Runtime/Persistence ownership cutover
 
@@ -238,8 +244,15 @@ Progress (2026-03-04):
 18. Added canonical `v2` integrations routes for root + connection management/actions (`/api/v2/integrations`, `/[id]/connections`, `/connections/[id]`, `/connections/[id]/session`, connection test routes, Base/Allegro request routes, Allegro authorize/disconnect) and migrated active runtime callers in integrations hooks/context from legacy `/api/integrations/*` to `/api/v2/integrations/*`.
 19. Migrated import/export template callers from legacy `/api/integrations/{import|export}-templates` literals to canonical `/api/v2/templates/{import|export}` endpoints, then extended integrations parity checks to enforce the expanded `v2` route surface and block feature/shared regressions to legacy `/api/integrations/*` literals.
 20. Removed legacy compatibility counters API surface (`/api/ai-paths/legacy-compat/counters`), dropped admin queue page polling for legacy counter snapshots, and pruned now-unused legacy counter snapshot contracts/query keys.
-21. Deleted migrated legacy integrations connection alias route entrypoints (`/api/integrations`, `/api/integrations/[id]/connections`, `/api/integrations/connections/[id]`, `/api/integrations/connections/[id]/session`, and migrated `/api/integrations/[id]/connections/[connectionId]/*` action routes), keeping only non-migrated callback/inventory/products route entrypoints.
+21. Deleted migrated legacy integrations connection alias route entrypoints (`/api/integrations`, `/api/integrations/[id]/connections`, `/api/integrations/connections/[id]`, `/api/integrations/connections/[id]/session`, and `/api/integrations/[id]/connections/[connectionId]/*` after canonical v2 route coverage reached parity for callback/base-inventories/base-products too).
 22. Pruned dead legacy route-compat internals after alias deletion: removed `legacy-compat/server.ts` + tests, removed `isLegacyCompatRoutesEnabled`/`AI_PATHS_LEGACY_COMPAT_ROUTES_ENABLED`, and removed unused legacy counter snapshot helpers plus `compat_route_hit` counter shape.
+23. Replaced canonical `v2` integrations connection-management `handler.ts` stubs (`/api/v2/integrations`, connection CRUD/session, connection test/base/allegro actions including callback/base-inventories/base-products) with local handler implementations, and extended parity checks to fail if that migrated handler surface reintroduces direct imports from `@/app/api/integrations/*`.
+24. Replaced remaining canonical `v2` integrations `handler.ts` stubs (imports/base, jobs, product-listings, products listing actions, queues/tradera, with-connections, images/sync-base/all) with local handler implementations, and extended parity checks to fail if any `src/app/api/v2/integrations/**/handler.ts` file reintroduces direct imports from `@/app/api/integrations/*`.
+25. Deleted the entire legacy integrations handler namespace (`src/app/api/integrations/**`) after moving remaining test imports/helpers to canonical `v2` modules (`__tests__/api/integrations/*`, `__tests__/app/api/integrations/products/*`) and added parity coverage to assert the legacy handler root stays removed.
+26. Removed `ai_paths_index_v1` runtime compatibility fallback by deleting `isLegacyPathIndexCompatEnabled` and the `legacy-compat/flags` module, migrating trigger/products/persistence settings loaders to canonical `ai_paths_index` reads only, and hardening `/api/ai-paths/settings` to always reject legacy key requests/writes while filtering legacy records from list responses.
+27. Removed remaining `legacy_key_read` observability plumbing from `/api/ai-paths/settings`, narrowed legacy compatibility counters to metadata payload tracking only (`legacy_payload_received`), and added canonical cleanup script `scripts/db/cleanup-ai-paths-legacy-index-key.ts` plus npm shortcut `cleanup:ai-paths-legacy-index-key` to backfill/delete stale `ai_paths_index_v1` records.
+28. Removed the final legacy compatibility counters runtime (`src/shared/lib/observability/legacy-compat-counters.ts`) by decoupling metadata handlers from counter recording while preserving wrapped-payload request compatibility, leaving no active `recordLegacyCompatCounter` usage in runtime code.
+29. Completed canvas interaction seam cutover by adapting `useAiPathsCanvasInteractions` to canonical `useCanvasInteractions`, updating hook-level delete shortcut tests to mock canonical interactions, and pruning dead settings-only canvas hook files (`useCanvasConnection`, `useCanvasNodeDrag`, `useCanvasView`) plus their duplicate race test.
 
 Session 6 explicit deletion checklist (prepared):
 
@@ -280,6 +293,9 @@ Session 6 explicit deletion checklist (prepared):
    9. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/request/route.ts`
    10. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/disconnect/route.ts`
    11. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/authorize/route.ts`
+   12. `src/app/api/integrations/[id]/connections/[connectionId]/allegro/callback/route.ts`
+   13. `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts`
+   14. `src/app/api/integrations/[id]/connections/[connectionId]/base/products/route.ts`
 7. Completed on 2026-03-04: pruned dead legacy route-compat internals:
    1. deleted `src/shared/lib/ai-paths/legacy-compat/server.ts`
    2. deleted `src/shared/lib/ai-paths/legacy-compat/server.test.ts`
@@ -328,7 +344,7 @@ Progress (2026-03-04):
 6. Captured architecture diff highlights (before/after migration endpoint surface):
    1. Removed legacy API entrypoints:
       1. `/api/integrations/products/[id]/*` route aliases (`route.ts` files)
-      2. `/api/integrations` connection-management/action route aliases (migrated subset)
+      2. `/api/integrations` connection-management/action route aliases (full migrated surface)
       3. `/api/ai-paths/legacy-compat/counters`
    2. Enforced canonical route surface via parity guards:
       1. `src/app/api/v2/integrations/routes-parity.test.ts` now asserts removed legacy aliases remain deleted.

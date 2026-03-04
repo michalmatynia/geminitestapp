@@ -9,8 +9,8 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
-  parseImageStudioSettings,
-} from '@/features/ai/image-studio/studio-settings';
+  parsePersistedImageStudioSettings,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -37,7 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     | string
     | null
     | undefined;
-  const settings = parseImageStudioSettings(settingsRaw);
+  const settings = parsePersistedImageStudioSettings(settingsRaw);
 
   const publicRoot = path.join(process.cwd(), 'public');
   const normalized = parsed.data.imagePath.replace(/^\/+/, '');

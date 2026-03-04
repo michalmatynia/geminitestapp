@@ -18,7 +18,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import {
   extractCssFromResponse,
   extractJsonFromResponse,

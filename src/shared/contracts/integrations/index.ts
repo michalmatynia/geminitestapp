@@ -13,7 +13,26 @@ export {
   type UpdateIntegrationTemplate,
 } from './templates';
 export * from './base-com';
-export type { ImportTemplateParameterImport } from '../data-import-export';
+export {
+  importExportTemplateSchema,
+} from '../data-import-export';
+export type {
+  CatalogOption,
+  DebugWarehouses,
+  ExportParameterDoc,
+  ImportExportTemplate,
+  ImportExportTemplateMapping,
+  ImportExportTemplateMappingDto,
+  ImportListItem,
+  ImportListStats,
+  ImportResponse,
+  ImportRunDetail,
+  ImportTemplateParameterImport,
+  InventoryOption,
+  Template,
+  TemplateMapping,
+  WarehouseOption,
+} from '../data-import-export';
 
 import { z } from 'zod';
 import { namedDtoSchema } from '../base';

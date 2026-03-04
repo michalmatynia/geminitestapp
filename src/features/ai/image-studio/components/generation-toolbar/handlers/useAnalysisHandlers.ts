@@ -59,7 +59,7 @@ export function useAnalysisHandlers(
   };
 
   const runAnalysis = async (
-    mode: 'server_analysis_v1' | 'client_analysis_v1',
+    mode: 'server_analysis' | 'client_analysis',
     layout: ImageStudioCenterLayoutConfig
   ): Promise<void> => {
     const slotId = workingSlot?.id?.trim() ?? '';
@@ -88,7 +88,7 @@ export function useAnalysisHandlers(
 
     try {
       let nextResult: AnalysisResult;
-      if (mode === 'client_analysis_v1') {
+      if (mode === 'client_analysis') {
         const source = clientProcessingImageSrc || workingSlotImageSrc;
         if (!source) {
           throw new Error('No client image source is available for analysis.');
@@ -97,7 +97,7 @@ export function useAnalysisHandlers(
         const analysis = await analyzeCanvasImageObject(source, layout);
         nextResult = {
           ...analysis,
-          effectiveMode: 'client_analysis_v1',
+          effectiveMode: 'client_analysis',
           authoritativeSource: 'client_upload',
         };
       } else {
@@ -153,7 +153,7 @@ export function useAnalysisHandlers(
       applyAnalysisLayoutToAutoScaler(sharedLayout, 'manual');
 
       const isClient = state.centerMode.startsWith('client_');
-      const preferredCenterMode = isClient ? 'client_object_layout_v1' : 'server_object_layout_v1';
+      const preferredCenterMode = isClient ? 'client_object_layout' : 'server_object_layout';
 
       // Handle center mode switching if needed
       if (
@@ -180,11 +180,11 @@ export function useAnalysisHandlers(
   };
 
   const handleRunAnalysisFromCenter = useCallback(async () => {
-    await runAnalysis('server_analysis_v1', centerLayoutPayload);
+    await runAnalysis('server_analysis', centerLayoutPayload);
   }, [centerLayoutPayload, runAnalysis]);
 
   const handleRunAnalysisFromAutoScaler = useCallback(async () => {
-    await runAnalysis('server_analysis_v1', autoScaleLayoutPayload);
+    await runAnalysis('server_analysis', autoScaleLayoutPayload);
   }, [autoScaleLayoutPayload, runAnalysis]);
 
   const handleCancelAnalysis = useCallback(() => {

@@ -83,13 +83,13 @@ export type CmsThemeUpdateInput = UpdateCmsThemeDto;
  */
 export const cmsPageBuilderComponentContentSchema = z
   .object({
-    zone: z.lazy(() => pageZoneSchema).optional(),
-    settings: z.record(z.string(), z.unknown()).optional(),
-    blocks: z.array(z.lazy(() => cmsBlockInstanceSchema)).optional(),
-    sectionId: z.string().optional(),
-    parentSectionId: z.string().nullable().optional(),
+    zone: z.lazy(() => pageZoneSchema),
+    settings: z.record(z.string(), z.unknown()),
+    blocks: z.array(z.lazy(() => cmsBlockInstanceSchema)),
+    sectionId: z.string(),
+    parentSectionId: z.string().nullable(),
   })
-  .passthrough();
+  .strict();
 
 export type CmsPageBuilderComponentContentDto = z.infer<
   typeof cmsPageBuilderComponentContentSchema
@@ -620,6 +620,7 @@ export const cmsPageSchema = dtoBaseSchema
       cmsPageComponentSchema.partial().extend({
         type: z.string(),
         order: z.number(),
+        content: cmsPageBuilderComponentContentSchema,
       })
     ),
     slugs: z.array(cmsSlugSchema),
@@ -693,10 +694,23 @@ export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
 export function normalizeCmsDomainSettings(
   input?: Partial<CmsDomainSettings> | null
 ): CmsDomainSettings {
-  return {
+  const exact = cmsDomainSettingsSchema.safeParse(input);
+  if (exact.success) {
+    return exact.data;
+  }
+
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return DEFAULT_CMS_DOMAIN_SETTINGS;
+  }
+
+  const merged = {
     ...DEFAULT_CMS_DOMAIN_SETTINGS,
-    ...(input ?? {}),
+    ...input,
   };
+  const mergedResult = cmsDomainSettingsSchema.safeParse(merged);
+  if (mergedResult.success) return mergedResult.data;
+
+  return DEFAULT_CMS_DOMAIN_SETTINGS;
 }
 
 /**
@@ -961,8 +975,10 @@ export type BlockDefinition = BlockDefinitionDto;
  * CMS Repository Interfaces
  */
 
+export type PageComponentInput = Pick<PageComponent, 'type' | 'order' | 'content'>;
+
 export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'updatedAt'>> & {
-  components?: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>;
+  components?: PageComponentInput[];
 };
 
 export type CmsRepository = {
@@ -978,7 +994,7 @@ export type CmsRepository = {
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
   replacePageComponents(
     pageId: string,
-    components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>
+    components: PageComponentInput[]
   ): Promise<void>;
 
   // Slugs

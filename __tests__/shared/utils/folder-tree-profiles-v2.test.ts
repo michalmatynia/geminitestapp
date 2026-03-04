@@ -4,17 +4,18 @@ import {
   canNestTreeNodeV2,
   createDefaultFolderTreeProfilesV2,
   defaultFolderTreeProfilesV2,
-  parseFolderTreeProfilesV2,
+  parseFolderTreeProfileV2Strict,
   resolveFolderTreeIconV2,
 } from '@/shared/utils/folder-tree-profiles-v2';
 
 describe('folder-tree-profiles-v2', () => {
-  it('returns default v2 profiles for invalid json', () => {
-    const parsed = parseFolderTreeProfilesV2('{broken-json');
-
-    expect(parsed.notes.version).toBe(2);
-    expect(parsed.notes.placeholders.style).toBe('ghost');
-    expect(parsed.image_studio.nesting.rules.length).toBeGreaterThan(0);
+  it('rejects invalid profiles in strict mode', () => {
+    expect(() =>
+      parseFolderTreeProfileV2Strict(
+        { broken: true },
+        defaultFolderTreeProfilesV2.notes
+      )
+    ).toThrow();
   });
 
   it('ships native v2 defaults for every tree instance', () => {
@@ -31,38 +32,41 @@ describe('folder-tree-profiles-v2', () => {
   });
 
   it('merges partial v2 payload with defaults and normalizes kind icon keys', () => {
-    const parsed = parseFolderTreeProfilesV2(
-      JSON.stringify({
-        notes: {
-          placeholders: {
-            style: 'pill',
-            emphasis: 'bold',
-          },
-          icons: {
-            byKind: {
-              NOTE: 'FileCode',
-            },
-          },
-          nesting: {
-            defaultAllow: false,
-            rules: [
-              {
-                childType: 'file',
-                childKinds: ['note'],
-                targetType: 'folder',
-                targetKinds: ['folder'],
-                allow: true,
-              },
-            ],
+    const parsed = parseFolderTreeProfileV2Strict(
+      {
+        ...defaultFolderTreeProfilesV2.notes,
+        placeholders: {
+          ...defaultFolderTreeProfilesV2.notes.placeholders,
+          style: 'pill',
+          emphasis: 'bold',
+        },
+        icons: {
+          ...defaultFolderTreeProfilesV2.notes.icons,
+          byKind: {
+            NOTE: 'FileCode',
           },
         },
-      })
+        nesting: {
+          ...defaultFolderTreeProfilesV2.notes.nesting,
+          defaultAllow: false,
+          rules: [
+            {
+              childType: 'file',
+              childKinds: ['note'],
+              targetType: 'folder',
+              targetKinds: ['folder'],
+              allow: true,
+            },
+          ],
+        },
+      },
+      defaultFolderTreeProfilesV2.notes
     );
 
-    expect(parsed.notes.placeholders.style).toBe('pill');
-    expect(parsed.notes.placeholders.emphasis).toBe('bold');
-    expect(resolveFolderTreeIconV2(parsed.notes, 'file', 'note')).toBe('FileCode');
-    expect(parsed.notes.icons.slots.folderOpen).toBe('FolderOpen');
+    expect(parsed.placeholders.style).toBe('pill');
+    expect(parsed.placeholders.emphasis).toBe('bold');
+    expect(resolveFolderTreeIconV2(parsed, 'file', 'note')).toBe('FileCode');
+    expect(parsed.icons.slots.folderOpen).toBe('FolderOpen');
   });
 
   it('evaluates matrix rules with blocked target kinds and fallback default', () => {

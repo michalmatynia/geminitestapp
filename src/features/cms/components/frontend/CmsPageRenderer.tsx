@@ -1,13 +1,10 @@
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import {
-  isCmsSectionHidden,
-  normalizePageZone,
-} from '@/features/cms/utils/page-builder-normalization';
+import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import { buildHierarchyIndexes } from '@/features/cms/hooks/page-builder/section-hierarchy';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type {
-  PageComponent,
+  PageComponentInput,
   BlockInstance,
   PageZone,
   SectionInstance,
@@ -38,18 +35,10 @@ import { FrontendVideoSection } from './sections/FrontendVideoSection';
 import { SectionBlockProvider } from './sections/SectionBlockContext';
 import { getHoverEffectVars } from './theme-styles';
 
-interface SectionContent {
-  zone?: PageZone;
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-  sectionId?: string;
-  parentSectionId?: string | null;
-}
-
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 
 interface CmsPageRendererProps {
-  components: PageComponent[];
+  components: PageComponentInput[];
   colorSchemes?: Record<string, ColorSchemeColors> | undefined;
   layout?: { fullWidth?: boolean } | undefined;
   hoverEffect?: string | undefined;
@@ -69,25 +58,16 @@ export function CmsPageRenderer({
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
 
-  const sections: SectionInstance[] = components.map((comp: PageComponent, idx: number) => {
-    const content = (comp.content ?? {}) as SectionContent;
-    const sectionId =
-      typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
-        ? content.sectionId
-        : `section-${idx}`;
-    const parentSectionId =
-      typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
-        ? content.parentSectionId
-        : null;
-    return {
-      id: sectionId,
+  const sections: SectionInstance[] = components.map(
+    (comp: PageComponentInput): SectionInstance => ({
+      id: comp.content.sectionId,
       type: comp.type,
-      zone: normalizePageZone(content.zone),
-      parentSectionId,
-      settings: content.settings ?? {},
-      blocks: content.blocks ?? [],
-    };
-  });
+      zone: comp.content.zone,
+      parentSectionId: comp.content.parentSectionId,
+      settings: comp.content.settings,
+      blocks: comp.content.blocks,
+    })
+  );
 
   const hierarchy = buildHierarchyIndexes(sections);
   const rootSectionIdsByZone: Record<PageZone, string[]> = {

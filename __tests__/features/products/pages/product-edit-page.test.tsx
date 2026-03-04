@@ -69,10 +69,10 @@ describe('EditProductForm', () => {
           { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] },
         ])
       ),
-      http.get('/api/products/categories', () => HttpResponse.json([])),
-      http.get('/api/products/tags', () => HttpResponse.json([])),
-      http.get('/api/products/parameters', () => HttpResponse.json([])),
-      http.get('/api/products/validator-config', () => HttpResponse.json([])),
+      http.get('/api/v2/products/categories', () => HttpResponse.json([])),
+      http.get('/api/v2/products/tags', () => HttpResponse.json([])),
+      http.get('/api/v2/products/parameters', () => HttpResponse.json([])),
+      http.get('/api/v2/products/validator-config', () => HttpResponse.json([])),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
   });

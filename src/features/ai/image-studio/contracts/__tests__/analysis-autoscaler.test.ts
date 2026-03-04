@@ -10,7 +10,7 @@ import {
 describe('imageStudioAnalysisRequestSchema', () => {
   it('accepts a server analysis payload with layout', () => {
     const parsed = imageStudioAnalysisRequestSchema.safeParse({
-      mode: 'server_analysis_v1',
+      mode: 'server_analysis',
       requestId: 'analysis_request_123456',
       layout: {
         paddingPercent: 12,
@@ -26,18 +26,29 @@ describe('imageStudioAnalysisRequestSchema', () => {
 
   it('accepts a client analysis payload with dataUrl', () => {
     const parsed = imageStudioAnalysisRequestSchema.safeParse({
-      mode: 'client_analysis_v1',
+      mode: 'client_analysis',
       dataUrl: 'data:image/png;base64,abc',
       requestId: 'analysis_client_1234',
     });
     expect(parsed.success).toBe(true);
+  });
+
+  it('normalizes legacy analysis mode aliases', () => {
+    const parsed = imageStudioAnalysisRequestSchema.safeParse({
+      mode: 'server_analysis_v1',
+      requestId: 'analysis_server_alias_1234',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.mode).toBe('server_analysis');
+    }
   });
 });
 
 describe('imageStudioAutoScalerRequestSchema', () => {
   it('accepts a server auto scaler payload', () => {
     const parsed = imageStudioAutoScalerRequestSchema.safeParse({
-      mode: 'server_auto_scaler_v1',
+      mode: 'server_auto_scaler',
       requestId: 'autoscale_request_1234',
       layout: {
         paddingPercent: 9,
@@ -51,16 +62,27 @@ describe('imageStudioAutoScalerRequestSchema', () => {
 
   it('accepts a client auto scaler payload with dataUrl', () => {
     const parsed = imageStudioAutoScalerRequestSchema.safeParse({
-      mode: 'client_auto_scaler_v1',
+      mode: 'client_auto_scaler',
       requestId: 'autoscale_client_1234',
       dataUrl: 'data:image/png;base64,abc',
     });
     expect(parsed.success).toBe(true);
   });
 
+  it('normalizes legacy auto scaler mode aliases', () => {
+    const parsed = imageStudioAutoScalerRequestSchema.safeParse({
+      mode: 'server_auto_scaler_v1',
+      requestId: 'autoscale_server_alias_1234',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.mode).toBe('server_auto_scaler');
+    }
+  });
+
   it('rejects unknown auto scaler mode', () => {
     const parsed = imageStudioAutoScalerRequestSchema.safeParse({
-      mode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
     });
     expect(parsed.success).toBe(false);
   });
@@ -70,8 +92,8 @@ describe('analysis/autoscaler response schemas', () => {
   it('accepts an analysis response payload', () => {
     const parsed = imageStudioAnalysisResponseSchema.safeParse({
       sourceSlotId: 'slot-1',
-      mode: 'server_analysis_v1',
-      effectiveMode: 'server_analysis_v1',
+      mode: 'server_analysis',
+      effectiveMode: 'server_analysis',
       authoritativeSource: 'source_slot',
       sourceMimeHint: 'image/png',
       analysis: {
@@ -143,8 +165,8 @@ describe('analysis/autoscaler response schemas', () => {
   it('accepts an autoscaler response payload', () => {
     const parsed = imageStudioAutoScalerResponseSchema.safeParse({
       sourceSlotId: 'slot-1',
-      mode: 'server_auto_scaler_v1',
-      effectiveMode: 'server_auto_scaler_v1',
+      mode: 'server_auto_scaler',
+      effectiveMode: 'server_auto_scaler',
       slot: {
         id: 'slot-2',
         createdAt: '2026-02-20T00:00:00.000Z',

@@ -1,23 +1,12 @@
-import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getCmsDataProviderMock = vi.fn();
-const pageFindFirstMock = vi.fn();
-const logSystemEventMock = vi.fn();
 
 const mongoRepositoryMock = { provider: 'mongodb' };
 const prismaRepositoryMock = { provider: 'prisma' };
 
 vi.mock('@/features/cms/services/cms-provider', () => ({
   getCmsDataProvider: getCmsDataProviderMock,
-}));
-
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
-    page: {
-      findFirst: pageFindFirstMock,
-    },
-  },
 }));
 
 vi.mock('@/features/cms/services/cms-repository/mongo-cms-repository', () => ({
@@ -28,40 +17,46 @@ vi.mock('@/features/cms/services/cms-repository/prisma-cms-repository', () => ({
   prismaCmsRepository: prismaRepositoryMock,
 }));
 
-vi.mock('@/shared/lib/observability/system-logger', () => ({
-  logSystemEvent: logSystemEventMock,
-}));
-
-describe('cms repository provider fallback', () => {
+describe('cms repository provider cutover', () => {
   beforeEach(async () => {
     getCmsDataProviderMock.mockReset();
-    pageFindFirstMock.mockReset();
-    logSystemEventMock.mockReset();
     const { resetCmsRepositoryCache } = await import('@/features/cms/services/cms-repository');
     resetCmsRepositoryCache();
   });
 
-  it('falls back to mongo repository when Prisma validation fails', async () => {
+  it('returns prisma repository when provider resolves to prisma', async () => {
     getCmsDataProviderMock.mockResolvedValue('prisma');
-    pageFindFirstMock.mockImplementation(async () => {
-      const validationError = new Error('Invalid prisma.page.findFirst invocation');
-      Object.setPrototypeOf(validationError, Prisma.PrismaClientValidationError.prototype);
-      throw validationError;
-    });
 
-    const { getCmsRepository } = await import('@/features/cms/services/cms-repository');
-    const repository = await getCmsRepository();
-
-    expect(repository).toBe(mongoRepositoryMock);
-  });
-
-  it('uses prisma repository when readiness probe succeeds', async () => {
-    getCmsDataProviderMock.mockResolvedValue('prisma');
-    pageFindFirstMock.mockResolvedValue(null);
-
-    const { getCmsRepository } = await import('@/features/cms/services/cms-repository');
+    const { getCmsRepository, getCmsRepositoryProvider } = await import(
+      '@/features/cms/services/cms-repository'
+    );
     const repository = await getCmsRepository();
 
     expect(repository).toBe(prismaRepositoryMock);
+    expect(getCmsRepositoryProvider()).toBe('prisma');
+  });
+
+  it('returns mongodb repository when provider resolves to mongodb', async () => {
+    getCmsDataProviderMock.mockResolvedValue('mongodb');
+
+    const { getCmsRepository, getCmsRepositoryProvider } = await import(
+      '@/features/cms/services/cms-repository'
+    );
+    const repository = await getCmsRepository();
+
+    expect(repository).toBe(mongoRepositoryMock);
+    expect(getCmsRepositoryProvider()).toBe('mongodb');
+  });
+
+  it('caches repository resolution until reset', async () => {
+    getCmsDataProviderMock.mockResolvedValue('prisma');
+
+    const { getCmsRepository } = await import('@/features/cms/services/cms-repository');
+    const first = await getCmsRepository();
+    const second = await getCmsRepository();
+
+    expect(first).toBe(prismaRepositoryMock);
+    expect(second).toBe(prismaRepositoryMock);
+    expect(getCmsDataProviderMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -25,7 +25,7 @@ describe('imageStudioCenterRequestSchema', () => {
 
   it('accepts an object layouting payload with layout config', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
-      mode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
       requestId: 'center_request_layout_1234',
       layout: {
         paddingPercent: 12.5,
@@ -43,6 +43,17 @@ describe('imageStudioCenterRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
+  it('normalizes legacy object layout mode aliases', () => {
+    const parsed = imageStudioCenterRequestSchema.safeParse({
+      mode: 'server_object_layout_v1',
+      requestId: 'center_request_layout_alias_1234',
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.mode).toBe('server_object_layout');
+    }
+  });
+
   it('rejects unknown centering mode', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
       mode: 'server_bbox',
@@ -52,7 +63,7 @@ describe('imageStudioCenterRequestSchema', () => {
 
   it('rejects invalid layout padding', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
-      mode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
       layout: {
         paddingXPercent: 75,
       },
@@ -62,7 +73,7 @@ describe('imageStudioCenterRequestSchema', () => {
 
   it('rejects invalid target canvas dimensions', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
-      mode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
       layout: {
         fillMissingCanvasWhite: true,
         targetCanvasWidth: 50_000,
@@ -76,8 +87,8 @@ describe('imageStudioCenterResponseSchema', () => {
   it('accepts a center response payload', () => {
     const parsed = imageStudioCenterResponseSchema.safeParse({
       sourceSlotId: 'slot_source_123',
-      mode: 'server_object_layout_v1',
-      effectiveMode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
+      effectiveMode: 'server_object_layout',
       slot: {
         id: 'slot_output_123',
         projectId: 'project_123',

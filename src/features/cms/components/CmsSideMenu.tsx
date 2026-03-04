@@ -16,10 +16,17 @@ export default function CmsSideMenu(): React.JSX.Element {
   const addComponent = (type: string): void => {
     setPage((prev) => {
       if (!prev) return prev; // nothing to update yet
+      const sectionId = `section-${Date.now()}-${prev.components.length}`;
       const newComponent: CmsSideMenuComponent = {
         type,
         order: prev.components.length,
-        content: {},
+        content: {
+          zone: 'template',
+          settings: {},
+          blocks: [],
+          sectionId,
+          parentSectionId: null,
+        },
       };
       return {
         ...prev,
@@ -34,9 +41,13 @@ export default function CmsSideMenu(): React.JSX.Element {
       const nextComponents = [...prev.components];
 
       if (!nextComponents[index]) return prev; // out of range safety
+      const component = nextComponents[index];
       nextComponents[index] = {
-        ...nextComponents[index],
-        content: { ...content },
+        ...component,
+        content: {
+          ...component.content,
+          settings: { ...content },
+        },
       };
 
       return {
@@ -78,7 +89,7 @@ export default function CmsSideMenu(): React.JSX.Element {
               return (
                 <RichTextBlock
                   key={index}
-                  content={(component.content ?? {}) as RichTextContent}
+                  content={component.content.settings as RichTextContent}
                   onChange={(content: RichTextContent): void => handleContentChange(index, content)}
                 />
               );

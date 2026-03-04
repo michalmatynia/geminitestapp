@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildImageStudioSequenceSnapshot,
   defaultImageStudioSettings,
+  parsePersistedImageStudioSettings,
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
 
@@ -66,6 +67,12 @@ describe('parseImageStudioSettings', () => {
     expect(parsed.promptExtraction.gpt.temperature).toBe(0.2);
     expect(parsed.uiExtractor.mode).toBe('both');
     expect(parsed.targetAi.openai.image.n).toBe(2);
+    expect(parsed.version).toBe(2);
+  });
+
+  it('upgrades legacy version markers to v2 output', () => {
+    const parsed = parseImageStudioSettings(JSON.stringify({ version: 1 }));
+    expect(parsed.version).toBe(2);
   });
 
   it('rejects deprecated persisted generation model fields', () => {
@@ -169,6 +176,38 @@ describe('parseImageStudioSettings', () => {
         })
       )
     ).toThrowError(/Invalid Image Studio settings payload/);
+  });
+
+  it('strips deprecated AI snapshot keys in persisted migration mode', () => {
+    const parsed = parsePersistedImageStudioSettings(
+      JSON.stringify({
+        ...defaultImageStudioSettings,
+        promptExtraction: {
+          ...defaultImageStudioSettings.promptExtraction,
+          gpt: {
+            ...defaultImageStudioSettings.promptExtraction.gpt,
+            model: 'gpt-4o-mini',
+          },
+        },
+        uiExtractor: {
+          ...defaultImageStudioSettings.uiExtractor,
+          model: 'gpt-4.1-mini',
+        },
+        targetAi: {
+          ...defaultImageStudioSettings.targetAi,
+          openai: {
+            ...defaultImageStudioSettings.targetAi.openai,
+            model: 'gpt-image-1',
+            modelPresets: ['gpt-image-1'],
+          },
+        },
+      })
+    );
+
+    expect(parsed.version).toBe(2);
+    expect(parsed.promptExtraction.gpt.max_output_tokens).toBeNull();
+    expect(parsed.uiExtractor.mode).toBe(defaultImageStudioSettings.uiExtractor.mode);
+    expect(parsed.targetAi.openai.image.format).toBe(defaultImageStudioSettings.targetAi.openai.image.format);
   });
 });
 

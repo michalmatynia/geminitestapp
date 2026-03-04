@@ -31,8 +31,6 @@ import type {
   Template,
   DebugWarehouses,
   CatalogOption,
-} from '@/shared/contracts/data-import-export';
-import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
   BaseImportMode,

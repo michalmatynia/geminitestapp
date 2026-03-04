@@ -51,6 +51,29 @@ describe('runObservabilityCheck logger enforcement', () => {
     });
   });
 
+  it('fails when legacy observability compatibility import is used', () => {
+    const root = createTempRoot();
+    writeSource(
+      root,
+      'src/bad-import.ts',
+      "import { logClientError } from '@/features/observability/public';\nvoid logClientError;\n"
+    );
+
+    const report = runObservabilityCheck({
+      mode: 'check',
+      root,
+      srcDir: 'src',
+      apiDir: 'src/app/api',
+      allowPartial: true,
+    });
+
+    expect(report.status).toBe('failed');
+    expect(report.legacyCompatibility.totalViolations).toBe(1);
+    expect(report.legacyCompatibility.violations[0]).toMatchObject({
+      file: 'src/bad-import.ts',
+    });
+  });
+
   it('passes when logger call includes canonical service prefix', () => {
     const root = createTempRoot();
     writeSource(

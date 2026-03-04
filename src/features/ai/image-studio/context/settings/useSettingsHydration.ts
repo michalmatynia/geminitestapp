@@ -8,7 +8,7 @@ import {
 } from '@/shared/lib/prompt-engine/settings';
 import {
   defaultImageStudioSettings,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -67,7 +67,7 @@ export function useSettingsHydration({
     let hydrated = defaultImageStudioSettings;
     let parseError: Error | null = null;
     try {
-      hydrated = parseImageStudioSettings(storedRaw);
+      hydrated = parsePersistedImageStudioSettings(storedRaw);
     } catch (error) {
       parseError =
         error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');

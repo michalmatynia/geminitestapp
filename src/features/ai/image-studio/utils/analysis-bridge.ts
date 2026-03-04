@@ -1,6 +1,8 @@
-import type {
-  ImageStudioCenterDetectionMode,
-  ImageStudioCenterShadowPolicy,
+import {
+  normalizeImageStudioAnalysisMode,
+  type ImageStudioAnalysisMode,
+  type ImageStudioCenterDetectionMode,
+  type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
 import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 
@@ -28,7 +30,7 @@ export type ImageStudioAnalysisPlanSnapshot = {
   sourceSignature: string;
   savedAt: string;
   layout: ImageStudioAnalysisSharedLayout;
-  effectiveMode: string;
+  effectiveMode: ImageStudioAnalysisMode;
   authoritativeSource: 'source_slot' | 'client_upload';
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidence: number;
@@ -215,8 +217,9 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
     const slotId = typeof candidate.slotId === 'string' ? candidate.slotId.trim() : '';
     if (!slotId) return null;
     const sourceSignature = normalizeSourceSignature(candidate.sourceSignature);
-    const effectiveMode =
-      typeof candidate.effectiveMode === 'string' ? candidate.effectiveMode.trim() : '';
+    const effectiveMode = normalizeImageStudioAnalysisMode(
+      typeof candidate.effectiveMode === 'string' ? candidate.effectiveMode : null
+    );
     if (!effectiveMode) return null;
     const policyVersion =
       typeof candidate.policyVersion === 'string' ? candidate.policyVersion.trim() : '';
@@ -324,7 +327,7 @@ export const saveImageStudioAnalysisPlanSnapshot = (
     sourceSignature: normalizeSourceSignature(payload.sourceSignature),
     savedAt: payload.savedAt,
     layout: normalizeLayout(payload.layout),
-    effectiveMode: payload.effectiveMode.trim(),
+    effectiveMode: normalizeImageStudioAnalysisMode(payload.effectiveMode) ?? 'server_analysis',
     authoritativeSource: payload.authoritativeSource,
     detectionUsed: payload.detectionUsed,
     confidence: Number(clampNumber(payload.confidence, 0, 1).toFixed(6)),

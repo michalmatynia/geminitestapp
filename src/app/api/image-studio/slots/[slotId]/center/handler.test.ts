@@ -251,8 +251,8 @@ describe('image-studio center handler', () => {
 
     createImageFileMock.mockResolvedValue({
       id: 'image-file-center-1',
-      filename: 'center-server_object_layout_v1.png',
-      filepath: '/uploads/studio/center/project-1/source-slot/center-server_object_layout_v1.png',
+      filename: 'center-server_object_layout.png',
+      filepath: '/uploads/studio/center/project-1/source-slot/center-server_object_layout.png',
       mimetype: 'image/png',
       size: outputBuffer.length,
       width: 40,
@@ -268,7 +268,7 @@ describe('image-studio center handler', () => {
         projectId: 'project-1',
         name: 'Source • Centered',
         imageFileId: 'image-file-center-1',
-        imageUrl: '/uploads/studio/center/project-1/source-slot/center-server_object_layout_v1.png',
+        imageUrl: '/uploads/studio/center/project-1/source-slot/center-server_object_layout.png',
       }),
     ]);
     upsertImageStudioSlotLinkMock.mockResolvedValue({ id: 'link-center-1' });
@@ -301,8 +301,8 @@ describe('image-studio center handler', () => {
       imageUrl: '/uploads/studio/center-existing.png',
       metadata: {
         center: {
-          mode: 'server_object_layout_v1',
-          effectiveMode: 'server_object_layout_v1',
+          mode: 'server_object_layout',
+          effectiveMode: 'server_object_layout',
           sourceObjectBounds: { left: 2, top: 2, width: 6, height: 6 },
           targetObjectBounds: { left: 8, top: 6, width: 24, height: 18 },
           layout: {
@@ -369,7 +369,7 @@ describe('image-studio center handler', () => {
     const postCenterSlotHandler = await loadHandler();
     const response = await postCenterSlotHandler(
       buildRequest({
-        mode: 'server_object_layout_v1',
+        mode: 'server_object_layout',
         requestId: 'req_center_dedupe_1234',
       }),
       buildApiContext(),
@@ -381,7 +381,7 @@ describe('image-studio center handler', () => {
     expect(payload['deduplicated']).toBe(true);
     expect(payload['dedupeReason']).toBe('request');
     expect(payload['sourceSlotId']).toBe('source-slot');
-    expect(payload['effectiveMode']).toBe('server_object_layout_v1');
+    expect(payload['effectiveMode']).toBe('server_object_layout');
     expect(payload['detectionUsed']).toBe('white_bg_first_colored_pixel');
     expect(payload['confidenceBefore']).toBe(0.91);
     expect(payload['scale']).toBe(3.5);
@@ -398,7 +398,7 @@ describe('image-studio center handler', () => {
     const response = await postCenterSlotHandler(
       buildRequest(
         {
-          mode: 'server_object_layout_v1',
+          mode: 'server_object_layout',
           requestId: 'req_center_persist_1234',
           layout: {
             paddingPercent: 8,
@@ -419,7 +419,7 @@ describe('image-studio center handler', () => {
     expect(response.status).toBe(201);
     expect(payload['deduplicated']).toBe(false);
     expect(payload['sourceSlotId']).toBe('source-slot');
-    expect(payload['effectiveMode']).toBe('server_object_layout_v1');
+    expect(payload['effectiveMode']).toBe('server_object_layout');
     expect(payload['detectionUsed']).toBe('white_bg_first_colored_pixel');
     expect(payload['confidenceBefore']).toBe(0.93);
     expect(payload['scale']).toBe(3.5);
@@ -454,8 +454,8 @@ describe('image-studio center handler', () => {
         ? (metadata['center'] as Record<string, unknown>)
         : null;
     expect(centerMetadata).not.toBeNull();
-    expect(centerMetadata?.['mode']).toBe('server_object_layout_v1');
-    expect(centerMetadata?.['effectiveMode']).toBe('server_object_layout_v1');
+    expect(centerMetadata?.['mode']).toBe('server_object_layout');
+    expect(centerMetadata?.['effectiveMode']).toBe('server_object_layout');
     expect(centerMetadata?.['detectionUsed']).toBe('white_bg_first_colored_pixel');
     expect(centerMetadata?.['confidenceBefore']).toBe(0.93);
     expect(centerMetadata?.['scale']).toBe(3.5);
@@ -479,7 +479,7 @@ describe('image-studio center handler', () => {
     const response = await postCenterSlotHandler(
       buildRequest(
         {
-          mode: 'server_object_layout_v1',
+          mode: 'server_object_layout',
           requestId: 'req_center_phase_k_chain_1',
           layout: analysisDerivedLayout,
         },
@@ -574,7 +574,7 @@ describe('image-studio center handler', () => {
     const response = await postCenterSlotHandler(
       buildRequest(
         {
-          mode: 'server_object_layout_v1',
+          mode: 'server_object_layout',
           requestId: 'req_center_phase_k_policy_1',
         },
         {
@@ -668,7 +668,7 @@ describe('image-studio center handler', () => {
       imageUrl: '/uploads/studio/center-existing-fingerprint.png',
       metadata: {
         center: {
-          effectiveMode: 'server_object_layout_v1',
+          effectiveMode: 'server_object_layout',
           sourceObjectBounds: { left: 2, top: 2, width: 6, height: 6 },
           targetObjectBounds: { left: 8, top: 6, width: 24, height: 18 },
           detectionUsed: 'white_bg_first_colored_pixel',
@@ -720,7 +720,7 @@ describe('image-studio center handler', () => {
     const postCenterSlotHandler = await loadHandler();
     const response = await postCenterSlotHandler(
       buildRequest({
-        mode: 'server_object_layout_v1',
+        mode: 'server_object_layout',
       }),
       buildApiContext(),
       { slotId: 'source-slot' }
@@ -742,7 +742,7 @@ describe('image-studio center handler', () => {
     const response = await postCenterSlotHandler(
       buildRequest({
         center: {
-          mode: ' server_object_layout_v1 ',
+          mode: ' server_object_layout ',
           requestId: ' req_center_normalized_1234 ',
           layout: {
             paddingPercent: '8.5',
@@ -764,7 +764,7 @@ describe('image-studio center handler', () => {
 
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(201);
-    expect(payload['effectiveMode']).toBe('server_object_layout_v1');
+    expect(payload['effectiveMode']).toBe('server_object_layout');
     expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledTimes(1);
     expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledWith(sourceBuffer, {
       paddingPercent: 8.5,
@@ -787,7 +787,7 @@ describe('image-studio center handler', () => {
         projectId: 'project-1',
         name: 'Source • Centered',
         imageFileId: 'image-file-center-1',
-        imageUrl: '/uploads/studio/center/project-1/source-slot/center-server_object_layout_v1.png',
+        imageUrl: '/uploads/studio/center/project-1/source-slot/center-server_object_layout.png',
       }),
     ]);
 
@@ -796,7 +796,7 @@ describe('image-studio center handler', () => {
     try {
       await postCenterSlotHandler(
         buildRequest({
-          mode: 'server_object_layout_v1',
+          mode: 'server_object_layout',
           requestId: 'req_output_invalid_center_1',
         }),
         buildApiContext(),

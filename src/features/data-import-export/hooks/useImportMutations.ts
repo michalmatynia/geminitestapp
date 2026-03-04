@@ -22,7 +22,7 @@ export function useCsvImportMutation(): CreateMutation<
       formData.append('file', file);
 
       const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-      const result = await uploadWithProgress<unknown>('/api/import', {
+      const result = await uploadWithProgress<unknown>('/api/v2/products/import/csv', {
         formData,
         onProgress,
       });

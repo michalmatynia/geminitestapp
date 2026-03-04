@@ -16,7 +16,7 @@ import type {
   InventoryOption,
   CatalogOption,
   Template,
-} from '@/shared/contracts/data-import-export';
+} from '@/shared/contracts/integrations';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
   const {

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   listAiPathsSettingsMock,
@@ -22,27 +22,12 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 
 import { GET_handler, POST_handler } from './handler';
 
-const originalLegacyPathIndexCompatEnv = process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
-
 describe('ai-paths settings handler', () => {
   beforeEach(() => {
     listAiPathsSettingsMock.mockReset();
     upsertAiPathsSettingMock.mockReset();
     upsertAiPathsSettingsBulkMock.mockReset();
     deleteAiPathsSettingsMock.mockReset();
-    if (originalLegacyPathIndexCompatEnv === undefined) {
-      delete process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
-    } else {
-      process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = originalLegacyPathIndexCompatEnv;
-    }
-  });
-
-  afterAll(() => {
-    if (originalLegacyPathIndexCompatEnv === undefined) {
-      delete process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'];
-    } else {
-      process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = originalLegacyPathIndexCompatEnv;
-    }
   });
 
   it('returns full settings list when no keys are requested', async () => {
@@ -84,9 +69,7 @@ describe('ai-paths settings handler', () => {
     ).rejects.toThrow('Invalid AI Paths key "invalid_key".');
   });
 
-  it('rejects legacy index key requests when compatibility is disabled', async () => {
-    process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = 'false';
-
+  it('rejects legacy index key requests', async () => {
     await expect(
       GET_handler(
         new NextRequest('http://localhost/api/ai-paths/settings?keys=ai_paths_index_v1') as Parameters<
@@ -99,8 +82,7 @@ describe('ai-paths settings handler', () => {
     expect(listAiPathsSettingsMock).not.toHaveBeenCalled();
   });
 
-  it('filters legacy index records from full list when compatibility is disabled', async () => {
-    process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = 'false';
+  it('filters legacy index records from full list responses', async () => {
     listAiPathsSettingsMock.mockResolvedValue([
       { key: 'ai_paths_index_v1', value: '[{"id":"legacy"}]' },
       { key: 'ai_paths_index', value: '[{"id":"canonical"}]' },
@@ -119,9 +101,7 @@ describe('ai-paths settings handler', () => {
     ]);
   });
 
-  it('rejects legacy index writes when compatibility is disabled', async () => {
-    process.env['AI_PATHS_LEGACY_PATH_INDEX_COMPAT_ENABLED'] = 'false';
-
+  it('rejects legacy index writes', async () => {
     await expect(
       POST_handler(
         new NextRequest('http://localhost/api/ai-paths/settings', {

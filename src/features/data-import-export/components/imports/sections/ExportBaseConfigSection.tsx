@@ -3,7 +3,7 @@
 import React from 'react';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { Label, SelectSimple } from '@/shared/ui';
-import type { InventoryOption, Template } from '@/shared/contracts/data-import-export';
+import type { InventoryOption, Template } from '@/shared/contracts/integrations';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 
 export function ExportBaseConfigSection(): React.JSX.Element {

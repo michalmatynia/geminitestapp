@@ -54,7 +54,13 @@ export function CanvasControlPanel({
       <div className='flex items-center gap-1 px-1'>
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Zoom In'>
-          <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onZoomIn}>
+          <Button
+            data-doc-id='canvas_zoom_in'
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8 rounded-full'
+            onClick={onZoomIn}
+          >
             <ZoomIn className='size-4' />
           </Button>
         </Tooltip>
@@ -63,7 +69,13 @@ export function CanvasControlPanel({
         </div>
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Zoom Out'>
-          <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onZoomOut}>
+          <Button
+            data-doc-id='canvas_zoom_out'
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8 rounded-full'
+            onClick={onZoomOut}
+          >
             <ZoomOut className='size-4' />
           </Button>
         </Tooltip>
@@ -75,6 +87,7 @@ export function CanvasControlPanel({
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Fit all nodes'>
           <Button
+            data-doc-id='canvas_fit_nodes'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
@@ -86,6 +99,7 @@ export function CanvasControlPanel({
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Fit selection'>
           <Button
+            data-doc-id='canvas_fit_selection'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
@@ -97,6 +111,7 @@ export function CanvasControlPanel({
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Reset view'>
           <Button
+            data-doc-id='canvas_reset_view'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
@@ -112,6 +127,7 @@ export function CanvasControlPanel({
       <div className='flex items-center gap-1'>
         <Tooltip content={showMinimap ? 'Hide Minimap' : 'Show Minimap'}>
           <Button
+            data-doc-id='canvas_toggle_minimap'
             variant={showMinimap ? 'secondary' : 'ghost'}
             size='icon'
             className='h-8 w-8 rounded-full'
@@ -122,6 +138,7 @@ export function CanvasControlPanel({
         </Tooltip>
         <Tooltip content={edgeRoutingMode === 'bezier' ? 'Orthogonal Edges' : 'Bezier Edges'}>
           <Button
+            data-doc-id='canvas_toggle_edge_routing'
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'

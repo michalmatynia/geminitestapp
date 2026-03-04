@@ -33,6 +33,20 @@ export type SlugRenderData = {
   hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
 };
 
+const normalizeRendererComponent = (
+  pageId: string,
+  component: Page['components'][number],
+  index: number
+): PageComponent => ({
+  id: component.id ?? `${pageId}:component:${index}`,
+  type: component.type,
+  order: component.order,
+  content: component.content,
+  pageId: component.pageId ?? pageId,
+  ...(component.createdAt ? { createdAt: component.createdAt } : {}),
+  ...(component.updatedAt !== undefined ? { updatedAt: component.updatedAt } : {}),
+});
+
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
   const user = session.user as Session['user'] & {
@@ -119,15 +133,9 @@ export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> =>
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
-    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-    type: component.type,
-    order: component.order || 0,
-    content: (component.content as Record<string, unknown>) ?? {},
-    pageId: page.id,
-    createdAt: component.createdAt ?? new Date().toISOString(),
-    updatedAt: component.updatedAt ?? null,
-  }));
+  const rendererComponents = [...page.components]
+    .sort((left, right) => left.order - right.order)
+    .map((component, index) => normalizeRendererComponent(page.id, component, index));
 
   return {
     theme,

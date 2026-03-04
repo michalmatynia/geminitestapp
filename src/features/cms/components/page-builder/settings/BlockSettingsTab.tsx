@@ -23,7 +23,7 @@ import {
   getImageBackgroundTargetOptions,
   type ImageBackgroundTarget,
 } from '../section-registry';
-import { usePageBuilderSelection, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderSelection, usePageBuilderDispatch } from '../../../hooks/usePageBuilderContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
 import type { BlockInstance } from '@/shared/contracts/cms';
 

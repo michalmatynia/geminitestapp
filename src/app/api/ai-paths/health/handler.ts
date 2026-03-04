@@ -16,7 +16,7 @@ import {
   getProductAiJobProvider,
   getProductAiJobRepository,
 } from '@/shared/lib/products/services/product-ai-job-repository';
-import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
+import { notifyAiPathsSloBreach } from '@/shared/lib/observability/ai-paths-slo-notifier';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

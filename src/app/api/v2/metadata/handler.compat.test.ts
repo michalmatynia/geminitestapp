@@ -52,7 +52,7 @@ describe('v2 metadata handler compatibility', () => {
     });
   });
 
-  it('creates currency from wrapped legacy payload shape', async () => {
+  it('creates currency from canonical payload shape', async () => {
     currencyRepoMock.createCurrency.mockResolvedValue({
       id: 'PLN',
       code: 'PLN',
@@ -64,11 +64,9 @@ describe('v2 metadata handler compatibility', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        data: {
-          code: 'PLN',
-          name: 'Polish Zloty',
-          symbol: 'zł',
-        },
+        code: 'PLN',
+        name: 'Polish Zloty',
+        symbol: 'zł',
       }),
     });
 
@@ -85,7 +83,7 @@ describe('v2 metadata handler compatibility', () => {
     );
   });
 
-  it('creates language from wrapped payload and country IDs', async () => {
+  it('creates language from canonical payload and country IDs', async () => {
     const languageCreateMock = vi.fn().mockResolvedValue({
       id: 'lang-en',
       code: 'EN',
@@ -101,12 +99,10 @@ describe('v2 metadata handler compatibility', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        data: {
-          code: 'EN',
-          name: 'English',
-          nativeName: 'English',
-          countryIds: ['country-pl'],
-        },
+        code: 'EN',
+        name: 'English',
+        nativeName: 'English',
+        countryIds: ['country-pl'],
       }),
     });
 
@@ -126,6 +122,25 @@ describe('v2 metadata handler compatibility', () => {
         }),
       })
     );
+  });
+
+  it('rejects wrapped legacy payload shape', async () => {
+    const request = new NextRequest('http://localhost/api/v2/metadata/currencies', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        data: {
+          code: 'PLN',
+          name: 'Polish Zloty',
+        },
+      }),
+    });
+
+    await expect(
+      POST_intl_handler(request, {} as Parameters<typeof POST_intl_handler>[1], {
+        type: 'currencies',
+      })
+    ).rejects.toThrow('Code and name are required');
   });
 
   it('reads languages from mongo provider with mapped country objects', async () => {

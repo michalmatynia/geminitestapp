@@ -38,7 +38,7 @@ const createState = (overrides?: Record<string, unknown>): GenerationToolbarStat
     workingSlot: { id: 'slot-1' },
     setSelectedSlotId: vi.fn(),
     setWorkingSlotId: vi.fn(),
-    centerMode: 'server_object_layout_v1',
+    centerMode: 'server_object_layout',
     setCenterMode: vi.fn(),
     toast: vi.fn(),
     workingSourceSignature: 'signature_slot_1_v1',
@@ -72,7 +72,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       sourceSignature: 'signature_slot_1_v1',
       savedAt: '2026-02-26T10:00:00.000Z',
       layout: BASE_LAYOUT,
-      effectiveMode: 'server_analysis_v1',
+      effectiveMode: 'server_analysis',
       authoritativeSource: 'source_slot',
       detectionUsed: 'alpha_bbox',
       confidence: 0.92,
@@ -137,7 +137,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
         'manual'
       );
     });
-    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout');
   });
 
   it('coerces object-layout intent to server object-layout when starting from server alpha mode', async () => {
@@ -161,7 +161,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
         'manual'
       );
     });
-    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout');
   });
 
   it('switches to analyzed slot first when intent slot differs from working slot', async () => {
@@ -369,7 +369,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
-      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout');
     });
     expect(actions.handleCenterObject).not.toHaveBeenCalled();
     expect(state.setQueuedAnalysisRunTarget).not.toHaveBeenCalled();
@@ -384,11 +384,11 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     const { rerender } = renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
-      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout');
     });
     expect(actions.handleCenterObject).not.toHaveBeenCalled();
 
-    state.centerMode = 'client_object_layout_v1';
+    state.centerMode = 'client_object_layout';
     rerender();
 
     await waitFor(() => {

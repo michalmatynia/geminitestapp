@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { Template, TemplateMapping } from '@/shared/contracts/data-import-export';
 import {
+  type Template,
+  type TemplateMapping,
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
   type ImportTemplateParameterImport,

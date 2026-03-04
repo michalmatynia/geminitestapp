@@ -20,10 +20,10 @@ export type CropMode = 'client_bbox' | 'server_bbox' | 'canvas_overflow';
 export type CenterMode =
   | 'client_alpha_bbox'
   | 'server_alpha_bbox'
-  | 'client_object_layout_v1'
-  | 'server_object_layout_v1'
+  | 'client_object_layout'
+  | 'server_object_layout'
   | 'client_white_bg_bbox';
-export type AutoScalerMode = 'client_auto_scaler_v1' | 'server_auto_scaler_v1';
+export type AutoScalerMode = 'client_auto_scaler' | 'server_auto_scaler';
 
 export type CropStatus =
   | 'idle'
@@ -161,7 +161,7 @@ export function GenerationToolbarProvider({
   const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
   const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
   const [centerMode, setCenterMode] = useState<CenterMode>('client_alpha_bbox');
-  const [autoScaleMode, setAutoScaleMode] = useState<AutoScalerMode>('client_auto_scaler_v1');
+  const [autoScaleMode, setAutoScaleMode] = useState<AutoScalerMode>('client_auto_scaler');
 
   const [centerLayoutPadding, setCenterLayoutPadding] = useState('8');
   const [centerLayoutPaddingX, setCenterLayoutPaddingX] = useState('8');

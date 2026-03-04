@@ -53,7 +53,7 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
 import {
   parseMappedParameterId,
   prepareBaseExportMappingsAndProduct,
-} from '@/app/api/integrations/products/[id]/export-to-base/segments/preparation';
+} from '@/app/api/v2/integrations/products/[id]/export-to-base/segments/preparation';
 
 describe('parseMappedParameterId', () => {
   beforeEach(() => {

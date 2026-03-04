@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cmsPageBuilderComponentContentSchema } from '@/shared/contracts/cms';
 
 const nonEmptyStringSchema = z.string().trim().min(1);
 const nullableNonEmptyStringSchema = nonEmptyStringSchema.nullable();
@@ -52,7 +53,7 @@ export const cmsPageCreateSchema = z.object({
 export const cmsPageComponentSchema = z.object({
   type: nonEmptyStringSchema,
   order: z.number(),
-  content: z.record(z.string(), z.unknown()),
+  content: cmsPageBuilderComponentContentSchema,
 });
 
 export const cmsPageUpdateSchema = z.object({

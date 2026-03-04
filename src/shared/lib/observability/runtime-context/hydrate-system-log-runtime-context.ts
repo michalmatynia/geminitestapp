@@ -58,25 +58,7 @@ const readContextRegistryEnvelope = (
   return asRecord(value);
 };
 
-const readLegacyAiPathRunRunId = (record: Record<string, unknown> | null): string | null => {
-  const staticContext = asRecord(record?.['staticContext']);
-  const aiPathRun = asRecord(staticContext?.['aiPathRun']);
-  return readTrimmedString(aiPathRun?.['runId']);
-};
-
-const normalizeContextForInference = (record: Record<string, unknown>): Record<string, unknown> => {
-  if (readTrimmedString(record['runId'])) return record;
-
-  const legacyRunId = readLegacyAiPathRunRunId(record);
-  if (!legacyRunId) return record;
-
-  return {
-    ...record,
-    runId: legacyRunId,
-  };
-};
-
-const stripLegacyAiPathRunSnapshot = (record: Record<string, unknown>): Record<string, unknown> => {
+const stripAiPathRunSnapshot = (record: Record<string, unknown>): Record<string, unknown> => {
   const staticContext = asRecord(record['staticContext']);
   if (!staticContext || !('aiPathRun' in staticContext)) return record;
 
@@ -94,17 +76,13 @@ const stripLegacyAiPathRunSnapshot = (record: Record<string, unknown>): Record<s
 
 const attachContextRegistryEnvelope = async (
   value: Record<string, unknown>,
-  options: { stripLegacySnapshots: boolean }
+  options: { stripAiPathRunSnapshot: boolean }
 ): Promise<Record<string, unknown>> => {
-  const normalizedForInference = normalizeContextForInference(value);
   const existingEnvelope = readContextRegistryEnvelope(value['contextRegistry']);
   const existingRefs = readContextRegistryRefs(existingEnvelope?.['refs']);
-  const refs =
-    existingRefs.length > 0
-      ? existingRefs
-      : contextRegistryEngine.inferRefs(normalizedForInference);
+  const refs = existingRefs.length > 0 ? existingRefs : contextRegistryEngine.inferRefs(value);
 
-  const baseRecord = options.stripLegacySnapshots ? stripLegacyAiPathRunSnapshot(value) : value;
+  const baseRecord = options.stripAiPathRunSnapshot ? stripAiPathRunSnapshot(value) : value;
   if (refs.length === 0) {
     return baseRecord;
   }
@@ -115,7 +93,7 @@ const attachContextRegistryEnvelope = async (
     engineVersion: contextRegistryEngine.getVersion(),
   };
 
-  if (options.stripLegacySnapshots && 'resolved' in envelope) {
+  if (options.stripAiPathRunSnapshot && 'resolved' in envelope) {
     delete envelope['resolved'];
   }
 
@@ -167,7 +145,7 @@ const hydrateConsumerRecordRuntimeContext = async (
   if (!record) return record;
 
   const withEnvelope = await attachContextRegistryEnvelope(record, {
-    stripLegacySnapshots: false,
+    stripAiPathRunSnapshot: false,
   });
   return await resolveContextRegistryEnvelope(withEnvelope);
 };
@@ -206,7 +184,7 @@ export const hydrateLogRuntimeContext = async (
   const contextRecord = asRecord(context);
   if (!contextRecord) return context ?? null;
   return await attachContextRegistryEnvelope(contextRecord, {
-    stripLegacySnapshots: true,
+    stripAiPathRunSnapshot: true,
   });
 };
 
@@ -217,7 +195,7 @@ export const hydrateSystemLogRecordRuntimeContext = async (
   if (!contextRecord) return log;
 
   const withEnvelope = await attachContextRegistryEnvelope(contextRecord, {
-    stripLegacySnapshots: false,
+    stripAiPathRunSnapshot: false,
   });
   const withResolved = await resolveContextRegistryEnvelope(withEnvelope);
   const hydratedContext = await hydrateAlertEvidenceRuntimeContext(withResolved);

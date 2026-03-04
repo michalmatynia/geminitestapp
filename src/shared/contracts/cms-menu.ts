@@ -152,19 +152,19 @@ export function getCmsMenuSettingsKey(domainId?: string | null): string {
 }
 
 export function normalizeMenuSettings(input: unknown): MenuSettings {
-  if (input && typeof input === 'object' && !Array.isArray(input)) {
-    const record = input as Record<string, unknown>;
-    return {
-      ...DEFAULT_MENU_SETTINGS,
-      ...record,
-      items: Array.isArray(record['items'])
-        ? (record['items'] as MenuItemDto[])
-        : DEFAULT_MENU_SETTINGS.items,
-      showMenu:
-        typeof record['showMenu'] === 'boolean'
-          ? record['showMenu']
-          : DEFAULT_MENU_SETTINGS.showMenu,
-    } as MenuSettings;
+  const exact = menuSettingsSchema.safeParse(input);
+  if (exact.success) {
+    return exact.data;
   }
+
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return DEFAULT_MENU_SETTINGS;
+
+  const merged = {
+    ...DEFAULT_MENU_SETTINGS,
+    ...(input as Partial<MenuSettings>),
+  };
+  const mergedResult = menuSettingsSchema.safeParse(merged);
+  if (mergedResult.success) return mergedResult.data;
+
   return DEFAULT_MENU_SETTINGS;
 }

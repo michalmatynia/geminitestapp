@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import type {
   Page,
   Slug,
-  PageComponent,
+  PageComponentInput,
   CmsTheme,
   CreateCmsThemeDto as CmsThemeCreateInput,
   UpdateCmsThemeDto as CmsThemeUpdateInput,
@@ -39,7 +39,7 @@ interface PageDocument {
   robotsMeta?: string | null;
   themeId?: string | null;
   showMenu?: boolean;
-  components: PageComponent[];
+  components: PageComponentInput[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -294,7 +294,7 @@ export const mongoCmsRepository: CmsRepository = {
       .insertMany(slugIds.map((slugId: string) => ({ pageId, slugId, assignedAt: new Date() })));
   },
 
-  async replacePageComponents(pageId: string, components: PageComponent[]): Promise<void> {
+  async replacePageComponents(pageId: string, components: PageComponentInput[]): Promise<void> {
     const db = await getMongoDb();
     await db
       .collection<PageDocument>(pagesCollection)

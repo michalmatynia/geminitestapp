@@ -6,7 +6,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import {
-  uid,
   syncNextIdFromSections,
   normalizeSections,
   buildSectionSettings,
@@ -36,29 +35,22 @@ export function reducePageActions(
         showMenu: page.showMenu ?? true,
       };
       const reconstructedSections: SectionInstance[] = (page.components ?? []).map(
-        (comp: any, idx: number): SectionInstance => {
-          const content = (comp.content ?? {}) as {
-            zone?: PageZone;
-            settings?: Record<string, unknown>;
-            blocks?: BlockInstance[];
-            sectionId?: string;
-            parentSectionId?: string | null;
+        (comp: any): SectionInstance => {
+          const content = comp.content as {
+            zone: PageZone;
+            settings: Record<string, unknown>;
+            blocks: BlockInstance[];
+            sectionId: string;
+            parentSectionId: string | null;
           };
-          const resolvedSectionId =
-            typeof content.sectionId === 'string' && content.sectionId.trim().length > 0
-              ? content.sectionId
-              : `loaded-${idx}-${uid()}`;
-          const resolvedParentSectionId =
-            typeof content.parentSectionId === 'string' && content.parentSectionId.trim().length > 0
-              ? content.parentSectionId
-              : null;
+
           return {
-            id: resolvedSectionId,
+            id: content.sectionId,
             type: comp.type,
             zone: normalizePageZone(content.zone),
-            parentSectionId: resolvedParentSectionId,
-            settings: buildSectionSettings(comp.type, content.settings ?? {}),
-            blocks: content.blocks ?? [],
+            parentSectionId: content.parentSectionId,
+            settings: buildSectionSettings(comp.type, content.settings),
+            blocks: content.blocks,
           };
         }
       );

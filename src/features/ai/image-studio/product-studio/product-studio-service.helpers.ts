@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { sanitizeImageStudioProjectId } from '@/features/ai/image-studio/server/run-executor';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import {
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import {
@@ -56,8 +56,8 @@ export const buildSequencingDiagnostics = (params: {
   const hasGlobalSettings = globalSettingsRaw !== null;
   const selectedScope = hasProjectSettings ? 'project' : 'default';
   const selectedSettingsKey = params.projectSettingsKey;
-  const projectSettings = projectSettingsRaw ? parseImageStudioSettings(projectSettingsRaw) : null;
-  const globalSettings = globalSettingsRaw ? parseImageStudioSettings(globalSettingsRaw) : null;
+  const projectSettings = projectSettingsRaw ? parsePersistedImageStudioSettings(projectSettingsRaw) : null;
+  const globalSettings = globalSettingsRaw ? parsePersistedImageStudioSettings(globalSettingsRaw) : null;
 
   return {
     projectId: trimString(params.projectId),

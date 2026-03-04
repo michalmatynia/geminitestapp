@@ -276,16 +276,16 @@ describe('Admin Products List UI', () => {
     });
 
     server.use(
-      http.get('/api/products', () => {
+      http.get('/api/v2/products', () => {
         return HttpResponse.json(mockProducts);
       }),
-      http.get('/api/products/count', () => {
+      http.get('/api/v2/products/count', () => {
         return HttpResponse.json({ count: mockProducts.length });
       }),
       http.get('/api/catalogs', () => {
         return HttpResponse.json([]);
       }),
-      http.get('/api/products/validator-config', () => HttpResponse.json([])),
+      http.get('/api/v2/products/validator-config', () => HttpResponse.json([])),
       http.get('/api/v2/integrations/with-connections', () => HttpResponse.json([])),
       http.get('/api/v2/integrations/exports/base/default-connection', () =>
         HttpResponse.json({ connectionId: null })

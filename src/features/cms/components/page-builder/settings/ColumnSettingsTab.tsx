@@ -8,7 +8,7 @@ import {
   renderFieldGroups,
 } from './field-group-helpers';
 import { getBlockDefinition } from '../section-registry';
-import { usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderSelection } from '../../../hooks/usePageBuilderContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
 
 export function ColumnSettingsTab(): React.JSX.Element | null {

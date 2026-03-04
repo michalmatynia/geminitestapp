@@ -736,6 +736,49 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  admin_menu_layout: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Move to Root',
+      inlineDropLabel: 'Drop item',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: null,
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {},
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
   brain_catalog_tree: {
     version: 2,
     placeholders: {

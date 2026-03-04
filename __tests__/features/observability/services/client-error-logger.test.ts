@@ -4,7 +4,7 @@ import { isSensitiveKey } from '@/shared/lib/observability/log-redaction';
 import {
   logClientError,
   setClientErrorBaseContext,
-} from '@/features/observability/utils/client-error-logger';
+} from '@/shared/utils/observability/client-error-logger';
 
 // Mock dependencies
 vi.mock('@/shared/lib/observability/log-redaction', () => ({

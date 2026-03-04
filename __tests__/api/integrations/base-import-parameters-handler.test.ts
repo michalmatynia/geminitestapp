@@ -5,7 +5,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { postBaseImportParametersHandler } from '@/app/api/integrations/imports/base/parameters/handler';
+import { postBaseImportParametersHandler } from '@/app/api/v2/integrations/imports/base/parameters/handler';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());

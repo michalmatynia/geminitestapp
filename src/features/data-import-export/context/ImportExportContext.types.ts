@@ -1,18 +1,14 @@
 import type {
-  ImportExportTemplateMapping as TemplateMapping,
+  TemplateMapping,
   ImportListItem,
   ImportListStats,
   DebugWarehouses,
   CatalogOption,
   InventoryOption,
   WarehouseOption,
-  ImportExportTemplate as Template,
-} from '@/shared/contracts/data-import-export';
-import type {
-  BaseImportStartResponse as ImportResponse,
-  BaseImportRunDetailResponse as ImportRunDetail,
-} from '@/shared/contracts/integrations/base-com';
-import type {
+  Template,
+  ImportResponse,
+  ImportRunDetail,
   BaseImportMode,
   IntegrationConnectionBasic,
   IntegrationWithConnections,

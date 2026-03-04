@@ -1,5 +1,5 @@
-import type { ImportResponse } from '@/shared/contracts/data-import-export';
 import type {
+  ImportResponse,
   BaseImportMode,
   ImageRetryPreset,
   BaseImportPreflightIssue,

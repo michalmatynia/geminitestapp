@@ -86,8 +86,8 @@ const ANALYSIS_LAYOUT = {
 
 const createAnalysisResponse = () => ({
   sourceSlotId: 'slot-1',
-  mode: 'server_analysis_v1',
-  effectiveMode: 'server_analysis_v1',
+  mode: 'server_analysis',
+  effectiveMode: 'server_analysis',
   authoritativeSource: 'source_slot',
   sourceMimeHint: null,
   analysis: {
@@ -153,9 +153,9 @@ const createState = (overrides?: Record<string, unknown>): GenerationToolbarStat
     upscaleMode: 'server_sharp',
     upscaleStrategy: 'scale',
     cropMode: 'server_bbox',
-    centerMode: 'server_object_layout_v1',
+    centerMode: 'server_object_layout',
     setCenterMode: vi.fn(),
-    autoScaleMode: 'server_auto_scaler_v1',
+    autoScaleMode: 'server_auto_scaler',
     upscaleScale: '2',
     upscaleSmoothingQuality: 'high',
     upscaleTargetHeight: '',
@@ -218,7 +218,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     expect(postSpy).toHaveBeenCalledWith(
       '/api/image-studio/slots/slot-1/analysis',
       expect.objectContaining({
-        mode: 'server_analysis_v1',
+        mode: 'server_analysis',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(CENTER_LAYOUT_PAYLOAD),
       }),
@@ -268,7 +268,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     expect(postSpy).toHaveBeenCalledWith(
       '/api/image-studio/slots/slot-1/analysis',
       expect.objectContaining({
-        mode: 'server_analysis_v1',
+        mode: 'server_analysis',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(AUTO_SCALE_LAYOUT_PAYLOAD),
       }),
@@ -288,7 +288,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
-    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout');
   });
 
   it('switches server alpha mode to server object-layout mode during analysis sync', async () => {
@@ -301,7 +301,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
-    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout');
   });
 
   it('preserves server family when analysis is triggered from Auto Scaler', async () => {
@@ -314,12 +314,12 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromAutoScaler();
 
-    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout');
   });
 
   it('does not change center mode when already using object-layout family', async () => {
     const state = createState({
-      centerMode: 'client_object_layout_v1',
+      centerMode: 'client_object_layout',
     });
     const response = createAnalysisResponse();
     vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);

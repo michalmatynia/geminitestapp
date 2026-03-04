@@ -94,6 +94,33 @@ const endConnectionMock = vi.fn(() => {
 const setLastDropMock = vi.fn((pos: { x: number; y: number } | null) => {
   canvasStateMock.lastDrop = pos;
 });
+const canvasInteractionsMock = {
+  handlePointerDownNode: vi.fn(),
+  handlePointerMoveNode: vi.fn(),
+  handlePointerUpNode: vi.fn(),
+  handleStartConnection: vi.fn(),
+  handleCompleteConnection: vi.fn(),
+  handleReconnectInput: vi.fn(),
+  handleDragStart: vi.fn(),
+  handleDragOver: vi.fn(),
+  handleDrop: vi.fn(),
+  handleRemoveEdge: vi.fn(),
+  handleDisconnectPort: vi.fn(),
+  ensureNodeVisible: vi.fn(),
+  zoomTo: vi.fn(),
+  fitToNodes: vi.fn(),
+  resetView: vi.fn(),
+  handlePanStart: vi.fn(),
+  handlePanMove: vi.fn(),
+  handlePanEnd: vi.fn(),
+  edgePaths: [] as {
+    id: string;
+    path: string;
+    label?: string;
+    arrow?: { x: number; y: number; angle: number };
+  }[],
+  ConfirmationModal: () => null,
+};
 
 vi.mock('@/features/ai/ai-paths/context/CanvasContext', () => ({
   useCanvasRefs: () => ({
@@ -131,10 +158,8 @@ vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   }),
 }));
 
-vi.mock('@/shared/hooks/ui/useConfirm', () => ({
-  useConfirm: () => ({
-    ConfirmationModal: () => null,
-  }),
+vi.mock('@/features/ai/ai-paths/context/hooks/useCanvasInteractions', () => ({
+  useCanvasInteractions: () => canvasInteractionsMock,
 }));
 
 describe('useAiPathsCanvasInteractions delete shortcuts', () => {
@@ -158,6 +183,24 @@ describe('useAiPathsCanvasInteractions delete shortcuts', () => {
     startConnectionMock.mockReset();
     endConnectionMock.mockReset();
     setLastDropMock.mockReset();
+    canvasInteractionsMock.handlePointerDownNode.mockReset();
+    canvasInteractionsMock.handlePointerMoveNode.mockReset();
+    canvasInteractionsMock.handlePointerUpNode.mockReset();
+    canvasInteractionsMock.handleStartConnection.mockReset();
+    canvasInteractionsMock.handleCompleteConnection.mockReset();
+    canvasInteractionsMock.handleReconnectInput.mockReset();
+    canvasInteractionsMock.handleDragStart.mockReset();
+    canvasInteractionsMock.handleDragOver.mockReset();
+    canvasInteractionsMock.handleDrop.mockReset();
+    canvasInteractionsMock.handleRemoveEdge.mockReset();
+    canvasInteractionsMock.handleDisconnectPort.mockReset();
+    canvasInteractionsMock.ensureNodeVisible.mockReset();
+    canvasInteractionsMock.zoomTo.mockReset();
+    canvasInteractionsMock.fitToNodes.mockReset();
+    canvasInteractionsMock.resetView.mockReset();
+    canvasInteractionsMock.handlePanStart.mockReset();
+    canvasInteractionsMock.handlePanMove.mockReset();
+    canvasInteractionsMock.handlePanEnd.mockReset();
     graphStateMock.nodes = [];
     graphStateMock.edges = [];
     canvasStateMock.view = { x: -600, y: -320, scale: 1 };

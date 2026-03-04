@@ -6,12 +6,12 @@ import {
   InspectorAiProvider,
   useInspectorAi,
 } from '@/features/cms/components/page-builder/context/InspectorAiContext';
-import { usePageBuilder } from '@/features/cms/components/hooks/usePageBuilderContext';
+import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
 import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 
-vi.mock('@/features/cms/components/hooks/usePageBuilderContext', () => ({
+vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
   usePageBuilder: vi.fn(),
 }));
 

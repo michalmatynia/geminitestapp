@@ -4,6 +4,7 @@ import type {
   Page,
   Slug,
   PageComponent,
+  PageComponentInput,
   CmsTheme,
   CreateCmsThemeDto as CmsThemeCreateInput,
   UpdateCmsThemeDto as CmsThemeUpdateInput,
@@ -266,7 +267,7 @@ export const prismaCmsRepository: CmsRepository = {
     });
   },
 
-  async replacePageComponents(pageId: string, components: PageComponent[]): Promise<void> {
+  async replacePageComponents(pageId: string, components: PageComponentInput[]): Promise<void> {
     await prisma.pageComponent.deleteMany({ where: { pageId } });
     if (components.length === 0) return;
     await prisma.pageComponent.createMany({

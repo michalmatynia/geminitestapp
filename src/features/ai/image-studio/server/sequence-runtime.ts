@@ -15,7 +15,7 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   normalizeImageStudioSequenceSteps,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
@@ -126,7 +126,7 @@ const resolveProjectScopedSettings = async (params: {
     typeof params.studioSettings === 'object' &&
     !Array.isArray(params.studioSettings)
   ) {
-    const parsed = parseImageStudioSettings(JSON.stringify(params.studioSettings));
+    const parsed = parsePersistedImageStudioSettings(JSON.stringify(params.studioSettings));
     return parsed as unknown as Record<string, unknown>;
   }
 
@@ -136,12 +136,12 @@ const resolveProjectScopedSettings = async (params: {
     getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
   ]);
 
-  const parsed = parseImageStudioSettings(projectSettingsRaw ?? globalSettingsRaw);
+  const parsed = parsePersistedImageStudioSettings(projectSettingsRaw ?? globalSettingsRaw);
   return parsed as unknown as Record<string, unknown>;
 };
 
 const resolveSequenceSteps = (params: {
-  parsedSettings: ReturnType<typeof parseImageStudioSettings>;
+  parsedSettings: ReturnType<typeof parsePersistedImageStudioSettings>;
   requestedSteps: unknown;
   presetId: string | null;
 }): ImageStudioSequenceStep[] => {
@@ -197,7 +197,7 @@ export async function startImageStudioSequenceRun(
     projectId,
     studioSettings: input.studioSettings,
   });
-  const parsedSettings = parseImageStudioSettings(JSON.stringify(settingsSnapshot));
+  const parsedSettings = parsePersistedImageStudioSettings(JSON.stringify(settingsSnapshot));
 
   const sequenceSteps = resolveSequenceSteps({
     parsedSettings,

@@ -8,7 +8,7 @@ import { resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain'
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { CmsTheme, PageComponent } from '@/shared/contracts/cms';
+import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 
 import type { Session } from 'next-auth';
@@ -26,6 +26,20 @@ export type PreviewRenderData = {
   hoverEffect: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined;
   hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
 };
+
+const normalizeRendererComponent = (
+  pageId: string,
+  component: Page['components'][number],
+  index: number
+): PageComponent => ({
+  id: component.id ?? `${pageId}:component:${index}`,
+  type: component.type,
+  order: component.order,
+  content: component.content,
+  pageId: component.pageId ?? pageId,
+  ...(component.createdAt ? { createdAt: component.createdAt } : {}),
+  ...(component.updatedAt !== undefined ? { updatedAt: component.updatedAt } : {}),
+});
 
 export const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
@@ -61,15 +75,9 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
-    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-    type: component.type,
-    order: component.order || 0,
-    content: (component.content as Record<string, unknown>) ?? {},
-    pageId: page.id,
-    createdAt: component.createdAt ?? new Date().toISOString(),
-    updatedAt: component.updatedAt ?? null,
-  }));
+  const rendererComponents = [...page.components]
+    .sort((left, right) => left.order - right.order)
+    .map((component, index) => normalizeRendererComponent(page.id, component, index));
 
   return {
     theme,

@@ -197,9 +197,8 @@ describe('hydrate-system-log-runtime-context', () => {
     );
   });
 
-  it('normalizes legacy aiPathRun snapshots into resolved registry documents without removing the legacy payload', async () => {
-    inferRefsMock.mockReturnValue([buildRef('run-legacy')]);
-    resolveRefsMock.mockResolvedValue(buildResolvedBundle('run-legacy'));
+  it('does not infer refs from legacy aiPathRun snapshots without canonical runId/context refs', async () => {
+    inferRefsMock.mockReturnValue([]);
 
     const { hydrateSystemLogRecordRuntimeContext } = await import(
       '@/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context'
@@ -230,7 +229,12 @@ describe('hydrate-system-log-runtime-context', () => {
 
     expect(inferRefsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        runId: 'run-legacy',
+        staticContext: {
+          aiPathRun: {
+            kind: 'ai_path_run',
+            runId: 'run-legacy',
+          },
+        },
       })
     );
     expect(result.context).toEqual(
@@ -241,14 +245,9 @@ describe('hydrate-system-log-runtime-context', () => {
             runId: 'run-legacy',
           },
         },
-        contextRegistry: expect.objectContaining({
-          refs: [buildRef('run-legacy')],
-          resolved: expect.objectContaining({
-            documents: [expect.objectContaining({ entityType: 'ai_path_run' })],
-          }),
-        }),
       })
     );
+    expect((result.context as Record<string, unknown>)['contextRegistry']).toBeUndefined();
   });
 
   it('keeps only fingerprint plus registry context in AI sanitization', async () => {

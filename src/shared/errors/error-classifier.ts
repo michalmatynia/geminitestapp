@@ -5,6 +5,7 @@ import {
   type ErrorCategory,
   type SuggestedAction,
 } from '@/shared/contracts/observability';
+import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 
 type ApiErrorLike = {
   status: number;
@@ -31,6 +32,18 @@ const isErrorCategory = (value: unknown): value is ErrorCategory =>
 export function classifyError(error: unknown): ErrorCategory {
   if (error instanceof z.ZodError) {
     return ERROR_CATEGORY.VALIDATION;
+  }
+
+  if (isAppError(error)) {
+    if (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden) {
+      return ERROR_CATEGORY.AUTH;
+    }
+    if (error.code === AppErrorCodes.databaseError) {
+      return ERROR_CATEGORY.DATABASE;
+    }
+    if (error.code === AppErrorCodes.validation || error.httpStatus === 400) {
+      return ERROR_CATEGORY.VALIDATION;
+    }
   }
 
   if (isApiErrorLike(error)) {
@@ -113,6 +126,33 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       break;
 
     case ERROR_CATEGORY.VALIDATION:
+      if (/agent persona settings contain deprecated ai snapshot keys/i.test(message)) {
+        actions.push({
+          label: 'Update Persona Settings',
+          description:
+            'Open Agent Creator personas and remove legacy model snapshot fields from persona settings.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
+      if (/image studio settings contain deprecated ai snapshot keys/i.test(message)) {
+        actions.push({
+          label: 'Update Image Studio Settings',
+          description:
+            'Open Image Studio settings and save once to persist the latest settings contract without legacy model snapshot fields.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
+      if (/deprecated ai snapshot keys/i.test(message)) {
+        actions.push({
+          label: 'Check Settings Contract',
+          description:
+            'A saved settings payload still includes legacy model snapshot fields. Re-save the relevant settings section.',
+          actionType: 'CHECK_CONFIG',
+        });
+        break;
+      }
       actions.push({
         label: 'Check Input',
         description:

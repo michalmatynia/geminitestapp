@@ -179,7 +179,7 @@ export async function processAutoScalerPayload(input: {
       outputHeight: scaled.height,
       sourceObjectBounds: scaled.sourceObjectBounds,
       targetObjectBounds: scaled.targetObjectBounds,
-      effectiveMode: 'server_auto_scaler_v1',
+      effectiveMode: 'server_auto_scaler',
       authoritativeSource: 'source_slot',
       layout: {
         paddingPercent: scaled.layout.paddingPercent,
@@ -239,7 +239,7 @@ export async function processAutoScalerPayload(input: {
       outputHeight,
       sourceObjectBounds: null,
       targetObjectBounds: null,
-      effectiveMode: 'client_auto_scaler_v1',
+      effectiveMode: 'client_auto_scaler',
       authoritativeSource: 'client_upload_fallback',
       layout: {
         paddingPercent: normalizedLayout.paddingPercent,
@@ -297,7 +297,7 @@ export async function processAutoScalerPayload(input: {
     outputHeight,
     sourceObjectBounds: null,
     targetObjectBounds: null,
-    effectiveMode: 'client_auto_scaler_v1',
+    effectiveMode: 'client_auto_scaler',
     authoritativeSource: 'client_upload_fallback',
     layout: {
       paddingPercent: normalizedLayout.paddingPercent,

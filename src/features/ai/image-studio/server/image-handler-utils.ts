@@ -31,21 +31,21 @@ export const centerBadRequest = (
 
 export const isClientCenterMode = (mode: ImageStudioCenterMode): boolean =>
   mode === 'client_alpha_bbox' ||
-  mode === 'client_object_layout_v1' ||
+  mode === 'client_object_layout' ||
   mode === 'client_white_bg_bbox';
 
 export const isServerCenterMode = (mode: ImageStudioCenterMode): boolean =>
-  mode === 'server_alpha_bbox' || mode === 'server_object_layout_v1';
+  mode === 'server_alpha_bbox' || mode === 'server_object_layout';
 
 export const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 export const sanitizeSegment = (value: string): string => value.replace(/[^a-zA-Z0-9_-]/g, '_');
 
 export const isClientAutoScaleMode = (mode: ImageStudioAutoScalerMode): boolean =>
-  mode === 'client_auto_scaler_v1';
+  mode === 'client_auto_scaler';
 
 export const isServerAutoScaleMode = (mode: ImageStudioAutoScalerMode): boolean =>
-  mode === 'server_auto_scaler_v1';
+  mode === 'server_auto_scaler';
 
 export const readIdempotencyKey = (req: NextRequest): string | null => {
   const headerValue =

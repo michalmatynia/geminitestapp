@@ -543,6 +543,40 @@ describe('cross-profile nesting rules', () => {
     });
   });
 
+  describe('admin_menu_layout profile', () => {
+    const profile = defaultFolderTreeProfilesV2.admin_menu_layout;
+
+    it('allows menu folder nesting', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'menu-a', type: 'folder', kind: 'folder', name: 'Menu A' }),
+        node({ id: 'menu-b', type: 'folder', kind: 'folder', name: 'Menu B' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'menu-b',
+        targetId: 'menu-a',
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('blocks file nodes in admin menu tree', () => {
+      const nodes: MasterTreeNode[] = [
+        node({ id: 'menu-file', type: 'file', kind: 'item', name: 'Menu File' }),
+      ];
+      const result = canDropMasterTreeNode({
+        nodes,
+        nodeId: 'menu-file',
+        targetId: null,
+        position: 'inside',
+        profile,
+      });
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('PROFILE_RULE_BLOCKED');
+    });
+  });
+
   describe('brain_catalog_tree profile', () => {
     const profile = defaultFolderTreeProfilesV2.brain_catalog_tree;
 

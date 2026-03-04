@@ -551,10 +551,21 @@ export const DEFAULT_THEME: ThemeSettings = {
 };
 
 export function normalizeThemeSettings(input?: Partial<ThemeSettings> | null): ThemeSettings {
-  return {
+  const exact = themeSettingsSchema.safeParse(input);
+  if (exact.success) {
+    return exact.data;
+  }
+
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return DEFAULT_THEME;
+
+  const merged = {
     ...DEFAULT_THEME,
-    ...(input ?? {}),
+    ...input,
   };
+  const mergedResult = themeSettingsSchema.safeParse(merged);
+  if (mergedResult.success) return mergedResult.data;
+
+  return DEFAULT_THEME;
 }
 
 export function buildColorSchemeMap(

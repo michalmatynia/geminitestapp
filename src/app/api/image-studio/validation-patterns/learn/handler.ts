@@ -8,7 +8,7 @@ import {
 } from '@/shared/lib/ai-brain/server-runtime-client';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
@@ -49,7 +49,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     | string
     | null
     | undefined;
-  const studioSettings = parseImageStudioSettings(studioSettingsRaw);
+  const studioSettings = parsePersistedImageStudioSettings(studioSettingsRaw);
 
   const settingsRaw = (await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY)) as
     | string

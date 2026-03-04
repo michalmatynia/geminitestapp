@@ -261,9 +261,9 @@ describe('image-studio autoscale handler', () => {
 
     createImageFileMock.mockResolvedValue({
       id: 'image-file-output-1',
-      filename: 'autoscale-server_auto_scaler_v1.png',
+      filename: 'autoscale-server_auto_scaler.png',
       filepath:
-        '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+        '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler.png',
       mimetype: 'image/png',
       size: outputBuffer.length,
       width: 40,
@@ -280,7 +280,7 @@ describe('image-studio autoscale handler', () => {
         name: 'Source • Auto Scaled',
         imageFileId: 'image-file-output-1',
         imageUrl:
-          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler.png',
       }),
     ]);
     upsertImageStudioSlotLinkMock.mockResolvedValue({
@@ -318,8 +318,8 @@ describe('image-studio autoscale handler', () => {
         sourceSlotId: 'source-slot',
         relationType: 'autoscale:output',
         autoscale: {
-          mode: 'server_auto_scaler_v1',
-          effectiveMode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
+          effectiveMode: 'server_auto_scaler',
           sourceObjectBounds: { left: 2, top: 2, width: 6, height: 6 },
           targetObjectBounds: { left: 8, top: 6, width: 24, height: 18 },
           layout: {
@@ -394,7 +394,7 @@ describe('image-studio autoscale handler', () => {
     const postAutoScaleSlotHandler = await loadHandler();
     const response = await postAutoScaleSlotHandler(
       buildRequest({
-        mode: 'server_auto_scaler_v1',
+        mode: 'server_auto_scaler',
         requestId: 'req_dedupe_1234',
       }),
       buildApiContext(),
@@ -406,7 +406,7 @@ describe('image-studio autoscale handler', () => {
     expect(payload['deduplicated']).toBe(true);
     expect(payload['dedupeReason']).toBe('request');
     expect(payload['sourceSlotId']).toBe('source-slot');
-    expect(payload['effectiveMode']).toBe('server_auto_scaler_v1');
+    expect(payload['effectiveMode']).toBe('server_auto_scaler');
     expect(payload['detectionUsed']).toBe('white_bg_first_colored_pixel');
     expect(payload['confidenceBefore']).toBe(0.92);
     expect(payload['scale']).toBe(3.5);
@@ -422,7 +422,7 @@ describe('image-studio autoscale handler', () => {
     const response = await postAutoScaleSlotHandler(
       buildRequest(
         {
-          mode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
           requestId: 'req_persist_1234',
           layout: {
             paddingPercent: 8,
@@ -443,7 +443,7 @@ describe('image-studio autoscale handler', () => {
     expect(response.status).toBe(201);
     expect(payload['deduplicated']).toBe(false);
     expect(payload['sourceSlotId']).toBe('source-slot');
-    expect(payload['effectiveMode']).toBe('server_auto_scaler_v1');
+    expect(payload['effectiveMode']).toBe('server_auto_scaler');
     expect(payload['detectionUsed']).toBe('white_bg_first_colored_pixel');
     expect(payload['confidenceBefore']).toBe(0.93);
     expect(payload['scale']).toBe(3.5);
@@ -463,8 +463,8 @@ describe('image-studio autoscale handler', () => {
         sourceSlotId: 'source-slot',
         relationType: 'autoscale:output',
         autoscale: {
-          mode: 'server_auto_scaler_v1',
-          effectiveMode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
+          effectiveMode: 'server_auto_scaler',
           detectionUsed: 'white_bg_first_colored_pixel',
           confidenceBefore: 0.93,
           scale: 3.5,
@@ -534,7 +534,7 @@ describe('image-studio autoscale handler', () => {
     const response = await postAutoScaleSlotHandler(
       buildRequest(
         {
-          mode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
           requestId: 'req_autoscale_phase_k_chain_1',
           layout: analysisDerivedLayout,
         },
@@ -660,7 +660,7 @@ describe('image-studio autoscale handler', () => {
     const response = await postAutoScaleSlotHandler(
       buildRequest(
         {
-          mode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
           requestId: 'req_autoscale_phase_k_policy_1',
         },
         {
@@ -754,7 +754,7 @@ describe('image-studio autoscale handler', () => {
       imageUrl: '/uploads/studio/existing-fingerprint.png',
       metadata: {
         autoscale: {
-          effectiveMode: 'server_auto_scaler_v1',
+          effectiveMode: 'server_auto_scaler',
           sourceObjectBounds: { left: 2, top: 2, width: 6, height: 6 },
           targetObjectBounds: { left: 8, top: 6, width: 24, height: 18 },
           layout: {
@@ -806,7 +806,7 @@ describe('image-studio autoscale handler', () => {
     const postAutoScaleSlotHandler = await loadHandler();
     const response = await postAutoScaleSlotHandler(
       buildRequest({
-        mode: 'server_auto_scaler_v1',
+        mode: 'server_auto_scaler',
       }),
       buildApiContext(),
       { slotId: 'source-slot' }
@@ -826,7 +826,7 @@ describe('image-studio autoscale handler', () => {
     const response = await postAutoScaleSlotHandler(
       buildRequest({
         autoscale: {
-          mode: ' server_auto_scaler_v1 ',
+          mode: ' server_auto_scaler ',
           requestId: ' req_autoscale_normalized_1234 ',
           layout: {
             paddingPercent: '8.5',
@@ -848,7 +848,7 @@ describe('image-studio autoscale handler', () => {
 
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(201);
-    expect(payload['effectiveMode']).toBe('server_auto_scaler_v1');
+    expect(payload['effectiveMode']).toBe('server_auto_scaler');
     expect(autoScaleObjectByAnalysisMock).toHaveBeenCalledTimes(1);
     expect(autoScaleObjectByAnalysisMock).toHaveBeenCalledWith(
       sourceBuffer,
@@ -876,7 +876,7 @@ describe('image-studio autoscale handler', () => {
         name: 'Source • Auto Scaled',
         imageFileId: 'image-file-output-1',
         imageUrl:
-          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler.png',
       }),
     ]);
 
@@ -885,7 +885,7 @@ describe('image-studio autoscale handler', () => {
     try {
       await postAutoScaleSlotHandler(
         buildRequest({
-          mode: 'server_auto_scaler_v1',
+          mode: 'server_auto_scaler',
           requestId: 'req_output_invalid_autoscale_1',
         }),
         buildApiContext(),

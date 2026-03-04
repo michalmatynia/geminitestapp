@@ -12,17 +12,15 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/ai-paths/context/SelectionContext';
+import { useCanvasInteractions } from '@/features/ai/ai-paths/context/hooks/useCanvasInteractions';
 import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
 import { sanitizeEdges } from '@/shared/lib/ai-paths';
-import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { type ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 import {
   computeEdgeSelectionDeleteResult,
   computeNodeSelectionDeleteResult,
 } from '@/features/ai/ai-paths/context/hooks/canvas/delete-selection-command';
 
-import { useCanvasView } from './hooks/useCanvasView';
-import { useCanvasNodeDrag } from './hooks/useCanvasNodeDrag';
-import { useCanvasConnection } from './hooks/useCanvasConnection';
 import { isEditableElement } from './utils/canvas-interaction-utils';
 
 type UseAiPathsCanvasInteractionsArgs = {
@@ -119,21 +117,16 @@ export function useAiPathsCanvasInteractions(
     confirmNodeSwitch,
     confirm,
     clearRuntimeInputsForEdges,
-    reportAiPathsError,
+    reportAiPathsError: _reportAiPathsError,
     toast,
   } = args;
+  void _reportAiPathsError;
 
   const { viewportRef, canvasRef } = useCanvasRefs();
-  const { dragState: dragStateCtx, connecting: connectingCtx, connectingPos: connectingPosCtx, lastDrop } =
-    useCanvasState();
+  const { view, panState, dragState, connecting, connectingPos, lastDrop } = useCanvasState();
   const {
-    startDrag,
-    endDrag,
     setConnecting: setConnectingCtx,
     setConnectingPos: setConnectingPosCtx,
-    startConnection,
-    endConnection,
-    setLastDrop: setLastDropCtx,
   } = useCanvasActions();
   const lockedToastAtRef = useRef<number>(0);
 
@@ -145,27 +138,6 @@ export function useAiPathsCanvasInteractions(
   const { selectEdge, selectNode } = useSelectionActions();
   const { nodes: graphNodes, edges: graphEdges } = useGraphState();
   const { setNodes: setGraphNodes, setEdges: setGraphEdges } = useGraphActions();
-  const { ConfirmationModal } = useConfirm();
-
-  const setNodesViaGraph = useCallback(
-    (nextNodes: AiNode[] | ((prev: AiNode[]) => AiNode[])): void => {
-      setGraphNodes(nextNodes, {
-        reason: 'update',
-        source: 'settings.canvas.compat.setNodesViaGraph',
-      });
-    },
-    [setGraphNodes]
-  );
-
-  const setEdgesViaGraph = useCallback(
-    (nextEdges: Edge[] | ((prev: Edge[]) => Edge[])): void => {
-      setGraphEdges(nextEdges, {
-        reason: 'update',
-        source: 'settings.canvas.compat.setEdgesViaGraph',
-      });
-    },
-    [setGraphEdges]
-  );
 
   const notifyLocked = useCallback((): void => {
     const now = Date.now();
@@ -176,76 +148,86 @@ export function useAiPathsCanvasInteractions(
     });
   }, [toast]);
 
-  const {
-    view,
-    panState,
-    zoomTo,
-    fitToNodes: fitToNodesView,
-    resetView,
-    ensureNodeVisible,
-    handlePanStart: handlePanStartView,
-    handlePanMove: handlePanMoveView,
-    handlePanEnd: handlePanEndView,
-    getCanvasCenterPosition,
-  } = useCanvasView(viewportRef);
-
-  const {
-    dragState,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleDragStart,
-    handleDragOver,
-    handleDrop,
-  } = useCanvasNodeDrag({
-    nodes: graphNodes,
-    setNodes: setNodesViaGraph,
-    dragState: dragStateCtx,
-    startDrag,
-    endDrag,
-    view,
-    viewportRef,
-    canvasRef,
-    isPathLocked,
-    notifyLocked,
-    reportAiPathsError,
-    toast,
-    setSelectedNodeId,
-    ensureNodeVisible,
-    setLastDrop: setLastDropCtx,
+  const interactions = useCanvasInteractions({
+    confirmNodeSwitch: (nextNodeId) => confirmNodeSwitch?.(nextNodeId) ?? true,
   });
 
-  const {
-    connecting,
-    setConnecting,
-    connectingPos,
-    setConnectingPos,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleRemoveEdge,
-    handleDisconnectPort,
-    handleReconnectInput,
-    edgePaths,
-    connectingFromNode,
-  } = useCanvasConnection({
-    nodes: graphNodes,
-    edges: graphEdges,
-    setEdges: setEdgesViaGraph,
-    connecting: connectingCtx,
-    setConnecting: setConnectingCtx,
-    connectingPos: connectingPosCtx,
-    setConnectingPos: setConnectingPosCtx,
-    startConnection,
-    endConnection,
-    view,
-    viewportRef,
-    isPathLocked,
-    notifyLocked,
-    selectedEdgeId,
-    selectEdge,
-    clearRuntimeInputsForEdges,
-    toast,
-  });
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>, nodeId: string): void => {
+      void interactions.handlePointerDownNode(event, nodeId);
+    },
+    [interactions]
+  );
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>, nodeId: string): void => {
+      interactions.handlePointerMoveNode(event, nodeId);
+    },
+    [interactions]
+  );
+
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>, nodeId: string): void => {
+      interactions.handlePointerUpNode(event, nodeId);
+    },
+    [interactions]
+  );
+
+  const handleStartConnection = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string): void => {
+      void interactions.handleStartConnection(event, node, port);
+    },
+    [interactions]
+  );
+
+  const handleCompleteConnection = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, node: AiNode, port: string): void => {
+      interactions.handleCompleteConnection(event, node, port);
+    },
+    [interactions]
+  );
+
+  const handleReconnectInput = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, nodeId: string, port: string): void => {
+      void interactions.handleReconnectInput(event, nodeId, port);
+    },
+    [interactions]
+  );
+
+  const handleDragStart = interactions.handleDragStart;
+  const handleDragOver = interactions.handleDragOver;
+  const handleDrop = interactions.handleDrop;
+  const handleRemoveEdge = interactions.handleRemoveEdge;
+  const handleDisconnectPort = interactions.handleDisconnectPort;
+  const ensureNodeVisible = interactions.ensureNodeVisible;
+  const zoomTo = interactions.zoomTo;
+  const fitToNodes = interactions.fitToNodes;
+  const resetView = interactions.resetView;
+  const ConfirmationModal = interactions.ConfirmationModal;
+  const edgePaths = interactions.edgePaths;
+  const handlePanStart = interactions.handlePanStart as (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => void;
+  const handlePanMove = interactions.handlePanMove as (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => void;
+  const handlePanEnd = interactions.handlePanEnd as (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => void;
+  const connectingFromNode = connecting
+    ? graphNodes.find((node: AiNode): boolean => node.id === connecting.fromNodeId) ?? null
+    : null;
+  const getCanvasCenterPosition = useCallback((): { x: number; y: number } => {
+    const viewport = viewportRef.current?.getBoundingClientRect();
+    if (!viewport) return { x: 0, y: 0 };
+    return {
+      x: (viewport.width / 2 - view.x) / view.scale,
+      y: (viewport.height / 2 - view.y) / view.scale,
+    };
+  }, [view.scale, view.x, view.y, viewportRef]);
+
+  const setConnecting = setConnectingCtx;
+  const setConnectingPos = setConnectingPosCtx;
 
   useEffect((): void | (() => void) => {
     const handleWindowPointerDown = (event: PointerEvent): void => {
@@ -382,35 +364,6 @@ export function useAiPathsCanvasInteractions(
     });
   }, [graphNodes, setGraphEdges]);
 
-  const handlePanStart = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (connecting) {
-      setConnecting(null);
-      setConnectingPos(null);
-      return;
-    }
-    handlePanStartView(event);
-  };
-
-  const handlePanMove = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (connecting) {
-      const viewport = viewportRef.current?.getBoundingClientRect();
-      if (!viewport) return;
-      const x = (event.clientX - viewport.left - view.x) / view.scale;
-      const y = (event.clientY - viewport.top - view.y) / view.scale;
-      setConnectingPos({ x, y });
-      return;
-    }
-    handlePanMoveView(event);
-  };
-
-  const handlePanEnd = (_event: React.PointerEvent<HTMLDivElement>): void => {
-    handlePanEndView();
-    if (connecting) {
-      setConnecting(null);
-      setConnectingPos(null);
-    }
-  };
-
   const handleSelectEdge = (edgeId: string | null): void => {
     selectEdge(edgeId);
     if (edgeId) {
@@ -440,10 +393,6 @@ export function useAiPathsCanvasInteractions(
     } else {
       proceed();
     }
-  };
-
-  const fitToNodes = (): void => {
-    fitToNodesView(graphNodes);
   };
 
   return {

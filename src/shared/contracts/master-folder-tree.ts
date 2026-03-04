@@ -231,8 +231,6 @@ export interface MasterFolderTreeAdapterV3 {
   ) => Promise<void>;
 }
 
-export type MasterFolderTreeAdapter = MasterFolderTreeAdapterV3;
-
 export const masterFolderTreeActionOkSchema = z.object({
   ok: z.literal(true),
 });

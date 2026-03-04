@@ -86,7 +86,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const { projectId, projectsQuery } = useProjectsState();
   const { slots, slotSelectionLocked, workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
-  const [mode, setMode] = useState<AnalysisMode>('server_analysis_v1');
+  const [mode, setMode] = useState<AnalysisMode>('server_analysis');
   const [layoutPadding, setLayoutPadding] = useState<string>(String(PADDING_DEFAULT));
   const [layoutPaddingX, setLayoutPaddingX] = useState<string>(String(PADDING_DEFAULT));
   const [layoutPaddingY, setLayoutPaddingY] = useState<string>(String(PADDING_DEFAULT));
@@ -497,7 +497,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     setStatus('resolving');
     try {
       let nextResult: AnalysisResult;
-      if (mode === 'client_analysis_v1') {
+      if (mode === 'client_analysis') {
         const source = clientProcessingImageSrc || workingSlotImageSrc;
         if (!source) {
           throw new Error('No client image source is available for analysis.');
@@ -506,7 +506,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         const analysis = await analyzeCanvasImageObject(source, layoutPayload);
         nextResult = {
           ...analysis,
-          effectiveMode: 'client_analysis_v1',
+          effectiveMode: 'client_analysis',
           authoritativeSource: 'client_upload',
         };
       } else {

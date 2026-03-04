@@ -10,14 +10,9 @@ export { defaultFolderTreeProfilesV2 };
 export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map =>
   logic.createDefaultFolderTreeProfilesV2(defaultFolderTreeProfilesV2);
 
-export const parseFolderTreeProfilesV2 = (
-  raw: string | null | undefined
-): FolderTreeProfilesV2Map => logic.parseFolderTreeProfilesV2(raw, defaultFolderTreeProfilesV2);
-
 export const getFolderTreePlaceholderClasses = logic.getFolderTreePlaceholderClasses;
 export const cloneProfileV2 = logic.cloneProfileV2;
 export const toCanonicalProfileV2 = logic.toCanonicalProfileV2;
-export const coerceProfileV2 = logic.coerceProfileV2;
 export const parseFolderTreeProfileV2Strict = logic.parseFolderTreeProfileV2Strict;
 export const canNestTreeNodeV2 = logic.canNestTreeNodeV2;
 export const resolveFolderTreeIconV2 = logic.resolveFolderTreeIconV2;

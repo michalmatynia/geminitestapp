@@ -93,11 +93,11 @@ describe('auto-scaler-utils', () => {
 
     const clientFingerprint = buildAutoScalerFingerprint({
       sourceSignature,
-      mode: 'client_auto_scaler_v1',
+      mode: 'client_auto_scaler',
     });
     const serverFingerprint = buildAutoScalerFingerprint({
       sourceSignature,
-      mode: 'server_auto_scaler_v1',
+      mode: 'server_auto_scaler',
     });
 
     expect(clientFingerprint).toBe(serverFingerprint);

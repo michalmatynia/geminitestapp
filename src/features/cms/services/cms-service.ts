@@ -6,7 +6,7 @@ import { ActivityTypes } from '@/shared/constants/observability';
 import type {
   Page,
   Slug,
-  PageComponent,
+  PageComponentInput,
   CmsTheme,
   CmsThemeCreateInput,
   CmsThemeUpdateInput,
@@ -89,7 +89,7 @@ export const cmsService: CmsRepository = {
     repoCall('replacePageSlugs', pageId, slugIds),
   replacePageComponents: (
     pageId: string,
-    components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>
+    components: PageComponentInput[]
   ): Promise<void> => repoCall('replacePageComponents', pageId, components),
 
   // Slugs

@@ -4,8 +4,6 @@ import type {
   CatalogOption as CatalogRecord,
   ImportListItem,
   WarehouseOption,
-} from '@/shared/contracts/data-import-export';
-import type {
   BaseImportRunDetailResponse,
   BaseImportRunRecord,
   BaseImportStartResponse,

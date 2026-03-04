@@ -49,11 +49,11 @@ export function useGenerationToolbarEffects(
   const preferredObjectLayoutMode =
     centerMode === 'client_white_bg_bbox'
       ? centerMode
-      : centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
-        ? 'client_object_layout_v1'
-        : 'server_object_layout_v1';
+      : centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout'
+        ? 'client_object_layout'
+        : 'server_object_layout';
   const centerModeIsObjectLayout =
-    centerMode === 'client_object_layout_v1' || centerMode === 'server_object_layout_v1';
+    centerMode === 'client_object_layout' || centerMode === 'server_object_layout';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

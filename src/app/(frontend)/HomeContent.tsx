@@ -4,7 +4,7 @@ import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
 import { productService } from '@/features/products/server';
-import type { Page, PageComponent, Slug } from '@/shared/contracts/cms';
+import type { Page, Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 
 import { HomeCmsDefaultContent } from './home-cms-default-content';
@@ -46,15 +46,9 @@ export async function HomeContent({
       cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0
     );
 
-    const rendererComponents: PageComponent[] = (cmsPage?.components ?? []).map((component) => ({
-      id: component.id ?? `home-component-${Math.random().toString(36).slice(2, 9)}`,
-      type: component.type,
-      order: component.order || 0,
-      content: (component.content as Record<string, unknown>) ?? {},
-      pageId: cmsPage?.id ?? 'home',
-      createdAt: component.createdAt ?? new Date().toISOString(),
-      updatedAt: component.updatedAt ?? null,
-    }));
+    const rendererComponents = [...(cmsPage?.components ?? [])].sort(
+      (left, right) => left.order - right.order
+    );
 
     const showMenu = cmsPage?.showMenu !== false;
 

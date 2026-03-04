@@ -21,7 +21,7 @@ import { useProjectsState } from './ProjectsContext';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   type ImageStudioSettings,
   defaultImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
@@ -99,7 +99,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     let hydrated = defaultImageStudioSettings;
     let parseError: Error | null = null;
     try {
-      hydrated = parseImageStudioSettings(studioSettingsRaw);
+      hydrated = parsePersistedImageStudioSettings(studioSettingsRaw);
     } catch (error) {
       parseError =
         error instanceof Error ? error : new Error('Invalid Image Studio settings payload.');
@@ -176,7 +176,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         if (!persistedRaw || persistedRaw.trim().length === 0) {
           throw new Error(`Settings write completed but verification failed for "${targetKey}".`);
         }
-        const persisted = parseImageStudioSettings(persistedRaw);
+        const persisted = parsePersistedImageStudioSettings(persistedRaw);
         const expectedSnapshotHash =
           typeof payload.projectSequencing.snapshotHash === 'string' &&
           payload.projectSequencing.snapshotHash.trim().length > 0

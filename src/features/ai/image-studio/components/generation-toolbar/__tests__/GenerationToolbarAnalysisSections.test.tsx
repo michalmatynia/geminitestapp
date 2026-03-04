@@ -9,7 +9,7 @@ import {
 } from '../GenerationToolbarSectionContexts';
 
 const mockToolbarContext = {
-  centerMode: 'server_object_layout_v1',
+  centerMode: 'server_object_layout',
   setCenterMode: vi.fn(),
   centerLayoutShadowPolicy: 'auto',
   setCenterLayoutShadowPolicy: vi.fn(),
@@ -32,7 +32,7 @@ const mockToolbarContext = {
   centerLayoutFillMissingCanvasWhite: false,
   setCenterLayoutFillMissingCanvasWhite: vi.fn(),
   centerBusy: false,
-  autoScaleMode: 'server_auto_scaler_v1',
+  autoScaleMode: 'server_auto_scaler',
   setAutoScaleMode: vi.fn(),
   autoScaleLayoutShadowPolicy: 'auto',
   setAutoScaleLayoutShadowPolicy: vi.fn(),
@@ -88,7 +88,7 @@ const baseCenterRuntime = (overrides?: Record<string, unknown>) => ({
     thresholds: 'Thresholds',
   },
   centerTooltipsEnabled: false,
-  centerModeOptions: [{ value: 'server_object_layout_v1', label: 'Layout Server' }],
+  centerModeOptions: [{ value: 'server_object_layout', label: 'Layout Server' }],
   hasSourceImage: true,
   onCancelCenter: vi.fn(),
   onCenterLayoutPresetChange: vi.fn(),
@@ -128,7 +128,7 @@ const baseAutoScalerRuntime = (overrides?: Record<string, unknown>) => ({
     shadowPolicy: 'Shadow',
   },
   autoScaleTooltipsEnabled: false,
-  autoScaleModeOptions: [{ value: 'server_auto_scaler_v1', label: 'Server' }],
+  autoScaleModeOptions: [{ value: 'server_auto_scaler', label: 'Server' }],
   hasSourceImage: true,
   onAutoScale: vi.fn(),
   onRunAnalysis: vi.fn(),

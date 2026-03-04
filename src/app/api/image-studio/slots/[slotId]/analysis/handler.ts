@@ -48,7 +48,7 @@ const analysisBadRequest = (
 ) => badRequestError(message, { analysisErrorCode, ...(meta ?? {}) });
 
 const isClientAnalysisMode = (mode: ImageStudioAnalysisMode): boolean =>
-  mode === 'client_analysis_v1';
+  mode === 'client_analysis';
 
 const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -114,7 +114,7 @@ async function resolveAnalysisSource(input: {
 }): Promise<AnalysisSource> {
   const { payload, sourceSlot, uploadedClientImage } = input;
   const preferAuthoritativeSource =
-    STRICT_SERVER_ANALYSIS_ENABLED || payload.mode === 'server_analysis_v1';
+    STRICT_SERVER_ANALYSIS_ENABLED || payload.mode === 'server_analysis';
 
   let sourceBuffer: Buffer | null = null;
   let sourceMimeHint: string | null = null;
@@ -211,7 +211,7 @@ export async function postAnalyzeSlotHandler(
   const normalizedMode =
     typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
   if (!normalizedMode) {
-    normalizedBody['mode'] = 'server_analysis_v1';
+    normalizedBody['mode'] = 'server_analysis';
   }
   const parsed = imageStudioAnalysisRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
@@ -243,7 +243,7 @@ export async function postAnalyzeSlotHandler(
     });
     const durationMs = Date.now() - startedAt;
     const effectiveMode =
-      source.sourceKind === 'source_slot' ? 'server_analysis_v1' : 'client_analysis_v1';
+      source.sourceKind === 'source_slot' ? 'server_analysis' : 'client_analysis';
 
     void logSystemEvent({
       level: 'info',

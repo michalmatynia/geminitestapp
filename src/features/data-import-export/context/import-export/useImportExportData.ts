@@ -12,7 +12,7 @@ import type {
   ImportListItem,
   ImportRunDetail,
   WarehouseOption,
-} from '@/shared/contracts/data-import-export';
+} from '@/shared/contracts/integrations';
 
 export function useImportExportData({
   selectedBaseConnectionId,

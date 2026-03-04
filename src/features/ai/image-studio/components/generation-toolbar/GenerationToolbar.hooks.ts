@@ -164,8 +164,8 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   }, [selectedCenterCustomPresetId, centerLayoutCustomPresets]);
 
   const centerIsObjectLayoutMode =
-    toolbarContext.centerMode === 'client_object_layout_v1' ||
-    toolbarContext.centerMode === 'server_object_layout_v1';
+    toolbarContext.centerMode === 'client_object_layout' ||
+    toolbarContext.centerMode === 'server_object_layout';
 
   const analysisPlanAvailable = Boolean(toolbarContext.analysisPlanSnapshot);
   const analysisPlanSlotId = toolbarContext.analysisPlanSnapshot?.slotId?.trim() ?? '';

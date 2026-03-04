@@ -4,7 +4,6 @@ import { ObjectId } from 'mongodb';
 
 import { isDomainZoningEnabled } from '@/features/cms/services/cms-domain';
 import {
-  CMS_MENU_SETTINGS_KEY,
   DEFAULT_MENU_SETTINGS,
   getCmsMenuSettingsKey,
   normalizeMenuSettings,
@@ -59,16 +58,7 @@ export const getCmsMenuSettings = async (domainId?: string | null): Promise<Menu
   const zoningEnabled = await isDomainZoningEnabled();
   const scopedKey = getCmsMenuSettingsKey(zoningEnabled ? (domainId ?? null) : null);
   const stored = await readSettingValue(scopedKey);
-  const parsed = parseJsonSetting<Partial<MenuSettings> | null>(stored, null);
-  if (stored) {
-    return normalizeMenuSettings(parsed);
-  }
-  if (scopedKey !== CMS_MENU_SETTINGS_KEY) {
-    const fallback = await readSettingValue(CMS_MENU_SETTINGS_KEY);
-    const fallbackParsed = parseJsonSetting<Partial<MenuSettings> | null>(fallback, null);
-    if (fallback) {
-      return normalizeMenuSettings(fallbackParsed);
-    }
-  }
-  return DEFAULT_MENU_SETTINGS;
+  if (!stored) return DEFAULT_MENU_SETTINGS;
+  const parsed = parseJsonSetting<unknown>(stored, null);
+  return normalizeMenuSettings(parsed);
 };

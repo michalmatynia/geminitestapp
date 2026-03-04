@@ -5,10 +5,7 @@ import {
 } from '@/shared/contracts/master-folder-tree';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
-import {
-  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
-  folderTreeInstanceValues,
-} from '@/shared/utils/folder-tree-profiles-v2';
+import { folderTreeInstanceValues } from '@/shared/utils/folder-tree-profiles-v2';
 
 const FOLDER_TREE_UI_STATE_V2_LITE_KEYS = folderTreeInstanceValues.map(
   (instance) => `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}${instance}`
@@ -32,7 +29,6 @@ export const LITE_SETTINGS_KEYS: readonly string[] = [
   ...FOLDER_TREE_UI_STATE_V2_LITE_KEYS,
   ...FOLDER_TREE_PROFILE_V2_LITE_KEYS,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
-  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,
 ];

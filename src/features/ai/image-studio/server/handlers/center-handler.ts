@@ -45,7 +45,7 @@ export async function executeCenterOperation(params: {
     scale: null,
   };
 
-  if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1') {
+  if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
     if (!parsedDataUrl) {
       throw badRequestError('Client centering/layouting requires a valid dataUrl payload.');
@@ -64,7 +64,7 @@ export async function executeCenterOperation(params: {
       throw badRequestError('Centered output exceeds center processing limits.');
     }
 
-    if (centerMode === 'client_object_layout_v1') {
+    if (centerMode === 'client_object_layout') {
       layoutMeta = {
         paddingPercent: normalizedLayout.paddingPercent,
         paddingXPercent: normalizedLayout.paddingXPercent,
@@ -99,7 +99,7 @@ export async function executeCenterOperation(params: {
         height: sourceHeight,
       });
     }
-    if (centerMode === 'server_object_layout_v1') {
+    if (centerMode === 'server_object_layout') {
       let centered: Awaited<ReturnType<typeof centerAndScaleObjectByLayout>>;
       try {
         centered = await centerAndScaleObjectByLayout(sourceBuffer, params.request.center?.layout);

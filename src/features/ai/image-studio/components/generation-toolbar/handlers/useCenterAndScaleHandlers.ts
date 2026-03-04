@@ -56,7 +56,7 @@ export function useCenterAndScaleHandlers(
     }
     const isClientCenterMode =
       centerMode === 'client_alpha_bbox' ||
-      centerMode === 'client_object_layout_v1' ||
+      centerMode === 'client_object_layout' ||
       centerMode === 'client_white_bg_bbox';
 
     if (isClientCenterMode && !clientProcessingImageSrc) {
@@ -93,7 +93,7 @@ export function useCenterAndScaleHandlers(
         const sourceForClientCenter = clientProcessingImageSrc || workingSlotImageSrc;
         setCenterStatus('preparing');
         const centeredDataUrl =
-          centerMode === 'client_object_layout_v1'
+          centerMode === 'client_object_layout'
             ? (await layoutCanvasImageObject(sourceForClientCenter, centerLayoutPayload)).dataUrl
             : centerMode === 'client_white_bg_bbox'
               ? await centerCanvasImageObjectWhiteBg(

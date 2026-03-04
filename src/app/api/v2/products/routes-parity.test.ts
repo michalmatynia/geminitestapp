@@ -8,6 +8,7 @@ const projectRoot = path.resolve(currentDir, '../../../../..');
 
 const legacyRoot = path.join(projectRoot, 'src/app/api/products');
 const v2Root = path.join(projectRoot, 'src/app/api/v2/products');
+const legacyImportAliasRoute = path.join(projectRoot, 'src/app/api/import/route.ts');
 
 const collectRouteFiles = (baseDir: string): string[] => {
   if (!existsSync(baseDir)) return [];
@@ -45,6 +46,15 @@ describe('v2 products route migration', () => {
   it('keeps /api/v2/products route.ts files available', () => {
     const v2Routes = collectRouteFiles(v2Root);
     expect(v2Routes.length).toBeGreaterThan(0);
+  });
+
+  it('keeps canonical /api/v2/products/import/csv route.ts file present', () => {
+    const v2Routes = new Set(collectRouteFiles(v2Root));
+    expect(v2Routes.has('import/csv/route.ts')).toBe(true);
+  });
+
+  it('removes legacy /api/import alias route.ts file', () => {
+    expect(existsSync(legacyImportAliasRoute)).toBe(false);
   });
 
   it('does not import v2 routes from removed legacy products namespace', () => {

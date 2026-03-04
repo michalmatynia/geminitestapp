@@ -27,7 +27,7 @@ import {
   estimateGenerationCost,
   type GenerationCostEstimate,
 } from '@/features/ai/image-studio/generation-cost';
-import { parseImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
+import { parsePersistedImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -221,7 +221,7 @@ const resolveGenerationModel = (
   }
   if (!isObjectRecord(run.request.studioSettings)) return null;
   try {
-    const parsed = parseImageStudioSettings(JSON.stringify(run.request.studioSettings));
+    const parsed = parsePersistedImageStudioSettings(JSON.stringify(run.request.studioSettings));
     const snapshotModelId = parsed.projectSequencing.snapshotModelId?.trim();
     return snapshotModelId ? snapshotModelId : null;
   } catch {

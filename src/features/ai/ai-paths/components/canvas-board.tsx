@@ -115,7 +115,7 @@ export function CanvasBoard({
     if (!(target instanceof Element)) return false;
     return Boolean(
       target.closest(
-        '[data-node-body], [data-node-root], [data-port], [data-node-diagnostics-badge], [data-node-action]'
+        '[data-node-body], [data-node-root], [data-port], [data-canvas-edge-hit], [data-node-diagnostics-badge], [data-node-action]'
       )
     );
   }, []);
@@ -258,6 +258,7 @@ export function CanvasBoard({
 
         <div
           ref={canvasRef}
+          data-doc-id='canvas_drop_zone'
           className='relative h-full w-full touch-none select-none overscroll-none'
           onPointerDown={(event) => {
             if (shouldIgnoreCanvasPanStart(event.target)) return;

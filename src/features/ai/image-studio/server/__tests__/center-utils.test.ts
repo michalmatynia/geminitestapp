@@ -57,7 +57,7 @@ describe('center-utils', () => {
     });
     const objectLayoutFingerprint = buildCenterFingerprint({
       sourceSignature,
-      mode: 'server_object_layout_v1',
+      mode: 'server_object_layout',
       layoutSignature: buildCenterLayoutSignature({ paddingPercent: 8 }),
     });
 

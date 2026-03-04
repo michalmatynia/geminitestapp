@@ -66,7 +66,7 @@ export const buildCenterLayoutSignature = (
 const normalizeModeForFingerprint = (
   mode: ImageStudioCenterMode
 ): NormalizedCenterModeForFingerprint =>
-  mode === 'client_object_layout_v1' || mode === 'server_object_layout_v1'
+  mode === 'client_object_layout' || mode === 'server_object_layout'
     ? 'object_layout_v1'
     : 'alpha_bbox';
 

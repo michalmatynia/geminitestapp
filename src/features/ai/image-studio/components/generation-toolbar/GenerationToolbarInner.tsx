@@ -220,15 +220,15 @@ export function GenerationToolbarInner(): React.JSX.Element {
       { value: 'client_alpha_bbox', label: 'Center Client: Canvas' },
       { value: 'server_alpha_bbox', label: 'Center Server: Sharp' },
       { value: 'client_white_bg_bbox', label: 'Center Client: White BG Bbox' },
-      { value: 'client_object_layout_v1', label: 'Object Layouting Client (Experimental)' },
-      { value: 'server_object_layout_v1', label: 'Object Layouting Server (Experimental)' },
+      { value: 'client_object_layout', label: 'Object Layouting Client (Experimental)' },
+      { value: 'server_object_layout', label: 'Object Layouting Server (Experimental)' },
     ],
     []
   );
   const autoScaleModeOptions = useMemo(
     () => [
-      { value: 'client_auto_scaler_v1', label: 'Auto Scaler Client: Canvas' },
-      { value: 'server_auto_scaler_v1', label: 'Auto Scaler Server: Sharp' },
+      { value: 'client_auto_scaler', label: 'Auto Scaler Client: Canvas' },
+      { value: 'server_auto_scaler', label: 'Auto Scaler Server: Sharp' },
     ],
     []
   );
@@ -448,9 +448,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
   const handleOpenSharedDetectionSettings = useCallback((): void => {
     state.setCenterLayoutAdvancedEnabled(true);
     const preferredCenterMode =
-      state.centerMode === 'client_alpha_bbox' || state.centerMode === 'client_object_layout_v1'
-        ? 'client_object_layout_v1'
-        : 'server_object_layout_v1';
+      state.centerMode === 'client_alpha_bbox' || state.centerMode === 'client_object_layout'
+        ? 'client_object_layout'
+        : 'server_object_layout';
     if (state.centerMode !== preferredCenterMode) {
       state.setCenterMode(preferredCenterMode);
     }

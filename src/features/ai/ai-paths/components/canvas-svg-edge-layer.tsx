@@ -121,6 +121,8 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
         return (
           <g key={edge.id} className='group cursor-pointer'>
             <path
+              data-canvas-edge-hit='true'
+              data-edge-id={edge.id}
               d={edge.path}
               stroke='transparent'
               strokeWidth='14'

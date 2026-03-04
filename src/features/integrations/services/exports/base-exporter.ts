@@ -2,8 +2,8 @@ import 'server-only';
 
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/contracts/data-import-export';
 import type {
+  ImportExportTemplateMapping as ExportTemplateMapping,
   BaseProductRecord,
   ImageExportDiagnostics,
   ImageUrlDiagnostic,

@@ -27,6 +27,9 @@ const migratedRoutePaths = [
   '[id]/connections/[connectionId]/allegro/request/route.ts',
   '[id]/connections/[connectionId]/allegro/disconnect/route.ts',
   '[id]/connections/[connectionId]/allegro/authorize/route.ts',
+  '[id]/connections/[connectionId]/allegro/callback/route.ts',
+  '[id]/connections/[connectionId]/base/inventories/route.ts',
+  '[id]/connections/[connectionId]/base/products/route.ts',
   'products/[id]/base/sku-check/route.ts',
   'products/[id]/base/link-existing/route.ts',
   'products/[id]/export-to-base/route.ts',
@@ -50,6 +53,9 @@ const removedLegacyAliasRoutes = [
   '[id]/connections/[connectionId]/allegro/request/route.ts',
   '[id]/connections/[connectionId]/allegro/disconnect/route.ts',
   '[id]/connections/[connectionId]/allegro/authorize/route.ts',
+  '[id]/connections/[connectionId]/allegro/callback/route.ts',
+  '[id]/connections/[connectionId]/base/inventories/route.ts',
+  '[id]/connections/[connectionId]/base/products/route.ts',
   'products/[id]/base/sku-check/route.ts',
   'products/[id]/base/link-existing/route.ts',
   'products/[id]/export-to-base/route.ts',
@@ -97,6 +103,30 @@ const collectSourceFiles = (baseDir: string): string[] => {
   return walk(baseDir).sort();
 };
 
+const collectHandlerFiles = (baseDir: string): string[] => {
+  if (!existsSync(baseDir)) return [];
+
+  const walk = (dir: string): string[] => {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    const files: string[] = [];
+
+    entries.forEach((entry) => {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...walk(absolute));
+        return;
+      }
+      if (entry.isFile() && entry.name === 'handler.ts') {
+        files.push(path.relative(baseDir, absolute));
+      }
+    });
+
+    return files;
+  };
+
+  return walk(baseDir).sort();
+};
+
 describe('v2 integrations selected route migration', () => {
   it('keeps selected v2 route.ts files present', () => {
     const missing = migratedRoutePaths.filter(
@@ -114,6 +144,16 @@ describe('v2 integrations selected route migration', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('keeps v2 handler.ts files independent from direct legacy api imports', () => {
+    const v2Handlers = collectHandlerFiles(v2Root);
+    const offenders = v2Handlers.filter((relativePath) => {
+      const source = readFileSync(path.join(v2Root, relativePath), 'utf8');
+      return source.includes("@/app/api/integrations/");
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
   it('removes migrated legacy alias route.ts files', () => {
     const legacyRoot = path.join(projectRoot, 'src/app/api/integrations');
     const stillPresent = removedLegacyAliasRoutes.filter((relativeRoute) =>
@@ -121,6 +161,11 @@ describe('v2 integrations selected route migration', () => {
     );
 
     expect(stillPresent).toEqual([]);
+  });
+
+  it('removes the legacy integrations handler namespace after v2 cutover', () => {
+    const legacyRoot = path.join(projectRoot, 'src/app/api/integrations');
+    expect(existsSync(legacyRoot)).toBe(false);
   });
 
   it('avoids migrated legacy integration endpoint literals in feature/shared runtime code', () => {

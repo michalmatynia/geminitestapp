@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
-import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   initClientErrorReporting,

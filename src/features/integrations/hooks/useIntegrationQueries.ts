@@ -8,8 +8,9 @@ import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,
   type ImportExportTemplate,
-} from '@/shared/contracts/data-import-export';
-import { integrationSchema, integrationConnectionSchema } from '@/shared/contracts/integrations';
+  integrationSchema,
+  integrationConnectionSchema,
+} from '@/shared/contracts/integrations';
 import type {
   Integration,
   IntegrationConnection,

@@ -1,6 +1,6 @@
 'use client';
 
-import { CLIENT_LOGGING_KEYS } from '@/features/observability/public';
+import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 

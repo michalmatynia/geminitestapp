@@ -108,7 +108,9 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             </svg>
           </button>
           <span className='text-xs font-medium text-white'>Runtime Events</span>
-          <span className='text-[10px] text-gray-500'>{runtimeEvents.length}</span>
+          <span data-doc-id='runtime_events_count' className='text-[10px] text-gray-500'>
+            {runtimeEvents.length}
+          </span>
           {errorCount > 0 && (
             <StatusBadge
               status={`${errorCount} err`}

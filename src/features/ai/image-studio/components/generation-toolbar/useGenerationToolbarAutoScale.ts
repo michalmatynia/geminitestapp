@@ -72,7 +72,7 @@ export function useGenerationToolbarAutoScale({
       return;
     }
     const requestedMode = autoScaleMode;
-    const isClientAutoMode = requestedMode === 'client_auto_scaler_v1';
+    const isClientAutoMode = requestedMode === 'client_auto_scaler';
     if (isClientAutoMode && !clientProcessingImageSrc) {
       toast('No client image source is available for auto scaling.', { variant: 'info' });
       return;
@@ -161,7 +161,7 @@ export function useGenerationToolbarAutoScale({
             throw error;
           }
           setAutoScaleStatus('processing');
-          const fallbackMode = 'server_auto_scaler_v1';
+          const fallbackMode = 'server_auto_scaler';
           const fallbackRequestPayload = buildValidatedAutoScaleRequestPayload(fallbackMode);
           response = await withAutoScalerRetry(
             () =>
@@ -235,7 +235,7 @@ export function useGenerationToolbarAutoScale({
       const createdLabel = response.slot?.name?.trim() || 'Auto-scaled variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;
       const modeLabel =
-        effectiveMode === 'client_auto_scaler_v1' ? 'Client auto scaler' : 'Server auto scaler';
+        effectiveMode === 'client_auto_scaler' ? 'Client auto scaler' : 'Server auto scaler';
       const sourceBounds = response.sourceObjectBounds ?? null;
       const targetBounds = response.targetObjectBounds ?? null;
       const autoScaleShiftedObject = Boolean(

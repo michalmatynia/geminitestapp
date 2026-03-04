@@ -261,15 +261,41 @@ export const IMAGE_STUDIO_CENTER_ERROR_CODES = {
 export type ImageStudioCenterErrorCode =
   (typeof IMAGE_STUDIO_CENTER_ERROR_CODES)[keyof typeof IMAGE_STUDIO_CENTER_ERROR_CODES];
 
-export const imageStudioCenterModeSchema = z.enum([
+const IMAGE_STUDIO_CENTER_MODE_CANONICAL_VALUES = [
   'client_alpha_bbox',
   'server_alpha_bbox',
-  'client_object_layout_v1',
-  'server_object_layout_v1',
+  'client_object_layout',
+  'server_object_layout',
   'client_white_bg_bbox',
-]);
+] as const;
+
+const IMAGE_STUDIO_CENTER_MODE_LEGACY_ALIASES = {
+  client_object_layout_v1: 'client_object_layout',
+  server_object_layout_v1: 'server_object_layout',
+} as const;
+
+const normalizeImageStudioCenterModeValue = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim();
+  return IMAGE_STUDIO_CENTER_MODE_LEGACY_ALIASES[
+    normalized as keyof typeof IMAGE_STUDIO_CENTER_MODE_LEGACY_ALIASES
+  ] ?? normalized;
+};
+
+export const imageStudioCenterModeSchema = z.preprocess(
+  normalizeImageStudioCenterModeValue,
+  z.enum(IMAGE_STUDIO_CENTER_MODE_CANONICAL_VALUES)
+);
 
 export type ImageStudioCenterMode = z.infer<typeof imageStudioCenterModeSchema>;
+
+export const normalizeImageStudioCenterMode = (
+  value: string | null | undefined
+): ImageStudioCenterMode | null => {
+  if (typeof value !== 'string') return null;
+  const parsed = imageStudioCenterModeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
 
 export const imageStudioCenterDetectionModeSchema = z.enum([
   'auto',
@@ -365,11 +391,40 @@ export const IMAGE_STUDIO_ANALYSIS_ERROR_CODES = {
 export type ImageStudioAnalysisErrorCode =
   (typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES)[keyof typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES];
 
-export const imageStudioAnalysisModeSchema = z.enum(['client_analysis_v1', 'server_analysis_v1']);
+const IMAGE_STUDIO_ANALYSIS_MODE_CANONICAL_VALUES = [
+  'client_analysis',
+  'server_analysis',
+] as const;
+
+const IMAGE_STUDIO_ANALYSIS_MODE_LEGACY_ALIASES = {
+  client_analysis_v1: 'client_analysis',
+  server_analysis_v1: 'server_analysis',
+} as const;
+
+const normalizeImageStudioAnalysisModeValue = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim();
+  return IMAGE_STUDIO_ANALYSIS_MODE_LEGACY_ALIASES[
+    normalized as keyof typeof IMAGE_STUDIO_ANALYSIS_MODE_LEGACY_ALIASES
+  ] ?? normalized;
+};
+
+export const imageStudioAnalysisModeSchema = z.preprocess(
+  normalizeImageStudioAnalysisModeValue,
+  z.enum(IMAGE_STUDIO_ANALYSIS_MODE_CANONICAL_VALUES)
+);
 export type ImageStudioAnalysisMode = z.infer<typeof imageStudioAnalysisModeSchema>;
 
+export const normalizeImageStudioAnalysisMode = (
+  value: string | null | undefined
+): ImageStudioAnalysisMode | null => {
+  if (typeof value !== 'string') return null;
+  const parsed = imageStudioAnalysisModeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
+
 export const imageStudioAnalysisRequestSchema = z.object({
-  mode: imageStudioAnalysisModeSchema.optional().default('server_analysis_v1'),
+  mode: imageStudioAnalysisModeSchema.optional().default('server_analysis'),
   dataUrl: z.string().trim().min(1).optional(),
   name: z.string().trim().min(1).max(180).optional(),
   requestId: z.string().trim().min(8).max(160).optional(),
@@ -395,11 +450,37 @@ export const IMAGE_STUDIO_AUTOSCALER_ERROR_CODES = {
 export type ImageStudioAutoScalerErrorCode =
   (typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES)[keyof typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES];
 
-export const imageStudioAutoScalerModeSchema = z.enum([
-  'client_auto_scaler_v1',
-  'server_auto_scaler_v1',
-]);
+const IMAGE_STUDIO_AUTOSCALER_MODE_CANONICAL_VALUES = [
+  'client_auto_scaler',
+  'server_auto_scaler',
+] as const;
+
+const IMAGE_STUDIO_AUTOSCALER_MODE_LEGACY_ALIASES = {
+  client_auto_scaler_v1: 'client_auto_scaler',
+  server_auto_scaler_v1: 'server_auto_scaler',
+} as const;
+
+const normalizeImageStudioAutoScalerModeValue = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim();
+  return IMAGE_STUDIO_AUTOSCALER_MODE_LEGACY_ALIASES[
+    normalized as keyof typeof IMAGE_STUDIO_AUTOSCALER_MODE_LEGACY_ALIASES
+  ] ?? normalized;
+};
+
+export const imageStudioAutoScalerModeSchema = z.preprocess(
+  normalizeImageStudioAutoScalerModeValue,
+  z.enum(IMAGE_STUDIO_AUTOSCALER_MODE_CANONICAL_VALUES)
+);
 export type ImageStudioAutoScalerMode = z.infer<typeof imageStudioAutoScalerModeSchema>;
+
+export const normalizeImageStudioAutoScalerMode = (
+  value: string | null | undefined
+): ImageStudioAutoScalerMode | null => {
+  if (typeof value !== 'string') return null;
+  const parsed = imageStudioAutoScalerModeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
 
 export const imageStudioAutoScalerRequestSchema = z.object({
   mode: imageStudioAutoScalerModeSchema,

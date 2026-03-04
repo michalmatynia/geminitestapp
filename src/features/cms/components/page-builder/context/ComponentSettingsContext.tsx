@@ -11,7 +11,7 @@ import {
 } from '@/shared/contracts/cms';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
 
 interface ConnectionSettings {
@@ -55,9 +55,6 @@ export function useComponentSettingsContext(): ComponentSettingsContextValue {
   }
   return context;
 }
-
-// Alias for older callers
-export const useComponentSettings = useComponentSettingsContext;
 
 export function ComponentSettingsProvider({
   children,

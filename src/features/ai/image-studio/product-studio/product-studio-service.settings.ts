@@ -5,7 +5,7 @@ import {
   buildImageStudioSequenceSnapshot,
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
@@ -114,7 +114,7 @@ export const resolveStudioSettingsBundle = async (
     ]);
 
   const parsedSettings = hasPersistedSettingValue(projectSettingsRaw)
-    ? parseImageStudioSettings(projectSettingsRaw)
+    ? parsePersistedImageStudioSettings(projectSettingsRaw)
     : defaultImageStudioSettings;
   const sequencingDiagnostics = buildSequencingDiagnostics({
     projectId,

@@ -175,7 +175,7 @@ describe('image-studio analysis handler', () => {
     const postAnalyzeSlotHandler = await loadHandler();
     const response = await postAnalyzeSlotHandler(
       buildRequest({
-        mode: 'server_analysis_v1',
+        mode: 'server_analysis',
       }),
       buildApiContext(),
       { slotId: 'source-slot' }
@@ -184,8 +184,8 @@ describe('image-studio analysis handler', () => {
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(200);
     expect(payload['sourceSlotId']).toBe('source-slot');
-    expect(payload['mode']).toBe('server_analysis_v1');
-    expect(payload['effectiveMode']).toBe('server_analysis_v1');
+    expect(payload['mode']).toBe('server_analysis');
+    expect(payload['effectiveMode']).toBe('server_analysis');
     expect(payload['authoritativeSource']).toBe('source_slot');
     expect(payload['sourceMimeHint']).toBe('image/png');
     expect((payload['analysis'] as Record<string, unknown>)['detectionUsed']).toBe(
@@ -214,7 +214,7 @@ describe('image-studio analysis handler', () => {
     const postAnalyzeSlotHandler = await loadHandler();
     const response = await postAnalyzeSlotHandler(
       buildRequest({
-        mode: 'server_analysis_v1',
+        mode: 'server_analysis',
         layout: sharedPresetLayout,
       }),
       buildApiContext(),
@@ -295,7 +295,7 @@ describe('image-studio analysis handler', () => {
     const postAnalyzeSlotHandler = await loadHandler();
     const response = await postAnalyzeSlotHandler(
       buildRequest({
-        mode: 'server_analysis_v1',
+        mode: 'server_analysis',
       }),
       buildApiContext(),
       { slotId: 'source-slot' }
@@ -329,7 +329,7 @@ describe('image-studio analysis handler', () => {
     const postAnalyzeSlotHandler = await loadHandler();
     const response = await postAnalyzeSlotHandler(
       buildRequest({
-        mode: 'client_analysis_v1',
+        mode: 'client_analysis',
         dataUrl: 'data:image/png;base64,ZmFrZQ==',
       }),
       buildApiContext(),
@@ -338,8 +338,8 @@ describe('image-studio analysis handler', () => {
 
     const payload = (await response.json()) as Record<string, unknown>;
     expect(response.status).toBe(200);
-    expect(payload['mode']).toBe('client_analysis_v1');
-    expect(payload['effectiveMode']).toBe('client_analysis_v1');
+    expect(payload['mode']).toBe('client_analysis');
+    expect(payload['effectiveMode']).toBe('client_analysis');
     expect(payload['authoritativeSource']).toBe('client_upload');
     expect(payload['sourceMimeHint']).toBe('image/png');
     expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledTimes(1);
@@ -356,7 +356,7 @@ describe('image-studio analysis handler', () => {
     try {
       await postAnalyzeSlotHandler(
         buildRequest({
-          mode: 'server_analysis_v1',
+          mode: 'server_analysis',
         }),
         buildApiContext(),
         { slotId: 'missing-slot' }

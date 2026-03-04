@@ -10,8 +10,6 @@ import {
   folderTreeInstanceValues,
 } from './types';
 
-export const FOLDER_TREE_PROFILES_V2_SETTING_KEY = 'folder_tree_profiles_v2';
-
 export const folderTreePlaceholderPresetValues: FolderTreePlaceholderPreset[] = [
   'sublime',
   'classic',
@@ -135,6 +133,12 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Not used (hierarchy items are folder-type entries).',
     folderHint: 'Example: folder',
   },
+  admin_menu_layout: {
+    title: 'Admin Menu Layout',
+    description: 'Controls hierarchy placeholders and drag/drop behavior in Admin Menu Builder.',
+    fileHint: 'Not used (menu nodes are folder-type entries).',
+    folderHint: 'Example: folder',
+  },
   brain_catalog_tree: {
     title: 'AI Brain Catalog',
     description: 'Controls drag/drop behavior for AI Brain catalog ordering.',
@@ -217,6 +221,11 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Hierarchy updated.',
+  },
+  admin_menu_layout: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Admin menu layout updated.',
   },
   brain_catalog_tree: {
     notifySuccess: false,

@@ -314,6 +314,113 @@ const collectCoreContractViolations = (root, allowPartial) => {
   return violations;
 };
 
+const collectLegacyCompatibilityViolations = (root, srcDir) => {
+  const srcRoot = path.join(root, srcDir);
+  const files = listFiles(
+    srcRoot,
+    (file) =>
+      /\.(ts|tsx|js|jsx)$/.test(file) &&
+      !/\.test\./.test(file) &&
+      !/\.spec\./.test(file) &&
+      !/__tests__/.test(file)
+  );
+
+  const violations = [];
+  const addMatchViolation = (file, text, index, message) => {
+    violations.push({
+      file: toRelative(root, file),
+      line: toLine(text, index),
+      message,
+    });
+  };
+
+  for (const file of files) {
+    const text = fs.readFileSync(file, 'utf8');
+    const relative = toRelative(root, file);
+
+    const legacyImportPatterns = [
+      {
+        regex: /@\/features\/observability\/public/g,
+        message: 'legacy import "@/features/observability/public" is not allowed',
+      },
+      {
+        regex: /@\/features\/observability\/server/g,
+        message: 'legacy import "@/features/observability/server" is not allowed',
+      },
+      {
+        regex: /@\/features\/observability\/utils\/client-error-logger/g,
+        message:
+          'legacy import "@/features/observability/utils/client-error-logger" is not allowed',
+      },
+    ];
+
+    for (const check of legacyImportPatterns) {
+      check.regex.lastIndex = 0;
+      let match = check.regex.exec(text);
+      while (match) {
+        addMatchViolation(file, text, match.index, check.message);
+        match = check.regex.exec(text);
+      }
+    }
+
+    if (
+      (relative === 'src/app/api/v2/metadata/handler.ts' ||
+        relative === 'src/app/api/v2/metadata/[type]/[id]/handler.ts') &&
+      /unwrapPayload\s*\(/.test(text)
+    ) {
+      const index = text.indexOf('unwrapPayload');
+      addMatchViolation(
+        file,
+        text,
+        index >= 0 ? index : 0,
+        'legacy wrapped payload compatibility helper "unwrapPayload" is not allowed'
+      );
+    }
+
+    if (
+      relative === 'src/shared/lib/observability/runtime-context/hydrate-system-log-runtime-context.ts'
+    ) {
+      const runtimeLegacyPatterns = [
+        {
+          regex: /readLegacyAiPathRunRunId\s*\(/g,
+          message: 'legacy runtime-context runId inference helper is not allowed',
+        },
+        {
+          regex: /normalizeContextForInference\s*\(/g,
+          message: 'legacy runtime-context inference normalization is not allowed',
+        },
+      ];
+
+      for (const check of runtimeLegacyPatterns) {
+        check.regex.lastIndex = 0;
+        let match = check.regex.exec(text);
+        while (match) {
+          addMatchViolation(file, text, match.index, check.message);
+          match = check.regex.exec(text);
+        }
+      }
+    }
+  }
+
+  const legacyCounterModule = path.join(
+    root,
+    'src',
+    'shared',
+    'lib',
+    'observability',
+    'legacy-compat-counters.ts'
+  );
+  if (fs.existsSync(legacyCounterModule)) {
+    violations.push({
+      file: toRelative(root, legacyCounterModule),
+      line: 1,
+      message: 'legacy compatibility counter module must be removed',
+    });
+  }
+
+  return violations;
+};
+
 const resolveFromRoot = (root, value) => (path.isAbsolute(value) ? value : path.join(root, value));
 
 const toReportPath = (root, file) => {
@@ -467,12 +574,15 @@ const collectRuntimeLogErrors = (root, logsDir, { excludedFiles, maxFindings }) 
 };
 
 const buildSummaryLine = (report) =>
-  `[observability:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
+  `[observability:${report.status}] routes=${report.routeCoverage.totalRoutes} wrapped=${report.routeCoverage.wrappedRoutes} delegated=${report.routeCoverage.delegatedRoutes} uncovered=${report.routeCoverage.uncoveredRoutes} loggerViolations=${report.logger.totalViolations} coreViolations=${report.core.totalViolations} legacyCompatViolations=${report.legacyCompatibility.totalViolations} runtimeErrors=${report.runtimeLogs.totalErrors}`;
 
 const buildErrorComment = (report, errorLogFile) => {
   if (report.runtimeLogs.totalErrors > 0) {
     const suffix = report.runtimeLogs.totalErrors === 1 ? 'entry' : 'entries';
     return `Error discovered in runtime logs: ${report.runtimeLogs.totalErrors} ${suffix}. See ${errorLogFile}.`;
+  }
+  if (report.legacyCompatibility.totalViolations > 0) {
+    return `Error discovered in legacy compatibility guardrails: ${report.legacyCompatibility.totalViolations} violations. See ${errorLogFile}.`;
   }
   if (report.logger.totalViolations > 0 || report.core.totalViolations > 0) {
     return `Error discovered in observability contracts: logger violations=${report.logger.totalViolations}, core violations=${report.core.totalViolations}. See ${errorLogFile}.`;
@@ -547,6 +657,14 @@ const emitCiAnnotations = (report) => {
     });
   }
 
+  for (const violation of report.legacyCompatibility.violations.slice(0, 50)) {
+    emitGithubError({
+      file: violation.file,
+      line: violation.line,
+      message: `[observability.check] legacy compatibility violation: ${violation.message}`,
+    });
+  }
+
   for (const errorEntry of report.runtimeLogs.errors.slice(0, 50)) {
     emitGithubError({
       file: errorEntry.file,
@@ -579,6 +697,7 @@ export const runObservabilityCheck = ({
   const routeCoverage = collectRouteCoverage(root, apiDir);
   const loggerViolations = collectLoggerServiceViolations(root, srcDir);
   const coreViolations = collectCoreContractViolations(root, allowPartial);
+  const legacyCompatibilityViolations = collectLegacyCompatibilityViolations(root, srcDir);
   const runtimeLogs = scanRuntimeLogs
     ? collectRuntimeLogErrors(root, logsDir, {
         excludedFiles,
@@ -595,7 +714,10 @@ export const runObservabilityCheck = ({
       };
 
   const hasBlockingViolations =
-    loggerViolations.length > 0 || coreViolations.length > 0 || runtimeLogs.totalErrors > 0;
+    loggerViolations.length > 0 ||
+    coreViolations.length > 0 ||
+    legacyCompatibilityViolations.length > 0 ||
+    runtimeLogs.totalErrors > 0;
   const report = {
     generatedAt: new Date().toISOString(),
     mode,
@@ -607,6 +729,10 @@ export const runObservabilityCheck = ({
     core: {
       totalViolations: coreViolations.length,
       violations: coreViolations,
+    },
+    legacyCompatibility: {
+      totalViolations: legacyCompatibilityViolations.length,
+      violations: legacyCompatibilityViolations,
     },
     runtimeLogs,
     logArtifacts: {

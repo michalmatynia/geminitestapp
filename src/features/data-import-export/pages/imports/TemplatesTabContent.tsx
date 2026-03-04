@@ -32,7 +32,7 @@ import {
   toParameterTargetValue,
   getParameterDisplayName,
 } from './imports-page-utils';
-import type { TemplateMapping } from '@/shared/contracts/data-import-export';
+import type { TemplateMapping } from '@/shared/contracts/integrations';
 import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 
 export function TemplatesTabContent(): React.JSX.Element {

@@ -49,7 +49,7 @@ import {
   useAdminMenuSettings,
 } from '../context/AdminMenuSettingsContext';
 
-const TREE_INSTANCE = 'prompt_exploder_hierarchy';
+const TREE_INSTANCE = 'admin_menu_layout';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
 

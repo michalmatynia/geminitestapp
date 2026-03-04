@@ -7,7 +7,6 @@ import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
   AI_PATHS_LAST_ERROR_KEY,
-  LEGACY_PATH_INDEX_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   createDefaultPathConfig,
@@ -180,7 +179,6 @@ export function useAiPathsPersistence(
       try {
         const baseKeys = [
           PATH_INDEX_KEY,
-          LEGACY_PATH_INDEX_KEY,
           'user_preferences',
           AI_PATHS_HISTORY_RETENTION_KEY,
           AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
@@ -193,9 +191,7 @@ export function useAiPathsPersistence(
         const stageADurationMs = Date.now() - stageAStartedAt;
         const userPrefs = prefs.resolveUserPreferences(baseSettings);
 
-        const pathIndexItem =
-          baseSettings.find((s) => s.key === PATH_INDEX_KEY) ??
-          baseSettings.find((s) => s.key === LEGACY_PATH_INDEX_KEY);
+        const pathIndexItem = baseSettings.find((s) => s.key === PATH_INDEX_KEY);
         let rawPaths: PathMeta[] = [];
         try {
           if (pathIndexItem?.value) rawPaths = JSON.parse(pathIndexItem.value) as PathMeta[];
@@ -204,18 +200,6 @@ export function useAiPathsPersistence(
         }
         const loadedPaths = normalizeLoadedPathMetas(rawPaths);
         setPaths(loadedPaths);
-        if (pathIndexItem?.key === LEGACY_PATH_INDEX_KEY && pathIndexItem.value.trim().length > 0) {
-          void updateAiPathsSettingsBulk([
-            { key: PATH_INDEX_KEY, value: pathIndexItem.value },
-          ]).catch((error: unknown) => {
-            logClientError(error, {
-              context: {
-                source: 'useAiPathsPersistence',
-                action: 'migrateLegacyPathIndexKey',
-              },
-            });
-          });
-        }
 
         const historyPassesItem = baseSettings.find(
           (s) => s.key === AI_PATHS_HISTORY_RETENTION_KEY

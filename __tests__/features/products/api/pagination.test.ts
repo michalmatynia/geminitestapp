@@ -4,8 +4,8 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { GET as GET_COUNT } from '@/app/api/products/count/route';
-import { GET as GET_LIST } from '@/app/api/products/route';
+import { GET as GET_COUNT } from '@/app/api/v2/products/count/route';
+import { GET as GET_LIST } from '@/app/api/v2/products/route';
 import { createMockProduct } from '@/shared/lib/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -36,14 +36,14 @@ describe('Products API - Pagination and Count', () => {
     await prisma.$disconnect();
   });
 
-  describe('GET /api/products/count', () => {
+  describe('GET /api/v2/products/count', () => {
     it('should return the total count of products', async () => {
       if (shouldSkipProductPaginationTests()) return;
       await createMockProduct({ name_en: 'P1', sku: 'SKU1' });
       await createMockProduct({ name_en: 'P2', sku: 'SKU2' });
       await createMockProduct({ name_en: 'P3', sku: 'SKU3' });
 
-      const res = await GET_COUNT(new NextRequest('http://localhost/api/products/count'));
+      const res = await GET_COUNT(new NextRequest('http://localhost/api/v2/products/count'));
       const data = (await res.json()) as { count: number };
 
       expect(res.status).toEqual(200);
@@ -56,7 +56,7 @@ describe('Products API - Pagination and Count', () => {
       await createMockProduct({ name_en: 'Mouse', sku: 'SKU2' });
 
       const res = await GET_COUNT(
-        new NextRequest('http://localhost/api/products/count?search=lap')
+        new NextRequest('http://localhost/api/v2/products/count?search=lap')
       );
       const data = (await res.json()) as { count: number };
 
@@ -65,14 +65,14 @@ describe('Products API - Pagination and Count', () => {
     });
   });
 
-  describe('GET /api/products - Server-side Pagination', () => {
+  describe('GET /api/v2/products - Server-side Pagination', () => {
     it('should return a limited number of products based on pageSize', async () => {
       if (shouldSkipProductPaginationTests()) return;
       for (let i = 1; i <= 5; i++) {
         await createMockProduct({ name_en: `Product ${i}`, sku: `SKU${i}` });
       }
 
-      const res = await GET_LIST(new NextRequest('http://localhost/api/products?pageSize=2'));
+      const res = await GET_LIST(new NextRequest('http://localhost/api/v2/products?pageSize=2'));
       const products = (await res.json()) as Product[];
 
       expect(res.status).toEqual(200);
@@ -87,12 +87,12 @@ describe('Products API - Pagination and Count', () => {
       }
 
       const res1 = await GET_LIST(
-        new NextRequest('http://localhost/api/products?page=1&pageSize=2')
+        new NextRequest('http://localhost/api/v2/products?page=1&pageSize=2')
       );
       const page1 = (await res1.json()) as Product[];
 
       const res2 = await GET_LIST(
-        new NextRequest('http://localhost/api/products?page=2&pageSize=2')
+        new NextRequest('http://localhost/api/v2/products?page=2&pageSize=2')
       );
       const page2 = (await res2.json()) as Product[];
 

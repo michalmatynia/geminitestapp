@@ -4,7 +4,7 @@ import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-r
 import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   normalizeImageStudioSequenceSteps,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
@@ -119,7 +119,7 @@ export async function executeImageStudioSequenceStep(
 export function resolveSequenceStepsForExecution(
   run: ImageStudioSequenceRunRecord
 ): ImageStudioSequenceStep[] {
-  const parsedSettings = parseImageStudioSettings(
+  const parsedSettings = parsePersistedImageStudioSettings(
     run.request.studioSettings ? JSON.stringify(run.request.studioSettings) : null
   );
 

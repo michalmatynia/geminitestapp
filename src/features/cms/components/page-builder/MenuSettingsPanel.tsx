@@ -111,17 +111,12 @@ export function MenuSettingsPanel({
 
   const settingsReady = !settingsStore.isLoading && !settingsStore.error;
   const menuSettingsRaw = settingsStore.get(menuKey);
-  const defaultMenuSettingsRaw = settingsStore.get(CMS_MENU_SETTINGS_KEY);
 
   const initialSettings = useMemo((): MenuSettings => {
     if (!settingsReady) return DEFAULT_MENU_SETTINGS;
-    const stored = parseJsonSetting<Partial<MenuSettings> | null>(menuSettingsRaw, null);
-    if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
-      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(defaultMenuSettingsRaw, null);
-      return normalizeMenuSettings(fallback);
-    }
+    const stored = parseJsonSetting<unknown>(menuSettingsRaw, null);
     return normalizeMenuSettings(stored);
-  }, [menuKey, settingsReady, menuSettingsRaw, defaultMenuSettingsRaw]);
+  }, [settingsReady, menuSettingsRaw]);
 
   const [userSettings, setUserSettings] = useState<MenuSettings | null>(null);
   const settings = userSettings ?? initialSettings;
@@ -708,7 +703,7 @@ export function MenuSettingsPanel({
                     setUserMenuScopeId(value);
                   }}
                   options={[
-                    { value: 'default', label: 'Default (fallback)' },
+                    { value: 'default', label: 'Default scope' },
                     ...domains.map((domain: CmsDomain) => ({
                       value: domain.id,
                       label: domain.domain,
@@ -720,7 +715,7 @@ export function MenuSettingsPanel({
                 />
                 {menuScopeId !== 'default' && !hasScopedMenu ? (
                   <p className='text-[10px] text-gray-500'>
-                    Using default menu until you customize this zone.
+                    Using base menu defaults until you customize this scope.
                   </p>
                 ) : null}
               </div>

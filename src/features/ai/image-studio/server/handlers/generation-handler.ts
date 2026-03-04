@@ -14,7 +14,7 @@ import {
 import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
 import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
-  parseImageStudioSettings,
+  parsePersistedImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { getSettingValue } from '@/shared/lib/ai/server-settings';
@@ -71,7 +71,7 @@ export async function executeGenerationOperation(params: {
 }): Promise<ImageStudioRunExecutionResult> {
   const { request, projectId, diskPath, hasSourceAsset, assetPath } = params;
 
-  const settings = parseImageStudioSettings(
+  const settings = parsePersistedImageStudioSettings(
     request.studioSettings ? JSON.stringify(request.studioSettings) : null
   );
 

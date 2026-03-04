@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AiNode } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 import type { CanvasBoardState } from '../CanvasBoard.types';
 import type { ConnectorInfo } from '../canvas-board-connectors';
@@ -205,6 +205,110 @@ describe('CanvasBoard world transform', () => {
 
     expect(handlePointerDownNode).toHaveBeenCalledTimes(1);
     expect(handlePanStart).not.toHaveBeenCalled();
+  });
+
+  it('does not start canvas pan when edge hit pointer events bubble to the canvas root', () => {
+    const handlePanStart = vi.fn();
+    const clearNodeSelection = vi.fn();
+    const selectEdge = vi.fn();
+    const source = buildNode({
+      id: 'node-a',
+      outputs: ['result'],
+      position: { x: 24, y: 24 },
+    });
+    const target = buildNode({
+      id: 'node-b',
+      inputs: ['value'],
+      position: { x: 420, y: 24 },
+    });
+    const edge: Edge = {
+      id: 'edge-a-b',
+      from: 'node-a',
+      to: 'node-b',
+      fromPort: 'result',
+      toPort: 'value',
+    };
+    useCanvasBoardStateMock.mockReturnValue({
+      ...buildState(),
+      nodes: [source, target],
+      edges: [edge],
+      nodeById: new Map([
+        [source.id, source],
+        [target.id, target],
+      ]),
+      edgePaths: [
+        {
+          id: edge.id,
+          path: 'M 284 116 C 340 116 380 116 420 116',
+          fromNodeId: source.id,
+          toNodeId: target.id,
+          bounds: { minX: 284, minY: 116, maxX: 420, maxY: 116 },
+        },
+      ],
+      handlePanStart,
+      clearNodeSelection,
+      selectEdge,
+    });
+
+    const { container } = render(<CanvasBoard />);
+    const edgeHit = container.querySelector('[data-canvas-edge-hit="true"]');
+    expect(edgeHit).toBeTruthy();
+    if (!edgeHit) return;
+
+    fireEvent.pointerDown(edgeHit, { clientX: 320, clientY: 116 });
+
+    expect(handlePanStart).not.toHaveBeenCalled();
+    expect(clearNodeSelection).not.toHaveBeenCalled();
+    expect(selectEdge).not.toHaveBeenCalled();
+  });
+
+  it('selects edge when clicking the edge hit target', () => {
+    const selectEdge = vi.fn();
+    const source = buildNode({
+      id: 'node-a',
+      outputs: ['result'],
+      position: { x: 24, y: 24 },
+    });
+    const target = buildNode({
+      id: 'node-b',
+      inputs: ['value'],
+      position: { x: 420, y: 24 },
+    });
+    const edge: Edge = {
+      id: 'edge-a-b',
+      from: 'node-a',
+      to: 'node-b',
+      fromPort: 'result',
+      toPort: 'value',
+    };
+    useCanvasBoardStateMock.mockReturnValue({
+      ...buildState(),
+      nodes: [source, target],
+      edges: [edge],
+      nodeById: new Map([
+        [source.id, source],
+        [target.id, target],
+      ]),
+      edgePaths: [
+        {
+          id: edge.id,
+          path: 'M 284 116 C 340 116 380 116 420 116',
+          fromNodeId: source.id,
+          toNodeId: target.id,
+          bounds: { minX: 284, minY: 116, maxX: 420, maxY: 116 },
+        },
+      ],
+      selectEdge,
+    });
+
+    const { container } = render(<CanvasBoard />);
+    const edgeHit = container.querySelector('[data-canvas-edge-hit="true"]');
+    expect(edgeHit).toBeTruthy();
+    if (!edgeHit) return;
+
+    fireEvent.click(edgeHit);
+
+    expect(selectEdge).toHaveBeenCalledWith(edge.id);
   });
 
   it('forwards pointer move and up events to canvas pan handlers with the event payload', () => {

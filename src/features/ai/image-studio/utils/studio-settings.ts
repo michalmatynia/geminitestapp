@@ -38,7 +38,7 @@ export function getImageStudioProjectSettingsKey(
 }
 
 export type ImageStudioSettings = {
-  version: 1;
+  version: 2;
   projectSequencing: ImageStudioProjectSequencingSettings;
   promptExtraction: {
     mode: 'programmatic' | 'gpt' | 'hybrid';
@@ -114,7 +114,7 @@ const defaultSequenceSteps = buildSequenceStepsFromOperations([
 ]);
 
 export const defaultImageStudioSettings: ImageStudioSettings = {
-  version: 1,
+  version: 2,
   projectSequencing: {
     enabled: false,
     trigger: 'manual',
@@ -282,7 +282,7 @@ export function buildImageStudioSequenceSnapshot(
 
 const imageStudioSettingsSchema = z
   .object({
-    version: z.literal(1).optional().default(1),
+    version: z.union([z.literal(1), z.literal(2)]).optional().default(2),
     projectSequencing: z
       .object({
         enabled: z
@@ -564,7 +564,69 @@ const resolveDeprecatedImageStudioSnapshotKeys = (value: unknown): string[] => {
   return deprecatedKeys;
 };
 
-export function parseImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
+const stripDeprecatedImageStudioSnapshotKeys = (
+  value: unknown
+): {
+  sanitized: unknown;
+  strippedKeys: string[];
+} => {
+  if (!isPlainObject(value)) {
+    return { sanitized: value, strippedKeys: [] };
+  }
+
+  const nextRoot: Record<string, unknown> = { ...value };
+  const strippedKeys: string[] = [];
+
+  const promptExtraction = isPlainObject(nextRoot['promptExtraction'])
+    ? { ...nextRoot['promptExtraction'] }
+    : null;
+  if (promptExtraction) {
+    const gpt = isPlainObject(promptExtraction['gpt']) ? { ...promptExtraction['gpt'] } : null;
+    if (gpt && hasOwnKey(gpt, 'model')) {
+      delete gpt['model'];
+      strippedKeys.push('promptExtraction.gpt.model');
+    }
+    if (gpt) {
+      promptExtraction['gpt'] = gpt;
+    }
+    nextRoot['promptExtraction'] = promptExtraction;
+  }
+
+  const uiExtractor = isPlainObject(nextRoot['uiExtractor']) ? { ...nextRoot['uiExtractor'] } : null;
+  if (uiExtractor && hasOwnKey(uiExtractor, 'model')) {
+    delete uiExtractor['model'];
+    strippedKeys.push('uiExtractor.model');
+  }
+  if (uiExtractor) {
+    nextRoot['uiExtractor'] = uiExtractor;
+  }
+
+  const targetAi = isPlainObject(nextRoot['targetAi']) ? { ...nextRoot['targetAi'] } : null;
+  const openai = targetAi && isPlainObject(targetAi['openai']) ? { ...targetAi['openai'] } : null;
+  if (openai && hasOwnKey(openai, 'model')) {
+    delete openai['model'];
+    strippedKeys.push('targetAi.openai.model');
+  }
+  if (openai && hasOwnKey(openai, 'modelPresets')) {
+    delete openai['modelPresets'];
+    strippedKeys.push('targetAi.openai.modelPresets');
+  }
+  if (targetAi && openai) {
+    targetAi['openai'] = openai;
+    nextRoot['targetAi'] = targetAi;
+  }
+
+  return { sanitized: nextRoot, strippedKeys };
+};
+
+type ParseImageStudioSettingsOptions = {
+  stripDeprecatedSnapshotKeys?: boolean;
+};
+
+export function parseImageStudioSettings(
+  raw: string | null | undefined,
+  options?: ParseImageStudioSettingsOptions
+): ImageStudioSettings {
   if (!raw) return defaultImageStudioSettings;
   if (!raw.trim()) return defaultImageStudioSettings;
 
@@ -579,15 +641,21 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
     });
   }
 
+  const shouldStripDeprecatedKeys = options?.stripDeprecatedSnapshotKeys === true;
+  const sanitizedLegacy = stripDeprecatedImageStudioSnapshotKeys(parsed);
   const deprecatedKeys = resolveDeprecatedImageStudioSnapshotKeys(parsed);
   if (deprecatedKeys.length > 0) {
-    throw validationError('Image Studio settings contain deprecated AI snapshot keys.', {
-      reason: 'deprecated_snapshot_keys',
-      deprecatedKeys,
-    });
+    if (!shouldStripDeprecatedKeys) {
+      throw validationError('Image Studio settings contain deprecated AI snapshot keys.', {
+        reason: 'deprecated_snapshot_keys',
+        deprecatedKeys,
+      });
+    }
   }
 
-  const result = imageStudioSettingsSchema.safeParse(parsed);
+  const result = imageStudioSettingsSchema.safeParse(
+    shouldStripDeprecatedKeys ? sanitizedLegacy.sanitized : parsed
+  );
   if (!result.success) {
     throw validationError('Invalid Image Studio settings payload.', {
       reason: 'schema_validation_failed',
@@ -643,6 +711,11 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
 
   return {
     ...parsedSettings,
+    version: 2,
     projectSequencing,
   };
+}
+
+export function parsePersistedImageStudioSettings(raw: string | null | undefined): ImageStudioSettings {
+  return parseImageStudioSettings(raw, { stripDeprecatedSnapshotKeys: true });
 }

@@ -6,23 +6,23 @@ import { notFoundError } from '@/shared/errors/app-error';
 import {
   GET_handler as getActiveTemplateHandler,
   POST_handler as postActiveTemplateHandler,
-} from '@/app/api/integrations/exports/base/active-template/handler';
+} from '@/app/api/v2/integrations/exports/base/active-template/handler';
 import {
   GET_handler as getDefaultConnectionHandler,
   POST_handler as postDefaultConnectionHandler,
-} from '@/app/api/integrations/exports/base/default-connection/handler';
+} from '@/app/api/v2/integrations/exports/base/default-connection/handler';
 import {
   GET_handler as getDefaultInventoryHandler,
   POST_handler as postDefaultInventoryHandler,
-} from '@/app/api/integrations/exports/base/default-inventory/handler';
+} from '@/app/api/v2/integrations/exports/base/default-inventory/handler';
 import {
   GET_handler as getImageRetryPresetsHandler,
   POST_handler as postImageRetryPresetsHandler,
-} from '@/app/api/integrations/exports/base/image-retry-presets/handler';
+} from '@/app/api/v2/integrations/exports/base/image-retry-presets/handler';
 import {
   GET_handler as getStockFallbackHandler,
   POST_handler as postStockFallbackHandler,
-} from '@/app/api/integrations/exports/base/stock-fallback/handler';
+} from '@/app/api/v2/integrations/exports/base/stock-fallback/handler';
 
 export type SettingParams = { setting: string };
 

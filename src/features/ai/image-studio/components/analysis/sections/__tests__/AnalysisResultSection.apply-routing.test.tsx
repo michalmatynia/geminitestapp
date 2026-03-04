@@ -39,7 +39,7 @@ const createSnapshot = (slotId: string): ImageStudioAnalysisPlanSnapshot => ({
     shadowPolicy: 'auto',
     detection: 'auto',
   },
-  effectiveMode: 'server_analysis_v1',
+  effectiveMode: 'server_analysis',
   authoritativeSource: 'source_slot',
   detectionUsed: 'alpha_bbox',
   confidence: 0.93,

@@ -140,6 +140,21 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
        - `CanvasOutputNodeConfigSection` + `CanvasOutputNodeConfigSectionImpl`
    - Action: split monolithic section logic into reusable field groups and testable hooks before cross-feature sharing.
 
+## Wave 4: zero-regression automation
+
+1. Consolidation drift guardrail in CI - `DONE`
+   - Added guard script:
+     - `scripts/architecture/check-ui-consolidation.mjs`
+   - Guardrail assertions now fail on any regression:
+     - `propForwarding > 0`
+     - `propDepthGte4Chains > 0`
+     - `uiOpportunities > 0`
+     - `uiHighPriority > 0`
+   - Added CI workflow job:
+     - `.github/workflows/test-matrix.yml` (`ui-consolidation`)
+   - Extended scanner CLI to support guardrail mode:
+     - `scripts/architecture/scan-ui-consolidation.mjs` now supports `--summary-json`, `--no-write`, `--ci/--no-history`.
+
 ## Guardrails per migration PR
 
 1. Run:
@@ -165,3 +180,5 @@ Source scan: `docs/ui-consolidation/scan-latest.md`
 - Initial scan (`2026-03-04T19:26:07.386Z`): 12 opportunities, 3 high-priority.
 - Current scan (`2026-03-04T20:36:09.950Z`): 0 opportunities, 0 high-priority.
 - Delta: `-12` opportunities after Wave 1 + early Wave 2 extraction.
+- Latest scan (`2026-03-04T23:33:39.803Z`): 0 opportunities, 0 high-priority.
+- Guardrail check (`2026-03-04T23:35+`): passed (`propForwarding=0 | propDepthGte4Chains=0 | uiOpportunities=0 | uiHighPriority=0`).

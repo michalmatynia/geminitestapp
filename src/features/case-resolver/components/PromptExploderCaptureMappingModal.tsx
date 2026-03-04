@@ -43,20 +43,24 @@ type PromptExploderCaptureMappingModalProps = {
   } | null;
 };
 
-export function PromptExploderCaptureMappingModal({
-  open,
-  draft,
-  applying,
-  targetFileName,
-  partyOptions,
-  onClose,
-  onApply,
-  onUpdateAction,
-  onUpdateReference,
-  onUpdateDateAction,
-  resolveMatchedPartyLabel,
-  diagnostics,
-}: PromptExploderCaptureMappingModalProps): React.JSX.Element {
+export function PromptExploderCaptureMappingModal(
+  props: PromptExploderCaptureMappingModalProps
+): React.JSX.Element {
+  const {
+    open,
+    draft,
+    applying,
+    targetFileName,
+    partyOptions,
+    onClose,
+    onApply,
+    onUpdateAction,
+    onUpdateReference,
+    onUpdateDateAction,
+    resolveMatchedPartyLabel,
+    diagnostics,
+  } = props;
+
   const [closeConfirmOpen, setCloseConfirmOpen] = React.useState(false);
 
   const resolveActionOptions = (
